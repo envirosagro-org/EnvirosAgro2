@@ -1,8 +1,8 @@
-
 export interface User {
   name: string;
   email: string;
   esin: string; // EnvirosAgro Social Identification Number
+  mnemonic: string; // 12-word recovery phrase
   regDate: string;
   avatar?: string;
   role: string;
