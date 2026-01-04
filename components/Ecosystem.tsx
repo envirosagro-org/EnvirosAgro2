@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Flower2, 
   Music, 
@@ -61,13 +61,15 @@ import {
   Grape,
   Radar,
   Lock,
-  // Fix: Added missing BookOpen icon import from lucide-react
-  BookOpen
+  BookOpen,
+  ArrowDownUp,
+  CreditCard as CardIcon,
+  Cable,
+  Fingerprint
 } from 'lucide-react';
 import { searchAgroTrends, AIResponse, chatWithAgroExpert, getDeFiIntelligence } from '../services/geminiService';
 import { User } from '../types';
 
-// SEHTI Framework Types
 type ThrustType = 'societal' | 'environmental' | 'human' | 'technological' | 'industry';
 
 interface Product {
@@ -221,12 +223,16 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
   const [filter, setFilter] = useState<'all' | ThrustType>('all');
   const [loading, setLoading] = useState(false);
   const [aiResult, setAiResult] = useState<AIResponse | null>(null);
-  const [portalTab, setPortalTab] = useState<'ai' | 'market' | 'finance' | 'gateways' | 'bridge' | 'deposit' | 'registry'>('ai');
+  const [portalTab, setPortalTab] = useState<'ai' | 'market' | 'finance' | 'gateways' | 'deposit' | 'registry'>('ai');
 
   const [esinSign, setEsinSign] = useState('');
-  const [isExchangeLoading, setIsExchangeLoading] = useState(false);
   
-  // Deposit State
+  // Swap States
+  const [swapInAmount, setSwapInAmount] = useState('100');
+  const [swapAsset, setSwapAsset] = useState('USDT');
+  const [isSwapping, setIsSwapping] = useState(false);
+  
+  // Deposit States
   const [depositAmount, setDepositAmount] = useState('500');
   const [selectedGateway, setSelectedGateway] = useState('M-Pesa Direct');
   const [isDepositing, setIsDepositing] = useState(false);
@@ -244,8 +250,10 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
   const launchBrand = (brand: Brand) => {
     setActiveBrand(brand);
     setAiResult(null);
-    if (brand.thrust === 'industry') {
-      setPortalTab(brand.id === 'tokenz' ? 'finance' : 'registry');
+    if (brand.id === 'tokenz') {
+      setPortalTab('deposit');
+    } else if (brand.thrust === 'industry') {
+      setPortalTab('registry');
     } else {
       setPortalTab('ai');
     }
@@ -263,6 +271,24 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
       alert(`DEPOSIT SUCCESS: ${depositAmount} EAC minted and optimized at ${optimizedYield}x efficiency.`);
       setEsinSign('');
     }, 2500);
+  };
+
+  const handleExecuteSwap = async () => {
+    if (!esinSign) {
+      alert("SIGNATURE REQUIRED: Authorized ESIN needed to commit market swap.");
+      return;
+    }
+    setIsSwapping(true);
+    const transaction = {
+      type: 'Swap',
+      pair: `EAC/${swapAsset}`,
+      amount: swapInAmount,
+      source: 'Node Treasury'
+    };
+    const res = await getDeFiIntelligence(transaction);
+    setAiResult(res);
+    setIsSwapping(false);
+    alert(`SWAP EXECUTED: Transaction enqueued for ZK-Rollup settlement.`);
   };
 
   const runBrandAction = async () => {
@@ -406,13 +432,13 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
               {activeBrand.id === 'tokenz' ? (
                 <>
                   <button onClick={() => setPortalTab('deposit')} className={`flex-1 min-w-[200px] py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'deposit' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
-                    <div className="flex items-center justify-center gap-3"><PlusCircle className="w-4 h-4" /> Initialize Deposit</div>
+                    <div className="flex items-center justify-center gap-3"><PlusCircle className="w-4 h-4" /> Node Deposit</div>
                   </button>
                   <button onClick={() => setPortalTab('finance')} className={`flex-1 min-w-[200px] py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'finance' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
-                    <div className="flex items-center justify-center gap-3"><ArrowRightLeft className="w-4 h-4" /> Market Swap</div>
+                    <div className="flex items-center justify-center gap-3"><ArrowDownUp className="w-4 h-4" /> Market Swap</div>
                   </button>
                   <button onClick={() => setPortalTab('gateways')} className={`flex-1 min-w-[200px] py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'gateways' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
-                    <div className="flex items-center justify-center gap-3"><Smartphone className="w-4 h-4" /> Payment Rails</div>
+                    <div className="flex items-center justify-center gap-3"><Cable className="w-4 h-4" /> Payment Rails</div>
                   </button>
                 </>
               ) : activeBrand.thrust === 'industry' ? (
@@ -510,6 +536,184 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                 </div>
               )}
 
+              {activeBrand.id === 'tokenz' && portalTab === 'finance' && (
+                <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                      <div className="space-y-8">
+                         <div className="glass-card p-10 rounded-[48px] border-yellow-500/20 bg-yellow-500/5 space-y-10">
+                            <div className="flex items-center justify-between">
+                               <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Open Market <span className="text-yellow-500">Swap</span></h3>
+                               <button className="p-3 bg-white/5 rounded-2xl text-slate-500 hover:text-white"><RefreshCw className="w-5 h-5" /></button>
+                            </div>
+
+                            <div className="space-y-4">
+                               <div className="bg-black/60 p-8 rounded-[32px] border border-white/5 space-y-4 relative">
+                                  <div className="flex justify-between items-center">
+                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sell Assets</span>
+                                     <span className="text-[10px] font-mono text-emerald-500">Balance: {user.wallet.balance.toFixed(2)} EAC</span>
+                                  </div>
+                                  <div className="flex items-center gap-6">
+                                     <input type="number" value={swapInAmount} onChange={e => setSwapInAmount(e.target.value)} className="flex-1 bg-transparent text-4xl font-mono text-white outline-none" />
+                                     <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                                        <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center"><Coins className="w-4 h-4 text-black" /></div>
+                                        <span className="text-sm font-black text-white">EAC</span>
+                                     </div>
+                                  </div>
+                               </div>
+
+                               <div className="flex justify-center -my-6 relative z-10">
+                                  <button className="w-12 h-12 bg-yellow-500 rounded-2xl border-4 border-[#050706] flex items-center justify-center text-black hover:rotate-180 transition-transform duration-500 shadow-xl">
+                                     <ArrowDownUp className="w-6 h-6" />
+                                  </button>
+                               </div>
+
+                               <div className="bg-black/60 p-8 rounded-[32px] border border-white/5 space-y-4">
+                                  <div className="flex justify-between items-center">
+                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Receive Assets</span>
+                                     <span className="text-[10px] font-mono text-blue-400">Rate: 1 EAC ≈ 0.85 {swapAsset}</span>
+                                  </div>
+                                  <div className="flex items-center gap-6">
+                                     <input type="number" disabled value={(Number(swapInAmount) * 0.85).toFixed(2)} className="flex-1 bg-transparent text-4xl font-mono text-slate-300 outline-none" />
+                                     <select value={swapAsset} onChange={e => setSwapAsset(e.target.value)} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/10 outline-none text-sm font-black text-white appearance-none cursor-pointer">
+                                        <option>USDT</option>
+                                        <option>ETH</option>
+                                        <option>SOL</option>
+                                        <option>BTC</option>
+                                     </select>
+                                  </div>
+                               </div>
+                            </div>
+
+                            <div className="space-y-4">
+                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Node Authorization (ESIN)</label>
+                               <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-mono uppercase tracking-[0.2em] focus:ring-4 focus:ring-yellow-500/40 outline-none" />
+                            </div>
+
+                            <button onClick={handleExecuteSwap} disabled={isSwapping || !esinSign} className="w-full py-8 bg-yellow-600 rounded-[32px] text-black font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-4 disabled:opacity-30">
+                               {isSwapping ? <Loader2 className="w-6 h-6 animate-spin" /> : <ArrowDownUp className="w-6 h-6" />}
+                               {isSwapping ? "CALCULATING SLIPPAGE..." : "EXECUTE SWAP"}
+                            </button>
+                         </div>
+                      </div>
+
+                      <div className="space-y-8">
+                         <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-6">
+                            <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                               <Activity className="w-4 h-4 text-yellow-500" /> Market Intelligence
+                            </h4>
+                            <div className="space-y-6">
+                               <div className="flex justify-between items-center py-4 border-b border-white/5">
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase">Est. Output</span>
+                                  <span className="text-sm font-mono text-white">{(Number(swapInAmount) * 0.85).toFixed(4)} {swapAsset}</span>
+                               </div>
+                               <div className="flex justify-between items-center py-4 border-b border-white/5">
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase">Network Fee</span>
+                                  <span className="text-sm font-mono text-slate-400">0.05 EAC</span>
+                               </div>
+                               <div className="flex justify-between items-center py-4">
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase">ZK-Bridge Time</span>
+                                  <span className="text-sm font-mono text-emerald-400">≈ 12 Seconds</span>
+                               </div>
+                            </div>
+                            <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-[32px] flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+                                  <ShieldCheck className="w-5 h-5 text-blue-400" />
+                               </div>
+                               <p className="text-[10px] text-blue-300 font-medium leading-relaxed italic">"Assets are bridged via ZK-Rollups ensuring privacy and instant cross-chain liquidity."</p>
+                            </div>
+                         </div>
+                         <div className="glass-card p-10 rounded-[48px] bg-emerald-500/5 border-emerald-500/10">
+                            <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-4">Liquidity Depth</h4>
+                            <div className="h-24 flex items-end justify-between gap-1">
+                               {[40,65,55,90,75,45,85,60,95,70,50,100].map((h, i) => (
+                                 <div key={i} className="flex-1 bg-emerald-500/20 rounded-t-sm" style={{ height: `${h}%` }}></div>
+                               ))}
+                            </div>
+                            <p className="text-[9px] text-slate-500 mt-4 text-center uppercase font-black">POOL_HEALTH: STABLE // LIQ_ID: 0x882</p>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+              )}
+
+              {activeBrand.id === 'tokenz' && portalTab === 'gateways' && (
+                <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
+                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                      <div className="lg:col-span-2 space-y-8">
+                         <div className="glass-card p-12 rounded-[48px] border-yellow-500/20 bg-yellow-500/5 space-y-10">
+                            <div className="flex items-center justify-between">
+                               <div className="flex items-center gap-4">
+                                  <Cable className="w-8 h-8 text-yellow-500" />
+                                  <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Payment <span className="text-yellow-500">Rails</span></h3>
+                               </div>
+                               <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black text-white uppercase tracking-widest hover:bg-white/10">Add Rail</button>
+                            </div>
+
+                            <div className="space-y-4">
+                               {[
+                                 { name: 'M-Pesa Direct', status: 'Linked', sync: '100%', balance: '$452.00', icon: Smartphone, col: 'text-emerald-400' },
+                                 { name: 'Stripe Institutional', status: 'Configured', sync: '100%', balance: '$12,400.00', icon: CardIcon, col: 'text-blue-400' },
+                                 { name: 'Binance Pay Relay', status: 'Pending Auth', sync: '0%', balance: '$0.00', icon: Globe, col: 'text-amber-500' },
+                                 { name: 'Mastercard Cloud', status: 'Legacy Node', sync: '84%', balance: '$1,200.00', icon: Banknote, col: 'text-slate-500' },
+                               ].map((rail, idx) => (
+                                 <div key={idx} className="p-8 bg-black/60 rounded-[32px] border border-white/5 hover:border-yellow-500/20 transition-all flex items-center justify-between group cursor-pointer">
+                                    <div className="flex items-center gap-6">
+                                       <div className={`w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center transition-transform group-hover:scale-110`}>
+                                          <rail.icon className={`w-7 h-7 ${rail.col}`} />
+                                       </div>
+                                       <div>
+                                          <p className="text-lg font-bold text-white uppercase tracking-tight">{rail.name}</p>
+                                          <div className="flex items-center gap-3 mt-1">
+                                             <span className={`text-[9px] font-black uppercase tracking-widest ${rail.status === 'Pending Auth' ? 'text-amber-500' : 'text-emerald-500'}`}>{rail.status}</span>
+                                             <span className="w-1 h-1 rounded-full bg-slate-800"></span>
+                                             <span className="text-[9px] font-mono text-slate-500">Sync: {rail.sync}</span>
+                                          </div>
+                                       </div>
+                                    </div>
+                                    <div className="text-right">
+                                       <p className="text-sm font-mono text-slate-400 mb-1">{rail.balance}</p>
+                                       <div className="flex items-center gap-2 text-[9px] font-black text-yellow-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                                          Config Rail <Settings2 className="w-3 h-3" />
+                                       </div>
+                                    </div>
+                                 </div>
+                               ))}
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="space-y-8">
+                         <div className="glass-card p-10 rounded-[48px] bg-white/[0.02] border-white/5 flex flex-col items-center text-center space-y-6">
+                            <div className="w-20 h-20 bg-yellow-500/10 rounded-[32px] flex items-center justify-center border border-yellow-500/20">
+                               <Fingerprint className="w-10 h-10 text-yellow-500" />
+                            </div>
+                            <div>
+                               <h4 className="text-xl font-bold text-white uppercase tracking-widest leading-tight">Biometric Rail Access</h4>
+                               <p className="text-slate-500 text-xs mt-2 leading-relaxed">Secure your financial ingress nodes with ZK-biometric hardware signatures.</p>
+                            </div>
+                            <button className="w-full py-4 bg-yellow-600 rounded-2xl text-black font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-yellow-500 transition-all">Setup Biometric Lock</button>
+                         </div>
+                         
+                         <div className="p-8 glass-card rounded-[40px] border-white/5 space-y-4">
+                            <div className="flex items-center gap-3">
+                               <History className="w-4 h-4 text-slate-500" />
+                               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Rail Activity</h4>
+                            </div>
+                            <div className="space-y-4">
+                               {[0,1,2].map(i => (
+                                 <div key={i} className="flex justify-between items-center text-[10px]">
+                                    <span className="text-slate-400 font-bold">Ingress: {i === 0 ? 'M-Pesa' : 'Stripe'}</span>
+                                    <span className="text-emerald-500 font-mono">+$240.00</span>
+                                 </div>
+                               ))}
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+              )}
+
+              {/* Default Content Render (Marketplace etc.) */}
               {portalTab === 'market' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in slide-in-from-right-4 duration-500">
                   {activeBrand.products.map(product => (
