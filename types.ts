@@ -40,7 +40,7 @@ export interface AgroProject {
   name: string;
   adminEsin: string;
   description: string;
-  thrust: 'Societal' | 'Environmental' | 'Human' | 'Technological' | 'Informational';
+  thrust: 'Societal' | 'Environmental' | 'Human' | 'Technological' | 'Industry';
   status: 'Ideation' | 'Verification' | 'Funding' | 'Execution' | 'Closure';
   totalCapital: number;
   fundedAmount: number;

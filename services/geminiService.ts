@@ -17,6 +17,12 @@ EnvirosAgro Sustainability Framework (EOS):
   x: Agricultural Base Factor (1-10, integration level).
   r: Growth/Adoption Rate.
   n: Number of Periods (seasons/years).
+- Pillars (SEHTI):
+  S: Societal - Anthropological agriculture.
+  E: Environmental - Stewardship of physical resources.
+  H: Human - Health and behavioral processes.
+  T: Technological - Modern agrarian innovations.
+  I: Industry - Data-driven industrial optimization and blockchain registries.
 `;
 
 export interface GroundingChunk {

@@ -23,7 +23,12 @@ import {
   Code,
   Zap,
   Bot,
-  Sparkles
+  Sparkles,
+  BookOpen,
+  ArrowUpRight,
+  Shield,
+  FileCode,
+  Network
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -37,7 +42,7 @@ interface LogEntry {
 }
 
 const NetworkIngest: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'api' | 'analyzer'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'api' | 'analyzer' | 'docs'>('overview');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isGeneratingKey, setIsGeneratingKey] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
@@ -122,7 +127,10 @@ const NetworkIngest: React.FC = () => {
                     {isGeneratingKey ? <Loader2 className="w-5 h-5 animate-spin" /> : <PlusCircle className="w-5 h-5" />}
                     Initialize Integration
                  </button>
-                 <button className="px-8 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3">
+                 <button 
+                  onClick={() => setActiveTab('docs')}
+                  className="px-8 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3"
+                 >
                     <Code className="w-5 h-5 text-indigo-400" /> API Docs
                  </button>
               </div>
@@ -165,6 +173,7 @@ const NetworkIngest: React.FC = () => {
                 { id: 'overview', label: 'Live Stream', icon: Activity },
                 { id: 'analyzer', label: 'Stream Analyzer', icon: Sparkles },
                 { id: 'api', label: 'API Credentials', icon: Key },
+                { id: 'docs', label: 'Technical Docs', icon: BookOpen },
               ].map(tab => (
                 <button 
                   key={tab.id}
@@ -185,16 +194,6 @@ const NetworkIngest: React.FC = () => {
               <p className="text-[10px] text-slate-400 leading-relaxed font-medium uppercase tracking-tight">
                  External datasets must adhere to the Informational Thrust (I) standards. Fraudulent telemetry will trigger a network-wide EAC slashing event.
               </p>
-           </div>
-
-           <div className="p-8 glass-card rounded-[32px] flex-1 flex flex-col justify-center items-center text-center space-y-4 border-white/5">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-                 <Server className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div>
-                 <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Active Shard</p>
-                 <h5 className="text-sm font-mono text-white font-bold uppercase">NODE_GALAXY_08</h5>
-              </div>
            </div>
         </div>
 
@@ -229,6 +228,74 @@ const NetworkIngest: React.FC = () => {
                         }`}>{log.status}</span>
                      </div>
                    ))}
+                </div>
+             </div>
+           )}
+
+           {activeTab === 'docs' && (
+             <div className="flex-1 p-12 overflow-y-auto custom-scrollbar animate-in slide-in-from-right-4 duration-500 space-y-12">
+                <div className="space-y-4">
+                   <h3 className="text-4xl font-black text-white uppercase tracking-tighter">API Documentation</h3>
+                   <p className="text-slate-400 text-lg max-w-2xl leading-relaxed italic">"Integrating the world's scientific data into the EOS Industrial Framework."</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-6 group hover:border-indigo-500/30 transition-all">
+                      <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                         <Shield className="w-6 h-6 text-indigo-400 group-hover:text-white" />
+                      </div>
+                      <h4 className="text-xl font-bold text-white uppercase tracking-widest">Authentication</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium">All requests must include a ZK-Session key in the header. Requests are limited to 1,000 packets per second for standard Steward Nodes.</p>
+                      <div className="p-4 bg-black/60 rounded-2xl border border-white/5 font-mono text-[10px] text-indigo-300">
+                         Authorization: Bearer {'<YOUR_ESIN_SECRET>'}
+                      </div>
+                   </div>
+
+                   <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-6 group hover:border-emerald-500/30 transition-all">
+                      <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                         <Network className="w-6 h-6 text-emerald-400 group-hover:text-white" />
+                      </div>
+                      <h4 className="text-xl font-bold text-white uppercase tracking-widest">Endpoint Nodes</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium">Use the `/ingest/telemetry` endpoint for continuous data streams. Valid payloads must match the SEHTI schema.</p>
+                      <div className="p-4 bg-black/60 rounded-2xl border border-white/5 font-mono text-[10px] text-emerald-400">
+                         POST https://eos.envirosagro.org/v1/ingest
+                      </div>
+                   </div>
+                </div>
+
+                <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-8">
+                   <div className="flex items-center gap-3">
+                      <FileCode className="w-6 h-6 text-blue-400" />
+                      <h4 className="text-lg font-bold text-white uppercase tracking-widest">Payload Schema (JSON)</h4>
+                   </div>
+                   <div className="p-8 bg-black/60 rounded-[32px] border border-white/5 font-mono text-xs text-slate-300 leading-relaxed overflow-x-auto">
+                      <pre>
+{`{
+  "header": {
+    "version": "EOS-3.2",
+    "timestamp": "ISO-8601",
+    "steward_id": "EA-XXXX-XXXX-XXXX"
+  },
+  "payload": {
+    "thrust": "TECHNOLOGICAL",
+    "metrics": {
+      "soil_moisture": 64.2,
+      "nitrogen_val": "OPTIMAL",
+      "thermal_deg": 22.4
+    },
+    "zk_proof": "0x882...CERTIFIED"
+  }
+}`}
+                      </pre>
+                   </div>
+                   <div className="flex justify-between items-center px-4">
+                      <button className="text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:text-white transition-all">
+                         <Download className="w-4 h-4" /> Download SDK (Node.js)
+                      </button>
+                      <button className="text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:text-white transition-all">
+                         <ExternalLink className="w-4 h-4" /> Postman Collection
+                      </button>
+                   </div>
                 </div>
              </div>
            )}

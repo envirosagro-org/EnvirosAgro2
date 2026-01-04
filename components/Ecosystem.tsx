@@ -50,13 +50,19 @@ import {
   ChevronRight,
   AlertCircle,
   ArrowRight,
-  // Added missing CheckCircle2 import
-  CheckCircle2
+  CheckCircle2,
+  PlusCircle,
+  RefreshCw,
+  Warehouse,
+  Factory,
+  HardHat,
+  Container
 } from 'lucide-react';
 import { searchAgroTrends, AIResponse, chatWithAgroExpert, getDeFiIntelligence } from '../services/geminiService';
+import { User } from '../types';
 
 // SEHTI Framework Types
-type ThrustType = 'societal' | 'environmental' | 'human' | 'technological' | 'informational';
+type ThrustType = 'societal' | 'environmental' | 'human' | 'technological' | 'industry';
 
 interface Product {
   id: string;
@@ -157,21 +163,21 @@ const BRANDS: Brand[] = [
     ]
   },
   { 
-    id: 'terra', name: 'TerraStore', icon: Store, color: 'text-emerald-400', bg: 'bg-emerald-400/10', 
-    desc: 'Informational Thrust (I): Decentralized market data and immutable seed storage registries.', 
-    action: 'Stock Registry', thrust: 'informational', toolType: 'defi', volume: '50.2M EAC',
+    id: 'terra', name: 'TerraStore', icon: Warehouse, color: 'text-emerald-400', bg: 'bg-emerald-400/10', 
+    desc: 'Industry Thrust (I): Large-scale storage solutions and decentralized physical asset registries.', 
+    action: 'Registry Audit', thrust: 'industry', toolType: 'defi', volume: '50.2M EAC',
     products: [
-      { id: 't1', name: 'Premium Seed Equity', price: 5000, type: 'Finance', icon: Coins },
-      { id: 't2', name: 'Real-time Market Data API', price: 150, type: 'Service', icon: Database }
+      { id: 't1', name: 'Bulk Grain Storage (ZK-Verified)', price: 5000, type: 'Finance', icon: Container },
+      { id: 't2', name: 'Industrial Supply Chain API', price: 150, type: 'Service', icon: Database }
     ]
   },
   { 
     id: 'tokenz', name: 'Tokenz', icon: Coins, color: 'text-yellow-400', bg: 'bg-yellow-400/10', 
-    desc: 'Informational Thrust (I): DeFi information protocols for tokenized agro-assets and carbon.', 
-    action: 'Yield Protocol', thrust: 'informational', toolType: 'defi', volume: '120M EAC',
+    desc: 'Industry Thrust (I): Institutional DeFi protocol for tokenized industrial agro-assets.', 
+    action: 'Liquidity Pool', thrust: 'industry', toolType: 'defi', volume: '120M EAC',
     products: [
-      { id: 'tk1', name: 'Harvest Yield Protocol', price: 2500, type: 'Finance', icon: TrendingUp },
-      { id: 'tk2', name: 'Agro-Asset Vault Integration', price: 3500, type: 'Finance', icon: Shield }
+      { id: 'tk1', name: 'Institutional Yield Protocol', price: 2500, type: 'Finance', icon: TrendingUp },
+      { id: 'tk2', name: 'Multi-Sig Escrow Node', price: 3500, type: 'Finance', icon: Shield }
     ]
   },
 ];
@@ -181,15 +187,20 @@ const THRUST_METADATA: Record<ThrustType, { label: string, icon: any, color: str
   environmental: { letter: 'E', label: 'Environmental', icon: Leaf, color: 'text-pink-400', description: 'Agricultural Environmental Management.' },
   human: { letter: 'H', label: 'Human', icon: Dna, color: 'text-teal-400', description: 'Human Impact, Health & Psychology.' },
   technological: { letter: 'T', label: 'Technological', icon: Cpu, color: 'text-blue-400', description: 'Modern Agrarian Revolution Innovations.' },
-  informational: { letter: 'I', label: 'Informational', icon: Database, color: 'text-emerald-400', description: 'Agricultural Information Technology & Data.' },
+  industry: { letter: 'I', label: 'Industry', icon: Factory, color: 'text-emerald-400', description: 'Agricultural Industry Optimization & Blockchain Registries.' },
 };
 
-const Ecosystem: React.FC = () => {
+interface EcosystemProps {
+  user: User;
+  onDeposit: (amount: number, gateway: string) => void;
+}
+
+const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
   const [activeBrand, setActiveBrand] = useState<Brand | null>(null);
   const [filter, setFilter] = useState<'all' | ThrustType>('all');
   const [loading, setLoading] = useState(false);
   const [aiResult, setAiResult] = useState<AIResponse | null>(null);
-  const [portalTab, setPortalTab] = useState<'ai' | 'market' | 'finance' | 'gateways' | 'bridge'>('ai');
+  const [portalTab, setPortalTab] = useState<'ai' | 'market' | 'finance' | 'gateways' | 'bridge' | 'deposit' | 'registry'>('ai');
 
   // Tokenz Specific State
   const [exchangePair, setExchangePair] = useState('EAC/USD');
@@ -200,12 +211,43 @@ const Ecosystem: React.FC = () => {
   const [bridgeStatus, setBridgeStatus] = useState<string[]>([]);
   const [withdrawalAddress, setWithdrawalAddress] = useState('');
 
+  // Deposit State
+  const [depositAmount, setDepositAmount] = useState('500');
+  const [selectedGateway, setSelectedGateway] = useState('M-Pesa Direct');
+  const [isDepositing, setIsDepositing] = useState(false);
+  const [optimizedYield, setOptimizedYield] = useState(1.0);
+
   const filteredBrands = filter === 'all' ? BRANDS : BRANDS.filter(b => b.thrust === filter);
+
+  // Framework optimization logic for EAC Minting
+  useEffect(() => {
+    const ca = user.metrics.agriculturalCodeU || 1.0;
+    const m = user.metrics.timeConstantTau || 1.0;
+    const multiplier = 1 + (Math.log10(ca * m + 1) / 5);
+    setOptimizedYield(Number(multiplier.toFixed(4)));
+  }, [user]);
 
   const launchBrand = (brand: Brand) => {
     setActiveBrand(brand);
     setAiResult(null);
-    setPortalTab(brand.id === 'tokenz' ? 'finance' : 'ai');
+    if (brand.thrust === 'industry') {
+      setPortalTab(brand.id === 'tokenz' ? 'finance' : 'registry');
+    } else {
+      setPortalTab('ai');
+    }
+  };
+
+  const handleExecuteDeposit = () => {
+    if (!esinSign) {
+      alert("ESIN AUTH REQUIRED: Please sign with your Social Identification Number.");
+      return;
+    }
+    setIsDepositing(true);
+    setTimeout(() => {
+      onDeposit(Number(depositAmount), selectedGateway);
+      setIsDepositing(false);
+      alert(`DEPOSIT SUCCESS: ${depositAmount} EAC minted and optimized at ${optimizedYield}x efficiency.`);
+    }, 2500);
   };
 
   const runBrandAction = async () => {
@@ -218,7 +260,7 @@ const Ecosystem: React.FC = () => {
       case 'environmental': query = `Global environmental management standards for regenerative farming and biodiversity stewardship.`; break;
       case 'human': query = `The intersection of agriculture, health, and human psychology in the context of regenerative cultivation.`; break;
       case 'technological': query = `Emerging technological innovations in agriculture: IoT, drones, and AI yield forecasting for SEHTI.`; break;
-      case 'informational': query = `Advancements in agricultural data systems, blockchain registries, and informational industrial optimization.`; break;
+      case 'industry': query = `Industrial optimization strategies, blockchain supply chain management, and large-scale agricultural data registries.`; break;
       default: query = `Innovative updates for the ${activeBrand.thrust} thrust within the SEHTI framework.`;
     }
 
@@ -270,7 +312,7 @@ const Ecosystem: React.FC = () => {
             <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded tracking-widest border border-emerald-500/20">The SEHTI Ecosystem</span>
             <h2 className="text-5xl font-black text-white mt-4 mb-6 leading-tight">Brand <span className="text-emerald-400">Registry</span></h2>
             <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
-              Access decentralized services across the five SEHTI thrusts. From community welfare to industrial DeFi, synchronize your steward node with global agro-brands.
+              Access decentralized services across the five SEHTI thrusts. From community welfare to industrial scale blockchain registries, synchronize your steward node with global agro-brands.
             </p>
           </div>
           <div className="relative z-10 flex gap-4 mt-8">
@@ -307,7 +349,7 @@ const Ecosystem: React.FC = () => {
                 <p className="text-sm font-bold text-emerald-400">14.2%</p>
               </div>
               <div>
-                <p className="text-[9px] text-slate-600 font-bold uppercase mb-1">DeFi Nodes</p>
+                <p className="text-[9px] text-slate-600 font-bold uppercase mb-1">Industrial Nodes</p>
                 <p className="text-sm font-bold text-white">1,248</p>
               </div>
             </div>
@@ -329,7 +371,7 @@ const Ecosystem: React.FC = () => {
             <button 
               key={thrust}
               onClick={() => setFilter(thrust)}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${filter === thrust ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${filter === thrust ? (thrust === 'industry' ? 'bg-emerald-600 shadow-emerald-900/40' : 'bg-white/10') + ' text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
             >
               <span className="w-5 h-5 flex items-center justify-center bg-black/20 rounded-md text-[10px] font-black">{meta.letter}</span>
               {meta.label}
@@ -345,7 +387,7 @@ const Ecosystem: React.FC = () => {
         ))}
       </div>
 
-      {/* Modal - Brand Portal (Specialized for Tokenz DeFi) */}
+      {/* Modal - Brand Portal */}
       {activeBrand && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in duration-300">
           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl" onClick={() => setActiveBrand(null)}></div>
@@ -362,7 +404,7 @@ const Ecosystem: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-4">
-                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">{activeBrand.name} <span className="text-yellow-500 font-black">Terminal</span></h2>
+                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">{activeBrand.name} <span className={activeBrand.thrust === 'industry' ? 'text-emerald-400' : 'text-yellow-500'}>{activeBrand.thrust === 'industry' ? 'Industry' : 'Terminal'}</span></h2>
                     <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
                       Volume: {activeBrand.volume}
                     </span>
@@ -382,48 +424,38 @@ const Ecosystem: React.FC = () => {
             <div className="flex border-b border-white/5 bg-white/[0.02] overflow-x-auto scrollbar-hide">
               {activeBrand.id === 'tokenz' ? (
                 <>
-                  <button 
-                    onClick={() => setPortalTab('finance')}
-                    className={`flex-1 min-w-[200px] py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'finance' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}
-                  >
-                    <div className="flex items-center justify-center gap-3">
-                      <ArrowRightLeft className="w-4 h-4" /> Exchange & Liquidity
-                    </div>
+                  <button onClick={() => setPortalTab('deposit')} className={`flex-1 min-w-[200px] py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'deposit' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><PlusCircle className="w-4 h-4" /> Initiate Deposit</div>
                   </button>
-                  <button 
-                    onClick={() => setPortalTab('gateways')}
-                    className={`flex-1 min-w-[200px] py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'gateways' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}
-                  >
-                    <div className="flex items-center justify-center gap-3">
-                      <Smartphone className="w-4 h-4" /> Payment Gateways
-                    </div>
+                  <button onClick={() => setPortalTab('finance')} className={`flex-1 min-w-[200px] py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'finance' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><ArrowRightLeft className="w-4 h-4" /> Exchange</div>
                   </button>
-                  <button 
-                    onClick={() => setPortalTab('bridge')}
-                    className={`flex-1 min-w-[200px] py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'bridge' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}
-                  >
-                    <div className="flex items-center justify-center gap-3">
-                      <ArrowUpCircle className="w-4 h-4" /> External Bridge
-                    </div>
+                  <button onClick={() => setPortalTab('gateways')} className={`flex-1 min-w-[200px] py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'gateways' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><Smartphone className="w-4 h-4" /> Gateways</div>
+                  </button>
+                  <button onClick={() => setPortalTab('bridge')} className={`flex-1 min-w-[200px] py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'bridge' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><ArrowUpCircle className="w-4 h-4" /> Bridge</div>
+                  </button>
+                </>
+              ) : activeBrand.thrust === 'industry' ? (
+                <>
+                  <button onClick={() => setPortalTab('registry')} className={`flex-1 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'registry' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><Database className="w-4 h-4" /> Industry Registry</div>
+                  </button>
+                  <button onClick={() => setPortalTab('market')} className={`flex-1 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'market' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><ShoppingBag className="w-4 h-4" /> Procurement</div>
+                  </button>
+                  <button onClick={() => setPortalTab('ai')} className={`flex-1 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'ai' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><Bot className="w-4 h-4" /> Industry Oracle</div>
                   </button>
                 </>
               ) : (
                 <>
-                  <button 
-                    onClick={() => setPortalTab('ai')}
-                    className={`flex-1 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'ai' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}
-                  >
-                    <div className="flex items-center justify-center gap-3">
-                      <Sparkles className="w-4 h-4" /> Node Intelligence
-                    </div>
+                  <button onClick={() => setPortalTab('ai')} className={`flex-1 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'ai' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><Sparkles className="w-4 h-4" /> Node Intelligence</div>
                   </button>
-                  <button 
-                    onClick={() => setPortalTab('market')}
-                    className={`flex-1 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'market' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}
-                  >
-                    <div className="flex items-center justify-center gap-3">
-                      <ShoppingBag className="w-4 h-4" /> Procurement & Finance
-                    </div>
+                  <button onClick={() => setPortalTab('market')} className={`flex-1 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${portalTab === 'market' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><ShoppingBag className="w-4 h-4" /> Procurement</div>
                   </button>
                 </>
               )}
@@ -432,381 +464,320 @@ const Ecosystem: React.FC = () => {
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-10 bg-gradient-to-b from-[#050706] to-black">
               
-              {/* Tokenz Exchange Portal */}
+              {/* Tokenz Deposit Tab */}
+              {activeBrand.id === 'tokenz' && portalTab === 'deposit' && (
+                <div className="max-w-4xl mx-auto space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    <div className="lg:col-span-2 space-y-8">
+                       <div className="glass-card p-10 rounded-[40px] border-yellow-500/20 bg-yellow-500/5">
+                          <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic mb-8">Initiate <span className="text-yellow-500">Deposit</span></h3>
+                          <div className="space-y-6">
+                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Select Payment Rail</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                   {['M-Pesa Direct', 'Stripe Institutional', 'Binance Pay', 'PayPal World'].map(gate => (
+                                     <button key={gate} onClick={() => setSelectedGateway(gate)} className={`p-4 rounded-2xl border text-xs font-bold transition-all text-left flex items-center gap-3 ${selectedGateway === gate ? 'bg-yellow-500 border-white text-black shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
+                                        <div className={`p-2 rounded-lg ${selectedGateway === gate ? 'bg-black/20' : 'bg-white/5'}`}><Smartphone className="w-4 h-4" /></div>
+                                        {gate}
+                                     </button>
+                                   ))}
+                                </div>
+                             </div>
+                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Deposit Amount (FIAT Equivalent)</label>
+                                <div className="relative">
+                                   <input type="number" value={depositAmount} onChange={e => setDepositAmount(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-3xl py-10 px-8 text-5xl font-mono text-white focus:ring-4 focus:ring-yellow-500/10 outline-none" />
+                                   <div className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-500 font-black">USD</div>
+                                </div>
+                             </div>
+                             <div className="p-6 bg-black/40 rounded-3xl border border-white/10 space-y-4">
+                                <div className="flex justify-between items-center">
+                                   <span className="text-[10px] font-black text-slate-500 uppercase">Estimated EAC Yield</span>
+                                   <span className="text-xl font-mono font-black text-emerald-400">≈ {(Number(depositAmount) * optimizedYield).toFixed(2)} EAC</span>
+                                </div>
+                             </div>
+                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Authorize Signature (ESIN)</label>
+                                <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-6 text-white font-mono uppercase tracking-widest focus:ring-2 focus:ring-yellow-500/40 outline-none" />
+                             </div>
+                             <button onClick={handleExecuteDeposit} disabled={isDepositing || !esinSign} className="w-full py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-4 disabled:opacity-50">
+                                {isDepositing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 fill-current" />}
+                                {isDepositing ? "PROCESSING PAYMENT..." : "INITIATE OPTIMIZED DEPOSIT"}
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="space-y-8">
+                       <div className="glass-card p-10 rounded-[40px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group">
+                          <h4 className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-6 flex items-center gap-2"><Sparkles className="w-4 h-4" /> EOS EAC Optimizer</h4>
+                          <div className="space-y-6">
+                             <div className="space-y-2">
+                                <p className="text-[9px] text-slate-500 font-bold uppercase">Dynamic Multiplier</p>
+                                <div className="flex items-end gap-2"><span className="text-5xl font-black text-white font-mono">{optimizedYield}</span><span className="text-emerald-400 font-black mb-1">X</span></div>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tokenz Exchange Tab */}
               {activeBrand.id === 'tokenz' && portalTab === 'finance' && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in slide-in-from-bottom-4 duration-500">
-                  <div className="lg:col-span-2 space-y-8">
-                    <div className="glass-card p-10 rounded-[40px] border-yellow-500/20 bg-yellow-500/5 relative overflow-hidden">
-                       <div className="flex justify-between items-center mb-10">
-                          <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic">Swap <span className="text-yellow-500">Engine</span></h3>
-                          <div className="flex gap-2">
-                             {['EAC/USD', 'EAC/KES', 'EAC/BTC', 'EAC/ETH'].map(p => (
-                               <button 
-                                key={p}
-                                onClick={() => setExchangePair(p)}
-                                className={`px-5 py-2 rounded-full text-[10px] font-black tracking-widest transition-all ${exchangePair === p ? 'bg-yellow-500 text-black shadow-lg' : 'bg-white/5 text-slate-500 hover:text-white'}`}
-                               >
-                                 {p}
-                               </button>
-                             ))}
-                          </div>
-                       </div>
-
-                       <div className="space-y-4">
-                          <div className="relative group">
-                             <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30"><Coins className="w-5 h-5 text-emerald-400" /></div>
-                                <span className="text-sm font-black text-white uppercase tracking-widest">EAC</span>
+                <div className="max-w-4xl mx-auto space-y-10 animate-in slide-in-from-right-4 duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="glass-card p-10 rounded-[40px] border-yellow-500/20 bg-yellow-500/5 space-y-8">
+                       <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic">EAC <span className="text-yellow-500">Swap</span></h3>
+                       <div className="space-y-6">
+                          <div className="p-6 bg-black/60 rounded-3xl border border-white/10 space-y-4">
+                             <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">From</div>
+                             <div className="flex justify-between items-center">
+                                <input type="number" value={amountIn} onChange={e => setAmountIn(e.target.value)} className="bg-transparent text-4xl font-mono text-white outline-none w-1/2" />
+                                <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                                   <Coins className="w-4 h-4 text-emerald-400" />
+                                   <span className="text-sm font-bold text-white">EAC</span>
+                                </div>
                              </div>
-                             <input 
-                              type="number" 
-                              value={amountIn}
-                              onChange={e => setAmountIn(e.target.value)}
-                              className="w-full bg-black/60 border border-white/10 rounded-3xl py-12 pl-28 pr-10 text-5xl font-mono text-white focus:ring-4 focus:ring-yellow-500/10 outline-none transition-all" 
-                             />
+                             <div className="text-[10px] text-slate-600 font-bold uppercase px-2">Balance: {user.wallet.balance.toFixed(2)} EAC</div>
                           </div>
 
-                          <div className="flex justify-center -my-8 relative z-10">
-                             <button className="p-5 bg-yellow-500 rounded-3xl shadow-2xl shadow-yellow-900/60 hover:rotate-180 transition-all duration-700 active:scale-90"><ArrowRightLeft className="w-8 h-8 text-black" /></button>
+                          <div className="flex justify-center -my-3 relative z-10">
+                             <button className="p-3 bg-yellow-500 rounded-2xl text-black shadow-xl hover:rotate-180 transition-transform"><ArrowDownCircle className="w-6 h-6" /></button>
                           </div>
 
-                          <div className="relative group">
-                             <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30"><Banknote className="w-5 h-5 text-blue-400" /></div>
-                                <span className="text-sm font-black text-white uppercase tracking-widest">{exchangePair.split('/')[1]}</span>
-                             </div>
-                             <div className="w-full bg-black/40 border border-white/5 rounded-3xl py-12 pl-28 pr-10 text-5xl font-mono text-slate-500 italic">
-                               ≈ {(Number(amountIn) * (exchangePair.includes('KES') ? 130.42 : exchangePair.includes('BTC') ? 0.0000018 : 0.8524)).toLocaleString()}
+                          <div className="p-6 bg-black/60 rounded-3xl border border-white/10 space-y-4">
+                             <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">To</div>
+                             <div className="flex justify-between items-center">
+                                <div className="text-4xl font-mono text-slate-500">≈ {(Number(amountIn) * 0.85).toFixed(2)}</div>
+                                <select value={exchangePair} onChange={e => setExchangePair(e.target.value)} className="bg-white/5 px-4 py-2 rounded-xl border border-white/10 text-sm font-bold text-white outline-none">
+                                   <option>EAC/USD</option>
+                                   <option>EAC/KSH</option>
+                                   <option>EAC/EUR</option>
+                                   <option>EAC/BTC</option>
+                                </select>
                              </div>
                           </div>
-                       </div>
 
-                       <div className="mt-12 p-8 bg-black/60 rounded-[32px] border border-white/10 space-y-6">
-                          <div className="flex justify-between items-center text-xs">
-                             <span className="text-slate-500 font-bold uppercase tracking-widest">Slippage Tolerance</span>
-                             <span className="text-emerald-400 font-mono">0.02% (Low)</span>
-                          </div>
-                          <div className="flex justify-between items-center text-xs">
-                             <span className="text-slate-500 font-bold uppercase tracking-widest">Registry Fee</span>
-                             <span className="text-white font-mono">2.50 EAC</span>
-                          </div>
-                          <div className="space-y-2">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Authorize Signature (ESIN)</label>
-                             <div className="relative">
-                               <Key className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-yellow-500" />
-                               <input 
-                                type="text"
-                                placeholder="EA-XXXX-XXXX-XXXX"
-                                value={esinSign}
-                                onChange={e => setEsinSign(e.target.value)}
-                                className="w-full bg-black/80 border border-white/10 rounded-2xl py-5 pl-14 pr-6 text-white font-mono uppercase tracking-widest focus:ring-2 focus:ring-yellow-500/40 outline-none transition-all" 
-                               />
-                             </div>
-                          </div>
-                          <button 
-                           onClick={handleEacExchange}
-                           disabled={isExchangeLoading}
-                           className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                          >
-                             {isExchangeLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Repeat className="w-6 h-6" />}
-                             {isExchangeLoading ? "PROCESS SETTLEMENT..." : "EXECUTE SWAP & LIQUIDATE"}
+                          <button onClick={handleEacExchange} disabled={isExchangeLoading} className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+                             {isExchangeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Repeat className="w-5 h-5" />}
+                             {isExchangeLoading ? "ANALYZING LIQUIDITY..." : "COMMIT EXCHANGE"}
                           </button>
                        </div>
                     </div>
 
-                    {aiResult && (
-                      <div className="glass-card p-10 rounded-[40px] border-emerald-500/20 bg-emerald-500/5 animate-in slide-in-from-left-4 duration-500">
-                         <div className="flex items-center gap-3 mb-6">
-                            <Bot className="w-8 h-8 text-emerald-400" />
-                            <h4 className="text-xl font-bold text-white uppercase tracking-tighter">DeFi Oracle Opinion</h4>
-                         </div>
-                         <div className="prose prose-invert max-w-none text-slate-300 text-lg leading-loose italic whitespace-pre-line border-l-2 border-emerald-500/20 pl-8">
-                            {aiResult.text}
-                         </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-8">
-                     <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-8">
-                        <div className="flex items-center justify-between">
-                           <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">Registry Sync</h4>
-                           <Activity className="w-4 h-4 text-emerald-500 animate-pulse" />
-                        </div>
-                        <div className="space-y-6">
-                           <div>
-                              <p className="text-[10px] text-slate-600 font-black uppercase mb-1">EAC Real-World Price</p>
-                              <h4 className="text-3xl font-mono font-black text-white">$1.18 <span className="text-[10px] text-emerald-400 font-bold ml-2">+2.4%</span></h4>
-                           </div>
-                           <div>
-                              <p className="text-[10px] text-slate-600 font-black uppercase mb-1">24h Registry Volume</p>
-                              <h4 className="text-2xl font-mono font-black text-slate-300">12.4M EAC</h4>
-                           </div>
-                        </div>
-                        <div className="pt-8 border-t border-white/5 space-y-4 text-center">
-                           <ShieldCheck className="w-12 h-12 text-yellow-500 mx-auto opacity-40" />
-                           <p className="text-[10px] text-slate-500 leading-relaxed italic uppercase">"All DeFi settlements are cross-verified by 12 institutional validator nodes."</p>
-                        </div>
-                     </div>
-
-                     <div className="p-8 glass-card rounded-[40px] bg-indigo-600/5 border-indigo-500/20 space-y-4">
-                        <div className="flex items-center gap-3 mb-2">
-                           <TrendingUp className="w-5 h-5 text-indigo-400" />
-                           <h5 className="font-bold text-white uppercase tracking-widest text-xs">Staking Yield</h5>
-                        </div>
-                        <p className="text-3xl font-black text-white font-mono">14.2% <span className="text-[10px] text-slate-500 uppercase tracking-widest">APY</span></p>
-                        <button className="w-full py-4 bg-indigo-600 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-900/40">
-                           Stake Registry Credits
-                        </button>
-                     </div>
+                    <div className="space-y-6">
+                       <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-6 flex flex-col justify-center min-h-[300px]">
+                          <div className="flex items-center gap-3">
+                             <Bot className="w-6 h-6 text-emerald-400" />
+                             <h4 className="text-xs font-black text-white uppercase tracking-widest">Tokenz DeFi Oracle</h4>
+                          </div>
+                          {aiResult ? (
+                            <div className="prose prose-invert max-w-none text-slate-400 text-xs italic leading-relaxed whitespace-pre-line animate-in fade-in duration-500">
+                               {aiResult.text}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-center space-y-4 py-8">
+                               <Activity className="w-12 h-12 text-slate-800 animate-pulse" />
+                               <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Awaiting Exchange Commitment</p>
+                            </div>
+                          )}
+                       </div>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Tokenz Payment Gateways Tab */}
+              {/* Tokenz Gateways Tab */}
               {activeBrand.id === 'tokenz' && portalTab === 'gateways' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
-                   {[
-                     { name: 'M-Pesa Direct', provider: 'Safaricom', type: 'Mobile Money', icon: Smartphone, col: 'text-emerald-500', bg: 'bg-emerald-500/10', desc: 'Direct EAC settlement to mobile currency. Optimized for Zone 2 hubs.' },
-                     { name: 'Stripe Institutional', provider: 'Global Bank', type: 'Credit/Bank Rail', icon: CreditCard, col: 'text-indigo-400', bg: 'bg-indigo-400/10', desc: 'Enterprise-grade fiat on/off ramp for industrial stewards.' },
-                     { name: 'Binance Pay', provider: 'Binance', type: 'Crypto-Rail', icon: Zap, col: 'text-yellow-500', bg: 'bg-yellow-500/10', desc: 'Lightning-fast crypto settlement via the EOS ZK-Relay.' },
-                     { name: 'PayPal World', provider: 'PayPal', type: 'Digital Wallet', icon: Globe, col: 'text-blue-400', bg: 'bg-blue-400/10', desc: 'Global retail-friendly liquidity bridge for agro-products.' },
-                     { name: 'SEPA Bridge', provider: 'EU Banking', type: 'Fiat Rail', icon: Banknote, col: 'text-teal-400', bg: 'bg-teal-400/10', desc: 'Direct clearing for Euro-zone agricultural cooperatives.' },
-                     { name: 'USDC Vault', provider: 'Circle', type: 'Stablecoin', icon: Shield, col: 'text-blue-500', bg: 'bg-blue-500/10', desc: 'Hedge against volatility by anchoring EAC to institutional USDC.' },
-                   ].map((gate) => (
-                     <div key={gate.name} className="glass-card p-10 rounded-[48px] border-white/5 hover:border-yellow-500/30 transition-all group flex flex-col h-full relative overflow-hidden">
-                        <div className="flex justify-between items-start mb-8">
-                           <div className={`p-5 rounded-3xl ${gate.bg} group-hover:scale-110 transition-transform`}>
-                              <gate.icon className={`w-8 h-8 ${gate.col}`} />
-                           </div>
-                           <span className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-black uppercase text-slate-500 tracking-widest border border-white/10 group-hover:border-yellow-500/20 group-hover:text-yellow-500">
-                              Ready
-                           </span>
-                        </div>
-                        <h4 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter italic">{gate.name}</h4>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-6">{gate.provider} // {gate.type}</p>
-                        <p className="text-xs text-slate-400 leading-relaxed flex-1 italic">"{gate.desc}"</p>
-                        <div className="pt-8 border-t border-white/5 flex gap-4">
-                           <button className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all">Link Account</button>
-                           <button className="p-4 bg-yellow-500 rounded-2xl text-black hover:scale-110 transition-transform shadow-xl shadow-yellow-900/40"><ArrowRight className="w-5 h-5" /></button>
-                        </div>
-                     </div>
-                   ))}
+                <div className="max-w-4xl mx-auto space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {[
+                      { name: 'M-Pesa Direct', region: 'East Africa', speed: 'Instant', fee: '1.2%', icon: Smartphone, col: 'text-emerald-500' },
+                      { name: 'Institutional SWIFT', region: 'Global', speed: '24-48 Hours', fee: '45 EAC Flat', icon: Banknote, col: 'text-blue-500' },
+                      { name: 'Binance Pay Relay', region: 'Web3', speed: 'Instant', fee: '0.5%', icon: LinkIcon, col: 'text-yellow-500' },
+                      { name: 'Stripe Institutional', region: 'US/EU', speed: 'Instant', fee: '2.9% + 30 EAC', icon: CreditCard, col: 'text-indigo-500' },
+                    ].map(gate => (
+                      <div key={gate.name} className="glass-card p-8 rounded-[40px] border-white/5 hover:border-white/20 transition-all group flex items-center gap-6">
+                         <div className={`w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform ${gate.col}`}>
+                            <gate.icon className="w-8 h-8" />
+                         </div>
+                         <div className="flex-1">
+                            <div className="flex justify-between items-center mb-1">
+                               <h4 className="text-lg font-bold text-white uppercase">{gate.name}</h4>
+                               <span className="text-[8px] font-black text-emerald-400 uppercase">{gate.speed}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{gate.region} Rail • {gate.fee} Processing Fee</p>
+                         </div>
+                         <ArrowRight className="w-5 h-5 text-slate-700 group-hover:text-white transition-colors" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Tokenz Withdrawal & Bridge Tab */}
+              {/* Tokenz Bridge Tab */}
               {activeBrand.id === 'tokenz' && portalTab === 'bridge' && (
                 <div className="max-w-4xl mx-auto space-y-10 animate-in zoom-in duration-500">
-                   <div className="glass-card p-12 rounded-[56px] border-yellow-500/20 bg-yellow-500/5 relative overflow-hidden flex flex-col items-center text-center space-y-8">
-                      <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none group-hover:rotate-12 transition-transform">
-                         <LinkIcon className="w-80 h-80 text-yellow-500" />
-                      </div>
-                      
-                      <div className="w-24 h-24 bg-yellow-500/10 rounded-[32px] flex items-center justify-center border border-yellow-500/30 shadow-2xl relative z-10">
-                         <ArrowUpCircle className="w-12 h-12 text-yellow-500" />
-                      </div>
+                  <div className="glass-card p-12 rounded-[48px] border-yellow-500/20 bg-yellow-500/5 relative overflow-hidden flex flex-col items-center text-center space-y-8">
+                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                     
+                     <div className="w-24 h-24 agro-gradient rounded-full flex items-center justify-center shadow-2xl relative z-10 group">
+                        <ArrowUpCircle className={`w-12 h-12 text-white transition-transform ${isBridgeActive ? 'animate-bounce' : 'group-hover:scale-110'}`} />
+                     </div>
 
-                      <div className="space-y-3 relative z-10">
-                         <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">Cross-Chain <span className="text-yellow-500">Bridge</span></h2>
-                         <p className="text-slate-400 text-lg max-w-lg leading-relaxed">Liquidate your EAC registry balance to external Web3 wallets or SWIFT-compliant bank accounts.</p>
-                      </div>
+                     <div className="space-y-4 relative z-10">
+                        <h2 className="text-4xl font-black text-white uppercase tracking-tighter">External <span className="text-yellow-500">Bridge</span></h2>
+                        <p className="text-slate-400 text-sm max-w-md mx-auto">Withdraw EAC to external non-custodial wallets or banking institutions via ZK-Proof relay.</p>
+                     </div>
 
-                      <div className="w-full space-y-6 relative z-10">
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2 text-left">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Withdraw Amount (EAC)</label>
-                               <input 
-                                type="number" 
-                                placeholder="500.00"
-                                className="w-full bg-black/60 border border-white/10 rounded-3xl py-6 px-8 text-2xl font-mono text-white focus:ring-2 focus:ring-yellow-500/40 outline-none" 
-                               />
-                            </div>
-                            <div className="space-y-2 text-left">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Destination Chain/Rail</label>
-                               <select className="w-full bg-black/60 border border-white/10 rounded-3xl py-6 px-8 text-lg font-bold text-white focus:ring-2 focus:ring-yellow-500/40 outline-none appearance-none">
-                                  <option>Ethereum Mainnet (0x)</option>
-                                  <option>Polygon POS (0x)</option>
-                                  <option>Bitcoin SegWit (bc1)</option>
-                                  <option>M-Pesa Payout (+254)</option>
-                                  <option>SWIFT/SEPA (IBAN)</option>
-                               </select>
-                            </div>
-                         </div>
+                     {!isBridgeActive ? (
+                       <div className="w-full max-w-md space-y-6 relative z-10">
+                          <div className="space-y-2 text-left">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Destination Address / IBAN</label>
+                             <input type="text" value={withdrawalAddress} onChange={e => setWithdrawalAddress(e.target.value)} placeholder="0x... or International Bank Number" className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-6 text-white font-mono text-sm focus:ring-2 focus:ring-yellow-500/40 outline-none" />
+                          </div>
+                          <button onClick={startWithdrawal} className="w-full py-6 bg-yellow-500 rounded-[32px] text-black font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-yellow-900/40 hover:scale-[1.02] active:scale-95 transition-all">
+                             INITIALIZE WITHDRAWAL
+                          </button>
+                       </div>
+                     ) : (
+                       <div className="w-full max-w-md space-y-8 relative z-10 py-4 animate-in fade-in duration-700">
+                          <div className="h-2 bg-white/5 rounded-full overflow-hidden relative">
+                             <div className="h-full bg-yellow-500 animate-bridge-progress"></div>
+                          </div>
+                          <div className="space-y-3">
+                             {bridgeStatus.map((status, i) => (
+                               <div key={i} className="flex items-center gap-3 text-xs font-mono animate-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${i*0.1}s` }}>
+                                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                                  <span className="text-slate-300 uppercase">{status}</span>
+                               </div>
+                             ))}
+                          </div>
+                       </div>
+                     )}
 
-                         <div className="space-y-2 text-left">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Target Address / Identifier</label>
-                            <div className="relative">
-                               <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
-                               <input 
-                                type="text"
-                                value={withdrawalAddress}
-                                onChange={e => setWithdrawalAddress(e.target.value)}
-                                placeholder="0x... / user@ens / +254..."
-                                className="w-full bg-black/60 border border-white/10 rounded-3xl py-6 pl-16 pr-8 text-white font-mono focus:ring-2 focus:ring-yellow-500/40 outline-none" 
-                               />
-                            </div>
-                         </div>
-
-                         {isBridgeActive ? (
-                           <div className="p-10 glass-card rounded-[40px] bg-[#0a1510] border border-emerald-500/20 text-left space-y-6">
-                              <div className="flex items-center gap-4">
-                                 <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-                                 <h4 className="text-xl font-bold text-white uppercase tracking-widest">Transmitting Bridge Packets</h4>
-                              </div>
-                              <div className="space-y-3">
-                                 {bridgeStatus.map((s, i) => (
-                                   <div key={i} className="flex items-center gap-3 animate-in slide-in-from-left duration-300">
-                                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                      <span className="text-xs font-mono text-slate-400">{s}</span>
-                                   </div>
-                                 ))}
-                              </div>
-                              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                 <div className="h-full agro-gradient w-full animate-bridge-progress"></div>
-                              </div>
-                           </div>
-                         ) : (
-                           <button 
-                            onClick={startWithdrawal}
-                            className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-900/60 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4"
-                           >
-                              <Zap className="w-6 h-6 fill-current" /> Open Withdrawal Relay
-                           </button>
-                         )}
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-6">
-                         <div className="flex items-center gap-3">
-                            <ShieldCheck className="w-6 h-6 text-emerald-400" />
-                            <h4 className="font-bold text-white uppercase tracking-widest text-sm">Security Audit</h4>
-                         </div>
-                         <p className="text-xs text-slate-500 leading-relaxed">
-                            "The EOS Bridge utilizes ZK-Rollups to ensure atomicity. If a withdrawal fails on the destination rail, EAC is automatically rolled back to your registry node treasury."
-                         </p>
-                      </div>
-                      <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-6">
-                         <div className="flex items-center gap-3">
-                            <History className="w-6 h-6 text-blue-400" />
-                            <h4 className="font-bold text-white uppercase tracking-widest text-sm">Recent Activity</h4>
-                         </div>
-                         <div className="space-y-4">
-                            <div className="flex justify-between items-center text-[10px]">
-                               <span className="text-slate-400 font-mono">0x842...1C32</span>
-                               <span className="text-emerald-400 font-black">SETTLED</span>
-                            </div>
-                            <div className="flex justify-between items-center text-[10px]">
-                               <span className="text-slate-400 font-mono">+254 7XX XXX 01</span>
-                               <span className="text-emerald-400 font-black">SETTLED</span>
-                            </div>
-                         </div>
-                      </div>
-                   </div>
+                     <div className="p-6 bg-black/40 rounded-3xl border border-white/5 flex items-center gap-6 relative z-10 w-full">
+                        <ShieldCheck className="w-8 h-8 text-yellow-500" />
+                        <div className="text-left">
+                           <h4 className="text-xs font-bold text-white uppercase">ZK-Rollup Protocol</h4>
+                           <p className="text-[10px] text-slate-500 leading-relaxed uppercase">Withdrawals are batched every 15 minutes to minimize network gas fees and maximize privacy.</p>
+                        </div>
+                     </div>
+                  </div>
                 </div>
               )}
 
-              {/* Standard Brand Content (Non-Tokenz) */}
-              {activeBrand.id !== 'tokenz' && (
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
-                  <div className="lg:col-span-3 space-y-8">
-                    {portalTab === 'ai' ? (
-                      <div className="glass-card p-10 rounded-[40px] min-h-[500px] flex flex-col relative group overflow-hidden border-white/5">
-                        {!aiResult && !loading ? (
-                          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 py-12">
-                            <div className="relative">
-                              <div className={`absolute inset-0 blur-3xl rounded-full scale-150 animate-pulse ${activeBrand.bg}`}></div>
-                              <activeBrand.icon className={`w-28 h-28 ${activeBrand.color} relative z-10 opacity-20`} />
-                            </div>
-                            <div className="max-w-md space-y-4">
-                              <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Invoke {activeBrand.thrust} Node</h4>
-                              <p className="text-slate-500 text-sm leading-relaxed">
-                                Requesting grounded intelligence from the EOS decentralized oracle network.
-                              </p>
-                              <button 
-                                onClick={runBrandAction}
-                                className="px-10 py-5 agro-gradient rounded-2xl text-white font-black text-sm shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all"
-                              >
-                                INITIALIZE {activeBrand.action.toUpperCase()}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-8 animate-in fade-in duration-700">
-                            <div className="flex items-center justify-between border-b border-white/5 pb-8">
-                              <div className="flex items-center gap-4">
-                                <Activity className="w-6 h-6 text-emerald-400" />
-                                <h4 className="text-xl font-bold text-white uppercase tracking-widest">{activeBrand.action} Report</h4>
-                              </div>
-                            </div>
-                            <div className="prose prose-invert prose-emerald max-w-none text-slate-300 leading-loose text-lg whitespace-pre-line bg-white/[0.01] p-10 rounded-3xl border border-white/5">
-                              {aiResult?.text}
+              {/* Industry Registry Tab */}
+              {activeBrand.thrust === 'industry' && portalTab === 'registry' && (
+                <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="glass-card p-8 rounded-[40px] border-white/5 space-y-4">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400"><Container className="w-6 h-6" /></div>
+                      <h4 className="text-xl font-bold text-white uppercase tracking-tighter">Asset Storage</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed italic">Manage physical agricultural assets linked to your ESIN node on the industrial blockchain.</p>
+                    </div>
+                    <div className="glass-card p-8 rounded-[40px] border-white/5 space-y-4">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400"><HardHat className="w-6 h-6" /></div>
+                      <h4 className="text-xl font-bold text-white uppercase tracking-tighter">Infrastructure</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed italic">Verified industrial equipment and facility registries for large-scale operations.</p>
+                    </div>
+                    <div className="glass-card p-8 rounded-[40px] border-white/5 space-y-4">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400"><Factory className="w-6 h-6" /></div>
+                      <h4 className="text-xl font-bold text-white uppercase tracking-tighter">Processing</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed italic">Monitor the industrial processing chain from field to factory with immutable data logs.</p>
+                    </div>
+                  </div>
+                  <div className="glass-card p-10 rounded-[48px] border-emerald-500/20 bg-emerald-500/5">
+                    <div className="flex justify-between items-center mb-10">
+                      <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Registry <span className="text-emerald-400">Node Sync</span></h3>
+                      <button className="px-6 py-2 bg-emerald-600 rounded-xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all">Export JSON Ledger</button>
+                    </div>
+                    <div className="space-y-4">
+                      {[1,2,3].map(i => (
+                        <div key={i} className="p-6 bg-black/40 border border-white/10 rounded-3xl flex justify-between items-center group hover:border-emerald-500/40 transition-all">
+                          <div className="flex gap-6 items-center">
+                            <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 font-mono text-xs">#0{i}</div>
+                            <div>
+                              <p className="text-sm font-bold text-white uppercase group-hover:text-emerald-400">Industrial Asset #{Math.floor(Math.random()*9000)+1000}</p>
+                              <p className="text-[10px] text-slate-500 font-mono mt-1 uppercase">Block: {(Math.random()*1000000).toFixed(0)} • Confirmed</p>
                             </div>
                           </div>
-                        )}
-                        {loading && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#050706]/80 backdrop-blur-md z-20">
-                            <Loader2 className="w-16 h-16 text-emerald-500 animate-spin" />
-                            <p className="text-emerald-400 font-bold mt-6 animate-pulse uppercase tracking-[0.2em] text-sm">Synchronizing SEHTI Integrals...</p>
-                          </div>
-                        )}
+                          <button className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><ExternalLink className="w-4 h-4" /></button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Standard Brand AI Content */}
+              {portalTab === 'ai' && (
+                <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700">
+                  <div className="glass-card p-12 rounded-[48px] min-h-[500px] flex flex-col relative group overflow-hidden border-white/5">
+                    {!aiResult && !loading ? (
+                      <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 py-12">
+                        <div className="relative">
+                          <div className={`absolute inset-0 blur-3xl rounded-full scale-150 animate-pulse ${activeBrand.bg}`}></div>
+                          <activeBrand.icon className={`w-28 h-28 ${activeBrand.color} relative z-10 opacity-20`} />
+                        </div>
+                        <div className="max-w-md space-y-4">
+                          <h4 className="text-2xl font-bold text-white uppercase tracking-widest italic">Invoke {activeBrand.thrust} Node</h4>
+                          <p className="text-slate-500 text-sm leading-relaxed">Requesting grounded intelligence from the EOS decentralized oracle network for the {activeBrand.thrust} thrust.</p>
+                          <button onClick={runBrandAction} className="px-12 py-5 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all">
+                            INITIALIZE {activeBrand.action.toUpperCase()}
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="space-y-8 animate-in slide-in-from-right duration-500">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {activeBrand.products.map((product) => (
-                            <div key={product.id} className="glass-card p-8 rounded-[32px] group hover:border-emerald-500/30 transition-all cursor-pointer flex flex-col border border-white/5">
-                              <div className="flex justify-between items-start mb-6">
-                                <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-emerald-500/10 transition-colors">
-                                  <product.icon className="w-6 h-6 text-emerald-400" />
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${product.type === 'Finance' ? 'bg-amber-500/10 text-amber-500' : product.type === 'Service' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                                  {product.type}
-                                </span>
-                              </div>
-                              <h4 className="text-xl font-bold text-white mb-2">{product.name}</h4>
-                              <p className="text-xs text-slate-500 mb-8 leading-relaxed">Standard contract for decentralized {product.type.toLowerCase()} fulfillment within the {activeBrand.name} network.</p>
-                              <div className="mt-auto pt-6 border-t border-white/5 flex items-center justify-between">
-                                <div>
-                                  <p className="text-[9px] text-slate-600 font-bold uppercase mb-1">Price</p>
-                                  <p className="text-xl font-mono font-black text-white">{product.price} <span className="text-xs text-emerald-500">EAC</span></p>
-                                </div>
-                                <button className="px-6 py-3 bg-emerald-600 rounded-xl text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all">
-                                  Procure
-                                </button>
-                              </div>
-                            </div>
-                          ))}
+                      <div className="space-y-8 animate-in fade-in duration-700">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-8">
+                          <div className="flex items-center gap-4">
+                            <Activity className="w-6 h-6 text-emerald-400" />
+                            <h4 className="text-xl font-bold text-white uppercase tracking-widest">{activeBrand.action} Report</h4>
+                          </div>
+                        </div>
+                        <div className="prose prose-invert prose-emerald max-w-none text-slate-300 leading-loose text-lg whitespace-pre-line bg-black/40 p-12 rounded-[40px] border border-white/10 italic">
+                          {aiResult?.text}
                         </div>
                       </div>
                     )}
+                    {loading && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#050706]/80 backdrop-blur-md z-20">
+                        <Loader2 className="w-16 h-16 text-emerald-500 animate-spin" />
+                        <p className="text-emerald-400 font-bold mt-6 animate-pulse uppercase tracking-[0.2em] text-sm">Synchronizing Industry Integrals...</p>
+                      </div>
+                    )}
                   </div>
-                  {/* Sidebar Portal Tools */}
-                  <div className="space-y-8">
-                    <div className="glass-card p-8 rounded-[32px] space-y-6">
-                      <h5 className="text-xs font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-3">Node Treasury</h5>
-                      <div className="space-y-4">
-                        <div>
-                          <p className="text-[9px] text-slate-600 font-bold uppercase mb-1">Active TVL</p>
-                          <p className="text-2xl font-mono font-black text-white">{activeBrand.volume}</p>
+                </div>
+              )}
+
+              {/* Standard Brand Marketplace Tab */}
+              {portalTab === 'market' && (
+                <div className="max-w-5xl mx-auto space-y-8 animate-in slide-in-from-right duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {activeBrand.products.map((product) => (
+                      <div key={product.id} className="glass-card p-10 rounded-[48px] group hover:border-emerald-500/30 transition-all cursor-pointer flex flex-col border border-white/5 bg-white/[0.01]">
+                        <div className="flex justify-between items-start mb-8">
+                          <div className="p-5 bg-white/5 rounded-3xl group-hover:bg-emerald-500/10 transition-colors">
+                            <product.icon className="w-8 h-8 text-emerald-400" />
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${product.type === 'Finance' ? 'bg-amber-500/10 text-amber-500' : product.type === 'Service' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                            {product.type}
+                          </span>
                         </div>
-                        <div>
-                          <p className="text-[9px] text-slate-600 font-bold uppercase mb-1">Total Minted Equity</p>
-                          <p className="text-2xl font-mono font-black text-emerald-400">14,200 UNITS</p>
+                        <h4 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter italic">{product.name}</h4>
+                        <p className="text-xs text-slate-500 mb-10 leading-relaxed font-medium">Standard industrial contract for decentralized {product.type.toLowerCase()} fulfillment within the {activeBrand.name} {activeBrand.thrust} network.</p>
+                        <div className="mt-auto pt-8 border-t border-white/5 flex items-center justify-between">
+                          <div>
+                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">Procurement Price</p>
+                            <p className="text-2xl font-mono font-black text-white">{product.price} <span className="text-xs text-emerald-500">EAC</span></p>
+                          </div>
+                          <button className="px-10 py-4 bg-emerald-600 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/40 hover:scale-105 transition-all">
+                            Procure Node
+                          </button>
                         </div>
                       </div>
-                    </div>
-                    <div className="glass-card p-8 rounded-[32px] bg-blue-500/5 border-blue-500/10 space-y-4">
-                      <CreditCard className="w-10 h-10 text-blue-400 mx-auto" />
-                      <h5 className="font-bold text-white text-center">Settlement Node</h5>
-                      <p className="text-xs text-slate-400 text-center leading-relaxed italic">
-                        All transactions in this portal are settled instantly on the EnvirosAgro Registry.
-                      </p>
-                      <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">
-                        View Ledger History
-                      </button>
-                    </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -828,27 +799,27 @@ const Ecosystem: React.FC = () => {
   );
 };
 
-// Internal Card Component
+// Internal BrandCard component
 const BrandCard: React.FC<{ brand: Brand; onLaunch: (b: Brand) => void }> = ({ brand, onLaunch }) => (
   <div 
     onClick={() => onLaunch(brand)}
-    className="glass-card p-8 rounded-[32px] group hover:border-emerald-500/30 transition-all cursor-pointer relative flex flex-col h-full active:scale-95 duration-200 overflow-hidden"
+    className="glass-card p-8 rounded-[32px] group hover:border-emerald-500/30 transition-all cursor-pointer relative flex flex-col h-full active:scale-95 duration-200 overflow-hidden bg-white/[0.01]"
   >
     <div className={`w-16 h-16 rounded-2xl ${brand.bg} flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-500 shadow-xl border border-white/5`}>
       <brand.icon className={`w-8 h-8 ${brand.color}`} />
     </div>
     
-    <h3 className="text-xl font-bold text-white mb-1 group-hover:text-emerald-400 transition-colors uppercase tracking-tight">
+    <h3 className="text-xl font-black text-white mb-1 group-hover:text-emerald-400 transition-colors uppercase tracking-tight italic">
       {brand.name}
     </h3>
     
     <div className="flex items-center gap-2 mb-4">
       <span className="text-[10px] font-mono text-emerald-500 font-bold">{brand.volume}</span>
       <div className="w-1 h-1 rounded-full bg-slate-700"></div>
-      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{brand.products.length} Protocols</span>
+      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{brand.thrust} THRUST</span>
     </div>
     
-    <p className="text-xs text-slate-400 leading-relaxed mb-8 flex-1">
+    <p className="text-xs text-slate-400 leading-relaxed mb-8 flex-1 font-medium">
       {brand.desc}
     </p>
     

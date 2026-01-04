@@ -22,7 +22,9 @@ import {
   ChevronRight,
   Target,
   LineChart,
-  Wallet
+  Wallet,
+  /* Added missing Bot icon */
+  Bot
 } from 'lucide-react';
 import { User } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
@@ -140,7 +142,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate }) => {
       </div>
 
       {activeTab === 'opportunities' && (
-        <div className="space-y-8 animate-in slide-in-from-left-4 duration-500">
+        <div className="space-y-8 animate-in slide-in-from-left-4 duration-300">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="relative w-full md:w-96 group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />

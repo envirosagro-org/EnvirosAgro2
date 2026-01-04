@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Award, TrendingUp, ShieldCheck, Zap, Bell, Clock, Briefcase, Database, LayoutGrid, Layers, CreditCard, X } from 'lucide-react';
+import { Award, TrendingUp, ShieldCheck, Zap, Bell, Clock, Briefcase, Database, LayoutGrid, Layers, CreditCard, X, Globe } from 'lucide-react';
 import { ViewState, User } from '../types';
 import IdentityCard from './IdentityCard';
 
@@ -132,7 +132,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               { letter: 'E', label: 'Environmental', val: 92, col: 'bg-pink-400' },
               { letter: 'H', label: 'Human', val: 78, col: 'bg-teal-400' },
               { letter: 'T', label: 'Technological', val: 95, col: 'bg-blue-400' },
-              { letter: 'I', label: 'Informational', val: 88, col: 'bg-emerald-400' },
+              { letter: 'I', label: 'Industry', val: 88, col: 'bg-emerald-400' },
             ].map((t) => (
               <div key={t.label} className="group">
                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest mb-2">

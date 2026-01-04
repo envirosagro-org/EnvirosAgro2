@@ -26,6 +26,7 @@ import { User } from '../types';
 
 interface EconomyProps {
   user: User;
+  onMint?: () => void;
 }
 
 const MARKET_PRODUCTS = [
@@ -37,7 +38,7 @@ const MARKET_PRODUCTS = [
   { id: 6, name: 'Agro-Profile Visibility Boost', price: 150, category: 'Service', rating: 4.5, description: 'Increase your U-Score visibility across the Industrial Cloud for 7 days.' },
 ];
 
-const Economy: React.FC<EconomyProps> = ({ user }) => {
+const Economy: React.FC<EconomyProps> = ({ user, onMint }) => {
   const [activeTab, setActiveTab] = useState<'finance' | 'marketplace'>('marketplace');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -188,7 +189,10 @@ const Economy: React.FC<EconomyProps> = ({ user }) => {
                 <h4 className="text-xs text-slate-500 font-black uppercase tracking-[0.2em] mb-2">Upload-to-Earn</h4>
                 <p className="text-sm text-slate-300 leading-relaxed font-medium italic">"Mint EAC tokens by submitting scientific evidence of regenerative growth."</p>
               </div>
-              <button className="w-full py-4 bg-blue-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-900/40 hover:scale-[1.02] active:scale-95 transition-all">
+              <button 
+                onClick={onMint}
+                className="w-full py-4 bg-blue-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-900/40 hover:scale-[1.02] active:scale-95 transition-all"
+              >
                 MINT NEW EVIDENCE
               </button>
             </div>
@@ -328,7 +332,7 @@ const Economy: React.FC<EconomyProps> = ({ user }) => {
           <div className="flex flex-col md:flex-row justify-between items-center py-12 border-t border-white/5 gap-8">
              <div className="flex gap-12">
                 <div className="flex items-center gap-3">
-                   <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                   <ShieldCheck className="w-5 h-5 text-emerald-400" />
                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">ZK-Verified Signing</span>
                 </div>
                 <div className="flex items-center gap-3">

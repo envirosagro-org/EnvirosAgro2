@@ -32,7 +32,9 @@ import {
   Handshake,
   Zap,
   Upload,
-  Sparkles
+  Sparkles,
+  FileBarChart,
+  BarChart4
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -43,15 +45,16 @@ interface CommunityProps {
 }
 
 const CHAPTERS = [
-  { id: 1, title: "The SEHTI Philosophy", content: "Agriculture is not just land management; it is a complex system of human psychology, social structures, and scientific data. SEHTI integrates five core thrusts to achieve 100% sustainability.\n\nS: Societal - Anthropological agriculture.\nE: Environmental - Stewardship of physical resources.\nH: Human - Health and behavioral processes.\nT: Technological - Modern agrarian innovations.\nI: Informational - Data-driven industrial optimization." },
-  { id: 2, title: "Societal Thrust (S)", content: "This thrust examines agriculture through human society. It integrates cultural traditions, blood lineages, and community structures (e.g., the Bantu farming clans) as critical variables in food security." },
+  { id: 1, title: "The SEHTI Philosophy", content: "Agriculture is not just land management; it is a complex system of human psychology, social structures, and scientific data. SEHTI integrates five core thrusts to achieve 100% sustainability.\n\nS: Societal - Anthropological agriculture.\nE: Environmental - Stewardship of physical resources.\nH: Human - Health and behavioral processes.\nT: Technological - Modern agrarian innovations.\nI: Industry - Data-driven industrial optimization and blockchain registries." },
+  { id: 2, title: "Industry Thrust (I)", content: "The 'I' pillar focuses on industrial optimization. By leveraging decentralized ledgers (ESIN), we create an immutable record of agricultural output, carbon capture, and resource efficiency. This allows farms to act as independent economic nodes in a global grid." },
+  { id: 3, title: "Agricultural Code C(a)", content: "The C(a) is the core biometric of your land. It is calculated based on cumulative sustainable practices. A high C(a) directly correlates with lower registry fees and higher EAC minting multipliers." },
 ];
 
 const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC }) => {
-  const [activeTab, setActiveTab] = useState<'hub' | 'lms' | 'manual' | 'media'>('hub');
-  const [showRegModal, setShowRegModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'hub' | 'lms' | 'manual' | 'report'>('hub');
   const [isPosting, setIsPosting] = useState(false);
   const [postContent, setPostContent] = useState('');
+  const [selectedChapter, setSelectedChapter] = useState(CHAPTERS[0]);
 
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +90,8 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
         {[
           { id: 'hub', name: 'Heritage Hub', icon: Globe },
           { id: 'lms', name: 'Learning Hub', icon: Library },
-          { id: 'manual', name: 'SEHTI Manual', icon: FileText },
+          { id: 'manual', name: 'SEHTI Manual', icon: BookOpen },
+          { id: 'report', name: 'Performance Report', icon: BarChart4 },
         ].map(t => (
           <button 
             key={t.id}
@@ -202,7 +206,10 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                         <span>Proof of Effort</span>
                         <span className="text-emerald-400 font-mono">{user.wallet.lifetimeEarned} EAC</span>
                      </div>
-                     <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all">
+                     <button 
+                      onClick={() => setActiveTab('report')}
+                      className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all"
+                     >
                         Registry Performance Report
                      </button>
                   </div>
@@ -211,17 +218,17 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                <div className="glass-card p-8 rounded-[40px] space-y-6">
                   <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-4">Top Skill Tags</h4>
                   <div className="space-y-4">
-                     {Object.entries(user.skills).map(([skill, points]) => (
+                     {Object.entries(user.skills).length > 0 ? Object.entries(user.skills).map(([skill, points]) => (
                        <div key={skill} className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                             {/* Fix: Explicitly cast points to number to resolve operator '>=' cannot be applied to unknown error. */}
                              <div className={`w-2 h-2 rounded-full ${(points as number) >= 100 ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-blue-400'}`}></div>
                              <span className="text-xs font-bold text-slate-300">{skill}</span>
                           </div>
-                          {/* Fix: Explicitly cast points to number for threshold logic. */}
                           <span className="text-[10px] font-mono text-slate-600">{(points as number) >= 100 ? 'SKILLED' : (points as number) >= 20 ? 'APPRENTICE' : 'SEED'}</span>
                        </div>
-                     ))}
+                     )) : (
+                       <p className="text-[10px] text-slate-500 italic text-center">Complete modules to earn skills.</p>
+                     )}
                   </div>
                </div>
             </div>
@@ -249,6 +256,7 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                 { title: "Precision Drip Irrigation", category: "Irrigation Tech", eac: 100, pts: 20 },
                 { title: "Bantu Clan Agronomy", category: "Sociological", eac: 100, pts: 20 },
                 { title: "Carbon-Neutral Composting", category: "Precision Farming", eac: 100, pts: 20 },
+                { title: "Industry 4.0 Agro-Logistics", category: "Industry", eac: 120, pts: 25 },
               ].map((m, i) => (
                 <div key={i} className="glass-card p-8 rounded-[40px] border border-white/5 hover:border-indigo-500/30 transition-all group cursor-pointer flex flex-col h-full active:scale-95">
                    <div className="flex justify-between items-start mb-8">
@@ -267,6 +275,106 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                    </button>
                 </div>
               ))}
+           </div>
+        </div>
+      )}
+
+      {activeTab === 'manual' && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in slide-in-from-right-4 duration-500">
+           <div className="lg:col-span-1 space-y-4">
+              <div className="glass-card p-6 rounded-[32px] space-y-2">
+                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 px-2">Manual Index</h4>
+                 {CHAPTERS.map(ch => (
+                   <button 
+                    key={ch.id}
+                    onClick={() => setSelectedChapter(ch)}
+                    className={`w-full text-left p-4 rounded-2xl text-xs font-bold transition-all ${selectedChapter.id === ch.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
+                   >
+                      Chapter {ch.id}: {ch.title}
+                   </button>
+                 ))}
+              </div>
+              <div className="glass-card p-6 rounded-[32px] bg-blue-600/5 border-blue-500/20">
+                 <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest mb-2">Registry Mandate</p>
+                 <p className="text-[10px] text-slate-400 leading-relaxed uppercase">The SEHTI Manual is the governing constitution for all Steward Nodes on the EOS network.</p>
+              </div>
+           </div>
+
+           <div className="lg:col-span-3 glass-card p-12 rounded-[48px] bg-white/[0.01] border-white/5 prose prose-invert max-w-none">
+              <div className="flex items-center gap-4 mb-8">
+                 <BookOpenIcon className="w-8 h-8 text-emerald-400" />
+                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter m-0">{selectedChapter.title}</h2>
+              </div>
+              <div className="text-slate-300 leading-loose text-lg whitespace-pre-line bg-black/40 p-10 rounded-[32px] border border-white/5 italic">
+                 {selectedChapter.content}
+              </div>
+              <div className="mt-12 pt-8 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-slate-600">
+                 <span>REVISION: v3.2.1-STABLE</span>
+                 <span>SIGNED BY: GOVERNANCE_ORACLE_01</span>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {activeTab === 'report' && (
+        <div className="space-y-8 animate-in zoom-in duration-500">
+           <div className="glass-card p-12 rounded-[48px] bg-emerald-600/5 border-emerald-500/20 flex flex-col md:flex-row items-center gap-12 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                 <BarChart4 className="w-80 h-80 text-emerald-400" />
+              </div>
+              
+              <div className="w-48 h-48 agro-gradient rounded-full flex flex-col items-center justify-center shadow-2xl ring-[12px] ring-white/5 group">
+                 <p className="text-[10px] font-black text-white/60 uppercase tracking-widest">Global Rank</p>
+                 <h4 className="text-5xl font-black text-white">#842</h4>
+                 <div className="mt-2 flex gap-1">
+                    {[0,1,2].map(i => <div key={i} className="w-1 h-3 bg-white/40 rounded-full animate-pulse" style={{animationDelay: `${i*0.2}s`}}></div>)}
+                 </div>
+              </div>
+
+              <div className="flex-1 space-y-6 relative z-10 text-center md:text-left">
+                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Registry Performance <span className="text-emerald-400">Report</span></h2>
+                 <p className="text-slate-400 text-lg leading-relaxed italic">"Your node is currently operating at 92% efficiency compared to the regional benchmark for {user.location}."</p>
+                 
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6">
+                    <div className="p-4 glass-card rounded-2xl border-white/5">
+                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Audit Passes</p>
+                       <p className="text-xl font-bold text-white">12/12</p>
+                    </div>
+                    <div className="p-4 glass-card rounded-2xl border-white/5">
+                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Vouch Score</p>
+                       <p className="text-xl font-bold text-emerald-400">4.8/5</p>
+                    </div>
+                    <div className="p-4 glass-card rounded-2xl border-white/5">
+                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Reaction Yield</p>
+                       <p className="text-xl font-bold text-blue-400">142.5 EAC</p>
+                    </div>
+                    <div className="p-4 glass-card rounded-2xl border-white/5">
+                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Thrust Level</p>
+                       <p className="text-xl font-bold text-amber-500">Tier 2</p>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="glass-card p-10 rounded-[40px] space-y-6">
+                 <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-emerald-400" /> Reputation Momentum
+                 </h4>
+                 <div className="h-48 flex items-end justify-between gap-2 px-4">
+                    {[30, 45, 25, 60, 85, 40, 75, 90, 55, 100].map((h, i) => (
+                      <div key={i} className="flex-1 bg-emerald-500/10 rounded-t-lg relative group overflow-hidden">
+                         <div className="absolute bottom-0 left-0 right-0 bg-emerald-500/40 transition-all duration-1000 group-hover:bg-emerald-400" style={{height: `${h}%`}}></div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+              <div className="glass-card p-10 rounded-[40px] bg-blue-600/5 border-blue-500/20 flex flex-col justify-center items-center text-center space-y-6">
+                 <ShieldCheck className="w-16 h-16 text-blue-400" />
+                 <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Verified Social Presence</h4>
+                 <p className="text-slate-400 text-sm max-w-xs leading-relaxed font-medium">Your contributions to the Heritage Hub have been cross-verified by 24 independent validator nodes.</p>
+                 <button className="px-10 py-4 agro-gradient rounded-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl">Download Official PDF</button>
+              </div>
            </div>
         </div>
       )}

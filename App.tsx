@@ -31,7 +31,12 @@ import {
   Landmark,
   Store,
   Cable,
-  Sparkles
+  Sparkles,
+  Upload,
+  FileText,
+  BarChart3,
+  /* Added missing Bot icon */
+  Bot
 } from 'lucide-react';
 import { ViewState, User } from './types';
 import Dashboard from './components/Dashboard';
@@ -62,6 +67,10 @@ const App: React.FC = () => {
 
   // Minting Action State
   const [isMintingModalOpen, setIsMintingModalOpen] = useState(false);
+  const [mintingStep, setMintingStep] = useState<'upload' | 'analyzing' | 'confirm' | 'success'>('upload');
+  const [evidenceDesc, setEvidenceDesc] = useState('');
+  const [mintResult, setMintResult] = useState<string | null>(null);
+  const [calculatedReward, setCalculatedReward] = useState(0);
 
   // Load session from localStorage
   useEffect(() => {
@@ -82,6 +91,23 @@ const App: React.FC = () => {
       registry[index] = updatedUser;
       localStorage.setItem('agro_users', JSON.stringify(registry));
     }
+  };
+
+  /**
+   * DEPOSIT ENGINE
+   */
+  const handleDepositEAC = (amount: number, gateway: string) => {
+    if (!user) return;
+    const updatedUser: User = {
+      ...user,
+      wallet: {
+        ...user.wallet,
+        balance: user.wallet.balance + amount,
+        lifetimeEarned: user.wallet.lifetimeEarned + (amount * 0.1) // Bonus for network liquidity
+      }
+    };
+    handleUpdateUser(updatedUser);
+    triggerEconomyToast(amount, `+${amount} EAC MINTED VIA ${gateway}`);
   };
 
   /**
@@ -186,6 +212,40 @@ const App: React.FC = () => {
     localStorage.removeItem('agro_steward');
     setActiveView('dashboard');
     alert("NODE PURGED: Your identity and EAC balance have been removed from the local registry.");
+  };
+
+  // EVIDENCE MINTING FLOW
+  const handleStartMinting = async () => {
+    if (!evidenceDesc.trim()) return;
+    setMintingStep('analyzing');
+    
+    // Gemini Evidence Analysis
+    const response = await diagnoseCropIssue(evidenceDesc);
+    setMintResult(response.text);
+    
+    // EOS Framework Reward Calculation: Reward = Base(25) * Multiplier(m, Ca)
+    const ca = user?.metrics.agriculturalCodeU || 1.0;
+    const m = user?.metrics.timeConstantTau || 1.0;
+    const multiplier = 1 + (Math.log10(ca * m + 1) / 5);
+    setCalculatedReward(Math.round(25 * multiplier));
+    
+    setMintingStep('confirm');
+  };
+
+  const finalizeMinting = () => {
+    if (!user) return;
+    const amount = calculatedReward;
+    const updatedUser: User = {
+      ...user,
+      wallet: {
+        ...user.wallet,
+        balance: user.wallet.balance + amount,
+        lifetimeEarned: user.wallet.lifetimeEarned + amount
+      }
+    };
+    handleUpdateUser(updatedUser);
+    setMintingStep('success');
+    triggerEconomyToast(amount, `+${amount} EAC MINTED: EVIDENCE CERTIFIED`);
   };
 
   if (!user) {
@@ -338,22 +398,154 @@ const App: React.FC = () => {
 
         <div className="animate-in fade-in duration-500">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={(view) => setActiveView(view)} />}
-          {activeView === 'wallet' && <AgroWallet user={user} />}
+          {activeView === 'wallet' && <AgroWallet user={user} onNavigate={(view) => setActiveView(view)} />}
           {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} />}
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} />}
           {activeView === 'vendor' && <VendorPortal user={user} />}
           {activeView === 'ingest' && <NetworkIngest />}
-          {activeView === 'sustainability' && <Sustainability onAction={() => setIsMintingModalOpen(true)} />}
-          {activeView === 'economy' && <Economy user={user} />}
+          {activeView === 'sustainability' && <Sustainability onAction={() => { setMintingStep('upload'); setIsMintingModalOpen(true); }} />}
+          {activeView === 'economy' && <Economy user={user} onMint={() => { setMintingStep('upload'); setIsMintingModalOpen(true); }} />}
           {activeView === 'industrial' && <Industrial user={user} onSpendEAC={spendEAC} />}
           {activeView === 'intelligence' && <Intelligence />}
           {activeView === 'community' && <Community user={user} onContribution={processContribution} onSpendEAC={spendEAC} />}
           {activeView === 'explorer' && <Explorer />}
-          {activeView === 'ecosystem' && <Ecosystem />}
+          {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={handleDepositEAC} />}
           {activeView === 'media' && <MediaHub />}
           {activeView === 'info' && <InfoPortal />}
         </div>
       </main>
+
+      {/* GLOBAL EVIDENCE MINTING MODAL */}
+      {isMintingModalOpen && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setIsMintingModalOpen(false)}></div>
+          <div className="relative z-10 w-full max-w-4xl glass-card rounded-[48px] border-emerald-500/20 overflow-hidden flex flex-col shadow-2xl bg-[#050706]">
+            {/* Header */}
+            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-emerald-600/5">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center border border-emerald-500/20">
+                  <Camera className="w-8 h-8 text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Evidence <span className="text-emerald-400">Minting</span></h2>
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Direct Reward Engine • EOS Framework</p>
+                </div>
+              </div>
+              <button onClick={() => setIsMintingModalOpen(false)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-12 space-y-10">
+              {mintingStep === 'upload' && (
+                <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-6">
+                       <h3 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-2"><Upload className="w-5 h-5 text-emerald-400" /> Field Upload</h3>
+                       <div className="aspect-square glass-card rounded-[40px] border-2 border-dashed border-emerald-500/20 flex flex-col items-center justify-center text-center p-10 group hover:border-emerald-500/40 transition-all cursor-pointer">
+                          <Camera className="w-12 h-12 text-slate-700 group-hover:text-emerald-400 transition-colors mb-4" />
+                          <p className="text-sm font-bold text-white">Capture / Upload Proof</p>
+                          <p className="text-[10px] text-slate-500 mt-2">Spectral Scan, Soil Log, or Photo Evidence</p>
+                       </div>
+                    </div>
+                    <div className="space-y-6">
+                       <h3 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-2"><FileText className="w-5 h-5 text-blue-400" /> Scientific Context</h3>
+                       <textarea 
+                        value={evidenceDesc}
+                        onChange={e => setEvidenceDesc(e.target.value)}
+                        placeholder="Describe the regenerative practices observed. Mention specific metrics like pH, nitrogen levels, or moisture retention..."
+                        className="w-full h-[300px] bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none"
+                       />
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleStartMinting}
+                    disabled={!evidenceDesc.trim()}
+                    className="w-full py-6 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-40"
+                  >
+                    <Sparkles className="w-5 h-5" /> Run AI Certification
+                  </button>
+                </div>
+              )}
+
+              {mintingStep === 'analyzing' && (
+                <div className="flex flex-col items-center justify-center py-20 space-y-8 animate-in zoom-in duration-500 text-center">
+                   <div className="relative">
+                      <div className="w-32 h-32 rounded-full border-4 border-emerald-500/10 flex items-center justify-center">
+                         <Bot className="w-16 h-16 text-emerald-400 animate-pulse" />
+                      </div>
+                      <div className="absolute inset-0 border-t-4 border-emerald-500 rounded-full animate-spin"></div>
+                   </div>
+                   <div className="space-y-4">
+                      <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Gemini Analyzing...</h3>
+                      <p className="text-slate-500 text-sm max-w-sm mx-auto uppercase tracking-widest">Cross-referencing evidence with EOS sustainability equations.</p>
+                   </div>
+                </div>
+              )}
+
+              {mintingStep === 'confirm' && (
+                <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+                   <div className="p-10 glass-card rounded-[40px] bg-emerald-500/5 border-l-4 border-emerald-500/50">
+                      <div className="flex items-center gap-4 mb-6">
+                         <ShieldCheck className="w-8 h-8 text-emerald-400" />
+                         <h4 className="text-xl font-bold text-white uppercase tracking-widest">Certification Report</h4>
+                      </div>
+                      <div className="prose prose-invert max-w-none text-slate-300 text-sm leading-relaxed italic whitespace-pre-line overflow-y-auto max-h-[300px] pr-4 custom-scrollbar">
+                         {mintResult}
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="p-8 glass-card rounded-[32px] border-white/5 text-center">
+                         <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Base Reward</p>
+                         <p className="text-2xl font-mono font-black text-white">25 EAC</p>
+                      </div>
+                      <div className="p-8 glass-card rounded-[32px] border-white/5 text-center">
+                         <p className="text-[9px] text-slate-500 font-black uppercase mb-1">EOS Multiplier</p>
+                         <p className="text-2xl font-mono font-black text-blue-400">{(calculatedReward / 25).toFixed(2)}x</p>
+                      </div>
+                      <div className="p-8 glass-card rounded-[32px] border-emerald-500/20 bg-emerald-500/5 text-center">
+                         <p className="text-[9px] text-emerald-500 font-black uppercase mb-1">Final Mint</p>
+                         <p className="text-3xl font-mono font-black text-emerald-400">{calculatedReward} EAC</p>
+                      </div>
+                   </div>
+
+                   <div className="flex gap-4">
+                      <button onClick={() => setMintingStep('upload')} className="flex-1 py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">Revise Evidence</button>
+                      <button 
+                        onClick={finalizeMinting}
+                        className="flex-[2] py-6 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                      >
+                         <Zap className="w-6 h-6 fill-current" /> Sign & Mint EAC
+                      </button>
+                   </div>
+                </div>
+              )}
+
+              {mintingStep === 'success' && (
+                <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 animate-in zoom-in duration-700 text-center">
+                   <div className="w-32 h-32 bg-emerald-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 scale-110">
+                      <CheckCircle2 className="w-16 h-16 text-white" />
+                   </div>
+                   <div className="space-y-4">
+                      <h3 className="text-4xl font-black text-white uppercase tracking-tighter">EAC Tokens Minted</h3>
+                      <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">Transaction Indexed on Industrial Ledger</p>
+                   </div>
+                   <div className="w-full glass-card p-10 rounded-[48px] border-white/5 bg-emerald-500/5 space-y-4 text-left max-w-lg">
+                      <div className="flex justify-between items-center text-xs">
+                         <span className="text-slate-500 font-black uppercase">Minted Balance</span>
+                         <span className="text-emerald-400 font-mono font-bold">+{calculatedReward} EAC</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                         <span className="text-slate-500 font-black uppercase">Registry Path</span>
+                         <span className="text-white font-mono text-[11px]">0x{Math.random().toString(16).slice(2, 14).toUpperCase()}...</span>
+                      </div>
+                   </div>
+                   <button onClick={() => setIsMintingModalOpen(false)} className="w-full max-w-lg py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">Dismiss Portal</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
