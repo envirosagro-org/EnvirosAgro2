@@ -23,6 +23,8 @@ export interface SustainabilityMetrics {
   agriculturalCodeU: number; 
   timeConstantTau: number;  
   sustainabilityScore: number;
+  socialImmunity: number; // 0-100: Resistance to SID
+  viralLoadSID: number;   // 0-100: Presence of Social Influenza
 }
 
 export interface WorkerProfile {
@@ -69,4 +71,4 @@ export interface AgroTransaction {
   unit: string;
 }
 
-export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest';
+export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools';

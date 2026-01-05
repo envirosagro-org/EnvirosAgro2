@@ -128,7 +128,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       role: 'Regenerative Farmer',
       location: location || 'Global Registry Node',
       wallet: { balance: 100, tier: 'Seed', lifetimeEarned: 100 },
-      metrics: { agriculturalCodeU: 1.2, timeConstantTau: 8.5, sustainabilityScore: 72 },
+      // Added socialImmunity and viralLoadSID to satisfy SustainabilityMetrics interface
+      metrics: { 
+        agriculturalCodeU: 1.2, 
+        timeConstantTau: 8.5, 
+        sustainabilityScore: 72,
+        socialImmunity: 60,
+        viralLoadSID: 35
+      },
       skills: { 'General': 10 },
       isReadyForHire: false
     };
@@ -222,7 +229,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   </>
                 ) : (
                   <>
-                    <h5 className="text-sm font-bold text-white mb-1">EnvirosAgro Node Verify</h5>
+                    <h5 className="text-sm font-bold text-white mb-1">EnvirosAgro™ Node Verify</h5>
                     <p className="text-[11px] text-slate-400 leading-relaxed">
                       Your registration code is: <br/>
                       <span className="text-lg font-mono font-black text-emerald-400 mt-2 block tracking-[0.2em]">{generatedCode}</span>
@@ -247,7 +254,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
           <div>
             <h1 className="text-6xl font-black text-white tracking-tighter uppercase italic">
-              Enviros<span className="text-emerald-400">Agro</span>
+              Enviros<span className="text-emerald-400">Agro™</span>
             </h1>
             <p className="text-emerald-500/60 text-[10px] font-black uppercase tracking-[0.4em] flex items-center justify-center gap-2 mt-2">
               <ShieldCheck className="w-3 h-3" /> Blockchain Identity Protocol
@@ -273,7 +280,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 )}
                 <div className="text-center space-y-2">
                   <h2 className="text-2xl font-black text-white uppercase tracking-tight">Access Control</h2>
-                  <p className="text-slate-500 text-sm font-medium">Initialize or resume your steward node session.</p>
+                  <p className="text-slate-500 text-sm font-medium">Initialize or resume your EnvirosAgro™ node session.</p>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   <button onClick={() => { setMode('register'); setError(null); }} className="w-full p-6 bg-white/[0.03] border border-white/10 rounded-3xl text-left hover:bg-emerald-600/10 hover:border-emerald-500/40 transition-all flex items-center gap-6 group">
@@ -351,7 +358,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 </div>
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-4 text-left">
                    <Shield className="w-10 h-10 text-amber-500 shrink-0" />
-                   <p className="text-[10px] text-amber-200 font-bold uppercase leading-tight">I understand that EnvirosAgro cannot recover my node without this phrase or the anchor email.</p>
+                   <p className="text-[10px] text-amber-200 font-bold uppercase leading-tight">I understand that EnvirosAgro™ cannot recover my node without this phrase or the anchor email.</p>
                 </div>
                 <button onClick={finalizeRegistration} className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl">
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
@@ -481,7 +488,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <CheckCircle2 className="w-10 h-10 text-white" />
                   </div>
                   <h2 className="text-3xl font-black text-white uppercase tracking-tight">Identity Secure</h2>
-                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mt-1">Cloud Sync Complete</p>
+                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mt-1">EnvirosAgro™ Cloud Sync Complete</p>
                 </div>
                 <IdentityCard user={generatedUser} />
                 <button onClick={() => onLogin(generatedUser)} className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Wallet, 
@@ -59,6 +58,11 @@ const MOCK_HISTORY: AgroTransaction[] = [
   { id: 'TX-882191', type: 'Harvest', farmId: 'ZONE-1-NY', details: 'Weekly Scientific Harvest Payout', value: 42.50, unit: 'EAC' },
 ];
 
+const MOCK_ACTIVE_PROJECTS: AgroProject[] = [
+  { id: 'PRJ-882', name: 'Nebraska Soil Restoration', adminEsin: 'EA-2025-ABCD-1234', description: 'Institutional scale moisture injection.', thrust: 'Environmental', status: 'Execution', totalCapital: 50000, fundedAmount: 50000, batchesClaimed: 1, totalBatches: 5, progress: 20, roiEstimate: 12, collateralLocked: 25000 },
+  { id: 'PRJ-104', name: 'Nairobi Ingest Hub', adminEsin: 'EA-2025-ABCD-1234', description: 'IoT array deployment for semi-arid zones.', thrust: 'Technological', status: 'Funding', totalCapital: 120000, fundedAmount: 85000, batchesClaimed: 0, totalBatches: 10, progress: 5, roiEstimate: 18, collateralLocked: 60000 },
+];
+
 const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate }) => {
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'harvest' | 'projects' | 'history'>('overview');
   const [isClaiming, setIsClaiming] = useState(false);
@@ -82,7 +86,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate }) => {
   }, [activeSubTab]);
 
   const handleClaimBatch = (project: AgroProject) => {
-    const batchSize = (project.totalCapital / project.totalBatches);
     const requiredCollateral = project.totalCapital * 0.5;
 
     if (user.wallet.balance < requiredCollateral) {
@@ -96,7 +99,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate }) => {
   const executeBatchSettlement = () => {
     setIsSettlingBatch(true);
     setTimeout(() => {
-      alert(`BATCH SETTLED: EAC has been released from Tokenz Escrow to your node treasury. Project progress updated to Stage ${selectedProjForClaim!.batchesClaimed + 1}.`);
+      alert(`BATCH SETTLED: EAC has been released from Tokenz Escrow to your node treasury. Project progress updated.`);
       setIsSettlingBatch(false);
       setSelectedProjForClaim(null);
     }, 3000);
@@ -104,7 +107,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      {/* Wallet Navigation */}
       <div className="flex gap-4 p-1 glass-card rounded-2xl w-fit">
         {[
           { id: 'overview', label: 'Treasury & Rep', icon: PieChart },
@@ -227,7 +229,103 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate }) => {
                  <p className="text-[10px] text-amber-500 font-black uppercase tracking-widest">50% Capital Collateral Required</p>
               </div>
            </div>
-           {/* ... existing projects mapping ... */}
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {MOCK_ACTIVE_PROJECTS.map(proj => (
+                <div key={proj.id} className="glass-card p-8 rounded-[40px] border border-white/5 space-y-6">
+                   <div className="flex justify-between items-start">
+                      <div>
+                         <h4 className="text-xl font-bold text-white uppercase">{proj.name}</h4>
+                         <p className="text-xs text-slate-500 font-mono">{proj.id}</p>
+                      </div>
+                      <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20 text-[9px] font-black uppercase">
+                        Batch {proj.batchesClaimed}/{proj.totalBatches}
+                      </span>
+                   </div>
+                   <div className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-black uppercase text-slate-500">
+                         <span>Release Progress</span>
+                         <span>{proj.progress}%</span>
+                      </div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                         <div className="h-full bg-blue-500" style={{ width: `${proj.progress}%` }}></div>
+                      </div>
+                   </div>
+                   <button 
+                    onClick={() => handleClaimBatch(proj)}
+                    className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-blue-600 transition-all"
+                   >
+                      Verify Next Batch
+                   </button>
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
+
+      {activeSubTab === 'history' && (
+        <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+           <div className="glass-card rounded-[40px] overflow-hidden border-white/5">
+              <div className="p-8 border-b border-white/5 bg-white/5">
+                 <h4 className="text-xs font-black text-white uppercase tracking-widest">Transaction Ledger</h4>
+              </div>
+              <div className="divide-y divide-white/5">
+                 {MOCK_HISTORY.map(tx => (
+                   <div key={tx.id} className="p-8 hover:bg-white/[0.02] transition-all flex items-center justify-between group">
+                      <div className="flex items-center gap-6">
+                         <div className={`p-4 rounded-2xl ${tx.value > 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                            {tx.value > 0 ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownLeft className="w-6 h-6" />}
+                         </div>
+                         <div>
+                            <p className="text-lg font-bold text-white">{tx.details}</p>
+                            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{tx.id} // {tx.type}</p>
+                         </div>
+                      </div>
+                      <div className="text-right">
+                         <p className={`text-xl font-mono font-black ${tx.value > 0 ? 'text-emerald-400' : 'text-white'}`}>
+                            {tx.value > 0 ? '+' : ''}{tx.value.toFixed(2)} EAC
+                         </p>
+                         <p className="text-[9px] text-slate-600 font-bold uppercase mt-1">Validated on EOS Mainnet</p>
+                      </div>
+                   </div>
+                 ))}
+              </div>
+           </div>
+        </div>
+      )}
+
+      {selectedProjForClaim && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-2xl" onClick={() => setSelectedProjForClaim(null)}></div>
+           <div className="relative z-10 w-full max-w-md glass-card p-10 rounded-[40px] border-blue-500/20 bg-blue-950/20 shadow-2xl">
+              <div className="text-center space-y-6">
+                 <div className="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto border border-blue-500/20">
+                    <History className="w-10 h-10 text-blue-400" />
+                 </div>
+                 <div className="space-y-2">
+                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Settle Batch</h3>
+                    <p className="text-slate-400 text-sm italic">"Initialize cryptographic payout for {selectedProjForClaim.name}."</p>
+                 </div>
+                 <div className="p-6 bg-black/60 rounded-3xl border border-white/5 space-y-4">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase">
+                       <span className="text-slate-500">Release Amount</span>
+                       <span className="text-emerald-400">{(selectedProjForClaim.totalCapital / selectedProjForClaim.totalBatches).toLocaleString()} EAC</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase">
+                       <span className="text-slate-500">Collateral Requirement</span>
+                       <span className="text-blue-400">{(selectedProjForClaim.totalCapital * 0.5).toLocaleString()} EAC</span>
+                    </div>
+                 </div>
+                 <button 
+                  onClick={executeBatchSettlement}
+                  disabled={isSettlingBatch}
+                  className="w-full py-6 bg-blue-600 rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50"
+                 >
+                    {isSettlingBatch ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+                    {isSettlingBatch ? "CONFIRMING..." : "AUTHORIZE PAYOUT"}
+                 </button>
+              </div>
+           </div>
         </div>
       )}
     </div>

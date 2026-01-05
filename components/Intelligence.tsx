@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
-import { Camera, Brain, TrendingUp, Search, Sparkles, AlertCircle, Loader2, MapPin, ExternalLink, Globe } from 'lucide-react';
-import { predictMarketTrends, searchAgroTrends, findAgroResources, AIResponse, GroundingChunk } from '../services/geminiService';
+import { Camera, Brain, TrendingUp, Search, Sparkles, AlertCircle, Loader2, MapPin, ExternalLink, Globe, ShieldAlert, Users, Heart, Dna, Flame } from 'lucide-react';
+import { predictMarketTrends, searchAgroTrends, findAgroResources, AIResponse, GroundingChunk, analyzeSocialInfluenza } from '../services/geminiService';
 
 const Intelligence: React.FC = () => {
-  const [mode, setMode] = useState<'doctor' | 'forecast' | 'search' | 'maps'>('doctor');
+  const [mode, setMode] = useState<'doctor' | 'forecast' | 'sid' | 'maps'>('doctor');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AIResponse | null>(null);
   const [query, setQuery] = useState('');
@@ -16,11 +15,12 @@ const Intelligence: React.FC = () => {
       if (mode === 'forecast') {
         const data = await predictMarketTrends(query || 'Maize');
         setResult(data);
-      } else if (mode === 'search') {
-        const data = await searchAgroTrends(query || 'Sustainable Agriculture News');
+      } else if (mode === 'sid') {
+        // Node identification simulation
+        const nodeData = { node_id: query || 'Global-Steward-Node', context: 'Intergenerational ideological conflict detection' };
+        const data = await analyzeSocialInfluenza(nodeData);
         setResult(data);
       } else if (mode === 'maps') {
-        // Attempt to get user location
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             const data = await findAgroResources(query || 'Fertilizer Suppliers', pos.coords.latitude, pos.coords.longitude);
@@ -33,7 +33,7 @@ const Intelligence: React.FC = () => {
             setLoading(false);
           }
         );
-        return; // handleAction will be finished in the callback
+        return; 
       }
     } catch (e) {
       console.error(e);
@@ -43,7 +43,6 @@ const Intelligence: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-      {/* Sidebar Tool Selection */}
       <div className="lg:col-span-1 space-y-4">
         <div className="glass-card p-6 rounded-3xl space-y-3">
           <div className="flex items-center gap-2 mb-4">
@@ -58,18 +57,18 @@ const Intelligence: React.FC = () => {
             <span className="text-sm font-bold">Crop Doctor</span>
           </button>
           <button 
+            onClick={() => { setMode('sid'); setQuery(''); setResult(null); }}
+            className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${mode === 'sid' ? 'bg-rose-600 text-white shadow-rose-950/40 shadow-lg' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+          >
+            <ShieldAlert className="w-4 h-4" />
+            <span className="text-sm font-bold">Social Pathogen Scan</span>
+          </button>
+          <button 
             onClick={() => { setMode('forecast'); setQuery(''); setResult(null); }}
             className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${mode === 'forecast' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
           >
             <TrendingUp className="w-4 h-4" />
-            <span className="text-sm font-bold">Market Intelligence</span>
-          </button>
-          <button 
-            onClick={() => { setMode('search'); setQuery(''); setResult(null); }}
-            className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${mode === 'search' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
-          >
-            <Globe className="w-4 h-4" />
-            <span className="text-sm font-bold">Search Grounding</span>
+            <span className="text-sm font-bold">Market Intel</span>
           </button>
           <button 
             onClick={() => { setMode('maps'); setQuery(''); setResult(null); }}
@@ -80,99 +79,80 @@ const Intelligence: React.FC = () => {
           </button>
         </div>
 
-        {mode !== 'doctor' && (
-          <div className="glass-card p-6 rounded-3xl space-y-4">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Input Query</label>
+        <div className="glass-card p-6 rounded-3xl space-y-4">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Input Parameters</label>
             <input 
               type="text" 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={mode === 'forecast' ? "Crop type..." : mode === 'search' ? "Search news..." : "Resource type..."}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              placeholder={mode === 'sid' ? "Enter Node ID or Narrative..." : "Query..."}
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
             <button 
               onClick={handleAction}
               disabled={loading}
-              className="w-full py-3 agro-gradient rounded-xl text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2"
+              className="w-full py-4 agro-gradient rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              {loading ? 'Processing...' : 'Run Analysis'}
+              {loading ? 'Consulting Oracle...' : 'Run Analysis'}
             </button>
-          </div>
-        )}
-
-        <div className="glass-card p-6 rounded-3xl bg-amber-500/5 border-amber-500/20">
-           <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-              <p className="text-[10px] text-amber-200/60 leading-relaxed uppercase font-bold tracking-widest">Scientific Advisory</p>
-           </div>
-           <p className="text-xs text-slate-400 mt-2">All EOS intelligence is verified against real-time web data and Registry nodes.</p>
         </div>
       </div>
 
-      {/* Main Analysis Area */}
       <div className="lg:col-span-3 space-y-6">
-        <div className="glass-card rounded-3xl overflow-hidden min-h-[500px] flex flex-col">
-          <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
-            <h3 className="font-bold text-white flex items-center gap-2">
-               {mode === 'doctor' ? <Camera className="w-5 h-5" /> : mode === 'forecast' ? <TrendingUp className="w-5 h-5" /> : mode === 'search' ? <Globe className="w-5 h-5" /> : <MapPin className="w-5 h-5" />}
-               {mode === 'doctor' ? 'Crop Health Diagnostic' : mode === 'forecast' ? 'Market & Climate Intelligence' : mode === 'search' ? 'Real-time Web Search' : 'Nearby Resource Mapping'}
+        <div className={`glass-card rounded-[40px] overflow-hidden min-h-[550px] flex flex-col border ${mode === 'sid' ? 'border-rose-500/20' : 'border-white/5'}`}>
+          <div className={`p-8 border-b border-white/5 bg-white/5 flex items-center justify-between ${mode === 'sid' ? 'bg-rose-950/10' : ''}`}>
+            <h3 className="font-bold text-white flex items-center gap-3">
+               {mode === 'sid' ? <Flame className="w-6 h-6 text-rose-500" /> : <Brain className="w-6 h-6 text-emerald-400" />}
+               {mode === 'sid' ? 'Social Influenza Diagnostics' : 'Industrial Intelligence'}
             </h3>
-            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded">
-              {mode === 'maps' ? 'Gemini 2.5 Maps' : 'Gemini 3 Flash'}
+            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded border ${mode === 'sid' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+              Oracle Sync Active
             </span>
           </div>
           
-          <div className="flex-1 p-8 flex flex-col items-start relative overflow-y-auto">
-            {loading ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 backdrop-blur-sm z-10">
-                <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
-                <p className="text-slate-400 text-sm mt-4 animate-pulse">Consulting real-time grounding nodes...</p>
+          <div className="flex-1 p-10 relative overflow-y-auto">
+            {loading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md z-10">
+                <Loader2 className="w-16 h-16 text-rose-500 animate-spin" />
+                <p className="text-rose-400 font-black text-xs mt-6 animate-pulse uppercase tracking-[0.4em]">Deconstructing intergenerational narratives...</p>
               </div>
-            ) : null}
+            )}
 
             {result ? (
-              <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="prose prose-invert max-w-none text-slate-300">
-                  <div className="p-8 bg-black/40 rounded-3xl border border-white/10 whitespace-pre-wrap leading-relaxed text-sm">
-                     {result.text}
-                  </div>
+              <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="p-10 bg-black/60 rounded-[40px] border border-white/10 prose prose-invert max-w-none shadow-2xl relative overflow-hidden">
+                   {mode === 'sid' && <div className="absolute top-0 right-0 p-8 opacity-[0.03]"><ShieldAlert className="w-32 h-32 text-rose-500" /></div>}
+                   <div className="text-slate-300 whitespace-pre-wrap leading-relaxed italic text-lg relative z-10">
+                      {result.text}
+                   </div>
                 </div>
 
-                {result.sources && result.sources.length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest px-2">Grounding References</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {result.sources.map((source, idx) => (
-                        <a 
-                          key={idx} 
-                          href={source.web?.uri || source.maps?.uri} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-emerald-500/10 hover:border-emerald-500/20 transition-all group"
-                        >
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            {source.web ? <Globe className="w-4 h-4 text-blue-400" /> : <MapPin className="w-4 h-4 text-rose-400" />}
-                            <span className="text-xs text-slate-300 font-medium truncate">
-                              {source.web?.title || source.maps?.title || "View Location"}
-                            </span>
-                          </div>
-                          <ExternalLink className="w-3 h-3 text-slate-600 group-hover:text-emerald-400" />
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : mode === 'doctor' ? (
-              <div className="w-full h-full flex flex-col items-center justify-center text-center space-y-6">
-                <div className="w-32 h-32 mx-auto bg-emerald-500/10 rounded-full flex items-center justify-center border-2 border-dashed border-emerald-500/40">
-                   <Camera className="w-12 h-12 text-emerald-400" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="glass-card p-8 rounded-[32px] bg-emerald-500/5 border-emerald-500/20 flex items-center gap-6 group hover:bg-emerald-500/10 transition-all">
+                      <Heart className="w-10 h-10 text-emerald-400 group-hover:scale-110 transition-transform" />
+                      <div>
+                         <h4 className="text-sm font-bold text-white uppercase tracking-widest">Remediation Path</h4>
+                         <p className="text-[10px] text-slate-500 leading-relaxed mt-1 uppercase">Positive Language & Community Vouching Node</p>
+                      </div>
+                   </div>
+                   <div className="glass-card p-8 rounded-[32px] bg-blue-500/5 border-blue-500/20 flex items-center gap-6 group hover:bg-blue-500/10 transition-all">
+                      <Users className="w-10 h-10 text-blue-400 group-hover:scale-110 transition-transform" />
+                      <div>
+                         <h4 className="text-sm font-bold text-white uppercase tracking-widest">Social Immunity</h4>
+                         <p className="text-[10px] text-slate-500 leading-relaxed mt-1 uppercase">Steward Resilience Multiplier Enabled</p>
+                      </div>
+                   </div>
                 </div>
-                <div>
-                   <h4 className="text-lg font-bold text-white mb-2">Upload Crop Image</h4>
-                   <p className="text-slate-500 text-sm max-w-xs mx-auto mb-6">Our AI identifies pests, diseases, and nutrient deficiencies from a single photo using EOS Framework logic.</p>
-                   <button className="px-8 py-3 agro-gradient rounded-xl text-white font-bold shadow-lg">Select File</button>
+              </div>
+            ) : mode === 'sid' ? (
+              <div className="w-full h-full flex flex-col items-center justify-center text-center space-y-8 py-20 animate-in zoom-in duration-500">
+                <div className="w-32 h-32 rounded-[40px] bg-rose-500/10 border-2 border-dashed border-rose-500/40 flex items-center justify-center group overflow-hidden">
+                   <ShieldAlert className="w-14 h-14 text-rose-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div className="max-w-md space-y-4">
+                   <h4 className="text-2xl font-black text-white uppercase tracking-tight">Social Pathogen Scanner</h4>
+                   <p className="text-slate-500 leading-relaxed font-medium italic">"Identify and mitigate intergenerational trauma nodes to unlock higher C(a)™ Agro Code growth."</p>
                 </div>
               </div>
             ) : (

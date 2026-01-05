@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Play, 
@@ -21,7 +20,7 @@ import {
   Eye,
   Zap,
   X,
-  Waveform,
+  AudioWaveform as Waveform,
   Activity,
   Maximize2,
   Share2,

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Award, TrendingUp, ShieldCheck, Zap, Bell, Clock, Briefcase, Database, LayoutGrid, Layers, CreditCard, X, Globe } from 'lucide-react';
 import { ViewState, User } from '../types';
@@ -40,7 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all group"
               >
                 <CreditCard className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-                View ID Card
+                View Identity Card
               </button>
               <div className="flex items-center gap-3">
                 <span className="text-[10px] text-emerald-400 font-black tracking-widest">ACTIVE SESSION</span>
@@ -55,11 +54,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <p className="text-2xl font-mono font-black text-white">{user.wallet.lifetimeEarned.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">U-Code Performance</p>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">C(a)™ Agro Code</p>
               <p className="text-2xl font-mono font-black text-emerald-400">{user.metrics.sustainabilityScore}%</p>
             </div>
             <div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Resilience Constant</p>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">m™ Constant</p>
               <p className="text-2xl font-mono font-black text-blue-400">{user.metrics.timeConstantTau}</p>
             </div>
           </div>
@@ -100,7 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
            <div className="relative z-10 space-y-8 flex flex-col items-center">
               <div className="text-center space-y-2 mb-4">
                  <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Steward Identification</h2>
-                 <p className="text-emerald-500 font-mono text-sm tracking-[0.3em]">ENVIROSAGRO SOCIAL IDENTITY</p>
+                 <p className="text-emerald-500 font-mono text-sm tracking-[0.3em]">ENVIROSAGRO™ SOCIAL IDENTITY</p>
               </div>
               <IdentityCard user={user} />
               <div className="flex gap-4">
@@ -115,13 +114,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         </div>
       )}
 
-      {/* SEHTI Integration Widget */}
+      {/* Five Thrusts™ Integration Widget */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass-card p-8 rounded-[40px] border-emerald-500/10 bg-gradient-to-br from-emerald-500/[0.02] to-transparent">
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-3">
               <Layers className="w-6 h-6 text-emerald-400" />
-              <h3 className="text-lg font-bold text-white uppercase tracking-widest">Thrust Index</h3>
+              <h3 className="text-lg font-bold text-white uppercase tracking-widest">Five Thrusts™ Index</h3>
             </div>
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Verified by ESIN</span>
           </div>
@@ -155,12 +154,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         <div className="glass-card p-8 rounded-[40px] bg-indigo-500/[0.02] flex flex-col justify-center border-white/5 overflow-hidden relative">
           <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
           <div className="text-center space-y-4 relative z-10">
-             <div className="w-24 h-24 mx-auto agro-gradient rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/30 mb-2 group">
+             <div className="w-24 h-24 agro-gradient rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/30 mb-2 group">
                 <TrendingUp className="w-12 h-12 text-white group-hover:scale-110 transition-transform" />
              </div>
              <h3 className="text-3xl font-black text-white tracking-tighter">92.4% Resilience</h3>
              <p className="text-sm text-slate-500 max-w-xs mx-auto font-medium">
-               Steward <span className="text-white">{user.name}</span>, your SEHTI integration is currently yielding a <span className="text-emerald-400">1.2x EAC multiplier</span>.
+               Steward <span className="text-white">{user.name}</span>, your Five Thrusts™ integration is currently yielding a <span className="text-emerald-400">1.2x EAC multiplier</span>.
              </p>
              <button 
               onClick={() => onNavigate('ecosystem')}
@@ -175,7 +174,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
       {/* Quick Access Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: "U-Code Simulator", icon: Zap, color: "bg-emerald-500", target: 'sustainability' as ViewState },
+          { label: "C(a)™ Simulator", icon: Zap, color: "bg-emerald-500", target: 'sustainability' as ViewState },
           { label: "Identity Registry", icon: CreditCard, color: "bg-blue-500", target: 'info' as ViewState },
           { label: "Industrial Cloud", icon: Briefcase, color: "bg-purple-500", target: 'industrial' as ViewState },
           { label: "Registry Database", icon: Database, color: "bg-amber-500", target: 'explorer' as ViewState },

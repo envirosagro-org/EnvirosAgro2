@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Search, 
   MapPin, 
@@ -32,14 +31,34 @@ import {
   Database,
   Gem,
   PlusCircle,
+  /* Added missing RefreshCcw icon */
+  RefreshCcw,
   AlertCircle,
   Rocket,
   Landmark,
   ArrowRight,
   BarChart3,
   Info,
-  Bot
+  Bot,
+  PieChart as PieChartIcon,
+  Globe,
+  LineChart as LineChartIcon
 } from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  Legend
+} from 'recharts';
 import { User, AgroProject } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -48,12 +67,38 @@ interface IndustrialProps {
   onSpendEAC: (amount: number, reason: string) => boolean;
 }
 
+const GLOBAL_STATS_DATA = [
+  { name: 'Jan', nodes: 2400, tvl: 4000 },
+  { name: 'Feb', nodes: 3200, tvl: 5200 },
+  { name: 'Mar', nodes: 3800, tvl: 7800 },
+  { name: 'Apr', nodes: 4200, tvl: 9200 },
+  { name: 'May', nodes: 4800, tvl: 11000 },
+];
+
+const THRUST_DISTRIBUTION = [
+  { name: 'Technological', value: 45, color: '#3b82f6' },
+  { name: 'Societal', value: 30, color: '#10b981' },
+  { name: 'Environmental', value: 15, color: '#fbbf24' },
+  { name: 'Informational', value: 10, color: '#6366f1' },
+];
+
+const REGIONAL_RELIANCE = [
+  { zone: 'Zone 1', resilience: 84, growth: 12 },
+  { zone: 'Zone 2', resilience: 92, growth: 18 },
+  { zone: 'Zone 3', resilience: 78, growth: 8 },
+  { zone: 'Zone 4', resilience: 95, growth: 22 },
+];
+
 const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
-  const [activeView, setActiveView] = useState<'registry' | 'talent' | 'auctions'>('registry');
+  const [activeView, setActiveView] = useState<'registry' | 'talent' | 'auctions' | 'analytics'>('registry');
   const [isRegisteringProject, setIsRegisteringProject] = useState(false);
   const [projectStep, setProjectStep] = useState<'ideation' | 'analysis' | 'policy' | 'success'>('ideation');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+
+  // Global Analytics State
+  const [isFetchingGlobalReport, setIsFetchingGlobalReport] = useState(false);
+  const [globalReport, setGlobalReport] = useState<string | null>(null);
 
   // Form State
   const [pName, setPName] = useState('');
@@ -75,6 +120,14 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
     setProjectStep('analysis');
   };
 
+  const runGlobalOracleReport = async () => {
+    setIsFetchingGlobalReport(true);
+    const prompt = "Generate a global industrial agro-intelligence report. Analyze macro-trends in decentralized infrastructure, TVL distribution across Five Thrusts™, and regional resilience growth. Use a professional, institutional tone.";
+    const response = await chatWithAgroExpert(prompt, []);
+    setGlobalReport(response.text);
+    setIsFetchingGlobalReport(false);
+  };
+
   const finalizeRegistration = () => {
     setProjectStep('success');
   };
@@ -83,7 +136,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 glass-card p-10 rounded-[40px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-6 transition-transform">
+           <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
               <Layers className="w-64 h-64 text-white" />
            </div>
            <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
@@ -92,7 +145,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
               </div>
               <div className="space-y-4">
                  <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Industrial <span className="text-indigo-400">Cloud</span></h2>
-                 <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
+                 <p className="text-slate-400 text-lg leading-relaxed max-w-xl font-medium">
                     Coordinate large-scale agricultural projects, source verified talent, and participate in tender auctions for global sustainability missions.
                  </p>
                  <div className="flex gap-4 pt-2">
@@ -102,7 +155,12 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
                     >
                        <PlusCircle className="w-4 h-4" /> Start Industrial Project
                     </button>
-                    <button className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">Global Analytics</button>
+                    <button 
+                      onClick={() => setActiveView('analytics')}
+                      className={`px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all ${activeView === 'analytics' ? 'bg-white/10 border-indigo-500/40' : ''}`}
+                    >
+                      Global Analytics
+                    </button>
                  </div>
               </div>
            </div>
@@ -125,6 +183,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
           { id: 'registry', label: 'Active Projects', icon: Database },
           { id: 'talent', label: 'Worker Cloud', icon: Users2 },
           { id: 'auctions', label: 'Tender Auctions', icon: Gavel },
+          { id: 'analytics', label: 'Global Analytics', icon: BarChart3 },
         ].map(tab => (
           <button 
             key={tab.id}
@@ -181,6 +240,172 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
                 </div>
              </div>
            ))}
+        </div>
+      )}
+
+      {activeView === 'analytics' && (
+        <div className="space-y-8 animate-in zoom-in duration-500">
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Network Growth Chart */}
+              <div className="lg:col-span-2 glass-card p-10 rounded-[40px] border-white/5 space-y-8">
+                 <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                       <div className="p-2 bg-indigo-500/10 rounded-xl">
+                          <LineChartIcon className="w-5 h-5 text-indigo-400" />
+                       </div>
+                       <h3 className="text-xl font-bold text-white uppercase tracking-tighter">Network Expansion</h3>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase">Steward Nodes Index</span>
+                 </div>
+                 <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <AreaChart data={GLOBAL_STATS_DATA}>
+                          <defs>
+                             <linearGradient id="colorNodes" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                             </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                          <Area type="monotone" dataKey="nodes" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorNodes)" />
+                       </AreaChart>
+                    </ResponsiveContainer>
+                 </div>
+              </div>
+
+              {/* TVL Distribution */}
+              <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-8 flex flex-col items-center">
+                 <div className="w-full flex justify-between items-center">
+                    <h3 className="text-xl font-bold text-white uppercase tracking-tighter">TVL Distribution</h3>
+                    <PieChartIcon className="w-5 h-5 text-emerald-400" />
+                 </div>
+                 <div className="h-[250px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <PieChart>
+                          <Pie
+                             data={THRUST_DISTRIBUTION}
+                             cx="50%"
+                             cy="50%"
+                             innerRadius={60}
+                             outerRadius={80}
+                             paddingAngle={5}
+                             dataKey="value"
+                          >
+                             {THRUST_DISTRIBUTION.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                             ))}
+                          </Pie>
+                          <Tooltip />
+                       </PieChart>
+                    </ResponsiveContainer>
+                 </div>
+                 <div className="w-full space-y-3">
+                    {THRUST_DISTRIBUTION.map(item => (
+                       <div key={item.name} className="flex justify-between items-center text-[10px] font-black uppercase">
+                          <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                             <span className="text-slate-400">{item.name}</span>
+                          </div>
+                          <span className="text-white">{item.value}%</span>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Regional Resilience Bar Chart */}
+              <div className="lg:col-span-2 glass-card p-10 rounded-[40px] border-white/5 space-y-8">
+                 <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/10 rounded-xl">
+                       <BarChart3 className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white uppercase tracking-tighter">Regional Resilience m™</h3>
+                 </div>
+                 <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <BarChart data={REGIONAL_RELIANCE}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="zone" stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                          <Bar dataKey="resilience" fill="#10b981" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="growth" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                       </BarChart>
+                    </ResponsiveContainer>
+                 </div>
+                 <div className="flex gap-8 justify-center">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-emerald-400">
+                       <div className="w-3 h-3 bg-emerald-500 rounded"></div> Resilience Index
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400">
+                       <div className="w-3 h-3 bg-blue-500 rounded"></div> MoM Growth %
+                    </div>
+                 </div>
+              </div>
+
+              {/* Global Oracle Intelligence Sidebox */}
+              <div className="glass-card p-8 rounded-[40px] bg-indigo-900/10 border-indigo-500/20 flex flex-col relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
+                    <Globe className="w-40 h-40 text-indigo-400" />
+                 </div>
+                 
+                 <div className="relative z-10 flex flex-col h-full">
+                    <div className="flex items-center gap-4 mb-6 border-b border-white/5 pb-6">
+                       <div className="w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-xl shadow-indigo-900/40">
+                          <Bot className="w-8 h-8 text-white" />
+                       </div>
+                       <div>
+                          <h4 className="text-xl font-bold text-white uppercase tracking-tighter italic">Global <span className="text-indigo-400">Oracle</span></h4>
+                          <span className="text-[10px] text-indigo-400 font-black uppercase">EOS_MACRO_INTEL</span>
+                       </div>
+                    </div>
+
+                    {!globalReport && !isFetchingGlobalReport ? (
+                      <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6">
+                         <p className="text-sm text-slate-400 italic leading-relaxed">
+                            "Initialize a global synchronization audit to generate high-level industrial intelligence on EOS network status."
+                         </p>
+                         <button 
+                           onClick={runGlobalOracleReport}
+                           className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                         >
+                            <Zap className="w-5 h-5 fill-current" /> Initialize Global Sweep
+                         </button>
+                      </div>
+                    ) : (
+                      <div className="flex-1 space-y-6 flex flex-col overflow-hidden animate-in fade-in duration-700">
+                         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                           {isFetchingGlobalReport ? (
+                             <div className="flex flex-col items-center justify-center h-full space-y-4">
+                                <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
+                                <p className="text-emerald-400 font-black text-[9px] uppercase tracking-widest animate-pulse">Aggregating Global Shards...</p>
+                             </div>
+                           ) : (
+                             <div className="prose prose-invert prose-indigo max-w-none text-slate-300 text-[11px] italic leading-relaxed whitespace-pre-line">
+                                {globalReport}
+                             </div>
+                           )}
+                         </div>
+                         <button 
+                          onClick={() => setGlobalReport(null)}
+                          className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-slate-500 hover:text-white"
+                         >
+                           Clear Report
+                         </button>
+                      </div>
+                    )}
+                    
+                    <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-slate-600 uppercase tracking-[0.4em]">
+                       <span>Status</span>
+                       <span className="text-emerald-400 animate-pulse">LIVE_FEED_SYNC</span>
+                    </div>
+                 </div>
+              </div>
+           </div>
         </div>
       )}
 
@@ -284,7 +509,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
                       </div>
 
                       <div className="p-10 glass-card rounded-[40px] bg-white/[0.01] border-l-4 border-blue-500/50">
-                         <div className="prose prose-invert prose-blue max-w-none text-slate-300 text-lg leading-loose italic whitespace-pre-line">
+                         <div className="prose prose-invert prose-blue max-w-none text-slate-300 text-lg leading-loose italic whitespace-pre-line border-l-4 border-blue-500/20 pl-8">
                             {aiAnalysis}
                          </div>
                       </div>
@@ -437,6 +662,37 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
             </div>
          </div>
       )}
+
+      {activeView === 'auctions' && (
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-8 animate-in zoom-in duration-500">
+           <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-700">
+              <Gavel className="w-12 h-12 opacity-20" />
+           </div>
+           <div className="max-w-md space-y-3">
+              <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Tender Auctions</h4>
+              <p className="text-slate-500 text-sm leading-relaxed">No active tender requests in your zone. Higher m™ resilience scores unlock access to premium industrial auctions.</p>
+           </div>
+           <button className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3">
+              <RefreshCcw className="w-4 h-4 text-emerald-500" /> Refresh Registry
+           </button>
+        </div>
+      )}
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.05);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255,255,255,0.1);
+        }
+      `}</style>
     </div>
   );
 };

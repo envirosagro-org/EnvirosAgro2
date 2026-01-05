@@ -2,6 +2,8 @@
   "name": "EnvirosAgro Blockchain",
   "description": "A decentralized ecosystem for sustainable agriculture, real-time crop monitoring, and carbon credit tracking using blockchain transparency and Gemini-powered agro-analytics.",
   "requestFramePermissions": [
-    "geolocation"
+    "geolocation",
+    "camera",
+    "microphone"
   ]
 }

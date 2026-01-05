@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Cable, 
@@ -28,7 +27,8 @@ import {
   ArrowUpRight,
   Shield,
   FileCode,
-  Network
+  Network,
+  Download
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -48,11 +48,9 @@ const NetworkIngest: React.FC = () => {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [generatedKey, setGeneratedKey] = useState('');
   
-  // Analyzer state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
-  // Simulated live log feed
   useEffect(() => {
     const sources = ['SAT-EOS-04', 'Drone-NE-82', 'Soil-Array-P4', 'ThirdParty-API-C1'];
     const events = ['Data Packet Received', 'ZK-Proof Validated', 'Registry Hash Committed', 'Telemetry Resync'];
@@ -98,7 +96,6 @@ const NetworkIngest: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      {/* Technical Header */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 glass-card p-12 rounded-[48px] bg-gradient-to-br from-indigo-600/10 to-transparent border-indigo-500/20 relative overflow-hidden flex flex-col justify-between group">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform pointer-events-none">
@@ -122,7 +119,7 @@ const NetworkIngest: React.FC = () => {
               <div className="flex gap-4 pt-4">
                  <button 
                   onClick={generateNewKey}
-                  className="px-8 py-5 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-emerald-900/40 hover:scale-105 transition-all flex items-center gap-3"
+                  className="px-8 py-5 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                  >
                     {isGeneratingKey ? <Loader2 className="w-5 h-5 animate-spin" /> : <PlusCircle className="w-5 h-5" />}
                     Initialize Integration
@@ -164,9 +161,7 @@ const NetworkIngest: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Terminal View */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-[650px]">
-        {/* Navigation Sidebar */}
         <div className="space-y-4">
            <div className="glass-card p-4 rounded-[32px] space-y-2">
               {[
@@ -197,9 +192,7 @@ const NetworkIngest: React.FC = () => {
            </div>
         </div>
 
-        {/* Content Terminal Area */}
         <div className="lg:col-span-3 glass-card rounded-[48px] flex flex-col overflow-hidden border-white/5 bg-black/40">
-           
            {activeTab === 'overview' && (
              <div className="flex-1 flex flex-col animate-in fade-in duration-500">
                 <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
@@ -233,12 +226,11 @@ const NetworkIngest: React.FC = () => {
            )}
 
            {activeTab === 'docs' && (
-             <div className="flex-1 p-12 overflow-y-auto custom-scrollbar animate-in slide-in-from-right-4 duration-500 space-y-12">
+             <div className="flex-1 p-12 overflow-y-auto animate-in slide-in-from-right-4 duration-500 space-y-12">
                 <div className="space-y-4">
                    <h3 className="text-4xl font-black text-white uppercase tracking-tighter">API Documentation</h3>
                    <p className="text-slate-400 text-lg max-w-2xl leading-relaxed italic">"Integrating the world's scientific data into the EOS Industrial Framework."</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-6 group hover:border-indigo-500/30 transition-all">
                       <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 group-hover:bg-indigo-500 group-hover:text-white transition-all">
@@ -250,7 +242,6 @@ const NetworkIngest: React.FC = () => {
                          Authorization: Bearer {'<YOUR_ESIN_SECRET>'}
                       </div>
                    </div>
-
                    <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-6 group hover:border-emerald-500/30 transition-all">
                       <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white transition-all">
                          <Network className="w-6 h-6 text-emerald-400 group-hover:text-white" />
@@ -262,7 +253,6 @@ const NetworkIngest: React.FC = () => {
                       </div>
                    </div>
                 </div>
-
                 <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-8">
                    <div className="flex items-center gap-3">
                       <FileCode className="w-6 h-6 text-blue-400" />
@@ -313,7 +303,6 @@ const NetworkIngest: React.FC = () => {
                       </p>
                    </div>
                 </div>
-
                 {!analysisResult && !isAnalyzing ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 py-12">
                      <div className="w-32 h-32 rounded-full border-4 border-dashed border-emerald-500/20 flex items-center justify-center relative overflow-hidden">
@@ -347,7 +336,6 @@ const NetworkIngest: React.FC = () => {
                      </div>
                   </div>
                 )}
-
                 {isAnalyzing && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#050706]/80 backdrop-blur-md z-20">
                      <Loader2 className="w-16 h-16 text-emerald-500 animate-spin" />
@@ -363,7 +351,6 @@ const NetworkIngest: React.FC = () => {
                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Developer Credentials</h3>
                    <p className="text-slate-400 leading-relaxed text-lg">Provision and manage secure access keys for automated telemetry submission via the ZK-Relay.</p>
                 </div>
-
                 <div className="space-y-6">
                    <div className="p-8 glass-card rounded-[40px] border-white/10 bg-white/[0.01] space-y-8">
                       <div className="flex justify-between items-center">
@@ -375,7 +362,6 @@ const NetworkIngest: React.FC = () => {
                             Status: Live
                          </div>
                       </div>
-                      
                       <div className="p-6 bg-black/60 rounded-3xl border border-white/5 flex items-center justify-between group overflow-hidden relative">
                          <span className="text-sm font-mono text-indigo-300 tracking-widest relative z-10">EA_STWD_A842_XXXX_SYNC</span>
                          <div className="flex gap-2 relative z-10">
@@ -384,13 +370,11 @@ const NetworkIngest: React.FC = () => {
                          </div>
                          <div className="absolute inset-0 bg-indigo-500/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500"></div>
                       </div>
-                      
                       <div className="pt-4 flex justify-between items-center text-[10px] text-slate-600 font-bold uppercase tracking-widest">
                          <span>Last Signature: 12m ago</span>
                          <span>Relay Node: GLOBAL_BETA_SYNC</span>
                       </div>
                    </div>
-
                    <button 
                     onClick={generateNewKey}
                     className="w-full py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-3"
@@ -403,7 +387,6 @@ const NetworkIngest: React.FC = () => {
         </div>
       </div>
 
-      {/* API Key Modal */}
       {showKeyModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-2xl" onClick={() => setShowKeyModal(false)}></div>
@@ -412,7 +395,6 @@ const NetworkIngest: React.FC = () => {
                  <button onClick={() => setShowKeyModal(false)} className="absolute top-10 right-10 text-slate-600 hover:text-white transition-colors">
                    <X className="w-8 h-8" />
                  </button>
-
                  <div className="space-y-4">
                     <div className="w-20 h-20 bg-emerald-500/10 rounded-[28px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
                        <Key className="w-10 h-10 text-emerald-400" />
@@ -422,7 +404,6 @@ const NetworkIngest: React.FC = () => {
                        This is a one-time cryptographic display. Secure this key immediately. Exposure leads to registry risk.
                     </p>
                  </div>
-
                  <div className="p-8 bg-black/60 rounded-[32px] border border-white/10 flex items-center justify-between">
                     <span className="text-xs font-mono text-emerald-400 break-all select-all tracking-wider">{generatedKey}</span>
                     <button 
@@ -432,14 +413,12 @@ const NetworkIngest: React.FC = () => {
                        <Copy className="w-6 h-6" />
                     </button>
                  </div>
-
                  <div className="p-6 bg-rose-500/5 border border-rose-500/10 rounded-[32px] flex items-center gap-4 text-left">
                     <AlertTriangle className="w-8 h-8 text-rose-500 shrink-0" />
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight leading-relaxed">
                        Losing this integration key requires a full Node Re-Authorization via your verified email anchor.
                     </p>
                  </div>
-
                  <button 
                     onClick={() => setShowKeyModal(false)}
                     className="w-full py-6 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all"
@@ -454,8 +433,8 @@ const NetworkIngest: React.FC = () => {
   );
 };
 
-// Local Download Icon fix
-const Download = ({ className }: { className?: string }) => (
+// Renamed to DownloadIcon to avoid conflict with 'Download' imported from lucide-react
+const DownloadIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
   </svg>
