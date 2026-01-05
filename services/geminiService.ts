@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -15,6 +14,7 @@ EnvirosAgro™ Sustainability Framework (EOS):
   - Impact: Reduces x (Social Immunity), disrupts m™ (Resilience), leading to Environmental degradation and Human Health decline (Hypertension, anxiety).
 - Five Thrusts™ (SEHTI): Societal, Environmental, Human, Technological, Industry.
 - Tokenz Institutional Account: The central gateway for value ingress/egress. It manages EAC liquidity, FIAT parity, and ZK-verified bridge protocols.
+- Telecommunication Node (TelNode): A specialized validator that anchors a steward's physical identity via encrypted line number handshakes.
 `;
 
 export interface GroundingChunk {
@@ -50,6 +50,26 @@ const callWithRetry = async <T>(fn: () => Promise<T>, retries = 3, delay = 1000)
   }
 };
 
+export const verifyTelecommNode = async (telData: any): Promise<AIResponse> => {
+  const ai = getAI();
+  const prompt = `Act as the EnvirosAgro Telecommunication Audit Oracle. 
+  Process this identity anchoring request: ${JSON.stringify(telData)}.
+  Context: ${FRAMEWORK_CONTEXT}
+  1. Perform a mock ZK-handshake with the regional TelNode.
+  2. Verify if the provided country code and line number align with the steward's geographic node location.
+  3. Confirm the cryptographic integrity of the proposed identity shard.`;
+
+  try {
+    const response = await callWithRetry(() => ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+    })) as GenerateContentResponse;
+    return { text: response.text || "Telecomm audit successful." };
+  } catch (error) {
+    return { text: "TelNode Gateway timeout. Proceeding with local verification cache." };
+  }
+};
+
 export const analyzeTokenzFinance = async (transactionData: any): Promise<AIResponse> => {
   const ai = getAI();
   const prompt = `Act as the EnvirosAgro Tokenz Institutional Oracle. 
@@ -60,7 +80,6 @@ export const analyzeTokenzFinance = async (transactionData: any): Promise<AIResp
   3. Provide an institutional risk assessment for this value transfer.`;
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
@@ -80,7 +99,6 @@ export const analyzeSocialInfluenza = async (nodeData: any): Promise<AIResponse>
   3. Suggest specific remediation for Environmental (E) and Health (H) thrusts using "Neural Reforestation" techniques.`;
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
@@ -98,7 +116,6 @@ export const analyzeSustainability = async (farmData: any): Promise<AIResponse> 
   Calculate or estimate C(a)™ Agro Code and m™ Constant if possible. Provide a structured sustainability report.`;
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-pro-preview', 
       contents: prompt,
@@ -115,7 +132,6 @@ export const searchAgroTrends = async (query: string): Promise<AIResponse> => {
   const prompt = `Search for the latest trends, news, and events related to: ${query} in the context of sustainable agriculture. Use the EnvirosAgro™ context if relevant: ${FRAMEWORK_CONTEXT}`;
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -148,7 +164,6 @@ export const generateMediaInsights = async (channelType: string, topic: string):
   }
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -170,7 +185,6 @@ export const findAgroResources = async (query: string, lat?: number, lng?: numbe
   } : undefined;
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -202,7 +216,6 @@ export const diagnoseCropIssue = async (description: string, imageBase64?: strin
   }
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: { parts }
@@ -218,7 +231,6 @@ export const predictMarketTrends = async (cropType: string): Promise<AIResponse>
   const prompt = `Using real-time web data and the EOS Framework context (${FRAMEWORK_CONTEXT}), predict the demand and price trends for ${cropType} over the next 6 months. How does high C(a)™ Agro Code verification affect market premium?`;
   
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -245,7 +257,6 @@ export const optimizeSupplyChain = async (routeData: any): Promise<AIResponse> =
   Provide a technical recommendation aligned with the Five Thrusts™.`;
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -263,7 +274,6 @@ export const getDeFiIntelligence = async (transaction: any): Promise<AIResponse>
   Provide a summary of the bridge security (ZK-Rollup confirmation times).`;
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -286,7 +296,6 @@ export const chatWithAgroExpert = async (message: string, history: any[], useSea
   });
 
   try {
-    // Cast result to GenerateContentResponse to fix 'unknown' type errors
     const response = await callWithRetry(() => chat.sendMessage({ message })) as GenerateContentResponse;
     const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     return {

@@ -50,7 +50,9 @@ import {
   Brain,
   Microscope,
   Binary,
-  Waves
+  Waves,
+  Link as LinkIcon,
+  ShieldX
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -71,7 +73,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis
 } from 'recharts';
-import { chatWithAgroExpert, diagnoseCropIssue, analyzeSocialInfluenza } from '../services/geminiService';
+import { chatWithAgroExpert, diagnoseCropIssue, analyzeSocialInfluenza, analyzeTokenzFinance } from '../services/geminiService';
 
 interface SustainabilityProps {
   onAction?: () => void;
@@ -101,6 +103,11 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
   const [iotStream, setIotStream] = useState<{ id: string, val: number, status: string }[]>([]);
   const [isRelayActive, setIsRelayActive] = useState(false);
   const [relayFrequency, setRelayFrequency] = useState(432);
+
+  // Institutional Data Bridge States
+  const [isBridgeAuthorized, setIsBridgeAuthorized] = useState(false);
+  const [isAuthorizingBridge, setIsAuthorizingBridge] = useState(false);
+  const [bridgeLog, setBridgeLog] = useState<string | null>(null);
 
   const [results, setResults] = useState({ ca: 0, m: 0 });
 
@@ -150,6 +157,25 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
     const response = await analyzeSocialInfluenza(nodeData);
     setSidReport(response.text);
     setIsAnalyzingSID(false);
+  };
+
+  const handleAuthorizeBridge = async () => {
+    setIsAuthorizingBridge(true);
+    try {
+      const handshakeData = {
+        action: 'INSTITUTIONAL_BRIDGE_AUTH',
+        node_id: 'NODE-291',
+        protocol: 'EOS-3.2-SHARD',
+        timestamp: new Date().toISOString()
+      };
+      const response = await analyzeTokenzFinance(handshakeData);
+      setBridgeLog(response.text);
+      setIsBridgeAuthorized(true);
+    } catch (error) {
+      alert("Institutional Handshake Failed. Verify ESIN node status.");
+    } finally {
+      setIsAuthorizingBridge(false);
+    }
   };
 
   const handleSaveScenario = () => {
@@ -543,18 +569,47 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
                 </button>
              </div>
 
-             <div className="glass-card p-10 rounded-[48px] bg-indigo-600/5 border-indigo-500/20 flex flex-col justify-center items-center text-center space-y-6 group">
+             <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-600/5 flex flex-col justify-center items-center text-center space-y-6 group overflow-hidden relative">
+                {isAuthorizingBridge && (
+                  <div className="absolute inset-0 bg-indigo-900/60 backdrop-blur-md z-20 flex flex-col items-center justify-center space-y-4">
+                     <Loader2 className="w-12 h-12 text-indigo-400 animate-spin" />
+                     <p className="text-indigo-400 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">Syncing Shards...</p>
+                  </div>
+                )}
                 <div className="relative">
-                   <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full scale-150 animate-pulse"></div>
-                   <Cloud className="w-16 h-16 text-indigo-400 relative z-10 group-hover:scale-110 transition-transform" />
+                   <div className={`absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full scale-150 transition-opacity ${isBridgeAuthorized ? 'opacity-100' : 'animate-pulse opacity-50'}`}></div>
+                   {isBridgeAuthorized ? <ShieldCheck className="w-16 h-16 text-emerald-400 relative z-10" /> : <Cloud className="w-16 h-16 text-indigo-400 relative z-10 group-hover:scale-110 transition-transform" />}
                 </div>
                 <div className="space-y-2">
                    <h4 className="text-xl font-bold text-white uppercase tracking-tighter">Institutional Data</h4>
-                   <p className="text-slate-500 text-xs font-medium leading-relaxed italic">"Connect your node to the Global Environmental Shard for predictive risk modeling."</p>
+                   <p className="text-slate-500 text-xs font-medium leading-relaxed italic">
+                     {isBridgeAuthorized ? "Bridge verified. Node connected to the Global Environmental Shard." : "Connect your node to the Global Environmental Shard for predictive risk modeling."}
+                   </p>
                 </div>
-                <button className="w-full py-5 bg-indigo-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/40 hover:scale-105 active:scale-95 transition-all">
-                   Authorize Data Bridge
-                </button>
+                {!isBridgeAuthorized ? (
+                  <button 
+                    onClick={handleAuthorizeBridge}
+                    className="w-full py-5 bg-indigo-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/40 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    Authorize Data Bridge
+                  </button>
+                ) : (
+                  <div className="w-full space-y-4 animate-in fade-in duration-500">
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-black/40 border border-white/5 rounded-2xl">
+                           <p className="text-[8px] text-slate-500 uppercase">Uptime</p>
+                           <p className="text-xs font-mono text-emerald-400 font-bold">99.99%</p>
+                        </div>
+                        <div className="p-3 bg-black/40 border border-white/5 rounded-2xl">
+                           <p className="text-[8px] text-slate-500 uppercase">Latency</p>
+                           <p className="text-xs font-mono text-white font-bold">8ms</p>
+                        </div>
+                     </div>
+                     <button onClick={() => setIsBridgeAuthorized(false)} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-[8px] font-black text-slate-500 uppercase tracking-widest hover:text-rose-400 transition-colors flex items-center justify-center gap-2">
+                        <ShieldX className="w-3 h-3" /> Revoke Shard Link
+                     </button>
+                  </div>
+                )}
              </div>
 
              <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-[32px] flex items-center gap-4">

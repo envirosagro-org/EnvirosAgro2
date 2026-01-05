@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   User as UserIcon, 
@@ -27,10 +26,18 @@ import {
   Send,
   LogOut,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Phone,
+  Globe,
+  Radio,
+  Sparkles,
+  Smartphone,
+  // Fix: Added missing Zap icon import from lucide-react
+  Zap
 } from 'lucide-react';
 import { User } from '../types';
 import IdentityCard from './IdentityCard';
+import { verifyTelecommNode } from '../services/geminiService';
 
 interface UserProfileProps {
   user: User;
@@ -47,13 +54,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
   const [name, setName] = useState(user.name);
   const [location, setLocation] = useState(user.location);
   const [role, setRole] = useState(user.role);
+  const [countryCode, setCountryCode] = useState(user.countryCode || '+254');
+  const [lineNumber, setLineNumber] = useState(user.lineNumber || '');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Line Verification States
+  const [showVerifyPhoneModal, setShowVerifyPhoneModal] = useState(false);
+  const [verifyStep, setVerifyStep] = useState<'idle' | 'auditing' | 'otp' | 'success'>('idle');
+  const [otpInput, setOtpInput] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [auditReport, setAuditReport] = useState<string | null>(null);
 
   // Security Interaction States
   const [showBiometricModal, setShowBiometricModal] = useState(false);
   const [biometricStep, setBiometricStep] = useState<'idle' | 'scanning' | 'complete'>('idle');
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-  const [recoveryStep, setRecoveryStep] = useState<'idle' | 'sending' | 'verified'>('idle');
+  const [recoveryStep, setVerifyStepRecovery] = useState<'idle' | 'sending' | 'verified'>('idle');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
 
@@ -64,11 +80,39 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
         ...user,
         name,
         location,
-        role
+        role,
+        countryCode,
+        lineNumber
       });
       setIsSaving(false);
       setIsEditing(false);
     }, 1500);
+  };
+
+  const startLineVerification = async () => {
+    if (!lineNumber || !countryCode) return;
+    setVerifyStep('auditing');
+    const res = await verifyTelecommNode({ countryCode, lineNumber, esin: user.esin });
+    setAuditReport(res.text);
+    
+    // Simulate OTP generation after audit
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(code);
+    
+    setTimeout(() => {
+      setVerifyStep('otp');
+    }, 3000);
+  };
+
+  const handleOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otpInput === generatedOtp) {
+      setVerifyStep('success');
+      onUpdate({ ...user, isPhoneVerified: true });
+    } else {
+      alert("Invalid verification code. Please check the network signal.");
+      setOtpInput('');
+    }
   };
 
   const startBiometricScan = () => {
@@ -79,9 +123,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
   };
 
   const initiateRecoveryCheck = () => {
-    setRecoveryStep('sending');
+    setVerifyStepRecovery('sending');
     setTimeout(() => {
-      setRecoveryStep('verified');
+      setVerifyStepRecovery('verified');
     }, 2500);
   };
 
@@ -92,7 +136,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       {/* Profile Header */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 glass-card p-10 rounded-[40px] relative overflow-hidden flex flex-col md:flex-row items-center gap-10">
@@ -120,7 +164,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-gap-2 flex items-center gap-2">
                 <MapPin className="w-3 h-3" /> {user.location}
               </span>
               <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -129,6 +173,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
               <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
                 <Calendar className="w-3 h-3" /> Node Active Since {user.regDate}
               </span>
+              {user.lineNumber && (
+                <span className={`px-3 py-1 border rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${user.isPhoneVerified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+                  <Phone className="w-3 h-3" /> {user.countryCode} {user.lineNumber}
+                  {user.isPhoneVerified && <CheckCircle2 className="w-2.5 h-2.5" />}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -239,12 +289,59 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                         className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 transition-all" 
                       />
                     </div>
+                    
+                    {/* Line Number Ingest with Country Code */}
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                       <div className="space-y-2 md:col-span-1">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Country Code</label>
+                          <div className="relative">
+                            <Globe className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <input 
+                              type="text" 
+                              disabled={!isEditing}
+                              value={countryCode}
+                              onChange={(e) => setCountryCode(e.target.value)}
+                              placeholder="+254"
+                              className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 transition-all font-mono" 
+                            />
+                          </div>
+                       </div>
+                       <div className="space-y-2 md:col-span-3">
+                          <div className="flex justify-between items-center px-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Line Number Ingest</label>
+                            {user.lineNumber && !user.isPhoneVerified && !isEditing && (
+                              <button 
+                                onClick={() => { setShowVerifyPhoneModal(true); setVerifyStep('idle'); }}
+                                className="text-[9px] font-black text-rose-400 uppercase tracking-widest hover:text-rose-300 flex items-center gap-1"
+                              >
+                                <ShieldAlert className="w-3 h-3" /> Unverified Node • Verify Now
+                              </button>
+                            )}
+                            {user.isPhoneVerified && !isEditing && (
+                              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                                <ShieldCheck className="w-3 h-3" /> TEL_NODE_SECURED
+                              </span>
+                            )}
+                          </div>
+                          <div className="relative">
+                            <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <input 
+                              type="tel" 
+                              disabled={!isEditing}
+                              value={lineNumber}
+                              onChange={(e) => setLineNumber(e.target.value)}
+                              placeholder="7XX XXX XXX"
+                              className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 transition-all font-mono tracking-widest" 
+                            />
+                          </div>
+                       </div>
+                    </div>
                  </div>
 
                  <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-center gap-4 mt-4">
                     <Activity className="w-6 h-6 text-amber-500 shrink-0" />
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Identity changes require a cryptographic re-sync with the global registry. This may briefly pause your active reaction mining sessions.
+                      Identity changes require a cryptographic re-sync with the global registry. Your verified Line Number anchors your steward presence to the physical telecommunication grid.
                     </p>
                  </div>
               </div>
@@ -272,7 +369,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
 
                     <div className="space-y-2 flex flex-col justify-center">
                        <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                          <Trash2 className="w-4 h-4 text-rose-500" /> Delete Node Entry
+                          <Trash2 className="w-4 h-4 text-rose-400" /> Delete Node Entry
                        </h4>
                        <p className="text-xs text-slate-500">Permanently purge your ESIN from the local registry.</p>
                        <button 
@@ -373,7 +470,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                            </div>
                         </button>
                         <button 
-                          onClick={() => { setShowRecoveryModal(true); setRecoveryStep('idle'); }}
+                          onClick={() => { setShowRecoveryModal(true); setVerifyStepRecovery('idle'); }}
                           className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center gap-4 text-left hover:bg-blue-500/5 hover:border-blue-500/20 transition-all group"
                         >
                            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all">
@@ -431,6 +528,124 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
         </div>
       </div>
 
+      {/* Line Verification Modal */}
+      {showVerifyPhoneModal && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl" onClick={() => setShowVerifyPhoneModal(false)}></div>
+           <div className="relative z-10 w-full max-w-lg glass-card p-1 rounded-[44px] border-emerald-500/40 bg-[#050706] overflow-hidden">
+              <div className="p-12 space-y-8 flex flex-col items-center text-center">
+                 <button onClick={() => setShowVerifyPhoneModal(false)} className="absolute top-10 right-10 p-2 text-slate-600 hover:text-white transition-all"><X className="w-6 h-6" /></button>
+                 
+                 {verifyStep === 'idle' && (
+                   <div className="space-y-8 animate-in zoom-in duration-300 w-full">
+                      <div className="w-20 h-20 bg-emerald-500/10 rounded-[32px] flex items-center justify-center border border-emerald-500/20 mx-auto shadow-2xl">
+                         <Radio className="w-10 h-10 text-emerald-400 animate-pulse" />
+                      </div>
+                      <div>
+                         <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">TelNode <span className="text-emerald-400">Anchoring</span></h3>
+                         <p className="text-slate-400 text-sm mt-2 leading-relaxed">
+                            Verify your line <strong>{countryCode} {lineNumber}</strong> via the regional telecommunication shard to secure your node identity.
+                         </p>
+                      </div>
+                      <button 
+                        onClick={startLineVerification}
+                        className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                      >
+                         <Zap className="w-5 h-5 fill-current" /> Initialize Tel-Audit
+                      </button>
+                   </div>
+                 )}
+
+                 {verifyStep === 'auditing' && (
+                   <div className="space-y-10 animate-in fade-in duration-500 py-10 w-full">
+                      <div className="relative mx-auto">
+                         <div className="absolute inset-0 border-t-4 border-emerald-500 rounded-full animate-spin"></div>
+                         <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                            <Cpu className="w-10 h-10 text-emerald-400 animate-pulse" />
+                         </div>
+                      </div>
+                      <div className="space-y-2">
+                         <h3 className="text-xl font-black text-white uppercase tracking-widest">Consulting Tel-Oracle</h3>
+                         <p className="text-emerald-500/60 font-mono text-[10px] animate-pulse uppercase tracking-[0.2em]">Synchronizing ZK-Shards...</p>
+                      </div>
+                   </div>
+                 )}
+
+                 {verifyStep === 'otp' && (
+                   <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 w-full">
+                      <div className="p-8 bg-black/60 rounded-[32px] border-l-4 border-emerald-500/50 text-left space-y-4">
+                         <div className="flex items-center gap-3">
+                            <Sparkles className="w-4 h-4 text-emerald-400" />
+                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Audit Shard: SUCCESS</span>
+                         </div>
+                         <p className="text-[11px] text-slate-400 italic leading-relaxed whitespace-pre-line">
+                            {auditReport}
+                         </p>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                           <h4 className="text-xl font-bold text-white uppercase tracking-widest">Enter Verification Shard</h4>
+                           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest italic">A signal was dispatched to {countryCode} {lineNumber}</p>
+                        </div>
+                        <form onSubmit={handleOtpSubmit} className="space-y-6">
+                           <input 
+                              type="text" 
+                              maxLength={6}
+                              autoFocus
+                              value={otpInput}
+                              onChange={e => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                              placeholder="000 000"
+                              className="w-full bg-black/60 border border-white/10 rounded-2xl py-8 text-white font-mono text-5xl text-center focus:ring-4 focus:ring-emerald-500/20 tracking-[0.4em] outline-none" 
+                           />
+                           <button 
+                              type="submit"
+                              disabled={otpInput.length !== 6}
+                              className="w-full py-6 bg-emerald-600 rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-xl shadow-emerald-900/40 disabled:opacity-30"
+                           >
+                              <ShieldCheck className="w-5 h-5" /> Anchor Identity
+                           </button>
+                        </form>
+                      </div>
+
+                      {/* Mock Notification display for ease of use */}
+                      <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 text-left">
+                         <Smartphone className="w-8 h-8 text-slate-500 shrink-0" />
+                         <div>
+                            <p className="text-[9px] text-slate-500 uppercase font-black">STWD_NOTIF: Incoming SMS</p>
+                            <p className="text-xs font-mono font-bold text-emerald-400">EnvirosAgro code: {generatedOtp}</p>
+                         </div>
+                      </div>
+                   </div>
+                 )}
+
+                 {verifyStep === 'success' && (
+                   <div className="flex flex-col items-center justify-center space-y-12 py-10 animate-in zoom-in duration-700 text-center w-full">
+                      <div className="w-32 h-32 bg-emerald-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 scale-110">
+                         <CheckCircle2 className="w-16 h-16 text-white" />
+                      </div>
+                      <div className="space-y-4">
+                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Line Node Anchored</h3>
+                         <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Steward Profile Hardened // EOS Registry Verified</p>
+                      </div>
+                      <div className="w-full glass-card p-10 rounded-[40px] border-white/5 bg-emerald-500/5 space-y-4 text-left">
+                         <div className="flex justify-between items-center text-xs">
+                            <span className="text-slate-500 font-black uppercase tracking-widest">Shard Registry</span>
+                            <span className="text-white font-mono font-bold">NODE_TEL_#{(Math.random()*1000).toFixed(0)}</span>
+                         </div>
+                         <div className="flex justify-between items-center text-xs">
+                            <span className="text-slate-500 font-black uppercase tracking-widest">Auth Protocol</span>
+                            <span className="text-emerald-400 font-mono text-[11px]">ZK_SMS_VERIFY_V3.2</span>
+                         </div>
+                      </div>
+                      <button onClick={() => setShowVerifyPhoneModal(false)} className="w-full py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">Dismiss Terminal</button>
+                   </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* Delete Account Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -471,7 +686,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                       disabled={deleteInput !== user.esin}
                       className="flex-1 py-4 bg-rose-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-rose-900/40 hover:bg-rose-500 transition-all disabled:opacity-30"
                     >
-                       Purge Node
+                       Purge Identity
                     </button>
                  </div>
               </div>

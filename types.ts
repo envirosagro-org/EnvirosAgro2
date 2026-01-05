@@ -7,6 +7,9 @@ export interface User {
   avatar?: string;
   role: string;
   location: string;
+  countryCode?: string;
+  lineNumber?: string;
+  isPhoneVerified?: boolean;
   wallet: EACWallet;
   metrics: SustainabilityMetrics;
   skills: Record<string, number>; // Maps category (e.g., 'Hydroponics') to points
