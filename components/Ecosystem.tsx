@@ -71,7 +71,25 @@ import {
   ArrowLeftRight,
   DollarSign,
   Brain,
-  Flame
+  Flame,
+  LayoutGrid,
+  Map as MapIcon,
+  Dog,
+  Trees,
+  HeartPulse,
+  Home,
+  Syringe,
+  Pill,
+  ShieldPlus,
+  Thermometer,
+  Sprout,
+  ArrowDown,
+  Settings,
+  CircleDollarSign,
+  Network,
+  Radio,
+  Wifi,
+  Signal
 } from 'lucide-react';
 import { searchAgroTrends, AIResponse, analyzeTokenzFinance } from '../services/geminiService';
 import { User } from '../types';
@@ -103,38 +121,47 @@ interface Brand {
 const BRANDS: Brand[] = [
   { 
     id: 'lilies', name: 'Lilies Around', icon: Flower2, color: 'text-pink-400', bg: 'bg-pink-400/10', 
-    desc: 'Environmental Thrust (E): Preserving floral biodiversity and C(a)™ Agro Code aesthetics through regenerative gardening.', 
-    action: 'Flora Audit', thrust: 'environmental', toolType: 'info', volume: '1.2M EAC',
+    desc: 'Environmental Thrust (E): Specializing in the aesthetics of agriculture through comprehensive landscaping, exterior agro-designs (flower beds and gardens), and architectural farm structures. We bridge nature and engineering through aesthetic stewardship.', 
+    action: 'Landscape Audit', thrust: 'environmental', toolType: 'info', volume: '1.2M EAC',
     products: [
-      { id: 'l1', name: 'Pollinator Support Kit', price: 85, type: 'Product', icon: Leaf },
-      { id: 'l2', name: 'Biodiversity Certification', price: 200, type: 'Service', icon: ShieldCheck }
+      { id: 'l1', name: 'Flower Garden Design', price: 450, type: 'Service', icon: Flower2 },
+      { id: 'l2', name: 'Farm Architecture Audit', price: 800, type: 'Service', icon: Home },
+      { id: 'l3', name: 'Biodiversity Shard', price: 120, type: 'Product', icon: Leaf },
+      { id: 'l4', name: 'Exterior Layout Plan', price: 300, type: 'Service', icon: LayoutGrid }
     ]
   },
   { 
     id: 'agromusika', name: 'AgroMusika', icon: Music, color: 'text-indigo-400', bg: 'bg-indigo-400/10', 
-    desc: 'Technological Thrust (T): Scientific rhythmic m™ Time Signatures for crop stimulation and soil molecular repair.', 
-    action: 'Sonic Sweep', thrust: 'technological', toolType: 'utility', volume: '4.8M EAC',
+    desc: 'Technological Thrust (T): Pioneer of Plant Wave Technology. We utilize scientific rhythmic m™ Time Signatures and bio-electric frequency stimulation to stimulate crop photosynthesis and soil molecular repair.', 
+    action: 'Frequency Audit', thrust: 'technological', toolType: 'utility', volume: '4.8M EAC',
     products: [
-      { id: 'm1', name: '432Hz Core Emitter', price: 450, type: 'Product', icon: Zap },
-      { id: 'm2', name: 'Rhythmic Yield Tuning', price: 120, type: 'Service', icon: Waves }
+      { id: 'm1', name: 'Plant Wave Bio-Emitter', price: 950, type: 'Product', icon: Sprout },
+      { id: 'm2', name: '432Hz Core Generator', price: 450, type: 'Product', icon: Zap },
+      { id: 'm3', name: 'Rhythmic Yield Tuning', price: 120, type: 'Service', icon: Waves }
     ]
   },
   { 
     id: 'hearts4agro', name: 'Hearts4Agro', icon: Heart, color: 'text-rose-400', bg: 'bg-rose-400/10', 
-    desc: 'Societal Thrust (S): Healing the social fabric through SID (Social Influenza Disease) remediation and intergenerational trauma clearing for EnvirosAgro™ smallholders.', 
-    action: 'SID Remediation', thrust: 'societal', toolType: 'info', volume: '2.5M EAC',
+    desc: 'Societal Thrust (S): Healing the social fabric through SID remediation, animal nursing and pet care, environment care, and social care protocols for the EnvirosAgro™ community.', 
+    action: 'Social Audit', thrust: 'societal', toolType: 'info', volume: '2.5M EAC',
     products: [
-      { id: 'h1', name: 'Trauma Clearing Hub', price: 500, type: 'Finance', icon: Brain },
-      { id: 'h2', name: 'Social Immunity Vouch', price: 150, type: 'Service', icon: ShieldCheck }
+      { id: 'h1', name: 'Animal Nursing & Pet Care', price: 350, type: 'Service', icon: Dog },
+      { id: 'h2', name: 'Environment Care Shard', price: 250, type: 'Product', icon: Trees },
+      { id: 'h3', name: 'Social Care Outreach', price: 400, type: 'Service', icon: Users2 },
+      { id: 'h4', name: 'SID Trauma Clearing', price: 500, type: 'Finance', icon: Brain },
+      { id: 'h5', name: 'Pet Wellness Relay', price: 150, type: 'Service', icon: HeartPulse }
     ]
   },
   { 
     id: 'medicag', name: 'MedicAg', icon: Stethoscope, color: 'text-teal-400', bg: 'bg-teal-400/10', 
-    desc: 'Human Thrust (H): Scientific physiological remediation of SID-induced stress and high-purity medicinal agricultural standards for worker longevity.', 
-    action: 'H-Thrust Analysis', thrust: 'human', toolType: 'info', volume: '15.4M EAC',
+    desc: 'Human Thrust (H): Pioneering the intersection of Agro-Medicine and Doctory. We specialize in high-purity medicinal crop protocols and steward physiological remediation (Agro-Doctory) to boost worker longevity.', 
+    action: 'Health Audit', thrust: 'human', toolType: 'info', volume: '15.4M EAC',
     products: [
-      { id: 'ma1', name: 'Anxiety Relief Batch #82', price: 1200, type: 'Service', icon: Microscope },
-      { id: 'ma2', name: 'Neural Health Extract', price: 850, type: 'Product', icon: Droplets }
+      { id: 'ma1', name: 'Agro-Medicine Clinic', price: 650, type: 'Service', icon: Stethoscope },
+      { id: 'ma2', name: 'Doctory Consult Node', price: 500, type: 'Service', icon: Activity },
+      { id: 'ma3', name: 'Medicinal Botanical Batch', price: 1200, type: 'Product', icon: Pill },
+      { id: 'ma4', name: 'High-Purity Serum Shard', price: 850, type: 'Product', icon: Syringe },
+      { id: 'ma5', name: 'Steward Wellness Vouch', price: 200, type: 'Finance', icon: ShieldPlus }
     ]
   },
   { 
@@ -234,8 +261,8 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
   const [esinSign, setEsinSign] = useState('');
   
   // Swap States
-  const [swapInAmount, setSwapInAmount] = useState('100');
-  const [swapAsset, setSwapAsset] = useState('USDT');
+  const [swapInAmount, setSwapInAmount] = useState('1000');
+  const [swapAsset, setSwapAsset] = useState('USDC');
   const [isSwapping, setIsSwapping] = useState(false);
   
   // Deposit States
@@ -305,8 +332,11 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
     };
     const res = await analyzeTokenzFinance(transaction);
     setAiResult(res);
-    setIsSwapping(false);
-    alert(`SWAP EXECUTED: Transaction routed through institutional node.`);
+    
+    setTimeout(() => {
+      setIsSwapping(false);
+      alert(`SWAP EXECUTED: Transaction routed through institutional node. ${swapAsset} reserved in Cloud Vault.`);
+    }, 3000);
   };
 
   const runBrandAction = async () => {
@@ -317,9 +347,13 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
     if (activeBrand.id === 'tokenz') {
       query = `Generate an institutional report for the Center Gate regarding current EAC/FIAT liquidity and network reserve status.`;
     } else if (activeBrand.id === 'hearts4agro') {
-      query = `Analyze current regional SID (Social Influenza Disease) load. How are "Language Vectors" and intergenerational trauma nodes impacting Social Immunity in the ${user.location} zone? Suggest remediation for the Societal (S) Thrust.`;
+      query = `Analyze current regional SID (Social Influenza Disease) load. Include impacts on animal nursing/pet care, environment care, and social care in the ${user.location} zone. How can these integrated social care protocols boost regional immunity?`;
     } else if (activeBrand.id === 'medicag') {
-      query = `Assess the physiological impact of SID-induced pathogens (hypertension, anxiety) on agricultural workers. How can high-purity medicinal crop protocols improve the Human (H) Thrust and boost C(a)™ Agro Code efficiency?`;
+      query = `Conduct a Human (H) Thrust analysis for ${user.location}. Focus on "Agro-Medicine" (high-purity pharmaceutical crops) and "Agro-Doctory" (physiological steward health audits). Assess the biological link between social thrust pathogens and steward physiological health.`;
+    } else if (activeBrand.id === 'lilies') {
+      query = `Provide a comprehensive design audit for agricultural aesthetics, focusing on exterior landscaping, flower beds/gardens, and farm structure architecture for the ${user.location} zone. How does aesthetic stewardship impact the Environmental (E) Thrust?`;
+    } else if (activeBrand.id === 'agromusika') {
+      query = `Analyze bio-electric responses for crops in ${user.location} under Plant Wave Technology protocols. How do 432Hz and ultrasonic frequency modulations impact C(a)™ efficiency and soil molecular repair?`;
     } else {
       switch(activeBrand.thrust) {
         case 'societal': query = `Latest research on community-centric farming and the Five Thrusts™ societal impact for brand ${activeBrand.name}.`; break;
@@ -441,7 +475,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                   <div className="flex items-center gap-6">
                     <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">{activeBrand.name}</h2>
                     <span className="px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                      {activeBrand.id === 'tokenz' ? 'Central Institutional Account' : activeBrand.id === 'hearts4agro' ? 'SID Remediation Portal' : `Market Volume: ${activeBrand.volume}`}
+                      {activeBrand.id === 'tokenz' ? 'Central Institutional Account' : activeBrand.id === 'hearts4agro' ? 'Social Care Portal' : activeBrand.id === 'medicag' ? 'Agro-Medicine & Doctory' : activeBrand.id === 'agromusika' ? 'Frequency Sync' : 'Terminal Intel'}
                     </span>
                   </div>
                   <p className="text-slate-400 text-xl font-medium mt-2 max-w-2xl leading-relaxed">{activeBrand.desc}</p>
@@ -465,7 +499,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                     <div className="flex items-center justify-center gap-3"><ArrowDownUp className="w-4 h-4" /> Institutional Swap</div>
                   </button>
                   <button onClick={() => setPortalTab('gateways')} className={`flex-1 min-w-[200px] py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'gateways' ? 'border-yellow-500 text-white bg-yellow-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
-                    <div className="flex items-center justify-center gap-3"><Cable className="w-4 h-4" /> Global Ingress</div>
+                    <div className="flex items-center justify-center gap-3"><Globe className="w-4 h-4" /> Global Ingress</div>
                   </button>
                 </>
               ) : activeBrand.thrust === 'industry' ? (
@@ -483,10 +517,10 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
               ) : (
                 <>
                   <button onClick={() => setPortalTab('ai')} className={`flex-1 py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'ai' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
-                    <div className="flex items-center justify-center gap-3"><Sparkles className="w-4 h-4" /> {activeBrand.id === 'hearts4agro' || activeBrand.id === 'medicag' ? 'SID Diagnostics' : 'Terminal Intel'}</div>
+                    <div className="flex items-center justify-center gap-3"><Sparkles className="w-4 h-4" /> {activeBrand.id === 'hearts4agro' ? 'Integrated Care Sweep' : activeBrand.id === 'medicag' ? 'Agro-Doctoring' : activeBrand.id === 'agromusika' ? 'Frequency Sync' : 'Terminal Intel'}</div>
                   </button>
                   <button onClick={() => setPortalTab('market')} className={`flex-1 py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'market' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
-                    <div className="flex items-center justify-center gap-3"><ShoppingBag className="w-4 h-4" /> Services</div>
+                    <div className="flex items-center justify-center gap-3"><ShoppingBag className="w-4 h-4" /> {activeBrand.id === 'medicag' ? 'Agro-Pharmacopeia' : activeBrand.id === 'agromusika' ? 'Wave Hardware' : 'Services'}</div>
                   </button>
                 </>
               )}
@@ -606,207 +640,159 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
               )}
 
               {activeBrand.id === 'tokenz' && portalTab === 'finance' && (
-                <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
-                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                      <div className="space-y-8">
-                         <div className="glass-card p-10 rounded-[48px] border-yellow-500/20 bg-yellow-500/5 space-y-10">
-                            <div className="flex items-center justify-between">
-                               <div className="flex items-center gap-4">
-                                  <div className="p-3 bg-yellow-500/20 rounded-xl">
-                                     <ArrowDownUp className="w-6 h-6 text-yellow-500" />
-                                  </div>
-                                  <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Institutional <span className="text-yellow-500">Swap</span></h3>
-                               </div>
-                               <button className="p-3 bg-white/5 rounded-2xl text-slate-500 hover:text-white"><RefreshCw className="w-5 h-5" /></button>
-                            </div>
-
-                            <div className="space-y-4">
-                               <div className="bg-black/60 p-8 rounded-[32px] border border-white/5 space-y-4 relative">
-                                  <div className="flex justify-between items-center">
-                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Institutional Asset (In)</span>
-                                     <span className="text-[10px] font-mono text-emerald-500">Balance: {user.wallet.balance.toFixed(2)} EAC</span>
-                                  </div>
-                                  <div className="flex items-center gap-6">
-                                     <input type="number" value={swapInAmount} onChange={e => setSwapInAmount(e.target.value)} className="flex-1 bg-transparent text-5xl font-mono text-white outline-none" />
-                                     <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
-                                        <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center"><Coins className="w-5 h-5 text-black" /></div>
-                                        <span className="text-lg font-black text-white">EAC</span>
-                                     </div>
-                                  </div>
-                               </div>
-
-                               <div className="flex justify-center -my-8 relative z-10">
-                                  <button className="w-16 h-16 bg-yellow-500 rounded-3xl border-4 border-[#050706] flex items-center justify-center text-black hover:rotate-180 transition-transform duration-700 shadow-2xl shadow-yellow-900/40">
-                                     <ArrowDownUp className="w-8 h-8" />
-                                  </button>
-                               </div>
-
-                               <div className="bg-black/60 p-8 rounded-[32px] border border-white/5 space-y-4">
-                                  <div className="flex justify-between items-center">
-                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Settlement Asset (Out)</span>
-                                     <span className="text-[10px] font-mono text-blue-400">System Value: 1 EAC ≈ 0.85 {swapAsset}</span>
-                                  </div>
-                                  <div className="flex items-center gap-6">
-                                     <input type="number" disabled value={(Number(swapInAmount) * 0.85).toFixed(2)} className="flex-1 bg-transparent text-5xl font-mono text-slate-300 outline-none" />
-                                     <select value={swapAsset} onChange={e => setSwapAsset(e.target.value)} className="flex items-center gap-2 bg-white/5 px-6 py-4 rounded-2xl border border-white/10 outline-none text-lg font-black text-white appearance-none cursor-pointer hover:bg-white/10 transition-all">
-                                        <option>USDT</option>
-                                        <option>ETH</option>
-                                        <option>SOL</option>
-                                        <option>BTC</option>
-                                     </select>
-                                  </div>
-                               </div>
-                            </div>
-
-                            <div className="space-y-4">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Node Authorization (ESIN)</label>
-                               <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-mono uppercase tracking-[0.2em] focus:ring-4 focus:ring-yellow-500/40 outline-none" />
-                            </div>
-
-                            <button onClick={handleExecuteSwap} disabled={isSwapping || !esinSign} className="w-full py-8 bg-yellow-600 rounded-[32px] text-black font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:bg-yellow-500 transition-all flex items-center justify-center gap-4 disabled:opacity-30">
-                               {isSwapping ? <Loader2 className="w-6 h-6 animate-spin" /> : <ArrowLeftRight className="w-6 h-6" />}
-                               {isSwapping ? "VERIFYING LIQUIDITY POOL..." : "SETTLE INSTITUTIONAL SWAP"}
-                            </button>
+                <div className="max-w-4xl mx-auto animate-in slide-in-from-right-4 duration-500 space-y-10">
+                   <div className="glass-card p-12 rounded-[56px] border-yellow-500/20 bg-yellow-500/5 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.03]">
+                         <ArrowDownUp className="w-64 h-64 text-yellow-400" />
+                      </div>
+                      
+                      <div className="flex items-center gap-6 mb-12 border-b border-white/5 pb-10">
+                         <div className="w-16 h-16 bg-yellow-500/10 rounded-3xl flex items-center justify-center border border-yellow-500/20 shadow-2xl">
+                            <ArrowDownUp className="w-8 h-8 text-yellow-500" />
+                         </div>
+                         <div>
+                            <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Institutional <span className="text-yellow-500">Swap</span></h3>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Direct Settlement via Center Gate Protocol</p>
                          </div>
                       </div>
 
-                      <div className="space-y-8">
-                         <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8 bg-black/40">
-                            <div className="flex items-center gap-4">
-                               <Activity className="w-8 h-8 text-yellow-500" />
-                               <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic">System <span className="text-yellow-500">Values</span></h4>
+                      <div className="space-y-4">
+                         <div className="p-8 bg-black/40 border border-white/10 rounded-[32px] space-y-4 relative group">
+                            <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
+                               <span>Sell</span>
+                               <span>Balance: {user.wallet.balance.toFixed(2)} EAC</span>
                             </div>
-                            <div className="space-y-6">
-                               {[
-                                 { label: 'Network Depth', val: '1.24B EAC', icon: Layers, col: 'text-blue-400' },
-                                 { label: 'EAC Yield Floor', val: '4.25%', icon: TrendingUp, col: 'text-emerald-400' },
-                                 { label: 'Fiat Reserve Ratio', val: '1:1.2', icon: DollarSign, col: 'text-amber-400' },
-                               ].map(val => (
-                                 <div key={val.label} className="flex justify-between items-center p-6 bg-white/5 rounded-3xl border border-white/5 group hover:bg-white/10 transition-all">
-                                    <div className="flex items-center gap-4">
-                                       <val.icon className={`w-5 h-5 ${val.col}`} />
-                                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{val.label}</span>
-                                    </div>
-                                    <span className="text-lg font-mono font-black text-white">{val.val}</span>
-                                 </div>
-                               ))}
-                            </div>
-                            <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center gap-6">
-                               <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                            <div className="flex items-center gap-6">
+                               <input type="number" value={swapInAmount} onChange={e => setSwapInAmount(e.target.value)} className="flex-1 bg-transparent text-5xl font-mono font-black text-white outline-none" />
+                               <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-3">
+                                  <Coins className="w-6 h-6 text-emerald-500" />
+                                  <span className="text-lg font-black text-white uppercase">EAC</span>
                                </div>
-                               <p className="text-xs text-emerald-300 font-medium leading-relaxed italic">"EnvirosAgro finance is collateralized by verified carbon-capture scientific nodes."</p>
                             </div>
                          </div>
-                         <div className="glass-card p-10 rounded-[48px] bg-indigo-500/5 border-indigo-500/10 flex flex-col relative overflow-hidden group min-h-[300px]">
-                            <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
-                               <Bot className="w-40 h-40 text-indigo-400" />
+
+                         <div className="flex justify-center -my-6 relative z-10">
+                            <div className="p-4 bg-yellow-500 rounded-2xl shadow-xl shadow-yellow-900/40 text-black hover:rotate-180 transition-transform cursor-pointer">
+                               <ArrowDown className="w-6 h-6" />
                             </div>
-                            <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-6 flex items-center gap-3 relative z-10"><Bot className="w-5 h-5" /> Institutional Oracle</h4>
-                            <div className="flex-1 relative z-10 custom-scrollbar overflow-y-auto pr-2">
-                               {aiResult ? (
-                                 <div className="text-[11px] text-slate-300 italic leading-loose whitespace-pre-line animate-in slide-in-from-right-2">
-                                    {aiResult.text}
-                                 </div>
-                               ) : (
-                                 <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
-                                    <Sparkles className="w-10 h-10 text-slate-700 opacity-20" />
-                                    <p className="text-[11px] text-slate-600 font-medium italic">Handshake required for live financial analysis.</p>
-                                 </div>
-                               )}
+                         </div>
+
+                         <div className="p-8 bg-black/40 border border-white/10 rounded-[32px] space-y-4 relative group">
+                            <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
+                               <span>Buy</span>
+                               <span>Est. Rate: 1 EAC = 0.85 {swapAsset}</span>
+                            </div>
+                            <div className="flex items-center gap-6">
+                               <p className="flex-1 text-5xl font-mono font-black text-white">{(Number(swapInAmount) * 0.852).toFixed(2)}</p>
+                               <select value={swapAsset} onChange={e => setSwapAsset(e.target.value)} className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-lg font-black text-white uppercase outline-none appearance-none cursor-pointer">
+                                  <option>USDC</option>
+                                  <option>USDT</option>
+                                  <option>EURT</option>
+                                  <option>BTC_INST</option>
+                               </select>
                             </div>
                          </div>
                       </div>
+
+                      <div className="grid grid-cols-2 gap-8 mt-12 pt-8 border-t border-white/5">
+                         <div className="p-6 bg-white/5 rounded-3xl space-y-2">
+                            <p className="text-[10px] text-slate-500 font-bold uppercase">Price Impact</p>
+                            <p className="text-lg font-mono font-black text-emerald-400">&lt; 0.01%</p>
+                         </div>
+                         <div className="p-6 bg-white/5 rounded-3xl space-y-2">
+                            <p className="text-[10px] text-slate-500 font-bold uppercase">Settlement Time</p>
+                            <p className="text-lg font-mono font-black text-white">~4.2s</p>
+                         </div>
+                      </div>
+
+                      <div className="mt-8 p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Authorized ESIN Signature</label>
+                          <div className="relative">
+                             <Fingerprint className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-600" />
+                             <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 pl-16 pr-10 text-white font-mono uppercase tracking-[0.2em] focus:ring-4 focus:ring-yellow-500/40 outline-none transition-all" />
+                          </div>
+                      </div>
+
+                      <button 
+                        onClick={handleExecuteSwap}
+                        disabled={isSwapping || !esinSign}
+                        className="w-full py-8 bg-yellow-500 rounded-[32px] text-black font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-yellow-900/40 hover:scale-[1.02] active:scale-95 transition-all mt-8 flex items-center justify-center gap-4 disabled:opacity-30"
+                      >
+                         {isSwapping ? <Loader2 className="w-8 h-8 animate-spin" /> : <ShieldCheck className="w-8 h-8" />}
+                         {isSwapping ? "INITIALIZING SETTLEMENT..." : "EXECUTE INSTITUTIONAL SWAP"}
+                      </button>
                    </div>
                 </div>
               )}
 
               {activeBrand.id === 'tokenz' && portalTab === 'gateways' && (
-                <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
-                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                      <div className="lg:col-span-2 space-y-8">
-                         <div className="glass-card p-12 rounded-[48px] border-yellow-500/20 bg-yellow-500/5 space-y-10">
-                            <div className="flex items-center justify-between">
-                               <div className="flex items-center gap-4">
-                                  <Cable className="w-10 h-10 text-yellow-500" />
-                                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Global <span className="text-yellow-500">Ingress Rails</span></h3>
-                               </div>
-                               <button className="px-6 py-2 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 shadow-lg">Link External account</button>
-                            </div>
-
-                            <div className="space-y-6">
-                               {[
-                                 { name: 'M-Pesa Node', status: 'Institutional Sync', sync: '100%', balance: '$452,000.00', icon: Smartphone, col: 'text-emerald-400', depth: 'HIGH' },
-                                 { name: 'Institutional Stripe', status: 'Center Gate Handshake', sync: '100%', balance: '$12,400,000.00', icon: CardIcon, col: 'text-blue-400', depth: 'V.HIGH' },
-                                 { name: 'Binance Pay Relay', status: 'Pending Multi-Sig', sync: '12%', balance: '$0.00', icon: Globe, col: 'text-amber-500', depth: 'LOW' },
-                                 { name: 'Mastercard Institutional', status: 'Audit Mode', sync: '84%', balance: '$1,200,000.00', icon: Banknote, col: 'text-slate-500', depth: 'MEDIUM' },
-                               ].map((rail, idx) => (
-                                 <div key={idx} className="p-10 bg-black/60 rounded-[40px] border border-white/5 hover:border-yellow-500/20 transition-all flex items-center justify-between group cursor-pointer relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-yellow-500/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <div className="flex items-center gap-10 relative z-10">
-                                       <div className={`w-20 h-20 rounded-[32px] bg-white/5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:bg-yellow-500 group-hover:text-black`}>
-                                          <rail.icon className={`w-10 h-10 ${rail.col} group-hover:text-black transition-colors`} />
-                                       </div>
-                                       <div>
-                                          <p className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{rail.name}</p>
-                                          <div className="flex items-center gap-4 mt-3">
-                                             <span className={`text-[10px] font-black uppercase tracking-widest ${rail.status === 'Pending Multi-Sig' ? 'text-amber-500' : 'text-emerald-500'}`}>{rail.status}</span>
-                                             <span className="w-1.5 h-1.5 rounded-full bg-slate-800"></span>
-                                             <span className="text-[10px] font-mono text-slate-500 font-bold">NODE_DEPTH: {rail.depth}</span>
-                                          </div>
-                                       </div>
-                                    </div>
-                                    <div className="text-right relative z-10">
-                                       <p className="text-2xl font-mono font-black text-white mb-1">{rail.balance}</p>
-                                       <div className="flex items-center gap-3 justify-end text-[10px] font-black text-yellow-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                                          MANAGE GATEWAY <ChevronRight className="w-4 h-4" />
-                                       </div>
-                                    </div>
-                                 </div>
-                               ))}
-                            </div>
+                <div className="max-w-4xl mx-auto animate-in slide-in-from-right-4 duration-500 space-y-10">
+                   <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.03]">
+                         <Globe className="w-64 h-64 text-emerald-400" />
+                      </div>
+                      
+                      <div className="flex items-center gap-6 mb-12 border-b border-white/5 pb-10">
+                         <div className="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center border border-emerald-500/20 shadow-2xl">
+                            <Network className="w-8 h-8 text-emerald-400" />
+                         </div>
+                         <div>
+                            <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Global <span className="text-emerald-400">Ingest Terminals</span></h3>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Institutional Connectivity Registry</p>
                          </div>
                       </div>
 
-                      <div className="space-y-8">
-                         <div className="glass-card p-12 rounded-[56px] bg-gradient-to-br from-yellow-600/10 to-transparent border-yellow-500/20 flex flex-col items-center text-center space-y-8">
-                            <div className="relative">
-                               <div className="absolute inset-0 bg-yellow-500/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
-                               <div className="w-24 h-24 bg-yellow-500 rounded-[32px] flex items-center justify-center shadow-2xl relative z-10 group hover:rotate-12 transition-transform">
-                                  <Lock className="w-12 h-12 text-black" />
-                               </div>
-                            </div>
-                            <div className="space-y-3">
-                               <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Biometric Ingress</h4>
-                               <p className="text-slate-500 text-sm leading-relaxed max-w-xs font-medium italic">"Secure institutional rails with hardware-encrypted ESIN handshakes."</p>
-                            </div>
-                            <button className="w-full py-6 bg-yellow-600 rounded-[32px] text-black font-black text-sm uppercase tracking-[0.3em] shadow-xl hover:bg-yellow-500 transition-all active:scale-95">Configure Hardware Lock</button>
-                         </div>
-                         
-                         <div className="p-10 glass-card rounded-[48px] border-white/5 space-y-6 bg-black/40">
-                            <div className="flex items-center gap-4">
-                               <History className="w-6 h-6 text-slate-500" />
-                               <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Institutional Handshake Log</h4>
-                            </div>
-                            <div className="space-y-6">
-                               {[0,1,2].map(i => (
-                                 <div key={i} className="flex justify-between items-center group">
-                                    <div className="space-y-1">
-                                       <p className="text-[10px] font-black text-white uppercase group-hover:text-yellow-500 transition-colors">{i === 0 ? 'M-Pesa Ingress' : i === 1 ? 'Stripe Settlement' : 'ZK-Bridge Auth'}</p>
-                                       <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest">TS_HANDSHAKE_{Math.random().toString(36).substring(7).toUpperCase()}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         {[
+                           { id: 'NG-LAG-01', location: 'Lagos, Nigeria', type: 'High Throughput', status: 'Active', ping: '12ms', icon: Signal },
+                           { id: 'US-NEB-04', location: 'Omaha, USA', type: 'Core Registry Node', status: 'Active', ping: '8ms', icon: Wifi },
+                           { id: 'KE-NAI-02', location: 'Nairobi, Kenya', type: 'Local Bridge', status: 'Maintenance', ping: '45ms', icon: Radio },
+                           { id: 'SG-SIN-08', location: 'Singapore Hub', type: 'Institutional Relay', status: 'Active', ping: '15ms', icon: Globe },
+                         ].map(node => (
+                           <div key={node.id} className="p-8 bg-black/40 border border-white/10 rounded-[32px] space-y-6 group hover:border-emerald-500/30 transition-all">
+                              <div className="flex justify-between items-start">
+                                 <div className="flex items-center gap-4">
+                                    <div className={`p-4 rounded-2xl ${node.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-500'}`}>
+                                       <node.icon className="w-6 h-6" />
                                     </div>
-                                    <span className="text-sm font-mono font-black text-emerald-500">+$24,000.00</span>
+                                    <div>
+                                       <h4 className="text-lg font-bold text-white uppercase tracking-tight">{node.location}</h4>
+                                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{node.id}</p>
+                                    </div>
                                  </div>
-                               ))}
-                            </div>
-                            <button className="w-full py-4 text-[9px] font-black text-slate-700 uppercase tracking-widest hover:text-white transition-colors">Request full Audit Shard</button>
+                                 <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${node.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>
+                                    {node.status}
+                                 </span>
+                              </div>
+                              <div className="space-y-2">
+                                 <div className="flex justify-between items-center text-[10px] font-black text-slate-600 uppercase">
+                                    <span>Signal Latency</span>
+                                    <span className="text-white font-mono">{node.ping}</span>
+                                 </div>
+                                 <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                    <div className={`h-full ${node.status === 'Active' ? 'bg-emerald-500' : 'bg-rose-500'} opacity-50`} style={{ width: node.status === 'Active' ? '92%' : '15%' }}></div>
+                                 </div>
+                              </div>
+                              <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-white hover:bg-emerald-600 transition-all flex items-center justify-center gap-2">
+                                 Link Terminal Node <ChevronRight className="w-3 h-3" />
+                              </button>
+                           </div>
+                         ))}
+                      </div>
+
+                      <div className="mt-12 p-8 bg-blue-500/5 border border-blue-500/10 rounded-[40px] flex items-center gap-8 group">
+                         <div className="w-16 h-16 rounded-[24px] bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 group-hover:rotate-12 transition-transform">
+                            <Activity className="w-8 h-8" />
+                         </div>
+                         <div className="flex-1">
+                            <h4 className="text-lg font-bold text-white uppercase tracking-widest mb-1">Global Ingress Logic</h4>
+                            <p className="text-xs text-slate-400 italic">"Terminals are optimized for the highest m™ resilience signatures. Connecting through a High Throughput node reduces bridge settlement time by 15%."</p>
                          </div>
                       </div>
                    </div>
                 </div>
               )}
 
-              {/* Default Content Render (Marketplace etc.) */}
               {portalTab === 'market' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in slide-in-from-right-4 duration-500">
                   {activeBrand.products.map(product => (
@@ -832,7 +818,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                 </div>
               )}
 
-              {portalTab === 'ai' && (
+              {portalTab === 'ai' && (activeBrand.id !== 'tokenz') && (
                 <div className="max-w-4xl mx-auto space-y-10 animate-in zoom-in duration-500">
                    <div className="glass-card p-12 rounded-[48px] border-white/5 bg-white/[0.01] flex flex-col items-center text-center space-y-10 min-h-[400px] justify-center relative">
                       {loading ? (
@@ -843,9 +829,9 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                       ) : aiResult ? (
                         <div className="w-full text-left space-y-10 animate-in fade-in duration-700">
                            <div className="flex items-center gap-4 border-b border-white/5 pb-8">
-                              {activeBrand.id === 'hearts4agro' ? <Flame className="w-10 h-10 text-rose-400" /> : <Bot className="w-10 h-10 text-emerald-400" />}
+                              {activeBrand.id === 'hearts4agro' ? <HeartPulse className="w-10 h-10 text-rose-400" /> : activeBrand.id === 'medicag' ? <Stethoscope className="w-10 h-10 text-teal-400" /> : activeBrand.id === 'agromusika' ? <Waves className="w-10 h-10 text-indigo-400" /> : <Bot className="w-10 h-10 text-emerald-400" />}
                               <div>
-                                 <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{activeBrand.id === 'hearts4agro' || activeBrand.id === 'medicag' ? 'Pathogen Analysis' : 'Terminal Intel'}</h4>
+                                 <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{activeBrand.id === 'hearts4agro' ? 'Integrated Care Sweep' : activeBrand.id === 'medicag' ? 'Physiological Audit' : activeBrand.id === 'agromusika' ? 'Plant Wave Synthesis' : 'Terminal Intel'}</h4>
                                  <p className="text-emerald-500/60 text-[10px] font-black uppercase tracking-widest">{activeBrand.name.toUpperCase()} // Five Thrusts™ SHARD</p>
                               </div>
                            </div>
@@ -857,13 +843,15 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                       ) : (
                         <div className="space-y-8">
                            <div className="w-24 h-24 rounded-[32px] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform">
-                              {activeBrand.id === 'hearts4agro' ? <Flame className="w-10 h-10 text-rose-400" /> : activeBrand.id === 'medicag' ? <Brain className="w-10 h-10 text-teal-400" /> : <Sparkles className="w-10 h-10 text-emerald-400" />}
+                              {activeBrand.id === 'hearts4agro' ? <Dog className="w-10 h-10 text-rose-400" /> : activeBrand.id === 'medicag' ? <Stethoscope className="w-10 h-10 text-teal-400" /> : activeBrand.id === 'lilies' ? <Home className="w-10 h-10 text-pink-400" /> : activeBrand.id === 'agromusika' ? <Sprout className="w-10 h-10 text-indigo-400" /> : <Sparkles className="w-10 h-10 text-emerald-400" />}
                            </div>
                            <div className="max-w-md mx-auto space-y-4">
                               <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Oracle <span className="text-emerald-400">Terminal</span></h4>
                               <p className="text-slate-500 text-lg leading-relaxed">
-                                 {activeBrand.id === 'hearts4agro' ? 'Invoke the SID Oracle to analyze intergenerational social pathogens and trauma vectors.' : 
-                                  activeBrand.id === 'medicag' ? 'Analyze the biological link between social thrust pathogens and steward physiological health.' :
+                                 {activeBrand.id === 'hearts4agro' ? 'Invoke the Integrated Care Oracle to analyze animal nursing, social outreach, and environment health vectors.' : 
+                                  activeBrand.id === 'medicag' ? 'Conduct a Human (H) Thrust session. Assess steward physiological health, analyze SID stress load, and optimize Agro-Medicine output.' :
+                                  activeBrand.id === 'lilies' ? 'Initialize an aesthetic agro-audit for your zone. Covers gardens, structural farm architecture, and floral landscaping.' :
+                                  activeBrand.id === 'agromusika' ? 'Synchronize with the Plant Wave Oracle to analyze bio-electric crop response and tune molecular frequencies.' :
                                   `Invoke the EnvirosAgro™ oracle to generate strategic insights for the ${activeBrand.name} protocol.`}
                               </p>
                               <button 
@@ -871,7 +859,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                                 className="px-12 py-5 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 mx-auto"
                               >
                                  <Zap className="w-6 h-6 fill-current" />
-                                 {activeBrand.id === 'hearts4agro' || activeBrand.id === 'medicag' ? 'RUN PATHOGEN SWEEP' : 'RUN ORACLE SWEEP'}
+                                 {activeBrand.id === 'hearts4agro' ? 'RUN INTEGRATED CARE SWEEP' : activeBrand.id === 'medicag' ? 'RUN AGRO-DOCTORING AUDIT' : activeBrand.id === 'lilies' ? 'RUN AESTHETIC AUDIT' : activeBrand.id === 'agromusika' ? 'INITIALIZE WAVE SYNC' : 'RUN ORACLE SWEEP'}
                               </button>
                            </div>
                         </div>
