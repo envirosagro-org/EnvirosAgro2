@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Info, 
@@ -47,12 +48,10 @@ import {
   Landmark,
   Layers,
   Target,
+  Sparkles,
   Rocket,
   Flame,
-  ShieldPlus,
-  CheckCircle2,
-  HeartPulse,
-  Sparkles
+  Activity
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -104,135 +103,134 @@ const FAQS = [
 ];
 
 const CORE_PRINCIPLES = [
-  { name: 'Integration', icon: Layers, desc: 'Unified cross-thrust protocols.' },
-  { name: 'Vision', icon: Eye, desc: 'Forward-looking regenerative roadmaps.' },
-  { name: 'Innovation', icon: Lightbulb, desc: 'Leading-edge scientific disruption.' },
-  { name: 'Sustainability', icon: Leaf, desc: 'Ecological and economic viability.' },
-  { name: 'Kaizen', icon: RefreshCw, desc: 'Continuous incremental improvement.' },
+  'Integration', 'Vision', 'Innovation', 'Sustainability', 'Kaizen'
 ];
 
 const CORE_VALUES = [
-  { name: 'Ethical', icon: ShieldCheck, desc: 'Integrity in every data shard.' },
-  { name: 'Communal', icon: Users, desc: 'Shared progress for the Bantu lineage.' },
-  { name: 'Optimistic', icon: Sun, desc: 'Focus on possible abundance.' },
-  { name: 'Supportive', icon: HeartHandshake, desc: 'Nurturing the steward ecosystem.' },
-  { name: 'Governed', icon: Landmark, desc: 'Regulated by decentralized consensus.' },
+  'Ethical', 'Communal', 'Optimistic', 'Supportive', 'Governed'
 ];
 
 const EnvirosAgroRocket: React.FC = () => {
   return (
-    <div className="relative py-20 overflow-hidden flex flex-col items-center bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent rounded-[80px]">
+    <div className="relative py-24 flex flex-col items-center bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent rounded-[80px] overflow-hidden">
       <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')]"></div>
       
-      {/* Main Rocket Stack */}
+      {/* Main Rocket Assembly */}
       <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
         
-        {/* Rocket Nose Cone & Body */}
-        <div className="relative w-72 md:w-96 flex flex-col items-center">
-          {/* Nose Cone */}
-          <div className="w-0 h-0 border-l-[144px] border-l-transparent border-r-[144px] border-r-transparent border-b-[200px] border-b-emerald-600 rounded-t-full relative">
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full text-center">
-              <p className="text-[10px] font-black text-black tracking-[0.4em] uppercase">EnvirosAgro™</p>
+        {/* Top Nose Cone */}
+        <div className="relative w-80 md:w-96 flex flex-col items-center">
+          <div className="w-0 h-0 border-l-[160px] border-l-transparent border-r-[160px] border-r-transparent border-b-[180px] border-b-emerald-600 rounded-t-[100px] relative drop-shadow-[0_20px_50px_rgba(5,150,105,0.3)]">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full text-center">
+              <span className="text-[10px] font-black text-emerald-100 uppercase tracking-[0.5em] drop-shadow-md">EnvirosAgro™</span>
             </div>
           </div>
           
-          {/* Main Body Section: Vision & Mission */}
-          <div className="w-full bg-emerald-700/90 border-x-4 border-emerald-500 py-12 px-8 flex flex-col items-center text-center space-y-8 -mt-1 shadow-2xl backdrop-blur-md">
-            <div>
-              <h4 className="text-xl font-black text-white uppercase tracking-widest mb-3 italic">Vision</h4>
-              <p className="text-white text-sm font-bold leading-relaxed max-w-xs">
+          {/* Main Module: Vision & Mission */}
+          <div className="w-full bg-emerald-700/90 border-x-4 border-emerald-500 py-14 px-10 flex flex-col items-center text-center space-y-10 -mt-1 shadow-2xl backdrop-blur-xl">
+            <div className="space-y-4">
+              <div className="flex justify-center gap-2 mb-2">
+                 <Eye className="w-6 h-6 text-emerald-200" />
+              </div>
+              <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Vision</h4>
+              <p className="text-emerald-50 font-bold leading-relaxed max-w-xs text-lg">
                 To have socioeconomic and healthy future for agricultural community
               </p>
             </div>
             
-            <div className="w-2/3 h-px bg-white/20"></div>
+            <div className="w-2/3 h-px bg-emerald-400/30"></div>
 
-            <div>
-              <h4 className="text-xl font-black text-white uppercase tracking-widest mb-3 italic">Mission</h4>
-              <p className="text-white text-sm font-bold leading-relaxed max-w-xs">
+            <div className="space-y-4">
+              <div className="flex justify-center gap-2 mb-2">
+                 <Target className="w-6 h-6 text-emerald-200" />
+              </div>
+              <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Mission</h4>
+              <p className="text-emerald-50 font-bold leading-relaxed max-w-xs text-lg">
                 To ensure agriculture and it's environ is smooth, reliable and safe
               </p>
             </div>
           </div>
         </div>
 
-        {/* Thrust Assembly */}
-        <div className="grid grid-cols-5 gap-4 md:gap-8 w-full mt-2">
+        {/* The Five Thrusts Propulsion System */}
+        <div className="grid grid-cols-5 gap-4 md:gap-8 w-full mt-4 max-w-3xl">
           {[
-            { label: 'Social', id: '1', col: 'bg-emerald-600' },
-            { label: 'Environmental', id: '2', col: 'bg-emerald-500' },
-            { label: 'Health', id: '3', col: 'bg-emerald-400' },
-            { label: 'Technical', id: '4', col: 'bg-emerald-300' },
-            { label: 'Industrial', id: '5', col: 'bg-emerald-200' },
+            { label: 'Social', id: '1', col: 'bg-emerald-600', delay: '0s' },
+            { label: 'Environmental', id: '2', col: 'bg-emerald-500', delay: '0.1s' },
+            { label: 'Health', id: '3', col: 'bg-emerald-400', delay: '0.2s' },
+            { label: 'Technical', id: '4', col: 'bg-emerald-300', delay: '0.3s' },
+            { label: 'Industrial', id: '5', col: 'bg-emerald-200', delay: '0.4s' },
           ].map((thrust, i) => (
-            <div key={i} className="flex flex-col items-center">
-              {/* Individual Thruster Rocket */}
-              <div className={`w-12 md:w-20 h-32 md:h-48 ${thrust.col} rounded-t-full relative border-x border-white/10 flex items-center justify-center`}>
+            <div key={i} className="flex flex-col items-center group">
+              {/* Individual Thruster Node */}
+              <div className={`w-14 md:w-24 h-36 md:h-56 ${thrust.col} rounded-t-full relative border-x-2 border-white/10 flex items-center justify-center shadow-lg group-hover:-translate-y-2 transition-transform duration-500`}>
                 <div className="absolute top-1/2 -translate-y-1/2 rotate-[-90deg] whitespace-nowrap">
-                   <p className="text-[8px] md:text-[10px] font-black text-black uppercase tracking-widest">Thrust {thrust.id}:{thrust.label}</p>
+                   <p className="text-[7px] md:text-[10px] font-black text-black uppercase tracking-widest">Thrust {thrust.id}:{thrust.label}</p>
                 </div>
+                <div className="absolute top-4 w-1/2 h-2 bg-black/10 rounded-full"></div>
               </div>
-              {/* Flame Effect */}
+              {/* Animated Engine Flame */}
               <div className="mt-1 flex flex-col items-center">
-                <div className="w-4 h-12 md:w-8 md:h-20 bg-gradient-to-b from-orange-500 via-amber-400 to-transparent rounded-full animate-pulse opacity-80 blur-sm"></div>
+                <div 
+                  className="w-4 h-16 md:w-8 md:h-32 bg-gradient-to-b from-orange-500 via-amber-400 to-transparent rounded-full animate-pulse opacity-80 blur-[2px]"
+                  style={{ animationDelay: thrust.delay }}
+                ></div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Values & Principles Blocks */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-16 w-full px-6">
+        {/* Foundation: Values & Principles Blocks */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-20 w-full px-6">
           {/* Values Block */}
-          <div className="glass-card p-10 rounded-[40px] border-emerald-500/30 bg-emerald-950/40 relative overflow-hidden group">
-            <div className="absolute -top-4 -left-4 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
-               <ShieldCheck className="w-32 h-32 text-emerald-400" />
+          <div className="glass-card p-12 rounded-[56px] border-emerald-500/30 bg-emerald-950/40 relative overflow-hidden group hover:border-emerald-500/60 transition-all">
+            <div className="absolute -top-10 -left-10 p-8 opacity-[0.05] group-hover:scale-110 transition-transform group-hover:opacity-[0.08]">
+               <ShieldCheck className="w-48 h-48 text-emerald-400" />
             </div>
-            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 italic flex items-center gap-3">
-              <Zap className="w-6 h-6 text-emerald-400 fill-current" /> Values of EnvirosAgro
+            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-10 italic flex items-center gap-4">
+              <Zap className="w-8 h-8 text-emerald-400 fill-emerald-400/20" /> Values of EnvirosAgro
             </h4>
-            <ul className="grid grid-cols-2 gap-y-4 gap-x-6">
-              {[
-                'Ethical', 'Communal', 'Optimistic', 'Supportive', 'Governed'
-              ].map(val => (
-                <li key={val} className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                  <span className="text-sm font-bold text-slate-200 uppercase tracking-widest">{val}</span>
+            <ul className="grid grid-cols-1 gap-y-5">
+              {CORE_VALUES.map(val => (
+                <li key={val} className="flex items-center gap-4 group/item">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] group-hover/item:scale-125 transition-transform"></div>
+                  <span className="text-base font-black text-slate-100 uppercase tracking-widest">{val}</span>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* Principles Block */}
-          <div className="glass-card p-10 rounded-[40px] border-emerald-500/30 bg-emerald-950/40 relative overflow-hidden group">
-             <div className="absolute -top-4 -right-4 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
-               <Landmark className="w-32 h-32 text-emerald-400" />
+          <div className="glass-card p-12 rounded-[56px] border-emerald-500/30 bg-emerald-950/40 relative overflow-hidden group hover:border-emerald-500/60 transition-all">
+             <div className="absolute -top-10 -right-10 p-8 opacity-[0.05] group-hover:scale-110 transition-transform group-hover:opacity-[0.08]">
+               <Landmark className="w-48 h-48 text-emerald-400" />
             </div>
-            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 italic flex items-center gap-3">
-              <Layers className="w-6 h-6 text-emerald-400" /> Principles of EnvirosAgro
+            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-10 italic flex items-center gap-4">
+              <Layers className="w-8 h-8 text-emerald-400" /> Principles of EnvirosAgro
             </h4>
-            <ul className="grid grid-cols-2 gap-y-4 gap-x-6">
-              {[
-                'Integration', 'Vision', 'Innovation', 'Sustainability', 'Kaizen'
-              ].map(pr => (
-                <li key={pr} className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                  <span className="text-sm font-bold text-slate-200 uppercase tracking-widest">{pr}</span>
+            <ul className="grid grid-cols-1 gap-y-5">
+              {CORE_PRINCIPLES.map(pr => (
+                <li key={pr} className="flex items-center gap-4 group/item">
+                  <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)] group-hover/item:scale-125 transition-transform"></div>
+                  <span className="text-base font-black text-slate-100 uppercase tracking-widest">{pr}</span>
                 </li>
               ))}
             </ul>
           </div>
         </div>
 
-        {/* Footer Slogan */}
-        <div className="mt-20 text-center space-y-6">
-          <div className="px-12 py-4 bg-emerald-950/80 border-y border-emerald-500/30 backdrop-blur-xl">
-             <h3 className="text-3xl font-black text-white uppercase tracking-[0.2em] italic">Embracing Sustainable Agriculture</h3>
+        {/* Global Footer Banner */}
+        <div className="mt-24 text-center space-y-8 w-full max-w-3xl">
+          <div className="px-16 py-6 bg-emerald-900/40 border-y border-emerald-500/30 backdrop-blur-2xl rounded-2xl">
+             <h3 className="text-3xl font-black text-white uppercase tracking-[0.2em] italic drop-shadow-lg">Embracing Sustainable Agriculture</h3>
           </div>
-          <div className="flex items-center justify-center gap-4">
-             <div className="h-px w-20 bg-emerald-500/30"></div>
+          <div className="flex flex-col items-center gap-4">
              <h2 className="text-4xl font-black text-white tracking-[0.5em] uppercase">EnvirosAgro Rocket</h2>
-             <Sparkles className="w-8 h-8 text-emerald-400 animate-pulse" />
-             <div className="h-px w-20 bg-emerald-500/30"></div>
+             <div className="flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-emerald-400 animate-pulse" />
+                <div className="h-px w-48 bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"></div>
+                <Sparkles className="w-6 h-6 text-emerald-400 animate-pulse" />
+             </div>
           </div>
         </div>
 
@@ -306,7 +304,7 @@ const InfoPortal: React.FC = () => {
               </p>
             </div>
 
-            {/* NEW ROCKET DESIGN INTEGRATION */}
+            {/* INTEGRATED ROCKET DESIGN */}
             <EnvirosAgroRocket />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-white/5">
@@ -334,7 +332,7 @@ const InfoPortal: React.FC = () => {
             <div className="p-12 glass-card rounded-[56px] bg-gradient-to-br from-[#050706] via-emerald-950/10 to-black border-emerald-500/20 text-center">
                <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Ensuring Longevity</h4>
                <p className="text-slate-400 max-w-3xl mx-auto text-lg italic leading-relaxed">
-                  "Byリンクing researchers and stakeholders, we ensure the long-term viability of farming for future generations, reducing environmental impact and improving resilience."
+                  "By linking researchers and stakeholders, we ensure the long-term viability of farming for future generations, reducing environmental impact and improving resilience."
                </p>
             </div>
           </div>
