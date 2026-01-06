@@ -38,7 +38,21 @@ import {
   MessageCircle,
   Facebook,
   HelpCircle as QuestionIcon,
-  MessageCircleQuestion
+  MessageCircleQuestion,
+  Eye,
+  Lightbulb,
+  Leaf,
+  RefreshCw,
+  Sun,
+  Landmark,
+  Layers,
+  Target,
+  Rocket,
+  Flame,
+  ShieldPlus,
+  CheckCircle2,
+  HeartPulse,
+  Sparkles
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -89,6 +103,144 @@ const FAQS = [
   }
 ];
 
+const CORE_PRINCIPLES = [
+  { name: 'Integration', icon: Layers, desc: 'Unified cross-thrust protocols.' },
+  { name: 'Vision', icon: Eye, desc: 'Forward-looking regenerative roadmaps.' },
+  { name: 'Innovation', icon: Lightbulb, desc: 'Leading-edge scientific disruption.' },
+  { name: 'Sustainability', icon: Leaf, desc: 'Ecological and economic viability.' },
+  { name: 'Kaizen', icon: RefreshCw, desc: 'Continuous incremental improvement.' },
+];
+
+const CORE_VALUES = [
+  { name: 'Ethical', icon: ShieldCheck, desc: 'Integrity in every data shard.' },
+  { name: 'Communal', icon: Users, desc: 'Shared progress for the Bantu lineage.' },
+  { name: 'Optimistic', icon: Sun, desc: 'Focus on possible abundance.' },
+  { name: 'Supportive', icon: HeartHandshake, desc: 'Nurturing the steward ecosystem.' },
+  { name: 'Governed', icon: Landmark, desc: 'Regulated by decentralized consensus.' },
+];
+
+const EnvirosAgroRocket: React.FC = () => {
+  return (
+    <div className="relative py-20 overflow-hidden flex flex-col items-center bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent rounded-[80px]">
+      <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')]"></div>
+      
+      {/* Main Rocket Stack */}
+      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
+        
+        {/* Rocket Nose Cone & Body */}
+        <div className="relative w-72 md:w-96 flex flex-col items-center">
+          {/* Nose Cone */}
+          <div className="w-0 h-0 border-l-[144px] border-l-transparent border-r-[144px] border-r-transparent border-b-[200px] border-b-emerald-600 rounded-t-full relative">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full text-center">
+              <p className="text-[10px] font-black text-black tracking-[0.4em] uppercase">EnvirosAgro™</p>
+            </div>
+          </div>
+          
+          {/* Main Body Section: Vision & Mission */}
+          <div className="w-full bg-emerald-700/90 border-x-4 border-emerald-500 py-12 px-8 flex flex-col items-center text-center space-y-8 -mt-1 shadow-2xl backdrop-blur-md">
+            <div>
+              <h4 className="text-xl font-black text-white uppercase tracking-widest mb-3 italic">Vision</h4>
+              <p className="text-white text-sm font-bold leading-relaxed max-w-xs">
+                To have socioeconomic and healthy future for agricultural community
+              </p>
+            </div>
+            
+            <div className="w-2/3 h-px bg-white/20"></div>
+
+            <div>
+              <h4 className="text-xl font-black text-white uppercase tracking-widest mb-3 italic">Mission</h4>
+              <p className="text-white text-sm font-bold leading-relaxed max-w-xs">
+                To ensure agriculture and it's environ is smooth, reliable and safe
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Thrust Assembly */}
+        <div className="grid grid-cols-5 gap-4 md:gap-8 w-full mt-2">
+          {[
+            { label: 'Social', id: '1', col: 'bg-emerald-600' },
+            { label: 'Environmental', id: '2', col: 'bg-emerald-500' },
+            { label: 'Health', id: '3', col: 'bg-emerald-400' },
+            { label: 'Technical', id: '4', col: 'bg-emerald-300' },
+            { label: 'Industrial', id: '5', col: 'bg-emerald-200' },
+          ].map((thrust, i) => (
+            <div key={i} className="flex flex-col items-center">
+              {/* Individual Thruster Rocket */}
+              <div className={`w-12 md:w-20 h-32 md:h-48 ${thrust.col} rounded-t-full relative border-x border-white/10 flex items-center justify-center`}>
+                <div className="absolute top-1/2 -translate-y-1/2 rotate-[-90deg] whitespace-nowrap">
+                   <p className="text-[8px] md:text-[10px] font-black text-black uppercase tracking-widest">Thrust {thrust.id}:{thrust.label}</p>
+                </div>
+              </div>
+              {/* Flame Effect */}
+              <div className="mt-1 flex flex-col items-center">
+                <div className="w-4 h-12 md:w-8 md:h-20 bg-gradient-to-b from-orange-500 via-amber-400 to-transparent rounded-full animate-pulse opacity-80 blur-sm"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Values & Principles Blocks */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-16 w-full px-6">
+          {/* Values Block */}
+          <div className="glass-card p-10 rounded-[40px] border-emerald-500/30 bg-emerald-950/40 relative overflow-hidden group">
+            <div className="absolute -top-4 -left-4 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
+               <ShieldCheck className="w-32 h-32 text-emerald-400" />
+            </div>
+            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 italic flex items-center gap-3">
+              <Zap className="w-6 h-6 text-emerald-400 fill-current" /> Values of EnvirosAgro
+            </h4>
+            <ul className="grid grid-cols-2 gap-y-4 gap-x-6">
+              {[
+                'Ethical', 'Communal', 'Optimistic', 'Supportive', 'Governed'
+              ].map(val => (
+                <li key={val} className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  <span className="text-sm font-bold text-slate-200 uppercase tracking-widest">{val}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Principles Block */}
+          <div className="glass-card p-10 rounded-[40px] border-emerald-500/30 bg-emerald-950/40 relative overflow-hidden group">
+             <div className="absolute -top-4 -right-4 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
+               <Landmark className="w-32 h-32 text-emerald-400" />
+            </div>
+            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 italic flex items-center gap-3">
+              <Layers className="w-6 h-6 text-emerald-400" /> Principles of EnvirosAgro
+            </h4>
+            <ul className="grid grid-cols-2 gap-y-4 gap-x-6">
+              {[
+                'Integration', 'Vision', 'Innovation', 'Sustainability', 'Kaizen'
+              ].map(pr => (
+                <li key={pr} className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                  <span className="text-sm font-bold text-slate-200 uppercase tracking-widest">{pr}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Footer Slogan */}
+        <div className="mt-20 text-center space-y-6">
+          <div className="px-12 py-4 bg-emerald-950/80 border-y border-emerald-500/30 backdrop-blur-xl">
+             <h3 className="text-3xl font-black text-white uppercase tracking-[0.2em] italic">Embracing Sustainable Agriculture</h3>
+          </div>
+          <div className="flex items-center justify-center gap-4">
+             <div className="h-px w-20 bg-emerald-500/30"></div>
+             <h2 className="text-4xl font-black text-white tracking-[0.5em] uppercase">EnvirosAgro Rocket</h2>
+             <Sparkles className="w-8 h-8 text-emerald-400 animate-pulse" />
+             <div className="h-px w-20 bg-emerald-500/30"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
 const InfoPortal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'guidelines' | 'privacy' | 'contact'>('about');
   const [showSupport, setShowSupport] = useState(false);
@@ -99,7 +251,7 @@ const InfoPortal: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
 
   const tabs = [
-    { id: 'about', label: 'The Mission', icon: Info },
+    { id: 'about', label: 'About & Mission', icon: Info },
     { id: 'environments', label: 'Official Environments', icon: Share2 },
     { id: 'faq', label: 'Expert Q&A (Quora)', icon: MessageCircleQuestion },
     { id: 'guidelines', label: 'Code of Conduct', icon: Handshake },
@@ -140,53 +292,50 @@ const InfoPortal: React.FC = () => {
 
       <div className="glass-card rounded-[40px] overflow-hidden min-h-[600px]">
         {activeTab === 'about' && (
-          <div className="p-12 space-y-10 animate-in fade-in duration-500">
-            <div className="space-y-4 text-center max-w-4xl mx-auto">
-              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">EnvirosAgro™ Ecosystem</span>
-              <h2 className="text-6xl font-black text-white leading-tight tracking-tighter">Decentralized <span className="text-emerald-400 italic">Sustainability</span> at Scale</h2>
-              <p className="text-xl text-slate-400 leading-relaxed">
-                EnvirosAgro™ is a next-generation blockchain protocol built to revolutionize global agriculture using the <strong>EOS Framework</strong> and <strong>Five Thrusts™</strong> calculus.
+          <div className="p-12 space-y-16 animate-in fade-in duration-500">
+            <div className="space-y-6 text-center max-w-4xl mx-auto">
+              <div className="flex justify-center mb-6">
+                <div className="w-20 h-20 agro-gradient rounded-3xl flex items-center justify-center shadow-2xl">
+                  <Leaf className="w-10 h-10 text-white" />
+                </div>
+              </div>
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em]">EnvirosAgro™ Ecosystem</span>
+              <h2 className="text-6xl font-black text-white leading-tight tracking-tighter">About <span className="text-emerald-400 italic">EnvirosAgro™</span></h2>
+              <p className="text-xl text-slate-400 leading-relaxed font-medium">
+                EnvirosAgro is a pioneering organization committed to establishing a comprehensive network that advances and supports agricultural sustainability. By linking farmers, researchers, and diverse stakeholders, we catalyze transformation within the global agricultural community.
               </p>
             </div>
 
+            {/* NEW ROCKET DESIGN INTEGRATION */}
+            <EnvirosAgroRocket />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-white/5">
-              <div className="space-y-6">
-                <h3 className="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-widest italic">
-                   <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                      <Globe className="w-6 h-6 text-emerald-400" />
-                   </div>
-                   Our Core Vision
-                </h3>
-                <p className="text-slate-400 leading-loose text-lg font-medium">
-                  We believe that agriculture is the intersection of all human progress. By quantifying sustainability through the <strong>C(a)™ Agro Code</strong>, we enable a transparent economy where ecological stewardship is the primary currency.
+              <div className="space-y-6 glass-card p-10 rounded-[48px] bg-emerald-500/5 border-emerald-500/10 group">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 mb-4 group-hover:scale-110 transition-transform">
+                   <Target className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Industrial Ingest</h3>
+                <p className="text-slate-300 leading-loose text-lg font-medium">
+                  EnvirosAgro aims to promote environmentally responsible practices, facilitate knowledge exchange, and develop sustainable technologies. Our network links farmers, researchers, and diverse stakeholders within the agricultural sector.
                 </p>
               </div>
 
-              <div className="space-y-6">
-                <h3 className="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-widest italic">
-                   <div className="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-                      <Scale className="w-6 h-6 text-blue-400" />
-                   </div>
-                   The Five Thrusts™
-                </h3>
-                <div className="grid grid-cols-1 gap-4">
-                  {[
-                    { l: 'S', t: 'Societal', d: 'Anthropological lineages and community welfare.', c: 'bg-rose-500' },
-                    { l: 'E', t: 'Environmental', d: 'Stewardship of soil, water, and biodiversity.', c: 'bg-emerald-500' },
-                    { l: 'H', t: 'Human', d: 'Health, psychology, and behavioral agro-outputs.', c: 'bg-teal-500' },
-                    { l: 'T', t: 'Technological', d: 'IoT, AI, and autonomous m™ Constant monitoring.', c: 'bg-blue-500' },
-                    { l: 'I', t: 'Industry', d: 'Industrial data ledgers and blockchain registries.', c: 'bg-purple-500' },
-                  ].map((p) => (
-                    <div key={p.t} className="flex gap-6 items-center p-4 bg-white/5 rounded-3xl border border-white/5 group hover:bg-white/10 transition-all">
-                      <span className={`w-12 h-12 rounded-2xl ${p.c} flex items-center justify-center text-black font-black text-lg shadow-lg group-hover:scale-110 transition-transform shrink-0`}>{p.l}</span>
-                      <div>
-                        <h4 className="text-sm font-black text-white uppercase tracking-widest">{p.t}</h4>
-                        <p className="text-xs text-slate-500 font-medium italic">"{p.d}"</p>
-                      </div>
-                    </div>
-                  ))}
+              <div className="space-y-6 glass-card p-10 rounded-[48px] bg-blue-500/5 border-blue-500/10 group">
+                <div className="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30 mb-4 group-hover:scale-110 transition-transform">
+                   <Eye className="w-8 h-8 text-blue-400" />
                 </div>
+                <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Global Transformation</h3>
+                <p className="text-slate-300 leading-loose text-lg font-medium">
+                  Through collaboration and the dissemination of best practices, EnvirosAgro strives to catalyze positive transformation within the agricultural community, fostering a more sustainable approach.
+                </p>
               </div>
+            </div>
+
+            <div className="p-12 glass-card rounded-[56px] bg-gradient-to-br from-[#050706] via-emerald-950/10 to-black border-emerald-500/20 text-center">
+               <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Ensuring Longevity</h4>
+               <p className="text-slate-400 max-w-3xl mx-auto text-lg italic leading-relaxed">
+                  "Byリンクing researchers and stakeholders, we ensure the long-term viability of farming for future generations, reducing environmental impact and improving resilience."
+               </p>
             </div>
           </div>
         )}
