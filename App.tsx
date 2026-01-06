@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Camera, CheckCircle2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, FileText, Power, Bot, AlertCircle, Lock, ArrowRight, Wrench, Mic, Coins, Heart, Activity
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Camera, CheckCircle2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, FileText, Power, Bot, AlertCircle, Lock, ArrowRight, Wrench, Mic, Coins, Heart, Activity, Globe, Box, Hash, Share2
 } from 'lucide-react';
 import { ViewState, User } from './types';
 import Dashboard from './components/Dashboard';
@@ -22,6 +22,7 @@ import VendorPortal from './components/VendorPortal';
 import NetworkIngest from './components/NetworkIngest';
 import ToolsSection from './components/ToolsSection';
 import LiveVoiceBridge from './components/LiveVoiceBridge';
+import Channelling from './components/Channelling';
 import { diagnoseCropIssue } from './services/geminiService';
 import { syncUserToCloud } from './services/firebaseService';
 
@@ -30,6 +31,7 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
+  const [blockHeight, setBlockHeight] = useState(8821942);
   
   const [economyToast, setEconomyToast] = useState<{ amount: number, label: string } | null>(null);
   
@@ -46,6 +48,11 @@ const App: React.FC = () => {
   useEffect(() => {
     const savedUser = localStorage.getItem('agro_steward');
     if (savedUser) setUser(JSON.parse(savedUser));
+    
+    const interval = setInterval(() => {
+      setBlockHeight(h => h + 1);
+    }, 12000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleUpdateUser = async (updatedUser: User) => {
@@ -66,6 +73,14 @@ const App: React.FC = () => {
     return true;
   };
 
+  const earnEAC = (amount: number, reason: string) => {
+    if (!user) return;
+    const updatedUser: User = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount } };
+    handleUpdateUser(updatedUser);
+    setEconomyToast({ amount, label: reason.toUpperCase() });
+    setTimeout(() => setEconomyToast(null), 3000);
+  };
+
   const handleDepositEAC = (amount: number, gateway: string) => {
     if (!user) return;
     const updatedUser: User = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount } };
@@ -83,14 +98,11 @@ const App: React.FC = () => {
     setTimeout(() => setEconomyToast(null), 3000);
   };
 
-  // Shared Minting Logic
   const handleStartMinting = async () => {
     setMintingStep('analyzing');
-    // Using Gemini to "verify" the evidence
     try {
       const res = await diagnoseCropIssue(evidenceDesc || "General scientific field evidence.", evidenceFile?.split(',')[1]);
       setMintResult(res.text);
-      // Reward based on C(a) logic simulation
       const reward = Math.floor(25 + Math.random() * 75);
       setCalculatedReward(reward);
       setMintingStep('confirm');
@@ -125,6 +137,7 @@ const App: React.FC = () => {
     { id: 'investor', name: 'Investor Portal', icon: Landmark },
     { id: 'vendor', name: 'Vendor Portal', icon: Store },
     { id: 'ingest', name: 'Network Ingest', icon: Cable },
+    { id: 'channelling', name: 'Channelling Hub', icon: Share2 },
     { id: 'sustainability', name: 'Science & IoT', icon: Cpu },
     { id: 'economy', name: 'Market & Mining', icon: ShoppingCart },
     { id: 'industrial', name: 'Industrial Cloud', icon: Users },
@@ -139,6 +152,8 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#050706] text-slate-200 font-sans relative">
+      <div className="scanline"></div>
+      
       {economyToast && (
         <div className="fixed top-20 right-10 z-[200] animate-in slide-in-from-top-4 duration-500">
           <div className={`glass-card px-6 py-3 rounded-2xl flex items-center gap-4 border-l-4 shadow-2xl ${economyToast.amount > 0 ? 'border-l-emerald-500 bg-emerald-500/10' : 'border-l-rose-500 bg-rose-500/10'}`}>
@@ -148,46 +163,96 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 glass-card border-r border-white/5 flex flex-col z-50`}>
-        <div className="p-6 flex items-center justify-between">
-          <div className="flex items-center gap-3"><div className="w-8 h-8 agro-gradient rounded-lg flex items-center justify-center shrink-0 shadow-lg"><Leaf className="text-white w-5 h-5" /></div>{isSidebarOpen && <span className="text-xl font-bold">EnvirosAgro™</span>}</div>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-500 hover:text-white">{isSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4 mx-auto" />}</button>
+      <aside className={`${isSidebarOpen ? 'w-72' : 'w-24'} transition-all duration-300 glass-card border-r border-white/5 flex flex-col z-50 bg-black/40`}>
+        <div className="p-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg glow-border">
+              <Leaf className="text-white w-6 h-6" />
+            </div>
+            {isSidebarOpen && <span className="text-xl font-black uppercase tracking-tighter italic">Enviros<span className="text-emerald-500">Agro™</span></span>}
+          </div>
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-600 hover:text-white transition-colors">{isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 mx-auto" />}</button>
         </div>
-        <nav className="flex-1 mt-4 space-y-1 px-3 overflow-y-auto scrollbar-hide">
+        
+        <nav className="flex-1 mt-2 space-y-1 px-4 overflow-y-auto scrollbar-hide">
           {navigation.map((item) => (
-            <button key={item.id} onClick={() => setActiveView(item.id as ViewState)} className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${activeView === item.id ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/20' : 'text-slate-400 hover:bg-white/5'}`}>
-              <item.icon className="w-5 h-5 shrink-0" />{isSidebarOpen && <span className="font-medium text-sm text-nowrap">{item.name}</span>}
+            <button key={item.id} onClick={() => setActiveView(item.id as ViewState)} className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all group ${activeView === item.id ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 shadow-inner' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'}`}>
+              <item.icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110 ${activeView === item.id ? 'text-emerald-400' : 'text-slate-600'}`} />
+              {isSidebarOpen && <span className="font-bold text-xs uppercase tracking-widest text-nowrap">{item.name}</span>}
             </button>
           ))}
         </nav>
-        <div className="p-4 border-t border-white/5 space-y-3">
-          <button onClick={() => setIsVoiceBridgeOpen(!isVoiceBridgeOpen)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${isVoiceBridgeOpen ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:bg-white/5'}`}><Mic className="w-5 h-5 shrink-0" />{isSidebarOpen && <span className="font-bold text-xs uppercase">Voice Bridge</span>}</button>
-          <button onClick={() => setShowLogoutConfirm(true)} className="w-full flex items-center gap-3 p-3 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"><LogOut className="w-5 h-5 shrink-0" />{isSidebarOpen && <span className="font-bold text-xs uppercase">Logout</span>}</button>
+        
+        <div className="p-6 border-t border-white/5 space-y-4">
+          <div className="glass-card p-4 rounded-2xl bg-white/[0.01] border-white/5">
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-[8px] font-black text-slate-600 uppercase">Block Height</p>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            </div>
+            <p className="text-xs font-mono font-bold text-white tracking-widest">#{blockHeight.toLocaleString()}</p>
+          </div>
+          <button onClick={() => setIsVoiceBridgeOpen(!isVoiceBridgeOpen)} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${isVoiceBridgeOpen ? 'bg-emerald-600 text-white' : 'text-slate-500 bg-white/5 hover:text-white'}`}>
+            <Mic className="w-5 h-5 shrink-0" />{isSidebarOpen && <span className="font-black text-[10px] uppercase tracking-widest">Voice Bridge</span>}
+          </button>
+          <button onClick={() => setShowLogoutConfirm(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all font-black text-[10px] uppercase tracking-widest border border-transparent hover:border-rose-500/20">
+            <LogOut className="w-5 h-5 shrink-0" />{isSidebarOpen && <span>Terminate Session</span>}
+          </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto relative p-6">
-        <header className="flex justify-between items-center mb-8 sticky top-0 bg-[#050706]/80 backdrop-blur-md z-40 py-3 px-2 rounded-b-3xl border-b border-white/5">
-          <div><h1 className="text-2xl font-bold text-white tracking-tight capitalize">{navigation.find(n => n.id === activeView)?.name}</h1><p className="text-slate-500 text-[10px] font-mono flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Registry: {user.esin}</p></div>
-          <button onClick={() => setActiveView('wallet')} className={`flex items-center gap-3 glass-card px-5 py-2.5 rounded-full border transition-all ${activeView === 'wallet' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 hover:border-white/20'}`}><div className="flex flex-col items-end"><span className="text-[10px] text-slate-500 font-black uppercase">Treasury</span><span className="text-sm font-mono text-emerald-400 font-bold">{user.wallet.balance.toFixed(2)} EAC</span></div><div className="p-1.5 bg-emerald-500/20 rounded-full"><Wallet className="w-4 h-4 text-emerald-400" /></div></button>
+      <main className="flex-1 overflow-y-auto relative bg-[#050706]">
+        <header className="flex justify-between items-center sticky top-0 bg-[#050706]/90 backdrop-blur-xl z-40 py-6 px-10 border-b border-white/5">
+          <div>
+            <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">{navigation.find(n => n.id === activeView)?.name}</h1>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-slate-600 text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Registry: {user.esin}
+              </p>
+              <p className="text-slate-700 text-[9px] font-black uppercase tracking-[0.3em] hidden md:block">Region: Global_Node_{user.location.replace(/ /g, '_')}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="hidden xl:flex items-center gap-10 mr-6">
+               <div className="text-right">
+                  <p className="text-[8px] text-slate-600 font-black uppercase">Gas Status</p>
+                  <p className="text-xs font-mono font-bold text-emerald-400">0.0001 EAC</p>
+               </div>
+               <div className="text-right">
+                  <p className="text-[8px] text-slate-600 font-black uppercase">Validator Sync</p>
+                  <p className="text-xs font-mono font-bold text-blue-400">99.98%</p>
+               </div>
+            </div>
+            <button onClick={() => setActiveView('wallet')} className="flex items-center gap-4 glass-card px-6 py-3 rounded-2xl border-white/10 hover:border-emerald-500/30 transition-all group">
+              <div className="flex flex-col items-end">
+                <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Available Capital</span>
+                <span className="text-lg font-mono text-white font-black">{user.wallet.balance.toFixed(2)} <span className="text-[10px] text-emerald-500">EAC</span></span>
+              </div>
+              <div className="p-3 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500 transition-colors group-hover:text-white text-emerald-500">
+                <Wallet className="w-5 h-5" />
+              </div>
+            </button>
+          </div>
         </header>
 
-        {activeView === 'dashboard' && <Dashboard user={user} onNavigate={setActiveView} />}
-        {activeView === 'wallet' && <AgroWallet user={user} onNavigate={setActiveView} />}
-        {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={() => setShowLogoutConfirm(true)} />}
-        {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} />}
-        {activeView === 'vendor' && <VendorPortal user={user} />}
-        {activeView === 'ingest' && <NetworkIngest />}
-        {activeView === 'sustainability' && <Sustainability onAction={() => setIsMintingModalOpen(true)} />}
-        {activeView === 'economy' && <Economy user={user} onMint={() => setIsMintingModalOpen(true)} />}
-        {activeView === 'industrial' && <Industrial user={user} onSpendEAC={spendEAC} />}
-        {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
-        {activeView === 'tools' && <ToolsSection />}
-        {activeView === 'community' && <Community user={user} onContribution={processContribution} onSpendEAC={spendEAC} />}
-        {activeView === 'explorer' && <Explorer />}
-        {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={handleDepositEAC} />}
-        {activeView === 'media' && <MediaHub userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
-        {activeView === 'info' && <InfoPortal />}
+        <div className="p-10">
+          {activeView === 'dashboard' && <Dashboard user={user} onNavigate={setActiveView} />}
+          {activeView === 'wallet' && <AgroWallet user={user} onNavigate={setActiveView} />}
+          {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={() => setShowLogoutConfirm(true)} />}
+          {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} />}
+          {activeView === 'vendor' && <VendorPortal user={user} />}
+          {activeView === 'ingest' && <NetworkIngest />}
+          {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} />}
+          {activeView === 'sustainability' && <Sustainability onAction={() => setIsMintingModalOpen(true)} />}
+          {activeView === 'economy' && <Economy user={user} onMint={() => setIsMintingModalOpen(true)} />}
+          {activeView === 'industrial' && <Industrial user={user} onSpendEAC={spendEAC} />}
+          {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
+          {activeView === 'tools' && <ToolsSection />}
+          {activeView === 'community' && <Community user={user} onContribution={processContribution} onSpendEAC={spendEAC} />}
+          {activeView === 'explorer' && <Explorer />}
+          {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={handleDepositEAC} />}
+          {activeView === 'media' && <MediaHub userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
+          {activeView === 'info' && <InfoPortal />}
+        </div>
       </main>
 
       <LiveVoiceBridge isOpen={isVoiceBridgeOpen} onClose={() => setIsVoiceBridgeOpen(false)} />
@@ -334,8 +399,8 @@ const App: React.FC = () => {
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl" onClick={() => setShowLogoutConfirm(false)}></div>
-          <div className="relative z-10 w-full max-w-md glass-card p-10 rounded-[44px] border-rose-500/20 bg-rose-950/20 text-center space-y-8">
-            <div className="w-20 h-20 bg-rose-500/10 rounded-[32px] flex items-center justify-center border border-rose-500/40 mx-auto"><Power className="w-10 h-10 text-rose-500" /></div>
+          <div className="relative z-10 w-full max-w-md glass-card p-10 rounded-3xl border-rose-500/20 bg-rose-950/20 text-center space-y-8">
+            <div className="w-20 h-20 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/40 mx-auto"><Power className="w-10 h-10 text-rose-500" /></div>
             <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Terminate Session?</h3>
             <div className="flex gap-4">
               <button onClick={() => setShowLogoutConfirm(false)} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase hover:bg-white/10 transition-all">Cancel</button>
@@ -348,7 +413,6 @@ const App: React.FC = () => {
   );
 };
 
-// Re-using Microscope icon for Ingest
 const Microscope = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M6 18c-2 0-3-1-3-3s1-3 3-3 3 1 3 3-1 3-3 3Z"/><path d="M12 18h9"/><path d="M16 12l2 2"/><path d="M9 12l3 3"/><path d="M10 5l4 4"/><path d="M15 2l5 5"/>

@@ -1,3 +1,4 @@
+
 export interface User {
   name: string;
   email: string;
@@ -74,4 +75,4 @@ export interface AgroTransaction {
   unit: string;
 }
 
-export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools';
+export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling';

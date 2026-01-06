@@ -166,8 +166,8 @@ const BRANDS: Brand[] = [
   },
   { 
     id: 'agroinpdf', name: 'AgroInPDF', icon: FileJson, color: 'text-orange-400', bg: 'bg-orange-400/10', 
-    desc: 'Industry Thrust (I): The standard protocol for sharding and distributing EnvirosAgro™ research data.', 
-    action: 'Shard Extract', thrust: 'industry', toolType: 'info', volume: '10.2M EAC',
+    desc: 'Industry Thrust (I): The primary protocol for sharding Knowledge Shards and technical research papers into the Archive Ledger. We power the intellectual capital of the EnvirosAgro network.', 
+    action: 'Archive Shard Export', thrust: 'industry', toolType: 'info', volume: '10.2M EAC',
     products: [
       { id: 'pdf1', name: 'Yield Data Digest', price: 50, type: 'Product', icon: Database },
       { id: 'pdf2', name: 'Research Shard Storage', price: 150, type: 'Service', icon: Layers }
@@ -354,6 +354,8 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
       query = `Provide a comprehensive design audit for agricultural aesthetics, focusing on exterior landscaping, flower beds/gardens, and farm structure architecture for the ${user.location} zone. How does aesthetic stewardship impact the Environmental (E) Thrust?`;
     } else if (activeBrand.id === 'agromusika') {
       query = `Analyze bio-electric responses for crops in ${user.location} under Plant Wave Technology protocols. How do 432Hz and ultrasonic frequency modulations impact C(a)™ efficiency and soil molecular repair?`;
+    } else if (activeBrand.id === 'agroinpdf') {
+      query = `How does the AgroInPDF™ protocol secure industrial agricultural Knowledge Shards and research papers? Analyze its integration with the decentralized Archive Ledger and the impact of I-Thrust sharding on network reputation.`;
     } else {
       switch(activeBrand.thrust) {
         case 'societal': query = `Latest research on community-centric farming and the Five Thrusts™ societal impact for brand ${activeBrand.name}.`; break;
@@ -475,7 +477,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                   <div className="flex items-center gap-6">
                     <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">{activeBrand.name}</h2>
                     <span className="px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                      {activeBrand.id === 'tokenz' ? 'Central Institutional Account' : activeBrand.id === 'hearts4agro' ? 'Social Care Portal' : activeBrand.id === 'medicag' ? 'Agro-Medicine & Doctory' : activeBrand.id === 'agromusika' ? 'Frequency Sync' : 'Terminal Intel'}
+                      {activeBrand.id === 'tokenz' ? 'Central Institutional Account' : activeBrand.id === 'hearts4agro' ? 'Social Care Portal' : activeBrand.id === 'medicag' ? 'Agro-Medicine & Doctory' : activeBrand.id === 'agromusika' ? 'Frequency Sync' : activeBrand.id === 'agroinpdf' ? 'Knowledge Sharding' : 'Terminal Intel'}
                     </span>
                   </div>
                   <p className="text-slate-400 text-xl font-medium mt-2 max-w-2xl leading-relaxed">{activeBrand.desc}</p>
@@ -829,9 +831,9 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                       ) : aiResult ? (
                         <div className="w-full text-left space-y-10 animate-in fade-in duration-700">
                            <div className="flex items-center gap-4 border-b border-white/5 pb-8">
-                              {activeBrand.id === 'hearts4agro' ? <HeartPulse className="w-10 h-10 text-rose-400" /> : activeBrand.id === 'medicag' ? <Stethoscope className="w-10 h-10 text-teal-400" /> : activeBrand.id === 'agromusika' ? <Waves className="w-10 h-10 text-indigo-400" /> : <Bot className="w-10 h-10 text-emerald-400" />}
+                              {activeBrand.id === 'hearts4agro' ? <HeartPulse className="w-10 h-10 text-rose-400" /> : activeBrand.id === 'medicag' ? <Stethoscope className="w-10 h-10 text-teal-400" /> : activeBrand.id === 'agromusika' ? <Waves className="w-10 h-10 text-indigo-400" /> : activeBrand.id === 'agroinpdf' ? <FileJson className="w-10 h-10 text-orange-400" /> : <Bot className="w-10 h-10 text-emerald-400" />}
                               <div>
-                                 <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{activeBrand.id === 'hearts4agro' ? 'Integrated Care Sweep' : activeBrand.id === 'medicag' ? 'Physiological Audit' : activeBrand.id === 'agromusika' ? 'Plant Wave Synthesis' : 'Terminal Intel'}</h4>
+                                 <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{activeBrand.id === 'hearts4agro' ? 'Integrated Care Sweep' : activeBrand.id === 'medicag' ? 'Physiological Audit' : activeBrand.id === 'agromusika' ? 'Plant Wave Synthesis' : activeBrand.id === 'agroinpdf' ? 'Knowledge Shard Audit' : 'Terminal Intel'}</h4>
                                  <p className="text-emerald-500/60 text-[10px] font-black uppercase tracking-widest">{activeBrand.name.toUpperCase()} // Five Thrusts™ SHARD</p>
                               </div>
                            </div>
@@ -843,7 +845,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                       ) : (
                         <div className="space-y-8">
                            <div className="w-24 h-24 rounded-[32px] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-2xl group-hover:scale-110 transition-transform">
-                              {activeBrand.id === 'hearts4agro' ? <Dog className="w-10 h-10 text-rose-400" /> : activeBrand.id === 'medicag' ? <Stethoscope className="w-10 h-10 text-teal-400" /> : activeBrand.id === 'lilies' ? <Home className="w-10 h-10 text-pink-400" /> : activeBrand.id === 'agromusika' ? <Sprout className="w-10 h-10 text-indigo-400" /> : <Sparkles className="w-10 h-10 text-emerald-400" />}
+                              {activeBrand.id === 'hearts4agro' ? <Dog className="w-10 h-10 text-rose-400" /> : activeBrand.id === 'medicag' ? <Stethoscope className="w-10 h-10 text-teal-400" /> : activeBrand.id === 'lilies' ? <Home className="w-10 h-10 text-pink-400" /> : activeBrand.id === 'agromusika' ? <Sprout className="w-10 h-10 text-indigo-400" /> : activeBrand.id === 'agroinpdf' ? <FileJson className="w-10 h-10 text-orange-400" /> : <Sparkles className="w-10 h-10 text-emerald-400" />}
                            </div>
                            <div className="max-w-md mx-auto space-y-4">
                               <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Oracle <span className="text-emerald-400">Terminal</span></h4>
@@ -852,6 +854,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                                   activeBrand.id === 'medicag' ? 'Conduct a Human (H) Thrust session. Assess steward physiological health, analyze SID stress load, and optimize Agro-Medicine output.' :
                                   activeBrand.id === 'lilies' ? 'Initialize an aesthetic agro-audit for your zone. Covers gardens, structural farm architecture, and floral landscaping.' :
                                   activeBrand.id === 'agromusika' ? 'Synchronize with the Plant Wave Oracle to analyze bio-electric crop response and tune molecular frequencies.' :
+                                  activeBrand.id === 'agroinpdf' ? 'Access the AgroInPDF™ Knowledge Oracle to analyze research sharding efficiency and I-Thrust ledger performance.' :
                                   `Invoke the EnvirosAgro™ oracle to generate strategic insights for the ${activeBrand.name} protocol.`}
                               </p>
                               <button 
@@ -859,7 +862,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                                 className="px-12 py-5 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 mx-auto"
                               >
                                  <Zap className="w-6 h-6 fill-current" />
-                                 {activeBrand.id === 'hearts4agro' ? 'RUN INTEGRATED CARE SWEEP' : activeBrand.id === 'medicag' ? 'RUN AGRO-DOCTORING AUDIT' : activeBrand.id === 'lilies' ? 'RUN AESTHETIC AUDIT' : activeBrand.id === 'agromusika' ? 'INITIALIZE WAVE SYNC' : 'RUN ORACLE SWEEP'}
+                                 {activeBrand.id === 'hearts4agro' ? 'RUN INTEGRATED CARE SWEEP' : activeBrand.id === 'medicag' ? 'RUN AGRO-DOCTORING AUDIT' : activeBrand.id === 'lilies' ? 'RUN AESTHETIC AUDIT' : activeBrand.id === 'agromusika' ? 'INITIALIZE WAVE SYNC' : activeBrand.id === 'agroinpdf' ? 'INITIALIZE KNOWLEDGE AUDIT' : 'RUN ORACLE SWEEP'}
                               </button>
                            </div>
                         </div>
