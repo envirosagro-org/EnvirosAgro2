@@ -35,7 +35,6 @@ import {
   HelpCircle,
   Cloud,
   Wind,
-  Butterfly,
   MessageCircle,
   Facebook,
   HelpCircle as QuestionIcon,

@@ -73,7 +73,7 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
             setIsConnecting(false);
           },
           onmessage: async (message: LiveServerMessage) => {
-            const base64Audio = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+            const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (base64Audio && outputAudioContextRef.current) {
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputAudioContextRef.current.currentTime);
               const audioBuffer = await decodeAudioData(decode(base64Audio), outputAudioContextRef.current, 24000, 1);
