@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Camera, CheckCircle2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, FileText, Power, Bot, AlertCircle, Lock, ArrowRight, Wrench, Mic, Coins, Heart, Activity, Globe, Box, Hash, Share2
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Camera, CheckCircle2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, FileText, Power, Bot, AlertCircle, Lock, ArrowRight, Wrench, Mic, Coins, Heart, Activity, Globe, Box, Hash, Share2, Server, Terminal, Shield
 } from 'lucide-react';
 import { ViewState, User } from './types';
 import Dashboard from './components/Dashboard';
@@ -32,6 +32,7 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
   const [blockHeight, setBlockHeight] = useState(8821942);
+  const [ping, setPing] = useState(12);
   
   const [economyToast, setEconomyToast] = useState<{ amount: number, label: string } | null>(null);
   
@@ -51,6 +52,7 @@ const App: React.FC = () => {
     
     const interval = setInterval(() => {
       setBlockHeight(h => h + 1);
+      setPing(Math.floor(8 + Math.random() * 8));
     }, 12000);
     return () => clearInterval(interval);
   }, []);
@@ -151,7 +153,7 @@ const App: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#050706] text-slate-200 font-sans relative">
+    <div className="flex h-screen overflow-hidden bg-[#050706] text-slate-200 font-sans relative selection:bg-emerald-500 selection:text-white">
       <div className="scanline"></div>
       
       {economyToast && (
@@ -163,10 +165,10 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <aside className={`${isSidebarOpen ? 'w-72' : 'w-24'} transition-all duration-300 glass-card border-r border-white/5 flex flex-col z-50 bg-black/40`}>
+      <aside className={`${isSidebarOpen ? 'w-72' : 'w-24'} transition-all duration-500 glass-card border-r border-white/5 flex flex-col z-50 bg-black/60 relative`}>
         <div className="p-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg glow-border">
+            <div className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg glow-border group cursor-pointer hover:rotate-12 transition-transform">
               <Leaf className="text-white w-6 h-6" />
             </div>
             {isSidebarOpen && <span className="text-xl font-black uppercase tracking-tighter italic">Enviros<span className="text-emerald-500">Agro™</span></span>}
@@ -174,7 +176,7 @@ const App: React.FC = () => {
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-600 hover:text-white transition-colors">{isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 mx-auto" />}</button>
         </div>
         
-        <nav className="flex-1 mt-2 space-y-1 px-4 overflow-y-auto scrollbar-hide">
+        <nav className="flex-1 mt-2 space-y-1 px-4 overflow-y-auto scrollbar-hide pb-20">
           {navigation.map((item) => (
             <button key={item.id} onClick={() => setActiveView(item.id as ViewState)} className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all group ${activeView === item.id ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 shadow-inner' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'}`}>
               <item.icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110 ${activeView === item.id ? 'text-emerald-400' : 'text-slate-600'}`} />
@@ -183,15 +185,16 @@ const App: React.FC = () => {
           ))}
         </nav>
         
-        <div className="p-6 border-t border-white/5 space-y-4">
-          <div className="glass-card p-4 rounded-2xl bg-white/[0.01] border-white/5">
+        <div className="p-6 border-t border-white/5 space-y-4 bg-black/40 backdrop-blur-md">
+          <div className="glass-card p-4 rounded-2xl bg-white/[0.01] border-white/5 relative overflow-hidden group">
+            <div className="absolute inset-0 shimmer opacity-[0.02] pointer-events-none"></div>
             <div className="flex justify-between items-center mb-1">
-              <p className="text-[8px] font-black text-slate-600 uppercase">Block Height</p>
+              <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Block Height</p>
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
             </div>
             <p className="text-xs font-mono font-bold text-white tracking-widest">#{blockHeight.toLocaleString()}</p>
           </div>
-          <button onClick={() => setIsVoiceBridgeOpen(!isVoiceBridgeOpen)} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${isVoiceBridgeOpen ? 'bg-emerald-600 text-white' : 'text-slate-500 bg-white/5 hover:text-white'}`}>
+          <button onClick={() => setIsVoiceBridgeOpen(!isVoiceBridgeOpen)} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${isVoiceBridgeOpen ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-slate-500 bg-white/5 hover:text-white'}`}>
             <Mic className="w-5 h-5 shrink-0" />{isSidebarOpen && <span className="font-black text-[10px] uppercase tracking-widest">Voice Bridge</span>}
           </button>
           <button onClick={() => setShowLogoutConfirm(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all font-black text-[10px] uppercase tracking-widest border border-transparent hover:border-rose-500/20">
@@ -200,7 +203,7 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto relative bg-[#050706]">
+      <main className="flex-1 overflow-y-auto relative bg-[#050706] flex flex-col">
         <header className="flex justify-between items-center sticky top-0 bg-[#050706]/90 backdrop-blur-xl z-40 py-6 px-10 border-b border-white/5">
           <div>
             <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">{navigation.find(n => n.id === activeView)?.name}</h1>
@@ -224,8 +227,8 @@ const App: React.FC = () => {
             </div>
             <button onClick={() => setActiveView('wallet')} className="flex items-center gap-4 glass-card px-6 py-3 rounded-2xl border-white/10 hover:border-emerald-500/30 transition-all group">
               <div className="flex flex-col items-end">
-                <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Available Capital</span>
-                <span className="text-lg font-mono text-white font-black">{user.wallet.balance.toFixed(2)} <span className="text-[10px] text-emerald-500">EAC</span></span>
+                <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest text-nowrap">Available Capital</span>
+                <span className="text-lg font-mono text-white font-black whitespace-nowrap">{user.wallet.balance.toFixed(2)} <span className="text-[10px] text-emerald-500">EAC</span></span>
               </div>
               <div className="p-3 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500 transition-colors group-hover:text-white text-emerald-500">
                 <Wallet className="w-5 h-5" />
@@ -234,7 +237,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="p-10">
+        <div className="p-10 flex-1">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={setActiveView} />}
           {activeView === 'wallet' && <AgroWallet user={user} onNavigate={setActiveView} />}
           {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={() => setShowLogoutConfirm(true)} />}
@@ -253,6 +256,35 @@ const App: React.FC = () => {
           {activeView === 'media' && <MediaHub userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
         </div>
+
+        {/* Industrial Production Status Bar */}
+        <footer className="h-10 bg-black/80 backdrop-blur-2xl border-t border-white/5 flex items-center px-10 justify-between text-[8px] font-black uppercase tracking-[0.4em] text-slate-600 relative z-[60]">
+           <div className="flex gap-10 items-center">
+              <div className="flex items-center gap-2">
+                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div>
+                 <span>Vercel_Deployment: <span className="text-slate-300">NODE_01_ACTIVE</span></span>
+              </div>
+              <div className="flex items-center gap-2">
+                 <Terminal className="w-3 h-3" />
+                 <span>Latency: <span className="text-emerald-500 font-mono">{ping}ms</span></span>
+              </div>
+              <div className="hidden md:flex items-center gap-2">
+                 <Server className="w-3 h-3" />
+                 <span>Protocol: <span className="text-slate-400">EOS_V3.2.1</span></span>
+              </div>
+           </div>
+           <div className="flex gap-10 items-center">
+              <div className="flex items-center gap-2">
+                 <Shield className="w-3 h-3 text-emerald-500" />
+                 <span>Registry_Auth: <span className="text-emerald-500">TRUSTED</span></span>
+              </div>
+              <div className="hidden sm:flex items-center gap-2">
+                 <Activity className="w-3 h-3" />
+                 <span>U-Score_Delta: <span className="text-white">+0.04%</span></span>
+              </div>
+              <p className="font-mono text-slate-800">ENVIROSAGRO_BLOCKCHAIN_INDUSTRIES_©2025</p>
+           </div>
+        </footer>
       </main>
 
       <LiveVoiceBridge isOpen={isVoiceBridgeOpen} onClose={() => setIsVoiceBridgeOpen(false)} />
