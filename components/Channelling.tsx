@@ -33,7 +33,14 @@ import {
   BookOpen,
   FileJson,
   FileDown,
-  Database
+  Database,
+  AtSign,
+  Pin,
+  HelpCircle,
+  Cloud,
+  Wind,
+  Linkedin,
+  Send
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -57,6 +64,15 @@ interface ArchiveItem {
   isAgroInPDF?: boolean; // Flag for Knowledge Ledger items
 }
 
+const OFFICIAL_ENVIRONMENTS = [
+  { name: 'Threads', url: 'https://www.threads.com/@envirosagro', icon: AtSign, color: 'text-white' },
+  { name: 'TikTok', url: 'https://www.tiktok.com/@envirosagro?_r=1&_t=ZM-92puItTmTF6', icon: Video, color: 'text-pink-500' },
+  { name: 'YouTube', url: 'https://youtube.com/@envirosagro?si=JOezDZYuxRVmeplX', icon: Youtube, color: 'text-red-500' },
+  { name: 'X / Twitter', url: 'https://x.com/EnvirosAgro', icon: Twitter, color: 'text-blue-400' },
+  { name: 'Quora', url: 'https://www.quora.com/profile/EnvirosAgro?ch=10&oid=2274202272&share=cee3144a&srid=3uVNlE&target_type=user', icon: HelpCircle, color: 'text-red-600' },
+  { name: 'LinkedIn', url: 'https://www.linkedin.com/company/modern-agrarian-revolution', icon: Linkedin, color: 'text-blue-600' },
+];
+
 const INITIAL_ARCHIVE: ArchiveItem[] = [
   { id: '1', type: 'YouTube', title: 'Regenerative Composting in Arid Zones', url: 'https://youtube.com/watch?v=agro1', author: 'Dr. Sarah Chen', views: 1240, interactions: 420, eacEarned: 12.4, timestamp: '2h ago' },
   { id: '2', type: 'X', title: 'Soil pH Anomaly Report - Sector 4', url: 'https://x.com/steward/status/882', author: 'Node_Paris_04', views: 8500, interactions: 1200, eacEarned: 85.0, timestamp: '5h ago' },
@@ -77,7 +93,7 @@ const PLATFORM_ICONS: Record<string, any> = {
 };
 
 const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC }) => {
-  const [activeTab, setActiveTab] = useState<'video' | 'social' | 'knowledge'>('video');
+  const [activeTab, setActiveTab] = useState<'video' | 'social' | 'knowledge' | 'official'>('video');
   const [archive, setArchive] = useState<ArchiveItem[]>(INITIAL_ARCHIVE);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -195,6 +211,7 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC }) => {
           { id: 'video', label: 'Visual Nodes', icon: Video },
           { id: 'social', label: 'Social Shards', icon: Smartphone },
           { id: 'knowledge', label: 'Knowledge Ledger', icon: BookOpen },
+          { id: 'official', label: 'Official Hubs', icon: Globe },
         ].map(tab => (
           <button 
             key={tab.id}
@@ -207,7 +224,7 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC }) => {
       </div>
 
       {activeTab === 'knowledge' && (
-        <div className="p-8 glass-card border-orange-500/20 bg-orange-500/5 rounded-3xl flex items-center justify-between mb-4">
+        <div className="p-8 glass-card border-orange-500/20 bg-orange-500/5 rounded-3xl flex items-center justify-between mb-4 animate-in slide-in-from-top-4 duration-500">
            <div className="flex items-center gap-4">
               <div className="p-3 bg-orange-400 text-black rounded-xl shadow-xl">
                  <FileJson className="w-6 h-6" />
@@ -224,77 +241,105 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC }) => {
         </div>
       )}
 
+      {activeTab === 'official' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-in zoom-in duration-500">
+           {OFFICIAL_ENVIRONMENTS.map((env, i) => (
+             <a 
+              key={i} 
+              href={env.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="glass-card p-10 rounded-[48px] border border-white/5 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all flex flex-col items-center text-center gap-6 group active:scale-95"
+             >
+                <div className={`w-20 h-20 rounded-[32px] bg-white/5 flex items-center justify-center shadow-2xl transition-all group-hover:scale-110 border border-white/10 ${env.color}`}>
+                   <env.icon className="w-10 h-10" />
+                </div>
+                <div>
+                   <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic">{env.name}</h4>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">Certified Shard</p>
+                </div>
+                <div className="mt-4 p-4 bg-white/5 rounded-2xl w-full flex items-center justify-center gap-3 group-hover:bg-white/10 transition-colors">
+                   <span className="text-[10px] font-black text-white uppercase tracking-widest">Connect Hub</span>
+                   <ExternalLink className="w-4 h-4 text-blue-400" />
+                </div>
+             </a>
+           ))}
+        </div>
+      )}
+
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-in slide-in-from-bottom-4 duration-500">
-         {filteredArchive.map(item => {
-           const Icon = PLATFORM_ICONS[item.type] || Globe;
-           const isKnowledge = ['Blog', 'Paper'].includes(item.type);
-           return (
-             <div key={item.id} className={`glass-card rounded-[44px] p-8 border group transition-all flex flex-col h-full active:scale-[0.98] duration-200 ${isKnowledge ? 'border-orange-500/10 hover:border-orange-500/30' : 'border-white/5 hover:border-indigo-500/20'}`}>
-                <div className="flex justify-between items-start mb-6">
-                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isKnowledge ? 'bg-orange-500/10 text-orange-400 group-hover:bg-orange-500 group-hover:text-white' : 'bg-white/5 group-hover:bg-indigo-600 group-hover:text-white'}`}>
-                      <Icon className="w-7 h-7" />
-                   </div>
-                   <div className="flex flex-col items-end">
-                      <span className={`px-2 py-0.5 border rounded text-[8px] font-black uppercase tracking-widest ${isKnowledge ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>{item.type}</span>
-                      <span className="text-[9px] text-slate-600 font-mono mt-1">{item.timestamp}</span>
-                   </div>
-                </div>
+      {activeTab !== 'official' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-in slide-in-from-bottom-4 duration-500">
+           {filteredArchive.map(item => {
+             const Icon = PLATFORM_ICONS[item.type] || Globe;
+             const isKnowledge = ['Blog', 'Paper'].includes(item.type);
+             return (
+               <div key={item.id} className={`glass-card rounded-[44px] p-8 border group transition-all flex flex-col h-full active:scale-[0.98] duration-200 ${isKnowledge ? 'border-orange-500/10 hover:border-orange-500/30' : 'border-white/5 hover:border-indigo-500/20'}`}>
+                  <div className="flex justify-between items-start mb-6">
+                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isKnowledge ? 'bg-orange-500/10 text-orange-400 group-hover:bg-orange-500 group-hover:text-white' : 'bg-white/5 group-hover:bg-indigo-600 group-hover:text-white'}`}>
+                        <Icon className="w-7 h-7" />
+                     </div>
+                     <div className="flex flex-col items-end">
+                        <span className={`px-2 py-0.5 border rounded text-[8px] font-black uppercase tracking-widest ${isKnowledge ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>{item.type}</span>
+                        <span className="text-[9px] text-slate-600 font-mono mt-1">{item.timestamp}</span>
+                     </div>
+                  </div>
 
-                <h4 className={`text-xl font-black text-white leading-tight tracking-tighter mb-4 transition-colors flex-1 ${isKnowledge ? 'group-hover:text-orange-400' : 'group-hover:text-indigo-400'}`}>{item.title}</h4>
-                
-                <div className="space-y-4 mb-8">
-                   <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                      <span className="text-slate-500">Source Steward</span>
-                      <span className="text-white">{item.author}</span>
-                   </div>
-                   <div className="flex gap-4">
-                      <div className="flex items-center gap-2 text-slate-500 group-hover:text-emerald-400 transition-colors">
-                         <Eye className="w-3.5 h-3.5" />
-                         <span className="text-[10px] font-mono font-bold">{item.views.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-500 group-hover:text-blue-400 transition-colors">
-                         <MessageSquare className="w-3.5 h-3.5" />
-                         <span className="text-[10px] font-mono font-bold">{item.interactions.toLocaleString()}</span>
-                      </div>
-                   </div>
-                </div>
+                  <h4 className={`text-xl font-black text-white leading-tight tracking-tighter mb-4 transition-colors flex-1 ${isKnowledge ? 'group-hover:text-orange-400' : 'group-hover:text-indigo-400'}`}>{item.title}</h4>
+                  
+                  <div className="space-y-4 mb-8">
+                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                        <span className="text-slate-500">Source Steward</span>
+                        <span className="text-white">{item.author}</span>
+                     </div>
+                     <div className="flex gap-4">
+                        <div className="flex items-center gap-2 text-slate-500 group-hover:text-emerald-400 transition-colors">
+                           <Eye className="w-3.5 h-3.5" />
+                           <span className="text-[10px] font-mono font-bold">{item.views.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-500 group-hover:text-blue-400 transition-colors">
+                           <MessageSquare className="w-3.5 h-3.5" />
+                           <span className="text-[10px] font-mono font-bold">{item.interactions.toLocaleString()}</span>
+                        </div>
+                     </div>
+                  </div>
 
-                <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                   <div className="space-y-1">
-                      <p className="text-[8px] text-slate-600 font-black uppercase">EAC Accrued</p>
-                      <p className={`text-xl font-mono font-black ${item.eacEarned > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>+{item.eacEarned.toFixed(1)}</p>
-                   </div>
-                   <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleInteraction(item.id)}
-                        className="p-3 rounded-xl bg-white/5 hover:bg-emerald-600 hover:text-white transition-all border border-white/10"
-                      >
-                         <Zap className="w-4 h-4" />
-                      </button>
-                      {isKnowledge ? (
+                  <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+                     <div className="space-y-1">
+                        <p className="text-[8px] text-slate-600 font-black uppercase">EAC Accrued</p>
+                        <p className={`text-xl font-mono font-black ${item.eacEarned > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>+{item.eacEarned.toFixed(1)}</p>
+                     </div>
+                     <div className="flex gap-2">
                         <button 
-                          onClick={() => handleAgroInPDFExport(item)}
-                          className="p-3 rounded-xl bg-orange-500/10 hover:bg-orange-500 hover:text-white transition-all border border-orange-500/20"
+                          onClick={() => handleInteraction(item.id)}
+                          className="p-3 rounded-xl bg-white/5 hover:bg-emerald-600 hover:text-white transition-all border border-white/10"
                         >
-                           <FileDown className="w-4 h-4" />
+                           <Zap className="w-4 h-4" />
                         </button>
-                      ) : (
-                        <a 
-                          href={item.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="p-3 rounded-xl bg-white/5 hover:bg-blue-600 hover:text-white transition-all border border-white/10"
-                        >
-                           <ExternalLink className="w-4 h-4" />
-                        </a>
-                      )}
-                   </div>
-                </div>
-             </div>
-           );
-         })}
-      </div>
+                        {isKnowledge ? (
+                          <button 
+                            onClick={() => handleAgroInPDFExport(item)}
+                            className="p-3 rounded-xl bg-orange-500/10 hover:bg-orange-500 hover:text-white transition-all border border-orange-500/20"
+                          >
+                             <FileDown className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <a 
+                            href={item.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-3 rounded-xl bg-white/5 hover:bg-blue-600 hover:text-white transition-all border border-white/10"
+                          >
+                             <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+                     </div>
+                  </div>
+               </div>
+             );
+           })}
+        </div>
+      )}
 
       {/* Submission Modal */}
       {isSubmitModalOpen && (
