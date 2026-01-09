@@ -86,7 +86,7 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
 
       <div className="absolute bottom-6 right-6">
         <div className="glass-card p-3 rounded-2xl border-emerald-500/10 flex items-center gap-3 bg-white/50 dark:bg-black/50">
-          <Globe className="w-4 h-4 text-emerald-500" />
+          <Globe className="w-4 h-4 text-emerald-400" />
           <div className="text-left">
             <p className="text-[7px] text-slate-500 font-black uppercase leading-none mb-1">Node Anchor</p>
             <p className="text-[9px] font-bold dark:text-white text-slate-900 uppercase truncate max-w-[100px]">{userLoc}</p>

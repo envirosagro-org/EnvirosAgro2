@@ -442,7 +442,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     placeholder="Search by hash, author, or thrust..." 
-                    className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-white focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
+                    className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                    />
                 </div>
              </div>
