@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake
@@ -59,6 +58,9 @@ const App: React.FC = () => {
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  // Support for deep linking actions from dashboard to components
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   
   // Global Network Signals
   const [networkSignals, setNetworkSignals] = useState<SignalShard[]>([
@@ -228,8 +230,9 @@ const App: React.FC = () => {
     localStorage.setItem('agro_theme', newTheme);
   };
 
-  const handleNavigate = (newView: ViewState) => {
-    if (newView === activeView) return;
+  const handleNavigate = (newView: ViewState, action: string | null = null) => {
+    if (newView === activeView && !action) return;
+    if (action) setPendingAction(action);
     setViewHistory(prev => [...prev, activeView]);
     setActiveView(newView);
     if (isMobile) setShowMobileMenu(false);
@@ -450,6 +453,8 @@ const App: React.FC = () => {
               setCollectives={setCollectives}
               onAddProject={(p) => setProjects(prev => [p, ...prev])}
               onUpdateProject={(p) => setProjects(prev => prev.map(oldP => oldP.id === p.id ? p : oldP))}
+              pendingAction={pendingAction}
+              clearAction={() => setPendingAction(null)}
             />
           )}
           {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance + (user.wallet.bonusBalance || 0)} onSpendEAC={spendEAC} />}
@@ -540,7 +545,7 @@ const App: React.FC = () => {
                     key={item.id} 
                     onClick={() => { handleNavigate(item.id as ViewState); setShowMobileMenu(false); }} 
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all ${
-                      activeView === item.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'dark:text-slate-400 text-slate-500 hover:bg-slate-500/5'
+                      activeView === item.id ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'dark:text-slate-400 text-slate-500 hover:bg-slate-500/5'
                     }`}
                   >
                     <item.icon size={20} />

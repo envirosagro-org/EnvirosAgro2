@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, Zap, Globe, Activity, HeartPulse, Cpu, Sparkles, Binary, 
@@ -10,7 +9,7 @@ import { ViewState, User } from '../types';
 import IdentityCard from './IdentityCard';
 
 interface DashboardProps {
-  onNavigate: (view: ViewState) => void;
+  onNavigate: (view: ViewState, action?: string | null) => void;
   user: User;
 }
 
@@ -124,7 +123,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                     <h3 className="text-3xl md:text-5xl font-black tracking-tighter uppercase italic leading-none dark:text-white text-slate-900">{user.name}</h3>
                     <p className="text-slate-500 text-sm md:text-lg font-medium">{user.role} • {user.location}</p>
                     <div className="flex gap-2 pt-2">
-                       <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-black rounded-full border border-emerald-500/20 uppercase tracking-widest">{user.wallet.tier} Node</span>
+                       <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[9px] font-black rounded-full border border-emerald-500/20 uppercase tracking-widest">{user.wallet.tier} Node</span>
                        <span className="px-3 py-1 bg-blue-500/10 text-blue-500 text-[9px] font-black rounded-full border border-blue-500/20 uppercase tracking-widest font-mono">AUTH_OK_256</span>
                     </div>
                   </div>
@@ -176,14 +175,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
            {[
-             { label: 'Form Collective', icon: PlusCircle, color: 'text-emerald-400', desc: 'Form Shard Group', target: 'industrial' },
-             { label: 'Register Node', icon: Building2, color: 'text-amber-400', desc: 'Industry Node Entry', target: 'industrial' },
-             { label: 'Place Bid', icon: Gavel, color: 'text-blue-400', desc: 'Tender Auction Portal', target: 'industrial' },
-             { label: 'Launch Mission', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Campaign', target: 'industrial' },
+             { label: 'Form Collective', icon: PlusCircle, color: 'text-emerald-400', desc: 'Form Shard Group', target: 'industrial', action: 'FORM_COLLECTIVE' },
+             { label: 'Register Node', icon: Building2, color: 'text-amber-400', desc: 'Industry Node Entry', target: 'industrial', action: 'REGISTER_NODE' },
+             { label: 'Place Bid', icon: Gavel, color: 'text-blue-400', desc: 'Tender Auction Portal', target: 'industrial', action: 'PLACE_BID' },
+             { label: 'Launch Mission', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Campaign', target: 'industrial', action: 'LAUNCH_MISSION' },
            ].map((action, i) => (
              <button 
               key={i} 
-              onClick={() => onNavigate(action.target as ViewState)}
+              onClick={() => onNavigate(action.target as ViewState, action.action)}
               className="glass-card p-8 rounded-[32px] border border-white/5 hover:border-indigo-500/30 hover:bg-white/5 transition-all text-left flex flex-col gap-4 group active:scale-95 shadow-xl"
              >
                 <div className={`p-4 rounded-2xl bg-slate-900 border border-white/5 group-hover:scale-110 transition-transform ${action.color}`}>

@@ -20,6 +20,8 @@ interface IndustrialProps {
   setCollectives: React.Dispatch<React.SetStateAction<any[]>>;
   onAddProject?: (project: AgroProject) => void;
   onUpdateProject?: (project: AgroProject) => void;
+  pendingAction?: string | null;
+  clearAction?: () => void;
 }
 
 const MIN_MEMBERS_REQUIRED = 3;
@@ -45,7 +47,10 @@ const GLOBAL_PERFORMANCE_DATA = [
   { time: 'NOW', yield: 8.2, m_cons: 1.6, ca: 6.4 },
 ];
 
-const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposal, collectives, setCollectives, onAddProject, onUpdateProject }) => {
+const Industrial: React.FC<IndustrialProps> = ({ 
+  user, onSpendEAC, onSendProposal, collectives, setCollectives, 
+  onAddProject, onUpdateProject, pendingAction, clearAction 
+}) => {
   const [activeView, setActiveView] = useState<'registry' | 'talent' | 'collectives' | 'missions' | 'analytics'>('registry');
   
   const [selectedCollectiveId, setSelectedCollectiveId] = useState<string | null>(null);
@@ -94,6 +99,43 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
   const [missionName, setMissionName] = useState('');
   const [missionGoal, setMissionGoal] = useState('50000');
   const [selectedColForMission, setSelectedColForMission] = useState<string>('');
+
+  // Respond to deep links from Dashboard
+  useEffect(() => {
+    if (!pendingAction) return;
+
+    switch (pendingAction) {
+      case 'FORM_COLLECTIVE':
+        setActiveView('collectives');
+        setShowRegisterCollective(true);
+        break;
+      case 'REGISTER_NODE':
+        setActiveView('registry');
+        setShowIndustryEntry(true);
+        break;
+      case 'PLACE_BID':
+        setActiveView('registry');
+        if (MOCK_TENDERS.length > 0) {
+          setSelectedTenderForBid(MOCK_TENDERS[0]);
+          setBidValue(MOCK_TENDERS[0].budget.toString());
+          setShowBidModal(true);
+        }
+        break;
+      case 'LAUNCH_MISSION':
+        setActiveView('missions');
+        setShowRegisterMission(true);
+        break;
+      case 'VIEW_DOSSIER':
+        setActiveView('talent');
+        // Default to first worker if none selected
+        setSelectedWorkerForDossier(MOCK_WORKERS[0]);
+        setShowDossierModal(true);
+        break;
+    }
+
+    // Clear the action so it doesn't re-trigger
+    if (clearAction) clearAction();
+  }, [pendingAction, clearAction]);
 
   const currentCollective = collectives.find(c => c.id === selectedCollectiveId);
 
@@ -853,28 +895,28 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowBidModal(false)}></div>
            <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
-              <div className="p-16 space-y-10 flex flex-col">
-                 <button onClick={() => setShowBidModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+              <div className="p-16 space-y-10 flex flex-col relative">
+                 <button onClick={() => setShowBidModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
                  <div className="flex items-center gap-6 mb-2">
                     <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20 shadow-xl">
                         <Gavel className="w-10 h-10 text-amber-500" />
                     </div>
                     <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Tender <span className="text-amber-500">Auction Bidding</span></h3>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Contract Node: {selectedTenderForBid.id}</p>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic text-left">Tender <span className="text-amber-500">Auction Bidding</span></h3>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 text-left">Contract Node: {selectedTenderForBid.id}</p>
                     </div>
                  </div>
 
                  <div className="space-y-8 flex-1">
                     <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 space-y-4">
-                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-2">Project Requirement</p>
-                       <p className="text-white text-lg font-medium italic">"{selectedTenderForBid.requirement}"</p>
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-2 text-left">Project Requirement</p>
+                       <p className="text-white text-lg font-medium italic text-left">"{selectedTenderForBid.requirement}"</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Bid Amount (EAC)</label>
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Bid Amount (EAC)</label>
                           <input 
                              type="number" 
                              value={bidValue} 
@@ -883,7 +925,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
                           />
                        </div>
                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">ESIN Signature</label>
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">ESIN Signature</label>
                           <input 
                              type="text" 
                              value={esinSign} 
@@ -896,7 +938,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
 
                     <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-center gap-6">
                        <ShieldAlert className="w-8 h-8 text-amber-500 shrink-0" />
-                       <p className="text-[10px] text-amber-200/50 font-bold uppercase tracking-widest leading-relaxed">
+                       <p className="text-[10px] text-amber-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
                           Auction Lock: 10% of bid value will be held in escrow upon shard commitment. Signature verifies node capacity for fulfillment.
                        </p>
                     </div>
@@ -920,22 +962,22 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowIndustryEntry(false)}></div>
            <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
-              <div className="p-16 space-y-10 flex flex-col">
-                 <button onClick={() => setShowIndustryEntry(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+              <div className="p-16 space-y-10 flex flex-col relative">
+                 <button onClick={() => setShowIndustryEntry(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
                  <div className="flex items-center gap-6 mb-2">
                     <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20 shadow-xl">
                         <Building2 className="w-10 h-10 text-amber-500" />
                     </div>
                     <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Facility <span className="text-amber-500">Registry Ingest</span></h3>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Initialize Layer-2 Industrial Node</p>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none text-left">Facility <span className="text-amber-500">Registry Ingest</span></h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2 text-left">Initialize Layer-2 Industrial Node</p>
                     </div>
                  </div>
 
                  <div className="space-y-8">
                     <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Facility Designation (Alias)</label>
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Facility Designation (Alias)</label>
                        <input 
                           type="text" 
                           value={facilityName} 
@@ -945,9 +987,9 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
                        />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Node Type</label>
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Node Type</label>
                           <select 
                              value={facilityType} 
                              onChange={e => setFacilityType(e.target.value)}
@@ -960,7 +1002,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
                           </select>
                        </div>
                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Regional Zone</label>
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Regional Zone</label>
                           <select 
                              value={facilityZone} 
                              onChange={e => setFacilityZone(e.target.value)}
@@ -975,7 +1017,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
                     </div>
 
                     <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-4">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Authorized ESIN Signature</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 text-left block">Authorized ESIN Signature</label>
                         <div className="relative">
                            <Fingerprint className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-600" />
                            <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 pl-16 pr-10 text-white font-mono uppercase tracking-[0.2em] focus:ring-4 focus:ring-amber-500/40 outline-none transition-all" />
@@ -1007,21 +1049,21 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterCollective(false)}></div>
            <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
               <div className="p-16 space-y-12 flex flex-col">
-                 <button onClick={() => setShowRegisterCollective(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 <button onClick={() => setShowRegisterCollective(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
                  <div className="flex items-center gap-6 mb-2">
                     <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 shadow-xl">
                         <Share2 className="w-10 h-10 text-emerald-400" />
                     </div>
                     <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Form <span className="text-emerald-400">Shard Group</span></h3>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Initialize Social Collective Node</p>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none text-left">Form <span className="text-emerald-400">Shard Group</span></h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2 text-left">Initialize Social Collective Node</p>
                     </div>
                  </div>
 
                  <div className="space-y-8">
                     <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Collective Alias</label>
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Collective Alias</label>
                        <input 
                           type="text" 
                           value={newColName} 
@@ -1032,7 +1074,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
                     </div>
 
                     <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Core Mission Shard</label>
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Core Mission Shard</label>
                        <textarea 
                           value={newColMission} 
                           onChange={e => setNewColMission(e.target.value)}
@@ -1042,7 +1084,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
                     </div>
 
                     <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Collective Type</label>
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Collective Type</label>
                        <div className="grid grid-cols-3 gap-3">
                           {['Team', 'Clan', 'Society'].map(type => (
                              <button 
@@ -1058,7 +1100,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
 
                     <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center gap-6">
                        <ShieldCheck className="w-10 h-10 text-emerald-400 shrink-0" />
-                       <p className="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest leading-relaxed">
+                       <p className="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
                           Registration Fee: 200 EAC Registry Burn. Administrator status linked to node {user.esin}.
                        </p>
                     </div>
@@ -1083,22 +1125,22 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterMission(false)}></div>
            <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
               <div className="p-16 space-y-12 flex flex-col">
-                 <button onClick={() => setShowRegisterMission(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 <button onClick={() => setShowRegisterMission(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
                  <div className="flex items-center gap-6 mb-2">
                     <div className="p-4 bg-indigo-500/10 rounded-3xl border border-indigo-500/20 shadow-xl">
                         <Rocket className="w-10 h-10 text-indigo-400" />
                     </div>
                     <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Initialize <span className="text-indigo-400">Mission Campaign</span></h3>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Scale Social Collective Impact</p>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none text-left">Initialize <span className="text-indigo-400">Mission Campaign</span></h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2 text-left">Scale Social Collective Impact</p>
                     </div>
                  </div>
 
                  <div className="space-y-10">
                     {!selectedColForMission && (
                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Select Collective Node</label>
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Select Collective Node</label>
                           <select 
                              onChange={e => setSelectedColForMission(e.target.value)}
                              className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-lg font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-indigo-500/20"
@@ -1110,13 +1152,13 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
                     )}
 
                     <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Campaign Designation (Title)</label>
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Campaign Designation (Title)</label>
                        <input 
                           type="text" 
                           value={missionName} 
                           onChange={e => setMissionName(e.target.value)}
                           placeholder="e.g. Bantu Soil Restoration Shard"
-                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" 
+                          className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" 
                        />
                     </div>
 
@@ -1175,7 +1217,7 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposa
       {showPerformanceModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowPerformanceModal(false)}></div>
-           <div className="relative z-10 w-full max-w-2xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
               <div className="p-16 space-y-10 min-h-[600px] flex flex-col">
                  <button onClick={() => setShowPerformanceModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
                  

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Droplets, 
@@ -59,7 +58,8 @@ import {
   Monitor,
   Sprout,
   LocateFixed,
-  Maximize
+  Maximize,
+  SearchCode
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -90,6 +90,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
   
   // Topology Map State
   const [activeTopologyNode, setActiveTopologyNode] = useState<{ x: number, y: number, data: any } | null>(null);
+  const [anchoredNode, setAnchoredNode] = useState<any | null>(null);
 
   // Framework Constants
   const [S, setS] = useState(120); 
@@ -178,6 +179,17 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
     }, 1500);
   };
 
+  const mapDataPoints = useMemo(() => {
+     return [...Array(25)].map((_, i) => ({
+        id: `Node-${i}`,
+        x: 10 + Math.random() * 80,
+        y: 10 + Math.random() * 80,
+        moisture: (60 + Math.random() * 10).toFixed(1),
+        temp: (22 + Math.random() * 3).toFixed(1),
+        nitrogen: (400 + Math.random() * 50).toFixed(0)
+     }));
+  }, []);
+
   return (
     <div className="space-y-8 pb-20 animate-in fade-in duration-700">
       {/* Primary Navigation */}
@@ -233,42 +245,79 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
                     </div>
 
                     {/* Topology Map Visualization */}
-                    <div className="relative h-[400px] w-full rounded-[48px] bg-black/60 border border-white/10 overflow-hidden mb-12 group/map">
+                    <div className="relative h-[450px] w-full rounded-[48px] bg-black/60 border border-white/10 overflow-hidden mb-12 group/map">
                        <div className="absolute inset-0 opacity-20 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]"></div>
                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
                        
                        <svg className="absolute inset-0 w-full h-full p-8" viewBox="0 0 100 100">
+                          {/* Resonance Field Effect */}
+                          <defs>
+                             <radialGradient id="resonance" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
+                                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                             </radialGradient>
+                          </defs>
+                          <circle cx="50" cy="50" r="40" fill="url(#resonance)" className="animate-pulse" />
+
                           {/* Grid Lines */}
                           {[...Array(10)].map((_, i) => (
                              <React.Fragment key={i}>
-                                <line x1={i * 10} y1="0" x2={i * 10} y2="100" stroke="rgba(16,185,129,0.1)" strokeWidth="0.1" />
-                                <line x1="0" y1={i * 10} x2="100" y2={i * 10} stroke="rgba(16,185,129,0.1)" strokeWidth="0.1" />
+                                <line x1={i * 10} y1="0" x2={i * 10} y2="100" stroke="rgba(16,185,129,0.05)" strokeWidth="0.1" />
+                                <line x1="0" y1={i * 10} x2="100" y2={i * 10} stroke="rgba(16,185,129,0.05)" strokeWidth="0.1" />
                              </React.Fragment>
                           ))}
                           
                           {/* Data Nodes */}
-                          {[...Array(15)].map((_, i) => {
-                             const x = 10 + Math.random() * 80;
-                             const y = 10 + Math.random() * 80;
-                             const isActive = activeTopologyNode?.data?.id === `Node-${i}`;
+                          {mapDataPoints.map((node, i) => {
+                             const isActive = activeTopologyNode?.data?.id === node.id;
+                             const isAnchored = anchoredNode?.id === node.id;
                              return (
                                 <g 
                                   key={i} 
                                   className="cursor-pointer" 
-                                  onMouseEnter={() => setActiveTopologyNode({ x, y, data: { id: `Node-${i}`, moisture: (60 + Math.random() * 10).toFixed(1), temp: (22 + Math.random() * 3).toFixed(1) } })}
+                                  onClick={() => setAnchoredNode(node)}
+                                  onMouseEnter={() => setActiveTopologyNode({ x: node.x, y: node.y, data: node })}
                                   onMouseLeave={() => setActiveTopologyNode(null)}
                                 >
-                                   <circle cx={x} cy={y} r={isActive ? 2 : 1.2} className={`${isActive ? 'fill-emerald-400' : 'fill-emerald-500/40'} transition-all`} />
-                                   {isActive && (
-                                      <circle cx={x} cy={y} r={4} className="stroke-emerald-400 fill-none stroke-[0.2] animate-ping" />
+                                   <circle cx={node.x} cy={node.y} r={isAnchored ? 2.5 : isActive ? 2 : 1.2} className={`${isAnchored ? 'fill-blue-400' : isActive ? 'fill-emerald-400' : 'fill-emerald-500/40'} transition-all duration-300`} />
+                                   {(isActive || isAnchored) && (
+                                      <circle cx={node.x} cy={node.y} r={4} className={`${isAnchored ? 'stroke-blue-400' : 'stroke-emerald-400'} fill-none stroke-[0.2] animate-ping`} />
                                    )}
                                 </g>
                              );
                           })}
                        </svg>
 
+                       {/* Anchored Detail Overlay */}
+                       {anchoredNode && (
+                          <div className="absolute top-10 right-10 w-72 glass-card p-6 rounded-[32px] border-blue-500/30 bg-black/90 backdrop-blur-2xl shadow-3xl animate-in slide-in-from-right-4 duration-500 z-30">
+                             <div className="flex justify-between items-start mb-6">
+                                <div className="flex items-center gap-3">
+                                   <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                      <SearchCode size={20} />
+                                   </div>
+                                   <div>
+                                      <h5 className="text-white font-black uppercase text-xs tracking-widest">{anchoredNode.id}</h5>
+                                      <p className="text-[8px] text-blue-400 font-mono">ANCHORED_SHARD</p>
+                                   </div>
+                                </div>
+                                <button onClick={() => setAnchoredNode(null)} className="text-slate-600 hover:text-white transition-colors"><X size={16} /></button>
+                             </div>
+                             <div className="space-y-4">
+                                <div className="p-4 bg-white/5 rounded-2xl space-y-2">
+                                   <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase"><span>Moisture</span> <span className="text-white font-mono">{anchoredNode.moisture}%</span></div>
+                                   <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase"><span>Nitrogen</span> <span className="text-emerald-400 font-mono">{anchoredNode.nitrogen} ppm</span></div>
+                                   <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase"><span>Thermal</span> <span className="text-orange-400 font-mono">{anchoredNode.temp}°C</span></div>
+                                </div>
+                                <button className="w-full py-3 bg-blue-600 rounded-2xl text-[9px] font-black text-white uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-2">
+                                   <Database size={14} /> Commit to Ledger
+                                </button>
+                             </div>
+                          </div>
+                       )}
+
                        {/* Hover Overlay */}
-                       {activeTopologyNode && (
+                       {activeTopologyNode && !anchoredNode && (
                           <div 
                              className="absolute z-20 pointer-events-none animate-in zoom-in duration-200"
                              style={{ left: `${activeTopologyNode.x}%`, top: `${activeTopologyNode.y}%`, transform: 'translate(20px, -50%)' }}
@@ -285,7 +334,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
 
                        <div className="absolute bottom-6 left-6 flex items-center gap-3 bg-black/80 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
                           <Activity className="w-3 h-3 text-emerald-400 animate-pulse" />
-                          <span className="text-[8px] font-black text-white uppercase tracking-widest leading-none">Spatial Scan Active</span>
+                          <span className="text-[8px] font-black text-white uppercase tracking-widest leading-none">Spatial Scan Active // Resonance Field: SYNCED</span>
                        </div>
                     </div>
 
@@ -293,7 +342,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
                       {iotStream.map(sensor => (
                         <div key={sensor.id} className="p-8 bg-black/60 rounded-[40px] border border-white/10 group hover:border-emerald-500/40 transition-all flex flex-col justify-between h-56 shadow-xl">
                            <div className="flex justify-between items-start">
-                              <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-white/10 transition-colors">
+                              <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-white/10 transition-colors">
                                  <sensor.icon className={`w-6 h-6 ${sensor.col}`} />
                               </div>
                               <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-600">{sensor.id}</span>
@@ -459,7 +508,6 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
           </div>
         )}
 
-        {/* Corrected from activeTab to tab */}
         {tab === 'social' && (
           <div className="space-y-10 animate-in zoom-in duration-500 max-w-6xl mx-auto">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
