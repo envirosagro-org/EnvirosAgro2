@@ -1,11 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Store, 
   Package, 
   PlusCircle, 
   Activity, 
-  BarChart3, 
   ShoppingCart, 
   Truck, 
   Upload, 
@@ -31,7 +30,11 @@ import {
   Route,
   Sparkles,
   Search,
-  ChevronLeft
+  ChevronLeft,
+  ChevronRight,
+  Monitor,
+  Radar,
+  Link2
 } from 'lucide-react';
 import { User } from '../types';
 import { optimizeSupplyChain, AIResponse } from '../services/geminiService';
@@ -51,6 +54,14 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user }) => {
   const [selectedMapNode, setSelectedMapNode] = useState<any>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationResult, setOptimizationResult] = useState<AIResponse | null>(null);
+  const [scanPulse, setScanPulse] = useState(0);
+
+  useEffect(() => {
+    if (showMap) {
+      const interval = setInterval(() => setScanPulse(p => (p + 1) % 100), 100);
+      return () => clearInterval(interval);
+    }
+  }, [showMap]);
 
   // Vendor Stats
   const stats = [
@@ -74,10 +85,10 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user }) => {
   ];
 
   const mapNodes = [
-    { id: 'HUB-01', name: 'Nebraska Logistics Hub', type: 'Primary Hub', load: '65%', lat: '30%', lng: '60%', zone: 'Zone 4' },
-    { id: 'WH-82', name: 'Nairobi Storage Node', type: 'Warehouse', load: '22%', lat: '65%', lng: '55%', zone: 'Zone 2' },
-    { id: 'PORT-04', name: 'Coastal Transit Point', type: 'Port', load: '88%', lat: '35%', lng: '75%', zone: 'Zone 1' },
-    { id: 'NODE-C1', name: 'California Supply Relay', type: 'Distribution', load: '45%', lat: '42%', lng: '15%', zone: 'Zone 2' },
+    { id: 'HUB-01', name: 'Nebraska Logistics Hub', type: 'Primary Hub', load: 65, lat: 30, lng: 60, zone: 'Zone 4' },
+    { id: 'WH-82', name: 'Nairobi Storage Node', type: 'Warehouse', load: 22, lat: 65, lng: 55, zone: 'Zone 2' },
+    { id: 'PORT-04', name: 'Coastal Transit Point', type: 'Port', load: 88, lat: 35, lng: 75, zone: 'Zone 1' },
+    { id: 'NODE-C1', name: 'California Supply Relay', type: 'Distribution', load: 45, lat: 42, lng: 15, zone: 'Zone 2' },
   ];
 
   const handleAddProduct = (e: React.FormEvent) => {
@@ -261,111 +272,218 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user }) => {
         )}
       </div>
 
-      {/* Procurement Map Overlay */}
+      {/* ENHANCED Procurement Map Overlay */}
       {showMap && (
-        <div className="fixed inset-0 z-[150] flex flex-col animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[150] flex flex-col animate-in fade-in duration-500 overflow-hidden">
           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl"></div>
           
+          {/* Scanline Effect Overlay */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-[160]" style={{ background: 'linear-gradient(transparent 50%, rgba(245,158,11,0.5) 50%)', backgroundSize: '100% 4px' }}></div>
+
           {/* Map Header */}
-          <div className="relative z-10 p-8 border-b border-white/5 flex items-center justify-between bg-black/40">
+          <div className="relative z-[170] p-8 border-b border-white/5 flex items-center justify-between bg-black/60 backdrop-blur-xl">
             <div className="flex items-center gap-6">
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                <MapIcon className="w-8 h-8 text-amber-500" />
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                <Radar className="w-8 h-8 text-amber-500 animate-pulse" />
               </div>
               <div>
-                <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Procurement <span className="text-amber-500">Map</span></h2>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Procurement <span className="text-amber-500">Telemetry</span></h2>
+                <div className="flex items-center gap-3 mt-1">
+                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                   <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">Global Sharding Active // Buffer: Optimal</p>
+                </div>
               </div>
             </div>
-            <button onClick={() => setShowMap(false)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all">
-              <X className="w-10 h-10" />
-            </button>
+            <div className="flex items-center gap-4">
+               <div className="hidden md:flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  Active Links: {mapNodes.length * 4}
+               </div>
+               <button onClick={() => setShowMap(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all hover:rotate-90">
+                 <X className="w-10 h-10" />
+               </button>
+            </div>
           </div>
           
-          <div className="relative flex-1 p-12 flex flex-col lg:flex-row gap-12 overflow-hidden">
-            <div className="flex-1 glass-card rounded-[48px] border-white/5 bg-black/40 relative overflow-hidden">
-               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')] opacity-20"></div>
+          <div className="relative flex-1 flex flex-col lg:flex-row overflow-hidden">
+            {/* Main Interactive Map Stage */}
+            <div className="flex-1 relative bg-black/40 overflow-hidden cursor-crosshair">
+               {/* Background Grid and Topography Simulation */}
+               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+               <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(245,158,11,0.5) 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+               
+               {/* Scanning Line */}
+               <div className="absolute left-0 right-0 h-1 bg-amber-500/20 shadow-[0_0_30px_rgba(245,158,11,0.5)] pointer-events-none z-[165]" style={{ top: `${scanPulse}%` }}></div>
+
+               {/* Simulated Route Sharding Lines */}
+               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20 z-[161]">
+                  {mapNodes.map((node, i) => (
+                     mapNodes.slice(i + 1).map((target, j) => (
+                        <line 
+                           key={`${i}-${j}`}
+                           x1={`${node.lng}%`} y1={`${node.lat}%`}
+                           x2={`${target.lng}%`} y2={`${target.lat}%`}
+                           stroke="#f59e0b"
+                           strokeWidth="0.5"
+                           strokeDasharray="4,4"
+                           className="animate-pulse"
+                        />
+                     ))
+                  ))}
+               </svg>
+
                {mapNodes.map(node => (
                  <div 
                    key={node.id} 
-                   style={{ left: node.lng, top: node.lat }} 
-                   className="absolute -translate-x-1/2 -translate-y-1/2 group/node"
+                   style={{ left: `${node.lng}%`, top: `${node.lat}%` }} 
+                   className="absolute -translate-x-1/2 -translate-y-1/2 group/node z-[162]"
                  >
                     <div 
                       onClick={() => handleNodeOptimization(node)}
-                      className={`p-4 rounded-2xl cursor-pointer transition-all ${selectedMapNode?.id === node.id ? 'bg-amber-500 text-black scale-110 shadow-[0_0_30px_#f59e0b]' : 'bg-white/5 text-amber-500 hover:bg-white/10'}`}
+                      className={`relative p-5 rounded-[24px] cursor-pointer transition-all duration-500 ${selectedMapNode?.id === node.id ? 'bg-amber-500 text-black scale-125 shadow-[0_0_50px_rgba(245,158,11,0.5)] ring-4 ring-amber-500/20' : 'bg-black/60 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-black hover:scale-110'}`}
                     >
-                       <LocateFixed className="w-6 h-6" />
-                    </div>
-                    <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 opacity-0 group-hover/node:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20">
-                       <div className="bg-black/80 backdrop-blur-md border border-amber-500/40 p-4 rounded-2xl shadow-2xl text-center">
-                          <p className="text-xs font-black text-white uppercase tracking-tight">{node.name}</p>
-                          <p className="text-[10px] text-amber-400 font-mono mt-1">{node.type} // Load: {node.load}</p>
+                       <LocateFixed className={`w-8 h-8 ${selectedMapNode?.id === node.id ? 'animate-spin-slow' : ''}`} />
+                       
+                       {/* Node Radar Pulse */}
+                       <div className="absolute inset-0 rounded-[24px] border-2 border-amber-500/40 animate-ping opacity-20 pointer-events-none scale-150"></div>
+                       
+                       {/* Telemetry Label */}
+                       <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 opacity-0 group-hover/node:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[180]">
+                          <div className="bg-[#0a0a0a] backdrop-blur-2xl border border-amber-500/40 p-5 rounded-[24px] shadow-2xl text-center space-y-2 ring-1 ring-white/10">
+                             <p className="text-sm font-black text-white uppercase tracking-tighter italic leading-none">{node.name}</p>
+                             <div className="h-px w-full bg-white/10"></div>
+                             <p className="text-[9px] text-amber-400 font-mono tracking-widest uppercase">{node.type} // LOAD: {node.load}%</p>
+                             <div className="flex justify-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                   <div key={i} className={`w-1 h-3 rounded-full ${i < (node.load/20) ? 'bg-amber-500' : 'bg-white/10'}`}></div>
+                                ))}
+                             </div>
+                          </div>
                        </div>
                     </div>
                  </div>
                ))}
+
+               {/* Map Global Legend Overlay */}
+               <div className="absolute bottom-8 left-8 glass-card p-6 rounded-[32px] border-white/5 bg-black/60 backdrop-blur-xl z-[170] space-y-4">
+                  <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/10 pb-3">Logistics Infrastructure</h5>
+                  <div className="space-y-3">
+                     {[
+                        { label: 'Primary Ingest Hub', icon: Radar, color: 'text-amber-500' },
+                        { label: 'Verified Route Shard', icon: Link2, color: 'text-emerald-500' },
+                        { label: 'Satellite Relay Link', icon: Globe, color: 'text-blue-400' },
+                     ].map(l => (
+                        <div key={l.label} className="flex items-center gap-4 group cursor-default">
+                           <l.icon className={`w-4 h-4 ${l.color} group-hover:scale-110 transition-transform`} />
+                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{l.label}</span>
+                        </div>
+                     ))}
+                  </div>
+               </div>
             </div>
 
-            <div className="w-full lg:w-[450px] space-y-8 flex flex-col">
-               <div className="glass-card p-10 rounded-[48px] border-amber-500/20 bg-amber-500/5 flex-1 overflow-y-auto custom-scrollbar">
+            {/* Sidebar Telemetry & Optimization Control */}
+            <div className="w-full lg:w-[480px] border-l border-white/5 flex flex-col bg-[#050706] z-[170]">
+               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
                   {!selectedMapNode ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-40">
-                       <Navigation className="w-16 h-16 text-slate-500 animate-pulse" />
-                       <div className="max-w-xs">
-                          <h4 className="text-xl font-bold text-white uppercase">Node Selection</h4>
-                          <p className="text-xs text-slate-500 italic mt-2">Select a logistics node on the map to initialize institutional optimization.</p>
+                    <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-30 animate-in fade-in duration-700">
+                       <div className="w-32 h-32 rounded-full border-4 border-dashed border-amber-500/20 flex items-center justify-center">
+                          <Navigation className="w-16 h-16 text-amber-500 animate-pulse" />
+                       </div>
+                       <div className="max-w-xs space-y-4">
+                          <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic">Selection <span className="text-amber-500">Lock Required</span></h4>
+                          <p className="text-sm text-slate-500 italic leading-relaxed">Probe the procurement grid map to initialize deep-shard logistics optimization.</p>
                        </div>
                     </div>
                   ) : (
-                    <div className="space-y-10 animate-in fade-in duration-500">
-                       <div className="flex items-center gap-4 border-b border-white/5 pb-8">
-                          <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center shadow-xl">
-                             <Route className="w-8 h-8 text-black" />
+                    <div className="space-y-12 animate-in slide-in-from-right-6 duration-500">
+                       <div className="space-y-6">
+                          <button onClick={() => setSelectedMapNode(null)} className="flex items-center gap-2 text-slate-600 hover:text-white transition-colors group">
+                             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                             <span className="text-[10px] font-black uppercase tracking-widest">Deselect Node</span>
+                          </button>
+                          
+                          <div className="flex items-center gap-6">
+                             <div className="w-20 h-20 rounded-[32px] bg-amber-500 flex items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.3)] shrink-0">
+                                <Route className="w-10 h-10 text-black" />
+                             </div>
+                             <div>
+                                <h4 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{selectedMapNode.name}</h4>
+                                <div className="flex items-center gap-3 mt-4">
+                                   <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[9px] font-black text-amber-500 uppercase tracking-widest">{selectedMapNode.id}</span>
+                                   <span className="text-slate-700 font-mono text-[10px]">||</span>
+                                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{selectedMapNode.zone}</span>
+                                </div>
+                             </div>
                           </div>
-                          <div>
-                             <h4 className="text-2xl font-black text-white uppercase tracking-tight">{selectedMapNode.name}</h4>
-                             <p className="text-amber-500 text-[10px] font-black uppercase tracking-widest">{selectedMapNode.id} // {selectedMapNode.zone}</p>
+                       </div>
+
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="p-6 glass-card rounded-[32px] border-white/5 space-y-2">
+                             <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Regional Load</p>
+                             <p className="text-3xl font-mono font-black text-white">{selectedMapNode.load}%</p>
+                          </div>
+                          <div className="p-6 glass-card rounded-[32px] border-white/5 space-y-2">
+                             <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Node Status</p>
+                             <p className="text-3xl font-mono font-black text-emerald-400">ACTIVE</p>
                           </div>
                        </div>
 
                        <div className="space-y-8">
+                          <div className="flex items-center justify-between px-2">
+                             <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Logistics Oracle v3.2</h5>
+                             <Zap className="w-4 h-4 text-amber-500 fill-current animate-pulse" />
+                          </div>
+                          
                           {isOptimizing ? (
-                            <div className="flex flex-col items-center py-10 space-y-6">
-                               <Loader2 className="w-12 h-12 text-amber-500 animate-spin" />
-                               <p className="text-amber-500 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">Syncing Path Shards...</p>
+                            <div className="flex flex-col items-center py-16 space-y-8 glass-card rounded-[48px] bg-white/[0.02] border-white/5">
+                               <Loader2 className="w-16 h-16 text-amber-500 animate-spin" />
+                               <div className="text-center space-y-2">
+                                  <p className="text-amber-500 font-black text-xs uppercase tracking-[0.4em] animate-pulse">Calculating Path Shards...</p>
+                                  <p className="text-slate-700 font-mono text-[9px]">DECONSTRUCTING ENTROPY_ID: #882_OPT</p>
+                               </div>
                             </div>
                           ) : optimizationResult ? (
-                            <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
-                               <div className="p-8 bg-black/60 rounded-[32px] border border-white/5 prose prose-invert max-w-none shadow-inner border-l-4 border-l-amber-500/50">
-                                  <div className="flex items-center gap-2 text-amber-500 font-black uppercase text-[10px] tracking-[0.3em] mb-4">
-                                     <Sparkles className="w-4 h-4" /> Oracle Optimization
-                                  </div>
-                                  <div className="text-slate-300 text-sm leading-loose italic whitespace-pre-line">
-                                     {optimizationResult.text}
+                            <div className="space-y-8 animate-in zoom-in duration-500">
+                               <div className="p-10 glass-card rounded-[48px] bg-white/[0.01] border-l-4 border-l-amber-500/50 relative shadow-2xl">
+                                  <div className="absolute top-6 right-8 opacity-20"><Sparkles className="w-8 h-8 text-amber-500" /></div>
+                                  <div className="prose prose-invert max-w-none">
+                                     <p className="text-slate-300 text-lg leading-loose italic whitespace-pre-line font-medium">
+                                        {optimizationResult.text}
+                                     </p>
                                   </div>
                                </div>
-                               <button className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl flex items-center justify-center gap-3">
-                                  <CheckCircle2 className="w-4 h-4" /> Deploy to Supply Grid
+                               <button className="w-full py-8 agro-gradient rounded-[32px] text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4">
+                                  <CheckCircle2 className="w-6 h-6" /> Deploy Optimized Shard
                                </button>
                             </div>
                           ) : (
-                            <button 
-                              onClick={() => handleNodeOptimization(selectedMapNode)}
-                              className="w-full py-8 bg-amber-600 rounded-3xl text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-amber-900/40 hover:bg-amber-500 transition-all flex items-center justify-center gap-4"
-                            >
-                               <Zap className="w-6 h-6" /> Run Path Optimization
-                            </button>
+                            <div className="space-y-8">
+                               <div className="p-8 bg-black/40 rounded-[40px] border border-white/5 text-center space-y-4">
+                                  <p className="text-slate-500 text-sm italic leading-relaxed">
+                                     Invoke the AI Supply Oracle to analyze path density, weather vectors, and m™ resilience signatures for this node.
+                                  </p>
+                               </div>
+                               <button 
+                                 onClick={() => handleNodeOptimization(selectedMapNode)}
+                                 className="w-full py-8 bg-amber-600 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-amber-900/40 hover:bg-amber-500 transition-all flex items-center justify-center gap-4 group active:scale-95"
+                               >
+                                  <Radar className="w-6 h-6 group-hover:rotate-45 transition-transform" /> 
+                                  Initialize Route Sweep
+                               </button>
+                            </div>
                           )}
                        </div>
                     </div>
                   )}
                </div>
                
-               <div className="p-8 glass-card rounded-[40px] border-white/5 bg-black/40 flex items-center gap-6 group">
-                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-slate-500 group-hover:text-amber-400 transition-colors">
+               <div className="p-8 border-t border-white/5 bg-black/40 flex items-center gap-6 group hover:bg-amber-500/5 transition-colors">
+                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-slate-500 group-hover:text-amber-400 transition-colors shrink-0">
                      <Info className="w-6 h-6" />
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed italic">"Logistics sharding efficiency is determined by regional m™ constants and node trust scores."</p>
+                  <p className="text-[10px] text-slate-500 leading-relaxed italic uppercase font-black tracking-widest">
+                     "Network resilience peaks when supply nodes are balanced across regional shards."
+                  </p>
                </div>
             </div>
           </div>
@@ -445,6 +563,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user }) => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 20s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
