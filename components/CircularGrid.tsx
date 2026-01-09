@@ -30,9 +30,13 @@ import {
   Layers,
   Archive,
   ShoppingCart,
-  // Added missing icons
   ChevronRight,
-  Warehouse
+  Warehouse,
+  ChevronLeft,
+  Gauge,
+  Thermometer,
+  Cpu,
+  Database
 } from 'lucide-react';
 import { User } from '../types';
 import { auditRecycledItem } from '../services/geminiService';
@@ -50,9 +54,9 @@ const REFURBISHED_STORE = [
 ];
 
 const CIRCULAR_HUBS = [
-  { id: 'HUB-NY-01', name: 'Empire Recycling Node', zone: 'Zone 1 NY', load: '45%', lat: '40.7128', lng: '-74.0060' },
-  { id: 'HUB-NE-04', name: 'Midwest Refurbish Shard', zone: 'Zone 4 NE', load: '12%', lat: '41.2565', lng: '-95.9345' },
-  { id: 'HUB-CA-02', name: 'Palo Alto Silicon Compost', zone: 'Zone 2 CA', load: '82%', lat: '37.4419', lng: '-122.1430' },
+  { id: 'HUB-NY-01', name: 'Empire Recycling Node', zone: 'Zone 1 NY', load: 45, lat: '40.7128', lng: '-74.0060', health: 98, throughput: '12 TB/h', items: 1420 },
+  { id: 'HUB-NE-04', name: 'Midwest Refurbish Shard', zone: 'Zone 4 NE', load: 12, lat: '41.2565', lng: '-95.9345', health: 99, throughput: '4 TB/h', items: 850 },
+  { id: 'HUB-CA-02', name: 'Palo Alto Silicon Compost', zone: 'Zone 2 CA', load: 82, lat: '37.4419', lng: '-122.1430', health: 92, throughput: '32 TB/h', items: 4500 },
 ];
 
 const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC }) => {
@@ -61,6 +65,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
   const [returnStep, setReturnStep] = useState<'form' | 'audit' | 'success'>('form');
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditText, setAuditText] = useState<string | null>(null);
+  const [selectedHub, setSelectedHub] = useState<any>(null);
   
   // Return Form State
   const [assetName, setAssetName] = useState('');
@@ -84,7 +89,6 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
       const usageData = { usage: assetUsage, declaredCondition: assetCondition, esin: user.esin };
       const res = await auditRecycledItem(assetName, usageData);
       setAuditText(res.text);
-      // Mock parsing reward from text or randomizing
       setMintValue(Math.floor(Math.random() * 40) + 10);
     } catch (err) {
       alert("Oracle Audit Failed. Check node connection.");
@@ -156,7 +160,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-4 p-1 glass-card rounded-[24px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40">
+      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[24px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40">
         {[
           { id: 'returns', label: 'Reverse Ingest', icon: RotateCcw },
           { id: 'market', label: 'Refurbished Store', icon: PackageSearch },
@@ -165,7 +169,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
         ].map(tab => (
           <button 
             key={tab.id}
-            onClick={() => setActiveView(tab.id as any)}
+            onClick={() => { setActiveView(tab.id as any); setSelectedHub(null); }}
             className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
@@ -293,63 +297,118 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
 
         {activeView === 'hubs' && (
           <div className="space-y-10 animate-in zoom-in duration-500">
-             <div className="glass-card rounded-[56px] overflow-hidden relative min-h-[600px] border-white/5 bg-black group">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=1200')] bg-cover opacity-20 grayscale hover:grayscale-0 transition-all duration-[8s]"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050706] to-transparent"></div>
-                
-                <div className="relative z-10 p-12 space-y-8 flex flex-col h-full">
-                   <div className="flex justify-between items-start">
-                      <div className="space-y-2">
-                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Regional <span className="text-amber-500">Reverse Hubs</span></h3>
-                         <p className="text-slate-400 text-lg max-w-xl">Processing and auditing returned industrial shards for the global registry.</p>
+             {selectedHub ? (
+                <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                   <button onClick={() => setSelectedHub(null)} className="flex items-center gap-2 p-2 px-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all group/back">
+                      <ChevronLeft className="w-5 h-5 group-hover/back:-translate-x-1 transition-transform" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Back to Hub Registry</span>
+                   </button>
+                   
+                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                      <div className="lg:col-span-2 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 space-y-10 relative overflow-hidden">
+                         <div className="absolute top-0 right-0 p-12 opacity-[0.03]"><Warehouse className="w-64 h-64 text-white" /></div>
+                         <div className="flex items-center gap-6 relative z-10">
+                            <div className="p-4 bg-emerald-500 rounded-3xl shadow-xl">
+                               <Warehouse className="w-10 h-10 text-white" />
+                            </div>
+                            <div>
+                               <h3 className="text-4xl font-black text-white uppercase tracking-tighter">{selectedHub.name}</h3>
+                               <p className="text-emerald-500/60 font-mono text-[10px] tracking-[0.3em] uppercase">{selectedHub.id} // {selectedHub.zone}</p>
+                            </div>
+                         </div>
+                         <div className="grid grid-cols-3 gap-8 relative z-10 pt-10 border-t border-white/10">
+                            <div><p className="text-[9px] text-slate-500 uppercase font-black mb-1">Health Index</p><p className="text-2xl font-mono font-black text-white">{selectedHub.health}%</p></div>
+                            <div><p className="text-[9px] text-slate-500 uppercase font-black mb-1">Throughput</p><p className="text-2xl font-mono font-black text-emerald-400">{selectedHub.throughput}</p></div>
+                            <div><p className="text-[9px] text-slate-500 uppercase font-black mb-1">Shard Load</p><p className="text-2xl font-mono font-black text-blue-400">{selectedHub.load}%</p></div>
+                         </div>
+                         <div className="space-y-4 pt-10">
+                            <h4 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2"><Gauge className="w-4 h-4 text-emerald-400" /> Operational Efficiency</h4>
+                            <div className="h-4 bg-black/40 rounded-full border border-white/5 overflow-hidden p-1">
+                               <div className="h-full agro-gradient rounded-full shadow-[0_0_15px_#10b981]" style={{ width: `${selectedHub.health}%` }}></div>
+                            </div>
+                         </div>
                       </div>
-                      <div className="flex gap-4">
-                         <div className="p-4 bg-black/60 rounded-3xl border border-white/10 text-center">
-                            <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Total Capacity</p>
-                            <p className="text-xl font-mono font-black text-amber-500">84 TB/h</p>
+                      <div className="space-y-8">
+                         <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 space-y-6">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Hub Telemetry</h4>
+                            <div className="space-y-4">
+                               {[
+                                 { l: 'Core Temp', v: '22.4°C', i: Thermometer },
+                                 { l: 'Node Latency', v: '12ms', i: Activity },
+                                 { l: 'Registry Sync', v: 'OK', i: Database },
+                               ].map(t => (
+                                 <div key={t.l} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
+                                    <div className="flex items-center gap-3"><t.i className="w-4 h-4 text-emerald-400" /><span className="text-[10px] font-bold text-white uppercase">{t.l}</span></div>
+                                    <span className="text-xs font-mono font-black text-slate-400">{t.v}</span>
+                                 </div>
+                               ))}
+                            </div>
                          </div>
                       </div>
                    </div>
+                </div>
+             ) : (
+                <div className="glass-card rounded-[56px] overflow-hidden relative min-h-[600px] border-white/5 bg-black group">
+                   <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=1200')] bg-cover opacity-20 grayscale hover:grayscale-0 transition-all duration-[8s]"></div>
+                   <div className="absolute inset-0 bg-gradient-to-t from-[#050706] to-transparent"></div>
+                   
+                   <div className="relative z-10 p-12 space-y-8 flex flex-col h-full">
+                      <div className="flex justify-between items-start">
+                         <div className="space-y-2">
+                            <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Regional <span className="text-amber-500">Reverse Hubs</span></h3>
+                            <p className="text-slate-400 text-lg max-w-xl">Processing and auditing returned industrial shards for the global registry.</p>
+                         </div>
+                         <div className="flex gap-4">
+                            <div className="p-4 bg-black/60 rounded-3xl border border-white/10 text-center">
+                               <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Total Capacity</p>
+                               <p className="text-xl font-mono font-black text-amber-500">84 TB/h</p>
+                            </div>
+                         </div>
+                      </div>
 
-                   <div className="flex-1 relative">
-                      {CIRCULAR_HUBS.map(hub => (
-                        <div key={hub.id} style={{ top: hub.lat === '40.7128' ? '30%' : hub.lat === '41.2565' ? '45%' : '70%', left: hub.lng === '-74.0060' ? '60%' : hub.lng === '-95.9345' ? '40%' : '20%' }} className="absolute group/hub">
-                           <div className="relative p-4 bg-amber-500 rounded-2xl shadow-2xl animate-pulse cursor-pointer group-hover/hub:scale-125 transition-transform z-10">
-                              <Warehouse className="w-6 h-6 text-black" />
-                           </div>
-                           <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 opacity-0 group-hover/hub:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20">
-                              <div className="bg-black/80 backdrop-blur-md border border-amber-500/40 p-4 rounded-2xl shadow-2xl text-center">
-                                 <p className="text-xs font-black text-white uppercase tracking-tight">{hub.name}</p>
-                                 <p className="text-[10px] text-amber-400 font-mono mt-1">Load: {hub.load} // Active</p>
+                      <div className="flex-1 relative">
+                         {CIRCULAR_HUBS.map(hub => (
+                           <div key={hub.id} style={{ top: hub.lat === '40.7128' ? '30%' : hub.lat === '41.2565' ? '45%' : '70%', left: hub.lng === '-74.0060' ? '60%' : hub.lng === '-95.9345' ? '40%' : '20%' }} className="absolute group/hub">
+                              <div 
+                                onClick={() => setSelectedHub(hub)}
+                                className="relative p-4 bg-amber-500 rounded-2xl shadow-2xl animate-pulse cursor-pointer group-hover/hub:scale-125 transition-transform z-10"
+                              >
+                                 <Warehouse className="w-6 h-6 text-black" />
                               </div>
+                              <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 opacity-0 group-hover/hub:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20">
+                                 <div className="bg-black/80 backdrop-blur-md border border-amber-500/40 p-4 rounded-2xl shadow-2xl text-center">
+                                    <p className="text-xs font-black text-white uppercase tracking-tight">{hub.name}</p>
+                                    <p className="text-[10px] text-amber-400 font-mono mt-1">Load: {hub.load}% // Active</p>
+                                 </div>
+                              </div>
+                              <div className="absolute inset-0 bg-amber-500 rounded-2xl blur-xl opacity-20 group-hover/hub:opacity-50 animate-ping"></div>
                            </div>
-                           <div className="absolute inset-0 bg-amber-500 rounded-2xl blur-xl opacity-20 group-hover/hub:opacity-50 animate-ping"></div>
-                        </div>
-                      ))}
-                   </div>
+                         ))}
+                      </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                      {CIRCULAR_HUBS.map(hub => (
-                        <div key={hub.id} className="p-8 bg-black/60 border border-white/5 rounded-[32px] group hover:border-amber-500/20 transition-all">
-                           <div className="flex justify-between items-center mb-4">
-                              <h4 className="text-lg font-bold text-white uppercase">{hub.id}</h4>
-                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                           </div>
-                           <p className="text-xs text-slate-500 uppercase font-black mb-6">{hub.zone}</p>
-                           <div className="space-y-2">
-                              <div className="flex justify-between items-center text-[10px] font-black text-slate-600 uppercase">
-                                 <span>Processing Load</span>
-                                 <span className="text-amber-500">{hub.load}</span>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                         {CIRCULAR_HUBS.map(hub => (
+                           <div key={hub.id} onClick={() => setSelectedHub(hub)} className="p-8 bg-black/60 border border-white/5 rounded-[32px] group hover:border-amber-500/20 transition-all cursor-pointer">
+                              <div className="flex justify-between items-center mb-4">
+                                 <h4 className="text-lg font-bold text-white uppercase">{hub.id}</h4>
+                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                               </div>
-                              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                 <div className="h-full bg-amber-500 shadow-[0_0_10px_#f59e0b] opacity-60" style={{ width: hub.load }}></div>
+                              <p className="text-xs text-slate-500 uppercase font-black mb-6">{hub.zone}</p>
+                              <div className="space-y-2">
+                                 <div className="flex justify-between items-center text-[10px] font-black text-slate-600 uppercase">
+                                    <span>Processing Load</span>
+                                    <span className="text-amber-500">{hub.load}%</span>
+                                 </div>
+                                 <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-amber-500 shadow-[0_0_10px_#f59e0b] opacity-60" style={{ width: `${hub.load}%` }}></div>
+                                 </div>
                               </div>
                            </div>
-                        </div>
-                      ))}
+                         ))}
+                      </div>
                    </div>
                 </div>
-             </div>
+             )}
           </div>
         )}
 

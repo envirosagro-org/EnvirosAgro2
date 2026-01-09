@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
+// Fix: Added missing AlertTriangle import from lucide-react
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle
 } from 'lucide-react';
 import { ViewState, User } from './types';
 import Dashboard from './components/Dashboard';
@@ -29,6 +30,14 @@ import NexusCRM from './components/NexusCRM';
 import TQMGrid from './components/TQMGrid';
 import { syncUserToCloud } from './services/firebaseService';
 
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  title: string;
+  message: string;
+  timestamp: string;
+}
+
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
@@ -36,6 +45,7 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('agro_theme');
     return (saved as 'light' | 'dark') || 'dark';
@@ -57,6 +67,15 @@ const App: React.FC = () => {
     
     return () => window.removeEventListener('resize', handleResize);
   }, [theme]);
+
+  const addNotification = (type: Notification['type'], title: string, message: string) => {
+    const id = Math.random().toString(36).substring(7);
+    const newNotif: Notification = { id, type, title, message, timestamp: new Date().toLocaleTimeString() };
+    setNotifications(prev => [newNotif, ...prev].slice(0, 5));
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -86,11 +105,12 @@ const App: React.FC = () => {
 
   const spendEAC = (amount: number, reason: string) => {
     if (!user || user.wallet.balance < amount) {
-      alert(`INSUFFICIENT LIQUIDITY: Requires ${amount} EAC.`);
+      addNotification('error', 'LIQUIDITY_FAIL', `Insufficient EAC for ${reason.replace('_', ' ')}.`);
       return false;
     }
     const updatedUser: User = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } };
     handleUpdateUser(updatedUser);
+    addNotification('success', 'EAC_BURN', `Spent ${amount} EAC for ${reason.replace('_', ' ')}.`);
     return true;
   };
 
@@ -105,6 +125,7 @@ const App: React.FC = () => {
       } 
     };
     handleUpdateUser(updatedUser);
+    addNotification('success', 'EAC_MINT', `Earned ${amount} EAC: ${reason.replace('_', ' ')}.`);
   };
 
   if (!user) return <Login onLogin={setUser} />;
@@ -261,11 +282,51 @@ const App: React.FC = () => {
           {activeView === 'media' && <MediaHub userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
         </div>
+
+        {/* Global Notification Shards */}
+        <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[300] flex flex-col gap-4 pointer-events-none w-full max-w-sm">
+           {notifications.map(n => (
+             <div key={n.id} className="pointer-events-auto animate-in slide-in-from-right-8 duration-500">
+               <div className={`glass-card p-5 rounded-3xl border-l-4 shadow-2xl flex items-start gap-4 ${
+                 n.type === 'success' ? 'border-emerald-500 bg-emerald-500/5' : 
+                 n.type === 'error' ? 'border-rose-500 bg-rose-500/5' : 
+                 n.type === 'warning' ? 'border-amber-500 bg-amber-500/5' : 
+                 'border-blue-500 bg-blue-500/5'
+               }`}>
+                  <div className={`p-2.5 rounded-xl ${
+                    n.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 
+                    n.type === 'error' ? 'bg-rose-500/20 text-rose-400' : 
+                    n.type === 'warning' ? 'bg-amber-500/20 text-amber-400' : 
+                    'bg-blue-500/20 text-blue-400'
+                  }`}>
+                    {n.type === 'success' ? <CheckCircle2 size={18} /> : 
+                     n.type === 'error' ? <AlertTriangle size={18} /> : 
+                     n.type === 'warning' ? <AlertCircle size={18} /> : 
+                     <Info size={18} />}
+                  </div>
+                  <div className="flex-1">
+                     <div className="flex justify-between items-center mb-1">
+                        <h5 className="text-[10px] font-black uppercase tracking-widest text-white">{n.title}</h5>
+                        <span className="text-[8px] font-mono text-slate-500">{n.timestamp}</span>
+                     </div>
+                     <p className="text-xs text-slate-400 leading-relaxed font-medium italic">"{n.message}"</p>
+                     <div className="mt-3 h-0.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className={`h-full animate-progress-shrink ${
+                          n.type === 'success' ? 'bg-emerald-500' : 
+                          n.type === 'error' ? 'bg-rose-500' : 
+                          'bg-blue-500'
+                        }`} style={{ animationDuration: '5s' }}></div>
+                     </div>
+                  </div>
+               </div>
+             </div>
+           ))}
+        </div>
       </main>
 
       {/* Handheld Navigation Bar */}
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 h-20 glass-card border-t border-slate-200 dark:border-white/5 flex items-center justify-around px-4 z-[100] pb-safe bg-white/80 dark:bg-black/80 backdrop-blur-3xl">
+        <nav className="fixed bottom-0 left-0 right-0 h-20 glass-card border-t border-slate-200 dark:border-white/5 flex items-center justify-around px-4 z-[100] pb-safe bg-white/80 dark:bg-agro-bg/80 backdrop-blur-3xl">
           {navigation.slice(0, 5).map((item) => (
             <button 
               key={item.id} 
@@ -327,6 +388,11 @@ const App: React.FC = () => {
         user={user} 
         onMinted={(val) => earnEAC(val, 'SCIENTIFIC_EVIDENCE_MINT')}
       />
+
+      <style>{`
+        @keyframes progress-shrink { from { width: 100%; } to { width: 0%; } }
+        .animate-progress-shrink { animation: progress-shrink linear forwards; }
+      `}</style>
     </div>
   );
 };
