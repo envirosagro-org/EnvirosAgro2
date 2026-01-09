@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, Zap, Globe, Activity, HeartPulse, Cpu, Sparkles, Binary, 
   CreditCard, Layers, Coins, Users, Heart, ArrowRight, BrainCircuit, Bot, 
-  TrendingUp, AtSign, Share2, Youtube, Twitter, HelpCircle, Send, Pin, Linkedin
+  TrendingUp, AtSign, Share2, Youtube, Twitter, HelpCircle, Send, Pin, Linkedin,
+  Rocket, PlusCircle, Gavel, Building2, Share, ShieldAlert
 } from 'lucide-react';
 import { ViewState, User } from '../types';
 import IdentityCard from './IdentityCard';
@@ -28,7 +29,7 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
   }, []);
 
   return (
-    <div className="relative w-full h-[300px] lg:h-full min-h-[350px] overflow-hidden glass-card rounded-[40px] border border-emerald-500/10 flex items-center justify-center group bg-slate-50 dark:bg-black/40">
+    <div className="relative w-full h-[300px] lg:h-full min-h-[400px] overflow-hidden glass-card rounded-[40px] border border-emerald-500/10 flex items-center justify-center group bg-slate-50 dark:bg-black/40 shadow-2xl">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')] opacity-10 dark:opacity-30"></div>
       
       {/* Dynamic Connections */}
@@ -57,7 +58,7 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
         >
           <div className="relative">
             {node.active && (
-              <div className={`absolute inset-0 rounded-full animate-ping opacity-20 ${node.isCurrent ? 'bg-emerald-400' : 'bg-blue-400'}`}></div>
+              <div className={`absolute inset-[-10px] rounded-full animate-ping opacity-20 ${node.isCurrent ? 'bg-emerald-400' : 'bg-blue-400'}`}></div>
             )}
             <div className={`rounded-full border-2 transition-all duration-500 shadow-2xl cursor-crosshair ${
               node.isCurrent ? 'bg-emerald-500 border-white scale-125 z-20 shadow-emerald-500/50' : 
@@ -79,7 +80,7 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
       <div className="absolute top-6 left-6 flex flex-col gap-2">
         <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full backdrop-blur-md">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Ledger Sync: Stable</span>
+          <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Network Consensus: 100%</span>
         </div>
       </div>
 
@@ -87,7 +88,7 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
         <div className="glass-card p-3 rounded-2xl border-emerald-500/10 flex items-center gap-3 bg-white/50 dark:bg-black/50">
           <Globe className="w-4 h-4 text-emerald-500" />
           <div className="text-left">
-            <p className="text-[7px] text-slate-500 font-black uppercase leading-none mb-1">Global Anchor</p>
+            <p className="text-[7px] text-slate-500 font-black uppercase leading-none mb-1">Node Anchor</p>
             <p className="text-[9px] font-bold dark:text-white text-slate-900 uppercase truncate max-w-[100px]">{userLoc}</p>
           </div>
         </div>
@@ -107,14 +108,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         
         {/* Profile Identity Command */}
         <div className="lg:col-span-8">
-          <div className="glass-card p-6 md:p-12 rounded-[40px] md:rounded-[56px] relative overflow-hidden group h-full flex flex-col justify-between dark:bg-black/20 bg-white">
+          <div className="glass-card p-6 md:p-12 rounded-[40px] md:rounded-[56px] relative overflow-hidden group h-full flex flex-col justify-between dark:bg-black/20 bg-white shadow-2xl">
              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.05] to-transparent pointer-events-none"></div>
+             <div className="absolute -top-24 -left-24 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none"></div>
              
              <div className="relative z-10 flex flex-col md:flex-row justify-between gap-8 md:items-center pb-8 border-b border-slate-200 dark:border-white/5 mb-8">
                 <div className="flex gap-6 items-center">
                   <div className="w-20 h-20 md:w-28 md:h-28 rounded-[32px] md:rounded-[40px] bg-slate-800 dark:bg-slate-700 border-2 border-white/5 flex items-center justify-center text-4xl md:text-5xl font-black text-emerald-400 shadow-2xl relative">
                     {user.name[0]}
-                    <div className="absolute -bottom-1 -right-1 w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-500 flex items-center justify-center border-4 border-white dark:border-agro-bg">
+                    <div className="absolute -bottom-1 -right-1 w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-500 flex items-center justify-center border-4 border-white dark:border-[#050706]">
                       <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                   </div>
@@ -123,7 +125,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                     <p className="text-slate-500 text-sm md:text-lg font-medium">{user.role} • {user.location}</p>
                     <div className="flex gap-2 pt-2">
                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-black rounded-full border border-emerald-500/20 uppercase tracking-widest">{user.wallet.tier} Node</span>
-                       <span className="px-3 py-1 bg-blue-500/10 text-blue-500 text-[9px] font-black rounded-full border border-blue-500/20 uppercase tracking-widest">AUTH_OK</span>
+                       <span className="px-3 py-1 bg-blue-500/10 text-blue-500 text-[9px] font-black rounded-full border border-blue-500/20 uppercase tracking-widest font-mono">AUTH_OK_256</span>
                     </div>
                   </div>
                 </div>
@@ -136,7 +138,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 </button>
              </div>
 
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10">
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 relative z-10">
                 {[
                   { label: 'Treasury', val: totalBalance.toLocaleString(), unit: 'EAC', icon: Coins, col: 'text-emerald-500' },
                   { label: 'C(a) Index', val: user.metrics.agriculturalCodeU, unit: '', icon: Binary, col: 'text-blue-500' },
@@ -163,19 +165,54 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         </div>
       </div>
 
-      {/* Logic & Strategy Shards */}
+      {/* Industrial Quick Launchpad (Requested Features Enhanced) */}
+      <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden">
+        <div className="flex justify-between items-center mb-10 px-2 relative z-10">
+           <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.3em] italic flex items-center gap-4 dark:text-white text-slate-900">
+              <Building2 className="w-6 h-6 text-indigo-400" /> Industrial <span className="text-indigo-400">Launchpad</span>
+           </h3>
+           <p className="hidden md:block text-[9px] font-mono text-indigo-500/50 font-black uppercase tracking-widest">Shard Priority: High</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+           {[
+             { label: 'Form Collective', icon: PlusCircle, color: 'text-emerald-400', desc: 'Form Shard Group', target: 'industrial' },
+             { label: 'Register Node', icon: Building2, color: 'text-amber-400', desc: 'Industry Node Entry', target: 'industrial' },
+             { label: 'Place Bid', icon: Gavel, color: 'text-blue-400', desc: 'Tender Auction Portal', target: 'industrial' },
+             { label: 'Launch Mission', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Campaign', target: 'industrial' },
+           ].map((action, i) => (
+             <button 
+              key={i} 
+              onClick={() => onNavigate(action.target as ViewState)}
+              className="glass-card p-8 rounded-[32px] border border-white/5 hover:border-indigo-500/30 hover:bg-white/5 transition-all text-left flex flex-col gap-4 group active:scale-95 shadow-xl"
+             >
+                <div className={`p-4 rounded-2xl bg-slate-900 border border-white/5 group-hover:scale-110 transition-transform ${action.color}`}>
+                   <action.icon className="w-8 h-8" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100 dark:text-white text-slate-900">{action.label}</span>
+                  <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">{action.desc}</p>
+                </div>
+                <div className="mt-auto pt-4 flex justify-end">
+                   <ArrowRight className="w-4 h-4 text-slate-700 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
+                </div>
+             </button>
+           ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
         
         {/* SEHTI Strategy Core */}
-        <div className="lg:col-span-2 glass-card p-8 md:p-12 rounded-[40px] border-emerald-500/10 dark:bg-white/[0.01] bg-white relative overflow-hidden group">
+        <div className="lg:col-span-2 glass-card p-8 md:p-12 rounded-[40px] border-emerald-500/10 dark:bg-white/[0.01] bg-white relative overflow-hidden group shadow-2xl">
            <div className="flex justify-between items-center mb-10">
               <div className="flex items-center gap-4">
                  <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
                     <Layers className="w-6 h-6 text-emerald-400" />
                  </div>
-                 <h3 className="text-xl md:text-2xl font-black uppercase tracking-tighter italic dark:text-white text-slate-900">SEHTI™ <span className="text-emerald-400">Analysis</span></h3>
+                 <h3 className="text-xl md:text-2xl font-black uppercase tracking-tighter italic dark:text-white text-slate-900">SEHTI™ <span className="text-emerald-400">Analysis Shard</span></h3>
               </div>
-              <span className="hidden sm:block text-[9px] font-mono text-slate-500 font-black uppercase tracking-widest">Protocol v3.2</span>
+              <span className="hidden sm:block text-[9px] font-mono text-slate-500 font-black uppercase tracking-widest">Framework v3.2.1-Final</span>
            </div>
            
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12">
@@ -194,7 +231,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                         <span className="font-mono dark:text-white text-slate-900">{t.val}%</span>
                      </div>
                      <div className="h-1 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                       <div className={`h-full ${t.color} rounded-full`} style={{ width: `${t.val}%` }}></div>
+                       <div className={`h-full ${t.color} rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(255,255,255,0.2)]`} style={{ width: `${t.val}%` }}></div>
                      </div>
                    </div>
                  ))}
@@ -213,7 +250,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                         <span className="font-mono dark:text-white text-slate-900">{t.val}%</span>
                      </div>
                      <div className="h-1 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                       <div className={`h-full ${t.color} rounded-full`} style={{ width: `${t.val}%` }}></div>
+                       <div className={`h-full ${t.color} rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(255,255,255,0.2)]`} style={{ width: `${t.val}%` }}></div>
                      </div>
                    </div>
                  ))}
@@ -224,8 +261,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                     <div className="flex items-center gap-3">
                        <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
                        <div className="text-left">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Node Insights</p>
-                          <p className="text-[11px] font-bold dark:text-slate-400 text-slate-600 truncate">Optimize T-Thrust Shards</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Oracle Insights</p>
+                          <p className="text-[11px] font-bold dark:text-slate-400 text-slate-600 truncate">Improve I-Thrust Ledger Density</p>
                        </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-1 transition-transform" />
@@ -235,7 +272,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         </div>
 
         {/* Neural Oracle Module */}
-        <div className="glass-card p-10 rounded-[40px] border-indigo-500/20 dark:bg-indigo-950/[0.03] bg-white flex flex-col justify-between group overflow-hidden relative">
+        <div className="glass-card p-10 rounded-[40px] border-indigo-500/20 dark:bg-indigo-950/[0.03] bg-white flex flex-col justify-between group overflow-hidden relative shadow-2xl">
            <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
               <BrainCircuit className="w-48 h-48 text-indigo-400" />
            </div>
@@ -246,29 +283,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                  </div>
                  <div>
                     <h4 className="text-xl font-black uppercase tracking-widest italic dark:text-white text-slate-900">Oracle <span className="text-indigo-400">Node</span></h4>
-                    <span className="text-[9px] font-mono text-indigo-500/60 uppercase font-black">Sync_v3_Active</span>
+                    <span className="text-[9px] font-mono text-indigo-500/60 uppercase font-black tracking-widest">Active_Session_ID: 0x882</span>
                  </div>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed italic">
-                "Global moisture shards suggest a 12% rise in C(a) efficiency for Zone 4. Recommend liquidity lock."
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed italic font-medium">
+                "Spectral telemetry indicates a 14.2% rise in soil moisture retention for your regional shard. Vouching protocols updated."
               </p>
            </div>
            <button 
             onClick={() => onNavigate('intelligence')}
             className="relative z-10 w-full py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 mt-8"
            >
-              <Zap className="w-4 h-4" /> Open Session
+              <Zap className="w-4 h-4 fill-current" /> Initialize Session
            </button>
         </div>
       </div>
 
       {/* Global External Environment Nodes */}
-      <div className="glass-card p-8 md:p-12 rounded-[40px] md:rounded-[56px] border-slate-200 dark:border-white/5 dark:bg-white/[0.01] bg-white relative overflow-hidden">
+      <div className="glass-card p-8 md:p-12 rounded-[40px] md:rounded-[56px] border-slate-200 dark:border-white/5 dark:bg-white/[0.01] bg-white relative overflow-hidden shadow-2xl">
         <div className="flex justify-between items-center mb-10 px-2">
            <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.3em] italic flex items-center gap-4 dark:text-white text-slate-900">
-              <Globe className="w-6 h-6 text-blue-500" /> Global <span className="text-blue-500">Shards</span>
+              <Globe className="w-6 h-6 text-blue-500" /> External <span className="text-blue-500">Shards</span>
            </h3>
-           <p className="hidden md:block text-[10px] font-black text-slate-500 uppercase tracking-widest">Network Ingress Nodes</p>
+           <p className="hidden md:block text-[10px] font-black text-slate-500 uppercase tracking-widest">Official Network Environments</p>
         </div>
         
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 md:gap-8">
@@ -299,18 +336,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
       {/* ID Shard Overlay */}
       {showIdentityCard && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-agro-bg/95 backdrop-blur-3xl" onClick={() => setShowIdentityCard(false)}></div>
+           <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setShowIdentityCard(false)}></div>
            <div className="relative z-10 w-full max-w-lg space-y-6 flex flex-col items-center animate-in zoom-in duration-300">
               <div className="text-center space-y-2 mb-2">
                  <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">Steward <span className="text-emerald-500">Identity</span></h2>
-                 <p className="text-emerald-500/60 font-mono text-[10px] tracking-[0.4em] uppercase">Blockchain Anchor Active</p>
+                 <p className="text-emerald-500/60 font-mono text-[10px] tracking-[0.4em] uppercase">Blockchain Anchor Secured</p>
               </div>
               <IdentityCard user={user} />
               <button 
                 onClick={() => setShowIdentityCard(false)} 
                 className="w-full max-w-xs py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all"
               >
-                Exit Dossier
+                Sync Dossier & Exit
               </button>
            </div>
         </div>

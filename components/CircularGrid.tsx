@@ -36,10 +36,12 @@ import {
   Gauge,
   Thermometer,
   Cpu,
-  Database
+  Database,
+  Hammer,
+  Sparkle
 } from 'lucide-react';
 import { User } from '../types';
-import { auditRecycledItem } from '../services/geminiService';
+import { auditRecycledItem, chatWithAgroExpert } from '../services/geminiService';
 
 interface CircularGridProps {
   user: User;
@@ -60,13 +62,18 @@ const CIRCULAR_HUBS = [
 ];
 
 const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC }) => {
-  const [activeView, setActiveView] = useState<'returns' | 'market' | 'analytics' | 'hubs'>('returns');
+  const [activeView, setActiveView] = useState<'returns' | 'market' | 'repair' | 'hubs'>('returns');
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [returnStep, setReturnStep] = useState<'form' | 'audit' | 'success'>('form');
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditText, setAuditText] = useState<string | null>(null);
   const [selectedHub, setSelectedHub] = useState<any>(null);
   
+  // Repair Assistant State
+  const [repairInput, setRepairInput] = useState('');
+  const [repairStrategy, setRepairStrategy] = useState<string | null>(null);
+  const [isSynthesizingRepair, setIsSynthesizingRepair] = useState(false);
+
   // Return Form State
   const [assetName, setAssetName] = useState('');
   const [assetUsage, setAssetUsage] = useState('24 Months');
@@ -74,7 +81,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
   const [mintValue, setMintValue] = useState(0);
 
   const stats = [
-    { label: "Landfilled Diverted", val: "14.2 Tons", icon: Leaf, col: "text-emerald-400" },
+    { label: "Waste Diverted", val: "14.2 Tons", icon: Leaf, col: "text-emerald-400" },
     { label: "Circular EAC Minted", val: "42.8K EAC", icon: Coins, col: "text-amber-500" },
     { label: "Active Return Shards", val: "128 Nodes", icon: RotateCcw, col: "text-blue-400" },
     { label: "Refurb Success Rate", val: "94%", icon: ShieldCheck, col: "text-indigo-400" },
@@ -97,6 +104,21 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
     }
   };
 
+  const handleRepairAssistant = async () => {
+    if (!repairInput.trim()) return;
+    setIsSynthesizingRepair(true);
+    setRepairStrategy(null);
+    try {
+       const prompt = `Act as an EnvirosAgro Refurbishment Specialist. Provide a technical repair strategy for the following agricultural hardware fault: "${repairInput}". Focus on restoring m™ constant resilience and industrial reuse compliance.`;
+       const res = await chatWithAgroExpert(prompt, []);
+       setRepairStrategy(res.text);
+    } catch (e) {
+       alert("Repair Oracle Interrupted. Check registry signal.");
+    } finally {
+       setIsSynthesizingRepair(false);
+    }
+  };
+
   const finalizeReturn = () => {
     onEarnEAC(mintValue, 'ASSET_RECYCLING_CREDIT');
     setReturnStep('success');
@@ -112,7 +134,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       {/* Header Info */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group flex flex-col justify-between">
+        <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group flex flex-col justify-between shadow-2xl">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
               <Recycle className="w-80 h-80 text-white" />
            </div>
@@ -122,27 +144,27 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                     <Recycle className="w-10 h-10 text-white" />
                  </div>
                  <div>
-                    <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">Circular <span className="text-emerald-400">Grid</span></h2>
+                    <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">Circular <span className="text-emerald-400">Hub</span></h2>
                     <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1 flex items-center gap-2">
-                       <ShieldCheck className="w-3 h-3" /> Reverse Supply Chain Protocol Active
+                       <ShieldCheck className="w-3 h-3" /> Zero-Waste Protocol V4.2
                     </p>
                  </div>
               </div>
               <p className="text-slate-400 text-xl leading-relaxed max-w-2xl font-medium italic">
-                "Promoting recycling, reusing, and refurbishing to maximize agricultural m-Constant efficiency and minimize environmental friction."
+                "Promoting recycling, reusing, and refurbishing to maximize m™ resilience and minimize environmental friction across the EOS network."
               </p>
               <div className="flex gap-4 pt-4">
                  <button 
                   onClick={() => { setShowReturnModal(true); setReturnStep('form'); }}
                   className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-2xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
                  >
-                    <RotateCcw className="w-5 h-5" /> Initialize Reverse Ingest
+                    <RotateCcw className="w-5 h-5" /> Initialize Return
                  </button>
                  <button 
                   onClick={() => setActiveView('market')}
                   className="px-10 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3"
                  >
-                    <ShoppingCart className="w-5 h-5" /> Refurbished Market
+                    <ShoppingCart className="w-5 h-5" /> Second-Life Store
                  </button>
               </div>
            </div>
@@ -150,7 +172,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
 
         <div className="grid grid-cols-2 gap-4 lg:flex lg:flex-col lg:justify-between">
            {stats.map((s, i) => (
-             <div key={i} className="glass-card p-6 rounded-[32px] border-white/5 bg-black/40 flex flex-col justify-center items-center text-center space-y-2 group hover:border-emerald-500/20 transition-all">
+             <div key={i} className="glass-card p-6 rounded-[32px] border-white/5 bg-black/40 flex flex-col justify-center items-center text-center space-y-2 group hover:border-emerald-500/20 transition-all shadow-lg">
                 <s.icon className={`w-6 h-6 ${s.col} group-hover:scale-110 transition-transform`} />
                 <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{s.label}</p>
                 <p className="text-xl font-black text-white font-mono">{s.val}</p>
@@ -160,12 +182,12 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[24px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40">
+      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[24px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl">
         {[
           { id: 'returns', label: 'Reverse Ingest', icon: RotateCcw },
-          { id: 'market', label: 'Refurbished Store', icon: PackageSearch },
-          { id: 'analytics', label: 'Circular Impact', icon: Activity },
-          { id: 'hubs', label: 'Processing Hubs', icon: MapPin },
+          { id: 'market', label: 'Second-Life Store', icon: PackageSearch },
+          { id: 'repair', label: 'Repair Assistant', icon: Hammer },
+          { id: 'hubs', label: 'Registry Hubs', icon: MapPin },
         ].map(tab => (
           <button 
             key={tab.id}
@@ -181,15 +203,15 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
       <div className="min-h-[500px]">
         {activeView === 'returns' && (
           <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
-             <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8">
+             <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8 px-4">
                 <div className="space-y-1">
-                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Active <span className="text-emerald-400">Return Shards</span></h3>
-                   <p className="text-slate-500 text-sm font-medium">Assets currently moving through the reverse logistics pipeline.</p>
+                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Active <span className="text-emerald-400">Ingest Shards</span></h3>
+                   <p className="text-slate-500 text-sm font-medium">Assets currently moving through the reverse logistics terminal.</p>
                 </div>
                 <div className="flex gap-4">
                    <div className="relative group">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
-                      <input type="text" placeholder="Search return hash..." className="bg-black/60 border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-xs text-white focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" />
+                      <input type="text" placeholder="Search return hash..." className="bg-black/60 border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-xs text-white focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-mono" />
                    </div>
                 </div>
              </div>
@@ -197,10 +219,10 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[
                   { id: 'RET-842', item: 'Used Soil Array S1', status: 'In-Transit', hub: 'Empire Node', time: '12h ago', eac: '24.50' },
-                  { id: 'RET-911', item: 'Drone Wing (Structural)', status: 'Auditing', hub: 'Palo Alto Shard', time: '1h ago', eac: '12.00' },
+                  { id: 'RET-911', item: 'Drone Wing Shard', status: 'Auditing', hub: 'Palo Alto Shard', time: '1h ago', eac: '12.00' },
                   { id: 'RET-004', item: 'Irrigation Relay C-04', status: 'Accepted', hub: 'Midwest Shard', time: '3d ago', eac: '85.40' },
                 ].map((ret, i) => (
-                  <div key={i} className="glass-card p-8 rounded-[40px] border border-white/5 group hover:border-emerald-500/30 transition-all flex flex-col h-full active:scale-95">
+                  <div key={i} className="glass-card p-8 rounded-[40px] border border-white/5 group hover:border-emerald-500/30 transition-all flex flex-col h-full active:scale-95 shadow-lg">
                      <div className="flex justify-between items-start mb-6">
                         <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-emerald-500/10 transition-colors">
                            <Truck className="w-6 h-6 text-emerald-400" />
@@ -213,14 +235,14 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                            {ret.status}
                         </span>
                      </div>
-                     <h4 className="text-xl font-bold text-white uppercase tracking-tight mb-2 group-hover:text-emerald-400 transition-colors">{ret.item}</h4>
+                     <h4 className="text-xl font-bold text-white uppercase tracking-tight mb-2 group-hover:text-emerald-400 transition-colors italic">{ret.item}</h4>
                      <p className="text-[10px] text-slate-500 font-mono tracking-widest flex items-center gap-2">
                         {ret.id} <span className="text-slate-800">|</span> {ret.hub.toUpperCase()}
                      </p>
                      
                      <div className="mt-8 pt-6 border-t border-white/5 flex justify-between items-end">
                         <div>
-                           <p className="text-[8px] text-slate-600 font-black uppercase">Pending Credit</p>
+                           <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-1">Expected Credit</p>
                            <p className="text-xl font-mono font-black text-emerald-400">{ret.eac} EAC</p>
                         </div>
                         <p className="text-[10px] text-slate-500 font-bold uppercase">{ret.time}</p>
@@ -230,14 +252,14 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                 
                 <button 
                   onClick={() => { setShowReturnModal(true); setReturnStep('form'); }}
-                  className="glass-card p-10 rounded-[44px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-center space-y-6 hover:border-emerald-500/40 transition-all group active:scale-95"
+                  className="glass-card p-10 rounded-[44px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-center space-y-6 hover:border-emerald-500/40 transition-all group active:scale-95 shadow-xl"
                 >
-                   <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-emerald-500/10 transition-colors shadow-2xl">
+                   <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-emerald-500/10 transition-colors shadow-2xl ring-1 ring-white/5">
                       <PlusCircle className="w-8 h-8 text-slate-700 group-hover:text-emerald-400" />
                    </div>
                    <div className="space-y-2">
-                      <h4 className="text-xl font-black text-white uppercase tracking-tighter">New Return Ingest</h4>
-                      <p className="text-slate-500 text-xs italic">De-clutter your farm and earn shards.</p>
+                      <h4 className="text-xl font-black text-white uppercase tracking-tighter italic">New Ingest Shard</h4>
+                      <p className="text-slate-500 text-xs italic max-w-[200px] mx-auto leading-relaxed">De-clutter your farm and earn instant EAC shards.</p>
                    </div>
                 </button>
              </div>
@@ -246,21 +268,22 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
 
         {activeView === 'market' && (
           <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-             <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8">
+             <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8 px-4">
                 <div className="space-y-1">
-                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Second-Life <span className="text-blue-400">Market</span></h3>
-                   <p className="text-slate-500 text-sm font-medium">Verified refurbished hardware at up to 60% system discount.</p>
+                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Second-Life <span className="text-blue-400">Registry</span></h3>
+                   <p className="text-slate-500 text-sm font-medium">Verified refurbished industrial hardware for network stewards.</p>
                 </div>
-                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                   <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest leading-none">Seed-Tier Exclusive Pricing Active</p>
+                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-3">
+                   <ShieldCheck className="w-5 h-5 text-blue-400" />
+                   <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest leading-none">Seed-Tier Discount Applied (15%)</p>
                 </div>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {REFURBISHED_STORE.map(item => (
-                  <div key={item.id} className="glass-card p-10 rounded-[48px] border border-white/5 hover:border-blue-500/30 transition-all group flex flex-col h-full active:scale-95 duration-300 relative overflow-hidden bg-black/20">
-                     <div className="flex justify-between items-start mb-8">
-                        <div className="p-5 rounded-[24px] bg-white/5 group-hover:bg-blue-600/10 transition-colors">
+                  <div key={item.id} className="glass-card p-10 rounded-[48px] border border-white/5 hover:border-blue-500/30 transition-all group flex flex-col h-full active:scale-95 duration-300 relative overflow-hidden bg-black/20 shadow-xl">
+                     <div className="flex justify-between items-start mb-8 relative z-10">
+                        <div className="p-5 rounded-[24px] bg-white/5 group-hover:bg-blue-600/10 transition-colors shadow-2xl">
                            <item.icon className="w-8 h-8 text-blue-400" />
                         </div>
                         <div className="text-right">
@@ -269,12 +292,12 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                         </div>
                      </div>
                      
-                     <div className="flex-1">
-                        <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight group-hover:text-blue-400 transition-colors mb-4 italic">{item.name}</h4>
+                     <div className="flex-1 relative z-10">
+                        <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight group-hover:text-blue-400 transition-colors mb-4 italic leading-none">{item.name}</h4>
                         <p className="text-xs text-slate-400 leading-relaxed italic mb-8">"{item.desc}"</p>
                      </div>
 
-                     <div className="pt-8 border-t border-white/5 flex items-end justify-between">
+                     <div className="pt-8 border-t border-white/5 flex items-end justify-between relative z-10">
                         <div className="space-y-1">
                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Shard Cost</p>
                            <div className="flex items-center gap-3">
@@ -286,7 +309,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                           onClick={() => buyRefurbished(item)}
                           className="px-8 py-4 bg-blue-600 rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-blue-900/40 hover:bg-blue-500 transition-all flex items-center justify-center gap-2 active:scale-90"
                         >
-                           Initialize <ChevronRight className="w-4 h-4" />
+                           Commit <ChevronRight className="w-4 h-4" />
                         </button>
                      </div>
                   </div>
@@ -295,49 +318,109 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
           </div>
         )}
 
+        {activeView === 'repair' && (
+           <div className="max-w-4xl mx-auto space-y-10 animate-in zoom-in duration-500">
+              <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-950/5 relative overflow-hidden shadow-2xl">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                    <Hammer className="w-96 h-96 text-white" />
+                 </div>
+                 
+                 <div className="flex items-center gap-6 mb-12 relative z-10">
+                    <div className="p-5 bg-emerald-600 rounded-3xl shadow-xl shadow-emerald-900/40">
+                       <Bot className="w-10 h-10 text-white" />
+                    </div>
+                    <div>
+                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Repair <span className="text-emerald-400">Assistant Shard</span></h3>
+                       <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.4em] mt-2">EOS_MAINTENANCE_ORACLE v3.2</p>
+                    </div>
+                 </div>
+
+                 {!repairStrategy ? (
+                   <div className="space-y-10 relative z-10 animate-in fade-in duration-700">
+                      <div className="space-y-4">
+                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6">Describe Hardware Friction</label>
+                         <textarea 
+                            value={repairInput}
+                            onChange={e => setRepairInput(e.target.value)}
+                            placeholder="Explain the fault in your spectral drone or sensor array..."
+                            className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-lg font-medium italic focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all h-48 resize-none placeholder:text-slate-800 shadow-inner"
+                         />
+                      </div>
+                      <button 
+                        onClick={handleRepairAssistant}
+                        disabled={isSynthesizingRepair || !repairInput.trim()}
+                        className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
+                      >
+                         {isSynthesizingRepair ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkle className="w-6 h-6 fill-current" />}
+                         {isSynthesizingRepair ? "Synthesizing Shard..." : "GENERATE REPAIR STRATEGY"}
+                      </button>
+                   </div>
+                 ) : (
+                   <div className="space-y-10 relative z-10 animate-in slide-in-from-right-4 duration-500">
+                      <div className="p-10 glass-card rounded-[48px] bg-black/80 border-l-8 border-emerald-500/50 prose prose-invert max-w-none shadow-3xl">
+                         <div className="flex items-center gap-4 mb-8 pb-4 border-b border-white/5">
+                            <Sparkles className="w-6 h-6 text-emerald-400" />
+                            <h4 className="text-xl font-black text-white uppercase tracking-widest italic">Oracle Verdict</h4>
+                         </div>
+                         <div className="text-slate-300 text-lg leading-loose italic whitespace-pre-line font-medium border-l-2 border-white/5 pl-8">
+                            {repairStrategy}
+                         </div>
+                      </div>
+                      <div className="flex gap-4">
+                         <button onClick={() => setRepairStrategy(null)} className="flex-1 py-6 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">New Fault Probe</button>
+                         <button className="flex-[2] py-6 agro-gradient rounded-[32px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-105 active:scale-95 transition-all">
+                            <CheckCircle2 className="w-6 h-6" /> Commit Refurbishment Shard
+                         </button>
+                      </div>
+                   </div>
+                 )}
+              </div>
+           </div>
+        )}
+
         {activeView === 'hubs' && (
           <div className="space-y-10 animate-in zoom-in duration-500">
              {selectedHub ? (
                 <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
                    <button onClick={() => setSelectedHub(null)} className="flex items-center gap-2 p-2 px-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all group/back">
                       <ChevronLeft className="w-5 h-5 group-hover/back:-translate-x-1 transition-transform" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Back to Hub Registry</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">Back to Hub Directory</span>
                    </button>
                    
                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                      <div className="lg:col-span-2 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 space-y-10 relative overflow-hidden">
+                      <div className="lg:col-span-2 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 space-y-10 relative overflow-hidden shadow-2xl">
                          <div className="absolute top-0 right-0 p-12 opacity-[0.03]"><Warehouse className="w-64 h-64 text-white" /></div>
                          <div className="flex items-center gap-6 relative z-10">
-                            <div className="p-4 bg-emerald-500 rounded-3xl shadow-xl">
+                            <div className="p-4 bg-emerald-500 rounded-3xl shadow-xl ring-4 ring-white/5">
                                <Warehouse className="w-10 h-10 text-white" />
                             </div>
                             <div>
-                               <h3 className="text-4xl font-black text-white uppercase tracking-tighter">{selectedHub.name}</h3>
-                               <p className="text-emerald-500/60 font-mono text-[10px] tracking-[0.3em] uppercase">{selectedHub.id} // {selectedHub.zone}</p>
+                               <h3 className="text-4xl font-black text-white uppercase tracking-tighter leading-none italic">{selectedHub.name}</h3>
+                               <p className="text-emerald-500/60 font-mono text-[10px] tracking-[0.3em] uppercase mt-2">{selectedHub.id} // {selectedHub.zone} // Hub Secured</p>
                             </div>
                          </div>
                          <div className="grid grid-cols-3 gap-8 relative z-10 pt-10 border-t border-white/10">
                             <div><p className="text-[9px] text-slate-500 uppercase font-black mb-1">Health Index</p><p className="text-2xl font-mono font-black text-white">{selectedHub.health}%</p></div>
                             <div><p className="text-[9px] text-slate-500 uppercase font-black mb-1">Throughput</p><p className="text-2xl font-mono font-black text-emerald-400">{selectedHub.throughput}</p></div>
-                            <div><p className="text-[9px] text-slate-500 uppercase font-black mb-1">Shard Load</p><p className="text-2xl font-mono font-black text-blue-400">{selectedHub.load}%</p></div>
+                            <div><p className="text-[9px] text-slate-500 uppercase font-black mb-1">Node Load</p><p className="text-2xl font-mono font-black text-blue-400">{selectedHub.load}%</p></div>
                          </div>
                          <div className="space-y-4 pt-10">
-                            <h4 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2"><Gauge className="w-4 h-4 text-emerald-400" /> Operational Efficiency</h4>
-                            <div className="h-4 bg-black/40 rounded-full border border-white/5 overflow-hidden p-1">
+                            <h4 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2"><Gauge className="w-4 h-4 text-emerald-400" /> Operational Efficiency Pulse</h4>
+                            <div className="h-4 bg-black/40 rounded-full border border-white/5 overflow-hidden p-1 shadow-inner">
                                <div className="h-full agro-gradient rounded-full shadow-[0_0_15px_#10b981]" style={{ width: `${selectedHub.health}%` }}></div>
                             </div>
                          </div>
                       </div>
                       <div className="space-y-8">
-                         <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 space-y-6">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Hub Telemetry</h4>
+                         <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 space-y-6 shadow-xl">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] border-b border-white/5 pb-4">Live Hub Telemetry</h4>
                             <div className="space-y-4">
                                {[
-                                 { l: 'Core Temp', v: '22.4°C', i: Thermometer },
-                                 { l: 'Node Latency', v: '12ms', i: Activity },
-                                 { l: 'Registry Sync', v: 'OK', i: Database },
+                                 { l: 'Core Thermal', v: '22.4°C', i: Thermometer },
+                                 { l: 'Sync Latency', v: '12ms', i: Activity },
+                                 { l: 'Ledger State', v: 'LOCKED', i: Database },
                                ].map(t => (
-                                 <div key={t.l} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
+                                 <div key={t.l} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all">
                                     <div className="flex items-center gap-3"><t.i className="w-4 h-4 text-emerald-400" /><span className="text-[10px] font-bold text-white uppercase">{t.l}</span></div>
                                     <span className="text-xs font-mono font-black text-slate-400">{t.v}</span>
                                  </div>
@@ -348,59 +431,59 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                    </div>
                 </div>
              ) : (
-                <div className="glass-card rounded-[56px] overflow-hidden relative min-h-[600px] border-white/5 bg-black group">
+                <div className="glass-card rounded-[56px] overflow-hidden relative min-h-[600px] border-white/5 bg-black group shadow-2xl">
                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=1200')] bg-cover opacity-20 grayscale hover:grayscale-0 transition-all duration-[8s]"></div>
-                   <div className="absolute inset-0 bg-gradient-to-t from-[#050706] to-transparent"></div>
+                   <div className="absolute inset-0 bg-gradient-to-t from-[#050706] via-[#050706]/40 to-transparent"></div>
                    
                    <div className="relative z-10 p-12 space-y-8 flex flex-col h-full">
                       <div className="flex justify-between items-start">
                          <div className="space-y-2">
                             <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Regional <span className="text-amber-500">Reverse Hubs</span></h3>
-                            <p className="text-slate-400 text-lg max-w-xl">Processing and auditing returned industrial shards for the global registry.</p>
+                            <p className="text-slate-400 text-lg max-w-xl font-medium">Processing and auditing returned industrial shards for the global second-life market.</p>
                          </div>
                          <div className="flex gap-4">
-                            <div className="p-4 bg-black/60 rounded-3xl border border-white/10 text-center">
-                               <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Total Capacity</p>
-                               <p className="text-xl font-mono font-black text-amber-500">84 TB/h</p>
+                            <div className="p-6 bg-black/60 rounded-3xl border border-white/10 text-center shadow-xl">
+                               <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Global Shard Volume</p>
+                               <p className="text-3xl font-mono font-black text-amber-500">842 TB/y</p>
                             </div>
                          </div>
                       </div>
 
-                      <div className="flex-1 relative">
+                      <div className="flex-1 relative h-96">
                          {CIRCULAR_HUBS.map(hub => (
                            <div key={hub.id} style={{ top: hub.lat === '40.7128' ? '30%' : hub.lat === '41.2565' ? '45%' : '70%', left: hub.lng === '-74.0060' ? '60%' : hub.lng === '-95.9345' ? '40%' : '20%' }} className="absolute group/hub">
                               <div 
                                 onClick={() => setSelectedHub(hub)}
-                                className="relative p-4 bg-amber-500 rounded-2xl shadow-2xl animate-pulse cursor-pointer group-hover/hub:scale-125 transition-transform z-10"
+                                className="relative p-5 bg-amber-500 rounded-3xl shadow-[0_0_40px_rgba(245,158,11,0.5)] animate-pulse cursor-pointer group-hover/hub:scale-125 transition-transform z-10 border-4 border-black"
                               >
-                                 <Warehouse className="w-6 h-6 text-black" />
+                                 <Warehouse className="w-8 h-8 text-black" />
                               </div>
-                              <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 opacity-0 group-hover/hub:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20">
-                                 <div className="bg-black/80 backdrop-blur-md border border-amber-500/40 p-4 rounded-2xl shadow-2xl text-center">
-                                    <p className="text-xs font-black text-white uppercase tracking-tight">{hub.name}</p>
-                                    <p className="text-[10px] text-amber-400 font-mono mt-1">Load: {hub.load}% // Active</p>
+                              <div className="absolute top-full mt-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/hub:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20">
+                                 <div className="bg-black border border-amber-500/40 p-6 rounded-[32px] shadow-2xl text-center space-y-1">
+                                    <p className="text-sm font-black text-white uppercase tracking-tighter italic">{hub.name}</p>
+                                    <p className="text-[10px] text-amber-400 font-mono mt-1 font-black">Sync: OK // LOAD: {hub.load}%</p>
                                  </div>
                               </div>
-                              <div className="absolute inset-0 bg-amber-500 rounded-2xl blur-xl opacity-20 group-hover/hub:opacity-50 animate-ping"></div>
+                              <div className="absolute inset-0 bg-amber-500 rounded-3xl blur-2xl opacity-20 group-hover/hub:opacity-50 animate-ping"></div>
                            </div>
                          ))}
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                          {CIRCULAR_HUBS.map(hub => (
-                           <div key={hub.id} onClick={() => setSelectedHub(hub)} className="p-8 bg-black/60 border border-white/5 rounded-[32px] group hover:border-amber-500/20 transition-all cursor-pointer">
+                           <div key={hub.id} onClick={() => setSelectedHub(hub)} className="p-8 bg-black/60 border border-white/5 rounded-[40px] group hover:border-amber-500/40 transition-all cursor-pointer shadow-xl">
                               <div className="flex justify-between items-center mb-4">
-                                 <h4 className="text-lg font-bold text-white uppercase">{hub.id}</h4>
-                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                 <h4 className="text-xl font-black text-white uppercase italic">{hub.id}</h4>
+                                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
                               </div>
-                              <p className="text-xs text-slate-500 uppercase font-black mb-6">{hub.zone}</p>
-                              <div className="space-y-2">
+                              <p className="text-[10px] text-slate-500 uppercase font-black mb-6 tracking-widest">{hub.zone} NODE</p>
+                              <div className="space-y-3">
                                  <div className="flex justify-between items-center text-[10px] font-black text-slate-600 uppercase">
-                                    <span>Processing Load</span>
+                                    <span>Shard Throughput</span>
                                     <span className="text-amber-500">{hub.load}%</span>
                                  </div>
                                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-amber-500 shadow-[0_0_10px_#f59e0b] opacity-60" style={{ width: `${hub.load}%` }}></div>
+                                    <div className={`h-full bg-amber-500 shadow-[0_0_10px_#f59e0b] transition-all duration-[2s]`} style={{ width: `${hub.load}%` }}></div>
                                  </div>
                               </div>
                            </div>
@@ -411,34 +494,6 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
              )}
           </div>
         )}
-
-        {activeView === 'analytics' && (
-           <div className="lg:col-span-3 flex flex-col items-center justify-center py-20 text-center space-y-10 animate-in zoom-in duration-500">
-             <div className="relative">
-                <div className="w-40 h-40 rounded-[56px] bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center shadow-2xl relative z-10 group hover:rotate-12 transition-transform duration-700">
-                   <Activity className="w-16 h-16 text-emerald-400 opacity-20 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="absolute inset-[-20px] rounded-full border border-white/5 animate-spin-slow"></div>
-             </div>
-             <div className="max-w-md space-y-4">
-                <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Circular <span className="text-emerald-400">Impact Ledger</span></h4>
-                <p className="text-slate-500 text-lg leading-relaxed font-medium italic">"Every return shard strengthens the m-Constant by reduces ecological entropy."</p>
-             </div>
-             <div className="grid grid-cols-2 gap-6 w-full max-w-2xl">
-                <div className="glass-card p-10 rounded-[40px] border-white/5 text-center space-y-2">
-                   <p className="text-[10px] text-slate-500 font-black uppercase">Carbon Shards Offset</p>
-                   <p className="text-4xl font-mono font-black text-emerald-400">842.5 <span className="text-xs">Tons</span></p>
-                </div>
-                <div className="glass-card p-10 rounded-[40px] border-white/5 text-center space-y-2">
-                   <p className="text-[10px] text-slate-500 font-black uppercase">Resource Velocity</p>
-                   <p className="text-4xl font-mono font-black text-blue-400">1.82x</p>
-                </div>
-             </div>
-             <button className="px-12 py-5 agro-gradient rounded-3xl text-xs font-black uppercase tracking-[0.4em] text-white shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all">
-                Generate Full Impact Shard
-             </button>
-          </div>
-        )}
       </div>
 
       {/* Return Ingest Modal */}
@@ -446,7 +501,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowReturnModal(false)}></div>
            
-           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300">
+           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2">
               <div className="p-16 space-y-12 min-h-[700px] flex flex-col">
                  <button onClick={() => setShowReturnModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
                  
@@ -467,54 +522,54 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                          <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
                             <RotateCcw className="w-12 h-12 text-emerald-400" />
                          </div>
-                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Reverse <span className="text-emerald-400">Ingest Form</span></h3>
-                         <p className="text-slate-400 text-lg font-medium">Declare item specifics to initialize the Oracle audit.</p>
+                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Asset <span className="text-emerald-400">Return Ingest</span></h3>
+                         <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Initialize reverse supply chain sharding to restore m™ signatures.</p>
                       </div>
 
                       <div className="space-y-8">
                          <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Asset Designation</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Hardware Designation</label>
                             <input 
                               type="text" 
                               required 
                               value={assetName}
                               onChange={e => setAssetName(e.target.value)}
-                              placeholder="e.g. Spectral Sensor X-882" 
+                              placeholder="e.g. Spectral Drone T-02" 
                               className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 px-10 text-2xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800" 
                             />
                          </div>
                          <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-4">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Service Cycle</label>
+                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Deployment Cycle</label>
                                <select 
                                 value={assetUsage}
                                 onChange={e => setAssetUsage(e.target.value)}
                                 className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-bold appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20"
                                >
-                                  <option>0-12 Months</option>
+                                  <option>0-6 Months</option>
+                                  <option>6-12 Months</option>
                                   <option>12-24 Months</option>
-                                  <option>24-48 Months</option>
-                                  <option>48+ Months</option>
+                                  <option>24+ Months</option>
                                </select>
                             </div>
                             <div className="space-y-4">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Visual Integrity</label>
+                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Integrity Level</label>
                                <select 
                                 value={assetCondition}
                                 onChange={e => setAssetCondition(e.target.value)}
                                 className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-bold appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20"
                                >
                                   <option>Functional</option>
-                                  <option>Damaged Shard</option>
-                                  <option>Mechanical Fail</option>
-                                  <option>End of Life</option>
+                                  <option>Degraded Node</option>
+                                  <option>Mechanical Fault</option>
+                                  <option>End of Shard</option>
                                </select>
                             </div>
                          </div>
                       </div>
 
                       <button type="submit" className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 mt-6">
-                         <Zap className="w-6 h-6 fill-current" /> Initialize Oracle Audit
+                         <Zap className="w-6 h-6 fill-current" /> Initialize Oracle Ingest Audit
                       </button>
                    </form>
                  )}
@@ -530,8 +585,8 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                                </div>
                             </div>
                             <div className="space-y-4">
-                               <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Circular <span className="text-emerald-400">Auditor</span></h3>
-                               <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Deconstructing physical entropy...</p>
+                               <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Industrial <span className="text-emerald-400">Auditor</span></h3>
+                               <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Deconstructing physical hardware entropy...</p>
                             </div>
                          </div>
                        ) : (
@@ -541,29 +596,29 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                                   <Archive className="w-8 h-8 text-blue-400" />
                                </div>
                                <div>
-                                  <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Refurbishment <span className="text-blue-400">Report</span></h4>
+                                  <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Refurbishment <span className="text-blue-400">Audit Shard</span></h4>
                                   <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-1">
-                                     <ShieldCheck className="w-3 h-3" /> Audit Shard 0x771_SYNC
+                                     <ShieldCheck className="w-3 h-3" /> Audit Verified // 0x771_SYNC
                                   </p>
                                </div>
                             </div>
 
                             <div className="flex-1 overflow-y-auto max-h-[300px] custom-scrollbar pr-4">
                                <div className="p-10 bg-black/60 rounded-[48px] border border-white/10 prose prose-invert max-w-none shadow-inner border-l-4 border-l-blue-500/50">
-                                  <p className="text-slate-300 text-lg leading-loose italic whitespace-pre-line">
+                                  <p className="text-slate-300 text-lg leading-loose italic whitespace-pre-line font-medium">
                                      {auditText}
                                   </p>
                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">
-                               <div className="p-8 glass-card rounded-[32px] border-emerald-500/20 bg-emerald-500/5 space-y-2 text-center">
-                                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Recycle Credit</p>
+                               <div className="p-8 glass-card rounded-[32px] border-emerald-500/20 bg-emerald-500/5 space-y-2 text-center group">
+                                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest group-hover:text-emerald-400 transition-colors">Return Value</p>
                                   <p className="text-4xl font-mono font-black text-emerald-400">+{mintValue.toFixed(1)} <span className="text-sm">EAC</span></p>
                                </div>
-                               <div className="p-8 glass-card rounded-[32px] border-blue-500/20 bg-blue-500/5 space-y-2 text-center">
-                                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Pillar Impact</p>
-                                  <p className="text-4xl font-mono font-black text-blue-400">+8.5</p>
+                               <div className="p-8 glass-card rounded-[32px] border-blue-500/20 bg-blue-500/5 space-y-2 text-center group">
+                                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest group-hover:text-blue-400 transition-colors">Resilience Impact</p>
+                                  <p className="text-4xl font-mono font-black text-blue-400">+8.5%</p>
                                </div>
                             </div>
 
@@ -571,7 +626,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                               onClick={finalizeReturn}
                               className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4"
                             >
-                               <CheckCircle2 className="w-8 h-8" /> Authorize Reverse Ingest
+                               <CheckCircle2 className="w-8 h-8" /> AUTHORIZE SHARD MINT
                             </button>
                          </div>
                        )}
@@ -585,21 +640,21 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                          <div className="absolute inset-[-10px] rounded-full border-4 border-emerald-500/20 animate-ping"></div>
                       </div>
                       <div className="space-y-4">
-                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter">Reverse Ingest <span className="text-emerald-400">Success</span></h3>
-                         <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Asset Unlinked from Node Registry // Credit Minted</p>
+                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Minting <span className="text-emerald-400">Success</span></h3>
+                         <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Asset Hash: 0x772_CIRC_#{(Math.random()*1000).toFixed(0)} committed.</p>
                       </div>
-                      <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-6 text-left relative overflow-hidden">
+                      <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-6 text-left relative overflow-hidden shadow-xl">
                          <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><ArrowUpRight className="w-40 h-40 text-emerald-400" /></div>
                          <div className="flex justify-between items-center text-xs relative z-10">
-                            <span className="text-slate-500 font-black uppercase tracking-widest">Circular Shard Minted</span>
+                            <span className="text-slate-500 font-black uppercase tracking-widest">Circular Shard Value</span>
                             <span className="text-white font-mono font-black text-3xl text-emerald-400">+{mintValue.toFixed(1)} EAC</span>
                          </div>
                          <div className="flex justify-between items-center text-xs relative z-10">
-                            <span className="text-slate-500 font-black uppercase tracking-widest">Steward Resilience</span>
-                            <span className="text-white font-black uppercase bg-emerald-500/20 px-4 py-1.5 rounded-full border border-emerald-500/20 tracking-widest">STABLE_PULSE</span>
+                            <span className="text-slate-500 font-black uppercase tracking-widest">Node Persistence</span>
+                            <span className="text-white font-black uppercase bg-emerald-500/20 px-4 py-1.5 rounded-full border border-emerald-500/20 tracking-widest">STABLE_PULSE_NOMINAL</span>
                          </div>
                       </div>
-                      <button onClick={() => setShowReturnModal(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl">Return to Circular Grid</button>
+                      <button onClick={() => setShowReturnModal(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command Hub</button>
                    </div>
                  )}
               </div>
