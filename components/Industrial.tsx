@@ -1,88 +1,32 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, 
-  MapPin, 
-  Gavel, 
-  ShieldCheck, 
-  X, 
-  Zap, 
-  ChevronRight, 
-  Loader2, 
-  Users2, 
-  Users,
-  RefreshCcw,
-  Briefcase, 
-  Layers, 
-  Database, 
-  PlusCircle, 
-  Rocket, 
-  ArrowLeft, 
-  BarChart3, 
-  MessageSquare, 
-  Video, 
-  Mic, 
-  Calendar, 
-  Target, 
-  Heart, 
-  Volume2, 
-  Play, 
-  Plus, 
-  Send, 
-  Leaf, 
-  Dna,
-  Landmark,
-  Sparkles,
-  Cpu,
-  Monitor,
-  Activity,
-  Bookmark,
-  Share2,
-  Trophy,
-  History,
-  TrendingUp,
-  Globe,
-  Star,
-  Clock,
-  UserCheck,
-  Mail,
-  FileText,
-  BadgeAlert,
-  Coins,
-  Hammer,
-  GanttChartSquare,
-  Network,
-  ArrowUpRight,
-  TrendingDown,
-  PieChart as PieChartIcon,
-  HardHat,
-  Factory,
-  Boxes,
-  ShieldAlert,
-  ClipboardCheck,
-  ChevronLeft,
-  ArrowRight
+  Search, MapPin, Gavel, ShieldCheck, X, Zap, ChevronRight, Loader2, Users2, Users, RefreshCcw, Briefcase, Layers, Database, PlusCircle, Rocket, ArrowLeft, BarChart3, MessageSquare, Video, Mic, Calendar, Target, Heart, Volume2, Plus, Send, Leaf, Dna, Landmark, Sparkles, Cpu, Monitor, Activity, Bookmark, Share2, Trophy, History, TrendingUp, Globe, Star, Clock, UserCheck, Mail, FileText, BadgeAlert, BadgeCheck, Coins, Hammer, GanttChartSquare, Network, ArrowUpRight, TrendingDown, PieChart as PieChartIcon, HardHat, Factory, Boxes, ShieldAlert, ClipboardCheck, ChevronLeft, ArrowRight, Warehouse, Fingerprint, Link2, Shield, Gauge, Satellite, Radio, Signal, CirclePlay, Maximize, ArrowDownUp, LayoutGrid, HeartPulse, Brain, Waves, LineChart as LucideLineChart, Handshake, FileCode, Lock, Eye, Key, CheckCircle2, Bot, Download, Building2, Paperclip, Flame, Image as ImageIcon, Upload, UserPlus, Podcast, FileUp, BadgeDollarSign, Stamp, FileSignature, FileBadge, AlertTriangle, PlaneTakeoff, Terminal, Trello,
+  Microscope,
+  UserCheck2,
+  LockKeyhole
 } from 'lucide-react';
 import { 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  AreaChart, 
-  Area
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
 import { User, AgroProject, WorkerProfile } from '../types';
+import { SignalShard } from '../App';
+import { runSpecialistDiagnostic } from '../services/geminiService';
 
 interface IndustrialProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => boolean;
+  onSendProposal?: (signal: Omit<SignalShard, 'id' | 'timestamp' | 'read'>) => void;
+  collectives: any[];
+  setCollectives: React.Dispatch<React.SetStateAction<any[]>>;
+  onAddProject?: (project: AgroProject) => void;
+  onUpdateProject?: (project: AgroProject) => void;
 }
 
-const MOCK_COLLECTIVES = [
-  { id: 'COLL-01', name: 'Bantu Soil Guardians', members: 142, type: 'Clan', thrust: 'Societal', mission: 'Preserving ancestral composting methods for global shards.', activeEvents: 2, objectives: ['Restore Soil Biome', 'Map Lineage Seeds'], impact: 'High Innovation' },
-  { id: 'COLL-02', name: 'Spectral Ingest Team', members: 45, type: 'Team', thrust: 'Technological', mission: 'Optimizing satellite data ingest for semi-arid zones.', activeEvents: 0, objectives: ['Satellite Sync', 'Drone Calibration'], impact: 'Incremental Improvement' },
-  { id: 'COLL-03', name: 'Resilience Society', members: 89, type: 'Society', thrust: 'Human', mission: 'Advancing physiological health audits for high-yield stewards.', activeEvents: 1, objectives: ['Steward Longevity', 'Mental Performance'], impact: 'Radical Innovation' },
+const MIN_MEMBERS_REQUIRED = 3;
+
+const MOCK_TENDERS = [
+  { id: 'TND-2025-01', facility: 'Omaha Ingest Hub', requirement: 'Bio-Nitrogen Array Installation', budget: 45000, biddable: true, timeRemaining: '24h' },
+  { id: 'TND-2025-02', facility: 'Nairobi Seed Vault', requirement: 'Spectral Cold Chain Maintenance', budget: 12500, biddable: true, timeRemaining: '6h' },
 ];
 
 const MOCK_WORKERS: WorkerProfile[] = [
@@ -91,212 +35,328 @@ const MOCK_WORKERS: WorkerProfile[] = [
   { id: 'W-03', name: 'Elena Rodriguez', skills: ['Permaculture', 'Social Care'], sustainabilityRating: 92, verifiedHours: 1560, isOpenToWork: false, lifetimeEAC: 28000 },
 ];
 
-const INITIAL_PROJECTS: AgroProject[] = [
-  { id: 'PRJ-NE-882', name: 'Zone 4 Moisture Array', adminEsin: 'EA-2024-X821-P991', description: 'Scaling sensor depth in Nebraska hubs.', thrust: 'Technological', status: 'Funding', totalCapital: 120000, fundedAmount: 85000, batchesClaimed: 0, totalBatches: 5, progress: 15, roiEstimate: 18.5, collateralLocked: 60000 },
-  { id: 'PRJ-KE-104', name: 'Nairobi Heritage Grains', adminEsin: 'EA-2024-X821-P991', description: 'Ancestral lineage seed preservation.', thrust: 'Societal', status: 'Execution', totalCapital: 45000, fundedAmount: 45000, batchesClaimed: 2, totalBatches: 4, progress: 50, roiEstimate: 12.2, collateralLocked: 22500, collectiveId: 'COLL-01' },
-  { id: 'PRJ-ES-042', name: 'Valencia Solar Desal', adminEsin: 'EA-2024-E112-S001', description: 'Industrial solar-powered desalination for coastal vineyards.', thrust: 'Industry', status: 'Verification', totalCapital: 250000, fundedAmount: 0, batchesClaimed: 0, totalBatches: 8, progress: 0, roiEstimate: 22.4, collateralLocked: 125000 },
+const GLOBAL_PERFORMANCE_DATA = [
+  { time: 'T-12', yield: 4.2, m_cons: 1.2, ca: 3.8 },
+  { time: 'T-10', yield: 4.8, m_cons: 1.3, ca: 4.1 },
+  { time: 'T-08', yield: 5.5, m_cons: 1.4, ca: 4.5 },
+  { time: 'T-06', yield: 5.2, m_cons: 1.4, ca: 4.8 },
+  { time: 'T-04', yield: 6.8, m_cons: 1.5, ca: 5.2 },
+  { time: 'T-02', yield: 7.4, m_cons: 1.6, ca: 5.8 },
+  { time: 'NOW', yield: 8.2, m_cons: 1.6, ca: 6.4 },
 ];
 
-const MOCK_TENDERS = [
-  { id: 'TND-01', proj: 'PRJ-NE-882', task: 'Deployment: 500 Soil Probes', zone: 'Zone 4', eac: 4500, time: '14h left', bids: 12 },
-  { id: 'TND-02', proj: 'PRJ-KE-104', task: 'Genetic Mapping: Lineage Grains', zone: 'Zone 2', eac: 12000, time: '2d left', bids: 4 },
-  { id: 'TND-03', proj: 'PRJ-ES-042', task: 'PV Panel Cleaning (Robotic)', zone: 'Global', eac: 2500, time: '6h left', bids: 28 },
-];
-
-const ANALYTICS_DATA = [
-  { time: 'T-12', nodes: 120, yield: 4.2 },
-  { time: 'T-09', nodes: 155, yield: 4.8 },
-  { time: 'T-06', nodes: 210, yield: 5.5 },
-  { time: 'T-03', nodes: 340, yield: 6.2 },
-  { time: 'T-01', nodes: 428, yield: 7.1 },
-  { time: 'NOW', nodes: 442, yield: 7.8 },
-];
-
-const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
-  const [activeView, setActiveView] = useState<'registry' | 'talent' | 'collectives' | 'auctions' | 'analytics'>('registry');
-  const [projects, setProjects] = useState<AgroProject[]>(INITIAL_PROJECTS);
+const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC, onSendProposal, collectives, setCollectives, onAddProject, onUpdateProject }) => {
+  const [activeView, setActiveView] = useState<'registry' | 'talent' | 'collectives' | 'missions' | 'analytics'>('registry');
   
-  const [showCreateProject, setShowCreateProject] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [regStep, setRegStep] = useState(1);
-  const [projName, setProjName] = useState('');
-  const [projDesc, setProjDesc] = useState('');
-  const [projThrust, setProjThrust] = useState<AgroProject['thrust']>('Technological');
-  const [projGoal, setProjGoal] = useState('100000');
-  const [projRoi, setProjRoi] = useState('15');
-  const [registeringForCollectiveId, setRegisteringForCollectiveId] = useState<string | undefined>(undefined);
+  const [selectedCollectiveId, setSelectedCollectiveId] = useState<string | null>(null);
+  const [invitingToColId, setInvitingToColId] = useState<string | null>(null);
+  const [selectedWorkerForDossier, setSelectedWorkerForDossier] = useState<WorkerProfile | null>(null);
+  
+  // Modals
+  const [showRegisterCollective, setShowRegisterCollective] = useState(false);
+  const [showIndustryEntry, setShowIndustryEntry] = useState(false);
+  const [showRegisterMission, setShowRegisterMission] = useState(false);
+  const [showDossierModal, setShowDossierModal] = useState(false);
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
+  const [showBidModal, setShowBidModal] = useState(false);
+  const [selectedTenderForBid, setSelectedTenderForBid] = useState<any>(null);
 
-  const [showCreateCollective, setShowCreateCollective] = useState(false);
-  const [collectiveStep, setCollectiveStep] = useState<1 | 2 | 3 | 4>(1);
-  const [selectedCollective, setSelectedCollective] = useState<any>(null);
-  const [collectivePortalMode, setCollectivePortalMode] = useState<'chat' | 'live' | 'podcast' | 'events' | 'missions'>('chat');
+  const [dossierStep, setDossierStep] = useState<'profile' | 'draft'>('profile');
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Performance Injection State
+  const [targetMissionId, setTargetMissionId] = useState<string | null>(null);
+  const [perfYield, setPerfYield] = useState('100');
+  const [perfNote, setPerfNote] = useState('');
+  const [perfStep, setPerfStep] = useState<'input' | 'audit' | 'success'>('input');
+  const [auditReport, setAuditReport] = useState('');
 
-  const [colName, setColName] = useState('');
-  const [colType, setColType] = useState('Society');
-  const [colObjectives, setColObjectives] = useState('');
-  const [colThrust, setColThrust] = useState('Societal');
-  const [colImpact, setColImpact] = useState('High Innovation');
+  // Internal Campaign State
+  const [isContributing, setIsContributing] = useState(false);
+  const [contribAmount, setContribAmount] = useState('500');
 
-  const [pulseLogs, setPulseLogs] = useState<{id: string, text: string, type: string}[]>([]);
+  // Form Values
+  const [newColName, setNewColName] = useState('');
+  const [newColMission, setNewColMission] = useState('');
+  const [newColType, setNewColType] = useState<'Team' | 'Clan' | 'Society'>('Team');
+  const [chatMessage, setChatMessage] = useState('');
 
-  useEffect(() => {
-    const messages = [
-      "PRJ-NE-882: Batch release authorized by Tokenz node.",
-      "New Collective formed: 'Kalahari Moisture Shards'",
-      "Tender TND-03: Lowest bid dropped to 2400 EAC",
-      "Global Capacity: 842 shards reached.",
-      "Vetting Node EA-2024-X: Handshake successful.",
-    ];
-    const interval = setInterval(() => {
-      const msg = messages[Math.floor(Math.random() * messages.length)];
-      setPulseLogs(prev => [{ id: Math.random().toString(), text: msg, type: 'info' }, ...prev].slice(0, 5));
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  // Bid Form Values
+  const [bidValue, setBidValue] = useState('');
+  const [esinSign, setEsinSign] = useState('');
 
-  const handleLaunchCollective = (col: any) => {
-    setSelectedCollective(col);
-    setCollectivePortalMode('chat');
-  };
+  // Industry Form Values
+  const [facilityName, setFacilityName] = useState('');
+  const [facilityType, setFacilityType] = useState('Processing Hub');
+  const [facilityZone, setFacilityZone] = useState('Zone 4');
 
-  const handleCreateProjectSubmit = () => {
-    const goal = Number(projGoal);
-    if (!onSpendEAC(goal * 0.5, 'PROJECT_COLLATERAL_LOCK')) return;
+  // Mission Form Values
+  const [missionName, setMissionName] = useState('');
+  const [missionGoal, setMissionGoal] = useState('50000');
+  const [selectedColForMission, setSelectedColForMission] = useState<string>('');
 
-    setIsRegistering(true);
+  const currentCollective = collectives.find(c => c.id === selectedCollectiveId);
+
+  const handleRegisterCollective = () => {
+    const isWorker = user.role.toLowerCase().includes('worker') || user.role.toLowerCase().includes('farmer');
+    if (!isWorker) {
+       alert("ACCESS DENIED: Collective registration requires a verified Agro-Worker/Farmer ESIN node.");
+       return;
+    }
+    
+    setIsProcessing(true);
     setTimeout(() => {
-      const newProj: AgroProject = {
-        id: `PRJ-ID-${Math.random().toString(36).substring(7).toUpperCase()}`,
-        name: projName,
+      const newCol = {
+        id: `COLL-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        name: newColName,
         adminEsin: user.esin,
-        collectiveId: registeringForCollectiveId,
-        description: projDesc,
-        thrust: projThrust,
-        status: 'Ideation',
-        totalCapital: goal,
-        fundedAmount: 0,
-        batchesClaimed: 0,
-        totalBatches: 5,
-        progress: 0,
-        roiEstimate: Number(projRoi),
-        collateralLocked: goal * 0.5
+        members: [
+           { id: user.esin, name: user.name, sustainabilityRating: user.metrics.sustainabilityScore }
+        ],
+        type: newColType,
+        mission: newColMission,
+        resonance: 50,
+        objectives: ['Initialize Shard Objectives'],
+        signals: [],
+        materials: [],
+        missionCampaign: {
+          active: false,
+          title: '',
+          target: 0,
+          pool: 0
+        }
       };
-      setProjects([newProj, ...projects]);
-      setIsRegistering(false);
-      setShowCreateProject(false);
-      setRegStep(1);
-      setRegisteringForCollectiveId(undefined);
+      setCollectives([...collectives, newCol]);
+      setIsProcessing(false);
+      setShowRegisterCollective(false);
+      onSpendEAC(200, 'COLLECTIVE_REGISTRATION');
     }, 2000);
   };
 
-  const openCollectiveRegistration = (collectiveId: string) => {
-    setRegisteringForCollectiveId(collectiveId);
-    setShowCreateProject(true);
-    setRegStep(1);
-    setProjThrust('Societal');
+  const handleRegisterIndustry = () => {
+    if (!esinSign) return;
+    setIsProcessing(true);
+    setTimeout(() => {
+       setIsProcessing(false);
+       setShowIndustryEntry(false);
+       onSpendEAC(1000, 'INDUSTRY_FACILITY_INGEST');
+       alert(`INGEST SUCCESS: ${facilityName} is now an authorized ${facilityType} node in ${facilityZone}. Registry hash: 0x882_IND_FAC`);
+    }, 2000);
   };
 
-  const handleCreateCollectiveSubmit = () => {
-    const newCol = {
-      id: `COLL-${Math.random().toString(36).substring(7).toUpperCase()}`,
-      name: colName || 'New Collective',
-      members: 1,
-      type: colType,
-      thrust: colThrust,
-      mission: colObjectives.substring(0, 100) + '...',
-      activeEvents: 0,
-      objectives: colObjectives.split(',').map(o => o.trim()),
-      impact: colImpact
+  const handlePlaceBid = () => {
+    if (!esinSign || !bidValue) return;
+    setIsProcessing(true);
+    setTimeout(() => {
+       setIsProcessing(false);
+       setShowBidModal(false);
+       alert(`BID ANCHORED: 0x${Math.random().toString(16).substring(2, 8).toUpperCase()} Shard Committed. Payout pending auction closure.`);
+    }, 1500);
+  };
+
+  const handleSendMessage = () => {
+    if (!chatMessage.trim() || !selectedCollectiveId) return;
+    const newSignal = { 
+        from: user.name, 
+        text: chatMessage, 
+        timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        type: 'text' 
     };
-    MOCK_COLLECTIVES.push(newCol as any);
-    setShowCreateCollective(false);
-    setCollectiveStep(1);
+    setCollectives(prev => prev.map(c => c.id === selectedCollectiveId ? { ...c, signals: [...(c.signals || []), newSignal] } : c));
+    setChatMessage('');
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Execution': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'Funding': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'Verification': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-      case 'Ideation': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+  const handleSendContractProposal = (worker: WorkerProfile) => {
+    const targetColId = invitingToColId;
+    if (!targetColId || !onSendProposal) return;
+    const collective = collectives.find(c => c.id === targetColId);
+    
+    setIsProcessing(true);
+    setTimeout(() => {
+      onSendProposal({
+        type: 'engagement',
+        title: 'Collective Shard Proposal',
+        message: `DECENTRALIZED_OFFER: ${collective?.name} has formulated a binding contract proposal. Verify the terms to anchor your node and release 50 EAC Registry Reward.`,
+        priority: 'high',
+        actionLabel: 'Review & Sign Contract',
+        actionIcon: FileSignature,
+        meta: {
+          workerId: worker.id,
+          collectiveId: targetColId,
+          collectiveName: collective?.name,
+          reward: 50,
+          mission: collective?.mission,
+          adminEsin: collective?.adminEsin
+        }
+      });
+      setIsProcessing(false);
+      setInvitingToColId(null);
+      setShowDossierModal(false);
+      setDossierStep('profile');
+      alert(`PROPOSAL TRANSMITTED: Contract shard 0x772_RECRUIT has been broadcast to ${worker.name}. Payout is escrowed until peer verification.`);
+    }, 2000);
+  };
+
+  const handleInitiateInternalCampaign = () => {
+    const targetCol = collectives.find(c => c.id === selectedColForMission);
+    if (!targetCol) return;
+    const targetGoal = Number(missionGoal);
+    setIsProcessing(true);
+    setTimeout(() => {
+      setCollectives(prev => prev.map(c => c.id === targetCol.id ? {
+        ...c,
+        missionCampaign: { active: true, title: missionName || 'New Collective Mission', target: targetGoal, pool: 0 }
+      } : c));
+      setIsProcessing(false);
+      setShowRegisterMission(false);
+      setActiveView('missions');
+      alert("CAMPAIGN INITIALIZED: Members can now pool EAC internally. 50% threshold and minimum 3 members required for public registry launch.");
+    }, 1500);
+  };
+
+  const handleContributeToPool = (colId: string) => {
+    const targetCol = collectives.find(c => c.id === colId);
+    if (!targetCol || !targetCol.missionCampaign) return;
+    const amount = Number(contribAmount);
+    if (onSpendEAC(amount, `COLLECTIVE_MISSION_CONTRIBUTION_${colId}`)) {
+      setCollectives(prev => prev.map(c => c.id === colId ? {
+        ...c,
+        missionCampaign: { ...c.missionCampaign, pool: c.missionCampaign.pool + amount }
+      } : c));
+      alert(`SYNERGY ADDED: +${amount} EAC committed to the shard.`);
     }
+  };
+
+  const handleAnchorToGlobalRegistry = (colId: string) => {
+    if (!onAddProject) return;
+    const targetCol = collectives.find(c => c.id === colId);
+    if (!targetCol || !targetCol.missionCampaign) return;
+    const campaign = targetCol.missionCampaign;
+    
+    if (campaign.pool < campaign.target * 0.5) {
+      alert("PROTOCOL REJECTION: 50% capital collateral lock required. Continue pooling internal EAC shards.");
+      return;
+    }
+
+    if (targetCol.members.length < MIN_MEMBERS_REQUIRED) {
+      alert(`QUORUM ERROR: Minimum ${MIN_MEMBERS_REQUIRED} founding members required to anchor project node. Recruit more stewards via the Worker Cloud.`);
+      return;
+    }
+
+    setIsProcessing(true);
+    setTimeout(() => {
+      const newProject: AgroProject = {
+        id: `PRJ-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        name: campaign.title,
+        adminEsin: targetCol.adminEsin,
+        collectiveId: targetCol.id,
+        description: targetCol.mission,
+        thrust: targetCol.type === 'Team' ? 'Technological' : targetCol.type === 'Clan' ? 'Societal' : 'Environmental',
+        status: 'Verification',
+        totalCapital: campaign.target,
+        fundedAmount: campaign.pool,
+        batchesClaimed: 0,
+        totalBatches: 10,
+        progress: 0,
+        roiEstimate: 15,
+        collateralLocked: campaign.pool,
+        profitsAccrued: 0,
+        investorShareRatio: 0.15,
+        performanceIndex: 0,
+        memberCount: targetCol.members.length
+      };
+      onAddProject(newProject);
+      setCollectives(prev => prev.map(c => c.id === colId ? {
+        ...c,
+        missionCampaign: { ...c.missionCampaign, launched: true, linkedProjectId: newProject.id }
+      } : c));
+      setIsProcessing(false);
+      alert(`MISSION ANCHORED: ${newProject.name} is now fundable by institutional nodes in the Investor Portal.`);
+    }, 2000);
+  };
+
+  const handlePerformanceInjection = async () => {
+    if (!targetMissionId) return;
+    setPerfStep('audit');
+    setIsProcessing(true);
+    try {
+      const diagRes = await runSpecialistDiagnostic('Production', `Evaluate reported yield of ${perfYield} tons. Collector note: ${perfNote}`);
+      setAuditReport(diagRes.text);
+      setPerfStep('success');
+    } catch (e) {
+      alert("Oracle Error: Telemetry Shard Interrupted.");
+      setPerfStep('input');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const commitPerformance = (projectId: string) => {
+    const calculatedProfit = Number(perfYield) * 12.5;
+    alert(`PERFORMANCE ANCHORED: Node reported yield verified. ${calculatedProfit.toFixed(0)} EAC added to Project Profit Pool.`);
+    setShowPerformanceModal(false);
+    setPerfStep('input');
+  };
+
+  const openDossier = (worker: WorkerProfile) => {
+    setSelectedWorkerForDossier(worker);
+    setDossierStep('profile');
+    setShowDossierModal(true);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto">
+      {/* Industrial Cloud Commander */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12">
+        <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
               <Factory className="w-96 h-96 text-white" />
            </div>
-           <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-              <div className="w-40 h-40 rounded-[48px] bg-indigo-600 flex items-center justify-center shadow-[0_0_50px_rgba(79,70,229,0.3)] ring-4 ring-white/10 shrink-0">
-                 <HardHat className="w-20 h-20 text-white" />
+           <div className="w-40 h-40 rounded-[48px] bg-indigo-600 flex items-center justify-center shadow-[0_0_50px_rgba(79,70,229,0.3)] ring-4 ring-white/10 shrink-0">
+              <HardHat className="w-20 h-20 text-white" />
+           </div>
+           <div className="space-y-6 relative z-10">
+              <div className="space-y-2">
+                 <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20">EOS_INDUSTRIAL_CLOUD_V4</span>
+                 <h2 className="text-6xl font-black text-white uppercase tracking-tighter italic mt-4">Industrial <span className="text-indigo-400">Cloud</span></h2>
               </div>
-              <div className="space-y-6">
-                 <div>
-                    <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20">EOS_INDUSTRIAL_LAYER_V3</span>
-                    <h2 className="text-6xl font-black text-white uppercase tracking-tighter italic mt-4">Industrial <span className="text-indigo-400">Cloud</span></h2>
-                 </div>
-                 <p className="text-slate-400 text-xl leading-relaxed max-w-2xl font-medium">
-                    Scale high-impact agricultural missions. Source verified talent, form strategic collectives, and secure decentralized industrial registries.
-                 </p>
-                 <div className="flex flex-wrap gap-6 pt-2">
-                    <button 
-                      onClick={() => { setShowCreateProject(true); setRegStep(1); setRegisteringForCollectiveId(undefined); }}
-                      className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
-                    >
-                       <PlusCircle className="w-5 h-5" /> Initialize Mission
-                    </button>
-                    <button 
-                      onClick={() => setActiveView('collectives')}
-                      className="px-10 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-sm uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center gap-3"
-                    >
-                       <Users2 className="w-5 h-5" /> Social Collectives
-                    </button>
-                 </div>
-              </div>
+              <p className="text-slate-400 text-xl leading-relaxed max-w-2xl font-medium">
+                 The center for institutional scale. Registry facilities, source verified talent, and coordinate social shards for global impact.
+              </p>
            </div>
         </div>
 
-        <div className="space-y-6 flex flex-col h-full">
-          <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 flex-1 flex flex-col justify-center text-center space-y-4">
-             <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Active Missions</p>
-             <h4 className="text-6xl font-mono font-black text-white tracking-tighter">{projects.length}</h4>
-             <div className="h-1 bg-white/5 rounded-full overflow-hidden w-24 mx-auto">
-                <div className="h-full bg-emerald-500 animate-pulse"></div>
-             </div>
-          </div>
-          <div className="glass-card p-8 rounded-[40px] border-emerald-500/20 bg-emerald-500/5 space-y-4">
-             <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Network Pulse</span>
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-             </div>
-             <div className="space-y-3">
-                {pulseLogs.map(log => (
-                  <div key={log.id} className="flex gap-3 text-[9px] font-bold text-slate-400 italic border-l border-white/10 pl-3">
-                    <span className="text-emerald-500 shrink-0">&gt;</span>
-                    <span className="truncate">{log.text}</span>
-                  </div>
-                ))}
-             </div>
-          </div>
+        <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 flex flex-col justify-between text-center group relative overflow-hidden">
+           <div className="absolute inset-0 bg-emerald-500/[0.02] pointer-events-none"></div>
+           <div className="space-y-2 relative z-10">
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-2">Network Capacity</p>
+              <h4 className="text-7xl font-mono font-black text-white tracking-tighter">842<span className="text-lg text-emerald-500">K</span></h4>
+           </div>
+           <div className="space-y-4 relative z-10">
+              <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
+                 <span>Ledger Sync</span>
+                 <span className="text-emerald-400">Stable</span>
+              </div>
+              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                 <div className="h-full bg-emerald-500 w-[65%] shadow-[0_0_10px_#10b981]"></div>
+              </div>
+           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40">
+      {/* Main Tabs Navigation */}
+      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40">
         {[
-          { id: 'registry', label: 'Active Missions', icon: Database },
+          { id: 'registry', label: 'Industrial Registry', icon: Building2 },
           { id: 'talent', label: 'Worker Cloud', icon: Users2 },
-          { id: 'collectives', label: 'Social Shards', icon: Share2 },
-          { id: 'auctions', label: 'Tender Grid', icon: Hammer },
+          { id: 'collectives', label: 'Social Shard Portal', icon: Share2 },
+          { id: 'missions', label: 'Mission Launchpad', icon: Rocket },
           { id: 'analytics', label: 'Global Performance', icon: BarChart3 },
         ].map(tab => (
           <button 
             key={tab.id}
-            onClick={() => { setActiveView(tab.id as any); setSelectedCollective(null); }}
-            className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            onClick={() => { setActiveView(tab.id as any); setSelectedCollectiveId(null); setInvitingToColId(null); }}
+            className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
           </button>
@@ -305,447 +365,121 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
 
       <div className="min-h-[700px]">
         {activeView === 'registry' && (
-          <div className="space-y-10 animate-in slide-in-from-left-6 duration-500">
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {projects.map(proj => (
-                  <div key={proj.id} className="glass-card p-10 rounded-[56px] border-white/5 hover:border-indigo-500/30 transition-all group flex flex-col h-full active:scale-[0.98] duration-300 relative overflow-hidden bg-black/20">
-                      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform">
-                         <Rocket className="w-40 h-40 text-white" />
-                      </div>
-                      
-                      <div className="flex justify-between items-start mb-10 relative z-10">
-                        <div className="flex items-center gap-5">
-                            <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-indigo-500/10 transition-colors shadow-2xl">
-                              <Rocket className="w-8 h-8 text-indigo-400" />
-                            </div>
-                            <div>
-                              <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-none group-hover:text-indigo-400 transition-colors">{proj.name}</h4>
-                              <p className="text-[10px] text-slate-500 font-mono mt-3 tracking-widest flex items-center gap-2">
-                                 {proj.id} <span className="text-slate-800">|</span> {proj.thrust.toUpperCase()}
-                              </p>
-                            </div>
-                        </div>
-                        <span className={`px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-[0.2em] backdrop-blur-md shadow-xl ${getStatusColor(proj.status)}`}>
-                            {proj.status}
-                        </span>
-                      </div>
-                      
-                      <div className="flex-1 relative z-10">
-                        <p className="text-slate-400 text-sm leading-relaxed mb-8 italic">"{proj.description}"</p>
-                        
-                        {proj.collectiveId && (
-                          <div className="mb-10 flex items-center gap-3 px-4 py-2 bg-emerald-500/5 w-fit rounded-2xl border border-emerald-500/10">
-                            <Share2 className="w-4 h-4 text-emerald-400" />
-                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Collective Mission: {MOCK_COLLECTIVES.find(c => c.id === proj.collectiveId)?.name}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-8 pt-8 border-t border-white/5 relative z-10">
-                        <div className="grid grid-cols-3 gap-6">
-                            <div>
-                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">Target Capital</p>
-                              <p className="text-lg font-mono font-black text-white">{proj.totalCapital.toLocaleString()} <span className="text-[10px] text-emerald-500">EAC</span></p>
-                            </div>
-                            <div>
-                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">ROI Predict</p>
-                              <p className="text-lg font-mono font-black text-emerald-400">+{proj.roiEstimate}%</p>
-                            </div>
-                            <div>
-                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">Ledger Sync</p>
-                              <p className="text-lg font-mono font-black text-blue-400">{proj.progress}%</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4">
-                          <button className="flex-1 py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-3">
-                              Dossier
-                          </button>
-                          <button onClick={() => setActiveView('auctions')} className="flex-[2] py-5 bg-indigo-600 rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-xl hover:bg-indigo-500 transition-all flex items-center justify-center gap-3 active:scale-95">
-                              Request Tender <ArrowRight className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                  </div>
-                ))}
-                
-                <button 
-                  onClick={() => { setShowCreateProject(true); setRegStep(1); setRegisteringForCollectiveId(undefined); }}
-                  className="glass-card p-10 rounded-[56px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-center space-y-8 hover:border-indigo-500/40 transition-all group min-h-[450px] active:scale-95"
-                >
-                   <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-indigo-500/10 transition-colors shadow-2xl">
-                      <Plus className="w-10 h-10 text-slate-700 group-hover:text-indigo-400" />
-                   </div>
-                   <div className="space-y-2">
-                      <h4 className="text-3xl font-black text-white uppercase tracking-tighter">New Industrial Entry</h4>
-                      <p className="text-slate-500 text-sm italic max-w-xs mx-auto">Commit capital and anchor a new mission to the global registry.</p>
-                   </div>
+          <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
+             <div className="flex justify-between items-end border-b border-white/5 pb-8">
+                <div>
+                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Entries <span className="text-amber-500">& Tenders</span></h3>
+                   <p className="text-slate-500 text-sm">Industrial node registration and regional contract bidding.</p>
+                </div>
+                <button onClick={() => { setEsinSign(''); setFacilityName(''); setShowIndustryEntry(true); }} className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
+                   <PlusCircle className="w-5 h-5" /> Register Industry Node
                 </button>
+             </div>
+
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="glass-card p-10 rounded-[56px] border-white/5 space-y-8">
+                   <h4 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-3">
+                      <Gavel className="w-6 h-6 text-amber-500" /> Active Tenders
+                   </h4>
+                   <div className="space-y-6">
+                      {MOCK_TENDERS.map(tender => (
+                        <div key={tender.id} className="p-8 bg-black/40 rounded-3xl border border-white/5 group hover:border-amber-500/30 transition-all">
+                           <div className="flex justify-between items-start mb-6">
+                              <div>
+                                 <h5 className="text-lg font-black text-white uppercase">{tender.facility}</h5>
+                                 <p className="text-[10px] text-slate-500 font-mono tracking-widest mt-1">{tender.id}</p>
+                              </div>
+                              <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-black rounded-full border border-amber-500/20">{tender.timeRemaining} REMAINING</span>
+                           </div>
+                           <p className="text-slate-400 text-sm italic mb-8">"{tender.requirement}"</p>
+                           <div className="flex justify-between items-end pt-6 border-t border-white/5">
+                              <div>
+                                 <p className="text-[8px] text-slate-600 font-black uppercase">Contract Value</p>
+                                 <p className="text-2xl font-mono font-black text-white">{tender.budget.toLocaleString()} EAC</p>
+                              </div>
+                              <button 
+                                onClick={() => { setSelectedTenderForBid(tender); setBidValue(tender.budget.toString()); setEsinSign(''); setShowBidModal(true); }}
+                                className="px-8 py-3 agro-gradient rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:scale-105 transition-all"
+                              >
+                                Place Bid
+                              </button>
+                           </div>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="glass-card p-10 rounded-[56px] border-white/5 bg-black/40 flex flex-col justify-center items-center text-center space-y-10 group overflow-hidden relative">
+                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform"><Building2 className="w-80 h-80 text-white" /></div>
+                   <div className="w-24 h-24 rounded-[32px] bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-amber-500/30 transition-colors shadow-2xl relative z-10">
+                      <HardHat className="w-10 h-10 text-amber-500" />
+                   </div>
+                   <div className="space-y-4 max-w-sm relative z-10">
+                      <h4 className="text-3xl font-black text-white uppercase tracking-tighter">Facility Ingest</h4>
+                      <p className="text-slate-500 text-sm italic leading-relaxed">"Authorized processing hubs, regional warehouses, and spectral labs must register with the Industrial Registry to begin node operations."</p>
+                   </div>
+                   <button onClick={() => setShowIndustryEntry(true)} className="w-full py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all relative z-10">Initialize Flow</button>
+                </div>
              </div>
           </div>
         )}
 
         {activeView === 'talent' && (
-          <div className="space-y-10 animate-in fade-in duration-700">
-            <div className="flex justify-between items-end mb-4 border-b border-white/5 pb-8">
-              <div className="space-y-2">
-                <h3 className="text-4xl font-black text-white flex items-center gap-4 uppercase tracking-tighter italic">
-                   <Users2 className="w-10 h-10 text-emerald-400" /> Talent <span className="text-emerald-400">Ecosystem</span>
-                </h3>
-                <p className="text-lg text-slate-500 italic max-w-2xl">Verified skilled laborers and industrial agro-architects synchronized via blockchain work history.</p>
-              </div>
-              <div className="flex items-center gap-3 px-8 py-3 bg-emerald-500/10 text-emerald-400 text-xs font-black uppercase tracking-[0.2em] rounded-2xl border border-emerald-500/20">
-                <UserCheck className="w-4 h-4" /> 84 Active Resource Nodes
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {MOCK_WORKERS.map((worker) => (
-                <div key={worker.id} className="glass-card rounded-[56px] p-10 group hover:border-emerald-500/30 transition-all active:scale-[0.98] relative overflow-hidden bg-black/20">
-                  <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:rotate-12 transition-transform">
-                     <Briefcase className="w-32 h-32 text-white" />
-                  </div>
-                  
-                  <div className="flex items-start justify-between mb-10 relative z-10">
-                    <div className="flex gap-6 items-center">
-                      <div className="w-20 h-20 rounded-[32px] bg-slate-800 border-2 border-white/5 flex items-center justify-center relative shadow-2xl group-hover:scale-105 transition-transform duration-500">
-                        <span className="text-3xl font-black text-emerald-500">{worker.name.split(' ').map(n => n[0]).join('')}</span>
-                        {worker.isOpenToWork && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#050706] animate-pulse"></div>
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="text-2xl font-black text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{worker.name}</h4>
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {worker.skills.map(s => <span key={s} className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-500 uppercase border border-white/5">{s}</span>)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-1.5 text-amber-400 justify-end">
-                        <Star className="w-4 h-4 fill-current" />
-                        <span className="text-lg font-black font-mono">{worker.sustainabilityRating}%</span>
-                      </div>
-                      <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest mt-1">U-SCORE</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-5 mb-10 relative z-10">
-                    <div className="flex items-center gap-4 text-slate-400 text-sm font-medium p-4 bg-white/5 rounded-3xl border border-white/5">
-                      <History className="w-5 h-5 text-emerald-500" />
-                      <span className="text-xs uppercase font-bold tracking-widest">{worker.verifiedHours.toLocaleString()} Verified Hours</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-slate-400 text-sm font-medium p-4 bg-white/5 rounded-3xl border border-white/5">
-                      <Trophy className="w-5 h-5 text-amber-500" />
-                      <span className="text-xs uppercase font-bold tracking-widest">Steward Rank: Lead Architect</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 relative z-10">
-                    <button className="flex-1 py-5 bg-white/5 hover:bg-white/10 rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 transition-all border border-white/5">View Dossier</button>
-                    <button className="flex-[2] py-5 agro-gradient rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] text-white flex items-center justify-center gap-3 shadow-xl active:scale-95">
-                      <Mail className="w-4 h-4" /> Initiate Session
-                    </button>
-                  </div>
+          <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+             <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
+                <div>
+                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Worker <span className="text-emerald-400">Cloud Registry</span></h3>
+                   <p className="text-slate-500 text-sm mt-1">Verified Agro-Workers available for collective contracts.</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeView === 'collectives' && (
-          <div className="space-y-10 animate-in slide-in-from-right-6 duration-500">
-            {!selectedCollective ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                 {MOCK_COLLECTIVES.map(col => (
-                   <div key={col.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/40 transition-all flex flex-col h-full group active:scale-[0.98] duration-300 bg-black/20 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform">
-                         <Share2 className="w-48 h-48 text-white" />
-                      </div>
-                      
-                      <div className="flex justify-between items-start mb-10 relative z-10">
-                         <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center shadow-2xl border border-emerald-500/20 group-hover:rotate-6 transition-transform">
-                            <Share2 className="w-10 h-10 text-emerald-400" />
-                         </div>
-                         <div className="text-right">
-                            <span className="px-4 py-1.5 bg-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest rounded-full border border-white/10">{col.type}</span>
-                            <p className="text-[10px] text-emerald-500 font-mono mt-3 font-black tracking-widest">{col.members} MEMBERS</p>
-                         </div>
-                      </div>
-                      
-                      <div className="flex-1 relative z-10">
-                         <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 group-hover:text-emerald-400 transition-colors italic">{col.name}</h4>
-                         <p className="text-slate-400 text-sm italic leading-relaxed mb-10">"{col.mission}"</p>
-                      </div>
-
-                      <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                               <Calendar className="w-4 h-4 text-slate-600" />
-                            </div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{col.activeEvents} Active Events</span>
-                         </div>
-                         <button 
-                          onClick={() => handleLaunchCollective(col)}
-                          className="p-5 rounded-3xl bg-white/5 hover:bg-emerald-600 text-white transition-all shadow-xl border border-white/10 group/btn active:scale-90"
-                         >
-                            <ChevronRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
-                         </button>
-                      </div>
+                {invitingToColId && (
+                   <div className="flex items-center gap-4 px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl animate-pulse">
+                      <Handshake className="w-5 h-5 text-emerald-400" />
+                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Recruiting for {collectives.find(c => c.id === invitingToColId)?.name}</p>
                    </div>
-                 ))}
-                 
-                 <button 
-                  onClick={() => setShowCreateCollective(true)}
-                  className="glass-card p-10 rounded-[56px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-center space-y-8 hover:border-emerald-500/40 transition-all group min-h-[450px] active:scale-95"
-                 >
-                    <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-emerald-500/10 transition-colors shadow-2xl">
-                       <Plus className="w-10 h-10 text-slate-700 group-hover:text-indigo-400" />
-                    </div>
-                    <div className="space-y-2">
-                       <h4 className="text-3xl font-black text-white uppercase tracking-tighter">Form Shard Group</h4>
-                       <p className="text-slate-500 text-sm italic max-w-xs mx-auto">Create a goal-oriented collective to lead regional missions.</p>
-                    </div>
-                 </button>
-              </div>
-            ) : (
-              <div className="glass-card rounded-[64px] overflow-hidden min-h-[850px] border-white/10 bg-black/40 flex flex-col lg:flex-row shadow-[0_0_100px_rgba(16,185,129,0.05)]">
-                 <div className="w-full lg:w-[400px] border-r border-white/5 p-12 space-y-12 bg-white/[0.01]">
-                    <div className="space-y-6">
-                       <button onClick={() => setSelectedCollective(null)} className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white transition-all group/back">
-                          <ChevronLeft className="w-5 h-5 group-hover/back:-translate-x-1 transition-transform" /> Leave Terminal
-                       </button>
-                       <div className="relative group w-24 h-24">
-                          <div className="absolute inset-0 bg-emerald-500/20 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="w-24 h-24 rounded-[36px] bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl relative z-10 group-hover:scale-105 transition-transform">
-                             <Share2 className="w-12 h-12 text-emerald-400" />
-                          </div>
-                       </div>
-                       <div>
-                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter leading-none italic">{selectedCollective.name}</h3>
-                          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] mt-4 flex items-center gap-3">
-                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                             {selectedCollective.type} // {selectedCollective.thrust}
-                          </p>
-                       </div>
-                    </div>
-
-                    <div className="space-y-6 pt-10 border-t border-white/5">
-                       <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.5em] px-2">ENGAGEMENT MODES</p>
-                       <div className="grid grid-cols-1 gap-4">
-                          {[
-                            { id: 'chat', label: 'Steward Dialogue', icon: MessageSquare, color: 'hover:text-blue-400' },
-                            { id: 'missions', label: 'Collective Missions', icon: Target, color: 'hover:text-emerald-400' },
-                            { id: 'live', label: 'Field Video Feed', icon: Video, color: 'hover:text-rose-400' },
-                            { id: 'podcast', label: 'Audio Archive', icon: Mic, color: 'hover:text-indigo-400' },
-                            { id: 'events', label: 'Event Registry', icon: Calendar, color: 'hover:text-amber-400' },
-                          ].map(mode => (
-                            <button 
-                              key={mode.id}
-                              onClick={() => setCollectivePortalMode(mode.id as any)}
-                              className={`w-full flex items-center justify-between p-6 rounded-3xl transition-all text-sm font-bold uppercase tracking-widest group/mode ${collectivePortalMode === mode.id ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-900/40' : 'text-slate-500 bg-white/5 hover:bg-white/10'}`}
-                            >
-                              <div className="flex items-center gap-4">
-                                 <mode.icon className={`w-5 h-5 ${collectivePortalMode === mode.id ? 'text-white' : 'group-hover/mode:scale-110 transition-transform'}`} />
-                                 {mode.label}
-                              </div>
-                              <ChevronRight className={`w-4 h-4 transition-transform ${collectivePortalMode === mode.id ? 'translate-x-1' : 'opacity-0 group-hover/mode:opacity-100'}`} />
-                            </button>
-                          ))}
-                       </div>
-                    </div>
-
-                    <div className="pt-10 border-t border-white/5 space-y-8">
-                       <div className="space-y-3">
-                          <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">IMPACT ANALYSIS</h4>
-                          <div className="p-6 bg-emerald-500/5 rounded-[32px] border border-emerald-500/20">
-                             <p className="text-[9px] text-slate-500 uppercase font-black mb-2">Innovation Index</p>
-                             <p className="text-lg font-black text-emerald-400 uppercase italic tracking-tight">{selectedCollective.impact}</p>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-
-                 <div className="flex-1 flex flex-col relative bg-[#050706]">
-                    {collectivePortalMode === 'chat' && (
-                      <div className="flex-1 flex flex-col p-12 h-full">
-                         <div className="flex justify-between items-center mb-10 pb-6 border-b border-white/5">
-                            <div className="flex items-center gap-4">
-                               <div className="p-3 bg-blue-500/10 rounded-2xl">
-                                  <MessageSquare className="w-6 h-6 text-blue-400" />
-                               </div>
-                               <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Dialogue <span className="text-blue-400">Terminal</span></h4>
-                            </div>
-                            <div className="flex items-center gap-3">
-                               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                               <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{selectedCollective.members} Stewards Synced</span>
-                            </div>
-                         </div>
-                         <div className="flex-1 space-y-8 overflow-y-auto custom-scrollbar pr-6">
-                            <div className="flex gap-6">
-                               <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-xs font-black text-emerald-500 shadow-xl border border-white/5">AS</div>
-                               <div className="p-8 bg-white/5 rounded-[40px] rounded-tl-none max-w-xl border border-white/5 shadow-2xl relative">
-                                  <p className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-3">@AgroSteward (Registry Lead)</p>
-                                  <p className="text-slate-300 leading-relaxed text-lg italic">"Welcome to the terminal. We are currently finalizing the spectral data for the heritage grain release in Zone 2. Does anyone have local soil logs from the last 24h block?"</p>
-                               </div>
-                            </div>
-                            <div className="flex gap-6 flex-row-reverse">
-                               <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-xs font-black text-white shadow-2xl">ME</div>
-                               <div className="p-8 bg-indigo-600/10 border border-indigo-500/20 rounded-[40px] rounded-tr-none max-w-xl shadow-2xl">
-                                  <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-3">YOU (STWD_{user.esin.split('-')[2]})</p>
-                                  <p className="text-slate-300 leading-relaxed text-lg italic">"Uploading my moisture shards now. I-Thrust efficiency is holding steady at 1.42x. Node sync complete."</p>
-                               </div>
-                            </div>
-                         </div>
-                         <div className="pt-10 border-t border-white/5 mt-auto">
-                            <div className="relative group">
-                               <div className="absolute inset-0 bg-indigo-500/10 blur-3xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-                               <input type="text" placeholder="Share knowledge shard..." className="w-full bg-black/60 border border-white/10 rounded-[40px] py-8 pl-10 pr-24 text-white text-lg focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all relative z-10 placeholder:text-slate-800" />
-                               <button className="absolute right-4 top-1/2 -translate-y-1/2 p-6 bg-indigo-600 rounded-full text-white shadow-2xl hover:bg-indigo-500 transition-all z-10 scale-90 active:scale-75 group-hover:rotate-12">
-                                  <Send className="w-8 h-8" />
-                               </button>
-                            </div>
-                         </div>
-                      </div>
-                    )}
-
-                    {collectivePortalMode === 'missions' && (
-                      <div className="flex-1 flex flex-col p-12 h-full animate-in slide-in-from-right-6 duration-500">
-                         <div className="flex justify-between items-center mb-12 pb-8 border-b border-white/5">
-                            <div>
-                               <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic flex items-center gap-4">
-                                  <Target className="w-10 h-10 text-emerald-400" /> Collective <span className="text-emerald-400">Missions</span>
-                               </h4>
-                               <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Active Strategic Initiatives by {selectedCollective.name}</p>
-                            </div>
-                            <button 
-                              onClick={() => openCollectiveRegistration(selectedCollective.id)}
-                              className="px-10 py-5 agro-gradient rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-2xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
-                            >
-                               <Rocket className="w-5 h-5" /> Propose Mission Shard
-                            </button>
-                         </div>
-                         
-                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-6">
-                            {projects.filter(p => p.collectiveId === selectedCollective.id).length > 0 ? (
-                              projects.filter(p => p.collectiveId === selectedCollective.id).map(proj => (
-                                <div key={proj.id} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 group hover:border-emerald-500/30 transition-all shadow-xl">
-                                   <div className="flex justify-between items-start mb-8">
-                                      <div className="flex items-center gap-6">
-                                         <div className="w-16 h-16 rounded-[28px] bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
-                                            <Rocket className="w-8 h-8 text-emerald-400" />
-                                         </div>
-                                         <div>
-                                            <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{proj.name}</h4>
-                                            <p className="text-[10px] text-slate-500 font-mono mt-2 tracking-widest">{proj.id} // THRUST: {proj.thrust}</p>
-                                         </div>
-                                      </div>
-                                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border backdrop-blur-md shadow-xl ${getStatusColor(proj.status)}`}>
-                                         {proj.status}
-                                      </span>
-                                   </div>
-                                   <p className="text-sm text-slate-400 leading-relaxed italic mb-10">"{proj.description}"</p>
-                                   <div className="grid grid-cols-3 gap-10 pt-8 border-t border-white/5">
-                                      <div className="space-y-1">
-                                         <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Active Pool</p>
-                                         <p className="text-xl font-mono font-black text-white">{proj.totalCapital.toLocaleString()} EAC</p>
-                                      </div>
-                                      <div className="space-y-1 text-center">
-                                         <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Oracle Yield</p>
-                                         <p className="text-xl font-mono font-black text-emerald-400">+{proj.roiEstimate}%</p>
-                                      </div>
-                                      <div className="space-y-1 text-right">
-                                         <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Registry Sync</p>
-                                         <p className="text-xl font-mono font-black text-blue-400">{proj.progress}%</p>
-                                      </div>
-                                   </div>
-                                   <div className="mt-10 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                      <div className="h-full bg-blue-600 shadow-[0_0_15px_#2563eb]" style={{ width: `${proj.progress}%` }}></div>
-                                   </div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="h-full flex flex-col items-center justify-center text-center space-y-10 opacity-20 py-20">
-                                 <Target className="w-32 h-32 text-slate-700 animate-pulse" />
-                                 <div className="max-w-sm mx-auto">
-                                    <h4 className="text-3xl font-black text-white uppercase tracking-tighter">Empty Archive</h4>
-                                    <p className="text-slate-500 text-lg italic mt-4 leading-relaxed">Lead your collective to its first industrial mission. Anchor your proposal to the registry to begin funding.</p>
-                                 </div>
-                              </div>
-                            )}
-                         </div>
-                      </div>
-                    )}
-                 </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeView === 'auctions' && (
-          <div className="space-y-10 animate-in slide-in-from-right-6 duration-500">
-             <div className="flex flex-col md:flex-row gap-6 items-center justify-between border-b border-white/5 pb-10">
-                <div className="space-y-2">
-                   <div className="flex items-center gap-4">
-                      <button onClick={() => setActiveView('registry')} className="p-3 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all group/back">
-                         <ChevronLeft className="w-5 h-5 group-hover/back:-translate-x-1 transition-transform" />
-                      </button>
-                      <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic flex items-center gap-4">
-                         <Hammer className="w-10 h-10 text-indigo-400" /> Tender <span className="text-indigo-400">Grid</span>
-                      </h3>
-                   </div>
-                   <p className="text-lg text-slate-500 italic">Competitive procurement cycle for large-scale industrial tasks.</p>
-                </div>
-                <div className="relative w-full md:w-[450px] group">
-                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-                   <input type="text" placeholder="Search grid by mission hash..." className="w-full bg-black/60 border border-white/10 rounded-[40px] py-6 pl-16 pr-8 text-white focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all text-lg placeholder:text-slate-800" />
-                </div>
+                )}
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {MOCK_TENDERS.map((t) => (
-                  <div key={t.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-indigo-500/40 transition-all group flex flex-col h-full active:scale-[0.98] duration-300 relative overflow-hidden bg-black/20">
-                     <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:rotate-12 transition-transform">
-                        <GanttChartSquare className="w-48 h-48 text-white" />
-                     </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {MOCK_WORKERS.map(worker => (
+                  <div key={worker.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full active:scale-95 duration-300 relative overflow-hidden bg-black/20">
                      <div className="flex justify-between items-start mb-10 relative z-10">
-                        <div className="p-5 bg-indigo-500/10 rounded-3xl border border-indigo-500/20 shadow-2xl group-hover:bg-indigo-500 transition-colors">
-                           <Hammer className="w-8 h-8 text-indigo-400 group-hover:text-white" />
+                        <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:rotate-6 transition-transform">
+                           <span className="text-3xl font-black text-emerald-400">{worker.name[0]}</span>
                         </div>
                         <div className="text-right">
-                           <span className="text-[10px] font-mono text-slate-600 font-black tracking-widest">{t.id}</span>
-                           <p className="text-[9px] text-indigo-400 uppercase font-black mt-2 tracking-[0.2em]">INDUSTRIAL_TASK</p>
-                        </div>
-                     </div>
-                     
-                     <div className="flex-1 relative z-10">
-                        <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight group-hover:text-indigo-400 transition-colors italic">{t.task}</h4>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] flex items-center gap-3">
-                           <Globe className="w-4 h-4 text-blue-500" /> MISSION: {t.proj} <span className="text-slate-800">|</span> {t.zone}
-                        </p>
-                     </div>
-                     
-                     <div className="grid grid-cols-2 gap-6 my-10 relative z-10">
-                        <div className="p-6 bg-black/40 rounded-3xl border border-white/5">
-                           <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-2">Contract Value</p>
-                           <p className="text-2xl font-mono font-black text-white">{t.eac.toLocaleString()} <span className="text-xs text-emerald-500">EAC</span></p>
-                        </div>
-                        <div className="p-6 bg-black/40 rounded-3xl border border-white/5">
-                           <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-2">Cycle Shard</p>
-                           <div className="flex items-center gap-3">
-                              <Clock className="w-4 h-4 text-rose-500 animate-pulse" />
-                              <p className="text-lg font-black text-white uppercase tracking-tighter">{t.time}</p>
+                           <div className="flex items-center gap-1 text-amber-500">
+                              <Star className="w-4 h-4 fill-current" />
+                              <span className="text-lg font-black font-mono">{worker.sustainabilityRating}%</span>
                            </div>
+                           <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest">U-SCORE</span>
                         </div>
                      </div>
-
-                     <div className="pt-8 border-t border-white/5 mt-auto flex items-center justify-between relative z-10">
-                        <div className="flex items-center gap-3">
-                           <Users className="w-4 h-4 text-slate-700" />
-                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.bids} ACTIVE BIDS</span>
+                     <h4 className="text-2xl font-black text-white uppercase tracking-tighter group-hover:text-emerald-400 transition-colors mb-2 italic">{worker.name}</h4>
+                     <div className="flex flex-wrap gap-2 mb-8">
+                        {worker.skills.map(s => <span key={s} className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest border border-white/5">{s}</span>)}
+                     </div>
+                     <div className="space-y-4 mb-10 flex-1">
+                        <div className="flex items-center gap-3 text-slate-400">
+                           <History className="w-4 h-4 text-emerald-500" />
+                           <span className="text-xs font-bold">{worker.verifiedHours.toLocaleString()} Verified Hours</span>
                         </div>
-                        <button className="px-10 py-4 agro-gradient rounded-3xl text-[10px] font-black uppercase tracking-[0.4em] text-white shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all">
-                          Initialize Bid
+                     </div>
+                     <div className="flex gap-4">
+                        <button 
+                           onClick={() => openDossier(worker)}
+                           className="flex-1 py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all"
+                        >
+                           View Full Dossier
                         </button>
+                        {invitingToColId && (
+                           <button 
+                              onClick={() => openDossier(worker)}
+                              className="flex-1 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] font-bold uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2"
+                           >
+                              <Handshake className="w-4 h-4" />
+                              Draft Proposal
+                           </button>
+                        )}
                      </div>
                   </div>
                 ))}
@@ -753,63 +487,950 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
           </div>
         )}
 
-        {activeView === 'analytics' && (
-          <div className="space-y-12 animate-in zoom-in duration-500">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div className="lg:col-span-8 glass-card p-12 rounded-[64px] border-white/5 relative overflow-hidden bg-black/40 shadow-2xl">
-                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 relative z-10 gap-8">
-                      <div className="flex items-center gap-6">
-                         <div className="p-5 bg-indigo-500/10 rounded-[32px] shadow-2xl border border-indigo-500/20">
-                            <Activity className="w-10 h-10 text-indigo-400" />
-                         </div>
-                         <div>
-                            <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Network <span className="text-indigo-400">Throughput</span></h3>
-                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Real-time Resource Velocity Index</p>
-                         </div>
-                      </div>
-                      <div className="flex gap-10">
-                         <div className="text-right">
-                            <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-1">Current ROI Avg</p>
-                            <p className="text-4xl font-mono font-black text-emerald-400">+15.8%</p>
-                         </div>
-                         <div className="w-[1px] h-12 bg-white/10 hidden md:block"></div>
-                         <div className="text-right">
-                            <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-1">Global Load</p>
-                            <p className="text-4xl font-mono font-black text-blue-400">92.4%</p>
+        {activeView === 'collectives' && (
+           <div className="animate-in fade-in duration-700">
+              {selectedCollectiveId && currentCollective ? (
+                <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                   <div className="flex items-center justify-between border-b border-white/5 pb-8">
+                      <div className="flex items-center gap-4">
+                         <button onClick={() => setSelectedCollectiveId(null)} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all group/back">
+                             <ChevronLeft className="w-6 h-6 group-hover/back:-translate-x-1 transition-transform" />
+                         </button>
+                         <div className="flex items-center gap-6">
+                             <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
+                                 <Share2 className="w-10 h-10 text-emerald-400" />
+                             </div>
+                             <div>
+                                 <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">{currentCollective.name}</h3>
+                                 <p className="text-emerald-500/60 font-mono text-[10px] tracking-[0.4em] uppercase">{currentCollective.id} // {currentCollective.type.toUpperCase()} // RESONANCE: {currentCollective.resonance}%</p>
+                             </div>
                          </div>
                       </div>
                    </div>
 
-                   <div className="h-[450px] w-full relative z-10 min-h-0 min-w-0">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                         <AreaChart data={ANALYTICS_DATA}>
-                            <defs>
-                               <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
-                                  <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                               </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                            <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} fontStyle="italic" />
-                            <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                            <Tooltip 
-                               contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', padding: '20px' }}
-                               itemStyle={{ color: '#818cf8', fontWeight: 'bold' }}
-                            />
-                            <Area type="monotone" dataKey="yield" stroke="#818cf8" strokeWidth={6} fillOpacity={1} fill="url(#colorYield)" />
-                         </AreaChart>
-                      </ResponsiveContainer>
+                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                      <div className="lg:col-span-8 space-y-8">
+                         <div className="glass-card p-10 rounded-[56px] border-white/5 bg-black/40 h-[650px] flex flex-col shadow-2xl overflow-hidden relative">
+                            <div className="absolute inset-0 opacity-[0.01] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]"></div>
+                            <div className="flex justify-between items-center mb-10 px-4 relative z-10">
+                                 <h4 className="text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-3">
+                                     <MessageSquare className="w-5 h-5 text-emerald-400 animate-pulse" /> Shard <span className="text-emerald-400">Stream</span>
+                                 </h4>
+                                 <div className="flex gap-4">
+                                     <button className="p-2.5 bg-white/5 rounded-xl text-slate-500 hover:text-rose-400 transition-all"><Video className="w-5 h-5" /></button>
+                                     <button className="p-2.5 bg-white/5 rounded-xl text-slate-500 hover:text-indigo-400 transition-all"><Podcast className="w-5 h-5" /></button>
+                                 </div>
+                            </div>
+                            <div className="flex-1 space-y-6 overflow-y-auto custom-scrollbar p-4 relative z-10">
+                                 {currentCollective.signals?.map((sig: any, i: number) => (
+                                     <div key={i} className={`flex gap-6 group ${sig.from === user.name ? 'flex-row-reverse' : ''}`}>
+                                         <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 border border-white/5 shadow-xl">
+                                             <span className="text-xs font-black text-emerald-500">{sig.from[0]}</span>
+                                         </div>
+                                         <div className={`p-6 glass-card rounded-[28px] border-white/5 bg-white/[0.02] max-w-[70%] relative overflow-hidden group-hover:bg-emerald-500/5 transition-colors ${sig.from === user.name ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
+                                             <div className="flex justify-between items-center gap-6 mb-2">
+                                                 <p className="text-[10px] text-slate-500 font-black uppercase">{sig.from}</p>
+                                                 <p className="text-[8px] text-slate-700 font-mono">{sig.timestamp}</p>
+                                             </div>
+                                             <p className="text-slate-300 text-sm italic font-medium leading-relaxed">"{sig.text}"</p>
+                                         </div>
+                                     </div>
+                                 )) || <p className="text-center text-slate-600 py-20 italic">No signals in current shard.</p>}
+                            </div>
+                            <div className="p-8 border-t border-white/5 relative z-10 flex gap-4">
+                                 <button className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all"><Paperclip className="w-6 h-6" /></button>
+                                 <div className="relative flex-1 group">
+                                     <input 
+                                         type="text" 
+                                         value={chatMessage}
+                                         onChange={e => setChatMessage(e.target.value)}
+                                         onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                                         placeholder="Broadcast signal to members..." 
+                                         className="w-full bg-black/60 border border-white/10 rounded-full py-6 pl-10 pr-20 text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all placeholder:text-slate-800 font-bold italic" 
+                                     />
+                                     <button onClick={handleSendMessage} className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-emerald-600 rounded-full text-white shadow-xl hover:scale-110 active:scale-95 transition-all">
+                                         <Send className="w-5 h-5" />
+                                     </button>
+                                 </div>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* Sidebar */}
+                      <div className="lg:col-span-4 space-y-8">
+                         <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-2xl">
+                            <div className="space-y-6 pt-2">
+                                 <div className="flex justify-between items-center mb-6">
+                                    <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4" /> Member Registry</h5>
+                                    {(currentCollective.adminEsin === user.esin) && (
+                                       <button 
+                                          onClick={() => { setInvitingToColId(currentCollective.id); setActiveView('talent'); }}
+                                          className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-lg"
+                                          title="Add member from Worker Cloud"
+                                       >
+                                          <UserPlus className="w-4 h-4" />
+                                       </button>
+                                    )}
+                                 </div>
+                                 <div className="space-y-4">
+                                     {currentCollective.members?.map((m: any) => (
+                                         <div key={m.id} className="flex items-center justify-between group">
+                                             <div className="flex items-center gap-3">
+                                                 <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-indigo-400 border border-white/5">{m.name[0]}</div>
+                                                 <div>
+                                                     <p className="text-xs font-bold text-white uppercase">{m.name}</p>
+                                                     <p className="text-[8px] text-slate-600 font-mono">NODE_VERIFIED</p>
+                                                 </div>
+                                             </div>
+                                             <div className="flex items-center gap-1 text-amber-500">
+                                                <Star className="w-2.5 h-2.5 fill-current" />
+                                                <span className="text-[9px] font-mono font-black">{m.sustainabilityRating}%</span>
+                                             </div>
+                                         </div>
+                                     )) || <p className="text-center text-slate-700 italic py-4">No contracted members.</p>}
+                                 </div>
+                            </div>
+
+                            <div className="space-y-6 pt-10 border-t border-white/10">
+                               <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2"><Target className="w-4 h-4" /> Shard Objectives</h5>
+                               <div className="space-y-3">
+                                  {currentCollective.objectives?.map((o: string) => (
+                                    <div key={o} className="flex items-center gap-4 p-4 bg-black/40 rounded-2xl border border-white/5 group hover:border-emerald-500/40 transition-colors">
+                                       <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform shadow-[0_0_10px_#10b981]"></div>
+                                       <span className="text-xs font-bold text-slate-400 uppercase group-hover:text-white transition-colors">{o}</span>
+                                    </div>
+                                  )) || <p className="text-xs text-slate-700 italic">No objectives set.</p>}
+                               </div>
+                            </div>
+
+                            {currentCollective.adminEsin === user.esin && !currentCollective.missionCampaign?.active && (
+                              <button 
+                               onClick={() => { setSelectedColForMission(currentCollective.id); setMissionName(''); setMissionGoal('50000'); setShowRegisterMission(true); }}
+                               className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl flex items-center justify-center gap-3 active:scale-95"
+                              >
+                                 <Rocket className="w-5 h-5" /> Launch Group Mission
+                              </button>
+                            )}
+                         </div>
+                      </div>
                    </div>
                 </div>
-             </div>
-          </div>
+              ) : (
+                <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                   <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
+                      <div>
+                         <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Social <span className="text-emerald-400">Shard Portal</span></h3>
+                         <p className="text-slate-500 text-sm mt-1">Goal-oriented collectives formed by workers.</p>
+                      </div>
+                      <button onClick={() => { setNewColName(''); setNewColMission(''); setShowRegisterCollective(true); }} className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
+                         <PlusCircle className="w-5 h-5" /> Form Shard Group
+                      </button>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      {collectives.map(col => (
+                        <div key={col.id} onClick={() => setSelectedCollectiveId(col.id)} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/40 transition-all flex flex-col h-full group active:scale-[0.98] duration-300 bg-black/20 relative overflow-hidden cursor-pointer">
+                           <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform"><Share2 className="w-48 h-48 text-white" /></div>
+                           <div className="flex justify-between items-start mb-10 relative z-10">
+                              <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center shadow-2xl border border-emerald-500/20 group-hover:rotate-6 transition-transform">
+                                 <Share2 className="w-10 h-10 text-emerald-400" />
+                              </div>
+                              <div className="text-right">
+                                 <span className="px-4 py-1.5 bg-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest rounded-full border border-white/10">{col.type}</span>
+                                 <p className="text-[10px] text-emerald-500 font-mono mt-3 font-black tracking-widest uppercase">{(col.members || []).length} MEMBERS</p>
+                              </div>
+                           </div>
+                           <div className="flex-1 relative z-10">
+                              <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 group-hover:text-emerald-400 transition-colors italic leading-tight">{col.name}</h4>
+                              <p className="text-slate-400 text-sm italic leading-relaxed mb-10 line-clamp-3">"{col.mission}"</p>
+                           </div>
+                           <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
+                              <div className="flex items-center gap-3">
+                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                                 <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Resonance: {col.resonance}%</span>
+                              </div>
+                              <button className="p-5 rounded-[28px] bg-white/5 hover:bg-emerald-600 text-white transition-all shadow-xl group/btn border border-white/5">
+                                 <ArrowRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
+                              </button>
+                           </div>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+              )}
+           </div>
+        )}
+
+        {activeView === 'missions' && (
+           <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+              <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
+                 <div>
+                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Mission <span className="text-indigo-400">Launchpad</span></h3>
+                    <p className="text-slate-500 text-sm mt-1">Manage collective project campaigns and registry anchoring.</p>
+                 </div>
+                 <button 
+                  onClick={() => { setSelectedColForMission(''); setMissionName(''); setMissionGoal('50000'); setShowRegisterMission(true); }}
+                  className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95"
+                 >
+                    <PlusCircle className="w-5 h-5" /> Initialize New Campaign
+                 </button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                 {collectives.filter(c => c.missionCampaign?.active).map(col => {
+                   const quorumMet = col.members.length >= MIN_MEMBERS_REQUIRED;
+                   const capitalMet = col.missionCampaign.pool >= col.missionCampaign.target * 0.5;
+                   
+                   return (
+                   <div key={col.id} className={`glass-card p-10 rounded-[56px] border-2 transition-all relative overflow-hidden flex flex-col group ${col.missionCampaign.launched ? 'border-emerald-500/40 bg-emerald-500/[0.02]' : 'border-indigo-500/20 bg-black/40'}`}>
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform">
+                         <Rocket className="w-48 h-48 text-white" />
+                      </div>
+                      
+                      <div className="flex justify-between items-start mb-10 relative z-10">
+                         <div className="flex items-center gap-6">
+                            <div className={`p-4 rounded-3xl ${col.missionCampaign.launched ? 'bg-emerald-500' : 'bg-indigo-600'} shadow-xl`}>
+                               <PlaneTakeoff className="w-10 h-10 text-white" />
+                            </div>
+                            <div>
+                               <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">{col.missionCampaign.title}</h4>
+                               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Originated by {col.name}</p>
+                            </div>
+                         </div>
+                         <div className="text-right">
+                            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${col.missionCampaign.launched ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20 animate-pulse'}`}>
+                               {col.missionCampaign.launched ? 'ANCHORED_LEDGER' : 'INTERNAL_STAGING'}
+                            </span>
+                         </div>
+                      </div>
+
+                      <div className="flex-1 space-y-10 relative z-10">
+                         {/* Quorum Progress */}
+                         <div className="space-y-4">
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                               <span className="text-slate-500 flex items-center gap-2">
+                                  <Users2 className="w-3 h-3 text-blue-400" /> Member Quorum
+                               </span>
+                               <span className={quorumMet ? 'text-emerald-400' : 'text-blue-400'}>{col.members.length} / {MIN_MEMBERS_REQUIRED} Nodes</span>
+                            </div>
+                            <div className="h-4 bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
+                               <div className={`h-full rounded-full transition-all duration-[2s] shadow-[0_0_20px_rgba(59,130,246,0.3)] ${quorumMet ? 'bg-emerald-500' : 'bg-blue-600'}`} style={{ width: `${Math.min(100, (col.members.length / MIN_MEMBERS_REQUIRED) * 100)}%` }}></div>
+                            </div>
+                         </div>
+
+                         {/* Capital Progress */}
+                         <div className="space-y-4">
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                               <span className="text-slate-500 flex items-center gap-2">
+                                  <Coins className="w-3 h-3 text-emerald-400" /> Capital Synergy Meter
+                               </span>
+                               <span className="text-white font-mono">{((col.missionCampaign.pool / col.missionCampaign.target) * 100).toFixed(1)}%</span>
+                            </div>
+                            <div className="h-4 bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
+                               <div className={`h-full rounded-full transition-all duration-[2s] shadow-[0_0_20px_rgba(59,130,246,0.3)] ${capitalMet ? 'bg-emerald-500' : 'bg-orange-500'}`} style={{ width: `${Math.min(100, (col.missionCampaign.pool / col.missionCampaign.target) * 100)}%` }}></div>
+                            </div>
+                         </div>
+
+                         {!col.missionCampaign.launched ? (
+                           <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-4">
+                                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-2">Inject Capital Shard</label>
+                                 <input type="number" value={contribAmount} onChange={e => setContribAmount(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-lg font-mono outline-none" />
+                              </div>
+                              <div className="flex items-end">
+                                 <button onClick={() => handleContributeToPool(col.id)} className="w-full py-4 bg-white/5 border border-white/10 hover:bg-emerald-600 hover:text-white rounded-2xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-3">
+                                    <Zap className="w-4 h-4" /> Contribute
+                                 </button>
+                              </div>
+                           </div>
+                         ) : (
+                           <div className="p-8 glass-card border-emerald-500/20 bg-emerald-500/5 rounded-3xl space-y-6">
+                             <div className="flex items-center gap-3">
+                               <Activity className="w-5 h-5 text-emerald-400" />
+                               <h5 className="text-xs font-black text-white uppercase italic">Lifecycle Performance</h5>
+                             </div>
+                             <p className="text-sm text-slate-400 italic font-medium">As a member, inject performance shards to generate EAC profits for the collective and investors.</p>
+                             <button 
+                               onClick={() => { setTargetMissionId(col.missionCampaign.linkedProjectId); setPerfStep('input'); setShowPerformanceModal(true); }}
+                               className="w-full py-5 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center justify-center gap-2"
+                             >
+                               <Database className="w-4 h-4" /> Inject Performance Shard
+                             </button>
+                           </div>
+                         )}
+                      </div>
+
+                      <div className="mt-12 pt-8 border-t border-white/5 relative z-10 flex flex-col sm:flex-row justify-between gap-6">
+                         <div className="flex items-center gap-4">
+                            <div className="p-4 bg-white/5 rounded-2xl">
+                               <Target className="w-6 h-6 text-indigo-400" />
+                            </div>
+                            <div>
+                               <p className="text-[8px] text-slate-600 uppercase font-black">Target Goal</p>
+                               <p className="text-xl font-mono font-black text-white">{col.missionCampaign.target.toLocaleString()} EAC</p>
+                            </div>
+                         </div>
+                         {!col.missionCampaign.launched && col.adminEsin === user.esin && (
+                           <button 
+                            onClick={() => handleAnchorToGlobalRegistry(col.id)} 
+                            disabled={!capitalMet || !quorumMet} 
+                            className="px-10 py-4 agro-gradient rounded-[32px] text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl disabled:opacity-30 flex items-center gap-3 transition-all"
+                           >
+                              {!capitalMet ? <Lock className="w-4 h-4" /> : !quorumMet ? <Users2 className="w-4 h-4" /> : <Database className="w-4 h-4" />}
+                              {!capitalMet ? "AWAITING CAPITAL" : !quorumMet ? "AWAITING QUORUM" : "Anchor Node to Registry"}
+                           </button>
+                         )}
+                         {col.missionCampaign.launched && (
+                           <div className="flex items-center gap-3 px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Anchored & Audited</span>
+                           </div>
+                         )}
+                      </div>
+                   </div>
+                 )})}
+              </div>
+           </div>
+        )}
+
+        {/* VIEW: Performance Analytics */}
+        {activeView === 'analytics' && (
+           <div className="space-y-12 animate-in zoom-in duration-500">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                 <div className="lg:col-span-12 glass-card p-12 rounded-[64px] border-white/5 bg-black/40 relative overflow-hidden shadow-3xl">
+                    <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none"></div>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 mb-12 gap-8 px-4">
+                       <div className="flex items-center gap-6">
+                          <div className="p-5 bg-indigo-500/10 rounded-[32px] border border-indigo-500/20 shadow-2xl">
+                             <BarChart3 className="w-10 h-10 text-indigo-400" />
+                          </div>
+                          <div>
+                             <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Global <span className="text-indigo-400">Throughput</span></h3>
+                             <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Network Productivity Cluster (T-12 to NOW)</p>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className="text-[10px] text-slate-600 font-black uppercase mb-1">Rolling Avg Yield</p>
+                          <p className="text-5xl font-mono font-black text-emerald-400 tracking-tighter">7.84 <span className="text-xl">TB/h</span></p>
+                       </div>
+                    </div>
+
+                    <div className="h-[450px] w-full relative z-10 min-h-0 min-w-0">
+                       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                          <AreaChart data={GLOBAL_PERFORMANCE_DATA}>
+                             <defs>
+                                <linearGradient id="colorPerf" x1="0" y1="0" x2="0" y2="1">
+                                   <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
+                                   <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                                </linearGradient>
+                             </defs>
+                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                             <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                             <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px' }} />
+                             <Area type="monotone" dataKey="yield" stroke="#818cf8" strokeWidth={6} fillOpacity={1} fill="url(#colorPerf)" />
+                             <Area type="monotone" dataKey="m_cons" stroke="#10b981" strokeWidth={4} strokeDasharray="10 5" fill="transparent" />
+                          </AreaChart>
+                       </ResponsiveContainer>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-10 px-8 text-[10px] font-mono text-slate-700 font-black uppercase tracking-[0.5em]">
+                       <span>CYCLE_START</span>
+                       <div className="flex gap-4">
+                          <div className="flex items-center gap-2"><div className="w-2 h-2 bg-indigo-500 rounded-full shadow-[0_0_8px_#6366f1]"></div> <span>Industrial Yield</span></div>
+                          <div className="flex items-center gap-2"><div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]"></div> <span>Node Sync Index</span></div>
+                       </div>
+                       <span>SYNC_STABLE</span>
+                    </div>
+                 </div>
+              </div>
+           </div>
         )}
       </div>
 
+      {/* MODAL: Place Bid */}
+      {showBidModal && selectedTenderForBid && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowBidModal(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+              <div className="p-16 space-y-10 flex flex-col">
+                 <button onClick={() => setShowBidModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 <div className="flex items-center gap-6 mb-2">
+                    <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20 shadow-xl">
+                        <Gavel className="w-10 h-10 text-amber-500" />
+                    </div>
+                    <div>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Tender <span className="text-amber-500">Auction Bidding</span></h3>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Contract Node: {selectedTenderForBid.id}</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-8 flex-1">
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 space-y-4">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-2">Project Requirement</p>
+                       <p className="text-white text-lg font-medium italic">"{selectedTenderForBid.requirement}"</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Bid Amount (EAC)</label>
+                          <input 
+                             type="number" 
+                             value={bidValue} 
+                             onChange={e => setBidValue(e.target.value)}
+                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-2xl font-mono text-emerald-400 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" 
+                          />
+                       </div>
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">ESIN Signature</label>
+                          <input 
+                             type="text" 
+                             value={esinSign} 
+                             onChange={e => setEsinSign(e.target.value)}
+                             placeholder="EA-XXXX-XXXX-XXXX"
+                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-mono text-white focus:ring-4 focus:ring-amber-500/20 outline-none transition-all uppercase tracking-widest" 
+                          />
+                       </div>
+                    </div>
+
+                    <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-center gap-6">
+                       <ShieldAlert className="w-8 h-8 text-amber-500 shrink-0" />
+                       <p className="text-[10px] text-amber-200/50 font-bold uppercase tracking-widest leading-relaxed">
+                          Auction Lock: 10% of bid value will be held in escrow upon shard commitment. Signature verifies node capacity for fulfillment.
+                       </p>
+                    </div>
+
+                    <button 
+                       onClick={handlePlaceBid}
+                       disabled={isProcessing || !bidValue || !esinSign}
+                       className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all"
+                    >
+                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Gavel className="w-8 h-8" />}
+                       {isProcessing ? "COMMITING SHARD..." : "AUTHORIZE BID COMMIT"}
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL: Register Industry Node */}
+      {showIndustryEntry && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowIndustryEntry(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+              <div className="p-16 space-y-10 flex flex-col">
+                 <button onClick={() => setShowIndustryEntry(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 <div className="flex items-center gap-6 mb-2">
+                    <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20 shadow-xl">
+                        <Building2 className="w-10 h-10 text-amber-500" />
+                    </div>
+                    <div>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Facility <span className="text-amber-500">Registry Ingest</span></h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Initialize Layer-2 Industrial Node</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-8">
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Facility Designation (Alias)</label>
+                       <input 
+                          type="text" 
+                          value={facilityName} 
+                          onChange={e => setFacilityName(e.target.value)}
+                          placeholder="e.g. Blue Harvest Processing Hub"
+                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" 
+                       />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Node Type</label>
+                          <select 
+                             value={facilityType} 
+                             onChange={e => setFacilityType(e.target.value)}
+                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-amber-500/20"
+                          >
+                             <option>Processing Hub</option>
+                             <option>Spectral Lab</option>
+                             <option>Logistics Relay</option>
+                             <option>Industrial Shard Vault</option>
+                          </select>
+                       </div>
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Regional Zone</label>
+                          <select 
+                             value={facilityZone} 
+                             onChange={e => setFacilityZone(e.target.value)}
+                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-amber-500/20"
+                          >
+                             <option>Zone 4 (Central)</option>
+                             <option>Zone 2 (Pacific)</option>
+                             <option>Zone 8 (EMEA)</option>
+                             <option>Zone 1 (Global)</option>
+                          </select>
+                       </div>
+                    </div>
+
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-4">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Authorized ESIN Signature</label>
+                        <div className="relative">
+                           <Fingerprint className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-600" />
+                           <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 pl-16 pr-10 text-white font-mono uppercase tracking-[0.2em] focus:ring-4 focus:ring-amber-500/40 outline-none transition-all" />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between items-center px-4 pt-4 border-t border-white/5">
+                       <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">REGISTRY FEE</span>
+                       <span className="text-xl font-mono font-black text-amber-500">1000 EAC</span>
+                    </div>
+
+                    <button 
+                       onClick={handleRegisterIndustry}
+                       disabled={isProcessing || !facilityName || !esinSign}
+                       className="w-full py-8 bg-amber-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all mt-4"
+                    >
+                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <HardHat className="w-8 h-8" />}
+                       {isProcessing ? "ANCHORING FACILITY..." : "FINALIZE FACILITY INGEST"}
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL: Form Shard Group (Collective) */}
+      {showRegisterCollective && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterCollective(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+              <div className="p-16 space-y-12 flex flex-col">
+                 <button onClick={() => setShowRegisterCollective(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 <div className="flex items-center gap-6 mb-2">
+                    <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 shadow-xl">
+                        <Share2 className="w-10 h-10 text-emerald-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Form <span className="text-emerald-400">Shard Group</span></h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Initialize Social Collective Node</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-8">
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Collective Alias</label>
+                       <input 
+                          type="text" 
+                          value={newColName} 
+                          onChange={e => setNewColName(e.target.value)}
+                          placeholder="e.g. Bantu Soil Guardians"
+                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all" 
+                       />
+                    </div>
+
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Core Mission Shard</label>
+                       <textarea 
+                          value={newColMission} 
+                          onChange={e => setNewColMission(e.target.value)}
+                          placeholder="What is the common sustainability goal of this shard group?"
+                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-sm italic font-medium text-slate-200 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all h-32 resize-none" 
+                       />
+                    </div>
+
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Collective Type</label>
+                       <div className="grid grid-cols-3 gap-3">
+                          {['Team', 'Clan', 'Society'].map(type => (
+                             <button 
+                                key={type} 
+                                onClick={() => setNewColType(type as any)}
+                                className={`py-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${newColType === type ? 'bg-emerald-600 border-white text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
+                             >
+                                {type}
+                             </button>
+                          ))}
+                       </div>
+                    </div>
+
+                    <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center gap-6">
+                       <ShieldCheck className="w-10 h-10 text-emerald-400 shrink-0" />
+                       <p className="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest leading-relaxed">
+                          Registration Fee: 200 EAC Registry Burn. Administrator status linked to node {user.esin}.
+                       </p>
+                    </div>
+
+                    <button 
+                       onClick={handleRegisterCollective}
+                       disabled={isProcessing || !newColName || !newColMission}
+                       className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all mt-4"
+                    >
+                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <PlusCircle className="w-8 h-8" />}
+                       {isProcessing ? "MINTING SHARD..." : "AUTHORIZE COLLECTIVE SHARD"}
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL: Initialize New Campaign */}
+      {showRegisterMission && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterMission(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+              <div className="p-16 space-y-12 flex flex-col">
+                 <button onClick={() => setShowRegisterMission(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 <div className="flex items-center gap-6 mb-2">
+                    <div className="p-4 bg-indigo-500/10 rounded-3xl border border-indigo-500/20 shadow-xl">
+                        <Rocket className="w-10 h-10 text-indigo-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Initialize <span className="text-indigo-400">Mission Campaign</span></h3>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Scale Social Collective Impact</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-10">
+                    {!selectedColForMission && (
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Select Collective Node</label>
+                          <select 
+                             onChange={e => setSelectedColForMission(e.target.value)}
+                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-lg font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-indigo-500/20"
+                          >
+                             <option value="">Choose your collective...</option>
+                             {collectives.filter(c => c.adminEsin === user.esin).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          </select>
+                       </div>
+                    )}
+
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Campaign Designation (Title)</label>
+                       <input 
+                          type="text" 
+                          value={missionName} 
+                          onChange={e => setMissionName(e.target.value)}
+                          placeholder="e.g. Bantu Soil Restoration Shard"
+                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" 
+                       />
+                    </div>
+
+                    <div className="space-y-4">
+                       <div className="flex justify-between px-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Target Capital Goal</label>
+                          <span className="text-xl font-mono font-black text-indigo-400">{Number(missionGoal).toLocaleString()} EAC</span>
+                       </div>
+                       <input 
+                          type="range" 
+                          min="10000" 
+                          max="1000000" 
+                          step="10000" 
+                          value={missionGoal} 
+                          onChange={e => setMissionGoal(e.target.value)}
+                          className="w-full h-2 bg-black/60 rounded-full appearance-none cursor-pointer accent-indigo-500" 
+                       />
+                       <div className="flex justify-between text-[8px] font-black text-slate-700 uppercase tracking-widest">
+                          <span>10K EAC</span>
+                          <span>1M EAC</span>
+                       </div>
+                    </div>
+
+                    <div className="p-8 bg-black/40 border border-white/5 rounded-[40px] space-y-4">
+                       <div className="flex items-center gap-3">
+                          <ShieldCheck className="w-5 h-5 text-indigo-400" />
+                          <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Campaign Parameters</h4>
+                       </div>
+                       <ul className="space-y-2">
+                          <li className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
+                             50% Internal Collateral Threshold required for registry anchoring.
+                          </li>
+                          <li className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div>
+                             Minimum 3 member nodes must sign binding mission contract.
+                          </li>
+                       </ul>
+                    </div>
+
+                    <button 
+                       onClick={handleInitiateInternalCampaign}
+                       disabled={isProcessing || !missionName || !selectedColForMission}
+                       className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-6 disabled:opacity-30 mt-4"
+                    >
+                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Rocket className="w-8 h-8" />}
+                       {isProcessing ? "INITIALIZING STAGING..." : "LAUNCH MISSION STAGING"}
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL: Performance Injection (Member Feedback Loop) */}
+      {showPerformanceModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowPerformanceModal(false)}></div>
+           <div className="relative z-10 w-full max-w-2xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+              <div className="p-16 space-y-10 min-h-[600px] flex flex-col">
+                 <button onClick={() => setShowPerformanceModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 <div className="flex items-center gap-6 mb-2">
+                    <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 shadow-xl">
+                        <Activity className="w-10 h-10 text-emerald-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Performance <span className="text-emerald-400">Shard Ingest</span></h3>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Mission Node: {targetMissionId}</p>
+                    </div>
+                 </div>
+
+                 {perfStep === 'input' && (
+                   <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                           <div className="flex justify-between px-4">
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reported Yield (Tons/Cycle)</label>
+                              <span className="text-xl font-mono font-black text-emerald-400">{perfYield} T</span>
+                           </div>
+                           <input type="range" min="0" max="500" value={perfYield} onChange={e => setPerfYield(e.target.value)} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500" />
+                        </div>
+                        <div className="space-y-4">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Observations</label>
+                           <textarea value={perfNote} onChange={e => setPerfNote(e.target.value)} placeholder="Describe the current field state..." className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-sm focus:ring-4 focus:ring-emerald-500/20 outline-none h-32 resize-none italic" />
+                        </div>
+                      </div>
+                      <button onClick={handlePerformanceInjection} className="w-full py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4">
+                         <Zap className="w-6 h-6 fill-current" /> Initialize Oracle Sweep
+                      </button>
+                   </div>
+                 )}
+
+                 {perfStep === 'audit' && (
+                   <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 text-center animate-in zoom-in duration-500">
+                      <div className="relative">
+                         <div className="w-48 h-48 rounded-full border-8 border-emerald-500/10 flex items-center justify-center shadow-2xl">
+                            <Microscope className="w-20 h-20 text-emerald-400 animate-pulse" />
+                         </div>
+                         <div className="absolute inset-0 border-t-8 border-emerald-500 rounded-full animate-spin"></div>
+                      </div>
+                      <div className="space-y-4">
+                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Oracle <span className="text-emerald-400">Verifying</span></h3>
+                         <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Cross-analyzing spectral telemetry shards...</p>
+                      </div>
+                   </div>
+                 )}
+
+                 {perfStep === 'success' && (
+                   <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col">
+                      <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 shadow-inner border-l-4 border-l-indigo-500/50">
+                         <div className="flex items-center gap-4 mb-6">
+                            <Bot className="w-6 h-6 text-indigo-400" />
+                            <h4 className="text-xl font-black text-white uppercase tracking-widest italic">Oracle Verdict</h4>
+                         </div>
+                         <p className="text-slate-300 text-lg leading-loose italic whitespace-pre-line">
+                            {auditReport}
+                         </p>
+                      </div>
+                      <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl flex items-center gap-6">
+                         <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+                         <p className="text-[11px] text-emerald-200/50 font-bold uppercase tracking-widest">Yield Verified. Proceed to Anchor Performance Shard and release profit pool.</p>
+                      </div>
+                      <button onClick={() => commitPerformance(targetMissionId!)} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl">
+                         Anchor Shard & release profit
+                      </button>
+                   </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL: Worker Dossier & Proposal Drafting */}
+      {showDossierModal && selectedWorkerForDossier && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setShowDossierModal(false)}></div>
+           <div className="relative z-10 w-full max-w-4xl glass-card p-1 rounded-[56px] border-emerald-500/20 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300">
+              <div className="p-12 space-y-12 overflow-y-auto max-h-[85vh] custom-scrollbar">
+                 <button onClick={() => setShowDossierModal(false)} className="absolute top-10 right-10 p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 {dossierStep === 'profile' ? (
+                   <>
+                     <div className="flex flex-col md:flex-row items-center gap-10 animate-in fade-in duration-500">
+                        <div className="w-48 h-48 rounded-[56px] bg-slate-800 border-4 border-emerald-500/20 flex items-center justify-center text-7xl font-black text-emerald-400 shadow-2xl relative shrink-0">
+                           {selectedWorkerForDossier.name[0]}
+                           <div className="absolute -bottom-2 -right-2 w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center border-4 border-[#050706]">
+                              <BadgeCheck className="w-8 h-8 text-white" />
+                           </div>
+                        </div>
+                        <div className="flex-1 text-center md:text-left space-y-4">
+                           <div>
+                              <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">{selectedWorkerForDossier.name}</h2>
+                              <p className="text-emerald-500 font-mono text-sm tracking-[0.4em] uppercase mt-2">{selectedWorkerForDossier.id} // VERIFIED_STEWARD</p>
+                           </div>
+                           <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                              <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                 <Trophy className="w-3 h-3" /> U-Score: {selectedWorkerForDossier.sustainabilityRating}%
+                              </span>
+                              <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                 <History className="w-3 h-3" /> {selectedWorkerForDossier.verifiedHours} Hours
+                              </span>
+                              <span className="px-4 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                 <Coins className="w-3 h-3" /> {selectedWorkerForDossier.lifetimeEAC.toLocaleString()} EAC
+                              </span>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-8">
+                           <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.4em] px-2 flex items-center gap-3">
+                              <Zap className="w-4 h-4 text-emerald-400" /> Skill Shard Distribution
+                           </h4>
+                           <div className="space-y-6">
+                              {selectedWorkerForDossier.skills.map((skill, i) => (
+                                 <div key={skill} className="space-y-3">
+                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                       <span className="text-slate-200">{skill}</span>
+                                       <span className="text-emerald-400">{(90 - i * 8)}% Mastery</span>
+                                    </div>
+                                    <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5">
+                                       <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_#10b981]" style={{ width: `${90 - i * 8}%` }}></div>
+                                    </div>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+                        
+                        <div className="glass-card p-8 rounded-[48px] bg-indigo-600/5 border-indigo-500/20 space-y-6 relative overflow-hidden">
+                           <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:scale-110 transition-transform"><Bot className="w-32 h-32 text-indigo-400" /></div>
+                           <h4 className="text-xs font-black text-indigo-400 uppercase tracking-[0.4em] flex items-center gap-3">
+                              <Bot className="w-4 h-4" /> Professional Oracle Audit
+                           </h4>
+                           <div className="prose prose-invert max-w-none">
+                              <p className="text-slate-300 text-sm italic leading-relaxed whitespace-pre-line border-l-2 border-indigo-500/40 pl-6">
+                                 "Node {selectedWorkerForDossier.id} demonstrates exceptional resilience in the {selectedWorkerForDossier.skills[0]} thrust. Historical telemetry data shows zero m-Constant degradation over 12 cycles. Highly recommended for industrial sharding and collective formation."
+                              </p>
+                           </div>
+                           <div className="flex items-center gap-2 pt-4">
+                              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                              <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Signed: Registry_Oracle_08</span>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="flex gap-6">
+                        <button onClick={() => setShowDossierModal(false)} className="flex-1 py-6 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Dismiss Dossier</button>
+                        {invitingToColId && (
+                           <button 
+                             onClick={() => setDossierStep('draft')}
+                             className="flex-[2] py-6 agro-gradient rounded-[32px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-105 transition-all"
+                           >
+                              <Handshake className="w-6 h-6" />
+                              Initialize Contract Draft
+                           </button>
+                        )}
+                     </div>
+                   </>
+                 ) : (
+                   <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col">
+                      <div className="flex items-center gap-6 border-b border-white/5 pb-10">
+                         <div className="w-20 h-20 bg-amber-500/10 rounded-[32px] border border-amber-500/30 flex items-center justify-center shadow-xl">
+                            <FileSignature className="w-10 h-10 text-amber-500" />
+                         </div>
+                         <div>
+                            <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Contract <span className="text-amber-500">Drafting Terminal</span></h3>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Collective Recipient: {selectedWorkerForDossier.name}</p>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                         <div className="space-y-10">
+                            <div className="glass-card p-10 rounded-[48px] border-amber-500/20 bg-amber-500/5 space-y-6 relative overflow-hidden">
+                               <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><Stamp className="w-48 h-48 text-amber-500" /></div>
+                               <h4 className="text-xs font-black text-amber-500 uppercase tracking-[0.4em] flex items-center gap-3 relative z-10">
+                                  <FileBadge className="w-4 h-4" /> Binding Parameters
+                               </h4>
+                               <div className="space-y-6 relative z-10">
+                                  <div className="flex justify-between text-sm">
+                                     <span className="text-slate-500 font-bold uppercase">Collective</span>
+                                     <span className="text-white font-black">{collectives.find(c => c.id === invitingToColId)?.name}</span>
+                                  </div>
+                                  <div className="flex justify-between text-sm">
+                                     <span className="text-slate-500 font-bold uppercase">Reward Value</span>
+                                     <span className="text-emerald-400 font-black">50 EAC (Escrowed)</span>
+                                  </div>
+                                  <div className="flex justify-between text-sm">
+                                     <span className="text-slate-500 font-bold uppercase">U-Score Impact</span>
+                                     <span className="text-blue-400 font-black">+2.4% Momentum</span>
+                                  </div>
+                               </div>
+                            </div>
+
+                            <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 space-y-4">
+                               <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-2">Proposed Mission Shard</p>
+                               <div className="p-4 bg-black/40 rounded-2xl border border-white/5 font-mono text-[11px] text-slate-400 italic">
+                                  "{collectives.find(c => c.id === invitingToColId)?.mission}"
+                               </div>
+                            </div>
+                         </div>
+
+                         <div className="space-y-8">
+                            <div className="glass-card p-10 rounded-[48px] bg-white/[0.01] border border-white/5 space-y-8">
+                               <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.4em]">Handshake Protocol</h4>
+                               <div className="space-y-4">
+                                  <div className="flex items-center gap-4">
+                                     <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                                     <p className="text-xs text-slate-300 font-medium">Verify node m-constant status: <strong>STABLE</strong></p>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                     <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                                     <p className="text-xs text-slate-300 font-medium">Allocate EAC rewards from collective vault.</p>
+                                  </div>
+                                  <div className="flex items-center gap-4 opacity-30">
+                                     <div className="w-3 h-3 rounded-full bg-slate-700"></div>
+                                     <p className="text-xs text-slate-300 font-medium">Wait for peer digital signature.</p>
+                                  </div>
+                               </div>
+                               <div className="pt-8 border-t border-white/5">
+                                  <p className="text-[10px] text-slate-500 italic leading-relaxed text-center">
+                                     "Upon signing, the worker will be officially anchored as a member node of the collective ledger."
+                                  </p>
+                               </div>
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="flex gap-6">
+                         <button onClick={() => setDossierStep('profile')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back to Dossier</button>
+                         <button 
+                           onClick={() => handleSendContractProposal(selectedWorkerForDossier)}
+                           disabled={isProcessing}
+                           className="flex-[2] py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-105 transition-all disabled:opacity-30"
+                         >
+                            {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Send className="w-8 h-8" />}
+                            {isProcessing ? "BROADCASTING SHARD..." : "Transmit Binding Proposal"}
+                         </button>
+                      </div>
+                   </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Embedded Styles for Industrial Theme */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .agro-gradient-orange { background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); }
+        .animate-spin-slow { animation: spin 12s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

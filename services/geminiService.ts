@@ -45,6 +45,35 @@ export const analyzeSustainability = async (farmData: any): Promise<AIResponse> 
   return { text: response.text || "" };
 };
 
+export const generateAgroResearch = async (title: string, thrust: string, iotTelemetry: any, externalContext: string): Promise<AIResponse> => {
+  const prompt = `
+    Act as an EnvirosAgro Senior Research Scientist.
+    Generate a formal research paper shard based on the following:
+    Title: ${title}
+    Primary Thrust: ${thrust}
+    IoT Telemetry Data: ${JSON.stringify(iotTelemetry)}
+    External Context: ${externalContext}
+    
+    Structure the output in professional scientific format:
+    1. Abstract
+    2. Introduction (SEHTI Alignment)
+    3. Methodology (EOS Framework integration)
+    4. Data Analysis (Based on IoT Telemetry)
+    5. C(a) & m-Constant Impact Prediction
+    6. Conclusion & Invention Potential.
+    
+    Reference: ${FRAMEWORK_CONTEXT}
+  `;
+  
+  const response = await getAI().models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: prompt,
+    config: { thinkingConfig: { thinkingBudget: 32768 } }
+  }) as GenerateContentResponse;
+  
+  return { text: response.text || "" };
+};
+
 export const chatWithAgroExpert = async (message: string, history: any[], useSearch: boolean = false): Promise<AIResponse> => {
   const chat = getAI().chats.create({
     model: 'gemini-3-flash-preview',
@@ -56,6 +85,25 @@ export const chatWithAgroExpert = async (message: string, history: any[], useSea
   });
   const response = await chat.sendMessage({ message }) as GenerateContentResponse;
   return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
+};
+
+export const runSpecialistDiagnostic = async (category: string, description: string, imageBase64?: string): Promise<AIResponse> => {
+  const systemPrompt = `EnvirosAgro ${category} Specialist. Context: ${FRAMEWORK_CONTEXT}. 
+  Provide a detailed industrial diagnostic report including:
+  1. Current Status (Condition Shard)
+  2. Remediation Strategy
+  3. C(a) Impact Prediction
+  4. m-Constant Stability Audit.`;
+  
+  const parts: any[] = [{ text: `${systemPrompt}\n\nDiagnostic Request: ${description}` }];
+  if (imageBase64) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } });
+  
+  const response = await getAI().models.generateContent({ 
+    model: 'gemini-3-pro-preview', 
+    contents: { parts },
+    config: { thinkingConfig: { thinkingBudget: 32768 } }
+  }) as GenerateContentResponse;
+  return { text: response.text || "" };
 };
 
 export const auditProductQuality = async (batchId: string, lifecycleLogs: any[]): Promise<AIResponse> => {

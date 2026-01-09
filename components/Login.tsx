@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Leaf, 
@@ -127,8 +128,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       regDate: new Date().toLocaleDateString(),
       role: 'Regenerative Farmer',
       location: location || 'Global Registry Node',
-      wallet: { balance: 100, tier: 'Seed', lifetimeEarned: 100 },
-      // Added socialImmunity and viralLoadSID to satisfy SustainabilityMetrics interface
+      // Bonus 100 EAC is non-withdrawable (investable/spendable in-system)
+      wallet: { balance: 0, bonusBalance: 100, tier: 'Seed', lifetimeEarned: 100 },
       metrics: { 
         agriculturalCodeU: 1.2, 
         timeConstantTau: 8.5, 
@@ -491,6 +492,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mt-1">EnvirosAgro™ Cloud Sync Complete</p>
                 </div>
                 <IdentityCard user={generatedUser} />
+                <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
+                   <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">100 EAC Registration Incentive Reserved</p>
+                </div>
                 <button onClick={() => onLogin(generatedUser)} className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl">
                   Initialize Command Center
                 </button>

@@ -32,23 +32,42 @@ import {
   Radio,
   Sparkles,
   Smartphone,
-  // Fix: Added missing Zap icon import from lucide-react
-  Zap
+  Zap,
+  Bell,
+  MessageSquare,
+  ChevronRight,
+  MoreVertical,
+  Trash,
+  Check,
+  UserPlus,
+  Handshake,
+  FileCode,
+  FileSignature,
+  Stamp,
+  BookOpenCheck,
+  // Added missing icon
+  Coins
 } from 'lucide-react';
 import { User } from '../types';
 import IdentityCard from './IdentityCard';
 import { verifyTelecommNode } from '../services/geminiService';
+import { SignalShard } from '../App';
 
 interface UserProfileProps {
   user: User;
   onUpdate: (user: User) => void;
   onLogout?: () => void;
   onDeleteAccount?: () => void;
+  signals: SignalShard[];
+  setSignals: React.Dispatch<React.SetStateAction<SignalShard[]>>;
+  onAcceptProposal?: (id: string) => void;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onDeleteAccount }) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'dossier' | 'security'>('general');
+const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onDeleteAccount, signals, setSignals, onAcceptProposal }) => {
+  const [activeTab, setActiveTab] = useState<'general' | 'dossier' | 'signals' | 'security'>('general');
   const [isEditing, setIsEditing] = useState(false);
+  const [isVerifying, setIsVerifying] = useState<string | null>(null);
+  const [viewingContract, setViewingContract] = useState<SignalShard | null>(null);
   
   // Form State
   const [name, setName] = useState(user.name);
@@ -58,20 +77,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
   const [lineNumber, setLineNumber] = useState(user.lineNumber || '');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Line Verification States
-  const [showVerifyPhoneModal, setShowVerifyPhoneModal] = useState(false);
-  const [verifyStep, setVerifyStep] = useState<'idle' | 'auditing' | 'otp' | 'success'>('idle');
-  const [otpInput, setOtpInput] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
-  const [auditReport, setAuditReport] = useState<string | null>(null);
-
-  // Security Interaction States
-  const [showBiometricModal, setShowBiometricModal] = useState(false);
-  const [biometricStep, setBiometricStep] = useState<'idle' | 'scanning' | 'complete'>('idle');
-  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-  const [recoveryStep, setVerifyStepRecovery] = useState<'idle' | 'sending' | 'verified'>('idle');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteInput, setDeleteInput] = useState('');
+  const unreadCount = signals.filter(n => !n.read).length;
 
   const handleSave = () => {
     setIsSaving(true);
@@ -89,50 +95,29 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
     }, 1500);
   };
 
-  const startLineVerification = async () => {
-    if (!lineNumber || !countryCode) return;
-    setVerifyStep('auditing');
-    const res = await verifyTelecommNode({ countryCode, lineNumber, esin: user.esin });
-    setAuditReport(res.text);
-    
-    // Simulate OTP generation after audit
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    
-    setTimeout(() => {
-      setVerifyStep('otp');
-    }, 3000);
+  const markRead = (id: string) => {
+    setSignals(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otpInput === generatedOtp) {
-      setVerifyStep('success');
-      onUpdate({ ...user, isPhoneVerified: true });
+  const deleteNotification = (id: string) => {
+    setSignals(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleAction = (sig: SignalShard) => {
+    if (sig.type === 'engagement' && sig.meta?.collectiveId) {
+      setViewingContract(sig);
     } else {
-      alert("Invalid verification code. Please check the network signal.");
-      setOtpInput('');
+      markRead(sig.id);
     }
   };
 
-  const startBiometricScan = () => {
-    setBiometricStep('scanning');
+  const finalizeAcceptance = (id: string) => {
+    setIsVerifying(id);
     setTimeout(() => {
-      setBiometricStep('complete');
-    }, 3000);
-  };
-
-  const initiateRecoveryCheck = () => {
-    setVerifyStepRecovery('sending');
-    setTimeout(() => {
-      setVerifyStepRecovery('verified');
+      onAcceptProposal?.(id);
+      setIsVerifying(null);
+      setViewingContract(null);
     }, 2500);
-  };
-
-  const handleDeleteFinal = () => {
-    if (deleteInput === user.esin) {
-      onDeleteAccount?.();
-    }
   };
 
   return (
@@ -164,50 +149,51 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-gap-2 flex items-center gap-2">
+              <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <MapPin className="w-3 h-3" /> {user.location}
               </span>
               <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <Briefcase className="w-3 h-3" /> {user.role}
               </span>
               <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                <Calendar className="w-3 h-3" /> Node Active Since {user.regDate}
+                <Calendar className="w-3 h-3" /> Active Since {user.regDate}
               </span>
-              {user.lineNumber && (
-                <span className={`px-3 py-1 border rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${user.isPhoneVerified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
-                  <Phone className="w-3 h-3" /> {user.countryCode} {user.lineNumber}
-                  {user.isPhoneVerified && <CheckCircle2 className="w-2.5 h-2.5" />}
-                </span>
-              )}
             </div>
           </div>
         </div>
 
         <div className="glass-card p-8 rounded-[40px] bg-blue-500/5 border-blue-500/20 flex flex-col justify-center text-center space-y-4">
            <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">Registry Standing</p>
-           <h3 className="text-5xl font-black text-white tracking-tighter">EXCELLENT</h3>
+           <h3 className="text-5xl font-black text-white tracking-tighter uppercase italic">Master</h3>
            <div className="flex justify-center gap-1">
              {[...Array(5)].map((_, i) => (
                <Award key={i} className="w-5 h-5 text-amber-500 fill-amber-500" />
              ))}
            </div>
-           <p className="text-xs text-slate-500 font-medium italic">"Top 5% of stewards in the {user.location.split(',')[1] || 'Global'} zone."</p>
+           <p className="text-xs text-slate-500 font-medium italic">"High reputation node (Cycle 12)"</p>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex gap-4 p-1 glass-card rounded-2xl w-fit">
+      <div className="flex flex-wrap gap-4 p-1 glass-card rounded-2xl w-fit">
         {[
-          { id: 'general', label: 'Identity Settings', icon: UserIcon },
-          { id: 'dossier', label: 'Steward Dossier', icon: Fingerprint },
-          { id: 'security', label: 'Node Security', icon: Lock },
+          { id: 'general', label: 'Identity Settings', icon: UserIcon, badge: 0 },
+          { id: 'signals', label: 'Network Signals', icon: Bell, badge: unreadCount },
+          { id: 'dossier', label: 'Steward Dossier', icon: Fingerprint, badge: 0 },
+          { id: 'security', label: 'Node Security', icon: Lock, badge: 0 },
         ].map(tab => (
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
-            <tab.icon className="w-4 h-4" /> {tab.label}
+            <tab.icon className="w-4 h-4" /> 
+            {tab.label}
+            {tab.badge > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-[#050706] animate-pulse">
+                {tab.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -216,6 +202,128 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8 animate-in slide-in-from-left-4 duration-500">
           
+          {activeTab === 'signals' && (
+            <div className="space-y-8">
+               <div className="flex justify-between items-end border-b border-white/5 pb-6 px-4">
+                  <div>
+                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Incoming <span className="text-emerald-400">Signals</span></h3>
+                    <p className="text-slate-500 text-sm mt-1">Real-time engagement and system telemetry shards.</p>
+                  </div>
+                  <button 
+                    onClick={() => setSignals(prev => prev.map(n => ({...n, read: true})))}
+                    className="text-[10px] font-black text-slate-500 hover:text-emerald-400 uppercase tracking-widest transition-colors flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Mark all as read
+                  </button>
+               </div>
+
+               <div className="space-y-6">
+                  {signals.length === 0 ? (
+                    <div className="glass-card p-20 rounded-[48px] border-white/5 flex flex-col items-center text-center space-y-4 opacity-30">
+                       <Radio className="w-16 h-16 text-slate-500 animate-pulse" />
+                       <p className="text-lg font-bold text-slate-400 uppercase">Silence in the Registry</p>
+                    </div>
+                  ) : (
+                    signals.map(sig => {
+                      const Icon = sig.type === 'system' ? ShieldCheck : sig.type === 'engagement' ? Handshake : Globe;
+                      const PriorityColor = sig.priority === 'high' ? 'text-rose-400' : sig.priority === 'medium' ? 'text-amber-400' : 'text-blue-400';
+                      const isContract = sig.type === 'engagement' && sig.meta?.collectiveId;
+                      
+                      return (
+                        <div 
+                          key={sig.id} 
+                          className={`glass-card p-8 rounded-[40px] border-2 transition-all flex flex-col group relative overflow-hidden ${sig.read ? 'border-white/5 bg-white/[0.01]' : isContract ? 'border-amber-500/40 bg-amber-500/[0.03] shadow-[0_0_50px_rgba(245,158,11,0.1)]' : 'border-emerald-500/20 bg-emerald-500/[0.03] shadow-2xl'}`}
+                        >
+                           <div className="flex items-start gap-8 w-full">
+                              <div className={`p-5 rounded-[24px] shrink-0 transition-all ${sig.read ? 'bg-white/5 text-slate-600' : isContract ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400 shadow-xl shadow-emerald-900/10 group-hover:scale-110'}`}>
+                                 {isContract ? <FileSignature className="w-8 h-8" /> : <Icon className="w-8 h-8" />}
+                              </div>
+                              
+                              <div className="flex-1 space-y-3">
+                                 <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-3">
+                                       <h4 className={`text-xl font-bold uppercase tracking-tight ${sig.read ? 'text-slate-400' : 'text-white'}`}>
+                                          {isContract && <span className="text-amber-500 mr-2">[BINDING_CONTRACT]</span>}
+                                          {sig.title}
+                                       </h4>
+                                       {!sig.read && <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>}
+                                    </div>
+                                    <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">{sig.timestamp}</span>
+                                 </div>
+                                 
+                                 {isContract ? (
+                                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-4">
+                                       <div className="flex items-center gap-2 mb-2">
+                                          <FileCode className="w-4 h-4 text-amber-500" />
+                                          <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">Protocol: EA_RECRUIT_V3.2</span>
+                                       </div>
+                                       <p className="text-slate-300 text-sm italic font-medium leading-relaxed">
+                                          {sig.message}
+                                       </p>
+                                       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                                          <div>
+                                             <p className="text-[8px] text-slate-600 uppercase font-black">Collective Node</p>
+                                             <p className="text-xs font-mono text-white truncate">{sig.meta.collectiveName}</p>
+                                          </div>
+                                          <div className="text-right">
+                                             <p className="text-[8px] text-slate-600 uppercase font-black">Bounty</p>
+                                             <p className="text-xs font-mono text-emerald-400 font-black">{sig.meta.reward} EAC</p>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 ) : (
+                                    <p className={`text-sm leading-relaxed italic ${sig.read ? 'text-slate-500' : 'text-slate-300'}`}>
+                                       "{sig.message}"
+                                    </p>
+                                 )}
+
+                                 <div className="pt-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                       <span className="text-[8px] font-black text-slate-700 font-mono uppercase tracking-[0.4em]">{sig.id}</span>
+                                       <div className="w-1 h-1 rounded-full bg-slate-800"></div>
+                                       <span className={`text-[8px] font-black uppercase tracking-widest ${PriorityColor}`}>Priority: {sig.priority}</span>
+                                    </div>
+                                    
+                                    <div className="flex gap-3">
+                                       {sig.actionLabel && !sig.read && (
+                                          <button 
+                                             onClick={() => handleAction(sig)}
+                                             className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg ${isContract ? 'bg-amber-600 text-white hover:bg-amber-500 shadow-amber-900/20' : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-900/20'}`}
+                                          >
+                                             <sig.actionIcon className="w-3 h-3" />
+                                             {sig.actionLabel}
+                                          </button>
+                                       )}
+                                       <button 
+                                         onClick={(e) => { e.stopPropagation(); deleteNotification(sig.id); }}
+                                         className="p-2.5 bg-rose-600/10 text-rose-500 rounded-xl hover:bg-rose-600 hover:text-white transition-all border border-rose-500/20"
+                                       >
+                                          <Trash className="w-4 h-4" />
+                                       </button>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div className={`absolute top-0 right-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity ${isContract ? 'bg-amber-500/40' : 'bg-emerald-500/20'}`}></div>
+                        </div>
+                      );
+                    })
+                  )}
+               </div>
+               
+               <div className="p-8 glass-card rounded-[40px] bg-indigo-500/5 border border-indigo-500/10 flex items-center gap-8 group">
+                  <div className="w-16 h-16 rounded-[24px] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
+                     <Sparkles className="w-8 h-8 text-indigo-400" />
+                  </div>
+                  <div>
+                     <h4 className="text-lg font-bold text-white uppercase tracking-widest italic">Engagement Multiplier</h4>
+                     <p className="text-xs text-slate-500 leading-relaxed font-medium">Respond to peer signals within 12h to boost your Societal (S) Thrust by 0.5% per interaction.</p>
+                  </div>
+               </div>
+            </div>
+          )}
+
           {activeTab === 'general' && (
             <div className="space-y-8">
               <div className="glass-card p-10 rounded-[40px] space-y-8 relative overflow-hidden">
@@ -268,18 +376,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Anchor Email (Immutable)</label>
-                      <div className="relative">
-                        <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-                        <input 
-                          type="email" 
-                          disabled
-                          value={user.email}
-                          className="w-full bg-black/20 border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-slate-600 cursor-not-allowed font-medium" 
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Professional Role</label>
                       <input 
                         type="text" 
@@ -289,95 +385,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                         className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 transition-all" 
                       />
                     </div>
-                    
-                    {/* Line Number Ingest with Country Code */}
-                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                       <div className="space-y-2 md:col-span-1">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Country Code</label>
-                          <div className="relative">
-                            <Globe className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                            <input 
-                              type="text" 
-                              disabled={!isEditing}
-                              value={countryCode}
-                              onChange={(e) => setCountryCode(e.target.value)}
-                              placeholder="+254"
-                              className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 transition-all font-mono" 
-                            />
-                          </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Line Number Ingest</label>
+                       <div className="relative">
+                          <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                          <input 
+                            type="tel" 
+                            disabled={!isEditing}
+                            value={lineNumber}
+                            onChange={(e) => setLineNumber(e.target.value)}
+                            placeholder="7XX XXX XXX"
+                            className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white font-mono tracking-widest disabled:opacity-50" 
+                          />
                        </div>
-                       <div className="space-y-2 md:col-span-3">
-                          <div className="flex justify-between items-center px-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Line Number Ingest</label>
-                            {user.lineNumber && !user.isPhoneVerified && !isEditing && (
-                              <button 
-                                onClick={() => { setShowVerifyPhoneModal(true); setVerifyStep('idle'); }}
-                                className="text-[9px] font-black text-rose-400 uppercase tracking-widest hover:text-rose-300 flex items-center gap-1"
-                              >
-                                <ShieldAlert className="w-3 h-3" /> Unverified Node • Verify Now
-                              </button>
-                            )}
-                            {user.isPhoneVerified && !isEditing && (
-                              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1">
-                                <ShieldCheck className="w-3 h-3" /> TEL_NODE_SECURED
-                              </span>
-                            )}
-                          </div>
-                          <div className="relative">
-                            <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                            <input 
-                              type="tel" 
-                              disabled={!isEditing}
-                              value={lineNumber}
-                              onChange={(e) => setLineNumber(e.target.value)}
-                              placeholder="7XX XXX XXX"
-                              className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 transition-all font-mono tracking-widest" 
-                            />
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-
-                 <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-center gap-4 mt-4">
-                    <Activity className="w-6 h-6 text-amber-500 shrink-0" />
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Identity changes require a cryptographic re-sync with the global registry. Your verified Line Number anchors your steward presence to the physical telecommunication grid.
-                    </p>
-                 </div>
-              </div>
-
-              {/* Danger Zone */}
-              <div className="glass-card p-10 rounded-[40px] border border-rose-500/30 bg-rose-500/5 space-y-8">
-                 <div className="flex items-center gap-3">
-                    <ShieldAlert className="w-6 h-6 text-rose-500" />
-                    <h3 className="text-xl font-bold text-white uppercase tracking-tighter">Danger Zone</h3>
-                 </div>
-                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2 flex flex-col justify-center">
-                       <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                          <LogOut className="w-4 h-4 text-rose-400" /> Terminate Node Session
-                       </h4>
-                       <p className="text-xs text-slate-500">Unbind hardware relay and clear local session state.</p>
-                       <button 
-                        onClick={onLogout}
-                        className="mt-4 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
-                       >
-                          Execute Logout
-                       </button>
-                    </div>
-
-                    <div className="space-y-2 flex flex-col justify-center">
-                       <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                          <Trash2 className="w-4 h-4 text-rose-400" /> Delete Node Entry
-                       </h4>
-                       <p className="text-xs text-slate-500">Permanently purge your ESIN from the local registry.</p>
-                       <button 
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="mt-4 px-8 py-3 bg-rose-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-rose-900/40 hover:bg-rose-500 transition-all"
-                       >
-                          Purge Identity
-                       </button>
                     </div>
                  </div>
               </div>
@@ -455,39 +475,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                           {btoa(user.esin + user.email).substring(0, 64).toUpperCase()}...
                         </p>
                      </div>
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <button 
-                          onClick={() => { setShowBiometricModal(true); setBiometricStep('idle'); }}
-                          className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center gap-4 text-left hover:bg-emerald-500/5 hover:border-emerald-500/20 transition-all group"
-                        >
-                           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                              <Fingerprint className="w-6 h-6" />
-                           </div>
-                           <div>
-                              <p className="text-xs font-bold text-white group-hover:text-emerald-400">Biometric Vault</p>
-                              <p className="text-[10px] text-slate-500">Node bound to device hardware.</p>
-                           </div>
-                        </button>
-                        <button 
-                          onClick={() => { setShowRecoveryModal(true); setVerifyStepRecovery('idle'); }}
-                          className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center gap-4 text-left hover:bg-blue-500/5 hover:border-blue-500/20 transition-all group"
-                        >
-                           <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all">
-                              <Key className="w-6 h-6" />
-                           </div>
-                           <div>
-                              <p className="text-xs font-bold text-white group-hover:text-blue-400">Recovery Anchor</p>
-                              <p className="text-[10px] text-slate-500">Verified via {user.email}</p>
-                           </div>
-                        </button>
-                     </div>
-                  </div>
-
-                  <div className="flex justify-center pt-4">
-                     <button className="px-10 py-4 bg-rose-600/10 border border-rose-500/20 rounded-2xl text-[10px] font-black text-rose-400 uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all">
-                        Initiate Node Transfer
-                     </button>
                   </div>
                </div>
             </div>
@@ -508,325 +495,117 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                 </div>
                 <div className="space-y-4">
                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-500 font-bold uppercase">Signals Unread</span>
+                      <span className={`font-black ${unreadCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{unreadCount}</span>
+                   </div>
+                   <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-500 font-bold uppercase">Node Integrity</span>
                       <span className="text-emerald-400 font-black">STABLE</span>
                    </div>
-                   <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-500 font-bold uppercase">Registry Sync</span>
-                      <span className="text-blue-400 font-black">100%</span>
-                   </div>
-                   <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-500 font-bold uppercase">Vouch Score</span>
-                      <span className="text-white font-black">42.8/50</span>
-                   </div>
                 </div>
-                <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                   <Activity className="w-4 h-4" /> Download Node Dossier
+                <button 
+                  onClick={() => setActiveTab('signals')}
+                  className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                >
+                   <Bell className="w-4 h-4" /> View Signal Shards
                 </button>
              </div>
           </div>
         </div>
       </div>
 
-      {/* Line Verification Modal */}
-      {showVerifyPhoneModal && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl" onClick={() => setShowVerifyPhoneModal(false)}></div>
-           <div className="relative z-10 w-full max-w-lg glass-card p-1 rounded-[44px] border-emerald-500/40 bg-[#050706] overflow-hidden">
-              <div className="p-12 space-y-8 flex flex-col items-center text-center">
-                 <button onClick={() => setShowVerifyPhoneModal(false)} className="absolute top-10 right-10 p-2 text-slate-600 hover:text-white transition-all"><X className="w-6 h-6" /></button>
+      {/* Contract Review Modal */}
+      {viewingContract && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setViewingContract(null)}></div>
+           <div className="relative z-[210] w-full max-w-2xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(245,158,11,0.2)] animate-in zoom-in duration-300">
+              <div className="p-12 space-y-10 min-h-[600px] flex flex-col">
+                 <button onClick={() => setViewingContract(null)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
                  
-                 {verifyStep === 'idle' && (
-                   <div className="space-y-8 animate-in zoom-in duration-300 w-full">
-                      <div className="w-20 h-20 bg-emerald-500/10 rounded-[32px] flex items-center justify-center border border-emerald-500/20 mx-auto shadow-2xl">
-                         <Radio className="w-10 h-10 text-emerald-400 animate-pulse" />
-                      </div>
-                      <div>
-                         <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">TelNode <span className="text-emerald-400">Anchoring</span></h3>
-                         <p className="text-slate-400 text-sm mt-2 leading-relaxed">
-                            Verify your line <strong>{countryCode} {lineNumber}</strong> via the regional telecommunication shard to secure your node identity.
-                         </p>
-                      </div>
-                      <button 
-                        onClick={startLineVerification}
-                        className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                      >
-                         <Zap className="w-5 h-5 fill-current" /> Initialize Tel-Audit
-                      </button>
-                   </div>
-                 )}
-
-                 {verifyStep === 'auditing' && (
-                   <div className="space-y-10 animate-in fade-in duration-500 py-10 w-full">
-                      <div className="relative mx-auto">
-                         <div className="absolute inset-0 border-t-4 border-emerald-500 rounded-full animate-spin"></div>
-                         <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                            <Cpu className="w-10 h-10 text-emerald-400 animate-pulse" />
-                         </div>
-                      </div>
-                      <div className="space-y-2">
-                         <h3 className="text-xl font-black text-white uppercase tracking-widest">Consulting Tel-Oracle</h3>
-                         <p className="text-emerald-500/60 font-mono text-[10px] animate-pulse uppercase tracking-[0.2em]">Synchronizing ZK-Shards...</p>
-                      </div>
-                   </div>
-                 )}
-
-                 {verifyStep === 'otp' && (
-                   <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 w-full">
-                      <div className="p-8 bg-black/60 rounded-[32px] border-l-4 border-emerald-500/50 text-left space-y-4">
-                         <div className="flex items-center gap-3">
-                            <Sparkles className="w-4 h-4 text-emerald-400" />
-                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Audit Shard: SUCCESS</span>
-                         </div>
-                         <p className="text-[11px] text-slate-400 italic leading-relaxed whitespace-pre-line">
-                            {auditReport}
-                         </p>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="space-y-2">
-                           <h4 className="text-xl font-bold text-white uppercase tracking-widest">Enter Verification Shard</h4>
-                           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest italic">A signal was dispatched to {countryCode} {lineNumber}</p>
-                        </div>
-                        <form onSubmit={handleOtpSubmit} className="space-y-6">
-                           <input 
-                              type="text" 
-                              maxLength={6}
-                              autoFocus
-                              value={otpInput}
-                              onChange={e => setOtpInput(e.target.value.replace(/\D/g, ''))}
-                              placeholder="000 000"
-                              className="w-full bg-black/60 border border-white/10 rounded-2xl py-8 text-white font-mono text-5xl text-center focus:ring-4 focus:ring-emerald-500/20 tracking-[0.4em] outline-none" 
-                           />
-                           <button 
-                              type="submit"
-                              disabled={otpInput.length !== 6}
-                              className="w-full py-6 bg-emerald-600 rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-xl shadow-emerald-900/40 disabled:opacity-30"
-                           >
-                              <ShieldCheck className="w-5 h-5" /> Anchor Identity
-                           </button>
-                        </form>
-                      </div>
-
-                      {/* Mock Notification display for ease of use */}
-                      <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 text-left">
-                         <Smartphone className="w-8 h-8 text-slate-500 shrink-0" />
-                         <div>
-                            <p className="text-[9px] text-slate-500 uppercase font-black">STWD_NOTIF: Incoming SMS</p>
-                            <p className="text-xs font-mono font-bold text-emerald-400">EnvirosAgro code: {generatedOtp}</p>
-                         </div>
-                      </div>
-                   </div>
-                 )}
-
-                 {verifyStep === 'success' && (
-                   <div className="flex flex-col items-center justify-center space-y-12 py-10 animate-in zoom-in duration-700 text-center w-full">
-                      <div className="w-32 h-32 bg-emerald-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 scale-110">
-                         <CheckCircle2 className="w-16 h-16 text-white" />
-                      </div>
-                      <div className="space-y-4">
-                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Line Node Anchored</h3>
-                         <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Steward Profile Hardened // EOS Registry Verified</p>
-                      </div>
-                      <div className="w-full glass-card p-10 rounded-[40px] border-white/5 bg-emerald-500/5 space-y-4 text-left">
-                         <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500 font-black uppercase tracking-widest">Shard Registry</span>
-                            <span className="text-white font-mono font-bold">NODE_TEL_#{(Math.random()*1000).toFixed(0)}</span>
-                         </div>
-                         <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500 font-black uppercase tracking-widest">Auth Protocol</span>
-                            <span className="text-emerald-400 font-mono text-[11px]">ZK_SMS_VERIFY_V3.2</span>
-                         </div>
-                      </div>
-                      <button onClick={() => setShowVerifyPhoneModal(false)} className="w-full py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">Dismiss Terminal</button>
-                   </div>
-                 )}
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* Delete Account Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl" onClick={() => setShowDeleteConfirm(false)}></div>
-           <div className="relative z-10 w-full max-w-lg glass-card p-1 rounded-[44px] border-rose-500/40 bg-rose-950/20 overflow-hidden">
-              <div className="p-12 space-y-10 flex flex-col items-center text-center">
-                 <div className="w-20 h-20 bg-rose-500/20 rounded-[32px] flex items-center justify-center border border-rose-500/40 animate-bounce">
-                    <AlertTriangle className="w-10 h-10 text-rose-500" />
-                 </div>
-                 
-                 <div className="space-y-4">
-                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Purge Node Identity?</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">
-                       This action is permanent. Your node <strong>{user.esin}</strong> will be unlinked from the registry and all spendable EAC will be lost.
-                    </p>
-                 </div>
-
-                 <div className="w-full space-y-4">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Type your ESIN to confirm purge</p>
-                    <input 
-                      type="text" 
-                      value={deleteInput}
-                      onChange={(e) => setDeleteInput(e.target.value)}
-                      placeholder={user.esin}
-                      className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-center font-mono uppercase tracking-widest focus:ring-2 focus:ring-rose-500/40 outline-none" 
-                    />
-                 </div>
-
-                 <div className="flex gap-4 w-full">
-                    <button 
-                      onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
-                    >
-                       Cancel
-                    </button>
-                    <button 
-                      onClick={handleDeleteFinal}
-                      disabled={deleteInput !== user.esin}
-                      className="flex-1 py-4 bg-rose-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-rose-900/40 hover:bg-rose-500 transition-all disabled:opacity-30"
-                    >
-                       Purge Identity
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* Biometric Vault Modal */}
-      {showBiometricModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/95 backdrop-blur-2xl" onClick={() => setShowBiometricModal(false)}></div>
-          <div className="relative z-10 w-full max-w-md glass-card p-1 rounded-[40px] border-emerald-500/20 overflow-hidden">
-             <div className="bg-[#050706]/90 p-10 space-y-8 flex flex-col items-center text-center min-h-[450px] justify-center">
-                <button onClick={() => setShowBiometricModal(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors">
-                  <X className="w-6 h-6" />
-                </button>
-
-                {biometricStep === 'idle' && (
-                  <div className="space-y-8 animate-in zoom-in duration-300">
-                    <div className="w-24 h-24 rounded-[32px] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
-                       <Scan className="w-12 h-12 text-emerald-400" />
+                 <div className="flex items-center gap-6 mb-2">
+                    <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20">
+                        <BookOpenCheck className="w-10 h-10 text-amber-500" />
                     </div>
                     <div>
-                       <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Hardware Lock</h3>
-                       <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-                          Secure your EnvirosAgro steward node by binding it to this device's hardware signature.
-                       </p>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Collective <span className="text-amber-500">Contract Review</span></h3>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Binding Shard: 0x772_RECRUIT</p>
                     </div>
-                    <button 
-                      onClick={startBiometricScan}
-                      className="w-full py-5 agro-gradient rounded-2xl text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] transition-all"
-                    >
-                       Initialize Scan
-                    </button>
-                  </div>
-                )}
+                 </div>
 
-                {biometricStep === 'scanning' && (
-                  <div className="space-y-8 animate-in fade-in duration-500 flex flex-col items-center">
-                    <div className="relative">
-                       <div className="w-32 h-32 rounded-full border-2 border-emerald-500/20 flex items-center justify-center overflow-hidden">
-                          <Fingerprint className="w-16 h-16 text-emerald-500 animate-pulse" />
+                 <div className="flex-1 space-y-10 overflow-y-auto custom-scrollbar pr-4">
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-1">
+                          <p className="text-[9px] text-slate-500 uppercase font-black">Contracting Admin</p>
+                          <p className="text-sm font-mono text-white truncate">{viewingContract.meta.adminEsin}</p>
                        </div>
-                       <div className="absolute inset-0 border-t-4 border-emerald-500 rounded-full animate-spin"></div>
+                       <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-1">
+                          <p className="text-[9px] text-slate-500 uppercase font-black">Target Collective</p>
+                          <p className="text-sm font-mono text-emerald-400 truncate">{viewingContract.meta.collectiveName}</p>
+                       </div>
                     </div>
-                    <div className="space-y-2">
-                       <h3 className="text-xl font-black text-white uppercase tracking-widest">Reading Hardware</h3>
-                       <p className="text-emerald-500/60 font-mono text-[10px] animate-pulse">0x882_ENCRYPT_HARDWARE_ID...</p>
-                    </div>
-                  </div>
-                )}
 
-                {biometricStep === 'complete' && (
-                  <div className="space-y-8 animate-in zoom-in duration-500">
-                    <div className="w-24 h-24 rounded-full bg-emerald-500 flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/40 scale-110">
-                       <ShieldCheck className="w-12 h-12 text-white" />
-                    </div>
-                    <div>
-                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Vault Bound</h3>
-                       <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mt-1">Biometric Integrity Confirmed</p>
-                    </div>
-                    <button 
-                      onClick={() => setShowBiometricModal(false)}
-                      className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
-                    >
-                       Return to Security
-                    </button>
-                  </div>
-                )}
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Recovery Anchor Modal */}
-      {showRecoveryModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/95 backdrop-blur-2xl" onClick={() => setShowRecoveryModal(false)}></div>
-          <div className="relative z-10 w-full max-w-md glass-card p-1 rounded-[40px] border-blue-500/20 overflow-hidden">
-             <div className="bg-[#050706]/90 p-10 space-y-8 flex flex-col items-center text-center min-h-[450px] justify-center">
-                <button onClick={() => setShowRecoveryModal(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors">
-                  <X className="w-6 h-6" />
-                </button>
-
-                {recoveryStep === 'idle' && (
-                  <div className="space-y-8 animate-in zoom-in duration-300">
-                    <div className="w-24 h-24 rounded-[32px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto">
-                       <Wifi className="w-12 h-12 text-blue-400" />
-                    </div>
                     <div className="space-y-4">
-                       <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Recovery Anchor</h3>
-                       <p className="text-slate-400 text-xs leading-relaxed">
-                          Your node identity is anchored to <br/><span className="text-blue-400 font-bold">{user.email}</span>.
-                       </p>
-                    </div>
-                    <button 
-                      onClick={initiateRecoveryCheck}
-                      className="w-full py-5 bg-blue-600 rounded-2xl text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-900/40 hover:bg-blue-500 transition-all"
-                    >
-                       Ping Recovery Node
-                    </button>
-                  </div>
-                )}
-
-                {recoveryStep === 'sending' && (
-                  <div className="space-y-8 animate-in fade-in duration-500 flex flex-col items-center">
-                    <div className="relative">
-                       <div className="w-32 h-32 rounded-full border-2 border-blue-500/20 flex items-center justify-center overflow-hidden">
-                          <Send className="w-12 h-12 text-blue-400 animate-ping" />
+                       <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest px-4">Agreement Narrative</h4>
+                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 prose prose-invert max-w-none">
+                          <p className="text-slate-300 text-lg leading-loose italic whitespace-pre-line font-medium border-l-4 border-amber-500/30 pl-8">
+                             "I, {user.name} (ESIN: {user.esin}), acknowledge the invitation to anchor my agricultural node to the {viewingContract.meta.collectiveName} distributed ledger. 
+                             
+                             By signing this shard, I commit to the mission objectives:
+                             
+                             '${viewingContract.meta.mission}'
+                             
+                             In exchange, the network will release a 50 EAC settlement to my treasury upon successful m-constant synchronization."
+                          </p>
                        </div>
-                       <div className="absolute inset-0 border-t-4 border-blue-500 rounded-full animate-spin"></div>
                     </div>
-                    <div className="space-y-2">
-                       <h3 className="text-xl font-black text-white uppercase tracking-widest">Routing Signal</h3>
-                       <p className="text-blue-500/60 font-mono text-[10px] animate-pulse">DISPATCHING_RECOVERY_PACKET...</p>
-                    </div>
-                  </div>
-                )}
 
-                {recoveryStep === 'verified' && (
-                  <div className="space-y-8 animate-in zoom-in duration-500">
-                    <div className="w-24 h-24 rounded-full bg-blue-500 flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/40 scale-110">
-                       <CheckCircle2 className="w-12 h-12 text-white" />
+                    <div className="p-8 glass-card rounded-[40px] border-emerald-500/20 bg-emerald-500/5 flex flex-col md:flex-row items-center justify-between gap-6">
+                       <div className="flex items-center gap-4">
+                          <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                             <Coins className="w-6 h-6 text-emerald-400" />
+                          </div>
+                          <div>
+                             <p className="text-[10px] text-slate-500 font-black uppercase">Settlement Reward</p>
+                             <p className="text-2xl font-mono font-black text-white">{viewingContract.meta.reward} EAC</p>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className="text-[8px] text-slate-500 uppercase font-black">Ledger Status</p>
+                          <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase rounded tracking-widest border border-amber-500/20">Awaiting Signature</span>
+                       </div>
                     </div>
-                    <div>
-                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Path Verified</h3>
-                       <p className="text-blue-500 text-[10px] font-black uppercase tracking-widest mt-1">Registry Handshake Successful</p>
-                    </div>
+                 </div>
+
+                 <div className="flex gap-6 relative z-10 pt-4 border-t border-white/5">
+                    <button onClick={() => setViewingContract(null)} className="flex-1 py-6 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Decline Shard</button>
                     <button 
-                      onClick={() => setShowRecoveryModal(false)}
-                      className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                      onClick={() => finalizeAcceptance(viewingContract.id)}
+                      disabled={!!isVerifying}
+                      className="flex-[2] py-6 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.02] transition-all disabled:opacity-30"
                     >
-                       Return to Security
+                       {isVerifying ? (
+                         <>
+                           <Loader2 className="w-8 h-8 animate-spin" />
+                           <span>ZK-Proof Syncing...</span>
+                         </>
+                       ) : (
+                         <>
+                           <Stamp className="w-8 h-8" />
+                           <span>Authorize Binding Contract</span>
+                         </>
+                       )}
                     </button>
-                  </div>
-                )}
-             </div>
-          </div>
+                 </div>
+              </div>
+           </div>
         </div>
       )}
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+      `}</style>
     </div>
   );
 };

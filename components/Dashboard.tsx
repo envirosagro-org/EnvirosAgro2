@@ -98,6 +98,7 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
   const [showIdentityCard, setShowIdentityCard] = useState(false);
+  const totalBalance = user.wallet.balance + (user.wallet.bonusBalance || 0);
 
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700">
@@ -137,7 +138,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
 
              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10">
                 {[
-                  { label: 'Treasury', val: user.wallet.balance.toLocaleString(), unit: 'EAC', icon: Coins, col: 'text-emerald-500' },
+                  { label: 'Treasury', val: totalBalance.toLocaleString(), unit: 'EAC', icon: Coins, col: 'text-emerald-500' },
                   { label: 'C(a) Index', val: user.metrics.agriculturalCodeU, unit: '', icon: Binary, col: 'text-blue-500' },
                   { label: 'm-Factor', val: user.metrics.timeConstantTau, unit: '', icon: Activity, col: 'text-amber-500' },
                   { label: 'U-Score', val: user.metrics.sustainabilityScore, unit: '%', icon: HeartPulse, col: 'text-emerald-400' },

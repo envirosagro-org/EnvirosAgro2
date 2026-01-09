@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-// Fix: Added missing AlertTriangle import from lucide-react
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake
 } from 'lucide-react';
-import { ViewState, User } from './types';
+import { ViewState, User, WorkerProfile, AgroProject, AgroTransaction } from './types';
 import Dashboard from './components/Dashboard';
 import Sustainability from './components/Sustainability';
 import Economy from './components/Economy';
@@ -28,6 +27,7 @@ import EvidenceModal from './components/EvidenceModal';
 import CircularGrid from './components/CircularGrid';
 import NexusCRM from './components/NexusCRM';
 import TQMGrid from './components/TQMGrid';
+import ResearchInnovation from './components/ResearchInnovation';
 import { syncUserToCloud } from './services/firebaseService';
 
 interface Notification {
@@ -38,6 +38,19 @@ interface Notification {
   timestamp: string;
 }
 
+export interface SignalShard {
+  id: string;
+  type: 'system' | 'engagement' | 'network';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  priority: 'low' | 'medium' | 'high';
+  actionLabel?: string;
+  actionIcon?: any;
+  meta?: any;
+}
+
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
@@ -46,6 +59,88 @@ const App: React.FC = () => {
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  // Global Network Signals
+  const [networkSignals, setNetworkSignals] = useState<SignalShard[]>([
+    { 
+      id: 'SIG-001', 
+      type: 'system', 
+      title: 'Protocol Upgrade v3.2.1', 
+      message: 'Center Gate has synchronized new C(a) multipliers.', 
+      timestamp: '10m ago', 
+      read: false, 
+      priority: 'high' 
+    }
+  ]);
+
+  // Lifted Collectives State
+  const [collectives, setCollectives] = useState<any[]>([
+    { 
+      id: 'COLL-01', 
+      name: 'Bantu Soil Guardians', 
+      adminEsin: 'EA-ADMIN-X842', 
+      members: [
+        { id: 'W-01', name: 'Dr. Sarah Chen', sustainabilityRating: 98 },
+        { id: 'W-02', name: 'Marcus T.', sustainabilityRating: 85 },
+        { id: 'W-03', name: 'Elena Rodriguez', sustainabilityRating: 92 }
+      ], 
+      type: 'Clan', 
+      mission: 'Preserving ancestral composting methods.',
+      resonance: 92,
+      objectives: ['Restore Soil Biome', 'Map Lineage Seeds'],
+      signals: [{ from: 'Dr. Sarah Chen', text: 'Moisture Shard #402 committed to Bantu Ledger.', timestamp: '10:42 AM', type: 'text' }],
+      materials: [{ name: 'Heritage_Grains_Map.png', uploader: 'Dr. Sarah Chen', size: '2.4MB' }],
+      missionCampaign: {
+        active: true,
+        title: 'Bantu Soil Restoration Shard',
+        target: 50000,
+        pool: 12500
+      }
+    }
+  ]);
+
+  // Lifted Projects State
+  const [projects, setProjects] = useState<AgroProject[]>([
+    { 
+      id: 'PRJ-NE-291', 
+      name: "Bantu Regenerative Cluster", 
+      adminEsin: 'EA-ADMIN-X842',
+      description: "Scaling ancient Bantu irrigation techniques using IoT telemetry.",
+      thrust: "Societal", 
+      status: 'Execution',
+      totalCapital: 500000, 
+      fundedAmount: 320000, 
+      batchesClaimed: 0, 
+      totalBatches: 10,
+      progress: 20, 
+      roiEstimate: 15,
+      collateralLocked: 250000,
+      profitsAccrued: 12500,
+      investorShareRatio: 0.20, 
+      performanceIndex: 88,
+      memberCount: 7
+    },
+    { 
+      id: 'PRJ-KE-101', 
+      name: "Nairobi Spectral Lab", 
+      adminEsin: 'EA-ADMIN-X842',
+      description: "Establishing localized crop testing using satellite shards.",
+      thrust: "Technological", 
+      status: 'Funding',
+      totalCapital: 120000, 
+      fundedAmount: 85000, 
+      batchesClaimed: 0, 
+      totalBatches: 5,
+      progress: 5, 
+      roiEstimate: 22,
+      collateralLocked: 60000,
+      profitsAccrued: 0,
+      investorShareRatio: 0.15,
+      performanceIndex: 0,
+      memberCount: 4
+    }
+  ]);
+
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('agro_theme');
     return (saved as 'light' | 'dark') || 'dark';
@@ -77,6 +172,56 @@ const App: React.FC = () => {
     }, 5000);
   };
 
+  const sendSignal = (signal: Omit<SignalShard, 'id' | 'timestamp' | 'read'>) => {
+    const id = `SIG-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    const newSignal: SignalShard = {
+      ...signal,
+      id,
+      timestamp: 'Just now',
+      read: false
+    };
+    setNetworkSignals(prev => [newSignal, ...prev]);
+    addNotification('info', 'SIGNAL_INCOMING', `New ${signal.type} shard received in your profile.`);
+  };
+
+  const handleAcceptProposal = (signalId: string) => {
+    const signal = networkSignals.find(s => s.id === signalId);
+    if (!signal || !signal.meta || !user) return;
+
+    const { collectiveId, collectiveName, reward } = signal.meta;
+
+    setCollectives(prev => prev.map(c => {
+      if (c.id === collectiveId) {
+        const isAlreadyMember = c.members.some((m: any) => m.id === user.esin);
+        if (isAlreadyMember) return c;
+        return {
+          ...c,
+          members: [...c.members, { 
+            id: user.esin, 
+            name: user.name, 
+            sustainabilityRating: user.metrics.sustainabilityScore 
+          }]
+        };
+      }
+      return c;
+    }));
+
+    if (reward) {
+      const updatedUser: User = {
+        ...user,
+        wallet: {
+          ...user.wallet,
+          balance: user.wallet.balance + reward,
+          lifetimeEarned: user.wallet.lifetimeEarned + reward
+        }
+      };
+      handleUpdateUser(updatedUser);
+    }
+
+    addNotification('success', 'CONTRACT_ANCHORED', `Handshake complete. You have joined ${collectiveName}. +${reward} EAC released.`);
+    setNetworkSignals(prev => prev.map(s => s.id === signalId ? { ...s, read: true, actionLabel: undefined } : s));
+  };
+
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
@@ -104,11 +249,36 @@ const App: React.FC = () => {
   };
 
   const spendEAC = (amount: number, reason: string) => {
-    if (!user || user.wallet.balance < amount) {
+    if (!user) return false;
+    const totalBalance = user.wallet.balance + (user.wallet.bonusBalance || 0);
+    
+    if (totalBalance < amount) {
       addNotification('error', 'LIQUIDITY_FAIL', `Insufficient EAC for ${reason.replace('_', ' ')}.`);
       return false;
     }
-    const updatedUser: User = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } };
+
+    let remainingToSpend = amount;
+    let newBonusBalance = user.wallet.bonusBalance || 0;
+    let newBalance = user.wallet.balance;
+
+    if (newBonusBalance > 0) {
+      const spendFromBonus = Math.min(newBonusBalance, remainingToSpend);
+      newBonusBalance -= spendFromBonus;
+      remainingToSpend -= spendFromBonus;
+    }
+
+    if (remainingToSpend > 0) {
+      newBalance -= remainingToSpend;
+    }
+
+    const updatedUser: User = { 
+      ...user, 
+      wallet: { 
+        ...user.wallet, 
+        balance: newBalance,
+        bonusBalance: newBonusBalance
+      } 
+    };
     handleUpdateUser(updatedUser);
     addNotification('success', 'EAC_BURN', `Spent ${amount} EAC for ${reason.replace('_', ' ')}.`);
     return true;
@@ -133,6 +303,7 @@ const App: React.FC = () => {
   const navigation = [
     { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
     { id: 'wallet', name: 'Agro-Wallet', icon: Wallet },
+    { id: 'research', name: 'Research & Innovation', icon: Microscope },
     { id: 'tqm', name: 'TQM & Trace', icon: ClipboardCheck },
     { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake },
     { id: 'profile', name: 'Steward Profile', icon: UserIcon },
@@ -157,7 +328,6 @@ const App: React.FC = () => {
     <div className={`flex h-screen overflow-hidden ${theme === 'dark' ? 'bg-[#050706] text-slate-200' : 'bg-slate-50 text-slate-900'} transition-colors duration-500`}>
       <div className="scanline"></div>
       
-      {/* Desktop Responsive Sidebar */}
       {!isMobile && (
         <aside className={`${isSidebarOpen ? 'w-72' : 'w-20'} glass-card border-r border-slate-200 dark:border-white/5 flex flex-col z-50 transition-all duration-300 relative`}>
           <div className="p-6 flex items-center justify-between overflow-hidden">
@@ -202,7 +372,6 @@ const App: React.FC = () => {
         </aside>
       )}
 
-      {/* Main Stage */}
       <main className="flex-1 overflow-y-auto relative flex flex-col pb-24 lg:pb-0">
         <header className="flex justify-between items-center sticky top-0 bg-white/80 dark:bg-agro-bg/80 backdrop-blur-xl z-40 py-4 px-6 md:px-10 border-b border-slate-200 dark:border-white/5">
           <div className="flex items-center gap-4">
@@ -230,7 +399,6 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Unified Toggle Controls */}
             <div className="flex items-center glass-card p-1 rounded-2xl border-slate-200 dark:border-white/5">
               <button 
                 onClick={toggleTheme}
@@ -251,7 +419,7 @@ const App: React.FC = () => {
             <button onClick={() => handleNavigate('wallet')} className="flex items-center gap-4 glass-card px-4 py-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5 transition-all group">
               <div className="hidden sm:flex flex-col items-end">
                 <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Treasury</span>
-                <span className="text-lg font-mono font-black dark:text-white text-slate-900">{user.wallet.balance.toFixed(0)} <span className="text-xs text-emerald-500">EAC</span></span>
+                <span className="text-lg font-mono font-black dark:text-white text-slate-900">{(user.wallet.balance + (user.wallet.bonusBalance || 0)).toFixed(0)} <span className="text-xs text-emerald-500">EAC</span></span>
               </div>
               <div className="p-2.5 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500 transition-colors group-hover:text-white text-emerald-500">
                 <Wallet size={20} />
@@ -262,9 +430,9 @@ const App: React.FC = () => {
 
         <div className="p-4 md:p-10 flex-1 relative overflow-x-hidden scrollbar-hide">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={handleNavigate} />}
-          {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} />}
-          {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} />}
-          {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} />}
+          {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} />}
+          {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} signals={networkSignals} setSignals={setNetworkSignals} onAcceptProposal={handleAcceptProposal} />}
+          {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} projects={projects} />}
           {activeView === 'vendor' && <VendorPortal user={user} />}
           {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} />}
           {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
@@ -273,18 +441,28 @@ const App: React.FC = () => {
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} />}
           {activeView === 'sustainability' && <Sustainability onAction={() => setIsEvidenceModalOpen(true)} />}
           {activeView === 'economy' && <Economy user={user} onMint={() => setIsEvidenceModalOpen(true)} />}
-          {activeView === 'industrial' && <Industrial user={user} onSpendEAC={spendEAC} />}
-          {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
+          {activeView === 'industrial' && (
+            <Industrial 
+              user={user} 
+              onSpendEAC={spendEAC} 
+              onSendProposal={sendSignal} 
+              collectives={collectives} 
+              setCollectives={setCollectives}
+              onAddProject={(p) => setProjects(prev => [p, ...prev])}
+              onUpdateProject={(p) => setProjects(prev => prev.map(oldP => oldP.id === p.id ? p : oldP))}
+            />
+          )}
+          {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance + (user.wallet.bonusBalance || 0)} onSpendEAC={spendEAC} />}
           {activeView === 'tools' && <ToolsSection />}
+          {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'community' && <Community user={user} onContribution={() => {}} onSpendEAC={spendEAC} />}
           {activeView === 'explorer' && <Explorer />}
           {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={() => {}} />}
-          {activeView === 'media' && <MediaHub userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
+          {activeView === 'media' && <MediaHub userBalance={user.wallet.balance + (user.wallet.bonusBalance || 0)} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
         </div>
 
-        {/* Global Notification Shards */}
-        <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[300] flex flex-col gap-4 pointer-events-none w-full max-w-sm">
+        <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[300] flex flex-col gap-4 pointer-events-none w-full max-sm:max-w-[90%] max-w-sm">
            {notifications.map(n => (
              <div key={n.id} className="pointer-events-auto animate-in slide-in-from-right-8 duration-500">
                <div className={`glass-card p-5 rounded-3xl border-l-4 shadow-2xl flex items-start gap-4 ${
@@ -297,7 +475,7 @@ const App: React.FC = () => {
                     n.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 
                     n.type === 'error' ? 'bg-rose-500/20 text-rose-400' : 
                     n.type === 'warning' ? 'bg-amber-500/20 text-amber-400' : 
-                    'bg-blue-500/20 text-blue-400'
+                    n.type === 'bg-blue-500/20 text-blue-400'
                   }`}>
                     {n.type === 'success' ? <CheckCircle2 size={18} /> : 
                      n.type === 'error' ? <AlertTriangle size={18} /> : 
@@ -324,7 +502,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Handheld Navigation Bar */}
       {isMobile && (
         <nav className="fixed bottom-0 left-0 right-0 h-20 glass-card border-t border-slate-200 dark:border-white/5 flex items-center justify-around px-4 z-[100] pb-safe bg-white/80 dark:bg-agro-bg/80 backdrop-blur-3xl">
           {navigation.slice(0, 5).map((item) => (
@@ -344,7 +521,6 @@ const App: React.FC = () => {
         </nav>
       )}
 
-      {/* Global View Drawer */}
       {showMobileMenu && (
         <div className="fixed inset-0 z-[200] animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-agro-bg/95 backdrop-blur-2xl" onClick={() => setShowMobileMenu(false)}></div>
@@ -356,7 +532,7 @@ const App: React.FC = () => {
                   )}
                   <h3 className="text-xl font-black uppercase italic tracking-tighter dark:text-white text-slate-900">Registry <span className="text-emerald-500">Nodes</span></h3>
                 </div>
-                <button onClick={() => setShowMobileMenu(false)} className="p-3 bg-white/5 rounded-full text-slate-400"><X size={28} /></button>
+                <button onClick={() => setShowMobileMenu(false)} className="p-3 bg-white/5 rounded-full text-slate-600 dark:text-slate-400"><X size={28} /></button>
              </div>
              <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-hide">
                 {navigation.map(item => (
