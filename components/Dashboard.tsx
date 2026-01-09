@@ -3,7 +3,7 @@ import {
   ShieldCheck, Zap, Globe, Activity, HeartPulse, Cpu, Sparkles, Binary, 
   CreditCard, Layers, Coins, Users, Heart, ArrowRight, BrainCircuit, Bot, 
   TrendingUp, AtSign, Share2, Youtube, Twitter, HelpCircle, Send, Pin, Linkedin,
-  Rocket, PlusCircle, Gavel, Building2, Share, ShieldAlert
+  Rocket, PlusCircle, Gavel, Building2, Share, ShieldAlert, UserCheck
 } from 'lucide-react';
 import { ViewState, User } from '../types';
 import IdentityCard from './IdentityCard';
@@ -173,12 +173,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
            <p className="hidden md:block text-[9px] font-mono text-indigo-500/50 font-black uppercase tracking-widest">Shard Priority: High</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
            {[
              { label: 'Form Collective', icon: PlusCircle, color: 'text-emerald-400', desc: 'Form Shard Group', target: 'industrial', action: 'FORM_COLLECTIVE' },
              { label: 'Register Node', icon: Building2, color: 'text-amber-400', desc: 'Industry Node Entry', target: 'industrial', action: 'REGISTER_NODE' },
              { label: 'Place Bid', icon: Gavel, color: 'text-blue-400', desc: 'Tender Auction Portal', target: 'industrial', action: 'PLACE_BID' },
              { label: 'Launch Mission', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Campaign', target: 'industrial', action: 'LAUNCH_MISSION' },
+             { label: 'Steward Dossier', icon: UserCheck, color: 'text-teal-400', desc: 'View Full Dossier', target: 'industrial', action: 'VIEW_DOSSIER' },
            ].map((action, i) => (
              <button 
               key={i} 
@@ -336,7 +337,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
       {showIdentityCard && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setShowIdentityCard(false)}></div>
-           <div className="relative z-10 w-full max-w-lg space-y-6 flex flex-col items-center animate-in zoom-in duration-300">
+           <div className="relative z-10 w-full max-lg:max-w-lg space-y-6 flex flex-col items-center animate-in zoom-in duration-300">
               <div className="text-center space-y-2 mb-2">
                  <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">Steward <span className="text-emerald-500">Identity</span></h2>
                  <p className="text-emerald-500/60 font-mono text-[10px] tracking-[0.4em] uppercase">Blockchain Anchor Secured</p>
