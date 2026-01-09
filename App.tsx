@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft
 } from 'lucide-react';
 import { ViewState, User } from './types';
 import Dashboard from './components/Dashboard';
@@ -32,6 +32,7 @@ import { syncUserToCloud } from './services/firebaseService';
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
+  const [viewHistory, setViewHistory] = useState<ViewState[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
@@ -61,6 +62,20 @@ const App: React.FC = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     localStorage.setItem('agro_theme', newTheme);
+  };
+
+  const handleNavigate = (newView: ViewState) => {
+    if (newView === activeView) return;
+    setViewHistory(prev => [...prev, activeView]);
+    setActiveView(newView);
+    if (isMobile) setShowMobileMenu(false);
+  };
+
+  const handleGoBack = () => {
+    if (viewHistory.length === 0) return;
+    const previousView = viewHistory[viewHistory.length - 1];
+    setViewHistory(prev => prev.slice(0, -1));
+    setActiveView(previousView);
   };
 
   const handleUpdateUser = async (updatedUser: User) => {
@@ -126,7 +141,7 @@ const App: React.FC = () => {
         <aside className={`${isSidebarOpen ? 'w-72' : 'w-20'} glass-card border-r border-slate-200 dark:border-white/5 flex flex-col z-50 transition-all duration-300 relative`}>
           <div className="p-6 flex items-center justify-between overflow-hidden">
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg group cursor-pointer hover:rotate-12 transition-transform">
+              <div onClick={() => handleNavigate('dashboard')} className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg group cursor-pointer hover:rotate-12 transition-transform">
                 <Leaf className="text-white w-6 h-6" />
               </div>
               {isSidebarOpen && <span className="text-xl font-black uppercase tracking-tighter truncate italic dark:text-white text-slate-900">Enviros<span className="text-emerald-500">Agro™</span></span>}
@@ -140,7 +155,7 @@ const App: React.FC = () => {
             {navigation.map((item) => (
               <button 
                 key={item.id} 
-                onClick={() => setActiveView(item.id as ViewState)} 
+                onClick={() => handleNavigate(item.id as ViewState)} 
                 className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all group ${
                   activeView === item.id 
                     ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-inner' 
@@ -170,10 +185,20 @@ const App: React.FC = () => {
       <main className="flex-1 overflow-y-auto relative flex flex-col pb-24 lg:pb-0">
         <header className="flex justify-between items-center sticky top-0 bg-white/80 dark:bg-agro-bg/80 backdrop-blur-xl z-40 py-4 px-6 md:px-10 border-b border-slate-200 dark:border-white/5">
           <div className="flex items-center gap-4">
-            {isMobile && (
+            {isMobile ? (
               <button onClick={() => setShowMobileMenu(true)} className="p-2 text-slate-400">
                 <Menu size={24} />
               </button>
+            ) : (
+              viewHistory.length > 0 && (
+                <button 
+                  onClick={handleGoBack}
+                  className="flex items-center gap-2 p-2 px-4 bg-white/5 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all group"
+                >
+                  <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Back</span>
+                </button>
+              )
             )}
             <div>
               <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase italic leading-none dark:text-white text-slate-900">
@@ -202,7 +227,7 @@ const App: React.FC = () => {
               </button>
             </div>
 
-            <button onClick={() => setActiveView('wallet')} className="flex items-center gap-4 glass-card px-4 py-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5 transition-all group">
+            <button onClick={() => handleNavigate('wallet')} className="flex items-center gap-4 glass-card px-4 py-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5 transition-all group">
               <div className="hidden sm:flex flex-col items-end">
                 <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Treasury</span>
                 <span className="text-lg font-mono font-black dark:text-white text-slate-900">{user.wallet.balance.toFixed(0)} <span className="text-xs text-emerald-500">EAC</span></span>
@@ -215,8 +240,8 @@ const App: React.FC = () => {
         </header>
 
         <div className="p-4 md:p-10 flex-1 relative overflow-x-hidden scrollbar-hide">
-          {activeView === 'dashboard' && <Dashboard user={user} onNavigate={setActiveView} />}
-          {activeView === 'wallet' && <AgroWallet user={user} onNavigate={setActiveView} />}
+          {activeView === 'dashboard' && <Dashboard user={user} onNavigate={handleNavigate} />}
+          {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} />}
           {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} />}
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} />}
           {activeView === 'vendor' && <VendorPortal user={user} />}
@@ -244,7 +269,7 @@ const App: React.FC = () => {
           {navigation.slice(0, 5).map((item) => (
             <button 
               key={item.id} 
-              onClick={() => setActiveView(item.id as ViewState)} 
+              onClick={() => handleNavigate(item.id as ViewState)} 
               className={`flex flex-col items-center gap-1.5 p-2 transition-all ${activeView === item.id ? 'text-emerald-500' : 'text-slate-400'}`}
             >
               <item.icon size={22} className={activeView === item.id ? 'animate-pulse drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : ''} />
@@ -264,14 +289,19 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-agro-bg/95 backdrop-blur-2xl" onClick={() => setShowMobileMenu(false)}></div>
           <div className="absolute top-0 right-0 bottom-0 w-[85%] max-w-sm dark:bg-agro-bg bg-white shadow-2xl p-8 flex flex-col border-l border-white/5 animate-in slide-in-from-right duration-400 rounded-l-[40px]">
              <div className="flex justify-between items-center mb-10">
-                <h3 className="text-xl font-black uppercase italic tracking-tighter dark:text-white text-slate-900">Registry <span className="text-emerald-500">Nodes</span></h3>
+                <div className="flex items-center gap-4">
+                  {viewHistory.length > 0 && (
+                    <button onClick={handleGoBack} className="p-3 bg-white/5 rounded-full text-slate-400"><ArrowLeft size={20} /></button>
+                  )}
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter dark:text-white text-slate-900">Registry <span className="text-emerald-500">Nodes</span></h3>
+                </div>
                 <button onClick={() => setShowMobileMenu(false)} className="p-3 bg-white/5 rounded-full text-slate-400"><X size={28} /></button>
              </div>
              <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-hide">
                 {navigation.map(item => (
                   <button 
                     key={item.id} 
-                    onClick={() => { setActiveView(item.id as ViewState); setShowMobileMenu(false); }} 
+                    onClick={() => { handleNavigate(item.id as ViewState); setShowMobileMenu(false); }} 
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all ${
                       activeView === item.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'dark:text-slate-400 text-slate-500 hover:bg-slate-500/5'
                     }`}

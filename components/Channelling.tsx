@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Share2, 
@@ -40,7 +41,9 @@ import {
   Cloud,
   Wind,
   Linkedin,
-  Send
+  Send,
+  // Fixed: Added missing icon
+  ArrowRight
 } from 'lucide-react';
 import { User } from '../types';
 

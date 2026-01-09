@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
@@ -29,7 +30,6 @@ import {
   ShieldAlert,
   Newspaper,
   BookOpen,
-  ArrowRight,
   Globe,
   Waves,
   Heart,
@@ -42,7 +42,9 @@ import {
   CirclePlay,
   Monitor,
   Video as VideoIcon,
-  Users
+  Users,
+  // Fixed: Added missing icon
+  ArrowRight
 } from 'lucide-react';
 import { searchAgroTrends, AIResponse } from '../services/geminiService';
 

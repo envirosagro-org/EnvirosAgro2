@@ -9,7 +9,6 @@ import {
   FlaskConical, 
   Factory, 
   ChefHat, 
-  ArrowRight, 
   Loader2, 
   Zap, 
   CheckCircle2, 
@@ -26,8 +25,10 @@ import {
   Binary,
   Microscope,
   Award,
-  // Fix: Added missing Heart icon import
-  Heart
+  Heart,
+  ChevronLeft,
+  // Fixed: Added missing icons
+  ArrowRight
 } from 'lucide-react';
 import { User } from '../types';
 import { auditProductQuality } from '../services/geminiService';
@@ -140,7 +141,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC }) => {
         ].map(tab => (
           <button 
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => { setActiveTab(tab.id as any); setAuditReport(null); }}
             className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
@@ -259,6 +260,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC }) => {
                             <div className={`w-3 h-3 rounded-full ${log.level === 'SUCCESS' ? 'bg-emerald-500' : log.level === 'WARNING' ? 'bg-amber-500 animate-pulse' : 'bg-blue-500'}`}></div>
                             <div>
                                <p className="text-slate-200 font-bold text-sm tracking-tight">{log.msg}</p>
+                               {/* Fixed: Changed 'node' to 'log.node' to resolve reference error */}
                                <p className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mt-1">{log.node} // {log.time}</p>
                             </div>
                          </div>
@@ -316,6 +318,13 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC }) => {
                      </div>
                    ) : (
                      <div className="w-full text-left space-y-10 animate-in fade-in duration-700">
+                        <button 
+                          onClick={() => setAuditReport(null)}
+                          className="flex items-center gap-2 mb-4 p-2 px-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all w-fit group/back"
+                        >
+                          <ChevronLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Back to Ingest</span>
+                        </button>
                         <div className="p-12 bg-black/60 rounded-[56px] border-l-8 border-emerald-500/50 shadow-2xl relative">
                            <div className="absolute top-6 right-10 text-[9px] font-black text-emerald-500/40 uppercase tracking-widest">GEMINI_3_FLASH_TQM_V1</div>
                            <div className="prose prose-invert prose-emerald max-w-none text-slate-300 text-lg leading-loose italic whitespace-pre-line border-white/5 pl-4">
@@ -324,7 +333,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC }) => {
                         </div>
                         <div className="flex justify-center gap-6">
                            <button onClick={() => setAuditReport(null)} className="px-10 py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Clear Audit</button>
-                           <button className="px-12 py-5 bg-emerald-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 active:scale-95">
+                           <button className="px-12 py-5 bg-indigo-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 active:scale-95">
                               <Download className="w-5 h-5" /> Export TQM Shard
                            </button>
                         </div>

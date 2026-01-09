@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Flower2, 
@@ -89,7 +90,8 @@ import {
   Network,
   Radio,
   Wifi,
-  Signal
+  Signal,
+  ChevronLeft
 } from 'lucide-react';
 import { searchAgroTrends, AIResponse, analyzeTokenzFinance } from '../services/geminiService';
 import { User } from '../types';
@@ -473,7 +475,14 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                     <activeBrand.icon className={`w-12 h-12 ${activeBrand.color}`} />
                   </div>
                 </div>
-                <div>
+                <div className="flex flex-col">
+                  <button 
+                    onClick={() => setActiveBrand(null)}
+                    className="flex items-center gap-2 mb-4 p-2 px-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all w-fit group/back"
+                  >
+                    <ChevronLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Back to Ecosystem</span>
+                  </button>
                   <div className="flex items-center gap-6">
                     <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">{activeBrand.name}</h2>
                     <span className="px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
@@ -519,7 +528,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
               ) : (
                 <>
                   <button onClick={() => setPortalTab('ai')} className={`flex-1 py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'ai' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
-                    <div className="flex items-center justify-center gap-3"><Sparkles className="w-4 h-4" /> {activeBrand.id === 'hearts4agro' ? 'Integrated Care Sweep' : activeBrand.id === 'medicag' ? 'Agro-Doctoring' : activeBrand.id === 'agromusika' ? 'Frequency Sync' : 'Terminal Intel'}</div>
+                    <div className="flex items-center justify-center gap-3"><Sparkles className="w-4 h-4" /> {activeBrand.id === 'hearts4agro' ? 'Integrated Care Sweep' : activeBrand.id === 'medicag' ? 'Agro-Medicine & Doctory' : activeBrand.id === 'agromusika' ? 'Frequency Sync' : 'Terminal Intel'}</div>
                   </button>
                   <button onClick={() => setPortalTab('market')} className={`flex-1 py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'market' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
                     <div className="flex items-center justify-center gap-3"><ShoppingBag className="w-4 h-4" /> {activeBrand.id === 'medicag' ? 'Agro-Pharmacopeia' : activeBrand.id === 'agromusika' ? 'Wave Hardware' : 'Services'}</div>
