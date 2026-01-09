@@ -8,8 +8,9 @@ EnvirosAgro™ Sustainability Framework (EOS):
 - C(a)™ Agro Code: Formula: C(a) = x * ((r^n - 1) / (r - 1)) + 1
 - m™ Constant / Time Signature: Formula: m = sqrt((Dn * In * C(a)) / S)
 - Five Thrusts™ (SEHTI): Societal, Environmental, Human, Technological, Industry.
-- Social Influenza Disease (SID): Vector pathogens impacting social immunity (x).
-- Tokenz: Central institutional gateway for value ingress/egress.
+- Total Quality Management (TQM): Tracking and tracing products from Production to Consumption.
+- Traceability Shards: Immutable ledger entries for every stage of a product's life.
+- Quality Grade: A score derived from multi-thrust audits (Purity, Cleanliness, Feedback).
 `;
 
 export interface GroundingChunk {
@@ -57,6 +58,23 @@ export const chatWithAgroExpert = async (message: string, history: any[], useSea
   return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
 };
 
+export const auditProductQuality = async (batchId: string, lifecycleLogs: any[]): Promise<AIResponse> => {
+  const response = await getAI().models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Audit TQM for Batch ${batchId}. Logs: ${JSON.stringify(lifecycleLogs)}. Verify quality across Production (Farm), Processing (Industrial), and Consumer feedback. Assign a 'Quality Shard Grade' (A-F) and identify any traceability gaps. Context: ${FRAMEWORK_CONTEXT}`,
+    config: { thinkingConfig: { thinkingBudget: 8000 } }
+  }) as GenerateContentResponse;
+  return { text: response.text || "" };
+};
+
+export const analyzeCustomerSentiment = async (feedbackLogs: any[]): Promise<AIResponse> => {
+  const response = await getAI().models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Analyze customer feedback logs: ${JSON.stringify(feedbackLogs)}. Determine aggregate Customer Satisfaction score (0-100), identify pain points in the Five Thrusts, and provide a Customer Experience (CX) improvement strategy. Context: ${FRAMEWORK_CONTEXT}`,
+  }) as GenerateContentResponse;
+  return { text: response.text || "" };
+};
+
 export const diagnoseCropIssue = async (description: string, imageBase64?: string): Promise<AIResponse> => {
   const parts: any[] = [{ text: `EnvirosAgro Crop Doctor. Context: ${FRAMEWORK_CONTEXT}. Diagnostic: ${description}` }];
   if (imageBase64) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } });
@@ -64,6 +82,17 @@ export const diagnoseCropIssue = async (description: string, imageBase64?: strin
     model: 'gemini-3-pro-preview', 
     contents: { parts },
     config: { thinkingConfig: { thinkingBudget: 32768 } }
+  }) as GenerateContentResponse;
+  return { text: response.text || "" };
+};
+
+export const auditRecycledItem = async (itemName: string, usageData: any, imageBase64?: string): Promise<AIResponse> => {
+  const parts: any[] = [{ text: `EnvirosAgro Reverse Supply Chain Auditor. Item: ${itemName}. Usage Logs: ${JSON.stringify(usageData)}. Context: ${FRAMEWORK_CONTEXT}. Evaluate refurbishment potential (0-100%) and calculate 'Recycle Credit' in EAC.` }];
+  if (imageBase64) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } });
+  const response = await getAI().models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: { parts },
+    config: { thinkingConfig: { thinkingBudget: 16000 } }
   }) as GenerateContentResponse;
   return { text: response.text || "" };
 };
@@ -93,43 +122,6 @@ export const analyzeMedia = async (mediaBase64: string, mimeType: string, prompt
     config: { thinkingConfig: { thinkingBudget: 32768 } }
   }) as GenerateContentResponse;
   return response.text || "";
-};
-
-export const generateAgroVideo = async (prompt: string, aspectRatio: '16:9' | '9:16'): Promise<string> => {
-  const ai = getAI();
-  let operation = await ai.models.generateVideos({
-    model: 'veo-3.1-fast-generate-preview',
-    prompt: `Industrial agro-documentation: ${prompt}`,
-    config: { numberOfVideos: 1, resolution: '720p', aspectRatio }
-  });
-  while (!operation.done) {
-    await new Promise(r => setTimeout(r, 10000));
-    operation = await ai.operations.getVideosOperation({ operation });
-  }
-  return `${operation.response?.generatedVideos?.[0]?.video?.uri}&key=${process.env.API_KEY}`;
-};
-
-export const generateAgroImage = async (prompt: string, aspectRatio: string, imageSize: '1K' | '2K' | '4K'): Promise<string> => {
-  const response = await getAI().models.generateContent({
-    model: imageSize === '1K' ? 'gemini-2.5-flash-image' : 'gemini-3-pro-image-preview',
-    contents: { parts: [{ text: `EnvirosAgro fidelity: ${prompt}` }] },
-    config: { imageConfig: { aspectRatio: aspectRatio as any, imageSize: imageSize as any } },
-  }) as GenerateContentResponse;
-  for (const part of response.candidates?.[0]?.content?.parts || []) {
-    if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-  }
-  throw new Error("Generation failure.");
-};
-
-export const editAgroImage = async (imageBase64: string, prompt: string): Promise<string> => {
-  const response = await getAI().models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: { parts: [{ inlineData: { data: imageBase64, mimeType: 'image/jpeg' } }, { text: prompt }] },
-  }) as GenerateContentResponse;
-  for (const part of response.candidates?.[0]?.content?.parts || []) {
-    if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-  }
-  throw new Error("Edit failure.");
 };
 
 export const analyzeTokenzFinance = async (tx: any): Promise<AIResponse> => {

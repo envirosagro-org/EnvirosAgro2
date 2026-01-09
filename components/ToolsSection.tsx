@@ -415,8 +415,8 @@ const ToolsSection: React.FC = () => {
                      <span className="text-[10px] font-mono text-slate-500 px-3 py-1 bg-white/5 rounded-full">UCL: 75</span>
                   </div>
                </div>
-               <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+               <div className="h-80 w-full min-h-0 min-w-0">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <RechartsLineChart data={CONTROL_CHART_DATA}>
                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                        <XAxis dataKey="batch" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
@@ -455,7 +455,7 @@ const ToolsSection: React.FC = () => {
                 <button 
                   onClick={handleSigmaAudit}
                   disabled={isOptimizing || !sigmaInput.trim()}
-                  className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                  className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30"
                 >
                    {isOptimizing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                    {isOptimizing ? "RUNNING SIMULATION..." : "GENERATE SIGMA AUDIT"}

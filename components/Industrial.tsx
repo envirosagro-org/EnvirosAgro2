@@ -1,602 +1,1012 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   MapPin, 
-  Truck, 
   Gavel, 
-  UserCheck, 
   ShieldCheck, 
-  Star, 
   X, 
   Zap, 
-  Clock, 
-  ArrowUpRight, 
-  Cpu, 
-  Lock, 
-  Activity,
-  ChevronRight,
-  Loader2,
-  FileText,
-  Filter,
-  Mail,
-  Award,
-  Users2,
-  Briefcase,
-  CheckCircle2,
-  BadgeCheck,
-  TrendingUp,
-  Tag,
-  Sparkles,
-  Layers,
-  Database,
-  Gem,
-  PlusCircle,
-  /* Added missing RefreshCcw icon */
+  ChevronRight, 
+  Loader2, 
+  Users2, 
+  Users,
   RefreshCcw,
-  AlertCircle,
-  Rocket,
+  Briefcase, 
+  Layers, 
+  Database, 
+  PlusCircle, 
+  Rocket, 
+  ArrowRight, 
+  BarChart3, 
+  MessageSquare, 
+  Video, 
+  Mic, 
+  Calendar, 
+  Target, 
+  Heart, 
+  Volume2, 
+  Play, 
+  Plus, 
+  Send, 
+  Leaf, 
+  Dna,
   Landmark,
-  ArrowRight,
-  BarChart3,
-  Info,
-  Bot,
-  PieChart as PieChartIcon,
+  Sparkles,
+  Cpu,
+  Monitor,
+  Activity,
+  Bookmark,
+  Share2,
+  Trophy,
+  History,
+  TrendingUp,
   Globe,
-  LineChart as LineChartIcon
+  Star,
+  Clock,
+  UserCheck,
+  Mail,
+  FileText,
+  BadgeAlert,
+  Coins,
+  Hammer,
+  GanttChartSquare,
+  Network,
+  ArrowUpRight,
+  TrendingDown,
+  PieChart as PieChartIcon,
+  HardHat,
+  Factory,
+  Boxes,
+  ShieldAlert,
+  ClipboardCheck
 } from 'lucide-react';
 import { 
-  AreaChart, 
-  Area, 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  ResponsiveContainer, 
+  AreaChart, 
+  Area,
   BarChart,
   Bar,
-  Legend
+  Cell
 } from 'recharts';
-import { User, AgroProject } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { User, AgroProject, WorkerProfile } from '../types';
 
 interface IndustrialProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => boolean;
 }
 
-const GLOBAL_STATS_DATA = [
-  { name: 'Jan', nodes: 2400, tvl: 4000 },
-  { name: 'Feb', nodes: 3200, tvl: 5200 },
-  { name: 'Mar', nodes: 3800, tvl: 7800 },
-  { name: 'Apr', nodes: 4200, tvl: 9200 },
-  { name: 'May', nodes: 4800, tvl: 11000 },
+const MOCK_COLLECTIVES = [
+  { id: 'COLL-01', name: 'Bantu Soil Guardians', members: 142, type: 'Clan', thrust: 'Societal', mission: 'Preserving ancestral composting methods for global shards.', activeEvents: 2, objectives: ['Restore Soil Biome', 'Map Lineage Seeds'], impact: 'High Innovation' },
+  { id: 'COLL-02', name: 'Spectral Ingest Team', members: 45, type: 'Team', thrust: 'Technological', mission: 'Optimizing satellite data ingest for semi-arid zones.', activeEvents: 0, objectives: ['Satellite Sync', 'Drone Calibration'], impact: 'Incremental Improvement' },
+  { id: 'COLL-03', name: 'Resilience Society', members: 89, type: 'Society', thrust: 'Human', mission: 'Advancing physiological health audits for high-yield stewards.', activeEvents: 1, objectives: ['Steward Longevity', 'Mental Performance'], impact: 'Radical Innovation' },
 ];
 
-const THRUST_DISTRIBUTION = [
-  { name: 'Technological', value: 45, color: '#3b82f6' },
-  { name: 'Societal', value: 30, color: '#10b981' },
-  { name: 'Environmental', value: 15, color: '#fbbf24' },
-  { name: 'Informational', value: 10, color: '#6366f1' },
+const MOCK_WORKERS: WorkerProfile[] = [
+  { id: 'W-01', name: 'Dr. Sarah Chen', skills: ['Soil Science', 'Spectral Analysis'], sustainabilityRating: 98, verifiedHours: 2400, isOpenToWork: true, lifetimeEAC: 45000 },
+  { id: 'W-02', name: 'Marcus T.', skills: ['Hydroponics', 'IoT Maintenance'], sustainabilityRating: 85, verifiedHours: 820, isOpenToWork: true, lifetimeEAC: 12000 },
+  { id: 'W-03', name: 'Elena Rodriguez', skills: ['Permaculture', 'Social Care'], sustainabilityRating: 92, verifiedHours: 1560, isOpenToWork: false, lifetimeEAC: 28000 },
 ];
 
-const REGIONAL_RELIANCE = [
-  { zone: 'Zone 1', resilience: 84, growth: 12 },
-  { zone: 'Zone 2', resilience: 92, growth: 18 },
-  { zone: 'Zone 3', resilience: 78, growth: 8 },
-  { zone: 'Zone 4', resilience: 95, growth: 22 },
+const INITIAL_PROJECTS: AgroProject[] = [
+  { id: 'PRJ-NE-882', name: 'Zone 4 Moisture Array', adminEsin: 'EA-2024-X821-P991', description: 'Scaling sensor depth in Nebraska hubs.', thrust: 'Technological', status: 'Funding', totalCapital: 120000, fundedAmount: 85000, batchesClaimed: 0, totalBatches: 5, progress: 15, roiEstimate: 18.5, collateralLocked: 60000 },
+  { id: 'PRJ-KE-104', name: 'Nairobi Heritage Grains', adminEsin: 'EA-2024-X821-P991', description: 'Ancestral lineage seed preservation.', thrust: 'Societal', status: 'Execution', totalCapital: 45000, fundedAmount: 45000, batchesClaimed: 2, totalBatches: 4, progress: 50, roiEstimate: 12.2, collateralLocked: 22500, collectiveId: 'COLL-01' },
+  { id: 'PRJ-ES-042', name: 'Valencia Solar Desal', adminEsin: 'EA-2024-E112-S001', description: 'Industrial solar-powered desalination for coastal vineyards.', thrust: 'Industry', status: 'Verification', totalCapital: 250000, fundedAmount: 0, batchesClaimed: 0, totalBatches: 8, progress: 0, roiEstimate: 22.4, collateralLocked: 125000 },
+];
+
+const MOCK_TENDERS = [
+  { id: 'TND-01', proj: 'PRJ-NE-882', task: 'Deployment: 500 Soil Probes', zone: 'Zone 4', eac: 4500, time: '14h left', bids: 12 },
+  { id: 'TND-02', proj: 'PRJ-KE-104', task: 'Genetic Mapping: Lineage Grains', zone: 'Zone 2', eac: 12000, time: '2d left', bids: 4 },
+  { id: 'TND-03', proj: 'PRJ-ES-042', task: 'PV Panel Cleaning (Robotic)', zone: 'Global', eac: 2500, time: '6h left', bids: 28 },
+];
+
+const ANALYTICS_DATA = [
+  { time: 'T-12', nodes: 120, yield: 4.2 },
+  { time: 'T-09', nodes: 155, yield: 4.8 },
+  { time: 'T-06', nodes: 210, yield: 5.5 },
+  { time: 'T-03', nodes: 340, yield: 6.2 },
+  { time: 'T-01', nodes: 428, yield: 7.1 },
+  { time: 'NOW', nodes: 442, yield: 7.8 },
 ];
 
 const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
-  const [activeView, setActiveView] = useState<'registry' | 'talent' | 'auctions' | 'analytics'>('registry');
-  const [isRegisteringProject, setIsRegisteringProject] = useState(false);
-  const [projectStep, setProjectStep] = useState<'ideation' | 'analysis' | 'policy' | 'success'>('ideation');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'registry' | 'talent' | 'collectives' | 'auctions' | 'analytics'>('registry');
+  const [projects, setProjects] = useState<AgroProject[]>(INITIAL_PROJECTS);
+  
+  // Registration States
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [regStep, setRegStep] = useState(1);
+  const [projName, setProjName] = useState('');
+  const [projDesc, setProjDesc] = useState('');
+  const [projThrust, setProjThrust] = useState<AgroProject['thrust']>('Technological');
+  const [projGoal, setProjGoal] = useState('100000');
+  const [projRoi, setProjRoi] = useState('15');
+  const [registeringForCollectiveId, setRegisteringForCollectiveId] = useState<string | undefined>(undefined);
 
-  // Global Analytics State
-  const [isFetchingGlobalReport, setIsFetchingGlobalReport] = useState(false);
-  const [globalReport, setGlobalReport] = useState<string | null>(null);
+  // Collectives Logic
+  const [showCreateCollective, setShowCreateCollective] = useState(false);
+  const [collectiveStep, setCollectiveStep] = useState<1 | 2 | 3 | 4>(1);
+  const [selectedCollective, setSelectedCollective] = useState<any>(null);
+  const [collectivePortalMode, setCollectivePortalMode] = useState<'chat' | 'live' | 'podcast' | 'events' | 'missions'>('chat');
 
-  // Form State
-  const [pName, setPName] = useState('');
-  const [pDesc, setPDesc] = useState('');
-  const [pCapital, setPCapital] = useState('50000');
-  const [pThrust, setPThrust] = useState('Industry');
+  // Collective Form State
+  const [colName, setColName] = useState('');
+  const [colType, setColType] = useState('Society');
+  const [colObjectives, setColObjectives] = useState('');
+  const [colThrust, setColThrust] = useState('Societal');
+  const [colImpact, setColImpact] = useState('High Innovation');
 
-  const MOCK_PROJECTS: AgroProject[] = [
-    { id: 'PRJ-NE-882', name: 'Zone 4 Moisture Array', adminEsin: user.esin, description: 'Scaling sensor depth in Nebraska hubs.', thrust: 'Technological', status: 'Funding', totalCapital: 120000, fundedAmount: 85000, batchesClaimed: 0, totalBatches: 5, progress: 15, roiEstimate: 18.5, collateralLocked: 60000 },
-    { id: 'PRJ-KE-104', name: 'Nairobi Heritage Grains', adminEsin: 'EA-2024-X821-P991', description: 'Ancestral lineage seed preservation.', thrust: 'Societal', status: 'Execution', totalCapital: 45000, fundedAmount: 45000, batchesClaimed: 2, totalBatches: 4, progress: 50, roiEstimate: 12.2, collateralLocked: 22500 },
-  ];
+  // Industrial Pulse Logs
+  const [pulseLogs, setPulseLogs] = useState<{id: string, text: string, type: string}[]>([]);
 
-  const handleStartAnalysis = async () => {
-    setIsAnalyzing(true);
-    const prompt = `Act as an EnvirosAgro ROI Analyst. Analyze this project: Name: ${pName}, Thrust: ${pThrust}, Capital: ${pCapital} EAC. Provide a technical ROI forecast and explain its alignment with the Tokenz Batch Release policy (50% collateral required).`;
-    const response = await chatWithAgroExpert(prompt, []);
-    setAiAnalysis(response.text);
-    setIsAnalyzing(false);
-    setProjectStep('analysis');
+  useEffect(() => {
+    const messages = [
+      "PRJ-NE-882: Batch release authorized by Tokenz node.",
+      "New Collective formed: 'Kalahari Moisture Shards'",
+      "Tender TND-03: Lowest bid dropped to 2400 EAC",
+      "Global Capacity: 842 shards reached.",
+      "Vetting Node EA-2024-X: Handshake successful.",
+    ];
+    const interval = setInterval(() => {
+      const msg = messages[Math.floor(Math.random() * messages.length)];
+      setPulseLogs(prev => [{ id: Math.random().toString(), text: msg, type: 'info' }, ...prev].slice(0, 5));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLaunchCollective = (col: any) => {
+    setSelectedCollective(col);
+    setCollectivePortalMode('chat');
   };
 
-  const runGlobalOracleReport = async () => {
-    setIsFetchingGlobalReport(true);
-    const prompt = "Generate a global industrial agro-intelligence report. Analyze macro-trends in decentralized infrastructure, TVL distribution across Five Thrusts™, and regional resilience growth. Use a professional, institutional tone.";
-    const response = await chatWithAgroExpert(prompt, []);
-    setGlobalReport(response.text);
-    setIsFetchingGlobalReport(false);
+  const handleCreateProjectSubmit = () => {
+    const goal = Number(projGoal);
+    if (!onSpendEAC(goal * 0.5, 'PROJECT_COLLATERAL_LOCK')) return;
+
+    setIsRegistering(true);
+    setTimeout(() => {
+      const newProj: AgroProject = {
+        id: `PRJ-ID-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        name: projName,
+        adminEsin: user.esin,
+        collectiveId: registeringForCollectiveId,
+        description: projDesc,
+        thrust: projThrust,
+        status: 'Ideation',
+        totalCapital: goal,
+        fundedAmount: 0,
+        batchesClaimed: 0,
+        totalBatches: 5,
+        progress: 0,
+        roiEstimate: Number(projRoi),
+        collateralLocked: goal * 0.5
+      };
+      setProjects([newProj, ...projects]);
+      setIsRegistering(false);
+      setShowCreateProject(false);
+      setRegStep(1);
+      setRegisteringForCollectiveId(undefined);
+    }, 2000);
   };
 
-  const finalizeRegistration = () => {
-    setProjectStep('success');
+  const openCollectiveRegistration = (collectiveId: string) => {
+    setRegisteringForCollectiveId(collectiveId);
+    setShowCreateProject(true);
+    setRegStep(1);
+    setProjThrust('Societal');
+  };
+
+  const handleCreateCollectiveSubmit = () => {
+    const newCol = {
+      id: `COLL-${Math.random().toString(36).substring(7).toUpperCase()}`,
+      name: colName || 'New Collective',
+      members: 1,
+      type: colType,
+      thrust: colThrust,
+      mission: colObjectives.substring(0, 100) + '...',
+      activeEvents: 0,
+      objectives: colObjectives.split(',').map(o => o.trim()),
+      impact: colImpact
+    };
+    MOCK_COLLECTIVES.push(newCol);
+    setShowCreateCollective(false);
+    setCollectiveStep(1);
+  };
+
+  const getThrustIcon = (thrust: string) => {
+    switch (thrust) {
+      case 'Societal': return <Heart className="w-5 h-5 text-rose-400" />;
+      case 'Environmental': return <Leaf className="w-5 h-5 text-emerald-400" />;
+      case 'Human': return <Dna className="w-5 h-5 text-teal-400" />;
+      case 'Technological': return <Cpu className="w-5 h-5 text-blue-400" />;
+      case 'Industry': return <Factory className="w-5 h-5 text-purple-400" />;
+      default: return <Boxes className="w-5 h-5 text-slate-400" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Execution': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+      case 'Funding': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'Verification': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+      case 'Ideation': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+    }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto">
+      {/* Industrial Cloud Header */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 glass-card p-10 rounded-[40px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
-              <Layers className="w-64 h-64 text-white" />
+        <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12">
+           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
+              <Factory className="w-96 h-96 text-white" />
            </div>
-           <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
-              <div className="w-32 h-32 rounded-[40px] bg-indigo-500 flex items-center justify-center shadow-2xl ring-4 ring-white/10 shrink-0">
-                 <Briefcase className="w-16 h-16 text-white" />
+           <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
+              <div className="w-40 h-40 rounded-[48px] bg-indigo-600 flex items-center justify-center shadow-[0_0_50px_rgba(79,70,229,0.3)] ring-4 ring-white/10 shrink-0">
+                 <HardHat className="w-20 h-20 text-white" />
               </div>
-              <div className="space-y-4">
-                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Industrial <span className="text-indigo-400">Cloud</span></h2>
-                 <p className="text-slate-400 text-lg leading-relaxed max-w-xl font-medium">
-                    Coordinate large-scale agricultural projects, source verified talent, and participate in tender auctions for global sustainability missions.
+              <div className="space-y-6">
+                 <div>
+                    <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20">EOS_INDUSTRIAL_LAYER_V3</span>
+                    <h2 className="text-6xl font-black text-white uppercase tracking-tighter italic mt-4">Industrial <span className="text-indigo-400">Cloud</span></h2>
+                 </div>
+                 <p className="text-slate-400 text-xl leading-relaxed max-w-2xl font-medium">
+                    Scale high-impact agricultural missions. Source verified talent, form strategic collectives, and secure decentralized industrial registries.
                  </p>
-                 <div className="flex gap-4 pt-2">
+                 <div className="flex flex-wrap gap-6 pt-2">
                     <button 
-                      onClick={() => setIsRegisteringProject(true)}
-                      className="px-8 py-3 agro-gradient rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                      onClick={() => { setShowCreateProject(true); setRegStep(1); setRegisteringForCollectiveId(undefined); }}
+                      className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                     >
-                       <PlusCircle className="w-4 h-4" /> Start Industrial Project
+                       <PlusCircle className="w-5 h-5" /> Initialize Mission
                     </button>
                     <button 
-                      onClick={() => setActiveView('analytics')}
-                      className={`px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all ${activeView === 'analytics' ? 'bg-white/10 border-indigo-500/40' : ''}`}
+                      onClick={() => setActiveView('collectives')}
+                      className="px-10 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-sm uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center gap-3"
                     >
-                      Global Analytics
+                       <Users2 className="w-5 h-5" /> Social Collectives
                     </button>
                  </div>
               </div>
            </div>
         </div>
 
-        <div className="glass-card p-8 rounded-[40px] border-white/5 space-y-6 flex flex-col justify-center">
-           <div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Verified Workers</p>
-              <h4 className="text-4xl font-mono font-black text-white">4,281</h4>
-           </div>
-           <div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Open Tenders</p>
-              <h4 className="text-4xl font-mono font-black text-indigo-400">12</h4>
-           </div>
+        <div className="space-y-6 flex flex-col h-full">
+          <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 flex-1 flex flex-col justify-center text-center space-y-4">
+             <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Active Missions</p>
+             <h4 className="text-6xl font-mono font-black text-white tracking-tighter">{projects.length}</h4>
+             <div className="h-1 bg-white/5 rounded-full overflow-hidden w-24 mx-auto">
+                <div className="h-full bg-emerald-500 animate-pulse"></div>
+             </div>
+          </div>
+          <div className="glass-card p-8 rounded-[40px] border-emerald-500/20 bg-emerald-500/5 space-y-4">
+             <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Network Pulse</span>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+             </div>
+             <div className="space-y-3">
+                {pulseLogs.map(log => (
+                  <div key={log.id} className="flex gap-3 text-[9px] font-bold text-slate-400 italic border-l border-white/10 pl-3">
+                    <span className="text-emerald-500 shrink-0">&gt;</span>
+                    <span className="truncate">{log.text}</span>
+                  </div>
+                ))}
+             </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex gap-4 p-1 glass-card rounded-2xl w-fit">
+      {/* Primary Navigation System */}
+      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40">
         {[
-          { id: 'registry', label: 'Active Projects', icon: Database },
+          { id: 'registry', label: 'Active Missions', icon: Database },
           { id: 'talent', label: 'Worker Cloud', icon: Users2 },
-          { id: 'auctions', label: 'Tender Auctions', icon: Gavel },
-          { id: 'analytics', label: 'Global Analytics', icon: BarChart3 },
+          { id: 'collectives', label: 'Social Shards', icon: Share2 },
+          { id: 'auctions', label: 'Tender Grid', icon: Hammer },
+          { id: 'analytics', label: 'Global Performance', icon: BarChart3 },
         ].map(tab => (
           <button 
             key={tab.id}
-            onClick={() => setActiveView(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeView === tab.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            onClick={() => { setActiveView(tab.id as any); setSelectedCollective(null); }}
+            className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
           </button>
         ))}
       </div>
 
-      {activeView === 'registry' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-left-4 duration-300">
-           {MOCK_PROJECTS.map(proj => (
-             <div key={proj.id} className="glass-card p-10 rounded-[48px] border-white/5 hover:border-indigo-500/20 transition-all group flex flex-col h-full active:scale-95">
-                <div className="flex justify-between items-start mb-8">
-                   <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center">
-                         <Rocket className="w-7 h-7 text-indigo-400" />
+      {/* View Containers */}
+      <div className="min-h-[700px]">
+        {/* Registry View */}
+        {activeView === 'registry' && (
+          <div className="space-y-10 animate-in slide-in-from-left-6 duration-500">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {projects.map(proj => (
+                  <div key={proj.id} className="glass-card p-10 rounded-[56px] border-white/5 hover:border-indigo-500/30 transition-all group flex flex-col h-full active:scale-[0.98] duration-300 relative overflow-hidden bg-black/20">
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform">
+                         <Rocket className="w-40 h-40 text-white" />
                       </div>
-                      <div>
-                         <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{proj.name}</h4>
-                         <p className="text-[10px] text-slate-500 font-mono mt-2 tracking-widest">{proj.id} // THRUST: {proj.thrust}</p>
+                      
+                      <div className="flex justify-between items-start mb-10 relative z-10">
+                        <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-indigo-500/10 transition-colors shadow-2xl">
+                              <Rocket className="w-8 h-8 text-indigo-400" />
+                            </div>
+                            <div>
+                              <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-none group-hover:text-indigo-400 transition-colors">{proj.name}</h4>
+                              <p className="text-[10px] text-slate-500 font-mono mt-3 tracking-widest flex items-center gap-2">
+                                 {proj.id} <span className="text-slate-800">|</span> {proj.thrust.toUpperCase()}
+                              </p>
+                            </div>
+                        </div>
+                        <span className={`px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-[0.2em] backdrop-blur-md shadow-xl ${getStatusColor(proj.status)}`}>
+                            {proj.status}
+                        </span>
                       </div>
-                   </div>
-                   <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest">
-                      {proj.status}
-                   </span>
-                </div>
-
-                <p className="text-slate-400 text-sm leading-relaxed mb-10 flex-1 italic">"{proj.description}"</p>
-
-                <div className="space-y-6 pt-8 border-t border-white/5">
-                   <div className="grid grid-cols-3 gap-4">
-                      <div>
-                         <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-1">Capital Goal</p>
-                         <p className="text-sm font-mono font-black text-white">{proj.totalCapital.toLocaleString()} EAC</p>
-                      </div>
-                      <div>
-                         <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-1">ROI Estimate</p>
-                         <p className="text-sm font-mono font-black text-emerald-400">+{proj.roiEstimate}%</p>
-                      </div>
-                      <div>
-                         <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-1">Progress</p>
-                         <p className="text-sm font-mono font-black text-blue-400">{proj.progress}%</p>
-                      </div>
-                   </div>
-                   <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${proj.progress}%` }}></div>
-                   </div>
-                   <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                      Full Prospectus <ArrowRight className="w-4 h-4" />
-                   </button>
-                </div>
-             </div>
-           ))}
-        </div>
-      )}
-
-      {activeView === 'analytics' && (
-        <div className="space-y-8 animate-in zoom-in duration-500">
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Network Growth Chart */}
-              <div className="lg:col-span-2 glass-card p-10 rounded-[40px] border-white/5 space-y-8">
-                 <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                       <div className="p-2 bg-indigo-500/10 rounded-xl">
-                          <LineChartIcon className="w-5 h-5 text-indigo-400" />
-                       </div>
-                       <h3 className="text-xl font-bold text-white uppercase tracking-tighter">Network Expansion</h3>
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase">Steward Nodes Index</span>
-                 </div>
-                 <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                       <AreaChart data={GLOBAL_STATS_DATA}>
-                          <defs>
-                             <linearGradient id="colorNodes" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                             </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                          <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} axisLine={false} />
-                          <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} axisLine={false} />
-                          <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                          <Area type="monotone" dataKey="nodes" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorNodes)" />
-                       </AreaChart>
-                    </ResponsiveContainer>
-                 </div>
-              </div>
-
-              {/* TVL Distribution */}
-              <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-8 flex flex-col items-center">
-                 <div className="w-full flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-white uppercase tracking-tighter">TVL Distribution</h3>
-                    <PieChartIcon className="w-5 h-5 text-emerald-400" />
-                 </div>
-                 <div className="h-[250px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                       <PieChart>
-                          <Pie
-                             data={THRUST_DISTRIBUTION}
-                             cx="50%"
-                             cy="50%"
-                             innerRadius={60}
-                             outerRadius={80}
-                             paddingAngle={5}
-                             dataKey="value"
-                          >
-                             {THRUST_DISTRIBUTION.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                             ))}
-                          </Pie>
-                          <Tooltip />
-                       </PieChart>
-                    </ResponsiveContainer>
-                 </div>
-                 <div className="w-full space-y-3">
-                    {THRUST_DISTRIBUTION.map(item => (
-                       <div key={item.name} className="flex justify-between items-center text-[10px] font-black uppercase">
-                          <div className="flex items-center gap-2">
-                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                             <span className="text-slate-400">{item.name}</span>
+                      
+                      <div className="flex-1 relative z-10">
+                        <p className="text-slate-400 text-sm leading-relaxed mb-8 italic">"{proj.description}"</p>
+                        
+                        {proj.collectiveId && (
+                          <div className="mb-10 flex items-center gap-3 px-4 py-2 bg-emerald-500/5 w-fit rounded-2xl border border-emerald-500/10">
+                            <Share2 className="w-4 h-4 text-emerald-400" />
+                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Collective Mission: {MOCK_COLLECTIVES.find(c => c.id === proj.collectiveId)?.name}</span>
                           </div>
-                          <span className="text-white">{item.value}%</span>
-                       </div>
-                    ))}
-                 </div>
-              </div>
-           </div>
-
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Regional Resilience Bar Chart */}
-              <div className="lg:col-span-2 glass-card p-10 rounded-[40px] border-white/5 space-y-8">
-                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-500/10 rounded-xl">
-                       <BarChart3 className="w-5 h-5 text-emerald-400" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white uppercase tracking-tighter">Regional Resilience m™</h3>
-                 </div>
-                 <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                       <BarChart data={REGIONAL_RELIANCE}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                          <XAxis dataKey="zone" stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} axisLine={false} />
-                          <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} axisLine={false} />
-                          <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                          <Bar dataKey="resilience" fill="#10b981" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="growth" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                       </BarChart>
-                    </ResponsiveContainer>
-                 </div>
-                 <div className="flex gap-8 justify-center">
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-emerald-400">
-                       <div className="w-3 h-3 bg-emerald-500 rounded"></div> Resilience Index
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400">
-                       <div className="w-3 h-3 bg-blue-500 rounded"></div> MoM Growth %
-                    </div>
-                 </div>
-              </div>
-
-              {/* Global Oracle Intelligence Sidebox */}
-              <div className="glass-card p-8 rounded-[40px] bg-indigo-900/10 border-indigo-500/20 flex flex-col relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
-                    <Globe className="w-40 h-40 text-indigo-400" />
-                 </div>
-                 
-                 <div className="relative z-10 flex flex-col h-full">
-                    <div className="flex items-center gap-4 mb-6 border-b border-white/5 pb-6">
-                       <div className="w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-xl shadow-indigo-900/40">
-                          <Bot className="w-8 h-8 text-white" />
-                       </div>
-                       <div>
-                          <h4 className="text-xl font-bold text-white uppercase tracking-tighter italic">Global <span className="text-indigo-400">Oracle</span></h4>
-                          <span className="text-[10px] text-indigo-400 font-black uppercase">EOS_MACRO_INTEL</span>
-                       </div>
-                    </div>
-
-                    {!globalReport && !isFetchingGlobalReport ? (
-                      <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6">
-                         <p className="text-sm text-slate-400 italic leading-relaxed">
-                            "Initialize a global synchronization audit to generate high-level industrial intelligence on EOS network status."
-                         </p>
-                         <button 
-                           onClick={runGlobalOracleReport}
-                           className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
-                         >
-                            <Zap className="w-5 h-5 fill-current" /> Initialize Global Sweep
-                         </button>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex-1 space-y-6 flex flex-col overflow-hidden animate-in fade-in duration-700">
-                         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                           {isFetchingGlobalReport ? (
-                             <div className="flex flex-col items-center justify-center h-full space-y-4">
-                                <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
-                                <p className="text-emerald-400 font-black text-[9px] uppercase tracking-widest animate-pulse">Aggregating Global Shards...</p>
-                             </div>
-                           ) : (
-                             <div className="prose prose-invert prose-indigo max-w-none text-slate-300 text-[11px] italic leading-relaxed whitespace-pre-line">
-                                {globalReport}
-                             </div>
-                           )}
-                         </div>
-                         <button 
-                          onClick={() => setGlobalReport(null)}
-                          className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-slate-500 hover:text-white"
-                         >
-                           Clear Report
-                         </button>
+
+                      <div className="space-y-8 pt-8 border-t border-white/5 relative z-10">
+                        <div className="grid grid-cols-3 gap-6">
+                            <div>
+                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">Target Capital</p>
+                              <p className="text-lg font-mono font-black text-white">{proj.totalCapital.toLocaleString()} <span className="text-[10px] text-emerald-500">EAC</span></p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">ROI Predict</p>
+                              <p className="text-lg font-mono font-black text-emerald-400">+{proj.roiEstimate}%</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">Ledger Sync</p>
+                              <p className="text-lg font-mono font-black text-blue-400">{proj.progress}%</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-4">
+                          <button className="flex-1 py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+                              Dossier
+                          </button>
+                          <button onClick={() => setActiveView('auctions')} className="flex-[2] py-5 bg-indigo-600 rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-xl hover:bg-indigo-500 transition-all flex items-center justify-center gap-3 active:scale-95">
+                              Request Tender <ArrowRight className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    )}
-                    
-                    <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-slate-600 uppercase tracking-[0.4em]">
-                       <span>Status</span>
-                       <span className="text-emerald-400 animate-pulse">LIVE_FEED_SYNC</span>
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* Industrial Project Registration Modal */}
-      {isRegisteringProject && (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setIsRegisteringProject(false)}></div>
-           <div className="relative z-10 w-full max-w-4xl glass-card p-1 rounded-[56px] border-indigo-500/20 overflow-hidden shadow-2xl flex flex-col bg-[#050706] max-h-[90vh]">
-              
-              {/* Header */}
-              <div className="p-10 border-b border-white/5 flex items-center justify-between bg-indigo-600/5">
-                 <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-indigo-500/10 rounded-3xl flex items-center justify-center border border-indigo-500/20">
-                       <PlusCircle className="w-8 h-8 text-indigo-400" />
-                    </div>
-                    <div>
-                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Project <span className="text-indigo-400">Initialization</span></h3>
-                       <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Registry Protocol v3.2 • industrial sync</p>
-                    </div>
-                 </div>
-                 <button onClick={() => setIsRegisteringProject(false)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
-              </div>
-
-              {/* Progress Stepper */}
-              <div className="px-10 py-6 border-b border-white/5 flex gap-8">
-                 {[
-                   { id: 'ideation', label: '1. Ideation', active: projectStep === 'ideation' },
-                   { id: 'analysis', label: '2. Analysis', active: projectStep === 'analysis' },
-                   { id: 'policy', label: '3. Policy', active: projectStep === 'policy' },
-                   { id: 'success', label: '4. Success', active: projectStep === 'success' },
-                 ].map(s => (
-                   <div key={s.id} className={`flex items-center gap-3 transition-opacity ${s.active ? 'opacity-100' : 'opacity-30'}`}>
-                      <div className={`w-2 h-2 rounded-full ${s.active ? 'bg-indigo-400' : 'bg-slate-700'}`}></div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white">{s.label}</span>
+                  </div>
+                ))}
+                
+                <button 
+                  onClick={() => { setShowCreateProject(true); setRegStep(1); setRegisteringForCollectiveId(undefined); }}
+                  className="glass-card p-10 rounded-[56px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-center space-y-8 hover:border-indigo-500/40 transition-all group min-h-[450px] active:scale-95"
+                >
+                   <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-indigo-500/10 transition-colors shadow-2xl">
+                      <Plus className="w-10 h-10 text-slate-700 group-hover:text-indigo-400" />
                    </div>
-                 ))}
-              </div>
+                   <div className="space-y-2">
+                      <h4 className="text-3xl font-black text-white uppercase tracking-tighter">New Industrial Entry</h4>
+                      <p className="text-slate-500 text-sm italic max-w-xs mx-auto">Commit capital and anchor a new mission to the global registry.</p>
+                   </div>
+                </button>
+             </div>
+          </div>
+        )}
 
-              <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
-                 {projectStep === 'ideation' && (
-                   <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                      <div className="grid grid-cols-2 gap-10">
-                         <div className="space-y-6">
-                            <div className="space-y-2">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Project Designation</label>
-                               <input type="text" value={pName} onChange={e => setPName(e.target.value)} placeholder="e.g. Zone 4 Nebraska Soil Recovery" className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-6 text-white font-bold" />
-                            </div>
-                            <div className="space-y-2">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Primary SEHTI Thrust</label>
-                               <select value={pThrust} onChange={e => setPThrust(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-6 text-white appearance-none outline-none focus:ring-2 focus:ring-indigo-500/40">
-                                  <option>Industry</option>
-                                  <option>Technological</option>
-                                  <option>Societal</option>
-                                  <option>Environmental</option>
-                                  <option>Human</option>
-                               </select>
-                            </div>
+        {/* Talent View */}
+        {activeView === 'talent' && (
+          <div className="space-y-10 animate-in fade-in duration-700">
+            <div className="flex justify-between items-end mb-4 border-b border-white/5 pb-8">
+              <div className="space-y-2">
+                <h3 className="text-4xl font-black text-white flex items-center gap-4 uppercase tracking-tighter italic">
+                   <Users2 className="w-10 h-10 text-emerald-400" /> Talent <span className="text-emerald-400">Ecosystem</span>
+                </h3>
+                <p className="text-lg text-slate-500 italic max-w-2xl">Verified skilled laborers and industrial agro-architects synchronized via blockchain work history.</p>
+              </div>
+              <div className="flex items-center gap-3 px-8 py-3 bg-emerald-500/10 text-emerald-400 text-xs font-black uppercase tracking-[0.2em] rounded-2xl border border-emerald-500/20">
+                <UserCheck className="w-4 h-4" /> 84 Active Resource Nodes
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              {MOCK_WORKERS.map((worker) => (
+                <div key={worker.id} className="glass-card rounded-[56px] p-10 group hover:border-emerald-500/30 transition-all active:scale-[0.98] relative overflow-hidden bg-black/20">
+                  <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:rotate-12 transition-transform">
+                     <Briefcase className="w-32 h-32 text-white" />
+                  </div>
+                  
+                  <div className="flex items-start justify-between mb-10 relative z-10">
+                    <div className="flex gap-6 items-center">
+                      <div className="w-20 h-20 rounded-[32px] bg-slate-800 border-2 border-white/5 flex items-center justify-center relative shadow-2xl group-hover:scale-105 transition-transform duration-500">
+                        <span className="text-3xl font-black text-emerald-500">{worker.name.split(' ').map(n => n[0]).join('')}</span>
+                        {worker.isOpenToWork && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-4 border-[#050706] animate-pulse"></div>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-2xl font-black text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{worker.name}</h4>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {worker.skills.map(s => <span key={s} className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-500 uppercase border border-white/5">{s}</span>)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-1.5 text-amber-400 justify-end">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span className="text-lg font-black font-mono">{worker.sustainabilityRating}%</span>
+                      </div>
+                      <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest mt-1">U-SCORE</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-5 mb-10 relative z-10">
+                    <div className="flex items-center gap-4 text-slate-400 text-sm font-medium p-4 bg-white/5 rounded-3xl border border-white/5">
+                      <History className="w-5 h-5 text-emerald-500" />
+                      <span className="text-xs uppercase font-bold tracking-widest">{worker.verifiedHours.toLocaleString()} Verified Hours</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-slate-400 text-sm font-medium p-4 bg-white/5 rounded-3xl border border-white/5">
+                      <Trophy className="w-5 h-5 text-amber-500" />
+                      <span className="text-xs uppercase font-bold tracking-widest">Steward Rank: Lead Architect</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 relative z-10">
+                    <button className="flex-1 py-5 bg-white/5 hover:bg-white/10 rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 transition-all border border-white/5">View Dossier</button>
+                    <button className="flex-[2] py-5 agro-gradient rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] text-white flex items-center justify-center gap-3 shadow-xl active:scale-95">
+                      <Mail className="w-4 h-4" /> Initiate Session
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Social Collectives View */}
+        {activeView === 'collectives' && (
+          <div className="space-y-10 animate-in slide-in-from-right-6 duration-500">
+            {!selectedCollective ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                 {MOCK_COLLECTIVES.map(col => (
+                   <div key={col.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/40 transition-all flex flex-col h-full group active:scale-[0.98] duration-300 bg-black/20 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform">
+                         <Share2 className="w-48 h-48 text-white" />
+                      </div>
+                      
+                      <div className="flex justify-between items-start mb-10 relative z-10">
+                         <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center shadow-2xl border border-emerald-500/20 group-hover:rotate-6 transition-transform">
+                            <Share2 className="w-10 h-10 text-emerald-400" />
                          </div>
-                         <div className="space-y-6">
-                            <div className="space-y-2">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Capital Pool Goal (EAC)</label>
-                               <input type="number" value={pCapital} onChange={e => setPCapital(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-6 text-white font-mono text-2xl" />
-                            </div>
-                            <div className="space-y-2">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Mission Abstract</label>
-                               <textarea value={pDesc} onChange={e => setPDesc(e.target.value)} placeholder="Describe the industrial impact and scientific outcomes..." className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm h-32 resize-none" />
-                            </div>
+                         <div className="text-right">
+                            <span className="px-4 py-1.5 bg-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest rounded-full border border-white/10">{col.type}</span>
+                            <p className="text-[10px] text-emerald-500 font-mono mt-3 font-black tracking-widest">{col.members} MEMBERS</p>
                          </div>
                       </div>
                       
-                      <div className="p-8 bg-amber-500/5 border border-amber-500/20 rounded-[32px] flex items-center gap-6">
-                         <AlertCircle className="w-8 h-8 text-amber-500 shrink-0" />
-                         <p className="text-xs text-slate-400 font-medium leading-relaxed italic">
-                            "Initial project registration requires a network processing fee of <span className="text-amber-500 font-black">100 EAC</span>. All projects are subject to multi-node verification."
-                         </p>
+                      <div className="flex-1 relative z-10">
+                         <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 group-hover:text-emerald-400 transition-colors italic">{col.name}</h4>
+                         <p className="text-slate-400 text-sm italic leading-relaxed mb-10">"{col.mission}"</p>
                       </div>
 
-                      <button 
-                        onClick={handleStartAnalysis}
-                        disabled={!pName || !pDesc || isAnalyzing}
-                        className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                      >
-                         {isAnalyzing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 fill-current" />}
-                         {isAnalyzing ? "CONSULTING ORACLE..." : "RUN ROI ANALYSIS"}
-                      </button>
-                   </div>
-                 )}
-
-                 {projectStep === 'analysis' && (
-                   <div className="space-y-10 animate-in zoom-in duration-500">
-                      <div className="flex items-center gap-6 border-b border-white/5 pb-8 mb-4">
-                         <div className="w-16 h-16 bg-blue-500/10 rounded-3xl flex items-center justify-center border border-blue-500/20 shadow-2xl">
-                            <Bot className="w-8 h-8 text-blue-400" />
+                      <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
+                         <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                               <Calendar className="w-4 h-4 text-slate-600" />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{col.activeEvents} Active Events</span>
                          </div>
-                         <div>
-                            <h4 className="text-2xl font-bold text-white uppercase tracking-widest">Oracle ROI Forecast</h4>
-                            <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-1">
-                               <Sparkles className="w-3 h-3" /> Gemini 3 Pro interpretation
-                            </p>
-                         </div>
-                      </div>
-
-                      <div className="p-10 glass-card rounded-[40px] bg-white/[0.01] border-l-4 border-blue-500/50">
-                         <div className="prose prose-invert prose-blue max-w-none text-slate-300 text-lg leading-loose italic whitespace-pre-line border-l-4 border-blue-500/20 pl-8">
-                            {aiAnalysis}
-                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-6">
-                         <div className="p-8 glass-card rounded-3xl border-white/5 text-center">
-                            <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Project Score</p>
-                            <p className="text-2xl font-mono font-black text-white">88/100</p>
-                         </div>
-                         <div className="p-8 glass-card rounded-3xl border-white/5 text-center">
-                            <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Vetting Days</p>
-                            <p className="text-2xl font-mono font-black text-white">12 Days</p>
-                         </div>
-                         <div className="p-8 glass-card rounded-3xl border-emerald-500/20 bg-emerald-500/5 text-center">
-                            <p className="text-[9px] text-emerald-500 font-black uppercase mb-1">Trust Multiplier</p>
-                            <p className="text-2xl font-mono font-black text-emerald-400">1.42x</p>
-                         </div>
-                      </div>
-
-                      <div className="flex gap-4">
-                         <button onClick={() => setProjectStep('ideation')} className="flex-1 py-6 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">Refine Parameters</button>
-                         <button onClick={() => setProjectStep('policy')} className="flex-[2] py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
-                            <ShieldCheck className="w-6 h-6" /> Accept & Proceed
+                         <button 
+                          onClick={() => handleLaunchCollective(col)}
+                          className="p-5 rounded-3xl bg-white/5 hover:bg-emerald-600 text-white transition-all shadow-xl border border-white/10 group/btn active:scale-90"
+                         >
+                            <ChevronRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
                          </button>
                       </div>
                    </div>
-                 )}
+                 ))}
+                 
+                 <button 
+                  onClick={() => setShowCreateCollective(true)}
+                  className="glass-card p-10 rounded-[56px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-center space-y-8 hover:border-emerald-500/40 transition-all group min-h-[450px] active:scale-95"
+                 >
+                    <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-emerald-500/10 transition-colors shadow-2xl">
+                       <Plus className="w-10 h-10 text-slate-700 group-hover:text-indigo-400" />
+                    </div>
+                    <div className="space-y-2">
+                       <h4 className="text-3xl font-black text-white uppercase tracking-tighter">Form Shard Group</h4>
+                       <p className="text-slate-500 text-sm italic max-w-xs mx-auto">Create a goal-oriented collective to lead regional missions.</p>
+                    </div>
+                 </button>
+              </div>
+            ) : (
+              /* Collective Engagement Portal - ENHANCED */
+              <div className="glass-card rounded-[64px] overflow-hidden min-h-[850px] border-white/10 bg-black/40 flex flex-col lg:flex-row shadow-[0_0_100px_rgba(16,185,129,0.05)]">
+                 {/* Portal Sidebar */}
+                 <div className="w-full lg:w-[400px] border-r border-white/5 p-12 space-y-12 bg-white/[0.01]">
+                    <div className="space-y-6">
+                       <button onClick={() => setSelectedCollective(null)} className="text-slate-500 hover:text-white flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] mb-10 transition-all">
+                          <ArrowRight className="w-4 h-4 rotate-180" /> Leave Terminal
+                       </button>
+                       <div className="relative group w-24 h-24">
+                          <div className="absolute inset-0 bg-emerald-500/20 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="w-24 h-24 rounded-[36px] bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl relative z-10 group-hover:scale-105 transition-transform">
+                             <Share2 className="w-12 h-12 text-emerald-400" />
+                          </div>
+                       </div>
+                       <div>
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter leading-none italic">{selectedCollective.name}</h3>
+                          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] mt-4 flex items-center gap-3">
+                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                             {selectedCollective.type} // {selectedCollective.thrust}
+                          </p>
+                       </div>
+                    </div>
 
-                 {projectStep === 'policy' && (
-                   <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
-                      <div className="text-center space-y-4">
-                         <div className="w-20 h-20 bg-blue-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-blue-500/20 shadow-2xl">
-                            <Landmark className="w-10 h-10 text-blue-400" />
-                         </div>
-                         <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Batch Release <span className="text-blue-400">Policy</span></h3>
-                      </div>
+                    <div className="space-y-6 pt-10 border-t border-white/5">
+                       <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.5em] px-2">ENGAGEMENT MODES</p>
+                       <div className="grid grid-cols-1 gap-4">
+                          {[
+                            { id: 'chat', label: 'Steward Dialogue', icon: MessageSquare, color: 'hover:text-blue-400' },
+                            { id: 'missions', label: 'Collective Missions', icon: Target, color: 'hover:text-emerald-400' },
+                            { id: 'live', label: 'Field Video Feed', icon: Video, color: 'hover:text-rose-400' },
+                            { id: 'podcast', label: 'Audio Archive', icon: Mic, color: 'hover:text-indigo-400' },
+                            { id: 'events', label: 'Event Registry', icon: Calendar, color: 'hover:text-amber-400' },
+                          ].map(mode => (
+                            <button 
+                              key={mode.id}
+                              onClick={() => setCollectivePortalMode(mode.id as any)}
+                              className={`w-full flex items-center justify-between p-6 rounded-3xl transition-all text-sm font-bold uppercase tracking-widest group/mode ${collectivePortalMode === mode.id ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-900/40' : 'text-slate-500 bg-white/5 hover:bg-white/10'}`}
+                            >
+                              <div className="flex items-center gap-4">
+                                 <mode.icon className={`w-5 h-5 ${collectivePortalMode === mode.id ? 'text-white' : 'group-hover/mode:scale-110 transition-transform'}`} />
+                                 {mode.label}
+                              </div>
+                              <ChevronRight className={`w-4 h-4 transition-transform ${collectivePortalMode === mode.id ? 'translate-x-1' : 'opacity-0 group-hover/mode:opacity-100'}`} />
+                            </button>
+                          ))}
+                       </div>
+                    </div>
 
-                      <div className="p-10 glass-card rounded-[48px] border-white/5 bg-blue-900/10 space-y-6">
-                         <h4 className="text-xl font-bold text-white uppercase tracking-widest">Mandatory Collateral Node</h4>
-                         <p className="text-slate-300 leading-relaxed italic">
-                            In accordance with the EnvirosAgro Industry standards, large-scale projects require a <span className="text-blue-400 font-bold uppercase">50% Capital Collateral Lock</span>. This ensures node administrator commitment and provides a security pool for investors (vouchers).
-                         </p>
-                         <div className="grid grid-cols-2 gap-6 pt-6">
-                            <div className="p-6 bg-black/40 rounded-3xl border border-white/5">
-                               <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Required Collateral</p>
-                               <p className="text-3xl font-mono font-black text-white">{(Number(pCapital)*0.5).toLocaleString()} <span className="text-xs">EAC</span></p>
+                    <div className="pt-10 border-t border-white/5 space-y-8">
+                       <div className="space-y-3">
+                          <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">IMPACT ANALYSIS</h4>
+                          <div className="p-6 bg-emerald-500/5 rounded-[32px] border border-emerald-500/20">
+                             <p className="text-[9px] text-slate-500 uppercase font-black mb-2">Innovation Index</p>
+                             <p className="text-lg font-black text-emerald-400 uppercase italic tracking-tight">{selectedCollective.impact}</p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Main Engagement Area - ENHANCED */}
+                 <div className="flex-1 flex flex-col relative bg-[#050706]">
+                    {collectivePortalMode === 'chat' && (
+                      <div className="flex-1 flex flex-col p-12 h-full">
+                         <div className="flex justify-between items-center mb-10 pb-6 border-b border-white/5">
+                            <div className="flex items-center gap-4">
+                               <div className="p-3 bg-blue-500/10 rounded-2xl">
+                                  <MessageSquare className="w-6 h-6 text-blue-400" />
+                               </div>
+                               <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Dialogue <span className="text-blue-400">Terminal</span></h4>
                             </div>
-                            <div className="p-6 bg-black/40 rounded-3xl border border-white/5">
-                               <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Vesting Period</p>
-                               <p className="text-3xl font-mono font-black text-white">180 <span className="text-xs">Days</span></p>
+                            <div className="flex items-center gap-3">
+                               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                               <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{selectedCollective.members} Stewards Synced</span>
+                            </div>
+                         </div>
+                         <div className="flex-1 space-y-8 overflow-y-auto custom-scrollbar pr-6">
+                            <div className="flex gap-6">
+                               <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-xs font-black text-emerald-500 shadow-xl border border-white/5">AS</div>
+                               <div className="p-8 bg-white/5 rounded-[40px] rounded-tl-none max-w-xl border border-white/5 shadow-2xl relative">
+                                  <p className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-3">@AgroSteward (Registry Lead)</p>
+                                  <p className="text-slate-300 leading-relaxed text-lg italic">"Welcome to the terminal. We are currently finalizing the spectral data for the heritage grain release in Zone 2. Does anyone have local soil logs from the last 24h block?"</p>
+                               </div>
+                            </div>
+                            <div className="flex gap-6 flex-row-reverse">
+                               <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-xs font-black text-white shadow-2xl">ME</div>
+                               <div className="p-8 bg-indigo-600/10 border border-indigo-500/20 rounded-[40px] rounded-tr-none max-w-xl shadow-2xl">
+                                  <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-3">YOU (STWD_{user.esin.split('-')[2]})</p>
+                                  <p className="text-slate-300 leading-relaxed text-lg italic">"Uploading my moisture shards now. I-Thrust efficiency is holding steady at 1.42x. Node sync complete."</p>
+                               </div>
+                            </div>
+                         </div>
+                         <div className="pt-10 border-t border-white/5 mt-auto">
+                            <div className="relative group">
+                               <div className="absolute inset-0 bg-indigo-500/10 blur-3xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+                               <input type="text" placeholder="Share knowledge shard..." className="w-full bg-black/60 border border-white/10 rounded-[40px] py-8 pl-10 pr-24 text-white text-lg focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all relative z-10 placeholder:text-slate-800" />
+                               <button className="absolute right-4 top-1/2 -translate-y-1/2 p-6 bg-indigo-600 rounded-full text-white shadow-2xl hover:bg-indigo-500 transition-all z-10 scale-90 active:scale-75 group-hover:rotate-12">
+                                  <Send className="w-8 h-8" />
+                               </button>
                             </div>
                          </div>
                       </div>
+                    )}
 
-                      <div className="p-6 bg-rose-500/5 border border-rose-500/10 rounded-3xl flex items-start gap-4">
-                         <Info className="w-6 h-6 text-rose-500 shrink-0 mt-0.5" />
-                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight leading-relaxed">
-                            Failure to maintain the 50% collateral ratio during the 'Funding' stage will result in project revocation and a burn of the initial registration fee.
-                         </p>
+                    {collectivePortalMode === 'missions' && (
+                      <div className="flex-1 flex flex-col p-12 h-full animate-in slide-in-from-right-6 duration-500">
+                         <div className="flex justify-between items-center mb-12 pb-8 border-b border-white/5">
+                            <div>
+                               <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic flex items-center gap-4">
+                                  <Target className="w-10 h-10 text-emerald-400" /> Collective <span className="text-emerald-400">Missions</span>
+                               </h4>
+                               <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Active Strategic Initiatives by {selectedCollective.name}</p>
+                            </div>
+                            <button 
+                              onClick={() => openCollectiveRegistration(selectedCollective.id)}
+                              className="px-10 py-5 agro-gradient rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-2xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
+                            >
+                               <Rocket className="w-5 h-5" /> Propose Mission Shard
+                            </button>
+                         </div>
+                         
+                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-6">
+                            {projects.filter(p => p.collectiveId === selectedCollective.id).length > 0 ? (
+                              projects.filter(p => p.collectiveId === selectedCollective.id).map(proj => (
+                                <div key={proj.id} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 group hover:border-emerald-500/30 transition-all shadow-xl">
+                                   <div className="flex justify-between items-start mb-8">
+                                      <div className="flex items-center gap-6">
+                                         <div className="w-16 h-16 rounded-[28px] bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
+                                            <Rocket className="w-8 h-8 text-emerald-400" />
+                                         </div>
+                                         <div>
+                                            <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{proj.name}</h4>
+                                            <p className="text-[10px] text-slate-500 font-mono mt-2 tracking-widest">{proj.id} // THRUST: {proj.thrust}</p>
+                                         </div>
+                                      </div>
+                                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border backdrop-blur-md shadow-xl ${getStatusColor(proj.status)}`}>
+                                         {proj.status}
+                                      </span>
+                                   </div>
+                                   <p className="text-sm text-slate-400 leading-relaxed italic mb-10">"{proj.description}"</p>
+                                   <div className="grid grid-cols-3 gap-10 pt-8 border-t border-white/5">
+                                      <div className="space-y-1">
+                                         <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Active Pool</p>
+                                         <p className="text-xl font-mono font-black text-white">{proj.totalCapital.toLocaleString()} EAC</p>
+                                      </div>
+                                      <div className="space-y-1 text-center">
+                                         <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Oracle Yield</p>
+                                         <p className="text-xl font-mono font-black text-emerald-400">+{proj.roiEstimate}%</p>
+                                      </div>
+                                      <div className="space-y-1 text-right">
+                                         <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Registry Sync</p>
+                                         <p className="text-xl font-mono font-black text-blue-400">{proj.progress}%</p>
+                                      </div>
+                                   </div>
+                                   <div className="mt-10 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                      <div className="h-full bg-blue-600 shadow-[0_0_15px_#2563eb]" style={{ width: `${proj.progress}%` }}></div>
+                                   </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="h-full flex flex-col items-center justify-center text-center space-y-10 opacity-20 py-20">
+                                 <Target className="w-32 h-32 text-slate-700 animate-pulse" />
+                                 <div className="max-w-sm mx-auto">
+                                    <h4 className="text-3xl font-black text-white uppercase tracking-tighter">Empty Archive</h4>
+                                    <p className="text-slate-500 text-lg italic mt-4 leading-relaxed">Lead your collective to its first industrial mission. Anchor your proposal to the registry to begin funding.</p>
+                                 </div>
+                              </div>
+                            )}
+                         </div>
                       </div>
+                    )}
 
-                      <button onClick={finalizeRegistration} className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4">
-                         <ShieldCheck className="w-6 h-6 fill-current" /> Sign Project Contract
+                    {/* Placeholder content for other portal modes to maintain UI consistency */}
+                    {['live', 'podcast', 'events'].includes(collectivePortalMode) && (
+                      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-10 animate-in zoom-in duration-500">
+                         <div className="w-32 h-32 rounded-[48px] bg-white/5 flex items-center justify-center border-2 border-dashed border-white/10 text-slate-800">
+                            {collectivePortalMode === 'live' ? <Video className="w-16 h-16" /> : collectivePortalMode === 'podcast' ? <Mic className="w-16 h-16" /> : <Calendar className="w-16 h-16" />}
+                         </div>
+                         <div className="max-w-md">
+                            <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Mode Under <span className="text-indigo-400">Registry Audit</span></h4>
+                            <p className="text-slate-500 text-lg italic mt-4">The {collectivePortalMode} interface is currently undergoing a v3.2 ZK-Sync. Check back after the next block update.</p>
+                         </div>
+                      </div>
+                    )}
+                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tender Grid View */}
+        {activeView === 'auctions' && (
+          <div className="space-y-10 animate-in slide-in-from-right-6 duration-500">
+             <div className="flex flex-col md:flex-row gap-6 items-center justify-between border-b border-white/5 pb-10">
+                <div className="space-y-2">
+                   <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic flex items-center gap-4">
+                      <Hammer className="w-10 h-10 text-indigo-400" /> Tender <span className="text-indigo-400">Grid</span>
+                   </h3>
+                   <p className="text-lg text-slate-500 italic">Competitive procurement cycle for large-scale industrial tasks.</p>
+                </div>
+                <div className="relative w-full md:w-[450px] group">
+                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                   <input type="text" placeholder="Search grid by mission hash..." className="w-full bg-black/60 border border-white/10 rounded-[40px] py-6 pl-16 pr-8 text-white focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all text-lg placeholder:text-slate-800" />
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {MOCK_TENDERS.map((t) => (
+                  <div key={t.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-indigo-500/40 transition-all group flex flex-col h-full active:scale-[0.98] duration-300 relative overflow-hidden bg-black/20">
+                     <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:rotate-12 transition-transform">
+                        <GanttChartSquare className="w-48 h-48 text-white" />
+                     </div>
+                     <div className="flex justify-between items-start mb-10 relative z-10">
+                        <div className="p-5 bg-indigo-500/10 rounded-3xl border border-indigo-500/20 shadow-2xl group-hover:bg-indigo-500 transition-colors">
+                           <Hammer className="w-8 h-8 text-indigo-400 group-hover:text-white" />
+                        </div>
+                        <div className="text-right">
+                           <span className="text-[10px] font-mono text-slate-600 font-black tracking-widest">{t.id}</span>
+                           <p className="text-[9px] text-indigo-400 uppercase font-black mt-2 tracking-[0.2em]">INDUSTRIAL_TASK</p>
+                        </div>
+                     </div>
+                     
+                     <div className="flex-1 relative z-10">
+                        <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 leading-tight group-hover:text-indigo-400 transition-colors italic">{t.task}</h4>
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] flex items-center gap-3">
+                           <Globe className="w-4 h-4 text-blue-500" /> MISSION: {t.proj} <span className="text-slate-800">|</span> {t.zone}
+                        </p>
+                     </div>
+                     
+                     <div className="grid grid-cols-2 gap-6 my-10 relative z-10">
+                        <div className="p-6 bg-black/40 rounded-[32px] border border-white/5 group-hover:border-white/10 transition-colors">
+                           <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-2">Contract Value</p>
+                           <p className="text-2xl font-mono font-black text-white">{t.eac.toLocaleString()} <span className="text-xs text-emerald-500">EAC</span></p>
+                        </div>
+                        <div className="p-6 bg-black/40 rounded-[32px] border border-white/5 group-hover:border-white/10 transition-colors">
+                           <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-2">Cycle Shard</p>
+                           <div className="flex items-center gap-3">
+                              <Clock className="w-4 h-4 text-rose-500 animate-pulse" />
+                              <p className="text-lg font-black text-white uppercase tracking-tighter">{t.time}</p>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="pt-8 border-t border-white/5 mt-auto flex items-center justify-between relative z-10">
+                        <div className="flex items-center gap-3">
+                           <Users className="w-4 h-4 text-slate-700" />
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.bids} ACTIVE BIDS</span>
+                        </div>
+                        <button className="px-10 py-4 agro-gradient rounded-3xl text-[10px] font-black uppercase tracking-[0.4em] text-white shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all">
+                          Initialize Bid
+                        </button>
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {/* Global Performance Analytics */}
+        {activeView === 'analytics' && (
+          <div className="space-y-12 animate-in zoom-in duration-500">
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div className="lg:col-span-8 glass-card p-12 rounded-[64px] border-white/5 relative overflow-hidden bg-black/40 shadow-2xl">
+                   <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none"></div>
+                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 relative z-10 gap-8">
+                      <div className="flex items-center gap-6">
+                         <div className="p-5 bg-indigo-500/10 rounded-[32px] shadow-2xl border border-indigo-500/20">
+                            <Activity className="w-10 h-10 text-indigo-400" />
+                         </div>
+                         <div>
+                            <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Network <span className="text-indigo-400">Throughput</span></h3>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Real-time Resource Velocity Index</p>
+                         </div>
+                      </div>
+                      <div className="flex gap-10">
+                         <div className="text-right">
+                            <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-1">Current ROI Avg</p>
+                            <p className="text-4xl font-mono font-black text-emerald-400">+15.8%</p>
+                         </div>
+                         <div className="w-[1px] h-12 bg-white/10 hidden md:block"></div>
+                         <div className="text-right">
+                            <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-1">Global Load</p>
+                            <p className="text-4xl font-mono font-black text-blue-400">92.4%</p>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="h-[450px] w-full relative z-10 min-h-0 min-w-0">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                         <AreaChart data={ANALYTICS_DATA}>
+                            <defs>
+                               <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
+                                  <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                               </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                            <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} fontStyle="italic" />
+                            <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                            <Tooltip 
+                               contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', padding: '20px' }}
+                               itemStyle={{ color: '#818cf8', fontWeight: 'bold' }}
+                            />
+                            <Area type="monotone" dataKey="yield" stroke="#818cf8" strokeWidth={6} fillOpacity={1} fill="url(#colorYield)" />
+                            <Line type="monotone" dataKey="nodes" stroke="#10b981" strokeWidth={3} dot={false} />
+                         </AreaChart>
+                      </ResponsiveContainer>
+                   </div>
+                   
+                   <div className="flex justify-between items-center mt-10 pt-8 border-t border-white/5 text-[9px] font-mono text-slate-700 tracking-[0.5em] font-black relative z-10">
+                      <span>DATA_INGEST_SHARD_842</span>
+                      <span className="flex items-center gap-3">
+                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                         SYNC_STATUS: OPTIMAL_NOMINAL
+                      </span>
+                   </div>
+                </div>
+
+                <div className="lg:col-span-4 space-y-8">
+                   <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-600/5 space-y-10 group overflow-hidden relative">
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform">
+                         <Network className="w-40 h-40 text-emerald-400" />
+                      </div>
+                      <h4 className="text-xl font-black text-emerald-400 uppercase tracking-[0.3em] flex items-center gap-4 relative z-10 italic">
+                         <Network className="w-6 h-6" /> Regional Alpha
+                      </h4>
+                      <div className="space-y-8 relative z-10">
+                         {[
+                           { zone: 'Nebraska (Zone 4)', load: 82, roi: '+18.2%', col: 'bg-emerald-500' },
+                           { zone: 'Nairobi (Zone 2)', load: 45, roi: '+14.5%', col: 'bg-blue-500' },
+                           { zone: 'Valencia (Zone 1)', load: 94, roi: '+9.8%', col: 'bg-indigo-500' },
+                         ].map(r => (
+                           <div key={r.zone} className="space-y-3 group/row cursor-default">
+                              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                 <span className="text-slate-400 group-hover/row:text-white transition-colors">{r.zone}</span>
+                                 <span className="text-emerald-400 font-mono text-xs">{r.roi}</span>
+                              </div>
+                              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner">
+                                 <div className={`h-full ${r.col} transition-all duration-[2s] shadow-[0_0_10px_current]`} style={{ width: `${r.load}%` }}></div>
+                              </div>
+                           </div>
+                         ))}
+                      </div>
+                      <button className="w-full py-5 bg-black/40 border border-white/10 rounded-[32px] text-[9px] font-black uppercase tracking-[0.3em] text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-xl relative z-10">
+                         Export Regional Shard
                       </button>
+                   </div>
+
+                   <div className="glass-card p-12 rounded-[56px] border-white/5 space-y-8 flex flex-col justify-center items-center text-center group relative overflow-hidden active:scale-95 duration-300">
+                      <div className="absolute inset-0 bg-white/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="w-24 h-24 bg-white/5 rounded-[40px] flex items-center justify-center border border-white/10 shadow-2xl group-hover:rotate-12 transition-transform duration-700">
+                         <ClipboardCheck className="w-12 h-12 text-slate-500 group-hover:text-indigo-400" />
+                      </div>
+                      <div className="space-y-3">
+                         <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic">Compliance Audit</h4>
+                         <p className="text-slate-500 text-sm italic leading-relaxed">Cross-verification of all industrial registry settlements for current cycle.</p>
+                      </div>
+                      <button className="w-full py-5 bg-white/5 border border-white/10 rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] text-white hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+                         <RefreshCcw className="w-4 h-4" /> Initialize Audit Sweep
+                      </button>
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Industrial Mission Wizard */}
+      {showCreateProject && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl" onClick={() => setShowCreateProject(false)}></div>
+           <div className="relative z-10 w-full max-w-2xl glass-card p-1 rounded-[64px] border-emerald-500/30 bg-black/60 overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.1)]">
+              <div className="p-16 space-y-12 flex flex-col min-h-[750px] relative">
+                 <button onClick={() => setShowCreateProject(false)} className="absolute top-12 right-12 p-4 bg-white/5 rounded-full text-slate-600 hover:text-white hover:rotate-90 transition-all border border-white/5"><X className="w-10 h-10" /></button>
+                 
+                 {/* Progress Bar */}
+                 <div className="flex justify-between items-center mb-6">
+                    <div className="flex gap-4">
+                       {[1,2,3].map(s => (
+                         <div key={s} className={`h-2.5 w-24 rounded-full transition-all duration-1000 ${regStep >= s ? 'bg-emerald-500 shadow-[0_0_20px_#10b981]' : 'bg-white/10'}`}></div>
+                       ))}
+                    </div>
+                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em]">Phase {regStep} / 3</span>
+                 </div>
+
+                 {regStep === 1 && (
+                   <div className="space-y-12 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                      <div className="space-y-6 text-center">
+                         <div className="w-32 h-32 bg-emerald-500/10 rounded-[48px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-[0_0_60px_rgba(16,185,129,0.2)]">
+                            <FileText className="w-16 h-16 text-emerald-400" />
+                         </div>
+                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic m-0">Mission <span className="text-emerald-400">Registry</span></h3>
+                         <p className="text-slate-400 text-xl italic max-w-md mx-auto leading-relaxed">
+                            {registeringForCollectiveId 
+                              ? `Leading a Collective Mission for ${MOCK_COLLECTIVES.find(c => c.id === registeringForCollectiveId)?.name}.`
+                              : "Anchor your industrial agricultural project on the global EOS grid."}
+                         </p>
+                      </div>
+                      <div className="space-y-8">
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Mission Designation</label>
+                            <input value={projName} onChange={e => setProjName(e.target.value)} type="text" placeholder="e.g. Zone 4 Solar Array" className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 px-10 text-2xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800" />
+                         </div>
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Scope Description</label>
+                            <textarea value={projDesc} onChange={e => setProjDesc(e.target.value)} placeholder="Explain the high-impact regenerative outcome of this mission..." className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 px-10 text-white h-48 outline-none focus:ring-4 focus:ring-emerald-500/20 resize-none italic text-lg leading-relaxed placeholder:text-slate-800" />
+                         </div>
+                      </div>
+                      <button onClick={() => setRegStep(2)} disabled={!projName || !projDesc} className="w-full py-10 agro-gradient rounded-40px text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl disabled:opacity-30 hover:scale-[1.02] active:scale-95 transition-all mt-6">Continue to Alignment</button>
                    </div>
                  )}
 
-                 {projectStep === 'success' && (
-                   <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 animate-in zoom-in duration-700 text-center">
-                      <div className="w-32 h-32 bg-emerald-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 scale-110">
-                         <CheckCircle2 className="w-16 h-16 text-white" />
+                 {regStep === 2 && (
+                   <div className="space-y-12 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                      <div className="text-center space-y-4">
+                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Thrust <span className="text-blue-400">Anchor</span></h3>
+                         <p className="text-slate-400 text-xl font-medium">Select the primary scientific pillar this project secures.</p>
                       </div>
-                      <div className="space-y-4">
-                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Project Indexed</h3>
-                         <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">Enqueued for Global Verification Shard #04</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         {[
+                           { id: 'Societal', icon: Heart, col: 'text-rose-400', bg: 'bg-rose-500/10' },
+                           { id: 'Environmental', icon: Leaf, col: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                           { id: 'Human', icon: Dna, col: 'text-teal-400', bg: 'bg-teal-400/10' },
+                           { id: 'Technological', icon: Cpu, col: 'text-blue-400', bg: 'bg-blue-500/10' },
+                           { id: 'Industry', icon: Factory, col: 'text-purple-400', bg: 'bg-purple-500/10' },
+                         ].map(t => (
+                           <button key={t.id} onClick={() => setProjThrust(t.id as any)} className={`p-8 rounded-[40px] border transition-all flex items-center gap-8 group/thrust ${projThrust === t.id ? 'bg-white/10 border-white text-white shadow-2xl scale-105' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'}`}>
+                              <div className={`p-5 rounded-[24px] ${projThrust === t.id ? 'bg-black/20' : t.bg}`}><t.icon className={`w-10 h-10 ${projThrust === t.id ? 'text-white' : t.col} group-hover/thrust:scale-110 transition-transform duration-500`} /></div>
+                              <span className="text-2xl font-black uppercase tracking-tight italic">{t.id}</span>
+                           </button>
+                         ))}
                       </div>
-                      <div className="w-full glass-card p-10 rounded-[48px] border-white/5 bg-emerald-500/5 space-y-4 text-left max-w-lg">
-                         <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500 font-black uppercase">Project ID</span>
-                            <span className="text-white font-mono font-bold">PRJ-{(Math.random()*1000).toFixed(0)}-ALPHA</span>
+                      <div className="flex gap-6 pt-10">
+                         <button onClick={() => setRegStep(1)} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                         <button onClick={() => setRegStep(3)} className="flex-[2] py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl hover:scale-[1.02] transition-all">Secure Global Alignment</button>
+                      </div>
+                   </div>
+                 )}
+
+                 {regStep === 3 && (
+                   <div className="space-y-12 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                      <div className="text-center space-y-6">
+                         <div className="w-32 h-32 agro-gradient rounded-full flex items-center justify-center mx-auto shadow-[0_0_80px_rgba(16,185,129,0.3)] animate-pulse border-8 border-white/5">
+                            <Coins className="w-16 h-16 text-white" />
                          </div>
-                         <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500 font-black uppercase">Registry Hash</span>
-                            <span className="text-emerald-400 font-mono text-[11px]">0x{Math.random().toString(16).slice(2, 14).toUpperCase()}...</span>
+                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic m-0">Capital <span className="text-amber-400">Lock</span></h3>
+                         <p className="text-slate-400 text-xl font-medium">Define mission funding targets and ROI forecasts.</p>
+                      </div>
+                      <div className="p-12 glass-card bg-emerald-500/5 border border-emerald-500/20 rounded-[56px] space-y-12 relative overflow-hidden">
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] px-4">Total Mission Goal (EAC)</label>
+                            <div className="relative group">
+                               <input type="number" value={projGoal} onChange={e => setProjGoal(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-[32px] py-10 px-10 text-6xl font-mono text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all text-center tracking-tighter" />
+                               <div className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-700 font-black text-2xl uppercase">EAC</div>
+                            </div>
+                         </div>
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] px-4">Steward ROI Yield (%)</label>
+                            <input type="number" value={projRoi} onChange={e => setProjRoi(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 px-10 text-4xl font-mono text-emerald-400 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all text-center tracking-widest" />
                          </div>
                       </div>
-                      <button onClick={() => setIsRegisteringProject(false)} className="w-full max-w-lg py-6 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">Dismiss Portal</button>
+                      <div className="p-10 bg-amber-500/5 border border-amber-500/10 rounded-[40px] flex items-center gap-10">
+                         <div className="w-20 h-20 rounded-[32px] bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20">
+                            <BadgeAlert className="w-12 h-12 text-amber-500 animate-pulse" />
+                         </div>
+                         <p className="text-xs text-amber-200/60 font-black uppercase leading-loose tracking-[0.05em]">
+                            Registry Mandate: You must lock <span className="text-amber-500 font-black">{(Number(projGoal) * 0.5).toLocaleString()} EAC</span> as institutional collateral. Proposing for a Collective increases your Vetting Priority by 14.2%.
+                         </p>
+                      </div>
+                      <div className="flex gap-6">
+                        <button onClick={() => setRegStep(2)} className="flex-1 py-10 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-[0.4em] hover:text-white transition-all">Abort</button>
+                        <button onClick={handleCreateProjectSubmit} disabled={isRegistering} className="flex-[3] py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-6">
+                            {isRegistering ? <Loader2 className="w-10 h-10 animate-spin" /> : <ShieldCheck className="w-10 h-10" />}
+                            {isRegistering ? "COMMITING TO LEDGER..." : "Authorize Industrial Entry"}
+                        </button>
+                      </div>
                    </div>
                  )}
               </div>
@@ -604,94 +1014,125 @@ const Industrial: React.FC<IndustrialProps> = ({ user, onSpendEAC }) => {
         </div>
       )}
 
-      {activeView === 'talent' && (
-         <div className="lg:col-span-3 space-y-12 animate-in slide-in-from-right-4 duration-500">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="relative w-full md:w-96 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-                <input type="text" placeholder="Search by skill or ESIN..." className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all text-sm" />
-              </div>
-              <button className="px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 hover:bg-white/10 transition-all">
-                <Filter className="w-4 h-4" /> Regional Filter
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-               {[
-                 { name: "Dr. Marcus Chen", role: "Hydroponics Architect", score: 98.4, hours: 1420, zone: "California, US", tags: ["Expert", "Verified"] },
-                 { name: "Seward Amina", role: "Registry Auditor", score: 95.2, hours: 850, zone: "Nairobi, KE", tags: ["Policy", "Auditor"] },
-                 { name: "Leonid V.", role: "IoT Array Engineer", score: 89.8, hours: 2100, zone: "Valencia, ES", tags: ["Hardware", "Satellite"] },
-               ].map((w, i) => (
-                 <div key={i} className="glass-card p-8 rounded-[40px] border border-white/5 hover:border-indigo-500/20 transition-all group relative overflow-hidden flex flex-col h-full active:scale-95 duration-200">
-                    <div className="flex items-start justify-between mb-8">
-                       <div className="flex gap-4">
-                          <div className="w-16 h-16 rounded-[24px] bg-slate-800 flex items-center justify-center font-bold text-indigo-400 text-2xl shadow-xl ring-2 ring-white/5">
-                             {w.name[0]}
-                          </div>
-                          <div>
-                             <h4 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors leading-tight">{w.name}</h4>
-                             <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">{w.role}</p>
-                          </div>
-                       </div>
-                       <div className="text-right">
-                          <div className="flex items-center gap-1 text-amber-400">
-                             <Star className="w-3 h-3 fill-current" />
-                             <span className="text-xs font-black">{w.score}%</span>
-                          </div>
-                          <p className="text-[7px] text-slate-600 font-black uppercase mt-1">U-Score</p>
-                       </div>
+      {/* Collective Wizard - STYLED SAME AS MISSION */}
+      {showCreateCollective && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl" onClick={() => setShowCreateCollective(false)}></div>
+           <div className="relative z-10 w-full max-w-2xl glass-card p-1 rounded-[64px] border-emerald-500/30 bg-black/60 overflow-hidden">
+              <div className="p-16 space-y-12 flex flex-col min-h-[750px]">
+                 <button onClick={() => setShowCreateCollective(false)} className="absolute top-12 right-12 p-4 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 <div className="flex justify-between items-center mb-6">
+                    <div className="flex gap-4">
+                       {[1,2,3,4].map(s => (
+                         <div key={s} className={`h-2.5 w-16 rounded-full transition-all duration-1000 ${collectiveStep >= s ? 'bg-emerald-500 shadow-[0_0_20px_#10b981]' : 'bg-white/10'}`}></div>
+                       ))}
                     </div>
-
-                    <div className="space-y-3 mb-8 flex-1">
-                       <div className="flex items-center gap-2 text-slate-400 text-xs">
-                          <MapPin className="w-3.5 h-3.5 text-indigo-500" /> <span>{w.zone}</span>
-                       </div>
-                       <div className="flex items-center gap-2 text-slate-400 text-xs">
-                          <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" /> <span>{w.hours} Verified Hours</span>
-                       </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                       <button className="flex-1 py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all">View Dossier</button>
-                       <button className="p-4 bg-indigo-600 rounded-2xl text-white shadow-xl shadow-indigo-900/40 hover:bg-indigo-500 hover:scale-105 active:scale-95 transition-all">
-                          <Mail className="w-4 h-4" />
-                       </button>
-                    </div>
+                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em]">Phase {collectiveStep} / 4</span>
                  </div>
-               ))}
-            </div>
-         </div>
-      )}
 
-      {activeView === 'auctions' && (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-8 animate-in zoom-in duration-500">
-           <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-700">
-              <Gavel className="w-12 h-12 opacity-20" />
+                 {collectiveStep === 1 && (
+                   <div className="space-y-12 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                      <div className="space-y-6 text-center">
+                         <div className="w-32 h-32 bg-emerald-500/10 rounded-[48px] flex items-center justify-center mx-auto border border-emerald-500/20">
+                            <Target className="w-16 h-16 text-emerald-400" />
+                         </div>
+                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic m-0">Define <span className="text-emerald-400">Shard</span></h3>
+                         <p className="text-slate-400 text-xl font-medium leading-relaxed max-w-md mx-auto">Create a social identity anchor for your industrial missions.</p>
+                      </div>
+                      <div className="space-y-8">
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Collective Name</label>
+                            <input value={colName} onChange={e => setColName(e.target.value)} type="text" placeholder="e.g. Zone 4 Soil Guardians" className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 px-10 text-2xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800" />
+                         </div>
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Core Objectives</label>
+                            <textarea value={colObjectives} onChange={e => setColObjectives(e.target.value)} placeholder="e.g. Ancestral Mapping, IoT Sync, Watershed Restoration..." className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 px-10 text-white h-48 outline-none focus:ring-4 focus:ring-emerald-500/20 resize-none italic text-lg leading-relaxed placeholder:text-slate-800" />
+                         </div>
+                      </div>
+                      <button onClick={() => setCollectiveStep(2)} disabled={!colName || !colObjectives} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl disabled:opacity-30 hover:scale-[1.02] active:scale-95 transition-all mt-6">Secure Objectives</button>
+                   </div>
+                 )}
+
+                 {/* Remaining Steps for Collective - Standardizing UI */}
+                 {collectiveStep === 2 && (
+                   <div className="space-y-12 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center text-center">
+                      <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">Shard <span className="text-blue-400">Structure</span></h3>
+                      <div className="grid grid-cols-1 gap-6">
+                        {[
+                          { id: 'Team', desc: 'Agile unit for tactical mission deployment.', icon: Zap, col: 'text-blue-400' },
+                          { id: 'Society', desc: 'Large communal shard for systemic change.', icon: Landmark, col: 'text-indigo-400' },
+                          { id: 'Clan', desc: 'Lineage-based heritage preservation node.', icon: Heart, col: 'text-rose-400' },
+                        ].map(t => (
+                          <button key={t.id} onClick={() => setColType(t.id)} className={`p-8 rounded-[40px] border flex items-center gap-10 text-left transition-all ${colType === t.id ? 'bg-blue-600 border-white text-white shadow-2xl scale-105' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'}`}>
+                             <div className={`p-5 rounded-3xl ${colType === t.id ? 'bg-black/20' : 'bg-white/5'}`}><t.icon className={`w-10 h-10 ${colType === t.id ? 'text-white' : t.col}`} /></div>
+                             <div>
+                                <h4 className="text-2xl font-black uppercase italic">{t.id}</h4>
+                                <p className={`text-sm ${colType === t.id ? 'text-blue-100' : 'text-slate-500'}`}>{t.desc}</p>
+                             </div>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-6 pt-10">
+                        <button onClick={() => setCollectiveStep(1)} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                        <button onClick={() => setCollectiveStep(3)} className="flex-[2] py-8 bg-blue-600 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl hover:bg-blue-500 transition-all">Secure Structure</button>
+                      </div>
+                   </div>
+                 )}
+
+                 {collectiveStep === 3 && (
+                   <div className="space-y-12 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                      <div className="text-center space-y-4">
+                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Pillar <span className="text-rose-400">Lock</span></h3>
+                         <p className="text-slate-400 text-xl font-medium">Select the SEHTI pillar your collective will stabilize.</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                         {[
+                           { id: 'Societal', icon: Heart, col: 'text-rose-400' },
+                           { id: 'Environmental', icon: Leaf, col: 'text-emerald-400' },
+                           { id: 'Human', icon: Dna, col: 'text-teal-400' },
+                           { id: 'Technological', icon: Cpu, col: 'text-blue-400' },
+                         ].map(t => (
+                           <button key={t.id} onClick={() => setColThrust(t.id)} className={`p-10 rounded-[48px] border transition-all flex flex-col items-center gap-6 ${colThrust === t.id ? 'bg-white/10 border-white text-white shadow-2xl scale-105' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'}`}>
+                              <t.icon className={`w-12 h-12 ${colThrust === t.id ? 'text-white' : t.col}`} />
+                              <span className="text-lg font-black uppercase tracking-[0.2em] italic">{t.id}</span>
+                           </button>
+                         ))}
+                      </div>
+                      <div className="flex gap-6 pt-10">
+                         <button onClick={() => setCollectiveStep(2)} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                         <button onClick={() => setCollectiveStep(4)} className="flex-[2] py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl hover:scale-102 transition-all">Confirm Alignment</button>
+                      </div>
+                   </div>
+                 )}
+
+                 {collectiveStep === 4 && (
+                   <div className="space-y-12 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center text-center">
+                      <div className="w-32 h-32 agro-gradient rounded-full flex items-center justify-center mx-auto shadow-[0_0_80px_rgba(16,185,129,0.3)] animate-pulse border-8 border-white/5">
+                         <Sparkles className="w-16 h-16 text-white" />
+                      </div>
+                      <div className="space-y-4">
+                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Impact <span className="text-emerald-400">Forecast</span></h3>
+                         <p className="text-slate-400 text-xl font-medium leading-relaxed max-w-md mx-auto">Authorize node identity and anchor collective on the industrial shard.</p>
+                      </div>
+                      <div className="p-10 bg-emerald-500/5 border border-emerald-500/20 rounded-[56px] space-y-6">
+                         <p className="text-sm text-emerald-400 font-black uppercase tracking-[0.3em]">Finalizing Identity...</p>
+                         <p className="text-slate-500 text-xs italic leading-relaxed">"This group will be recorded on the EOS Social Ledger. Mission leadership multipliers will activate based on registry activity."</p>
+                      </div>
+                      <button onClick={handleCreateCollectiveSubmit} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all mt-6">Launch Collective Registry</button>
+                   </div>
+                 )}
+              </div>
            </div>
-           <div className="max-w-md space-y-3">
-              <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Tender Auctions</h4>
-              <p className="text-slate-500 text-sm leading-relaxed">No active tender requests in your zone. Higher m™ resilience scores unlock access to premium industrial auctions.</p>
-           </div>
-           <button className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3">
-              <RefreshCcw className="w-4 h-4 text-emerald-500" /> Refresh Registry
-           </button>
         </div>
       )}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.05);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255,255,255,0.1);
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .animate-wave { animation: wave 2s infinite ease-in-out; }
+        @keyframes wave { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; transform: scaleY(1.1); } }
       `}</style>
     </div>
   );

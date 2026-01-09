@@ -576,7 +576,7 @@ const InfoPortal: React.FC = () => {
                 </div>
              </div>
 
-             <div className="p-10 glass-card rounded-[48px] border-white/5 bg-white/[0.02] flex items-center justify-between">
+             <div className="p-10 glass-card rounded-[48px] bg-white/[0.02] flex items-center justify-between">
                 <div className="flex items-center gap-6">
                    <div className="w-16 h-16 rounded-[28px] bg-emerald-500 flex items-center justify-center shadow-2xl">
                       <HeartHandshake className="w-8 h-8 text-white" />
@@ -586,7 +586,10 @@ const InfoPortal: React.FC = () => {
                       <p className="text-slate-500 text-xs font-medium">All corporate inquiries are indexed on the EOS industrial shard within 24 hours.</p>
                    </div>
                 </div>
-                <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-white hover:bg-white/10 transition-all flex items-center gap-2">
+                <button 
+                  onClick={() => setActiveTab('faq')}
+                  className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-white hover:bg-white/10 transition-all flex items-center gap-2"
+                >
                    Institutional FAQ <ArrowRight className="w-4 h-4" />
                 </button>
              </div>

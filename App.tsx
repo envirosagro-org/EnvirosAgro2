@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Camera, CheckCircle2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, FileText, Power, Bot, AlertCircle, Lock, ArrowRight, Wrench, Mic, Coins, Heart, Activity, Globe, Box, Hash, Share2, Server, Terminal, Shield
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck
 } from 'lucide-react';
 import { ViewState, User } from './types';
 import Dashboard from './components/Dashboard';
@@ -23,7 +23,10 @@ import NetworkIngest from './components/NetworkIngest';
 import ToolsSection from './components/ToolsSection';
 import LiveVoiceBridge from './components/LiveVoiceBridge';
 import Channelling from './components/Channelling';
-import { diagnoseCropIssue } from './services/geminiService';
+import EvidenceModal from './components/EvidenceModal';
+import CircularGrid from './components/CircularGrid';
+import NexusCRM from './components/NexusCRM';
+import TQMGrid from './components/TQMGrid';
 import { syncUserToCloud } from './services/firebaseService';
 
 const App: React.FC = () => {
@@ -31,31 +34,34 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
-  const [blockHeight, setBlockHeight] = useState(8821942);
-  const [ping, setPing] = useState(12);
-  
-  const [economyToast, setEconomyToast] = useState<{ amount: number, label: string } | null>(null);
-  
-  // Minting Logic States
-  const [isMintingModalOpen, setIsMintingModalOpen] = useState(false);
-  const [mintingStep, setMintingStep] = useState<'upload' | 'analyzing' | 'confirm' | 'success'>('upload');
-  const [evidenceFile, setEvidenceFile] = useState<string | null>(null);
-  const [evidenceDesc, setEvidenceDesc] = useState('');
-  const [mintResult, setMintResult] = useState<string | null>(null);
-  const [calculatedReward, setCalculatedReward] = useState(0);
-  
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('agro_theme');
+    return (saved as 'light' | 'dark') || 'dark';
+  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) setIsSidebarOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    document.documentElement.className = theme;
+    
     const savedUser = localStorage.getItem('agro_steward');
     if (savedUser) setUser(JSON.parse(savedUser));
     
-    const interval = setInterval(() => {
-      setBlockHeight(h => h + 1);
-      setPing(Math.floor(8 + Math.random() * 8));
-    }, 12000);
-    return () => clearInterval(interval);
-  }, []);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('agro_theme', newTheme);
+  };
 
   const handleUpdateUser = async (updatedUser: User) => {
     setUser(updatedUser);
@@ -65,69 +71,25 @@ const App: React.FC = () => {
 
   const spendEAC = (amount: number, reason: string) => {
     if (!user || user.wallet.balance < amount) {
-      alert(`INSUFFICIENT LIQUIDITY: Node treasury requires ${amount} EAC for ${reason.replace(/_/g, ' ')}.`);
+      alert(`INSUFFICIENT LIQUIDITY: Requires ${amount} EAC.`);
       return false;
     }
     const updatedUser: User = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } };
     handleUpdateUser(updatedUser);
-    setEconomyToast({ amount: -amount, label: reason.toUpperCase() });
-    setTimeout(() => setEconomyToast(null), 3000);
     return true;
   };
 
   const earnEAC = (amount: number, reason: string) => {
     if (!user) return;
-    const updatedUser: User = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount } };
-    handleUpdateUser(updatedUser);
-    setEconomyToast({ amount, label: reason.toUpperCase() });
-    setTimeout(() => setEconomyToast(null), 3000);
-  };
-
-  const handleDepositEAC = (amount: number, gateway: string) => {
-    if (!user) return;
-    const updatedUser: User = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount } };
-    handleUpdateUser(updatedUser);
-    setEconomyToast({ amount, label: `DEPOSIT VIA ${gateway}` });
-    setTimeout(() => setEconomyToast(null), 3000);
-  };
-
-  const processContribution = (type: string, category: string) => {
-    if (!user) return;
-    const reward = type === 'post' ? 5 : type === 'upload' ? 20 : 50;
-    const updatedUser: User = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + reward } };
-    handleUpdateUser(updatedUser);
-    setEconomyToast({ amount: reward, label: `${type.toUpperCase()} REWARD` });
-    setTimeout(() => setEconomyToast(null), 3000);
-  };
-
-  const handleStartMinting = async () => {
-    setMintingStep('analyzing');
-    try {
-      const res = await diagnoseCropIssue(evidenceDesc || "General scientific field evidence.", evidenceFile?.split(',')[1]);
-      setMintResult(res.text);
-      const reward = Math.floor(25 + Math.random() * 75);
-      setCalculatedReward(reward);
-      setMintingStep('confirm');
-    } catch (e) {
-      alert("Registry Handshake Error. Retry analysis.");
-      setMintingStep('upload');
-    }
-  };
-
-  const finalizeMinting = () => {
-    if (!user) return;
     const updatedUser: User = { 
       ...user, 
       wallet: { 
         ...user.wallet, 
-        balance: user.wallet.balance + calculatedReward,
-        lifetimeEarned: user.wallet.lifetimeEarned + calculatedReward
+        balance: user.wallet.balance + amount,
+        lifetimeEarned: user.wallet.lifetimeEarned + amount 
       } 
     };
     handleUpdateUser(updatedUser);
-    setMintingStep('success');
-    setEconomyToast({ amount: calculatedReward, label: "EVIDENCE MINTED" });
-    setTimeout(() => setEconomyToast(null), 3000);
   };
 
   if (!user) return <Login onLogin={setUser} />;
@@ -135,9 +97,12 @@ const App: React.FC = () => {
   const navigation = [
     { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
     { id: 'wallet', name: 'Agro-Wallet', icon: Wallet },
+    { id: 'tqm', name: 'TQM & Trace', icon: ClipboardCheck },
+    { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake },
     { id: 'profile', name: 'Steward Profile', icon: UserIcon },
     { id: 'investor', name: 'Investor Portal', icon: Landmark },
     { id: 'vendor', name: 'Vendor Portal', icon: Store },
+    { id: 'circular', name: 'Circular Grid', icon: Recycle },
     { id: 'ingest', name: 'Network Ingest', icon: Cable },
     { id: 'channelling', name: 'Channelling Hub', icon: Share2 },
     { id: 'sustainability', name: 'Science & IoT', icon: Cpu },
@@ -153,302 +118,187 @@ const App: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#050706] text-slate-200 font-sans relative selection:bg-emerald-500 selection:text-white">
+    <div className={`flex h-screen overflow-hidden ${theme === 'dark' ? 'bg-[#050706] text-slate-200' : 'bg-slate-50 text-slate-900'} transition-colors duration-500`}>
       <div className="scanline"></div>
       
-      {economyToast && (
-        <div className="fixed top-20 right-10 z-[200] animate-in slide-in-from-top-4 duration-500">
-          <div className={`glass-card px-6 py-3 rounded-2xl flex items-center gap-4 border-l-4 shadow-2xl ${economyToast.amount > 0 ? 'border-l-emerald-500 bg-emerald-500/10' : 'border-l-rose-500 bg-rose-500/10'}`}>
-            <Zap className={`w-5 h-5 ${economyToast.amount > 0 ? 'text-emerald-400' : 'text-rose-400'}`} />
-            <div><p className="text-white font-black text-sm uppercase tracking-tighter">{economyToast.label}</p><p className="text-[10px] text-slate-400 font-mono italic">Registry Sync</p></div>
+      {/* Desktop Responsive Sidebar */}
+      {!isMobile && (
+        <aside className={`${isSidebarOpen ? 'w-72' : 'w-20'} glass-card border-r border-slate-200 dark:border-white/5 flex flex-col z-50 transition-all duration-300 relative`}>
+          <div className="p-6 flex items-center justify-between overflow-hidden">
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg group cursor-pointer hover:rotate-12 transition-transform">
+                <Leaf className="text-white w-6 h-6" />
+              </div>
+              {isSidebarOpen && <span className="text-xl font-black uppercase tracking-tighter truncate italic dark:text-white text-slate-900">Enviros<span className="text-emerald-500">Agro™</span></span>}
+            </div>
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-400 hover:text-emerald-500">
+              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
-        </div>
+          
+          <nav className="flex-1 mt-4 space-y-1 px-3 overflow-y-auto scrollbar-hide pb-20">
+            {navigation.map((item) => (
+              <button 
+                key={item.id} 
+                onClick={() => setActiveView(item.id as ViewState)} 
+                className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all group ${
+                  activeView === item.id 
+                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-inner' 
+                    : 'text-slate-400 hover:bg-slate-500/5 hover:text-emerald-500'
+                }`}
+              >
+                <item.icon className={`w-5 h-5 shrink-0 group-hover:scale-110 transition-transform ${activeView === item.id ? 'text-emerald-500' : ''}`} />
+                {isSidebarOpen && <span className="font-bold text-xs uppercase tracking-widest truncate">{item.name}</span>}
+              </button>
+            ))}
+          </nav>
+
+          {isSidebarOpen && (
+            <div className="p-6 mt-auto border-t border-slate-200 dark:border-white/5 space-y-4">
+              <button 
+                onClick={() => setIsVoiceBridgeOpen(true)}
+                className="w-full flex items-center gap-3 p-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform"
+              >
+                <Mic size={18} /> Initialize Voice
+              </button>
+            </div>
+          )}
+        </aside>
       )}
 
-      <aside className={`${isSidebarOpen ? 'w-72' : 'w-24'} transition-all duration-500 glass-card border-r border-white/5 flex flex-col z-50 bg-black/60 relative`}>
-        <div className="p-8 flex items-center justify-between">
+      {/* Main Stage */}
+      <main className="flex-1 overflow-y-auto relative flex flex-col pb-24 lg:pb-0">
+        <header className="flex justify-between items-center sticky top-0 bg-white/80 dark:bg-agro-bg/80 backdrop-blur-xl z-40 py-4 px-6 md:px-10 border-b border-slate-200 dark:border-white/5">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg glow-border group cursor-pointer hover:rotate-12 transition-transform">
-              <Leaf className="text-white w-6 h-6" />
+            {isMobile && (
+              <button onClick={() => setShowMobileMenu(true)} className="p-2 text-slate-400">
+                <Menu size={24} />
+              </button>
+            )}
+            <div>
+              <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase italic leading-none dark:text-white text-slate-900">
+                {navigation.find(n => n.id === activeView)?.name}
+              </h1>
+              <p className="hidden md:block text-[9px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1 opacity-60">Node: {user.esin}</p>
             </div>
-            {isSidebarOpen && <span className="text-xl font-black uppercase tracking-tighter italic">Enviros<span className="text-emerald-500">Agro™</span></span>}
           </div>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-600 hover:text-white transition-colors">{isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 mx-auto" />}</button>
-        </div>
-        
-        <nav className="flex-1 mt-2 space-y-1 px-4 overflow-y-auto scrollbar-hide pb-20">
-          {navigation.map((item) => (
-            <button key={item.id} onClick={() => setActiveView(item.id as ViewState)} className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all group ${activeView === item.id ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 shadow-inner' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'}`}>
-              <item.icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110 ${activeView === item.id ? 'text-emerald-400' : 'text-slate-600'}`} />
-              {isSidebarOpen && <span className="font-bold text-xs uppercase tracking-widest text-nowrap">{item.name}</span>}
-            </button>
-          ))}
-        </nav>
-        
-        <div className="p-6 border-t border-white/5 space-y-4 bg-black/40 backdrop-blur-md">
-          <div className="glass-card p-4 rounded-2xl bg-white/[0.01] border-white/5 relative overflow-hidden group">
-            <div className="absolute inset-0 shimmer opacity-[0.02] pointer-events-none"></div>
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Block Height</p>
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            </div>
-            <p className="text-xs font-mono font-bold text-white tracking-widest">#{blockHeight.toLocaleString()}</p>
-          </div>
-          <button onClick={() => setIsVoiceBridgeOpen(!isVoiceBridgeOpen)} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${isVoiceBridgeOpen ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-slate-500 bg-white/5 hover:text-white'}`}>
-            <Mic className="w-5 h-5 shrink-0" />{isSidebarOpen && <span className="font-black text-[10px] uppercase tracking-widest">Voice Bridge</span>}
-          </button>
-          <button onClick={() => setShowLogoutConfirm(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all font-black text-[10px] uppercase tracking-widest border border-transparent hover:border-rose-500/20">
-            <LogOut className="w-5 h-5 shrink-0" />{isSidebarOpen && <span>Terminate Session</span>}
-          </button>
-        </div>
-      </aside>
 
-      <main className="flex-1 overflow-y-auto relative bg-[#050706] flex flex-col">
-        <header className="flex justify-between items-center sticky top-0 bg-[#050706]/90 backdrop-blur-xl z-40 py-6 px-10 border-b border-white/5">
-          <div>
-            <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">{navigation.find(n => n.id === activeView)?.name}</h1>
-            <div className="flex items-center gap-4 mt-1">
-              <p className="text-slate-600 text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Registry: {user.esin}
-              </p>
-              <p className="text-slate-700 text-[9px] font-black uppercase tracking-[0.3em] hidden md:block">Region: Global_Node_{user.location.replace(/ /g, '_')}</p>
+          <div className="flex items-center gap-4">
+            {/* Unified Toggle Controls */}
+            <div className="flex items-center glass-card p-1 rounded-2xl border-slate-200 dark:border-white/5">
+              <button 
+                onClick={toggleTheme}
+                className={`p-2.5 rounded-xl transition-all ${theme === 'dark' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                aria-label="Dark Mode"
+              >
+                <Moon size={18} />
+              </button>
+              <button 
+                onClick={toggleTheme}
+                className={`p-2.5 rounded-xl transition-all ${theme === 'light' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                aria-label="Light Mode"
+              >
+                <Sun size={18} />
+              </button>
             </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="hidden xl:flex items-center gap-10 mr-6">
-               <div className="text-right">
-                  <p className="text-[8px] text-slate-600 font-black uppercase">Gas Status</p>
-                  <p className="text-xs font-mono font-bold text-emerald-400">0.0001 EAC</p>
-               </div>
-               <div className="text-right">
-                  <p className="text-[8px] text-slate-600 font-black uppercase">Validator Sync</p>
-                  <p className="text-xs font-mono font-bold text-blue-400">99.98%</p>
-               </div>
-            </div>
-            <button onClick={() => setActiveView('wallet')} className="flex items-center gap-4 glass-card px-6 py-3 rounded-2xl border-white/10 hover:border-emerald-500/30 transition-all group">
-              <div className="flex flex-col items-end">
-                <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest text-nowrap">Available Capital</span>
-                <span className="text-lg font-mono text-white font-black whitespace-nowrap">{user.wallet.balance.toFixed(2)} <span className="text-[10px] text-emerald-500">EAC</span></span>
+
+            <button onClick={() => setActiveView('wallet')} className="flex items-center gap-4 glass-card px-4 py-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5 transition-all group">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Treasury</span>
+                <span className="text-lg font-mono font-black dark:text-white text-slate-900">{user.wallet.balance.toFixed(0)} <span className="text-xs text-emerald-500">EAC</span></span>
               </div>
-              <div className="p-3 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500 transition-colors group-hover:text-white text-emerald-500">
-                <Wallet className="w-5 h-5" />
+              <div className="p-2.5 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500 transition-colors group-hover:text-white text-emerald-500">
+                <Wallet size={20} />
               </div>
             </button>
           </div>
         </header>
 
-        <div className="p-10 flex-1">
+        <div className="p-4 md:p-10 flex-1 relative overflow-x-hidden scrollbar-hide">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={setActiveView} />}
           {activeView === 'wallet' && <AgroWallet user={user} onNavigate={setActiveView} />}
-          {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={() => setShowLogoutConfirm(true)} />}
+          {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} />}
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} />}
           {activeView === 'vendor' && <VendorPortal user={user} />}
+          {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} />}
+          {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} />}
           {activeView === 'ingest' && <NetworkIngest />}
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} />}
-          {activeView === 'sustainability' && <Sustainability onAction={() => setIsMintingModalOpen(true)} />}
-          {activeView === 'economy' && <Economy user={user} onMint={() => setIsMintingModalOpen(true)} />}
+          {activeView === 'sustainability' && <Sustainability onAction={() => setIsEvidenceModalOpen(true)} />}
+          {activeView === 'economy' && <Economy user={user} onMint={() => setIsEvidenceModalOpen(true)} />}
           {activeView === 'industrial' && <Industrial user={user} onSpendEAC={spendEAC} />}
           {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
           {activeView === 'tools' && <ToolsSection />}
-          {activeView === 'community' && <Community user={user} onContribution={processContribution} onSpendEAC={spendEAC} />}
+          {activeView === 'community' && <Community user={user} onContribution={() => {}} onSpendEAC={spendEAC} />}
           {activeView === 'explorer' && <Explorer />}
-          {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={handleDepositEAC} />}
+          {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={() => {}} />}
           {activeView === 'media' && <MediaHub userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
         </div>
-
-        {/* Industrial Production Status Bar */}
-        <footer className="h-10 bg-black/80 backdrop-blur-2xl border-t border-white/5 flex items-center px-10 justify-between text-[8px] font-black uppercase tracking-[0.4em] text-slate-600 relative z-[60]">
-           <div className="flex gap-10 items-center">
-              <div className="flex items-center gap-2">
-                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div>
-                 <span>Vercel_Deployment: <span className="text-slate-300">NODE_01_ACTIVE</span></span>
-              </div>
-              <div className="flex items-center gap-2">
-                 <Terminal className="w-3 h-3" />
-                 <span>Latency: <span className="text-emerald-500 font-mono">{ping}ms</span></span>
-              </div>
-              <div className="hidden md:flex items-center gap-2">
-                 <Server className="w-3 h-3" />
-                 <span>Protocol: <span className="text-slate-400">EOS_V3.2.1</span></span>
-              </div>
-           </div>
-           <div className="flex gap-10 items-center">
-              <div className="flex items-center gap-2">
-                 <Shield className="w-3 h-3 text-emerald-500" />
-                 <span>Registry_Auth: <span className="text-emerald-500">TRUSTED</span></span>
-              </div>
-              <div className="hidden sm:flex items-center gap-2">
-                 <Activity className="w-3 h-3" />
-                 <span>U-Score_Delta: <span className="text-white">+0.04%</span></span>
-              </div>
-              <p className="font-mono text-slate-800">ENVIROSAGRO_BLOCKCHAIN_INDUSTRIES_©2025</p>
-           </div>
-        </footer>
       </main>
 
+      {/* Handheld Navigation Bar */}
+      {isMobile && (
+        <nav className="fixed bottom-0 left-0 right-0 h-20 glass-card border-t border-slate-200 dark:border-white/5 flex items-center justify-around px-4 z-[100] pb-safe bg-white/80 dark:bg-black/80 backdrop-blur-3xl">
+          {navigation.slice(0, 5).map((item) => (
+            <button 
+              key={item.id} 
+              onClick={() => setActiveView(item.id as ViewState)} 
+              className={`flex flex-col items-center gap-1.5 p-2 transition-all ${activeView === item.id ? 'text-emerald-500' : 'text-slate-400'}`}
+            >
+              <item.icon size={22} className={activeView === item.id ? 'animate-pulse drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : ''} />
+              <span className="text-[9px] font-black uppercase tracking-widest">{item.name.split(' ')[0]}</span>
+            </button>
+          ))}
+          <button onClick={() => setShowMobileMenu(true)} className="flex flex-col items-center gap-1.5 p-2 text-slate-400">
+            <Layers size={22} />
+            <span className="text-[9px] font-black uppercase tracking-widest">Portal</span>
+          </button>
+        </nav>
+      )}
+
+      {/* Global View Drawer */}
+      {showMobileMenu && (
+        <div className="fixed inset-0 z-[200] animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-agro-bg/95 backdrop-blur-2xl" onClick={() => setShowMobileMenu(false)}></div>
+          <div className="absolute top-0 right-0 bottom-0 w-[85%] max-w-sm dark:bg-agro-bg bg-white shadow-2xl p-8 flex flex-col border-l border-white/5 animate-in slide-in-from-right duration-400 rounded-l-[40px]">
+             <div className="flex justify-between items-center mb-10">
+                <h3 className="text-xl font-black uppercase italic tracking-tighter dark:text-white text-slate-900">Registry <span className="text-emerald-500">Nodes</span></h3>
+                <button onClick={() => setShowMobileMenu(false)} className="p-3 bg-white/5 rounded-full text-slate-400"><X size={28} /></button>
+             </div>
+             <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-hide">
+                {navigation.map(item => (
+                  <button 
+                    key={item.id} 
+                    onClick={() => { setActiveView(item.id as ViewState); setShowMobileMenu(false); }} 
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all ${
+                      activeView === item.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'dark:text-slate-400 text-slate-500 hover:bg-slate-500/5'
+                    }`}
+                  >
+                    <item.icon size={20} />
+                    <span className="text-sm font-bold uppercase tracking-widest">{item.name}</span>
+                  </button>
+                ))}
+             </div>
+             <div className="pt-8 mt-8 border-t border-white/5 space-y-4">
+                <button onClick={() => { setIsVoiceBridgeOpen(true); setShowMobileMenu(false); }} className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
+                   <Mic size={18} /> Initialize Voice
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+
       <LiveVoiceBridge isOpen={isVoiceBridgeOpen} onClose={() => setIsVoiceBridgeOpen(false)} />
-
-      {/* Minting Evidence Modal */}
-      {isMintingModalOpen && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setIsMintingModalOpen(false)}></div>
-          <div className="relative z-10 w-full max-w-2xl glass-card p-1 rounded-[56px] border-emerald-500/20 overflow-hidden shadow-2xl bg-[#050706]">
-            <div className="p-10 bg-emerald-600/5 border-b border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                 <div className="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center border border-emerald-500/20 shadow-xl">
-                    <Microscope className="w-8 h-8 text-emerald-400" />
-                 </div>
-                 <div>
-                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Mint <span className="text-emerald-400">Evidence</span></h3>
-                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Industrial Registry v3.2</p>
-                 </div>
-              </div>
-              <button onClick={() => setIsMintingModalOpen(false)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
-            </div>
-
-            <div className="p-12 min-h-[400px] flex flex-col justify-center">
-              {mintingStep === 'upload' && (
-                <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
-                  <div 
-                    onClick={() => document.getElementById('file-upload')?.click()}
-                    className="p-16 border-4 border-dashed border-white/5 rounded-[48px] bg-white/[0.01] flex flex-col items-center text-center group hover:border-emerald-500/40 hover:bg-emerald-500/[0.02] cursor-pointer transition-all"
-                  >
-                    <input type="file" id="file-upload" className="hidden" onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = () => setEvidenceFile(reader.result as string);
-                        reader.readAsDataURL(file);
-                      }
-                    }} />
-                    {evidenceFile ? (
-                      <div className="space-y-4">
-                        <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
-                        <p className="text-white font-bold uppercase tracking-widest">Scientific Shard Loaded</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-6">
-                        <Upload className="w-16 h-16 text-slate-700 group-hover:text-emerald-500 group-hover:scale-110 transition-all" />
-                        <div>
-                          <p className="text-xl font-bold text-white uppercase tracking-tight">Ingest Field Telemetry</p>
-                          <p className="text-slate-500 text-sm mt-2 italic">Support: Spectral PDF, Soil CSV, Crop Scans (JPG/PNG)</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Evidence Context</label>
-                    <textarea 
-                      value={evidenceDesc}
-                      onChange={(e) => setEvidenceDesc(e.target.value)}
-                      placeholder="Explain the regenerative practice or scientific outcome..."
-                      className="w-full bg-black/60 border border-white/10 rounded-3xl p-6 text-white text-sm h-32 outline-none focus:ring-2 focus:ring-emerald-500/40"
-                    />
-                  </div>
-                  <button 
-                    onClick={handleStartMinting}
-                    disabled={!evidenceFile}
-                    className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl disabled:opacity-30"
-                  >
-                    INITIALIZE AI VALIDATION
-                  </button>
-                </div>
-              )}
-
-              {mintingStep === 'analyzing' && (
-                <div className="flex flex-col items-center justify-center space-y-10 animate-in zoom-in duration-500">
-                  <div className="relative">
-                    <div className="absolute inset-0 border-t-8 border-emerald-500 rounded-full animate-spin"></div>
-                    <div className="w-32 h-32 rounded-full bg-emerald-500/10 flex items-center justify-center shadow-2xl">
-                       <Bot className="w-12 h-12 text-emerald-400 animate-pulse" />
-                    </div>
-                  </div>
-                  <div className="text-center space-y-4">
-                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Registry Oracle <span className="text-emerald-400">Auditing</span></h3>
-                    <p className="text-slate-500 text-sm font-black uppercase tracking-[0.4em] animate-pulse">Running SEHTI Consistency Check...</p>
-                  </div>
-                </div>
-              )}
-
-              {mintingStep === 'confirm' && (
-                <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                  <div className="p-8 glass-card rounded-[40px] border-l-4 border-emerald-500/50 bg-emerald-950/10 space-y-6">
-                    <div className="flex items-center gap-3">
-                       <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                       <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Oracle Validation Shard</span>
-                    </div>
-                    <div className="prose prose-invert max-w-none text-slate-300 italic text-lg leading-relaxed whitespace-pre-line border-l border-white/10 pl-6">
-                       {mintResult}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-8">
-                     <div className="p-8 bg-black/60 rounded-[32px] border border-white/5 space-y-2 text-center">
-                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">C(a) Impact</p>
-                        <p className="text-3xl font-mono font-black text-white">+1.42x</p>
-                     </div>
-                     <div className="p-8 bg-emerald-500/10 rounded-[32px] border border-emerald-500/20 space-y-2 text-center">
-                        <p className="text-[10px] text-emerald-400 font-black uppercase mb-1">EAC Reward</p>
-                        <p className="text-3xl font-mono font-black text-emerald-400">+{calculatedReward}</p>
-                     </div>
-                  </div>
-                  <button 
-                    onClick={finalizeMinting}
-                    className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6"
-                  >
-                    <Coins className="w-8 h-8" /> SETTLE & MINT EAC
-                  </button>
-                </div>
-              )}
-
-              {mintingStep === 'success' && (
-                <div className="flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
-                  <div className="w-40 h-40 bg-emerald-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 scale-110">
-                     <CheckCircle2 className="w-20 h-20 text-white" />
-                  </div>
-                  <div className="space-y-4">
-                     <h3 className="text-5xl font-black text-white uppercase tracking-tighter">Shard Committed</h3>
-                     <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.5em]">Treasury Synchronized // Shard Hash 0x882...</p>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setIsMintingModalOpen(false);
-                      setMintingStep('upload');
-                      setEvidenceFile(null);
-                      setEvidenceDesc('');
-                    }} 
-                    className="w-full py-8 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all"
-                  >
-                    Dismiss Ingest Terminal
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl" onClick={() => setShowLogoutConfirm(false)}></div>
-          <div className="relative z-10 w-full max-w-md glass-card p-10 rounded-3xl border-rose-500/20 bg-rose-950/20 text-center space-y-8">
-            <div className="w-20 h-20 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/40 mx-auto"><Power className="w-10 h-10 text-rose-500" /></div>
-            <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Terminate Session?</h3>
-            <div className="flex gap-4">
-              <button onClick={() => setShowLogoutConfirm(false)} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-xs uppercase hover:bg-white/10 transition-all">Cancel</button>
-              <button onClick={() => { localStorage.removeItem('agro_steward'); window.location.reload(); }} className="flex-1 py-4 bg-rose-600 rounded-2xl text-white font-black text-xs uppercase hover:bg-rose-500 transition-all shadow-xl">Terminate</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EvidenceModal 
+        isOpen={isEvidenceModalOpen} 
+        onClose={() => setIsEvidenceModalOpen(false)} 
+        user={user} 
+        onMinted={(val) => earnEAC(val, 'SCIENTIFIC_EVIDENCE_MINT')}
+      />
     </div>
   );
 };
-
-const Microscope = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M6 18c-2 0-3-1-3-3s1-3 3-3 3 1 3 3-1 3-3 3Z"/><path d="M12 18h9"/><path d="M16 12l2 2"/><path d="M9 12l3 3"/><path d="M10 5l4 4"/><path d="M15 2l5 5"/>
-  </svg>
-);
 
 export default App;

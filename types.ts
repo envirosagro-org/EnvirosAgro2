@@ -45,6 +45,7 @@ export interface AgroProject {
   id: string;
   name: string;
   adminEsin: string;
+  collectiveId?: string; // Optional: Project led by a social collective
   description: string;
   thrust: 'Societal' | 'Environmental' | 'Human' | 'Technological' | 'Industry';
   status: 'Ideation' | 'Verification' | 'Funding' | 'Execution' | 'Closure';
@@ -68,11 +69,11 @@ export interface AgroBlock {
 
 export interface AgroTransaction {
   id: string;
-  type: 'Harvest' | 'Audit' | 'Transfer' | 'CarbonMint' | 'ReactionMining' | 'MarketTrade' | 'EvidenceUpload' | 'Reward' | 'Burn';
+  type: 'Harvest' | 'Audit' | 'Transfer' | 'CarbonMint' | 'ReactionMining' | 'MarketTrade' | 'EvidenceUpload' | 'Reward' | 'Burn' | 'Recycle';
   farmId: string;
   details: string;
   value: number;
   unit: string;
 }
 
-export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling';
+export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling' | 'circular' | 'crm' | 'tqm';

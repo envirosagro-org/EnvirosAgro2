@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Droplets, 
@@ -262,8 +263,8 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
                    <Binary className="w-32 h-32 text-emerald-500" />
                 </div>
                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-8">C(a)™ Growth Projection</h4>
-                <div className="h-[250px] w-full">
-                   <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[250px] w-full min-h-0 min-w-0">
+                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <AreaChart data={[{period: 'Genesis', ca: 1}, {period: 'P1', ca: results.ca * 0.2}, {period: 'P2', ca: results.ca * 0.5}, {period: 'P3', ca: results.ca}]}>
                       <defs>
                         <linearGradient id="colorCa" x1="0" y1="0" x2="0" y2="1">
@@ -384,8 +385,8 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
                     <h4 className="text-xs font-black text-white uppercase tracking-widest mb-8 flex items-center gap-2">
                        <Dna className="w-4 h-4 text-rose-400" /> Resonance Analysis
                     </h4>
-                    <div className="h-[280px] w-full">
-                       <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-[280px] w-full min-h-0 min-w-0">
+                       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={sidData}>
                              <PolarGrid stroke="rgba(255,255,255,0.05)" />
                              <PolarAngleAxis dataKey="subject" stroke="rgba(255,255,255,0.3)" fontSize={10} fontStyle="italic" />
@@ -507,7 +508,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
                       </div>
                       <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-center">
                          <span className="text-[9px] text-slate-600 font-black uppercase">Shard Release</span>
-                         <ChevronRight className="w-4 h-4 text-emerald-500" />
+                         <ChevronRight className="w-4 h-4 text-emerald-400" />
                       </div>
                    </div>
 
@@ -692,16 +693,14 @@ const Sustainability: React.FC<SustainabilityProps> = ({ onAction }) => {
                     ))}
                  </div>
                  
-                 <button className="w-full py-6 bg-white/5 border border-white/10 rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white transition-all">
+                 <button className="w-full py-6 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white transition-all">
                     Load Older Shards
                  </button>
               </div>
 
               <div className="space-y-8">
                  <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8 bg-indigo-600/5">
-                    <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-3">
-                       <Zap className="w-5 h-5 text-indigo-400" /> Network Stats
-                    </h4>
+                    <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-3"><Zap className="w-5 h-5 text-indigo-400" /> Network Stats</h4>
                     <div className="space-y-8">
                        <div className="space-y-2">
                           <p className="text-[10px] text-slate-500 font-black uppercase">Minted via Evidence</p>

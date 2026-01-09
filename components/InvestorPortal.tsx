@@ -30,7 +30,9 @@ import {
   Activity,
   Layers,
   ArrowDownUp,
-  Cpu
+  Cpu,
+  /* Fix: Added missing Coins icon import from lucide-react */
+  Coins
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -345,8 +347,8 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate }) => {
                     </div>
                  </div>
 
-                 <div className="h-[350px] w-full relative z-10">
-                    <ResponsiveContainer width="100%" height="100%">
+                 <div className="h-[350px] w-full relative z-10 min-h-0 min-w-0">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                        <AreaChart data={ANALYTICS_TREND_DATA}>
                           <defs>
                              <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
@@ -392,8 +394,8 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate }) => {
                     <h3 className="text-xl font-bold text-white uppercase tracking-tighter italic">Sector <span className="text-blue-400">Alpha</span></h3>
                     <PieChartIcon className="w-6 h-6 text-blue-400" />
                  </div>
-                 <div className="h-[280px] w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
+                 <div className="h-[280px] w-full relative min-h-0 min-w-0">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                        <PieChart>
                           <Pie
                              data={THRUST_YIELD_ALLOCATION}
@@ -682,12 +684,13 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate }) => {
                          <h3 className="text-5xl font-black text-white uppercase tracking-tighter">Vouch Complete</h3>
                          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Liquidity Successfully Synchronized // Shard 0x882</p>
                       </div>
-                      <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-6 text-left">
-                         <div className="flex justify-between items-center text-xs">
+                      <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-6 text-left relative overflow-hidden">
+                         <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><Coins className="w-40 h-40 text-emerald-400" /></div>
+                         <div className="flex justify-between items-center text-xs relative z-10">
                             <span className="text-slate-500 font-black uppercase tracking-widest">Transaction Hash</span>
                             <span className="text-emerald-400 font-mono font-bold">0x{Math.random().toString(16).slice(2, 14)}...</span>
                          </div>
-                         <div className="flex justify-between items-center text-xs">
+                         <div className="flex justify-between items-center text-xs relative z-10">
                             <span className="text-slate-500 font-black uppercase tracking-widest">Steward Standing</span>
                             <span className="text-white font-black uppercase bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/20">UPGRADED</span>
                          </div>
