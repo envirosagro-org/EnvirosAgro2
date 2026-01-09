@@ -523,8 +523,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
                    </div>
                    <div className="space-y-4">
                       <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">AgroInPDF <span className="text-amber-500">Patent Vault</span></h4>
-                      {/* FIXED BUILD ERROR: Wrapped text and comparison operator in curly braces */}
-                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with {' more than 90% '} Community Consensus graduate into official Industrial Inventions.</p>
+                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with &gt; 90% Community Consensus graduate into official Industrial Inventions.</p>
                    </div>
                 </div>
                 <div className="text-right relative z-10 shrink-0">

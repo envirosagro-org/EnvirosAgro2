@@ -3,7 +3,8 @@ import {
   ShieldCheck, Zap, Globe, Activity, HeartPulse, Cpu, Sparkles, Binary, 
   CreditCard, Layers, Coins, Users, Heart, ArrowRight, BrainCircuit, Bot, 
   TrendingUp, AtSign, Share2, Youtube, Twitter, HelpCircle, Send, Pin, Linkedin,
-  Rocket, PlusCircle, Gavel, Building2, Share, ShieldAlert, UserCheck
+  Rocket, PlusCircle, Gavel, Building2, Share, ShieldAlert, UserCheck, Handshake,
+  LayoutGrid, Video
 } from 'lucide-react';
 import { ViewState, User } from '../types';
 import IdentityCard from './IdentityCard';
@@ -28,7 +29,7 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
   }, []);
 
   return (
-    <div className="relative w-full h-[300px] lg:h-full min-h-[400px] overflow-hidden glass-card rounded-[40px] border border-emerald-500/10 flex items-center justify-center group bg-slate-50 dark:bg-black/40 shadow-2xl">
+    <div className="relative w-full h-[300px] lg:h-full min-h-[400px] overflow-hidden glass-card rounded-[40px] border border-emerald-500/10 flex items-center justify-center group bg-slate-50 dark:bg-black/40 shadow-2xl text-slate-900 dark:text-slate-100">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')] opacity-10 dark:opacity-30"></div>
       
       {/* Dynamic Connections */}
@@ -170,22 +171,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
            <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.3em] italic flex items-center gap-4 dark:text-white text-slate-900">
               <Building2 className="w-6 h-6 text-indigo-400" /> Industrial <span className="text-indigo-400">Launchpad</span>
            </h3>
-           <p className="hidden md:block text-[9px] font-mono text-indigo-500/50 font-black uppercase tracking-widest">Shard Priority: High</p>
+           <div className="flex items-center gap-3">
+              <span className="text-[9px] font-mono text-indigo-500/50 font-black uppercase tracking-widest">Shard Priority: High</span>
+              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
            {[
-             { label: 'Form Collective', icon: PlusCircle, color: 'text-emerald-400', desc: 'Form Shard Group', target: 'industrial', action: 'FORM_COLLECTIVE' },
-             { label: 'Register Node', icon: Building2, color: 'text-amber-400', desc: 'Industry Node Entry', target: 'industrial', action: 'REGISTER_NODE' },
-             { label: 'Place Bid', icon: Gavel, color: 'text-blue-400', desc: 'Tender Auction Portal', target: 'industrial', action: 'PLACE_BID' },
-             { label: 'Launch Mission', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Campaign', target: 'industrial', action: 'LAUNCH_MISSION' },
-             { label: 'Steward Dossier', icon: UserCheck, color: 'text-teal-400', desc: 'View Full Dossier', target: 'industrial', action: 'VIEW_DOSSIER' },
+             { label: 'Form Shard Group', icon: PlusCircle, color: 'text-emerald-400', desc: 'Initialize Collective Node', target: 'industrial', action: 'FORM_COLLECTIVE', priority: true },
+             { label: 'New Mission Campaign', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Scaling Shard', target: 'industrial', action: 'LAUNCH_MISSION', priority: true },
+             { label: 'View Full Dossier', icon: UserCheck, color: 'text-teal-400', desc: 'Steward Registry Audit', target: 'industrial', action: 'VIEW_DOSSIER', priority: true },
+             { label: 'Register Node', icon: Building2, color: 'text-amber-400', desc: 'Industry Facility Entry', target: 'industrial', action: 'REGISTER_NODE', priority: false },
+             { label: 'Place Auction Bid', icon: Gavel, color: 'text-blue-400', desc: 'Tender Ingress Portal', target: 'industrial', action: 'PLACE_BID', priority: false },
            ].map((action, i) => (
              <button 
               key={i} 
               onClick={() => onNavigate(action.target as ViewState, action.action)}
-              className="glass-card p-8 rounded-[32px] border border-white/5 hover:border-indigo-500/30 hover:bg-white/5 transition-all text-left flex flex-col gap-4 group active:scale-95 shadow-xl"
+              className={`glass-card p-8 rounded-[32px] border transition-all text-left flex flex-col gap-4 group active:scale-95 shadow-xl relative overflow-hidden ${action.priority ? 'border-indigo-500/40 bg-white/5' : 'border-white/5 hover:border-indigo-500/30 hover:bg-white/5'}`}
              >
+                {action.priority && (
+                  <div className="absolute -top-1 -right-1 w-12 h-12 bg-indigo-500/10 rotate-45 flex items-end justify-center pb-1">
+                     <Sparkles className="w-3 h-3 text-indigo-400 animate-pulse" />
+                  </div>
+                )}
                 <div className={`p-4 rounded-2xl bg-slate-900 border border-white/5 group-hover:scale-110 transition-transform ${action.color}`}>
                    <action.icon className="w-8 h-8" />
                 </div>
@@ -193,8 +202,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100 dark:text-white text-slate-900">{action.label}</span>
                   <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">{action.desc}</p>
                 </div>
-                <div className="mt-auto pt-4 flex justify-end">
-                   <ArrowRight className="w-4 h-4 text-slate-700 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
+                <div className="mt-auto pt-4 flex justify-between items-center">
+                   <div className="flex gap-1">
+                      {[0,1,2].map(dot => <div key={dot} className={`w-1 h-1 rounded-full ${action.priority ? 'bg-indigo-500' : 'bg-slate-800'}`}></div>)}
+                   </div>
+                   <ArrowRight className={`w-4 h-4 transition-all ${action.priority ? 'text-indigo-400 translate-x-0' : 'text-slate-700'} group-hover:translate-x-1`} />
                 </div>
              </button>
            ))}
@@ -312,7 +324,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
            {[
              { label: 'X Node', icon: Twitter, url: 'https://x.com/EnvirosAgro', color: 'text-blue-400' },
              { label: 'YouTube', icon: Youtube, url: 'https://youtube.com/@envirosagro', color: 'text-red-500' },
-             { label: 'TikTok', icon: Share2, url: 'https://www.tiktok.com/@envirosagro', color: 'text-pink-500' },
+             { label: 'TikTok', icon: Video, url: 'https://www.tiktok.com/@envirosagro', color: 'text-pink-500' },
              { label: 'Quora', icon: HelpCircle, url: 'https://www.quora.com/profile/EnvirosAgro', color: 'text-red-600' },
              { label: 'Telegram', icon: Send, url: 'https://t.me/EnvirosAgro', color: 'text-sky-400' },
              { label: 'LinkedIn', icon: Linkedin, url: 'https://www.linkedin.com/company/modern-agrarian-revolution', color: 'text-blue-600' },
@@ -339,7 +351,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
            <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setShowIdentityCard(false)}></div>
            <div className="relative z-10 w-full max-lg:max-w-lg space-y-6 flex flex-col items-center animate-in zoom-in duration-300">
               <div className="text-center space-y-2 mb-2">
-                 <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">Steward <span className="text-emerald-500">Identity</span></h2>
+                 <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">Steward <span className="text-emerald-400">Identity</span></h2>
                  <p className="text-emerald-500/60 font-mono text-[10px] tracking-[0.4em] uppercase">Blockchain Anchor Secured</p>
               </div>
               <IdentityCard user={user} />
