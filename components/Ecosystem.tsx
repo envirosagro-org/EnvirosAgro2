@@ -124,19 +124,19 @@ interface Brand {
   products: Product[];
 }
 
-const ZODIAC_FLOWERS: Record<string, { flower: string; color: string; desc: string }> = {
-  'January': { flower: 'Carnation', color: 'text-pink-400', desc: 'Symbolizing fascination and distinction.' },
-  'February': { flower: 'Violet', color: 'text-purple-400', desc: 'Symbolizing faithfulness and wisdom.' },
-  'March': { flower: 'Daffodil', color: 'text-yellow-400', desc: 'Symbolizing rebirth and new beginnings.' },
-  'April': { flower: 'Daisy', color: 'text-white', desc: 'Symbolizing innocence and purity.' },
-  'May': { flower: 'Lily of the Valley', color: 'text-emerald-200', desc: 'Symbolizing humility and happiness.' },
-  'June': { flower: 'Rose', color: 'text-rose-500', desc: 'Symbolizing love and passion.' },
-  'July': { flower: 'Water Lily', color: 'text-blue-300', desc: 'Symbolizing enlightenment and purity.' },
-  'August': { flower: 'Poppy', color: 'text-red-500', desc: 'Symbolizing strength of character.' },
-  'September': { flower: 'Morning Glory', color: 'text-indigo-400', desc: 'Symbolizing affection and mortality.' },
-  'October': { flower: 'Cosmos', color: 'text-pink-300', desc: 'Symbolizing order and peace.' },
-  'November': { flower: 'Chrysanthemum', color: 'text-orange-400', desc: 'Symbolizing loyalty and honesty.' },
-  'December': { flower: 'Narcissus', color: 'text-blue-100', desc: 'Symbolizing respect and faithfulness.' },
+const ZODIAC_FLOWERS: Record<string, { flower: string; color: string; hex: string; desc: string }> = {
+  'January': { flower: 'Carnation', color: 'text-pink-400', hex: '#f472b6', desc: 'Symbolizing fascination and distinction.' },
+  'February': { flower: 'Violet', color: 'text-purple-400', hex: '#c084fc', desc: 'Symbolizing faithfulness and wisdom.' },
+  'March': { flower: 'Daffodil', color: 'text-yellow-400', hex: '#facc15', desc: 'Symbolizing rebirth and new beginnings.' },
+  'April': { flower: 'Daisy', color: 'text-white', hex: '#ffffff', desc: 'Symbolizing innocence and purity.' },
+  'May': { flower: 'Lily of the Valley', color: 'text-emerald-200', hex: '#a7f3d0', desc: 'Symbolizing humility and happiness.' },
+  'June': { flower: 'Rose', color: 'text-rose-500', hex: '#f43f5e', desc: 'Symbolizing love and passion.' },
+  'July': { flower: 'Water Lily', color: 'text-blue-300', hex: '#93c5fd', desc: 'Symbolizing enlightenment and purity.' },
+  'August': { flower: 'Poppy', color: 'text-red-500', hex: '#ef4444', desc: 'Symbolizing strength of character.' },
+  'September': { flower: 'Morning Glory', color: 'text-indigo-400', hex: '#818cf8', desc: 'Symbolizing affection and mortality.' },
+  'October': { flower: 'Cosmos', color: 'text-pink-300', hex: '#f9a8d4', desc: 'Symbolizing order and peace.' },
+  'November': { flower: 'Chrysanthemum', color: 'text-orange-400', hex: '#fb923c', desc: 'Symbolizing loyalty and honesty.' },
+  'December': { flower: 'Narcissus', color: 'text-blue-100', hex: '#dbeafe', desc: 'Symbolizing respect and faithfulness.' },
 };
 
 const BRANDS: Brand[] = [
@@ -238,6 +238,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
   // Zodiac Gift States
   const [selectedMonth, setSelectedMonth] = useState('January');
   const [isClaimingGift, setIsClaimingGift] = useState(false);
+  const [isGeneratingBadge, setIsGeneratingBadge] = useState(false);
 
   const filteredBrands = filter === 'all' ? BRANDS : BRANDS.filter(b => b.thrust === filter);
 
@@ -260,6 +261,78 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
     } else {
       setPortalTab('ai');
     }
+  };
+
+  const downloadBadgeImage = async () => {
+    if (!user.zodiacFlower) return;
+    setIsGeneratingBadge(true);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1000;
+    canvas.height = 1000;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Background
+    ctx.fillStyle = '#050706';
+    ctx.fillRect(0, 0, 1000, 1000);
+
+    // Outer Glow
+    const gradient = ctx.createRadialGradient(500, 500, 0, 500, 500, 500);
+    gradient.addColorStop(0, '#10b98111');
+    gradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1000, 1000);
+
+    // Badge Ring
+    ctx.beginPath();
+    ctx.arc(500, 500, 400, 0, Math.PI * 2);
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = '#10b98122';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(500, 500, 380, 0, Math.PI * 2);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#10b981';
+    ctx.stroke();
+
+    // Text Ring
+    ctx.font = 'black 40px Arial';
+    ctx.fillStyle = '#10b981';
+    ctx.textAlign = 'center';
+    
+    // Drawing a stylized flower (Placeholder for icon)
+    ctx.beginPath();
+    ctx.arc(500, 500, 150, 0, Math.PI * 2);
+    ctx.fillStyle = user.zodiacFlower.hex + '22';
+    ctx.fill();
+    
+    ctx.font = 'bold 120px serif';
+    ctx.fillStyle = user.zodiacFlower.hex;
+    ctx.fillText('❁', 500, 540); // Stylized flower symbol
+
+    // User Data
+    ctx.font = 'black 40px monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(user.name.toUpperCase(), 500, 720);
+    
+    ctx.font = 'bold 30px monospace';
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(user.esin, 500, 770);
+
+    ctx.font = 'black 25px Arial';
+    ctx.fillStyle = '#444';
+    ctx.fillText('ENVIROSAGRO REGISTRY SHARD // ZODIAC GIFT', 500, 850);
+
+    // Download
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `EnvirosAgro_Badge_${user.zodiacFlower.flower}.png`;
+    link.href = dataUrl;
+    link.click();
+    
+    setIsGeneratingBadge(false);
   };
 
   const handleExecuteDeposit = async () => {
@@ -301,13 +374,14 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
         month: selectedMonth,
         flower: flowerData.flower,
         color: flowerData.color,
+        hex: flowerData.hex,
         pointsAdded: true
       }
     };
 
     await onUpdateUser(updatedUser);
     setIsClaimingGift(false);
-    alert(`BIRTH MONTH GIFT: Claimed your ${flowerData.flower} shard! +${points} reputation points added.`);
+    alert(`BIRTH MONTH GIFT: Claimed your ${flowerData.flower} shard! +100 reputation points added.`);
   };
 
   const handleExecuteSwap = async () => {
@@ -817,12 +891,23 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
                            <h4 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">Your {user.zodiacFlower.flower}</h4>
                            <p className="text-pink-400 text-[10px] md:text-[11px] font-black uppercase tracking-[0.6em]">ANCHORED TO STEWARD DOSSIER</p>
                         </div>
-                        <button 
-                          onClick={() => setPortalTab('ai')}
-                          className="w-full py-5 md:py-6 bg-white/5 border border-white/10 rounded-2xl md:rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] text-white hover:bg-white/10 transition-all shadow-xl"
-                        >
-                           Return to Main Hub
-                        </button>
+                        
+                        <div className="grid grid-cols-1 gap-4 w-full">
+                          <button 
+                            onClick={downloadBadgeImage}
+                            disabled={isGeneratingBadge}
+                            className="w-full py-5 md:py-6 agro-gradient rounded-2xl md:rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] text-white shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50"
+                          >
+                             {isGeneratingBadge ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                             Download Digital Badge
+                          </button>
+                          <button 
+                            onClick={() => setPortalTab('ai')}
+                            className="w-full py-5 md:py-6 bg-white/5 border border-white/10 rounded-2xl md:rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] text-white hover:bg-white/10 transition-all shadow-xl"
+                          >
+                             Return to Main Hub
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

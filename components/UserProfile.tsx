@@ -71,6 +71,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
   const [isEditing, setIsEditing] = useState(false);
   const [isVerifying, setIsVerifying] = useState<string | null>(null);
   const [viewingContract, setViewingContract] = useState<SignalShard | null>(null);
+  const [isGeneratingBadge, setIsGeneratingBadge] = useState(false);
   
   // Form State
   const [name, setName] = useState(user.name);
@@ -123,14 +124,61 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
     }, 2500);
   };
 
-  const downloadZodiacBadge = () => {
+  const downloadZodiacBadge = async () => {
     if (!user.zodiacFlower) return;
-    alert(`ENVIROSAGRO REGISTRY: Downloading "${user.zodiacFlower.flower} Shard" badge. Metadata anchored to node ${user.esin}.`);
-    // Simulation of file download
+    setIsGeneratingBadge(true);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1000;
+    canvas.height = 1000;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Background
+    ctx.fillStyle = '#050706';
+    ctx.fillRect(0, 0, 1000, 1000);
+
+    // Glow Effect
+    const gradient = ctx.createRadialGradient(500, 500, 0, 500, 500, 500);
+    gradient.addColorStop(0, '#10b98111');
+    gradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1000, 1000);
+
+    // Badge Ring
+    ctx.beginPath();
+    ctx.arc(500, 500, 400, 0, Math.PI * 2);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#10b981';
+    ctx.stroke();
+
+    // Stylized Flower
+    ctx.font = 'bold 180px serif';
+    ctx.fillStyle = user.zodiacFlower.hex || '#f472b6';
+    ctx.textAlign = 'center';
+    ctx.fillText('❁', 500, 550);
+
+    // User Data
+    ctx.font = 'black 45px monospace';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(user.name.toUpperCase(), 500, 720);
+    
+    ctx.font = 'bold 35px monospace';
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(user.esin, 500, 780);
+
+    ctx.font = 'bold 25px Arial';
+    ctx.fillStyle = '#666';
+    ctx.fillText('STWD_ZODIAC_RECOGNITION_NODE', 500, 850);
+
+    // Download
+    const dataUrl = canvas.toDataURL('image/png');
     const link = document.createElement('a');
-    link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(`ENVIROSAGRO ZODIAC BADGE: ${user.zodiacFlower.flower} | STEWARD: ${user.name} | ESIN: ${user.esin}`);
-    link.download = `EnvirosAgro_Badge_${user.zodiacFlower.flower}.txt`;
+    link.download = `EnvirosAgro_Identity_Shard_${user.zodiacFlower.flower}.png`;
+    link.href = dataUrl;
     link.click();
+    
+    setIsGeneratingBadge(false);
   };
 
   return (
@@ -361,10 +409,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                       </p>
                       <button 
                         onClick={downloadZodiacBadge}
-                        className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-pink-600 hover:border-pink-500 transition-all shadow-xl group/btn"
+                        disabled={isGeneratingBadge}
+                        className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-pink-600 hover:border-pink-500 transition-all shadow-xl group/btn disabled:opacity-50"
                       >
-                         <Download className="w-4 h-4 group-hover/btn:-translate-y-1 transition-transform" />
-                         Download Identity Shard
+                         {isGeneratingBadge ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 group-hover/btn:-translate-y-1 transition-transform" />}
+                         Download Identity Shard (PNG)
                       </button>
                    </div>
                 </div>
