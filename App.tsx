@@ -138,7 +138,7 @@ const App: React.FC = () => {
       roiEstimate: 22,
       collateralLocked: 60000,
       profitsAccrued: 0,
-      investorShareRatio: 0.15,
+      investorShareRatio: 0.15, 
       performanceIndex: 0,
       memberCount: 4
     }
@@ -400,6 +400,14 @@ const App: React.FC = () => {
               </h1>
               <p className="hidden md:block text-[9px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1 opacity-60">Node: {user.esin}</p>
             </div>
+            
+            <div className="hidden lg:flex items-center gap-6 px-6 border-l border-slate-200 dark:border-white/5 ml-4">
+              <div className="flex flex-col items-end">
+                <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Global Consensus</span>
+                <span className="text-[10px] font-mono font-black text-emerald-500">100% VERIFIED</span>
+              </div>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]"></div>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -481,7 +489,7 @@ const App: React.FC = () => {
                     n.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 
                     n.type === 'error' ? 'bg-rose-500/20 text-rose-400' : 
                     n.type === 'warning' ? 'bg-amber-500/20 text-amber-400' : 
-                    n.type === 'bg-blue-500/20 text-blue-400'
+                    'bg-blue-500/20 text-blue-400'
                   }`}>
                     {n.type === 'success' ? <CheckCircle2 size={18} /> : 
                      n.type === 'error' ? <AlertTriangle size={18} /> : 

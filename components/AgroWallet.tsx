@@ -44,7 +44,6 @@ import {
   PlusCircle,
   Pickaxe,
   LockKeyhole,
-  // Added missing ShieldAlert icon
   ShieldAlert
 } from 'lucide-react';
 import { User, AgroTransaction, AgroProject, ViewState } from '../types';
@@ -81,7 +80,6 @@ const INITIAL_PROJECTS: AgroProject[] = [
     profitsAccrued: 12000,
     investorShareRatio: 0.15,
     performanceIndex: 85,
-    // Fix: Added missing required property 'memberCount' (Line 67)
     memberCount: 12
   },
   { 
@@ -101,7 +99,6 @@ const INITIAL_PROJECTS: AgroProject[] = [
     profitsAccrued: 0,
     investorShareRatio: 0.15,
     performanceIndex: 0,
-    // Fix: Added missing required property 'memberCount' (Line 85)
     memberCount: 8
   },
 ];
@@ -254,7 +251,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser 
                        <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">Node Value</p>
                        <p className="text-lg font-mono font-black text-white">≈ ${(totalBalance * 0.85).toFixed(2)} USD</p>
                     </div>
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3">
+                    <div className="p-4 bg-emerald-500/10 rounded-2xl flex items-center gap-3">
                        <TrendingUp className="w-5 h-5 text-emerald-400" />
                        <div>
                           <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">Sustainability Multiplier</p>
