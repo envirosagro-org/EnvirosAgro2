@@ -86,7 +86,7 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
 
       <div className="absolute bottom-6 right-6">
         <div className="glass-card p-3 rounded-2xl border-emerald-500/10 flex items-center gap-3 bg-white/50 dark:bg-black/50">
-          <Globe className="w-4 h-4 text-emerald-400" />
+          <Globe className="w-4 h-4 text-emerald-500" />
           <div className="text-left">
             <p className="text-[7px] text-slate-500 font-black uppercase leading-none mb-1">Node Anchor</p>
             <p className="text-[9px] font-bold dark:text-white text-slate-900 uppercase truncate max-w-[100px]">{userLoc}</p>
@@ -188,7 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
              <button 
               key={i} 
               onClick={() => onNavigate(action.target as ViewState, action.action)}
-              className={`glass-card p-8 rounded-[32px] border transition-all text-left flex flex-col gap-4 group active:scale-95 shadow-xl relative overflow-hidden ${action.priority ? 'border-indigo-500/40 bg-white/5' : 'border-white/5 hover:border-indigo-500/30 hover:bg-white/5'}`}
+              className={`glass-card p-8 rounded-[32px] border transition-all text-left flex flex-col gap-4 group active:scale-95 shadow-xl relative overflow-hidden ${action.priority ? 'border-indigo-500/40 bg-white/5 ring-1 ring-indigo-500/30' : 'border-white/5 hover:border-indigo-500/30 hover:bg-white/5'}`}
              >
                 {action.priority && (
                   <div className="absolute -top-1 -right-1 w-12 h-12 bg-indigo-500/10 rotate-45 flex items-end justify-center pb-1">
@@ -204,7 +204,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 </div>
                 <div className="mt-auto pt-4 flex justify-between items-center">
                    <div className="flex gap-1">
-                      {[0,1,2].map(dot => <div key={dot} className={`w-1 h-1 rounded-full ${action.priority ? 'bg-indigo-500' : 'bg-slate-800'}`}></div>)}
+                      {[0,1,2].map(dot => <div key={dot} className={`w-1 h-1 rounded-full ${action.priority ? 'bg-indigo-500 animate-pulse' : 'bg-slate-800'}`}></div>)}
                    </div>
                    <ArrowRight className={`w-4 h-4 transition-all ${action.priority ? 'text-indigo-400 translate-x-0' : 'text-slate-700'} group-hover:translate-x-1`} />
                 </div>

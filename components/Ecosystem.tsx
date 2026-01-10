@@ -91,7 +91,10 @@ import {
   Radio,
   Wifi,
   Signal,
-  ChevronLeft
+  ChevronLeft,
+  Calendar,
+  Gift,
+  Star
 } from 'lucide-react';
 import { searchAgroTrends, AIResponse, analyzeTokenzFinance } from '../services/geminiService';
 import { User } from '../types';
@@ -119,6 +122,21 @@ interface Brand {
   volume: string;
   products: Product[];
 }
+
+const ZODIAC_FLOWERS: Record<string, { flower: string; color: string; desc: string }> = {
+  'January': { flower: 'Carnation', color: 'text-pink-400', desc: 'Symbolizing fascination and distinction.' },
+  'February': { flower: 'Violet', color: 'text-purple-400', desc: 'Symbolizing faithfulness and wisdom.' },
+  'March': { flower: 'Daffodil', color: 'text-yellow-400', desc: 'Symbolizing rebirth and new beginnings.' },
+  'April': { flower: 'Daisy', color: 'text-white', desc: 'Symbolizing innocence and purity.' },
+  'May': { flower: 'Lily of the Valley', color: 'text-emerald-200', desc: 'Symbolizing humility and happiness.' },
+  'June': { flower: 'Rose', color: 'text-rose-500', desc: 'Symbolizing love and passion.' },
+  'July': { flower: 'Water Lily', color: 'text-blue-300', desc: 'Symbolizing enlightenment and purity.' },
+  'August': { flower: 'Poppy', color: 'text-red-500', desc: 'Symbolizing strength of character.' },
+  'September': { flower: 'Morning Glory', color: 'text-indigo-400', desc: 'Symbolizing affection and mortality.' },
+  'October': { flower: 'Cosmos', color: 'text-pink-300', desc: 'Symbolizing order and peace.' },
+  'November': { flower: 'Chrysanthemum', color: 'text-orange-400', desc: 'Symbolizing loyalty and honesty.' },
+  'December': { flower: 'Narcissus', color: 'text-blue-100', desc: 'Symbolizing respect and faithfulness.' },
+};
 
 const BRANDS: Brand[] = [
   { 
@@ -251,14 +269,15 @@ const THRUST_METADATA: Record<ThrustType, { label: string, icon: any, color: str
 interface EcosystemProps {
   user: User;
   onDeposit: (amount: number, gateway: string) => void;
+  onUpdateUser: (user: User) => Promise<void>;
 }
 
-const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
+const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) => {
   const [activeBrand, setActiveBrand] = useState<Brand | null>(null);
   const [filter, setFilter] = useState<'all' | ThrustType>('all');
   const [loading, setLoading] = useState(false);
   const [aiResult, setAiResult] = useState<AIResponse | null>(null);
-  const [portalTab, setPortalTab] = useState<'ai' | 'market' | 'finance' | 'gateways' | 'bridge' | 'deposit' | 'registry'>('ai');
+  const [portalTab, setPortalTab] = useState<'ai' | 'market' | 'finance' | 'gateways' | 'bridge' | 'deposit' | 'registry' | 'gift'>('ai');
 
   const [esinSign, setEsinSign] = useState('');
   
@@ -272,6 +291,10 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
   const [selectedGateway, setSelectedGateway] = useState('M-Pesa Direct');
   const [isDepositing, setIsDepositing] = useState(false);
   const [optimizedYield, setOptimizedYield] = useState(1.0);
+
+  // Zodiac Gift States
+  const [selectedMonth, setSelectedMonth] = useState('January');
+  const [isClaimingGift, setIsClaimingGift] = useState(false);
 
   const filteredBrands = filter === 'all' ? BRANDS : BRANDS.filter(b => b.thrust === filter);
 
@@ -287,6 +310,8 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
     setAiResult(null);
     if (brand.id === 'tokenz') {
       setPortalTab('deposit');
+    } else if (brand.id === 'lilies') {
+      setPortalTab('gift');
     } else if (brand.thrust === 'industry') {
       setPortalTab('registry');
     } else {
@@ -318,6 +343,41 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
       setIsDepositing(false);
       alert(`CENTER GATE SETTLED: Institutional account synchronized. ${depositAmount} EAC minted.`);
     }, 3000);
+  };
+
+  const handleClaimZodiacGift = async () => {
+    if (user.zodiacFlower) {
+      alert("GIFT CLAIMED: You already have your Zodiac Flower shard anchored to your node.");
+      return;
+    }
+
+    setIsClaimingGift(true);
+    const flowerData = ZODIAC_FLOWERS[selectedMonth];
+    
+    // Calculate points: 100 points towards worker status
+    const points = 100;
+    
+    const updatedUser: User = {
+      ...user,
+      wallet: {
+        ...user.wallet,
+        lifetimeEarned: user.wallet.lifetimeEarned + points
+      },
+      skills: {
+        ...user.skills,
+        'Floral Stewardship': (user.skills['Floral Stewardship'] || 0) + points
+      },
+      zodiacFlower: {
+        month: selectedMonth,
+        flower: flowerData.flower,
+        color: flowerData.color,
+        pointsAdded: true
+      }
+    };
+
+    await onUpdateUser(updatedUser);
+    setIsClaimingGift(false);
+    alert(`BIRTH MONTH GIFT: Claimed your ${flowerData.flower} shard! +${points} reputation points added to your steward dossier.`);
   };
 
   const handleExecuteSwap = async () => {
@@ -513,6 +573,18 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
                     <div className="flex items-center justify-center gap-3"><Globe className="w-4 h-4" /> Global Ingress</div>
                   </button>
                 </>
+              ) : activeBrand.id === 'lilies' ? (
+                <>
+                  <button onClick={() => setPortalTab('gift')} className={`flex-1 py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'gift' ? 'border-pink-500 text-white bg-pink-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><Gift className="w-4 h-4" /> Birth Month Gift</div>
+                  </button>
+                  <button onClick={() => setPortalTab('market')} className={`flex-1 py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'market' ? 'border-pink-500 text-white bg-pink-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><ShoppingBag className="w-4 h-4" /> Aesthetics Store</div>
+                  </button>
+                  <button onClick={() => setPortalTab('ai')} className={`flex-1 py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'ai' ? 'border-pink-500 text-white bg-pink-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
+                    <div className="flex items-center justify-center gap-3"><Bot className="w-4 h-4" /> Oracle Sync</div>
+                  </button>
+                </>
               ) : activeBrand.thrust === 'industry' ? (
                 <>
                   <button onClick={() => setPortalTab('registry')} className={`flex-1 py-8 text-xs font-black uppercase tracking-[0.3em] transition-all border-b-2 ${portalTab === 'registry' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}>
@@ -538,6 +610,82 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit }) => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-12 bg-gradient-to-b from-[#050706] to-black">
+              {activeBrand.id === 'lilies' && portalTab === 'gift' && (
+                <div className="max-w-4xl mx-auto space-y-12 animate-in zoom-in duration-500">
+                  <div className="glass-card p-12 rounded-[56px] border-pink-500/20 bg-pink-500/5 relative overflow-hidden flex flex-col items-center text-center space-y-10">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.05]">
+                      <Gift className="w-64 h-64 text-pink-400" />
+                    </div>
+                    
+                    <div className="space-y-6 relative z-10">
+                      <div className="w-24 h-24 bg-pink-500 rounded-[32px] flex items-center justify-center shadow-2xl mx-auto ring-4 ring-white/10">
+                        <Calendar className="w-12 h-12 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Zodiac <span className="text-pink-400">Flower Gift</span></h3>
+                        <p className="text-slate-400 text-lg font-medium mt-4 max-w-xl mx-auto">
+                          As an EnvirosAgro steward, receive a branded Zodiac Flower from Lilies Around. This shard anchors your birth month to your dossier and grants you 100 worker eligibility points.
+                        </p>
+                      </div>
+                    </div>
+
+                    {!user.zodiacFlower ? (
+                      <div className="space-y-10 w-full max-w-md relative z-10">
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Birth Month</label>
+                          <select 
+                            value={selectedMonth}
+                            onChange={e => setSelectedMonth(e.target.value)}
+                            className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-pink-500/20 outline-none transition-all appearance-none text-center cursor-pointer"
+                          >
+                            {Object.keys(ZODIAC_FLOWERS).map(m => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </div>
+                        
+                        <div className="p-10 bg-white/[0.02] border border-white/5 rounded-[40px] space-y-4">
+                           <div className={`text-5xl font-black italic tracking-tighter ${ZODIAC_FLOWERS[selectedMonth].color}`}>
+                              {ZODIAC_FLOWERS[selectedMonth].flower}
+                           </div>
+                           <p className="text-slate-400 text-sm italic">"{ZODIAC_FLOWERS[selectedMonth].desc}"</p>
+                        </div>
+
+                        <button 
+                          onClick={handleClaimZodiacGift}
+                          disabled={isClaimingGift}
+                          className="w-full py-8 bg-pink-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
+                        >
+                          {isClaimingGift ? <Loader2 className="w-8 h-8 animate-spin" /> : <Sparkles className="w-8 h-8" />}
+                          CLAIM BIRTH MONTH GIFT
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-10 animate-in zoom-in duration-700 w-full max-w-md relative z-10">
+                        <div className="w-48 h-48 rounded-full bg-pink-500/10 border-4 border-pink-500/30 flex items-center justify-center mx-auto relative group">
+                          <Flower2 className={`w-24 h-24 ${user.zodiacFlower.color} group-hover:scale-110 transition-transform duration-500`} />
+                          <div className="absolute inset-[-10px] border-2 border-dashed border-pink-500/20 rounded-full animate-spin-slow"></div>
+                        </div>
+                        <div className="space-y-2">
+                           <h4 className="text-3xl font-black text-white uppercase tracking-tighter">Your {user.zodiacFlower.flower}</h4>
+                           <p className="text-pink-400 text-[10px] font-black uppercase tracking-[0.4em]">ANCHORED TO DOSSIER</p>
+                        </div>
+                        <div className="p-8 bg-emerald-500/10 border border-emerald-500/20 rounded-[40px] flex items-center gap-6">
+                           <Star className="w-10 h-10 text-emerald-400 fill-emerald-400/20" />
+                           <p className="text-xs text-emerald-100 font-bold uppercase tracking-widest text-left">
+                              +100 Rep Points Added. Your steward node is now more visible for industrial mission recruitment.
+                           </p>
+                        </div>
+                        <button 
+                          onClick={() => setPortalTab('ai')}
+                          className="w-full py-6 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/10 transition-all"
+                        >
+                           Return to Terminal
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {activeBrand.id === 'tokenz' && portalTab === 'deposit' && (
                 <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-500">
                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake
@@ -462,7 +463,7 @@ const App: React.FC = () => {
           {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'community' && <Community user={user} onContribution={() => {}} onSpendEAC={spendEAC} />}
           {activeView === 'explorer' && <Explorer />}
-          {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={() => {}} />}
+          {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={() => {}} onUpdateUser={handleUpdateUser} />}
           {activeView === 'media' && <MediaHub userBalance={user.wallet.balance + (user.wallet.bonusBalance || 0)} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
         </div>

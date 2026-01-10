@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   User as UserIcon, 
@@ -45,8 +46,10 @@ import {
   FileSignature,
   Stamp,
   BookOpenCheck,
-  // Added missing icon
-  Coins
+  Coins,
+  Flower2,
+  Download,
+  Gift
 } from 'lucide-react';
 import { User } from '../types';
 import IdentityCard from './IdentityCard';
@@ -118,6 +121,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
       setIsVerifying(null);
       setViewingContract(null);
     }, 2500);
+  };
+
+  const downloadZodiacBadge = () => {
+    if (!user.zodiacFlower) return;
+    alert(`ENVIROSAGRO REGISTRY: Downloading "${user.zodiacFlower.flower} Shard" badge. Metadata anchored to node ${user.esin}.`);
+    // Simulation of file download
+    const link = document.createElement('a');
+    link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(`ENVIROSAGRO ZODIAC BADGE: ${user.zodiacFlower.flower} | STEWARD: ${user.name} | ESIN: ${user.esin}`);
+    link.download = `EnvirosAgro_Badge_${user.zodiacFlower.flower}.txt`;
+    link.click();
   };
 
   return (
@@ -326,6 +339,37 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
 
           {activeTab === 'general' && (
             <div className="space-y-8">
+              {/* Zodiac Flower Gift Badge Section */}
+              {user.zodiacFlower && (
+                <div className="glass-card p-10 rounded-[48px] border-pink-500/20 bg-pink-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-10 animate-in slide-in-from-top-4 duration-700">
+                   <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+                      <Gift className="w-64 h-64 text-pink-400" />
+                   </div>
+                   <div className="w-32 h-32 rounded-[40px] bg-pink-500/10 border border-pink-500/20 flex items-center justify-center shadow-2xl shrink-0 group hover:rotate-12 transition-transform duration-500 relative">
+                      <Flower2 className={`w-16 h-16 ${user.zodiacFlower.color}`} />
+                      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[40px] backdrop-blur-sm">
+                         <Download className="w-8 h-8 text-white" />
+                      </div>
+                   </div>
+                   <div className="flex-1 space-y-4 text-center md:text-left relative z-10">
+                      <div>
+                         <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Zodiac <span className="text-pink-400">Flower Shard</span></h3>
+                         <p className="text-[10px] text-pink-400 font-black uppercase tracking-[0.4em] mt-2">Lilies Around x EnvirosAgro™ Gift</p>
+                      </div>
+                      <p className="text-slate-400 text-sm font-medium italic">
+                         Your {user.zodiacFlower.flower} badge is anchored to the {user.zodiacFlower.month} registry. This shard grants 100 bonus reputation points for your worker dossier.
+                      </p>
+                      <button 
+                        onClick={downloadZodiacBadge}
+                        className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-pink-600 hover:border-pink-500 transition-all shadow-xl group/btn"
+                      >
+                         <Download className="w-4 h-4 group-hover/btn:-translate-y-1 transition-transform" />
+                         Download Identity Shard
+                      </button>
+                   </div>
+                </div>
+              )}
+
               <div className="glass-card p-10 rounded-[40px] space-y-8 relative overflow-hidden">
                  <div className="flex justify-between items-center mb-2">
                     <h3 className="text-xl font-bold text-white flex items-center gap-3">
@@ -372,7 +416,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                         disabled={!isEditing}
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 transition-all" 
+                        className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" 
                       />
                     </div>
                     <div className="space-y-2">
@@ -435,6 +479,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                     <CheckCircle2 className="w-4 h-4 text-blue-400" /> Node Milestones
                   </h4>
                   <div className="space-y-4">
+                     {user.zodiacFlower && (
+                        <div className="flex gap-4 p-4 bg-pink-500/5 border border-pink-500/20 rounded-2xl animate-pulse">
+                           <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400 shrink-0">
+                              <Flower2 size={20} />
+                           </div>
+                           <div>
+                              <p className="text-xs font-bold text-white">Floral Registry Sync</p>
+                              <p className="text-[10px] text-slate-500 font-medium">Earned {user.zodiacFlower.flower} Zodiac Badge.</p>
+                           </div>
+                        </div>
+                     )}
                      {[
                        { title: "Genesis Anchor", date: "Jan 12", desc: "First node initialization successful." },
                        { title: "Carbon-Zero Pilot", date: "Feb 08", desc: "Achieved 10t CO2e mitigation." },
@@ -520,7 +575,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setViewingContract(null)}></div>
            <div className="relative z-[210] w-full max-w-2xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(245,158,11,0.2)] animate-in zoom-in duration-300">
               <div className="p-12 space-y-10 min-h-[600px] flex flex-col">
-                 <button onClick={() => setViewingContract(null)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 <button onClick={() => setViewingContract(null)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
                  
                  <div className="flex items-center gap-6 mb-2">
                     <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20">

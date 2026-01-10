@@ -15,6 +15,12 @@ export interface User {
   metrics: SustainabilityMetrics;
   skills: Record<string, number>; // Maps category (e.g., 'Hydroponics') to points
   isReadyForHire: boolean;
+  zodiacFlower?: {
+    month: string;
+    flower: string;
+    color: string;
+    pointsAdded: boolean;
+  };
 }
 
 export interface EACWallet {
