@@ -60,10 +60,8 @@ const App: React.FC = () => {
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   
-  // Support for deep linking actions from dashboard to components
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   
-  // Global Network Signals
   const [networkSignals, setNetworkSignals] = useState<SignalShard[]>([
     { 
       id: 'SIG-001', 
@@ -76,7 +74,6 @@ const App: React.FC = () => {
     }
   ]);
 
-  // Lifted Collectives State
   const [collectives, setCollectives] = useState<any[]>([
     { 
       id: 'COLL-01', 
@@ -102,7 +99,6 @@ const App: React.FC = () => {
     }
   ]);
 
-  // Lifted Projects State
   const [projects, setProjects] = useState<AgroProject[]>([
     { 
       id: 'PRJ-NE-291', 
