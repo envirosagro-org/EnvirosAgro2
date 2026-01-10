@@ -19,6 +19,7 @@ export interface User {
     month: string;
     flower: string;
     color: string;
+    hex?: string;
     pointsAdded: boolean;
   };
 }
@@ -36,6 +37,46 @@ export interface SustainabilityMetrics {
   sustainabilityScore: number;
   socialImmunity: number; // 0-100: Resistance to SID
   viralLoadSID: number;   // 0-100: Presence of Social Influenza
+}
+
+export interface LiveAgroProduct {
+  id: string;
+  stewardEsin: string;
+  stewardName: string;
+  productType: string;
+  category: 'Produce' | 'Manufactured' | 'Input';
+  stage: 'Inception' | 'Processing' | 'Quality_Audit' | 'Finalization' | 'Market_Ready';
+  progress: number;
+  votes: number;
+  location: string;
+  timestamp: string;
+  lastUpdate: string;
+  image?: string;
+  isAuthentic: boolean; // Result of Physical Audit
+  auditStatus: 'Pending' | 'In-Progress' | 'Verified' | 'Rejected';
+}
+
+export interface FarmingContract {
+  id: string;
+  investorEsin: string;
+  investorName: string;
+  productType: string;
+  requiredLand: string;
+  requiredLabour: string;
+  budget: number;
+  status: 'Open' | 'Auditing' | 'Active' | 'Settled';
+  applications: ContractApplication[];
+  capitalIngested: boolean; // Whether investor has released resources
+}
+
+export interface ContractApplication {
+  id: string;
+  farmerEsin: string;
+  farmerName: string;
+  landResources: string;
+  labourCapacity: string;
+  auditStatus: 'Pending' | 'Field_Inspection' | 'Physically_Verified' | 'Rejected';
+  paymentEscrowed: number;
 }
 
 export interface ResearchPaper {
@@ -84,6 +125,8 @@ export interface AgroProject {
   investorShareRatio: number; // Percentage (e.g. 0.15 for 15%)
   performanceIndex: number; // 0-100 based on collective feedback
   memberCount: number; // Number of collective members backing the project
+  isPreAudited: boolean; // New: Physical Audit before public listing
+  isPostAudited: boolean; // New: Physical Audit after capital requisition
 }
 
 export interface AgroBlock {
@@ -104,4 +147,4 @@ export interface AgroTransaction {
   unit: string;
 }
 
-export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research';
+export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research' | 'live_farming' | 'contract_farming';

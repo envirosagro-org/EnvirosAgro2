@@ -4,7 +4,7 @@ import {
   X, Upload, ShieldCheck, Zap, Loader2, Cpu, Camera, 
   FileText, Microscope, Binary, Coins, Sparkles, Bot,
   ArrowRight, Heart, Leaf, Dna, Database, CheckCircle2,
-  AlertCircle, Cloud
+  AlertCircle, Cloud, MapPin, ClipboardCheck, Lock
 } from 'lucide-react';
 import { User } from '../types';
 import { diagnoseCropIssue } from '../services/geminiService';
@@ -46,10 +46,9 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
   const runAudit = async () => {
     setIsAuditing(true);
     try {
-      // Direct call to Gemini for scientific evaluation
       const res = await diagnoseCropIssue(`Evaluate this ${evidenceType} evidence for the ${thrust} thrust. Assess C(a) growth potential and resilience factors.`);
       setAuditReport(res.text);
-      setMintedValue(Math.floor(Math.random() * 50) + 25); // Random reward based on quality
+      setMintedValue(Math.floor(Math.random() * 50) + 25);
       setStep('settlement');
     } catch (err) {
       alert("Registry Audit Failed. Check node connection.");
@@ -96,7 +95,6 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
             <button onClick={reset} className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-6 h-6" /></button>
           </div>
 
-          {/* Progress Shards */}
           <div className="flex gap-2">
             {(['thrust', 'upload', 'settlement', 'success'] as Step[]).map((s, i) => {
               const stages = ['thrust', 'upload', 'settlement', 'success'];
@@ -210,32 +208,20 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                   </div>
                </div>
 
-               <div className="grid grid-cols-2 gap-6">
-                  <div className="p-8 glass-card rounded-[32px] border-emerald-500/20 bg-emerald-500/5 space-y-2 text-center group">
-                     <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest group-hover:text-emerald-400 transition-colors">Mintable Value</p>
-                     <p className="text-4xl font-mono font-black text-emerald-400">+{mintedValue.toFixed(2)} <span className="text-sm">EAC</span></p>
-                  </div>
-                  <div className="p-8 glass-card rounded-[32px] border-blue-500/20 bg-blue-500/5 space-y-2 text-center group">
-                     <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest group-hover:text-blue-400 transition-colors">Reputation Shards</p>
-                     <p className="text-4xl font-mono font-black text-blue-400">+12.4</p>
-                  </div>
-               </div>
-
-               <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-center gap-6">
-                  <AlertCircle className="w-8 h-8 text-amber-500 shrink-0" />
-                  <p className="text-[10px] text-amber-200/50 font-black uppercase leading-relaxed tracking-tight">
-                     Signing this settlement commits your evidence to the Archive Ledger. Payout will be distributed to node <strong>{user.esin}</strong> instantly.
+               <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex items-center gap-6">
+                  <MapPin className="w-8 h-8 text-blue-500 shrink-0" />
+                  <p className="text-[10px] text-blue-200/50 font-black uppercase leading-relaxed tracking-tight">
+                     PHYSICAL_AUDIT_PROTOCOL: Digital shards verified. Final settlement requires an on-site physical verification by the EnvirosAgro scientific team.
                   </p>
                </div>
 
                <button 
-                // Fix: changed executeVouch to executeMint as it was a typo
                 onClick={executeMint}
                 disabled={isMinting}
                 className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
                >
                   {isMinting ? <Loader2 className="w-8 h-8 animate-spin" /> : <ShieldCheck className="w-8 h-8" />}
-                  {isMinting ? "MINTING EAC SHARDS..." : "AUTHORIZE MINT"}
+                  {isMinting ? "MINTING EAC SHARDS..." : "AUTHORIZE MINT & SCHEDULE AUDIT"}
                </button>
             </div>
           )}
@@ -247,21 +233,29 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                   <div className="absolute inset-[-10px] rounded-full border-4 border-emerald-500/20 animate-ping"></div>
                </div>
                <div className="space-y-4">
-                  <h3 className="text-5xl font-black text-white uppercase tracking-tighter">Minting <span className="text-emerald-400">Success</span></h3>
-                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Asset Hash: 0x882_MNT_#{(Math.random()*1000).toFixed(0)}</p>
+                  <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">Minting <span className="text-emerald-400">Success</span></h3>
+                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Evidence provisional. Status: Awaiting On-Site Verification.</p>
                </div>
-               <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-6 text-left relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><Coins className="w-40 h-40 text-emerald-400" /></div>
-                  <div className="flex justify-between items-center text-xs relative z-10">
-                     <span className="text-slate-500 font-black uppercase tracking-widest">Treasury Impact</span>
-                     <span className="text-white font-mono font-black text-2xl text-emerald-400">+{mintedValue.toFixed(2)} EAC</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs relative z-10">
-                     <span className="text-slate-500 font-black uppercase tracking-widest">Skill Evolution</span>
-                     <span className="text-white font-black uppercase bg-emerald-500/20 px-4 py-1.5 rounded-full border border-emerald-500/20 tracking-widest">+12 {thrust} PTS</span>
+               <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-8 text-left relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><ClipboardCheck className="w-40 h-40 text-emerald-400" /></div>
+                  <div className="space-y-4 relative z-10">
+                     <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-black uppercase tracking-widest">Evidence Shard</span>
+                        <span className="text-emerald-400 font-mono font-black">0x{(Math.random()*1000).toFixed(0)}_PROV</span>
+                     </div>
+                     <div className="h-px w-full bg-white/10"></div>
+                     <div className="flex items-center gap-4">
+                        <div className="p-4 bg-blue-500/20 rounded-2xl border border-blue-500/20">
+                           <MapPin className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <div>
+                           <p className="text-xs font-black text-white uppercase">Physical Audit Queued</p>
+                           <p className="text-[10px] text-slate-500 font-bold uppercase">Location Sync: {user.location}</p>
+                        </div>
+                     </div>
                   </div>
                </div>
-               <button onClick={reset} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl">Return to Command Center</button>
+               <button onClick={reset} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl">Return to Evidence Ledger</button>
             </div>
           )}
         </div>

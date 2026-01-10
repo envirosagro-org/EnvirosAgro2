@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Search, MapPin, Gavel, ShieldCheck, X, Zap, ChevronRight, Loader2, Users2, Users, RefreshCcw, Briefcase, Layers, Database, PlusCircle, Rocket, ArrowLeft, BarChart3, MessageSquare, Video, Mic, Calendar, Target, Heart, Volume2, Plus, Send, Leaf, Dna, Landmark, Sparkles, Cpu, Monitor, Activity, Bookmark, Share2, Trophy, History, TrendingUp, Globe, Star, Clock, UserCheck, Mail, FileText, BadgeAlert, BadgeCheck, Coins, Hammer, GanttChartSquare, Network, ArrowUpRight, TrendingDown, PieChart as PieChartIcon, HardHat, Factory, Boxes, ShieldAlert, ClipboardCheck, ChevronLeft, ArrowRight, Warehouse, Fingerprint, Link2, Shield, Gauge, Satellite, Radio, Signal, CirclePlay, Maximize, ArrowDownUp, LayoutGrid, HeartPulse, Brain, Waves, LineChart as LucideLineChart, Handshake, FileCode, Lock, Eye, Key, CheckCircle2, Bot, Download, Building2, Paperclip, Flame, Image as ImageIcon, Upload, UserPlus, Podcast, FileUp, BadgeDollarSign, Stamp, FileSignature, FileBadge, AlertTriangle, PlaneTakeoff, Terminal, Trello,
   Microscope,
   UserCheck2,
-  LockKeyhole
+  LockKeyhole,
+  Building,
+  Scale
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell, PieChart, Pie
@@ -54,6 +57,9 @@ const Industrial: React.FC<IndustrialProps> = ({
   const [activeView, setActiveView] = useState<'registry' | 'talent' | 'collectives' | 'missions' | 'analytics'>('registry');
   
   const [selectedCollectiveId, setSelectedCollectiveId] = useState<string | null>(null);
+  // FIX: Defined currentCollective to resolve "Cannot find name 'currentCollective'" errors
+  const currentCollective = collectives.find(c => c.id === selectedCollectiveId);
+  
   const [invitingToColId, setInvitingToColId] = useState<string | null>(null);
   const [selectedWorkerForDossier, setSelectedWorkerForDossier] = useState<WorkerProfile | null>(null);
   
@@ -84,6 +90,7 @@ const Industrial: React.FC<IndustrialProps> = ({
   const [newColName, setNewColName] = useState('');
   const [newColMission, setNewColMission] = useState('');
   const [newColType, setNewColType] = useState<'Team' | 'Clan' | 'Society'>('Team');
+  const [newColRegion, setNewColRegion] = useState(user.location);
   const [chatMessage, setChatMessage] = useState('');
 
   // Bid Form Values
@@ -92,22 +99,27 @@ const Industrial: React.FC<IndustrialProps> = ({
 
   // Industry Form Values
   const [facilityName, setFacilityName] = useState('');
+  const [legalEntityName, setLegalEntityName] = useState('');
+  const [registrationNo, setRegistrationNo] = useState('');
+  const [taxId, setTaxId] = useState('');
+  const [hqAddress, setHqAddress] = useState('');
   const [facilityType, setFacilityType] = useState('Processing Hub');
   const [facilityZone, setFacilityZone] = useState('Zone 4');
+  const [industryStep, setIndustryStep] = useState<'form' | 'legal' | 'audit_pending'>('form');
 
   // Mission Form Values
   const [missionName, setMissionName] = useState('');
   const [missionGoal, setMissionGoal] = useState('50000');
   const [selectedColForMission, setSelectedColForMission] = useState<string>('');
 
-  // Respond to deep links from Dashboard
+  // Respond to deep links from Dashboard or Quick Actions
   useEffect(() => {
     if (!pendingAction) return;
 
     switch (pendingAction) {
       case 'FORM_COLLECTIVE':
         setActiveView('collectives');
-        setShowRegisterCollective(true);
+        handleOpenFormGroup();
         break;
       case 'REGISTER_NODE':
         setActiveView('registry');
@@ -123,21 +135,36 @@ const Industrial: React.FC<IndustrialProps> = ({
         break;
       case 'LAUNCH_MISSION':
         setActiveView('missions');
-        setShowRegisterMission(true);
+        handleOpenNewCampaign();
         break;
       case 'VIEW_DOSSIER':
         setActiveView('talent');
-        // Default to first worker if none selected
-        setSelectedWorkerForDossier(MOCK_WORKERS[0]);
-        setShowDossierModal(true);
+        handleOpenFullDossier(MOCK_WORKERS[0]);
         break;
     }
 
-    // Clear the action so it doesn't re-trigger
     if (clearAction) clearAction();
   }, [pendingAction, clearAction]);
 
-  const currentCollective = collectives.find(c => c.id === selectedCollectiveId);
+  const handleOpenFormGroup = () => {
+    setNewColName('');
+    setNewColMission('');
+    setNewColRegion(user.location);
+    setShowRegisterCollective(true);
+  };
+
+  const handleOpenNewCampaign = () => {
+    setSelectedColForMission('');
+    setMissionName('');
+    setMissionGoal('50000');
+    setShowRegisterMission(true);
+  };
+
+  const handleOpenFullDossier = (worker: WorkerProfile) => {
+    setSelectedWorkerForDossier(worker);
+    setDossierStep('profile');
+    setShowDossierModal(true);
+  };
 
   const handleRegisterCollective = () => {
     const isWorker = user.role.toLowerCase().includes('worker') || user.role.toLowerCase().includes('farmer');
@@ -157,6 +184,7 @@ const Industrial: React.FC<IndustrialProps> = ({
         ],
         type: newColType,
         mission: newColMission,
+        region: newColRegion,
         resonance: 50,
         objectives: ['Initialize Shard Objectives'],
         signals: [],
@@ -165,24 +193,25 @@ const Industrial: React.FC<IndustrialProps> = ({
           active: false,
           title: '',
           target: 0,
-          pool: 0
+          pool: 0,
+          isPreAudited: false
         }
       };
       setCollectives([...collectives, newCol]);
       setIsProcessing(false);
       setShowRegisterCollective(false);
       onSpendEAC(200, 'COLLECTIVE_REGISTRATION');
+      alert(`GROUP FORMED: ${newColName} node created. Awaiting physical verification of regional resources in ${newColRegion}.`);
     }, 2000);
   };
 
   const handleRegisterIndustry = () => {
-    if (!esinSign) return;
+    if (!esinSign || !registrationNo || !legalEntityName) return;
     setIsProcessing(true);
     setTimeout(() => {
        setIsProcessing(false);
-       setShowIndustryEntry(false);
+       setIndustryStep('audit_pending');
        onSpendEAC(1000, 'INDUSTRY_FACILITY_INGEST');
-       alert(`INGEST SUCCESS: ${facilityName} is now an authorized ${facilityType} node in ${facilityZone}. Registry hash: 0x882_IND_FAC`);
     }, 2000);
   };
 
@@ -247,13 +276,25 @@ const Industrial: React.FC<IndustrialProps> = ({
     setTimeout(() => {
       setCollectives(prev => prev.map(c => c.id === targetCol.id ? {
         ...c,
-        missionCampaign: { active: true, title: missionName || 'New Collective Mission', target: targetGoal, pool: 0 }
+        missionCampaign: { active: true, title: missionName || 'New Collective Mission', target: targetGoal, pool: 0, isPreAudited: false }
       } : c));
       setIsProcessing(false);
       setShowRegisterMission(false);
       setActiveView('missions');
-      alert("CAMPAIGN INITIALIZED: Members can now pool EAC internally. 50% threshold and minimum 3 members required for public registry launch.");
+      alert("CAMPAIGN INITIALIZED: Members can now pool EAC internally. Final public launch requires mandatory Physical Field Audit.");
     }, 1500);
+  };
+
+  const handleRequestPreAudit = (colId: string) => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setCollectives(prev => prev.map(c => c.id === colId ? {
+        ...c,
+        missionCampaign: { ...c.missionCampaign, isPreAudited: true }
+      } : c));
+      setIsProcessing(false);
+      alert("PHYSICAL AUDIT COMPLETE: Mission site evaluated by EnvirosAgro. Integrity verified for public registry anchoring and capital requisition.");
+    }, 2500);
   };
 
   const handleContributeToPool = (colId: string) => {
@@ -275,13 +316,18 @@ const Industrial: React.FC<IndustrialProps> = ({
     if (!targetCol || !targetCol.missionCampaign) return;
     const campaign = targetCol.missionCampaign;
     
+    if (!campaign.isPreAudited) {
+      alert("PROTOCOL REJECTION: Physical Site Audit Required. Please request a physical evaluation before anchoring to the global registry.");
+      return;
+    }
+
     if (campaign.pool < campaign.target * 0.5) {
       alert("PROTOCOL REJECTION: 50% capital collateral lock required. Continue pooling internal EAC shards.");
       return;
     }
 
     if (targetCol.members.length < MIN_MEMBERS_REQUIRED) {
-      alert(`QUORUM ERROR: Minimum ${MIN_MEMBERS_REQUIRED} founding members required to anchor project node. Recruit more stewards via the Worker Cloud.`);
+      alert(`QUORUM ERROR: Minimum ${MIN_MEMBERS_REQUIRED} founding members required to anchor project node.`);
       return;
     }
 
@@ -305,7 +351,9 @@ const Industrial: React.FC<IndustrialProps> = ({
         profitsAccrued: 0,
         investorShareRatio: 0.15,
         performanceIndex: 0,
-        memberCount: targetCol.members.length
+        memberCount: targetCol.members.length,
+        isPreAudited: true,
+        isPostAudited: false
       };
       onAddProject(newProject);
       setCollectives(prev => prev.map(c => c.id === colId ? {
@@ -313,42 +361,39 @@ const Industrial: React.FC<IndustrialProps> = ({
         missionCampaign: { ...c.missionCampaign, launched: true, linkedProjectId: newProject.id }
       } : c));
       setIsProcessing(false);
-      alert(`MISSION ANCHORED: ${newProject.name} is now fundable by institutional nodes in the Investor Portal.`);
+      alert(`MISSION ANCHORED: ${newProject.name} is now fundable. Investors can now vouch for this audited node.`);
     }, 2000);
   };
 
+  // FIX: Implemented handlePerformanceInjection to resolve missing reference
   const handlePerformanceInjection = async () => {
-    if (!targetMissionId) return;
     setPerfStep('audit');
-    setIsProcessing(true);
     try {
-      const diagRes = await runSpecialistDiagnostic('Production', `Evaluate reported yield of ${perfYield} tons. Collector note: ${perfNote}`);
-      setAuditReport(diagRes.text);
+      const res = await runSpecialistDiagnostic(
+        "Industrial Performance",
+        `Project Node: ${targetMissionId}. Reported Yield: ${perfYield} Tons. Observations: ${perfNote}. Cross-reference with regional m-Constant stability.`
+      );
+      setAuditReport(res.text);
       setPerfStep('success');
     } catch (e) {
-      alert("Oracle Error: Telemetry Shard Interrupted.");
+      alert("Oracle Handshake Failed.");
       setPerfStep('input');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
+  // FIX: Implemented commitPerformance to resolve missing reference
   const commitPerformance = (projectId: string) => {
-    const calculatedProfit = Number(perfYield) * 12.5;
-    alert(`PERFORMANCE ANCHORED: Node reported yield verified. ${calculatedProfit.toFixed(0)} EAC added to Project Profit Pool.`);
-    setShowPerformanceModal(false);
-    setPerfStep('input');
-  };
-
-  const openDossier = (worker: WorkerProfile) => {
-    setSelectedWorkerForDossier(worker);
-    setDossierStep('profile');
-    setShowDossierModal(true);
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      setShowPerformanceModal(false);
+      alert(`PERFORMANCE ANCHORED: Shard 0x${Math.random().toString(16).substring(2, 8).toUpperCase()} committed to Project ${projectId}. Profit release synchronized.`);
+    }, 1500);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto">
-      {/* Industrial Cloud Commander */}
+      {/* Industrial Cloud Commander Header */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
@@ -386,8 +431,50 @@ const Industrial: React.FC<IndustrialProps> = ({
         </div>
       </div>
 
+      {/* NEW: Quick Action Command Shards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         <button 
+           onClick={handleOpenNewCampaign}
+           className="glass-card p-8 rounded-[40px] border border-indigo-500/30 bg-indigo-500/5 hover:border-indigo-500/60 hover:bg-indigo-500/10 transition-all text-left flex items-center gap-6 group shadow-xl active:scale-95"
+         >
+            <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform">
+               <Rocket className="w-8 h-8" />
+            </div>
+            <div>
+               <h4 className="text-white font-black uppercase tracking-widest text-sm italic">New Campaign</h4>
+               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Open Launchpad Terminal</p>
+            </div>
+         </button>
+
+         <button 
+           onClick={handleOpenFormGroup}
+           className="glass-card p-8 rounded-[40px] border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-left flex items-center gap-6 group shadow-xl active:scale-95"
+         >
+            <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform">
+               <PlusCircle className="w-8 h-8" />
+            </div>
+            <div>
+               <h4 className="text-white font-black uppercase tracking-widest text-sm italic">Form Shard Group</h4>
+               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Initialize Collective Node</p>
+            </div>
+         </button>
+
+         <button 
+           onClick={() => handleOpenFullDossier(MOCK_WORKERS[0])}
+           className="glass-card p-8 rounded-[40px] border border-blue-500/30 bg-blue-500/5 hover:border-blue-500/60 hover:bg-blue-500/10 transition-all text-left flex items-center gap-6 group shadow-xl active:scale-95"
+         >
+            <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform">
+               <UserCheck2 className="w-8 h-8" />
+            </div>
+            <div>
+               <h4 className="text-white font-black uppercase tracking-widest text-sm italic">View Full Dossier</h4>
+               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Access Steward Registry</p>
+            </div>
+         </button>
+      </div>
+
       {/* Main Tabs Navigation */}
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40">
+      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-xl">
         {[
           { id: 'registry', label: 'Industrial Registry', icon: Building2 },
           { id: 'talent', label: 'Worker Cloud', icon: Users2 },
@@ -406,6 +493,7 @@ const Industrial: React.FC<IndustrialProps> = ({
       </div>
 
       <div className="min-h-[700px]">
+        {/* ... registry view remains same ... */}
         {activeView === 'registry' && (
           <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
              <div className="flex justify-between items-end border-b border-white/5 pb-8">
@@ -413,7 +501,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Entries <span className="text-amber-500">& Tenders</span></h3>
                    <p className="text-slate-500 text-sm">Industrial node registration and regional contract bidding.</p>
                 </div>
-                <button onClick={() => { setEsinSign(''); setFacilityName(''); setShowIndustryEntry(true); }} className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
+                <button onClick={() => { setEsinSign(''); setFacilityName(''); setIndustryStep('form'); setShowIndustryEntry(true); }} className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
                    <PlusCircle className="w-5 h-5" /> Register Industry Node
                 </button>
              </div>
@@ -460,12 +548,13 @@ const Industrial: React.FC<IndustrialProps> = ({
                       <h4 className="text-3xl font-black text-white uppercase tracking-tighter">Facility Ingest</h4>
                       <p className="text-slate-500 text-sm italic leading-relaxed">"Authorized processing hubs, regional warehouses, and spectral labs must register with the Industrial Registry to begin node operations."</p>
                    </div>
-                   <button onClick={() => setShowIndustryEntry(true)} className="w-full py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all relative z-10">Initialize Flow</button>
+                   <button onClick={() => { setIndustryStep('form'); setShowIndustryEntry(true); }} className="w-full py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all relative z-10">Initialize Flow</button>
                 </div>
              </div>
           </div>
         )}
 
+        {/* ... talent view remains same ... */}
         {activeView === 'talent' && (
           <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
              <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
@@ -483,7 +572,7 @@ const Industrial: React.FC<IndustrialProps> = ({
 
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {MOCK_WORKERS.map(worker => (
-                  <div key={worker.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full active:scale-95 duration-300 relative overflow-hidden bg-black/20">
+                  <div key={worker.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full active:scale-95 duration-300 relative overflow-hidden bg-black/20 shadow-xl">
                      <div className="flex justify-between items-start mb-10 relative z-10">
                         <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:rotate-6 transition-transform">
                            <span className="text-3xl font-black text-emerald-400">{worker.name[0]}</span>
@@ -508,14 +597,14 @@ const Industrial: React.FC<IndustrialProps> = ({
                      </div>
                      <div className="flex gap-4">
                         <button 
-                           onClick={() => openDossier(worker)}
+                           onClick={() => handleOpenFullDossier(worker)}
                            className="flex-1 py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all"
                         >
                            View Full Dossier
                         </button>
                         {invitingToColId && (
                            <button 
-                              onClick={() => openDossier(worker)}
+                              onClick={() => handleOpenFullDossier(worker)}
                               className="flex-1 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] font-bold uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2"
                            >
                               <Handshake className="w-4 h-4" />
@@ -529,6 +618,7 @@ const Industrial: React.FC<IndustrialProps> = ({
           </div>
         )}
 
+        {/* ... collectives list remains same ... */}
         {activeView === 'collectives' && (
            <div className="animate-in fade-in duration-700">
               {selectedCollectiveId && currentCollective ? (
@@ -664,7 +754,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Social <span className="text-emerald-400">Shard Portal</span></h3>
                          <p className="text-slate-500 text-sm mt-1">Goal-oriented collectives formed by workers.</p>
                       </div>
-                      <button onClick={() => { setNewColName(''); setNewColMission(''); setShowRegisterCollective(true); }} className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
+                      <button onClick={handleOpenFormGroup} className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
                          <PlusCircle className="w-5 h-5" /> Form Shard Group
                       </button>
                    </div>
@@ -688,7 +778,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                            </div>
                            <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
                               <div className="flex items-center gap-3">
-                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
                                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Resonance: {col.resonance}%</span>
                               </div>
                               <button className="p-5 rounded-[28px] bg-white/5 hover:bg-emerald-600 text-white transition-all shadow-xl group/btn border border-white/5">
@@ -703,6 +793,7 @@ const Industrial: React.FC<IndustrialProps> = ({
            </div>
         )}
 
+        {/* ... mission launchpad view remains same ... */}
         {activeView === 'missions' && (
            <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
@@ -711,7 +802,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                     <p className="text-slate-500 text-sm mt-1">Manage collective project campaigns and registry anchoring.</p>
                  </div>
                  <button 
-                  onClick={() => { setSelectedColForMission(''); setMissionName(''); setMissionGoal('50000'); setShowRegisterMission(true); }}
+                  onClick={handleOpenNewCampaign}
                   className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95"
                  >
                     <PlusCircle className="w-5 h-5" /> Initialize New Campaign
@@ -722,6 +813,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                  {collectives.filter(c => c.missionCampaign?.active).map(col => {
                    const quorumMet = col.members.length >= MIN_MEMBERS_REQUIRED;
                    const capitalMet = col.missionCampaign.pool >= col.missionCampaign.target * 0.5;
+                   const preAudited = col.missionCampaign.isPreAudited;
                    
                    return (
                    <div key={col.id} className={`glass-card p-10 rounded-[56px] border-2 transition-all relative overflow-hidden flex flex-col group ${col.missionCampaign.launched ? 'border-emerald-500/40 bg-emerald-500/[0.02]' : 'border-indigo-500/20 bg-black/40'}`}>
@@ -739,10 +831,16 @@ const Industrial: React.FC<IndustrialProps> = ({
                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Originated by {col.name}</p>
                             </div>
                          </div>
-                         <div className="text-right">
+                         <div className="text-right flex flex-col items-end gap-2">
                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${col.missionCampaign.launched ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20 animate-pulse'}`}>
                                {col.missionCampaign.launched ? 'ANCHORED_LEDGER' : 'INTERNAL_STAGING'}
                             </span>
+                            {preAudited && (
+                               <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/40 shadow-lg">
+                                  <BadgeCheck className="w-3.5 h-3.5" />
+                                  <span className="text-[8px] font-black uppercase">Pre-Funding Audited</span>
+                               </div>
+                            )}
                          </div>
                       </div>
 
@@ -774,24 +872,43 @@ const Industrial: React.FC<IndustrialProps> = ({
                          </div>
 
                          {!col.missionCampaign.launched ? (
-                           <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-4">
-                                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-2">Inject Capital Shard</label>
-                                 <input type="number" value={contribAmount} onChange={e => setContribAmount(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-lg font-mono outline-none" />
+                           <div className="space-y-6">
+                              <div className="grid grid-cols-2 gap-4">
+                                 <div className="space-y-4">
+                                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-2">Inject Capital Shard</label>
+                                    <input type="number" value={contribAmount} onChange={e => setContribAmount(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-lg font-mono outline-none" />
+                                 </div>
+                                 <div className="flex items-end">
+                                    <button onClick={() => handleContributeToPool(col.id)} className="w-full py-4 bg-white/5 border border-white/10 hover:bg-emerald-600 hover:text-white rounded-2xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-3">
+                                       <Zap className="w-4 h-4" /> Contribute
+                                    </button>
+                                 </div>
                               </div>
-                              <div className="flex items-end">
-                                 <button onClick={() => handleContributeToPool(col.id)} className="w-full py-4 bg-white/5 border border-white/10 hover:bg-emerald-600 hover:text-white rounded-2xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-3">
-                                    <Zap className="w-4 h-4" /> Contribute
-                                 </button>
-                              </div>
+                              {!preAudited && col.adminEsin === user.esin && (
+                                <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex flex-col gap-4">
+                                   <div className="flex items-center gap-3">
+                                      <HardHat className="w-5 h-5 text-blue-400" />
+                                      <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">Physical Evaluation Protocol</p>
+                                   </div>
+                                   <p className="text-[9px] text-slate-500 leading-relaxed italic">"Our audit team must physically monitor and evaluate the mission site before public registry anchoring."</p>
+                                   <button 
+                                      onClick={() => handleRequestPreAudit(col.id)}
+                                      disabled={isProcessing}
+                                      className="w-full py-3 bg-blue-600 rounded-2xl text-[9px] font-black text-white uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-2"
+                                   >
+                                      {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <MapPin className="w-3 h-3" />}
+                                      Request Physical Audit
+                                   </button>
+                                </div>
+                              )}
                            </div>
                          ) : (
-                           <div className="p-8 glass-card border-emerald-500/20 bg-emerald-500/5 rounded-3xl space-y-6">
+                           <div className="p-8 glass-card border-emerald-500/20 bg-emerald-500/5 rounded-3xl space-y-6 shadow-inner">
                              <div className="flex items-center gap-3">
                                <Activity className="w-5 h-5 text-emerald-400" />
                                <h5 className="text-xs font-black text-white uppercase italic">Lifecycle Performance</h5>
                              </div>
-                             <p className="text-sm text-slate-400 italic font-medium">As a member, inject performance shards to generate EAC profits for the collective and investors.</p>
+                             <p className="text-sm text-slate-400 italic font-medium">Mission synchronized. Inject performance shards to generate EAC profits for the collective.</p>
                              <button 
                                onClick={() => { setTargetMissionId(col.missionCampaign.linkedProjectId); setPerfStep('input'); setShowPerformanceModal(true); }}
                                className="w-full py-5 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center justify-center gap-2"
@@ -815,11 +932,11 @@ const Industrial: React.FC<IndustrialProps> = ({
                          {!col.missionCampaign.launched && col.adminEsin === user.esin && (
                            <button 
                             onClick={() => handleAnchorToGlobalRegistry(col.id)} 
-                            disabled={!capitalMet || !quorumMet} 
+                            disabled={!capitalMet || !quorumMet || !preAudited} 
                             className="px-10 py-4 agro-gradient rounded-[32px] text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl disabled:opacity-30 flex items-center gap-3 transition-all"
                            >
-                              {!capitalMet ? <Lock className="w-4 h-4" /> : !quorumMet ? <Users2 className="w-4 h-4" /> : <Database className="w-4 h-4" />}
-                              {!capitalMet ? "AWAITING CAPITAL" : !quorumMet ? "AWAITING QUORUM" : "Anchor Node to Registry"}
+                              {!capitalMet ? <Lock className="w-4 h-4" /> : !quorumMet ? <Users2 className="w-4 h-4" /> : !preAudited ? <ShieldAlert className="w-4 h-4" /> : <Database className="w-4 h-4" />}
+                              {!capitalMet ? "AWAITING CAPITAL" : !quorumMet ? "AWAITING QUORUM" : !preAudited ? "AWAITING PRE-AUDIT" : "Anchor Node to Registry"}
                            </button>
                          )}
                          {col.missionCampaign.launched && (
@@ -831,60 +948,6 @@ const Industrial: React.FC<IndustrialProps> = ({
                       </div>
                    </div>
                  )})}
-              </div>
-           </div>
-        )}
-
-        {/* VIEW: Performance Analytics */}
-        {activeView === 'analytics' && (
-           <div className="space-y-12 animate-in zoom-in duration-500">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                 <div className="lg:col-span-12 glass-card p-12 rounded-[64px] border-white/5 bg-black/40 relative overflow-hidden shadow-3xl">
-                    <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none"></div>
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 mb-12 gap-8 px-4">
-                       <div className="flex items-center gap-6">
-                          <div className="p-5 bg-indigo-500/10 rounded-[32px] border border-indigo-500/20 shadow-2xl">
-                             <BarChart3 className="w-10 h-10 text-indigo-400" />
-                          </div>
-                          <div>
-                             <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Global <span className="text-indigo-400">Throughput</span></h3>
-                             <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Network Productivity Cluster (T-12 to NOW)</p>
-                          </div>
-                       </div>
-                       <div className="text-right">
-                          <p className="text-[10px] text-slate-600 font-black uppercase mb-1">Rolling Avg Yield</p>
-                          <p className="text-5xl font-mono font-black text-emerald-400 tracking-tighter">7.84 <span className="text-xl">TB/h</span></p>
-                       </div>
-                    </div>
-
-                    <div className="h-[450px] w-full relative z-10 min-h-0 min-w-0">
-                       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                          <AreaChart data={GLOBAL_PERFORMANCE_DATA}>
-                             <defs>
-                                <linearGradient id="colorPerf" x1="0" y1="0" x2="0" y2="1">
-                                   <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
-                                   <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                                </linearGradient>
-                             </defs>
-                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                             <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                             <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px' }} />
-                             <Area type="monotone" dataKey="yield" stroke="#818cf8" strokeWidth={6} fillOpacity={1} fill="url(#colorPerf)" />
-                             <Area type="monotone" dataKey="m_cons" stroke="#10b981" strokeWidth={4} strokeDasharray="10 5" fill="transparent" />
-                          </AreaChart>
-                       </ResponsiveContainer>
-                    </div>
-
-                    <div className="flex justify-between items-center mt-10 px-8 text-[10px] font-mono text-slate-700 font-black uppercase tracking-[0.5em]">
-                       <span>CYCLE_START</span>
-                       <div className="flex gap-4">
-                          <div className="flex items-center gap-2"><div className="w-2 h-2 bg-indigo-500 rounded-full shadow-[0_0_8px_#6366f1]"></div> <span>Industrial Yield</span></div>
-                          <div className="flex items-center gap-2"><div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]"></div> <span>Node Sync Index</span></div>
-                       </div>
-                       <span>SYNC_STABLE</span>
-                    </div>
-                 </div>
               </div>
            </div>
         )}
@@ -929,7 +992,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                           <input 
                              type="text" 
                              value={esinSign} 
-                             onChange={e => setEsinSign(e.target.value)}
+                             onChange={e => setEsinSign(e.target.value)} 
                              placeholder="EA-XXXX-XXXX-XXXX"
                              className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-mono text-white focus:ring-4 focus:ring-amber-500/20 outline-none transition-all uppercase tracking-widest" 
                           />
@@ -961,83 +1024,158 @@ const Industrial: React.FC<IndustrialProps> = ({
       {showIndustryEntry && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowIndustryEntry(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
-              <div className="p-16 space-y-10 flex flex-col relative">
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-2">
+              <div className="p-16 space-y-12 flex flex-col relative min-h-[700px]">
                  <button onClick={() => setShowIndustryEntry(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
-                 <div className="flex items-center gap-6 mb-2">
-                    <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20 shadow-xl">
-                        <Building2 className="w-10 h-10 text-amber-500" />
-                    </div>
-                    <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none text-left">Facility <span className="text-amber-500">Registry Ingest</span></h3>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2 text-left">Initialize Layer-2 Industrial Node</p>
-                    </div>
-                 </div>
-
-                 <div className="space-y-8">
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Facility Designation (Alias)</label>
-                       <input 
-                          type="text" 
-                          value={facilityName} 
-                          onChange={e => setFacilityName(e.target.value)}
-                          placeholder="e.g. Blue Harvest Processing Hub"
-                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" 
-                       />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Node Type</label>
-                          <select 
-                             value={facilityType} 
-                             onChange={e => setFacilityType(e.target.value)}
-                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-amber-500/20"
-                          >
-                             <option>Processing Hub</option>
-                             <option>Spectral Lab</option>
-                             <option>Logistics Relay</option>
-                             <option>Industrial Shard Vault</option>
-                          </select>
+                 {industryStep === 'form' && (
+                    <div className="animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-6 mb-10">
+                          <div className="w-24 h-24 bg-amber-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-amber-500/20 shadow-2xl">
+                              <Building2 className="w-12 h-12 text-amber-500" />
+                          </div>
+                          <div>
+                              <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Facility <span className="text-amber-500">Registry Ingest</span></h3>
+                              <p className="text-slate-400 text-lg font-medium mt-2">Initialize Layer-2 Industrial Node.</p>
+                          </div>
                        </div>
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Regional Zone</label>
-                          <select 
-                             value={facilityZone} 
-                             onChange={e => setFacilityZone(e.target.value)}
-                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-amber-500/20"
+
+                       <div className="space-y-8">
+                          <div className="space-y-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6">Facility Designation (Alias)</label>
+                             <input 
+                                type="text" 
+                                value={facilityName} 
+                                onChange={e => setFacilityName(e.target.value)}
+                                placeholder="e.g. Blue Harvest Processing Hub"
+                                className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-amber-500/20 outline-none transition-all placeholder:text-slate-800" 
+                             />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-6">
+                             <div className="space-y-4">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6">Node Type</label>
+                                <select 
+                                   value={facilityType} 
+                                   onChange={e => setFacilityType(e.target.value)}
+                                   className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20"
+                                >
+                                   <option>Processing Hub</option>
+                                   <option>Spectral Lab</option>
+                                   <option>Logistics Relay</option>
+                                   <option>Industrial Shard Vault</option>
+                                </select>
+                             </div>
+                             <div className="space-y-4">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6">Regional Zone</label>
+                                <select 
+                                   value={facilityZone} 
+                                   onChange={e => setFacilityZone(e.target.value)}
+                                   className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20"
+                                >
+                                   <option>Zone 4 (Central)</option>
+                                   <option>Zone 2 (Pacific)</option>
+                                   <option>Zone 8 (EMEA)</option>
+                                   <option>Zone 1 (Global)</option>
+                                </select>
+                             </div>
+                          </div>
+                       </div>
+
+                       <button 
+                         onClick={() => setIndustryStep('legal')}
+                         disabled={!facilityName}
+                         className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all mt-10"
+                       >
+                          Next: Legal Compliance <ChevronRight className="w-6 h-6" />
+                       </button>
+                    </div>
+                 )}
+
+                 {/* ... other industry steps ... */}
+                 {industryStep === 'legal' && (
+                    <div className="animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col">
+                       <div className="text-center space-y-6 mb-10">
+                          <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto border border-blue-500/20 shadow-xl">
+                              <Scale className="w-10 h-10 text-blue-400" />
+                          </div>
+                          <div>
+                              <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Legal <span className="text-blue-400">Compliance Ingest</span></h3>
+                              <p className="text-slate-400 text-sm mt-2">Authentic projects require legally registered details for industrial validation.</p>
+                          </div>
+                       </div>
+
+                       <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-4">
+                          <div className="space-y-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Legal Entity Name</label>
+                             <input type="text" value={legalEntityName} onChange={e => setLegalEntityName(e.target.value)} placeholder="Full Registered Organization Name" className="w-full bg-black/60 border border-white/10 rounded-[28px] py-5 px-8 text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-800" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-4">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Registration Number</label>
+                                <input type="text" value={registrationNo} onChange={e => setRegistrationNo(e.target.value)} placeholder="Reg ID" className="w-full bg-black/60 border border-white/10 rounded-[28px] py-5 px-8 text-white font-mono focus:ring-2 focus:ring-blue-500/20 outline-none placeholder:text-slate-800" />
+                             </div>
+                             <div className="space-y-4">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Tax ID / PIN</label>
+                                <input type="text" value={taxId} onChange={e => setTaxId(e.target.value)} placeholder="Tax ID" className="w-full bg-black/60 border border-white/10 rounded-[28px] py-5 px-8 text-white font-mono focus:ring-2 focus:ring-blue-500/20 outline-none placeholder:text-slate-800" />
+                             </div>
+                          </div>
+                          <div className="space-y-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Registered HQ Address</label>
+                             <input type="text" value={hqAddress} onChange={e => setHqAddress(e.target.value)} placeholder="Physical Head Office Address" className="w-full bg-black/60 border border-white/10 rounded-[28px] py-5 px-8 text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-800" />
+                          </div>
+                          <div className="space-y-4 pt-6 border-t border-white/5">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 text-center block">ESIN Institutional Signature</label>
+                             <div className="relative">
+                                <Fingerprint className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-600" />
+                                <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/40 border border-white/10 rounded-3xl py-6 pl-16 pr-10 text-white font-mono uppercase tracking-[0.2em] focus:ring-4 focus:ring-blue-500/40 outline-none transition-all" />
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="flex gap-4 pt-8">
+                          <button onClick={() => setIndustryStep('form')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                          <button 
+                             onClick={handleRegisterIndustry}
+                             disabled={isProcessing || !legalEntityName || !registrationNo || !esinSign}
+                             className="flex-1 py-8 bg-amber-600 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all"
                           >
-                             <option>Zone 4 (Central)</option>
-                             <option>Zone 2 (Pacific)</option>
-                             <option>Zone 8 (EMEA)</option>
-                             <option>Zone 1 (Global)</option>
-                          </select>
+                             {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Database className="w-8 h-8" />}
+                             {isProcessing ? "ANCHORING FACILITY..." : "AUTHORIZE LEGAL INGEST"}
+                          </button>
                        </div>
                     </div>
+                 )}
 
-                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-4">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 text-left block">Authorized ESIN Signature</label>
-                        <div className="relative">
-                           <Fingerprint className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-600" />
-                           <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 pl-16 pr-10 text-white font-mono uppercase tracking-[0.2em] focus:ring-4 focus:ring-amber-500/40 outline-none transition-all" />
-                        </div>
+                 {industryStep === 'audit_pending' && (
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 text-center animate-in zoom-in duration-500">
+                       <div className="relative">
+                          <div className="w-48 h-48 rounded-full border-8 border-amber-500/10 flex items-center justify-center shadow-2xl relative group">
+                             <MapPin className="w-20 h-20 text-amber-500 animate-bounce" />
+                             <div className="absolute inset-[-15px] border-4 border-amber-500/20 rounded-full animate-ping"></div>
+                          </div>
+                       </div>
+                       <div className="space-y-6">
+                          <div className="space-y-2">
+                             <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic leading-none">Physical <span className="text-amber-500">Audit Protocol</span></h3>
+                             <p className="text-amber-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Node Provisional // Registry Locked</p>
+                          </div>
+                          <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto leading-relaxed">
+                             "Legal details indexed. The EnvirosAgro Audit Team must now physically verify your facility and documentation to mark this node as 'Authentic' on the global registry."
+                          </p>
+                       </div>
+                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 w-full space-y-4">
+                          <div className="flex items-center gap-4">
+                             <div className="p-3 bg-white/5 rounded-2xl"><Calendar className="w-6 h-6 text-slate-400" /></div>
+                             <div className="text-left">
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Audit Window</p>
+                                <p className="text-sm font-bold text-white uppercase tracking-widest">24 - 72 Standard Hours</p>
+                             </div>
+                          </div>
+                       </div>
+                       <button onClick={() => setShowIndustryEntry(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Registry</button>
                     </div>
-
-                    <div className="flex justify-between items-center px-4 pt-4 border-t border-white/5">
-                       <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">REGISTRY FEE</span>
-                       <span className="text-xl font-mono font-black text-amber-500">1000 EAC</span>
-                    </div>
-
-                    <button 
-                       onClick={handleRegisterIndustry}
-                       disabled={isProcessing || !facilityName || !esinSign}
-                       className="w-full py-8 bg-amber-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all mt-4"
-                    >
-                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <HardHat className="w-8 h-8" />}
-                       {isProcessing ? "ANCHORING FACILITY..." : "FINALIZE FACILITY INGEST"}
-                    </button>
-                 </div>
+                 )}
               </div>
            </div>
         </div>
@@ -1047,7 +1185,7 @@ const Industrial: React.FC<IndustrialProps> = ({
       {showRegisterCollective && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterCollective(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-2">
               <div className="p-16 space-y-12 flex flex-col">
                  <button onClick={() => setShowRegisterCollective(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
@@ -1074,35 +1212,33 @@ const Industrial: React.FC<IndustrialProps> = ({
                     </div>
 
                     <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Collective Node Region</label>
+                       <input 
+                          type="text" 
+                          value={newColRegion} 
+                          onChange={e => setNewColRegion(e.target.value)}
+                          placeholder="e.g. Zone 4, Nebraska"
+                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all" 
+                       />
+                    </div>
+
+                    <div className="space-y-4">
                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Core Mission Shard</label>
                        <textarea 
                           value={newColMission} 
                           onChange={e => setNewColMission(e.target.value)}
                           placeholder="What is the common sustainability goal of this shard group?"
-                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-sm italic font-medium text-slate-200 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all h-32 resize-none" 
+                          className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-sm italic font-medium text-slate-200 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all h-32 resize-none" 
                        />
-                    </div>
-
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Collective Type</label>
-                       <div className="grid grid-cols-3 gap-3">
-                          {['Team', 'Clan', 'Society'].map(type => (
-                             <button 
-                                key={type} 
-                                onClick={() => setNewColType(type as any)}
-                                className={`py-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${newColType === type ? 'bg-emerald-600 border-white text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
-                             >
-                                {type}
-                             </button>
-                          ))}
-                       </div>
                     </div>
 
                     <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center gap-6">
                        <ShieldCheck className="w-10 h-10 text-emerald-400 shrink-0" />
-                       <p className="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
-                          Registration Fee: 200 EAC Registry Burn. Administrator status linked to node {user.esin}.
-                       </p>
+                       <div className="space-y-1">
+                          <p className="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
+                             REGISTRATION_PROTOCOL: Collective anchors require mandatory physical verification of regional resources to ensure authentic group sharding.
+                          </p>
+                       </div>
                     </div>
 
                     <button 
@@ -1123,7 +1259,7 @@ const Industrial: React.FC<IndustrialProps> = ({
       {showRegisterMission && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterMission(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-2">
               <div className="p-16 space-y-12 flex flex-col">
                  <button onClick={() => setShowRegisterMission(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
@@ -1158,7 +1294,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                           value={missionName} 
                           onChange={e => setMissionName(e.target.value)}
                           placeholder="e.g. Bantu Soil Restoration Shard"
-                          className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" 
+                          className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-800" 
                        />
                     </div>
 
@@ -1184,17 +1320,17 @@ const Industrial: React.FC<IndustrialProps> = ({
 
                     <div className="p-8 bg-black/40 border border-white/5 rounded-[40px] space-y-4">
                        <div className="flex items-center gap-3">
-                          <ShieldCheck className="w-5 h-5 text-indigo-400" />
-                          <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Campaign Parameters</h4>
+                          <ShieldAlert className="w-5 h-5 text-indigo-400" />
+                          <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Investment Integrity Check</h4>
                        </div>
-                       <ul className="space-y-2">
+                       <ul className="space-y-3">
                           <li className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-2">
                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
                              50% Internal Collateral Threshold required for registry anchoring.
                           </li>
-                          <li className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-2">
-                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div>
-                             Minimum 3 member nodes must sign binding mission contract.
+                          <li className="text-[9px] text-amber-500 font-black uppercase flex items-center gap-2">
+                             <MapPin className="w-3.5 h-3.5" />
+                             PHYSICAL_AUDIT_PREREQUISITE: Audit team dispatch required before public listing.
                           </li>
                        </ul>
                     </div>
@@ -1292,13 +1428,13 @@ const Industrial: React.FC<IndustrialProps> = ({
         </div>
       )}
 
-      {/* MODAL: Worker Dossier & Proposal Drafting */}
+      {/* MODAL: Worker Dossier & Proposal Drafting (ENHANCED WITH PHYSICAL AUDIT HISTORY) */}
       {showDossierModal && selectedWorkerForDossier && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setShowDossierModal(false)}></div>
-           <div className="relative z-10 w-full max-w-4xl glass-card p-1 rounded-[56px] border-emerald-500/20 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300">
+           <div className="relative z-10 w-full max-w-4xl glass-card p-1 rounded-[56px] border-emerald-500/20 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2">
               <div className="p-12 space-y-12 overflow-y-auto max-h-[85vh] custom-scrollbar">
-                 <button onClick={() => setShowDossierModal(false)} className="absolute top-10 right-10 p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 <button onClick={() => setShowDossierModal(false)} className="absolute top-10 right-10 p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all border border-white/5"><X className="w-8 h-8" /></button>
                  
                  {dossierStep === 'profile' ? (
                    <>
@@ -1331,19 +1467,27 @@ const Industrial: React.FC<IndustrialProps> = ({
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div className="space-y-8">
                            <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.4em] px-2 flex items-center gap-3">
-                              <Zap className="w-4 h-4 text-emerald-400" /> Skill Shard Distribution
+                              <ClipboardCheck className="w-4 h-4 text-emerald-400" /> Physical Audit Timeline
                            </h4>
-                           <div className="space-y-6">
-                              {selectedWorkerForDossier.skills.map((skill, i) => (
-                                 <div key={skill} className="space-y-3">
-                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                       <span className="text-slate-200">{skill}</span>
-                                       <span className="text-emerald-400">{(90 - i * 8)}% Mastery</span>
-                                    </div>
-                                    <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5">
-                                       <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_#10b981]" style={{ width: `${90 - i * 8}%` }}></div>
-                                    </div>
-                                 </div>
+                           <div className="space-y-4">
+                              {[
+                                { date: '2024.12.10', event: 'Field Inspection: Zone 4 NE', status: 'Passed', icon: HardHat },
+                                { date: '2024.08.22', event: 'Biometric Integrity Shard', status: 'Verified', icon: Fingerprint },
+                                { date: '2024.04.15', event: 'Node Initialization Audit', status: 'Secure', icon: ShieldCheck },
+                              ].map((audit, i) => (
+                                <div key={i} className="flex gap-4 p-4 bg-black/40 rounded-2xl border border-white/5 group hover:border-emerald-500/20 transition-all">
+                                   <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-500 shrink-0">
+                                      <audit.icon size={20} />
+                                   </div>
+                                   <div>
+                                      <p className="text-xs font-bold text-white uppercase">{audit.event}</p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                         <span className="text-[8px] font-mono text-slate-600">{audit.date}</span>
+                                         <div className="w-1 h-1 rounded-full bg-slate-800"></div>
+                                         <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">{audit.status}</span>
+                                      </div>
+                                   </div>
+                                </div>
                               ))}
                            </div>
                         </div>
@@ -1355,7 +1499,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                            </h4>
                            <div className="prose prose-invert max-w-none">
                               <p className="text-slate-300 text-sm italic leading-relaxed whitespace-pre-line border-l-2 border-indigo-500/40 pl-6">
-                                 "Node {selectedWorkerForDossier.id} demonstrates exceptional resilience in the {selectedWorkerForDossier.skills[0]} thrust. Historical telemetry data shows zero m-Constant degradation over 12 cycles. Highly recommended for industrial sharding and collective formation."
+                                 "Node {selectedWorkerForDossier.id} demonstrates exceptional resilience. Physical audit history indicates high reliability in field telemetry and collective contribution. Secure for high-capital missions."
                               </p>
                            </div>
                            <div className="flex items-center gap-2 pt-4">
@@ -1380,6 +1524,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                    </>
                  ) : (
                    <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col">
+                      {/* ... contract drafting content remains same ... */}
                       <div className="flex items-center gap-6 border-b border-white/5 pb-10">
                          <div className="w-20 h-20 bg-amber-500/10 rounded-[32px] border border-amber-500/30 flex items-center justify-center shadow-xl">
                             <FileSignature className="w-10 h-10 text-amber-500" />
@@ -1452,7 +1597,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                          <button 
                            onClick={() => handleSendContractProposal(selectedWorkerForDossier)}
                            disabled={isProcessing}
-                           className="flex-[2] py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-105 transition-all disabled:opacity-30"
+                           className="flex-[2] py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.02] transition-all disabled:opacity-30"
                          >
                             {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Send className="w-8 h-8" />}
                             {isProcessing ? "BROADCASTING SHARD..." : "Transmit Binding Proposal"}
@@ -1465,7 +1610,6 @@ const Industrial: React.FC<IndustrialProps> = ({
         </div>
       )}
 
-      {/* Embedded Styles for Industrial Theme */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

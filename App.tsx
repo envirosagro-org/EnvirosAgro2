@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake, Sprout, Briefcase
 } from 'lucide-react';
 import { ViewState, User, WorkerProfile, AgroProject, AgroTransaction } from './types';
 import Dashboard from './components/Dashboard';
@@ -28,6 +28,8 @@ import CircularGrid from './components/CircularGrid';
 import NexusCRM from './components/NexusCRM';
 import TQMGrid from './components/TQMGrid';
 import ResearchInnovation from './components/ResearchInnovation';
+import LiveFarming from './components/LiveFarming';
+import ContractFarming from './components/ContractFarming';
 import { syncUserToCloud } from './services/firebaseService';
 
 interface Notification {
@@ -303,6 +305,8 @@ const App: React.FC = () => {
   const navigation = [
     { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
     { id: 'wallet', name: 'Agro-Wallet', icon: Wallet },
+    { id: 'live_farming', name: 'Live Farming', icon: Sprout },
+    { id: 'contract_farming', name: 'Contract Farming', icon: Briefcase },
     { id: 'research', name: 'Research & Innovation', icon: Microscope },
     { id: 'tqm', name: 'TQM & Trace', icon: ClipboardCheck },
     { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake },
@@ -449,6 +453,8 @@ const App: React.FC = () => {
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} />}
           {activeView === 'sustainability' && <Sustainability onAction={() => setIsEvidenceModalOpen(true)} />}
           {activeView === 'economy' && <Economy user={user} onMint={() => setIsEvidenceModalOpen(true)} />}
+          {activeView === 'live_farming' && <LiveFarming user={user} onEarnEAC={earnEAC} />}
+          {activeView === 'contract_farming' && <ContractFarming user={user} onSpendEAC={spendEAC} />}
           {activeView === 'industrial' && (
             <Industrial 
               user={user} 
@@ -534,7 +540,7 @@ const App: React.FC = () => {
       {showMobileMenu && (
         <div className="fixed inset-0 z-[200] animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-agro-bg/95 backdrop-blur-2xl" onClick={() => setShowMobileMenu(false)}></div>
-          <div className="absolute top-0 right-0 bottom-0 w-[85%] max-w-sm dark:bg-agro-bg bg-white shadow-2xl p-8 flex flex-col border-l border-white/5 animate-in slide-in-from-right duration-400 rounded-l-[40px]">
+          <div className="absolute top-0 right-0 bottom-0 w-[85%] max-sm:max-w-sm dark:bg-agro-bg bg-white shadow-2xl p-8 flex flex-col border-l border-white/5 animate-in slide-in-from-right duration-400 rounded-l-[40px]">
              <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-4">
                   {viewHistory.length > 0 && (

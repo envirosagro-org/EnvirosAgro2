@@ -1,10 +1,18 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Landmark, TrendingUp, ShieldCheck, Handshake, PieChart as PieChartIcon, BarChart3, Search, Filter, ArrowUpRight, Zap, Clock, Globe, CheckCircle2, X, Loader2, Lock, Gem, AlertCircle, ChevronRight, ChevronLeft, Target, LineChart as LineChartIcon, Wallet, Bot, Sparkles, Database, ArrowRight, TrendingDown, Activity, Layers, ArrowDownUp, Cpu, Coins, Share2, FileCheck, ShieldAlert, Sprout,
   RefreshCcw,
-  Users
+  Users,
+  BadgeCheck,
+  Star,
+  Fingerprint,
+  Key,
+  Download,
+  BarChart4,
+  Info
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { User, AgroProject } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -36,13 +44,11 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
   const [activeTab, setActiveTab] = useState<'opportunities' | 'portfolio' | 'analytics'>('opportunities');
   const [selectedProject, setSelectedProject] = useState<AgroProject | null>(null);
   const [isVouching, setIsVouching] = useState(false);
-  const [vouchStep, setVouchStep] = useState<'form' | 'analysis' | 'signing' | 'success'>('form');
+  const [vouchStep, setVouchStep] = useState<'analysis' | 'signing' | 'success'>('analysis');
   const [vouchAmount, setVouchAmount] = useState('5000');
+  const [esinSign, setEsinSign] = useState('');
   const [aiOpinion, setAiOpinion] = useState<string | null>(null);
-
   const [isHarvesting, setIsHarvesting] = useState<string | null>(null);
-
-  const [isForecasting, setIsForecasting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredProjects = projects.filter(p => 
@@ -54,7 +60,8 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
     setSelectedProject(project);
     setVouchStep('analysis');
     setIsVouching(true);
-    const prompt = `Act as an EnvirosAgro Institutional Risk Analyst. Analyze this project for an investor: ${JSON.stringify(project)}. Provide a brief 2-paragraph summary on its EAC yield potential and SEHTI framework alignment. Mention the profit-sharing model.`;
+    setAiOpinion(null);
+    const prompt = `Act as an EnvirosAgro Institutional Risk Analyst. Analyze this project for an investor: ${JSON.stringify(project)}. Provide a brief 2-paragraph summary on its EAC yield potential and SEHTI framework alignment. Focus on investor security and risk shards.`;
     const response = await chatWithAgroExpert(prompt, []);
     setAiOpinion(response.text);
   };
@@ -79,16 +86,25 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
   };
 
   const executeVouch = () => {
+    if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
+      alert("SIGNATURE ERROR: ESIN verification failed.");
+      return;
+    }
+    const amount = Number(vouchAmount);
+    if (user.wallet.balance < amount) {
+      alert("LIQUIDITY ERROR: Insufficient EAC in treasury.");
+      return;
+    }
+
     setVouchStep('signing');
     setTimeout(() => {
       setVouchStep('success');
-      const amount = Number(vouchAmount);
       onUpdate({
         ...user,
         wallet: {
           ...user.wallet,
           balance: user.wallet.balance - amount,
-          lifetimeEarned: user.wallet.lifetimeEarned + (amount * 0.05)
+          lifetimeEarned: user.wallet.lifetimeEarned + (amount * 0.05) // Earn reputation for vouching
         }
       });
     }, 3000);
@@ -96,6 +112,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+      {/* Investor Header */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="glass-card p-10 rounded-[40px] border-blue-500/20 bg-blue-500/5 col-span-1 lg:col-span-2 flex flex-col justify-between relative overflow-hidden group">
            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform pointer-events-none">
@@ -104,7 +121,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
            <div className="relative z-10 space-y-4">
               <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-widest border border-blue-500/20">Institutional Node</span>
               <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic leading-tight">Capital <span className="text-blue-400">Commander</span></h2>
-              <p className="text-slate-400 text-lg leading-relaxed max-w-md font-medium">Manage ROI releases and EAC deployments across the EOS industrial grid.</p>
+              <p className="text-slate-400 text-lg leading-relaxed max-md:text-sm font-medium">Manage ROI releases and EAC deployments across the EOS industrial grid.</p>
            </div>
            <div className="relative z-10 flex items-center gap-12 mt-10 pt-8 border-t border-white/5">
               <div>
@@ -139,73 +156,98 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6 px-1">
-        <div className="flex gap-4 p-1 glass-card rounded-[24px] w-fit border border-white/5">
-          {[
-            { id: 'opportunities', label: 'Vetting Registry', icon: Gem },
-            { id: 'portfolio', label: 'ROI Harvest', icon: PieChartIcon },
-            { id: 'analytics', label: 'Yield Analytics', icon: BarChart3 },
-          ].map(tab => (
-            <button 
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-3 px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-2xl shadow-blue-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-            >
-              <tab.icon className="w-4 h-4" /> {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-4 p-1 glass-card rounded-[24px] w-fit border border-white/5 bg-black/40">
+        {[
+          { id: 'opportunities', label: 'Vetting Registry', icon: Gem },
+          { id: 'portfolio', label: 'ROI Harvest', icon: PieChartIcon },
+          { id: 'analytics', label: 'Yield Analytics', icon: BarChart3 },
+        ].map(tab => (
+          <button 
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+          >
+            <tab.icon className="w-4 h-4" /> {tab.label}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'opportunities' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {filteredProjects.map(opp => (
-            <div key={opp.id} className="glass-card rounded-[44px] p-10 group border border-white/5 hover:border-blue-500/30 transition-all flex flex-col relative overflow-hidden active:scale-95 duration-200">
-              <div className="flex items-center justify-between mb-8">
-                <span className="px-4 py-1.5 bg-white/5 text-[9px] font-black uppercase rounded-full tracking-widest border border-white/10 text-slate-400">
-                  {opp.thrust} Thrust
-                </span>
-                <span className="text-[10px] font-mono text-blue-400 font-bold tracking-tighter">{opp.id}</span>
-              </div>
-              <h4 className="text-3xl font-black text-white mb-3 leading-tight tracking-tighter group-hover:text-blue-400 transition-colors">{opp.name}</h4>
-              
-              <div className="flex items-center gap-2 mb-6">
-                 <Users className="w-3.5 h-3.5 text-blue-400" />
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Founding Nodes: <span className="text-white font-mono">{opp.memberCount}</span></span>
-              </div>
+        <div className="space-y-8 animate-in slide-in-from-left-4 duration-500">
+          <div className="flex justify-between items-center px-4 border-b border-white/5 pb-6">
+             <div>
+                <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Vetting <span className="text-blue-400">Registry</span></h3>
+                <p className="text-slate-500 text-sm">Validated mission nodes awaiting capital sharding.</p>
+             </div>
+             <div className="relative group w-full md:w-80">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                <input 
+                  type="text" 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  placeholder="Filter nodes..." 
+                  className="w-full bg-black/60 border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-xs text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                />
+             </div>
+          </div>
 
-              <p className="text-sm text-slate-400 leading-relaxed mb-8 flex-1 italic opacity-70">"{opp.description}"</p>
-              
-              <div className="space-y-6 mb-8">
-                <div className="p-4 bg-white/5 rounded-3xl border border-white/5 flex justify-between items-center">
-                   <div>
-                      <p className="text-[8px] text-slate-500 font-black uppercase">ROI Ratio</p>
-                      <p className="text-lg font-mono font-black text-emerald-400">{(opp.investorShareRatio * 100).toFixed(0)}%</p>
-                   </div>
-                   <div className="text-right">
-                      <p className="text-[8px] text-slate-500 font-black uppercase">Est. Annual</p>
-                      <p className="text-lg font-mono font-black text-white">+{opp.roiEstimate}%</p>
-                   </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+            {filteredProjects.map(opp => (
+              <div key={opp.id} className="glass-card rounded-[44px] p-10 group border border-white/5 hover:border-blue-500/30 transition-all flex flex-col relative overflow-hidden active:scale-[0.98] duration-200">
+                <div className="flex items-center justify-between mb-8">
+                  <span className="px-4 py-1.5 bg-white/5 text-[9px] font-black uppercase rounded-full tracking-widest border border-white/10 text-slate-400">
+                    {opp.thrust} Thrust
+                  </span>
+                  <div className="flex items-center gap-2">
+                     {opp.isPreAudited && (
+                        <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/40" title="Pre-Funding Audit Verified">
+                           <BadgeCheck size={14} />
+                        </div>
+                     )}
+                     <span className="text-[10px] font-mono text-blue-400 font-bold tracking-tighter">{opp.id}</span>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                   <div className="flex justify-between text-[9px] font-black uppercase text-slate-500">
-                      <span>Performance Index</span>
-                      <span className="text-white">{opp.performanceIndex}%</span>
-                   </div>
-                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500" style={{ width: `${opp.performanceIndex}%` }}></div>
-                   </div>
+                <h4 className="text-3xl font-black text-white mb-3 leading-tight tracking-tighter group-hover:text-blue-400 transition-colors italic">{opp.name}</h4>
+                
+                <div className="flex items-center gap-2 mb-6">
+                   <Users className="w-3.5 h-3.5 text-blue-400" />
+                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Founding Nodes: <span className="text-white font-mono">{opp.memberCount}</span></span>
                 </div>
-              </div>
 
-              <button 
-                onClick={() => handleVouchRequest(opp)}
-                className="w-full py-6 bg-white/5 border border-white/10 group-hover:bg-blue-600 group-hover:border-blue-500 rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
-              >
-                <ShieldCheck className="w-5 h-5" /> Vouch Node
-              </button>
-            </div>
-          ))}
+                <p className="text-sm text-slate-400 leading-relaxed mb-8 flex-1 italic opacity-70">"{opp.description}"</p>
+                
+                <div className="space-y-6 mb-8">
+                  <div className="p-4 bg-white/5 rounded-3xl border border-white/5 flex justify-between items-center">
+                     <div>
+                        <p className="text-[8px] text-slate-500 font-black uppercase">ROI Ratio</p>
+                        <p className="text-lg font-mono font-black text-emerald-400">{(opp.investorShareRatio * 100).toFixed(0)}%</p>
+                     </div>
+                     <div className="text-right">
+                        <p className="text-[8px] text-slate-500 font-black uppercase">Est. Annual</p>
+                        <p className="text-lg font-mono font-black text-white">+{opp.roiEstimate}%</p>
+                     </div>
+                  </div>
+                  <div className="space-y-2">
+                     <div className="flex justify-between text-[9px] font-black uppercase text-slate-500">
+                        <span>Performance Index</span>
+                        <span className="text-white">{opp.performanceIndex}%</span>
+                     </div>
+                     <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500" style={{ width: `${opp.performanceIndex}%` }}></div>
+                     </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => handleVouchRequest(opp)}
+                  className="w-full py-6 bg-white/5 border border-white/10 group-hover:bg-blue-600 group-hover:border-blue-500 rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
+                >
+                  <ShieldCheck className="w-5 h-5" /> Vouch Node
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -225,14 +267,17 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
               {projects.filter(p => p.status === 'Execution').map(proj => {
                  const claimable = proj.profitsAccrued * proj.investorShareRatio;
                  return (
-                  <div key={proj.id} className="glass-card p-10 rounded-[48px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full active:scale-95 duration-300 relative overflow-hidden bg-black/20">
+                  <div key={proj.id} className="glass-card p-10 rounded-[48px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full active:scale-95 duration-300 relative overflow-hidden bg-black/20 shadow-xl">
                      <div className="flex justify-between items-start mb-8 relative z-10">
                         <div className="p-5 rounded-[24px] bg-white/5 group-hover:bg-emerald-500/10 transition-colors shadow-xl">
                            <TrendingUp className="w-8 h-8 text-emerald-400" />
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end gap-2">
                            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[9px] font-black uppercase rounded tracking-widest border border-emerald-500/20">Active Yield</span>
-                           <p className="text-[10px] text-slate-600 font-mono mt-2 font-black uppercase tracking-widest">{proj.id}</p>
+                           <div className="flex gap-1.5">
+                              {proj.isPreAudited && <div className="p-1 bg-emerald-500/20 text-emerald-400 rounded border border-emerald-500/40" title="Pre-Funding Audited"><BadgeCheck size={10} /></div>}
+                              {proj.isPostAudited && <div className="p-1 bg-blue-500/20 text-blue-400 rounded border border-blue-500/40" title="Post-Acquisition Audited"><ShieldCheck size={10} /></div>}
+                           </div>
                         </div>
                      </div>
                      
@@ -283,130 +328,240 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
                   </div>
                  );
               })}
-              {projects.filter(p => p.status === 'Execution').length === 0 && (
-                <div className="col-span-full py-20 text-center space-y-6 opacity-30">
-                   <Activity className="w-16 h-16 mx-auto text-slate-500 animate-pulse" />
-                   <div className="space-y-2">
-                      <h4 className="text-xl font-bold text-white uppercase tracking-widest">No Active Deployments</h4>
-                      <p className="text-sm text-slate-500 italic max-w-xs mx-auto">Vouch for execution-ready node projects to begin earning dividends.</p>
-                   </div>
-                </div>
-              )}
            </div>
         </div>
       )}
 
       {activeTab === 'analytics' && (
-        <div className="space-y-10 animate-in zoom-in duration-500">
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 glass-card p-12 rounded-[56px] border-white/5 space-y-10 relative overflow-hidden bg-black/40">
-                 <div className="flex justify-between items-center relative z-10">
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Yield <span className="text-emerald-400">Velocity</span></h3>
-                 </div>
-                 <div className="h-[350px] w-full relative z-10 min-h-0 min-w-0">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                       <AreaChart data={ANALYTICS_TREND_DATA}>
-                          <defs>
-                             <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                             </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                          <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} />
-                          <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} />
-                          <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid #10b98122', borderRadius: '24px' }} />
-                          <Area type="monotone" dataKey="yield" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorYield)" />
-                       </AreaChart>
-                    </ResponsiveContainer>
-                 </div>
+        <div className="space-y-12 animate-in zoom-in duration-500">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Main Trend Chart */}
+            <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border-white/5 bg-black/40 relative overflow-hidden shadow-2xl">
+              <div className="absolute inset-0 bg-blue-500/[0.01] pointer-events-none"></div>
+              <div className="flex justify-between items-center relative z-10 mb-12 px-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20 shadow-xl">
+                    <BarChart4 className="w-8 h-8 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Yield <span className="text-blue-400">Projections</span></h3>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-2">Rolling network performance telemetry</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-1">Global APY Index</p>
+                  <p className="text-4xl font-mono font-black text-emerald-400">18.4<span className="text-xl">%</span></p>
+                </div>
               </div>
-              <div className="glass-card p-12 rounded-[56px] border-white/5 flex flex-col items-center bg-black/40">
-                 <h3 className="text-xl font-bold text-white uppercase tracking-tighter italic w-full mb-10">Sector <span className="text-blue-400">Alpha</span></h3>
-                 <div className="h-[280px] w-full relative min-h-0 min-w-0">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                       <PieChart>
-                          <Pie data={THRUST_YIELD_ALLOCATION} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={8} dataKey="value" stroke="none">
-                             {THRUST_YIELD_ALLOCATION.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                          </Pie>
-                          <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
-                       </PieChart>
-                    </ResponsiveContainer>
+
+              <div className="h-[450px] w-full relative z-10">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={ANALYTICS_TREND_DATA}>
+                    <defs>
+                      <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                    <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                    <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '12px' }} />
+                    <Area type="monotone" dataKey="yield" stroke="#3b82f6" strokeWidth={6} fillOpacity={1} fill="url(#colorYield)" />
+                    <Area type="monotone" dataKey="volume" stroke="#10b981" strokeWidth={2} fill="transparent" strokeDasharray="4 4" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Allocation Breakdown */}
+            <div className="lg:col-span-4 glass-card p-10 rounded-[56px] border-white/5 bg-black/40 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-8 opacity-[0.02]"><Target className="w-64 h-64 text-white" /></div>
+               <h4 className="text-xl font-bold text-white uppercase tracking-widest italic mb-10 relative z-10 flex items-center gap-3">
+                  <PieChartIcon className="w-5 h-5 text-indigo-400" /> Capital <span className="text-indigo-400">Diffusion</span>
+               </h4>
+               <div className="h-64 w-full relative z-10">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={THRUST_YIELD_ALLOCATION} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                        {THRUST_YIELD_ALLOCATION.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: '#050706', border: 'none', borderRadius: '8px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+               </div>
+               <div className="mt-10 grid grid-cols-2 gap-4 w-full relative z-10">
+                  {THRUST_YIELD_ALLOCATION.map(t => (
+                    <div key={t.name} className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
+                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }}></div>
+                       <div className="flex flex-col">
+                          <span className="text-[8px] font-black text-slate-500 uppercase">{t.name}</span>
+                          <span className="text-xs font-mono font-bold text-white">{t.value}%</span>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             {[
+               { label: 'Network Liquidity', val: '840M EAC', icon: Coins, color: 'text-emerald-400' },
+               { label: 'Active Vouchers', val: '14.2K Nodes', icon: Users, color: 'text-blue-400' },
+               { label: 'Trust Equilibrium', val: '0.942 AR_V', icon: Activity, color: 'text-indigo-400' },
+             ].map((stat, i) => (
+               <div key={i} className="glass-card p-8 rounded-[40px] border border-white/5 flex items-center gap-8 group hover:bg-white/[0.02] transition-all shadow-xl">
+                  <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl">
+                     <stat.icon className={`w-8 h-8 ${stat.color}`} />
+                  </div>
+                  <div>
+                     <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-1">{stat.label}</p>
+                     <p className="text-2xl font-mono font-black text-white">{stat.val}</p>
+                  </div>
+               </div>
+             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Vouch Modal */}
+      {isVouching && selectedProject && (
+        <div className="fixed inset-0 z-[310] flex items-center justify-center p-4 md:p-10">
+           <div className="absolute inset-0 bg-black/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setIsVouching(false)}></div>
+           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-blue-500/20 bg-[#050706] overflow-hidden shadow-[0_0_150px_rgba(59,130,246,0.15)] animate-in zoom-in duration-300 border-2 flex flex-col min-h-[600px]">
+              
+              <div className="p-12 border-b border-white/5 bg-blue-500/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-blue-600 rounded-[28px] flex items-center justify-center shadow-2xl shadow-blue-900/40">
+                       <ShieldCheck className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Vouch <span className="text-blue-400">Mission Node</span></h3>
+                       <p className="text-[10px] text-blue-500/60 font-mono tracking-widest uppercase mt-2">PROTOCOL: EA_VETTING_v4 // {selectedProject.id}</p>
+                    </div>
                  </div>
+                 <button onClick={() => setIsVouching(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+              </div>
+
+              <div className="flex-1 p-12 overflow-y-auto custom-scrollbar flex flex-col justify-center">
+                 {vouchStep === 'analysis' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                       <div className="p-8 bg-black/60 rounded-[44px] border border-white/10 relative overflow-hidden border-l-4 border-l-blue-500/50">
+                          <div className="flex items-center gap-3 mb-6">
+                             <Bot className="w-6 h-6 text-blue-400" />
+                             <h4 className="text-xl font-black text-white uppercase tracking-widest italic">Institutional Analysis</h4>
+                          </div>
+                          {!aiOpinion ? (
+                             <div className="flex flex-col items-center py-10 gap-6">
+                                <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
+                                <p className="text-blue-500 font-black text-xs uppercase tracking-[0.4em] animate-pulse italic">Synthesizing Risk Shards...</p>
+                             </div>
+                          ) : (
+                             <div className="prose prose-invert max-w-none text-slate-300 text-lg leading-loose italic whitespace-pre-line font-medium border-l-2 border-white/5 pl-8">
+                                {aiOpinion}
+                             </div>
+                          )}
+                       </div>
+
+                       <div className="space-y-4">
+                          <div className="flex justify-between px-6">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Capital Vouch Amount</label>
+                             <span className="text-xl font-mono font-black text-blue-400">{Number(vouchAmount).toLocaleString()} EAC</span>
+                          </div>
+                          <input 
+                            type="range" min="1000" max="100000" step="1000" value={vouchAmount} 
+                            onChange={e => setVouchAmount(e.target.value)}
+                            className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500" 
+                          />
+                       </div>
+
+                       <button 
+                        onClick={() => setVouchStep('signing')}
+                        disabled={!aiOpinion}
+                        className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-blue-900/40 hover:bg-blue-500 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30"
+                       >
+                          Proceed to Signing <ChevronRight className="w-6 h-6" />
+                       </button>
+                    </div>
+                 )}
+
+                 {vouchStep === 'signing' && (
+                    <div className="space-y-12 animate-in slide-in-from-right-4 duration-500">
+                       <div className="text-center space-y-6">
+                          <div className="w-24 h-24 bg-blue-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-blue-500/20 shadow-2xl">
+                             <Fingerprint className="w-12 h-12 text-blue-400" />
+                          </div>
+                          <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Cryptographic <span className="text-blue-400">Anchor</span></h4>
+                          <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Enter your ESIN signature to commit capital to the industrial registry.</p>
+                       </div>
+
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-8">Signature Authority (ESIN)</label>
+                          <input 
+                             type="text" 
+                             value={esinSign}
+                             onChange={e => setEsinSign(e.target.value)}
+                             placeholder="EA-XXXX-XXXX-XXXX" 
+                             className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 text-center text-3xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-blue-500/20 outline-none transition-all uppercase" 
+                          />
+                       </div>
+
+                       <div className="p-8 bg-amber-500/5 border border-amber-500/10 rounded-[40px] flex items-center gap-8">
+                          <ShieldAlert className="w-12 h-12 text-amber-500 shrink-0" />
+                          <p className="text-xs text-amber-200/50 font-black uppercase tracking-tight leading-relaxed">
+                             ESCROW_LOCK: Vouching commits {vouchAmount} EAC to the mission pool. Capital will be locked until the first batch settlement trigger.
+                          </p>
+                       </div>
+
+                       <div className="flex gap-4">
+                          <button onClick={() => setVouchStep('analysis')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                          <button 
+                            onClick={executeVouch}
+                            disabled={!esinSign}
+                            className="flex-1 py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30"
+                          >
+                             <Key className="w-6 h-6 fill-current" /> Commit Vouch Shard
+                          </button>
+                       </div>
+                    </div>
+                 )}
+
+                 {vouchStep === 'success' && (
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
+                       <div className="w-48 h-48 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
+                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
+                          <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+                       </div>
+                       <div className="space-y-4">
+                          <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Vouch <span className="text-emerald-400">Anchored</span></h3>
+                          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.6em] font-mono">Registry Hash: 0x882_VOUCH_{Math.random().toString(16).substring(2, 6).toUpperCase()}</p>
+                       </div>
+                       <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-6 text-left relative overflow-hidden shadow-xl">
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><Activity className="w-40 h-40 text-emerald-400" /></div>
+                          <div className="flex justify-between items-center text-xs relative z-10">
+                             <span className="text-slate-500 font-black uppercase tracking-widest">Committed Capital</span>
+                             <span className="text-white font-mono font-black text-3xl text-emerald-400">-{vouchAmount} EAC</span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs relative z-10">
+                             <span className="text-slate-500 font-black uppercase tracking-widest">Reputation Gained</span>
+                             <span className="text-blue-400 font-mono font-black text-3xl">+{Math.floor(Number(vouchAmount) * 0.05)} PTS</span>
+                          </div>
+                       </div>
+                       <button onClick={() => setIsVouching(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Registry</button>
+                    </div>
+                 )}
               </div>
            </div>
         </div>
       )}
 
-      {isVouching && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-2xl" onClick={() => setIsVouching(false)}></div>
-           <div className="relative z-10 w-full max-w-2xl glass-card p-1 rounded-[44px] border-blue-500/20 overflow-hidden shadow-[0_0_80px_#3b82f622]">
-              <div className="bg-[#050706] p-12 space-y-10 min-h-[550px] flex flex-col justify-center">
-                 <button onClick={() => setIsVouching(false)} className="absolute top-10 right-10 p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all">
-                   <X className="w-8 h-8" />
-                 </button>
-                 {vouchStep === 'analysis' && (
-                   <div className="space-y-10 animate-in zoom-in duration-300">
-                      {aiOpinion ? (
-                        <div className="space-y-10">
-                          <button onClick={() => setAiOpinion(null)} className="flex items-center gap-2 mb-4 p-2 px-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all group/back">
-                            <ChevronLeft className="w-4 h-4" /> Back
-                          </button>
-                          <div className="p-10 bg-blue-950/10 border-l-4 border-blue-500/40 rounded-3xl text-slate-300 italic leading-loose">
-                            {aiOpinion}
-                          </div>
-                          <button onClick={() => setVouchStep('form')} className="w-full py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl">Continue</button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center py-12 space-y-10">
-                           <Loader2 className="w-16 h-16 text-blue-500 animate-spin" />
-                           <p className="text-slate-500 text-sm font-black uppercase animate-pulse">Running SEHTI Vetting Protocols...</p>
-                        </div>
-                      )}
-                   </div>
-                 )}
-                 {vouchStep === 'form' && selectedProject && (
-                   <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                      <div className="text-center">
-                         <h3 className="text-4xl font-black text-white uppercase italic">Commit <span className="text-blue-400">Capital</span></h3>
-                         <p className="text-slate-500 text-sm mt-2 uppercase tracking-widest">Project: {selectedProject.name}</p>
-                      </div>
-                      <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl text-center space-y-2">
-                         <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Locked Shard Credit</p>
-                         <p className="text-2xl font-mono font-black text-white">{selectedProject.collateralLocked.toLocaleString()} EAC (50%)</p>
-                      </div>
-                      <div className="space-y-4">
-                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6 text-center block">Institutional Vouch (EAC)</label>
-                         <input type="number" value={vouchAmount} onChange={e => setVouchAmount(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-[48px] py-16 text-7xl font-mono text-white text-center outline-none focus:ring-4 focus:ring-blue-500/20 transition-all" />
-                      </div>
-                      <button onClick={executeVouch} className="w-full py-8 bg-blue-600 rounded-[32px] text-white font-black text-sm uppercase shadow-2xl hover:scale-[1.02] transition-all">Execute Digital Vouch</button>
-                   </div>
-                 )}
-                 {vouchStep === 'signing' && (
-                   <div className="flex flex-col items-center justify-center space-y-12 py-12 animate-in zoom-in duration-500 text-center">
-                     <div className="relative">
-                        <div className="w-48 h-48 rounded-full border-4 border-blue-500/10 flex items-center justify-center">
-                           <Handshake className="w-20 h-20 text-blue-400 animate-pulse" />
-                        </div>
-                        <div className="absolute inset-0 border-t-8 border-blue-500 rounded-full animate-spin"></div>
-                     </div>
-                     <h3 className="text-4xl font-black text-white uppercase tracking-tighter leading-tight">Blockchain Settlement</h3>
-                   </div>
-                 )}
-                 {vouchStep === 'success' && (
-                   <div className="flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
-                      <div className="w-40 h-40 bg-emerald-500 rounded-full flex items-center justify-center shadow-2xl scale-110">
-                         <CheckCircle2 className="w-20 h-20 text-white" />
-                      </div>
-                      <h3 className="text-5xl font-black text-white uppercase tracking-tighter">Vouch Complete</h3>
-                      <button onClick={() => setIsVouching(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase hover:bg-white/10 transition-all">Return</button>
-                   </div>
-                 )}
-              </div>
-           </div>
-        </div>
-      )}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+      `}</style>
     </div>
   );
 };

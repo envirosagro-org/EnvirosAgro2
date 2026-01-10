@@ -44,7 +44,10 @@ import {
   PlusCircle,
   Pickaxe,
   LockKeyhole,
-  ShieldAlert
+  ShieldAlert,
+  HardHat,
+  MapPin,
+  BadgeCheck
 } from 'lucide-react';
 import { User, AgroTransaction, AgroProject, ViewState } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
@@ -80,7 +83,9 @@ const INITIAL_PROJECTS: AgroProject[] = [
     profitsAccrued: 12000,
     investorShareRatio: 0.15,
     performanceIndex: 85,
-    memberCount: 12
+    memberCount: 12,
+    isPreAudited: true,
+    isPostAudited: true
   },
   { 
     id: 'PRJ-104', 
@@ -99,7 +104,9 @@ const INITIAL_PROJECTS: AgroProject[] = [
     profitsAccrued: 0,
     investorShareRatio: 0.15,
     performanceIndex: 0,
-    memberCount: 8
+    memberCount: 8,
+    isPreAudited: true,
+    isPostAudited: false
   },
 ];
 
@@ -115,6 +122,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser 
   // Project Settlement States
   const [selectedProjForClaim, setSelectedProjForClaim] = useState<AgroProject | null>(null);
   const [isSettlingBatch, setIsSettlingBatch] = useState(false);
+  const [isRequestingPostAudit, setIsRequestingPostAudit] = useState(false);
 
   const totalBalance = user.wallet.balance + (user.wallet.bonusBalance || 0);
   const nextTierPoints = user.wallet.tier === 'Seed' ? 500 : user.wallet.tier === 'Sprout' ? 2000 : 2000;
@@ -140,12 +148,26 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser 
       return;
     }
 
+    if (!project.isPostAudited) {
+      alert("POST-ACQUISITION AUDIT REQUIRED: Capital has been requisitioned, but the physical evaluation of resource deployment is pending. Request a physical audit before settling batches.");
+      return;
+    }
+
     if (project.batchesClaimed >= project.totalBatches) {
       alert("PROJECT COMPLETE: All batches for this mission have already been settled.");
       return;
     }
 
     setSelectedProjForClaim(project);
+  };
+
+  const handleRequestPostAudit = (projectId: string) => {
+    setIsRequestingPostAudit(true);
+    setTimeout(() => {
+      setActiveProjects(prev => prev.map(p => p.id === projectId ? { ...p, isPostAudited: true } : p));
+      setIsRequestingPostAudit(false);
+      alert("POST-ACQUISITION AUDIT COMPLETE: Project evaluated. Secure deployment verified. Batch settlement protocols unlocked.");
+    }, 2500);
   };
 
   const executeBatchSettlement = () => {
@@ -349,13 +371,43 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser 
                          <h4 className="text-2xl font-black text-white uppercase tracking-tighter group-hover:text-blue-400 transition-colors italic leading-none">{proj.name}</h4>
                          <p className="text-[10px] text-slate-500 font-mono tracking-widest mt-2">{proj.id} // THRUST: {proj.thrust.toUpperCase()}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-2">
                          <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20 text-[10px] font-black uppercase tracking-widest">
                            Batch {proj.batchesClaimed}/{proj.totalBatches}
                          </span>
-                         <p className="text-[8px] text-slate-600 font-black uppercase mt-2">Cycle Active</p>
+                         {proj.isPostAudited ? (
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/40">
+                               <BadgeCheck size={12} />
+                               <span className="text-[8px] font-black uppercase">Post-Audit OK</span>
+                            </div>
+                         ) : (
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 text-amber-500 rounded-full border border-amber-500/40 animate-pulse">
+                               <HardHat size={12} />
+                               <span className="text-[8px] font-black uppercase">Post-Acquisition Audit Required</span>
+                            </div>
+                         )}
                       </div>
                    </div>
+
+                   {!proj.isPostAudited && (
+                      <div className="p-8 bg-amber-500/5 border border-amber-500/20 rounded-[40px] space-y-4 animate-pulse">
+                         <div className="flex items-center gap-3">
+                            <ShieldAlert className="w-5 h-5 text-amber-500" />
+                            <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Capital Deployment Lock</h4>
+                         </div>
+                         <p className="text-xs text-slate-400 italic leading-relaxed">
+                            "Secure investment check: Our team must physically evaluate the deployment of requisitioned capital before batch settlement unlocks."
+                         </p>
+                         <button 
+                            onClick={() => handleRequestPostAudit(proj.id)}
+                            disabled={isRequestingPostAudit}
+                            className="w-full py-4 bg-amber-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 transition-all flex items-center justify-center gap-2"
+                         >
+                            {isRequestingPostAudit ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
+                            Request Post-Acquisition Audit
+                         </button>
+                      </div>
+                   )}
 
                    <div className="space-y-4 relative z-10">
                       <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500 tracking-widest">
@@ -385,13 +437,18 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser 
 
                    <button 
                     onClick={() => handleClaimBatch(proj)}
-                    disabled={proj.batchesClaimed >= proj.totalBatches}
+                    disabled={proj.batchesClaimed >= proj.totalBatches || !proj.isPostAudited}
                     className="w-full py-6 bg-white/5 border border-white/10 rounded-[32px] text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-[0.3em] hover:bg-blue-600 hover:border-blue-500 transition-all flex items-center justify-center gap-3 disabled:opacity-20"
                    >
                       {proj.batchesClaimed >= proj.totalBatches ? (
                         <>
                           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                           Project Settled
+                        </>
+                      ) : !proj.isPostAudited ? (
+                        <>
+                          <Lock className="w-5 h-5 text-amber-500" />
+                          Awaiting Post-Audit Verification
                         </>
                       ) : (
                         <>
@@ -423,7 +480,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser 
                  {MOCK_HISTORY.map(tx => (
                    <div key={tx.id} className="p-8 hover:bg-white/[0.02] transition-all flex items-center justify-between group">
                       <div className="flex items-center gap-6">
-                         <div className={`p-4 rounded-2xl ${tx.value > 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'} group-hover:scale-110 transition-transform`}>
+                         <div className={`p-4 rounded-2xl ${tx.value > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-500'} group-hover:scale-110 transition-transform`}>
                             {tx.value > 0 ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownLeft className="w-6 h-6" />}
                          </div>
                          <div>
