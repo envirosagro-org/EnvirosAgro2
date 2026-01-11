@@ -713,7 +713,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                        </div>
                     </div>
 
-                    <div className="p-10 glass-card rounded-[48px] bg-blue-600/5 border border-blue-500/20 space-y-4">
+                    <div className="p-10 glass-card rounded-[48px] bg-blue-600/5 border-blue-500/20 space-y-4">
                        <div className="flex items-center gap-3">
                           <MapPin className="w-6 h-6 text-blue-400" />
                           <h4 className="text-xl font-bold text-white uppercase tracking-tighter">Geospatial Range</h4>
@@ -745,9 +745,9 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                        <div className="p-8 bg-black/60 rounded-[32px] border border-white/5 space-y-4">
                           <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><History size={12} /> Registry Feed</h5>
                           <div className="space-y-3 font-mono text-[9px]">
-                             <p className="text-slate-600 italic">>> PACKET_INGEST: 2024.12.12_14:20</p>
-                             <p className="text-emerald-500">>> SIGNAL_MATCH_ZK_PROOF: SUCCESS</p>
-                             <p className="text-slate-600 italic">>> COMMITTING_TELEMETRY: SHARD_V4</p>
+                             <p className="text-slate-600 italic">{" >> "} PACKET_INGEST: 2024.12.12_14:20</p>
+                             <p className="text-emerald-500">{" >> "} SIGNAL_MATCH_ZK_PROOF: SUCCESS</p>
+                             <p className="text-slate-600 italic">{" >> "} COMMITTING_TELEMETRY: SHARD_V4</p>
                           </div>
                        </div>
                     </div>
@@ -769,7 +769,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                  <button onClick={() => setShowDiscoveryModal(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
                  
                  {discoveryStep === 'upload' && (
-                    <div className="space-y-10 text-center animate-in slide-in-from-right-4 duration-500">
+                    <div className="space-y-10 text-center animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
                        <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
                           <Camera className="w-12 h-12 text-emerald-400" />
                        </div>
@@ -841,7 +841,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
             </div>
             <div className="space-y-4">
                <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">AgroInPDF <span className="text-amber-500">Patent Vault</span></h4>
-               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with {" > "} 90% Community Consensus graduate into official Industrial Inventions.</p>
+               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with &gt; 90% Community Consensus graduate into official Industrial Inventions.</p>
             </div>
          </div>
          <div className="text-right relative z-10 shrink-0">

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake, Sprout, Briefcase, PawPrint, UserCircle, BellRing, Settings2, Bot
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake, Sprout, Briefcase, PawPrint, UserCircle, BellRing, Settings2, Bot, Fingerprint, Network, Binary
 } from 'lucide-react';
 import { ViewState, User, WorkerProfile, AgroProject, AgroTransaction } from './types';
 import Dashboard from './components/Dashboard';
@@ -56,6 +56,7 @@ export interface SignalShard {
 }
 
 const App: React.FC = () => {
+  const [isBooting, setIsBooting] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
   const [viewHistory, setViewHistory] = useState<ViewState[]>([]);
@@ -158,6 +159,11 @@ const App: React.FC = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
+    // Initializing splash screen
+    const bootTimer = setTimeout(() => {
+      setIsBooting(false);
+    }, 3500);
+
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
@@ -169,7 +175,10 @@ const App: React.FC = () => {
     const savedUser = localStorage.getItem('agro_steward');
     if (savedUser) setUser(JSON.parse(savedUser));
     
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(bootTimer);
+    };
   }, [theme]);
 
   const addNotification = (type: Notification['type'], title: string, message: string) => {
@@ -324,6 +333,75 @@ const App: React.FC = () => {
     handleUpdateUser(updatedUser);
     addNotification('success', 'EAC_MINT', `Earned ${amount} EAC: ${reason.replace('_', ' ')}.`);
   };
+
+  if (isBooting) {
+    return (
+      <div className="fixed inset-0 z-[500] bg-[#050706] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-500/5 blur-[120px] rounded-full"></div>
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-center animate-in fade-in duration-1000">
+          <div className="relative group mb-12">
+            <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] opacity-50 group-hover:opacity-100 transition-opacity rounded-full animate-pulse-slow"></div>
+            <div className="w-40 h-40 rounded-[56px] bg-black/60 border-2 border-emerald-500/30 flex items-center justify-center relative z-10 animate-float shadow-3xl">
+              <Leaf className="w-20 h-20 text-emerald-500 group-hover:scale-110 transition-transform duration-1000" />
+              <div className="absolute inset-0 border-4 border-transparent border-t-emerald-500/40 rounded-[56px] animate-spin-slow"></div>
+            </div>
+          </div>
+          
+          <div className="text-center space-y-6">
+            <div className="flex flex-col items-center">
+              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase italic leading-none">
+                Enviros<span className="text-emerald-500">Agro™</span>
+              </h1>
+              <div className="flex items-center gap-3 mt-4">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                <p className="text-[10px] md:text-xs font-black text-emerald-500/60 uppercase tracking-[0.6em] font-mono">
+                  Registry Syncing...
+                </p>
+              </div>
+            </div>
+            
+            <div className="pt-12 flex flex-col items-center space-y-4 opacity-80">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Powered by</p>
+              <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter italic">
+                EnvirosAgro <span className="text-emerald-500">Operating System</span>
+              </h2>
+            </div>
+            
+            <div className="w-64 h-1.5 bg-white/5 rounded-full overflow-hidden mt-8 mx-auto">
+              <div className="h-full bg-emerald-500/60 animate-boot-progress shadow-[0_0_15px_#10b981]"></div>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-6 pt-12 opacity-20">
+               <Fingerprint className="w-6 h-6 text-emerald-400" />
+               <Network className="w-6 h-6 text-blue-400" />
+               <Binary className="w-6 h-6 text-indigo-400" />
+               <ShieldCheck className="w-6 h-6 text-teal-400" />
+            </div>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes boot-progress {
+            0% { width: 0%; }
+            20% { width: 40%; }
+            50% { width: 45%; }
+            80% { width: 90%; }
+            100% { width: 100%; }
+          }
+          .animate-boot-progress {
+            animation: boot-progress 3.5s ease-in-out forwards;
+          }
+          .animate-spin-slow {
+            animation: spin 8s linear infinite;
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   if (!user) return <Login onLogin={setUser} />;
 
@@ -480,7 +558,7 @@ const App: React.FC = () => {
                                <p className={`text-[11px] font-black uppercase tracking-tight ${!sig.read ? 'text-white' : 'text-slate-500'}`}>{sig.title}</p>
                                <span className="text-[8px] font-mono text-slate-700">{sig.timestamp}</span>
                             </div>
-                            <p className="text-[10px] text-slate-400 leading-relaxed line-clamp-2 italic font-medium">"{sig.message}"</p>
+                            <p className="text-xs text-slate-400 leading-relaxed line-clamp-2 italic font-medium">"{sig.message}"</p>
                          </div>
                       </div>
                     )) : (
