@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   PawPrint, 
@@ -50,10 +51,10 @@ import {
   Layers,
   Smartphone,
   Star,
-  // Added missing icons to resolve compilation errors
   CheckCircle2,
   ArrowRight,
-  Users
+  Users,
+  Coins
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 import { runSpecialistDiagnostic } from '../services/geminiService';
@@ -315,7 +316,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                   <div key={offer.id} className="glass-card rounded-[48px] overflow-hidden border border-white/5 hover:border-emerald-500/30 transition-all flex flex-col h-full group active:scale-[0.98] duration-300 bg-black/40 shadow-2xl relative">
                      <div className="h-64 relative overflow-hidden shrink-0">
                         <img src={offer.thumb} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[5s]" alt={offer.title} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#050706] via-transparent to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                         <div className="absolute top-6 left-6 flex items-center gap-2">
                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                            <span className="text-[10px] font-black text-white uppercase tracking-widest backdrop-blur-md bg-black/60 px-3 py-1 rounded-full border border-white/10">STWD_GUIDED</span>
@@ -512,7 +513,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                        <p className="text-[10px] text-blue-500/60 font-mono tracking-widest uppercase mt-2">EOS_SPATIAL_SCAN // ACTIVE_NODE_INGEST</p>
                     </div>
                  </div>
-                 <button onClick={() => setShowMappingModal(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 <button onClick={() => setShowMappingModal(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
               </div>
 
               <div className="flex-1 p-12 flex flex-col justify-center items-center space-y-12">
@@ -593,7 +594,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                                {plant.id}
                             </span>
                          </div>
-                         <h4 className="text-2xl font-black text-white uppercase tracking-tight italic mb-2 group-hover:text-emerald-400 transition-colors">{plant.name}</h4>
+                         <h4 className="text-2xl font-black text-white uppercase tracking-tight italic mb-2 group-hover:text-pink-400 transition-colors leading-none m-0">{plant.name}</h4>
                          <p className="text-orange-400 text-[10px] font-bold uppercase mb-6">{plant.rarity}</p>
                          
                          <div className="space-y-4 mb-8 flex-1">
@@ -681,7 +682,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                        <p className="text-[10px] text-amber-500/60 font-mono tracking-widest uppercase mt-3">NODE_ID: {selectedWildlife.id} // REGISTRY_SECURED</p>
                     </div>
                  </div>
-                 <button onClick={() => setSelectedWildlife(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 <button onClick={() => setSelectedWildlife(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
               </div>
 
               <div className="flex-1 p-12 overflow-y-auto custom-scrollbar flex flex-col lg:flex-row gap-12">
@@ -758,6 +759,96 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
            </div>
         </div>
       )}
+
+      {/* Discovery Modal */}
+      {showDiscoveryModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowDiscoveryModal(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
+              <div className="p-12 space-y-10 min-h-[650px] flex flex-col justify-center">
+                 <button onClick={() => setShowDiscoveryModal(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 {discoveryStep === 'upload' && (
+                    <div className="space-y-10 text-center animate-in slide-in-from-right-4 duration-500">
+                       <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
+                          <Camera className="w-12 h-12 text-emerald-400" />
+                       </div>
+                       <div className="space-y-4">
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Flora <span className="text-emerald-400">Discovery</span></h3>
+                          <p className="text-slate-400 text-lg">Upload an image shard to identify species and earn registry EAC rewards.</p>
+                       </div>
+                       <div className="p-12 border-4 border-dashed border-white/5 rounded-[48px] bg-black/40 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/[0.02] transition-all">
+                          <Upload className="w-12 h-12 text-slate-600 mb-6" />
+                          <p className="text-xl font-black text-white uppercase tracking-widest">Select Image Shard</p>
+                       </div>
+                       <button onClick={handleDiscoverySubmit} className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl">Initialize Oracle Analysis</button>
+                    </div>
+                 )}
+
+                 {discoveryStep === 'analysis' && (
+                    <div className="flex flex-col items-center space-y-12 animate-in fade-in duration-500">
+                       <div className="relative">
+                          <div className="absolute inset-[-10px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
+                          <div className="w-48 h-48 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
+                             <Dna className="w-20 h-20 text-emerald-400 animate-pulse" />
+                          </div>
+                       </div>
+                       <div className="space-y-4 text-center">
+                          <p className="text-emerald-400 font-black text-xl uppercase tracking-[0.5em] animate-pulse italic">Sequencing DNA Shard...</p>
+                          <p className="text-slate-600 font-mono text-[10px]">EOS_BOTANICAL_MATCH_v3.2</p>
+                       </div>
+                    </div>
+                 )}
+
+                 {discoveryStep === 'success' && (
+                    <div className="space-y-10 animate-in zoom-in duration-700">
+                       <div className="p-10 glass-card rounded-[48px] bg-white/[0.01] border-l-8 border-emerald-500/50 shadow-3xl">
+                          <h4 className="text-2xl font-black text-white uppercase italic mb-6 flex items-center gap-3">
+                             <Sparkles className="w-6 h-6 text-emerald-400" /> Oracle Result
+                          </h4>
+                          <div className="prose prose-invert max-w-none text-slate-300 text-lg leading-loose italic whitespace-pre-line border-l-2 border-white/5 pl-8 font-medium">
+                             {discoveryResult}
+                          </div>
+                       </div>
+                       <div className="p-8 bg-emerald-500/5 border border-emerald-500/20 rounded-[40px] flex items-center justify-between">
+                          <div className="flex items-center gap-6">
+                             <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl">
+                                <Coins size={24} />
+                             </div>
+                             <div>
+                                <p className="text-[10px] text-slate-500 font-black uppercase">Registry Reward</p>
+                                <p className="text-2xl font-mono font-black text-white">+50 EAC</p>
+                             </div>
+                          </div>
+                          <BadgeCheck className="w-10 h-10 text-emerald-400" />
+                       </div>
+                       <button onClick={() => setShowDiscoveryModal(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 shadow-xl">Return to Portal</button>
+                    </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Research Patent Vault */}
+      <div className="p-16 glass-card rounded-[64px] border-amber-500/20 bg-amber-500/5 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-2xl">
+         <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12">
+            <Smartphone className="w-96 h-96 text-amber-400" />
+         </div>
+         <div className="flex items-center gap-10 relative z-10">
+            <div className="w-32 h-32 bg-amber-600 rounded-[40px] flex items-center justify-center shadow-3xl animate-pulse ring-[20px] ring-white/5">
+               <Layers className="w-16 h-16 text-white" />
+            </div>
+            <div className="space-y-4">
+               <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">AgroInPDF <span className="text-amber-500">Patent Vault</span></h4>
+               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with &gt; 90% Community Consensus graduate into official Industrial Inventions.</p>
+            </div>
+         </div>
+         <div className="text-right relative z-10 shrink-0">
+            <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em]">TOTAL REGISTERED</p>
+            <p className="text-7xl font-mono font-black text-white tracking-tighter">14</p>
+         </div>
+      </div>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

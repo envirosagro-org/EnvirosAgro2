@@ -35,7 +35,6 @@ import {
   HelpCircle,
   Cloud,
   Wind,
-  MessageCircle,
   Facebook,
   HelpCircle as QuestionIcon,
   MessageCircleQuestion,
@@ -50,7 +49,12 @@ import {
   Sparkles,
   Rocket,
   Flame,
-  Activity
+  Activity,
+  Copyright,
+  Shield,
+  Award,
+  CheckCircle2,
+  BadgeCheck
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -107,6 +111,15 @@ const CORE_PRINCIPLES = [
 
 const CORE_VALUES = [
   'Ethical', 'Communal', 'Optimistic', 'Supportive', 'Governed'
+];
+
+const TRADEMARKS = [
+  { name: 'EnvirosAgro™', type: 'Primary Organization', desc: 'The overarching ecosystem for sustainable agricultural decentralization and blockchain coordination.' },
+  { name: 'WhatIsAG™', type: 'Philosophical Definition', desc: 'Defines agriculture as an application of art or science from nature by human beings towards natural resources (Animals, plants, water, soil and air) for sustainability.' },
+  { name: 'Five Thrusts™ (SEHTI)', type: 'Strategic Framework', desc: 'The mandatory quintuplicate pillar system (Societal, Environmental, Human, Technological, Industry) governing all registry nodes.' },
+  { name: 'C(a)™ Agro Code', type: 'Mathematical Identity', desc: 'Proprietary formula for calculating node-specific agricultural growth density and regenerative value.' },
+  { name: 'm™ Constant', type: 'Resilience Signature', desc: 'Proprietary time-signature metric for quantifying industrial stability, recovery, and ecosystem durability.' },
+  { name: 'SID™ Remediation', type: 'Societal Protocol', desc: 'The official protocol for identifying and mitigating Social Influenza Disease within decentralized farm clusters.' },
 ];
 
 const EnvirosAgroRocket: React.FC = () => {
@@ -187,7 +200,7 @@ const EnvirosAgroRocket: React.FC = () => {
                <ShieldCheck className="w-48 h-48 text-emerald-400" />
             </div>
             <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-10 italic flex items-center gap-4">
-              <Zap className="w-8 h-8 text-emerald-400 fill-emerald-400/20" /> Values of EnvirosAgro
+              <Zap className="w-8 h-8 text-emerald-400 fill-emerald-400/20" /> Values of EnvirosAgro™
             </h4>
             <ul className="grid grid-cols-1 gap-y-5">
               {CORE_VALUES.map(val => (
@@ -205,12 +218,12 @@ const EnvirosAgroRocket: React.FC = () => {
                <Landmark className="w-48 h-48 text-emerald-400" />
             </div>
             <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-10 italic flex items-center gap-4">
-              <Layers className="w-8 h-8 text-emerald-400" /> Principles of EnvirosAgro
+              <Layers className="w-8 h-8 text-emerald-400" /> Principles of EnvirosAgro™
             </h4>
             <ul className="grid grid-cols-1 gap-y-5">
               {CORE_PRINCIPLES.map(pr => (
                 <li key={pr} className="flex items-center gap-4 group/item">
-                  <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)] group-hover/item:scale-125 transition-transform"></div>
+                  <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_100px_rgba(52,211,153,0.5)] group-hover/item:scale-125 transition-transform"></div>
                   <span className="text-base font-black text-slate-100 uppercase tracking-widest">{pr}</span>
                 </li>
               ))}
@@ -224,7 +237,7 @@ const EnvirosAgroRocket: React.FC = () => {
              <h3 className="text-3xl font-black text-white uppercase tracking-[0.2em] italic drop-shadow-lg">Embracing Sustainable Agriculture</h3>
           </div>
           <div className="flex flex-col items-center gap-4">
-             <h2 className="text-4xl font-black text-white tracking-[0.5em] uppercase">EnvirosAgro Rocket</h2>
+             <h2 className="text-4xl font-black text-white tracking-[0.5em] uppercase">EnvirosAgro™ Rocket</h2>
              <div className="flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-emerald-400 animate-pulse" />
                 <div className="h-px w-48 bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"></div>
@@ -239,7 +252,7 @@ const EnvirosAgroRocket: React.FC = () => {
 };
 
 const InfoPortal: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'guidelines' | 'privacy' | 'contact'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'guidelines' | 'privacy' | 'contact' | 'trademarks'>('about');
   const [showSupport, setShowSupport] = useState(false);
   const [supportChat, setSupportChat] = useState<{ role: 'user' | 'bot', text: string }[]>([
     { role: 'bot', text: "Hello Steward. I am the EnvirosAgro™ Governance Assistant. How can I resolve your network dispute or Five Thrusts™ protocol question today?" }
@@ -252,6 +265,7 @@ const InfoPortal: React.FC = () => {
     { id: 'environments', label: 'Official Environments', icon: Share2 },
     { id: 'faq', label: 'Expert Q&A (Quora)', icon: MessageCircleQuestion },
     { id: 'guidelines', label: 'Code of Conduct', icon: Handshake },
+    { id: 'trademarks', label: 'Trademarks & IP', icon: Copyright },
     { id: 'privacy', label: 'Privacy & Data', icon: ShieldCheck },
     { id: 'contact', label: 'Contact & HQ', icon: Globe },
   ];
@@ -299,8 +313,33 @@ const InfoPortal: React.FC = () => {
               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em]">EnvirosAgro™ Ecosystem</span>
               <h2 className="text-6xl font-black text-white leading-tight tracking-tighter">About <span className="text-emerald-400 italic">EnvirosAgro™</span></h2>
               <p className="text-xl text-slate-400 leading-relaxed font-medium">
-                EnvirosAgro is a pioneering organization committed to establishing a comprehensive network that advances and supports agricultural sustainability. By linking farmers, researchers, and diverse stakeholders, we catalyze transformation within the global agricultural community.
+                EnvirosAgro™ is a pioneering organization committed to establishing a comprehensive network that advances and supports agricultural sustainability. By linking farmers, researchers, and diverse stakeholders, we catalyze transformation within the global agricultural community.
               </p>
+            </div>
+
+            {/* Trademarks Sidebar/Footer for visibility */}
+            <div className="p-10 glass-card rounded-[48px] border-emerald-500/20 bg-emerald-500/5 grid grid-cols-1 md:grid-cols-3 gap-8 shadow-inner">
+               <div className="flex items-center gap-4">
+                  <BadgeCheck className="w-10 h-10 text-emerald-500" />
+                  <div>
+                    <h4 className="text-lg font-black text-white uppercase italic">Registry Protection</h4>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">EnvirosAgro™ is a registered mark.</p>
+                  </div>
+               </div>
+               <div className="flex items-center gap-4">
+                  <Award className="w-10 h-10 text-amber-500" />
+                  <div>
+                    <h4 className="text-lg font-black text-white uppercase italic">Protocol Authority</h4>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">C(a)™ & m™ are proprietary sharding codes.</p>
+                  </div>
+               </div>
+               <div className="flex items-center gap-4">
+                  <ShieldCheck className="w-10 h-10 text-indigo-400" />
+                  <div>
+                    <h4 className="text-lg font-black text-white uppercase italic">Legal Consensus</h4>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Five Thrusts™ (SEHTI) Framework certified.</p>
+                  </div>
+               </div>
             </div>
 
             {/* INTEGRATED ROCKET DESIGN */}
@@ -313,7 +352,7 @@ const InfoPortal: React.FC = () => {
                 </div>
                 <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Industrial Ingest</h3>
                 <p className="text-slate-300 leading-loose text-lg font-medium">
-                  EnvirosAgro aims to promote environmentally responsible practices, facilitate knowledge exchange, and develop sustainable technologies. Our network links farmers, researchers, and diverse stakeholders within the agricultural sector.
+                  EnvirosAgro™ aims to promote environmentally responsible practices, facilitate knowledge exchange, and develop sustainable technologies. Our network links farmers, researchers, and diverse stakeholders within the agricultural sector.
                 </p>
               </div>
 
@@ -323,7 +362,7 @@ const InfoPortal: React.FC = () => {
                 </div>
                 <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Global Transformation</h3>
                 <p className="text-slate-300 leading-loose text-lg font-medium">
-                  Through collaboration and the dissemination of best practices, EnvirosAgro strives to catalyze positive transformation within the agricultural community, fostering a more sustainable approach.
+                  Through collaboration and the dissemination of best practices, EnvirosAgro™ strives to catalyze positive transformation within the agricultural community, fostering a more sustainable approach.
                 </p>
               </div>
             </div>
@@ -337,11 +376,68 @@ const InfoPortal: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'trademarks' && (
+          <div className="p-12 space-y-12 animate-in fade-in duration-500">
+             <div className="flex items-center gap-6 border-b border-white/5 pb-8 mb-10">
+                <div className="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center border border-emerald-500/20 shadow-2xl">
+                   <Shield className="w-8 h-8 text-emerald-400" />
+                </div>
+                <div>
+                   <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Intellectual <span className="text-emerald-400">Property Shards</span></h2>
+                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 mt-1">
+                      <ShieldCheck className="w-3 h-3" /> Registered Trademarks & Registry Protocols
+                   </p>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {TRADEMARKS.map((tm, i) => (
+                   <div key={i} className="glass-card p-10 rounded-[44px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full bg-black/40 shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform">
+                         <Award className="w-40 h-40 text-white" />
+                      </div>
+                      <div className="flex justify-between items-start mb-8 relative z-10">
+                         <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-emerald-500/10 transition-colors">
+                            <Sparkles className="w-7 h-7 text-emerald-400" />
+                         </div>
+                         <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                            {tm.type}
+                         </span>
+                      </div>
+                      <h4 className="text-3xl font-black text-white uppercase tracking-tight italic mb-4 group-hover:text-emerald-400 transition-colors leading-tight">{tm.name}</h4>
+                      <p className="text-slate-400 text-base italic leading-relaxed mb-6 flex-1 group-hover:text-slate-200 transition-colors">
+                         {tm.desc}
+                      </p>
+                      <div className="pt-6 border-t border-white/5 flex items-center gap-2">
+                         <CheckCircle2 size={12} className="text-emerald-500" />
+                         <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">EnvirosAgro™ Legal Registry</span>
+                      </div>
+                   </div>
+                ))}
+             </div>
+
+             <div className="p-12 glass-card rounded-[56px] border-emerald-500/20 bg-emerald-500/5 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                <div className="space-y-6 relative z-10">
+                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter">The Official <span className="text-emerald-400 italic">WhatIsAG™</span> Protocol</h3>
+                   <div className="p-10 bg-black/80 rounded-[40px] border border-white/10 shadow-inner">
+                      <p className="text-2xl text-slate-200 leading-relaxed italic font-medium border-l-4 border-emerald-500/40 pl-10">
+                         "Agriculture is an application of art or science from nature by human beings towards natural resources such as Animals, plants, water, soil and air for sustainability."
+                      </p>
+                   </div>
+                   <p className="text-slate-500 text-xs text-center font-bold uppercase tracking-widest opacity-60">
+                      © {new Date().getFullYear()} EnvirosAgro™ • All Framework Shards Reserved
+                   </p>
+                </div>
+             </div>
+          </div>
+        )}
+
         {activeTab === 'environments' && (
           <div className="p-12 space-y-12 animate-in slide-in-from-right-4 duration-500">
              <div className="space-y-4 text-center max-w-4xl mx-auto">
                 <h2 className="text-5xl font-black text-white uppercase tracking-tighter italic">Network <span className="text-blue-400">Environments</span></h2>
-                <p className="text-slate-400 text-lg leading-relaxed">Official external shards of the EnvirosAgro ecosystem. Connect and interact with the global community while outside the protocol.</p>
+                <p className="text-slate-400 text-lg leading-relaxed">Official external shards of the EnvirosAgro™ ecosystem. Connect and interact with the global community while outside the protocol.</p>
              </div>
              
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -393,7 +489,7 @@ const InfoPortal: React.FC = () => {
                       </div>
                       <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Expert <span className="text-red-500">Shard</span></h3>
                       <p className="text-slate-400 text-sm leading-relaxed italic font-medium">
-                         The official EnvirosAgro Expert Shard is hosted on Quora. Access deep scientific discussions and technical agriculture inquiries directly from the registry source.
+                         The official EnvirosAgro™ Expert Shard is hosted on Quora. Access deep scientific discussions and technical agriculture inquiries directly from the registry source.
                       </p>
                       <a 
                         href="https://www.quora.com/profile/EnvirosAgro?ch=10&oid=2274202272&share=cee3144a&srid=3uVNlE&target_type=user" 
@@ -517,7 +613,7 @@ const InfoPortal: React.FC = () => {
           <div className="p-12 space-y-12 animate-in fade-in duration-500">
              <div className="space-y-4">
                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Contact & <span className="text-emerald-400">Hub HQ</span></h2>
-                <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">Connect with the EnvirosAgro industrial core for administrative inquiries or governance disputes.</p>
+                <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">Connect with the EnvirosAgro™ industrial core for administrative inquiries or governance disputes.</p>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -597,74 +693,102 @@ const InfoPortal: React.FC = () => {
         )}
       </div>
 
-      {/* Support Chat Overlay */}
-      <div className="fixed bottom-10 right-10 z-[100]">
+      {/* Support Chat Overlay (ADJUSTED POSITION and LAYER) */}
+      <div className="fixed bottom-44 right-10 z-[450]">
         {!showSupport ? (
           <button 
             onClick={() => setShowSupport(true)}
-            className="w-16 h-16 agro-gradient rounded-full flex items-center justify-center text-white shadow-2xl shadow-emerald-900/40 hover:scale-110 active:scale-95 transition-all animate-bounce"
+            className="w-16 h-16 agro-gradient rounded-full flex items-center justify-center text-white shadow-2xl shadow-emerald-900/40 hover:scale-110 active:scale-95 transition-all animate-bounce border-2 border-white/20"
           >
             <MessageSquare className="w-8 h-8" />
           </button>
         ) : (
-          <div className="w-[400px] h-[550px] glass-card rounded-[40px] border-emerald-500/40 bg-[#050706] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
-             <div className="p-6 bg-emerald-600/10 border-b border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg">
-                      <Bot className="w-6 h-6" />
-                   </div>
-                   <div>
-                      <h4 className="text-sm font-black text-white uppercase tracking-widest">EnvirosAgro™ AI</h4>
-                      <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Online // Registry 01</p>
-                   </div>
-                </div>
-                <button onClick={() => setShowSupport(false)} className="p-2 text-slate-500 hover:text-white transition-colors">
-                   <X className="w-5 h-5" />
-                </button>
-             </div>
-
-             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                {supportChat.map((chat, i) => (
-                  <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                     <div className={`max-w-[85%] p-4 rounded-3xl text-xs leading-relaxed ${chat.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white/5 text-slate-300 border border-white/10 rounded-tl-none italic'}`}>
-                        {chat.text}
+          <>
+            {/* Local Backdrop for Support Chat to ensure visual focus */}
+            <div className="fixed inset-0 z-[440] bg-black/30 backdrop-blur-[2px]" onClick={() => setShowSupport(false)}></div>
+            
+            <div className="relative w-[400px] h-[550px] glass-card rounded-[40px] border-emerald-500/40 bg-[#050706]/98 shadow-[0_0_80px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500 border-2 z-[450]">
+               <div className="p-6 bg-emerald-600/10 border-b border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg">
+                        <Bot className="w-6 h-6" />
+                     </div>
+                     <div>
+                        <h4 className="text-sm font-black text-white uppercase tracking-widest">Governance AI</h4>
+                        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Online // Registry 01</p>
                      </div>
                   </div>
-                ))}
-                {isTyping && (
-                  <div className="flex justify-start">
-                     <div className="bg-white/5 border border-white/10 p-4 rounded-3xl rounded-tl-none flex gap-1">
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce"></div>
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-200"></div>
-                     </div>
-                  </div>
-                )}
-             </div>
+                  <button onClick={() => setShowSupport(false)} className="p-2 text-slate-500 hover:text-white transition-colors">
+                     <X className="w-5 h-5" />
+                  </button>
+               </div>
 
-             <div className="p-6 border-t border-white/5 bg-black/40">
-                <div className="relative">
-                   <input 
-                    type="text" 
-                    value={supportInput}
-                    onChange={e => setSupportInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSupportSend()}
-                    placeholder="Ask about EOS or Five Thrusts™..."
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-6 pr-14 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40" 
-                   />
-                   <button 
-                    onClick={handleSupportSend}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-emerald-500 rounded-xl text-white shadow-lg hover:bg-emerald-400 transition-all"
-                   >
-                      <Send className="w-4 h-4" />
-                   </button>
-                </div>
-             </div>
-          </div>
+               <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                  {supportChat.map((chat, i) => (
+                    <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                       <div className={`max-w-[85%] p-4 rounded-3xl text-xs leading-relaxed ${chat.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white/5 text-slate-300 border border-white/10 rounded-tl-none italic'}`}>
+                          {chat.text}
+                       </div>
+                    </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                       <div className="bg-white/5 border border-white/10 p-4 rounded-3xl rounded-tl-none flex gap-1">
+                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce"></div>
+                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
+                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-200"></div>
+                       </div>
+                    </div>
+                  )}
+               </div>
+
+               <div className="p-6 border-t border-white/5 bg-black/40">
+                  <div className="relative">
+                     <input 
+                      type="text" 
+                      value={supportInput}
+                      onChange={e => setSupportInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSupportSend()}
+                      placeholder="Ask about trademarks or SEHTI™..."
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-6 pr-14 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40" 
+                     />
+                     <button 
+                      onClick={handleSupportSend}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-emerald-600 rounded-xl text-white shadow-lg hover:bg-emerald-400 transition-all"
+                     >
+                        <Send className="w-4 h-4" />
+                     </button>
+                  </div>
+               </div>
+            </div>
+          </>
         )}
       </div>
     </div>
   );
 };
+
+interface BookOpenCheckProps extends React.SVGProps<SVGSVGElement> {
+  size?: number | string;
+}
+
+const BookOpenCheck: React.FC<BookOpenCheckProps> = ({ size = 24, ...props }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
 
 export default InfoPortal;
