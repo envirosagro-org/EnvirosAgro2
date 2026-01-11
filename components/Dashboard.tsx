@@ -6,7 +6,6 @@ import {
   TrendingUp, AtSign, Share2, Youtube, Twitter, HelpCircle, Send, Pin, Linkedin,
   Rocket, PlusCircle, Gavel, Building2, Share, ShieldAlert, UserCheck, Handshake,
   LayoutGrid, Video, Landmark, BarChart3, Fingerprint, Lock, Sprout, Briefcase,
-  // Added missing LogOut icon
   LogOut
 } from 'lucide-react';
 import { ViewState, User } from '../types';
@@ -294,7 +293,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                        <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
                        <div className="text-left">
                           <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Oracle Insights</p>
-                          <p className="text-[11px] font-bold dark:text-slate-400 text-slate-600 truncate">Improve I-Thrust Ledger Density</p>
+                          <p className="text-11px font-bold dark:text-slate-400 text-slate-600 truncate">Improve I-Thrust Ledger Density</p>
                        </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-1 transition-transform" />
@@ -314,7 +313,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                     <Bot className="w-7 h-7 text-indigo-400 group-hover:text-white" />
                  </div>
                  <div>
-                    <h4 className="text-xl font-black uppercase tracking-widest italic dark:text-white text-slate-900">Oracle <span className="text-indigo-400">Node</span></h4>
+                    <h4 className="text-xl font-black text-white uppercase tracking-widest italic dark:text-white text-slate-900">Oracle <span className="text-indigo-400">Node</span></h4>
                     <span className="text-[9px] font-mono text-indigo-500/60 uppercase font-black tracking-widest">Active_Session_ID: 0x882</span>
                  </div>
               </div>

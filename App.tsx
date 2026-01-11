@@ -243,7 +243,13 @@ const App: React.FC = () => {
 
   const handleNavigate = (newView: ViewState, action: string | null = null) => {
     if (newView === activeView && !action) return;
-    if (action) setPendingAction(action);
+    if (action) {
+      if (action === 'LOGOUT_PROMPT') {
+        handleLogout();
+        return;
+      }
+      setPendingAction(action);
+    }
     setViewHistory(prev => [...prev, activeView]);
     setActiveView(newView);
     if (isMobile) setShowMobileMenu(false);
