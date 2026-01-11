@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Sprout, 
@@ -45,15 +46,16 @@ import {
   Heart, 
   Sparkles, 
   Gauge,
-  // Added missing icons to resolve errors on line 577 and 593
   Smartphone,
-  Star
+  Star,
+  ArrowLeftCircle
 } from 'lucide-react';
-import { User, LiveAgroProduct } from '../types';
+import { User, LiveAgroProduct, ViewState } from '../types';
 
 interface LiveFarmingProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
+  onNavigate: (view: ViewState, action?: string | null) => void;
 }
 
 interface IngestLog {
@@ -112,7 +114,7 @@ const MOCK_LIVE_PRODUCTS: LiveAgroProduct[] = [
   },
 ];
 
-const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
+const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }) => {
   const [products, setProducts] = useState<LiveAgroProduct[]>(MOCK_LIVE_PRODUCTS);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [selectedDossier, setSelectedDossier] = useState<LiveAgroProduct | null>(null);
@@ -122,19 +124,16 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
   const [newProductCategory, setNewProductCategory] = useState<'Produce' | 'Manufactured' | 'Input'>('Produce');
   const [auditStep, setAuditStep] = useState<'form' | 'audit_pending' | 'success'>('form');
   
-  // Live Ingest State
   const [ingestLogs, setIngestLogs] = useState<IngestLog[]>([]);
   const [isIngesting, setIsIngesting] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
 
   const [votedProducts, setVotedProducts] = useState<string[]>([]);
 
-  // Auto-scroll ingest logs
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [ingestLogs]);
 
-  // Simulate Live Ingest per Sequence
   useEffect(() => {
     let interval: any;
     if (selectedDossier && dossierTab === 'lifecycle') {
@@ -231,7 +230,21 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto">
-      {/* Header */}
+      
+      <div className="flex justify-between items-center px-4">
+        <button 
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-emerald-600/10 transition-all group"
+        >
+          <ArrowLeftCircle className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          Return to Command Center
+        </button>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px] font-mono text-emerald-400 font-black uppercase tracking-widest">Shard: PRODUCT_INGEST</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
@@ -377,9 +390,8 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
       {selectedDossier && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-10">
            <div className="absolute inset-0 bg-black/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setSelectedDossier(null)}></div>
-           <div className="relative z-10 w-full max-w-6xl h-[85vh] glass-card rounded-[64px] border-emerald-500/20 bg-[#050706] overflow-hidden shadow-[0_0_150px_rgba(16,185,129,0.15)] animate-in zoom-in duration-500 border-2 flex flex-col">
+           <div className="relative z-10 w-full max-w-6xl h-[85vh] glass-card rounded-[64px] border-emerald-500/20 bg-[#050706] overflow-hidden shadow-[0_0_150px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2 flex flex-col">
               
-              {/* Header */}
               <div className="p-10 md:p-14 border-b border-white/5 bg-white/[0.01] flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative shrink-0">
                  <button onClick={() => setSelectedDossier(null)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
@@ -418,7 +430,6 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                  </div>
               </div>
 
-              {/* Dossier Tabs */}
               <div className="flex border-b border-white/5 bg-white/[0.02] shrink-0">
                  <button 
                   onClick={() => setDossierTab('lifecycle')}
@@ -438,11 +449,9 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                  </button>
               </div>
 
-              {/* Body Content */}
               <div className="flex-1 overflow-hidden">
                  {dossierTab === 'lifecycle' ? (
                    <div className="h-full overflow-y-auto p-10 md:p-14 custom-scrollbar flex flex-col lg:flex-row gap-14">
-                      {/* Left: Shards */}
                       <div className="lg:w-7/12 space-y-12">
                          <div className="space-y-8 relative py-4">
                             <div className="absolute left-7 top-10 bottom-10 w-0.5 bg-white/5"></div>
@@ -480,7 +489,6 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                             <p className="text-slate-600">[TELEM_SYNC] Nebraska Relay Node connected.</p>
                          </div>
                       </div>
-                      {/* Right: Oracle & Metrics */}
                       <div className="lg:w-5/12 space-y-10">
                          <div className="glass-card p-10 rounded-[48px] bg-indigo-600/5 border-indigo-500/20 space-y-8 relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><Bot className="w-48 h-48 text-indigo-400" /></div>
@@ -512,13 +520,10 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                    </div>
                  ) : (
                    <div className="h-full flex flex-col lg:flex-row animate-in fade-in zoom-in duration-500 overflow-hidden bg-black/40">
-                      {/* Left: Interactions Twin Visualization */}
                       <div className="flex-1 relative flex items-center justify-center overflow-hidden border-r border-white/5 min-h-[400px]">
                          <div className="absolute inset-0 bg-emerald-500/[0.02] pointer-events-none"></div>
                          
-                         {/* Resonance Field Visualizer */}
                          <div className="relative w-96 h-96 flex items-center justify-center">
-                            {/* Inner Pulsing Core */}
                             <div className={`absolute w-32 h-32 rounded-full flex items-center justify-center border-4 shadow-[0_0_100px_current] transition-all duration-[2s] ${selectedDossier.isAuthentic ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-amber-500/20 border-amber-500 text-amber-400 animate-pulse'}`}>
                                <Waves className="w-16 h-16 animate-pulse" />
                                {!selectedDossier.isAuthentic && (
@@ -528,7 +533,6 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                                )}
                             </div>
 
-                            {/* Orbiting Interaction Shards */}
                             {orbitalParticles.map((p) => (
                               <div 
                                 key={p.id}
@@ -557,13 +561,11 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                               </div>
                             ))}
 
-                            {/* Background Grid Lines */}
                             <div className="absolute w-[600px] h-[600px] border border-white/[0.02] rounded-full"></div>
                             <div className="absolute w-[400px] h-[400px] border border-white/[0.03] rounded-full"></div>
                             <div className="absolute w-[200px] h-[200px] border border-white/[0.05] rounded-full"></div>
                          </div>
 
-                         {/* UI HUD Overlays */}
                          <div className="absolute top-10 left-10 p-6 glass-card rounded-[32px] border-emerald-500/20 bg-black/60 space-y-4">
                             <h5 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
                                <Signal className="w-3 h-3" /> Live Shard Pulse
@@ -583,7 +585,6 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                          </div>
                       </div>
 
-                      {/* Right: Interaction Metrics & Feed */}
                       <div className="w-full lg:w-[450px] p-10 md:p-14 overflow-y-auto custom-scrollbar space-y-10">
                          <div className="space-y-6">
                             <h4 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
@@ -639,7 +640,6 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                  )}
               </div>
 
-              {/* Footer */}
               <div className="p-10 border-t border-white/5 bg-white/[0.01] flex justify-between items-center shrink-0">
                  <p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.4em]">Node Link: 0x881_DIAG_EOS_FINAL</p>
                  <button className="text-emerald-400 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
@@ -723,7 +723,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC }) => {
                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic text-center">Physical <span className="text-amber-500 text-center">Verification Pending</span></h3>
                           <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto">"Product initialized. EnvirosAgro team has been dispatched for a site audit to verify authenticity."</p>
                        </div>
-                       <div className="p-6 bg-white/5 border border-white/10 rounded-3xl w-full max-w-sm">
+                       <div className="p-6 bg-white/5 border border-white/10 rounded-3xl w-full max-sm:max-w-sm">
                           <div className="flex items-center gap-4 text-left">
                              <Clock className="w-6 h-6 text-amber-400" />
                              <div>

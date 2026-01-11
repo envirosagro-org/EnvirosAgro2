@@ -31,13 +31,15 @@ import {
   CheckCircle,
   AlertCircle,
   FileDigit,
-  Fingerprint
+  Fingerprint,
+  ArrowLeftCircle
 } from 'lucide-react';
-import { User, FarmingContract, ContractApplication } from '../types';
+import { User, FarmingContract, ContractApplication, ViewState } from '../types';
 
 interface ContractFarmingProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => boolean;
+  onNavigate: (view: ViewState, action?: string | null) => void;
 }
 
 const MOCK_CONTRACTS: FarmingContract[] = [
@@ -67,7 +69,7 @@ const MOCK_CONTRACTS: FarmingContract[] = [
   },
 ];
 
-const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) => {
+const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate }) => {
   const [contracts, setContracts] = useState<FarmingContract[]>(MOCK_CONTRACTS);
   const [activeTab, setActiveTab] = useState<'browse' | 'invest' | 'applications'>('browse');
   const [showApply, setShowApply] = useState<FarmingContract | null>(null);
@@ -75,11 +77,9 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subStep, setSubStep] = useState<'form' | 'audit' | 'success'>('form');
 
-  // Application Form
   const [landResources, setLandResources] = useState('');
   const [labourCapacity, setLabourCapacity] = useState('');
 
-  // Deploy Form
   const [deployProduct, setDeployProduct] = useState('Maize Farming');
   const [deployBudget, setDeployBudget] = useState('50000');
   const [esinSign, setEsinSign] = useState('');
@@ -127,7 +127,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
       landResources,
       labourCapacity,
       auditStatus: 'Pending',
-      paymentEscrowed: showApply.budget * 0.1 // 10% provision for resources
+      paymentEscrowed: showApply.budget * 0.1
     };
     setContracts(prev => prev.map(c => c.id === showApply.id ? { ...c, status: 'Auditing', applications: [...c.applications, newApp] } : c));
     setSubStep('success');
@@ -135,7 +135,21 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto">
-      {/* Header */}
+      
+      <div className="flex justify-between items-center px-4">
+        <button 
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-emerald-600/10 transition-all group"
+        >
+          <ArrowLeftCircle className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          Return to Command Center
+        </button>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px] font-mono text-blue-400 font-black uppercase tracking-widest">Shard: CONTRACT_ESCROW</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-blue-500/20 bg-blue-500/5 relative overflow-hidden group flex flex-col md:flex-row items-center gap-12">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform">
@@ -144,15 +158,15 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
            <div className="w-40 h-40 rounded-[48px] bg-blue-600 flex items-center justify-center shadow-[0_0_50px_rgba(37,99,235,0.3)] ring-4 ring-white/10 shrink-0">
               <Handshake className="w-20 h-20 text-white" />
            </div>
-           <div className="space-y-6 relative z-10">
+           <div className="space-y-6 relative z-10 text-center md:text-left">
               <div className="space-y-2">
                  <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-blue-500/20">CONTRACT_SETTLEMENT_PORTAL</span>
-                 <h2 className="text-6xl font-black text-white uppercase tracking-tighter italic mt-4">Contract <span className="text-blue-400">Farming</span></h2>
+                 <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4">Contract <span className="text-blue-400">Farming</span></h2>
               </div>
-              <p className="text-slate-400 text-xl leading-relaxed max-w-xl font-medium">
+              <p className="text-slate-400 text-lg md:text-xl leading-relaxed max-xl:text-sm font-medium">
                  Institutional investment meet decentralized stewardship. Investors deploy mission capital; farmers apply with physically-verified resource assets.
               </p>
-              <div className="flex gap-4 pt-2">
+              <div className="flex flex-wrap gap-4 pt-2 justify-center md:justify-start">
                  <button 
                   onClick={() => setActiveTab('browse')}
                   className={`px-10 py-5 rounded-3xl font-black text-sm uppercase tracking-widest shadow-2xl flex items-center gap-3 transition-all ${activeTab === 'browse' ? 'agro-gradient text-white scale-105' : 'bg-white/5 text-slate-500 hover:text-white border border-white/10'}`}
@@ -246,7 +260,6 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
          </div>
       </div>
 
-      {/* MODAL: Apply for Contract */}
       {showApply && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowApply(null)}></div>
@@ -260,8 +273,8 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
                          <div className="w-24 h-24 bg-blue-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-blue-500/20 shadow-2xl">
                             <Briefcase className="w-12 h-12 text-blue-400" />
                          </div>
-                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Steward <span className="text-blue-400">Application</span></h3>
-                         <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Commit your land and labor resources. physical verification required.</p>
+                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Steward <span className="text-blue-400">Application</span></h3>
+                         <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto text-center">Commit your land and labor resources. physical verification required.</p>
                       </div>
 
                       <div className="space-y-8">
@@ -303,8 +316,8 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
                              <HardHat className="w-12 h-12 text-amber-500 animate-bounce" />
                              <div className="absolute inset-0 border-2 border-amber-500/20 rounded-full animate-ping"></div>
                           </div>
-                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Physical <span className="text-amber-500">Audit Protocol</span></h3>
-                          <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto">"Metadata recorded. The EnvirosAgro Field Team must physically verify your resources to authorize resource ingest."</p>
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-amber-500">Audit Protocol</span></h3>
+                          <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto text-center">"Metadata recorded. The EnvirosAgro Field Team must physically verify your resources to authorize resource ingest."</p>
                        </div>
 
                        <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-4">
@@ -321,7 +334,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
 
                        <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex items-center gap-6">
                           <ShieldAlert className="w-8 h-8 text-blue-500 shrink-0" />
-                          <p className="text-[10px] text-blue-200/50 font-black uppercase leading-relaxed tracking-tight">
+                          <p className="text-[10px] text-blue-200/50 font-black uppercase leading-relaxed tracking-tight text-left">
                              INVESTMENT_LOCK: Resource ingest (EAC payout for land/labor) is frozen until physical audit completion.
                           </p>
                        </div>
@@ -341,11 +354,11 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
                          <div className="absolute inset-[-10px] rounded-full border-4 border-blue-500/20 animate-ping"></div>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-4 text-center">
                          <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Application <span className="text-blue-400">Committed</span></h3>
                          <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em]">Audit Ticket: #CTR-{(Math.random()*10000).toFixed(0)} active.</p>
                       </div>
-                      <p className="text-slate-500 text-sm max-w-sm italic leading-relaxed">"Your resource dossier is now indexed. Standby for physical node inspection by EnvirosAgro."</p>
+                      <p className="text-slate-500 text-sm max-w-sm italic leading-relaxed text-center">"Your resource dossier is now indexed. Standby for physical node inspection by EnvirosAgro."</p>
                       <button onClick={() => setShowApply(null)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Portal</button>
                    </div>
                  )}
@@ -354,7 +367,6 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
         </div>
       )}
 
-      {/* MODAL: Deploy Mission Capital */}
       {showDeploy && (
          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowDeploy(false)}></div>
@@ -366,8 +378,8 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC }) =
                      <div className="w-24 h-24 bg-blue-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-blue-500/20 shadow-2xl">
                         <TrendingUp className="w-12 h-12 text-blue-400" />
                      </div>
-                     <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Deploy <span className="text-blue-400">Mission Capital</span></h3>
-                     <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Register a production target and escrow resources for steward nodes.</p>
+                     <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Deploy <span className="text-blue-400">Mission Capital</span></h3>
+                     <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto text-center">Register a production target and escrow resources for steward nodes.</p>
                   </div>
 
                   <form onSubmit={handleDeploy} className="space-y-8">

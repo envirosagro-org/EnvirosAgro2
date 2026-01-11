@@ -6,14 +6,22 @@ import {
   UserCheck2,
   LockKeyhole,
   Building,
-  Scale
+  Scale,
+  ArrowLeftCircle,
+  FileSearch,
+  CheckCircle,
+  BarChart4,
+  GraduationCap,
+  Info,
+  Smartphone
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
-import { User, AgroProject, WorkerProfile } from '../types';
+import { User, AgroProject, WorkerProfile, ViewState } from '../types';
 import { SignalShard } from '../App';
 import { runSpecialistDiagnostic } from '../services/geminiService';
+import TQMGrid from './TQMGrid';
 
 interface IndustrialProps {
   user: User;
@@ -25,6 +33,7 @@ interface IndustrialProps {
   onUpdateProject?: (project: AgroProject) => void;
   pendingAction?: string | null;
   clearAction?: () => void;
+  onNavigate: (view: ViewState, action?: string | null) => void;
 }
 
 const MIN_MEMBERS_REQUIRED = 3;
@@ -50,20 +59,20 @@ const GLOBAL_PERFORMANCE_DATA = [
   { time: 'NOW', yield: 8.2, m_cons: 1.6, ca: 6.4 },
 ];
 
+type BidStep = 'evaluation' | 'selection' | 'approval' | 'transaction' | 'improvement' | 'development' | 'success';
+
 const Industrial: React.FC<IndustrialProps> = ({ 
   user, onSpendEAC, onSendProposal, collectives, setCollectives, 
-  onAddProject, onUpdateProject, pendingAction, clearAction 
+  onAddProject, onUpdateProject, pendingAction, clearAction, onNavigate 
 }) => {
-  const [activeView, setActiveView] = useState<'registry' | 'talent' | 'collectives' | 'missions' | 'analytics'>('registry');
+  const [activeView, setActiveView] = useState<'registry' | 'talent' | 'collectives' | 'missions' | 'analytics'>('analytics');
   
   const [selectedCollectiveId, setSelectedCollectiveId] = useState<string | null>(null);
-  // FIX: Defined currentCollective to resolve "Cannot find name 'currentCollective'" errors
   const currentCollective = collectives.find(c => c.id === selectedCollectiveId);
   
   const [invitingToColId, setInvitingToColId] = useState<string | null>(null);
   const [selectedWorkerForDossier, setSelectedWorkerForDossier] = useState<WorkerProfile | null>(null);
   
-  // Modals
   const [showRegisterCollective, setShowRegisterCollective] = useState(false);
   const [showIndustryEntry, setShowIndustryEntry] = useState(false);
   const [showRegisterMission, setShowRegisterMission] = useState(false);
@@ -75,29 +84,25 @@ const Industrial: React.FC<IndustrialProps> = ({
   const [dossierStep, setDossierStep] = useState<'profile' | 'draft'>('profile');
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Performance Injection State
   const [targetMissionId, setTargetMissionId] = useState<string | null>(null);
   const [perfYield, setPerfYield] = useState('100');
   const [perfNote, setPerfNote] = useState('');
   const [perfStep, setPerfStep] = useState<'input' | 'audit' | 'success'>('input');
   const [auditReport, setAuditReport] = useState('');
 
-  // Internal Campaign State
   const [isContributing, setIsContributing] = useState(false);
   const [contribAmount, setContribAmount] = useState('500');
 
-  // Form Values
   const [newColName, setNewColName] = useState('');
   const [newColMission, setNewColMission] = useState('');
   const [newColType, setNewColType] = useState<'Team' | 'Clan' | 'Society'>('Team');
   const [newColRegion, setNewColRegion] = useState(user.location);
   const [chatMessage, setChatMessage] = useState('');
 
-  // Bid Form Values
   const [bidValue, setBidValue] = useState('');
   const [esinSign, setEsinSign] = useState('');
+  const [bidStep, setBidStep] = useState<BidStep>('evaluation');
 
-  // Industry Form Values
   const [facilityName, setFacilityName] = useState('');
   const [legalEntityName, setLegalEntityName] = useState('');
   const [registrationNo, setRegistrationNo] = useState('');
@@ -107,22 +112,24 @@ const Industrial: React.FC<IndustrialProps> = ({
   const [facilityZone, setFacilityZone] = useState('Zone 4');
   const [industryStep, setIndustryStep] = useState<'form' | 'legal' | 'audit_pending'>('form');
 
-  // Mission Form Values
   const [missionName, setMissionName] = useState('');
   const [missionGoal, setMissionGoal] = useState('50000');
   const [selectedColForMission, setSelectedColForMission] = useState<string>('');
 
-  // Respond to deep links from Dashboard or Quick Actions
   useEffect(() => {
     if (!pendingAction) return;
 
     switch (pendingAction) {
+      case 'VIEW_PERFORMANCE':
+        setActiveView('analytics');
+        break;
       case 'FORM_COLLECTIVE':
         setActiveView('collectives');
         handleOpenFormGroup();
         break;
       case 'REGISTER_NODE':
         setActiveView('registry');
+        setIndustryStep('form');
         setShowIndustryEntry(true);
         break;
       case 'PLACE_BID':
@@ -130,6 +137,7 @@ const Industrial: React.FC<IndustrialProps> = ({
         if (MOCK_TENDERS.length > 0) {
           setSelectedTenderForBid(MOCK_TENDERS[0]);
           setBidValue(MOCK_TENDERS[0].budget.toString());
+          setBidStep('evaluation');
           setShowBidModal(true);
         }
         break;
@@ -215,14 +223,21 @@ const Industrial: React.FC<IndustrialProps> = ({
     }, 2000);
   };
 
-  const handlePlaceBid = () => {
-    if (!esinSign || !bidValue) return;
+  const advanceBidStep = () => {
     setIsProcessing(true);
     setTimeout(() => {
-       setIsProcessing(false);
-       setShowBidModal(false);
-       alert(`BID ANCHORED: 0x${Math.random().toString(16).substring(2, 8).toUpperCase()} Shard Committed. Payout pending auction closure.`);
+      setIsProcessing(false);
+      const stages: BidStep[] = ['evaluation', 'selection', 'approval', 'transaction', 'improvement', 'development', 'success'];
+      const currentIndex = stages.indexOf(bidStep);
+      if (currentIndex < stages.length - 1) {
+        setBidStep(stages[currentIndex + 1]);
+      }
     }, 1500);
+  };
+
+  const handlePlaceBid = () => {
+    if (!esinSign || !bidValue) return;
+    advanceBidStep();
   };
 
   const handleSendMessage = () => {
@@ -365,7 +380,6 @@ const Industrial: React.FC<IndustrialProps> = ({
     }, 2000);
   };
 
-  // FIX: Implemented handlePerformanceInjection to resolve missing reference
   const handlePerformanceInjection = async () => {
     setPerfStep('audit');
     try {
@@ -381,7 +395,6 @@ const Industrial: React.FC<IndustrialProps> = ({
     }
   };
 
-  // FIX: Implemented commitPerformance to resolve missing reference
   const commitPerformance = (projectId: string) => {
     setIsProcessing(true);
     setTimeout(() => {
@@ -393,7 +406,21 @@ const Industrial: React.FC<IndustrialProps> = ({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto">
-      {/* Industrial Cloud Commander Header */}
+      
+      <div className="flex justify-between items-center px-4">
+        <button 
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-emerald-600/10 transition-all group"
+        >
+          <ArrowLeftCircle className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          Return to Command Center
+        </button>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px] font-mono text-indigo-400 font-black uppercase tracking-widest">Shard: INDUSTRIAL_CORE</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
@@ -431,56 +458,38 @@ const Industrial: React.FC<IndustrialProps> = ({
         </div>
       </div>
 
-      {/* NEW: Quick Action Command Shards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <button 
-           onClick={handleOpenNewCampaign}
-           className="glass-card p-8 rounded-[40px] border border-indigo-500/30 bg-indigo-500/5 hover:border-indigo-500/60 hover:bg-indigo-500/10 transition-all text-left flex items-center gap-6 group shadow-xl active:scale-95"
-         >
-            <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform">
-               <Rocket className="w-8 h-8" />
-            </div>
-            <div>
-               <h4 className="text-white font-black uppercase tracking-widest text-sm italic">New Campaign</h4>
-               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Open Launchpad Terminal</p>
-            </div>
-         </button>
-
-         <button 
-           onClick={handleOpenFormGroup}
-           className="glass-card p-8 rounded-[40px] border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-left flex items-center gap-6 group shadow-xl active:scale-95"
-         >
-            <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform">
-               <PlusCircle className="w-8 h-8" />
-            </div>
-            <div>
-               <h4 className="text-white font-black uppercase tracking-widest text-sm italic">Form Shard Group</h4>
-               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Initialize Collective Node</p>
-            </div>
-         </button>
-
-         <button 
-           onClick={() => handleOpenFullDossier(MOCK_WORKERS[0])}
-           className="glass-card p-8 rounded-[40px] border border-blue-500/30 bg-blue-500/5 hover:border-blue-500/60 hover:bg-blue-500/10 transition-all text-left flex items-center gap-6 group shadow-xl active:scale-95"
-         >
-            <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform">
-               <UserCheck2 className="w-8 h-8" />
-            </div>
-            <div>
-               <h4 className="text-white font-black uppercase tracking-widest text-sm italic">View Full Dossier</h4>
-               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Access Steward Registry</p>
-            </div>
-         </button>
+      {/* OPERATIONS HUD GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-2">
+         {[
+           { label: 'Form Shard Group', icon: PlusCircle, color: 'bg-emerald-600', action: handleOpenFormGroup, desc: 'Collective Inception' },
+           { label: 'New Campaign', icon: Rocket, color: 'bg-indigo-600', action: handleOpenNewCampaign, desc: 'Mission Launch' },
+           { label: 'View Full Dossier', icon: UserCheck2, color: 'bg-blue-600', action: () => handleOpenFullDossier(MOCK_WORKERS[0]), desc: 'Verified Registry' },
+           { label: 'Register Node', icon: Building2, color: 'bg-amber-600', action: () => { setActiveView('registry'); setIndustryStep('form'); setShowIndustryEntry(true); }, desc: 'Facility Ingest' },
+         ].map((op, i) => (
+           <button 
+             key={i} 
+             onClick={op.action}
+             className="glass-card p-8 rounded-[40px] border border-white/10 hover:border-white/20 transition-all text-left flex items-center gap-6 group active:scale-95 shadow-xl bg-black/40 relative overflow-hidden"
+           >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none"></div>
+              <div className={`w-14 h-14 rounded-2xl ${op.color} flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform shrink-0`}>
+                 <op.icon className="w-7 h-7" />
+              </div>
+              <div className="min-w-0">
+                 <h4 className="text-white font-black uppercase tracking-widest text-[11px] italic truncate">{op.label}</h4>
+                 <p className="text-[8px] text-slate-600 font-bold uppercase mt-1 tracking-widest">{op.desc}</p>
+              </div>
+           </button>
+         ))}
       </div>
 
-      {/* Main Tabs Navigation */}
       <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-xl">
         {[
+          { id: 'analytics', label: 'Global Performance', icon: BarChart3 },
           { id: 'registry', label: 'Industrial Registry', icon: Building2 },
           { id: 'talent', label: 'Worker Cloud', icon: Users2 },
           { id: 'collectives', label: 'Social Shard Portal', icon: Share2 },
           { id: 'missions', label: 'Mission Launchpad', icon: Rocket },
-          { id: 'analytics', label: 'Global Performance', icon: BarChart3 },
         ].map(tab => (
           <button 
             key={tab.id}
@@ -493,10 +502,80 @@ const Industrial: React.FC<IndustrialProps> = ({
       </div>
 
       <div className="min-h-[700px]">
-        {/* ... registry view remains same ... */}
+        {activeView === 'analytics' && (
+          <div className="space-y-12 animate-in zoom-in duration-500">
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border-white/5 bg-black/40 relative overflow-hidden shadow-2xl">
+                   <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none"></div>
+                   <div className="flex justify-between items-center relative z-10 mb-12 px-4">
+                      <div className="flex items-center gap-4">
+                         <div className="p-4 bg-indigo-500/10 rounded-2xl">
+                            <TrendingUp className="w-8 h-8 text-indigo-400" />
+                         </div>
+                         <div>
+                            <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Network <span className="text-indigo-400">Vitality Velocity</span></h3>
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Steward Interaction Index (Rolling 12T)</p>
+                         </div>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-[10px] text-slate-600 font-black uppercase">Aggregate Yield</p>
+                         <p className="text-4xl font-mono font-black text-white">18.2<span className="text-xl text-emerald-500">%</span></p>
+                      </div>
+                   </div>
+
+                   <div className="h-[450px] w-full relative z-10 min-h-0 min-w-0">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                         <AreaChart data={GLOBAL_PERFORMANCE_DATA}>
+                            <defs>
+                               <linearGradient id="colorPerf" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
+                                  <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                               </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                            <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                            <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                            <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid #6366f122', borderRadius: '16px', padding: '12px' }} />
+                            <Area type="monotone" dataKey="yield" stroke="#818cf8" strokeWidth={6} fillOpacity={1} fill="url(#colorPerf)" />
+                            <Area type="monotone" dataKey="m_cons" stroke="#10b981" strokeWidth={2} fill="transparent" strokeDasharray="4 4" />
+                         </AreaChart>
+                      </ResponsiveContainer>
+                   </div>
+                </div>
+
+                <div className="lg:col-span-4 glass-card p-10 rounded-[56px] border-white/5 bg-black/40 flex flex-col shadow-2xl relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-8 opacity-[0.02]">
+                      <LucideLineChart className="w-64 h-64 text-white" />
+                   </div>
+                   <h3 className="text-xl font-bold text-white uppercase tracking-tighter mb-10 italic flex items-center gap-3 px-2 relative z-10">
+                      <Layers className="w-5 h-5 text-indigo-400" /> Shard <span className="text-indigo-400">Diffusion</span>
+                   </h3>
+                   <div className="flex-1 min-h-0 min-w-0 relative z-10 space-y-8">
+                      {[
+                        { label: 'Network Liquidity', val: '840M EAC', icon: Coins, col: 'text-emerald-400' },
+                        { label: 'Active Missions', val: '142 Nodes', icon: Rocket, col: 'text-blue-400' },
+                        { label: 'Consensus Rate', val: '99.8%', icon: ShieldCheck, col: 'text-indigo-400' },
+                      ].map((item, i) => (
+                        <div key={i} className="p-6 bg-white/5 rounded-3xl border border-white/5 flex justify-between items-center group hover:bg-white/10 transition-all">
+                           <div className="flex items-center gap-4">
+                              <item.icon className={`w-5 h-5 ${item.col}`} />
+                              <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+                           </div>
+                           <span className="text-xl font-mono font-black text-white">{item.val}</span>
+                        </div>
+                      ))}
+                   </div>
+                   <div className="mt-8 p-6 bg-white/5 rounded-3xl border border-white/10 text-[10px] text-slate-500 leading-relaxed italic text-center relative z-10">
+                      "Real-time sharding allows for 100% transparent ROI tracking across the global industrial mesh."
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
+
         {activeView === 'registry' && (
           <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
-             <div className="flex justify-between items-end border-b border-white/5 pb-8">
+             <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
                 <div>
                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Entries <span className="text-amber-500">& Tenders</span></h3>
                    <p className="text-slate-500 text-sm">Industrial node registration and regional contract bidding.</p>
@@ -507,7 +586,7 @@ const Industrial: React.FC<IndustrialProps> = ({
              </div>
 
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div className="glass-card p-10 rounded-[56px] border-white/5 space-y-8">
+                <div className="glass-card p-10 rounded-[56px] border-white/5 space-y-8 bg-black/40">
                    <h4 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-3">
                       <Gavel className="w-6 h-6 text-amber-500" /> Active Tenders
                    </h4>
@@ -528,7 +607,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                                  <p className="text-2xl font-mono font-black text-white">{tender.budget.toLocaleString()} EAC</p>
                               </div>
                               <button 
-                                onClick={() => { setSelectedTenderForBid(tender); setBidValue(tender.budget.toString()); setEsinSign(''); setShowBidModal(true); }}
+                                onClick={() => { setSelectedTenderForBid(tender); setBidValue(tender.budget.toString()); setEsinSign(''); setBidStep('evaluation'); setShowBidModal(true); }}
                                 className="px-8 py-3 agro-gradient rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:scale-105 transition-all"
                               >
                                 Place Bid
@@ -554,7 +633,6 @@ const Industrial: React.FC<IndustrialProps> = ({
           </div>
         )}
 
-        {/* ... talent view remains same ... */}
         {activeView === 'talent' && (
           <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
              <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
@@ -578,7 +656,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                            <span className="text-3xl font-black text-emerald-400">{worker.name[0]}</span>
                         </div>
                         <div className="text-right">
-                           <div className="flex items-center gap-1 text-amber-500">
+                           <div className="flex items-center justify-end gap-1 text-amber-500">
                               <Star className="w-4 h-4 fill-current" />
                               <span className="text-lg font-black font-mono">{worker.sustainabilityRating}%</span>
                            </div>
@@ -618,7 +696,6 @@ const Industrial: React.FC<IndustrialProps> = ({
           </div>
         )}
 
-        {/* ... collectives list remains same ... */}
         {activeView === 'collectives' && (
            <div className="animate-in fade-in duration-700">
               {selectedCollectiveId && currentCollective ? (
@@ -688,7 +765,6 @@ const Industrial: React.FC<IndustrialProps> = ({
                          </div>
                       </div>
 
-                      {/* Sidebar */}
                       <div className="lg:col-span-4 space-y-8">
                          <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-2xl">
                             <div className="space-y-6 pt-2">
@@ -793,7 +869,6 @@ const Industrial: React.FC<IndustrialProps> = ({
            </div>
         )}
 
-        {/* ... mission launchpad view remains same ... */}
         {activeView === 'missions' && (
            <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
@@ -845,7 +920,6 @@ const Industrial: React.FC<IndustrialProps> = ({
                       </div>
 
                       <div className="flex-1 space-y-10 relative z-10">
-                         {/* Quorum Progress */}
                          <div className="space-y-4">
                             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
                                <span className="text-slate-500 flex items-center gap-2">
@@ -858,7 +932,6 @@ const Industrial: React.FC<IndustrialProps> = ({
                             </div>
                          </div>
 
-                         {/* Capital Progress */}
                          <div className="space-y-4">
                             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
                                <span className="text-slate-500 flex items-center gap-2">
@@ -953,657 +1026,467 @@ const Industrial: React.FC<IndustrialProps> = ({
         )}
       </div>
 
-      {/* MODAL: Place Bid */}
+      {/* -------------------- MODALS -------------------- */}
+
+      {/* 1. Bid Modal (COMPREHENSIVE 6-STAGE WORKFLOW) */}
       {showBidModal && selectedTenderForBid && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowBidModal(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
-              <div className="p-16 space-y-10 flex flex-col relative">
-                 <button onClick={() => setShowBidModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
-                 
-                 <div className="flex items-center gap-6 mb-2">
-                    <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20 shadow-xl">
-                        <Gavel className="w-10 h-10 text-amber-500" />
+           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col h-[85vh]">
+              
+              <div className="p-10 border-b border-white/5 bg-amber-500/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 bg-amber-600 rounded-2xl flex items-center justify-center shadow-xl border border-amber-400/30">
+                       <Gavel className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic text-left">Tender <span className="text-amber-500">Auction Bidding</span></h3>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2 text-left">Contract Node: {selectedTenderForBid.id}</p>
+                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Procurement <span className="text-amber-500">Lifecycle</span></h3>
+                       <p className="text-[10px] text-amber-500/60 font-mono tracking-widest uppercase mt-2">{selectedTenderForBid.id} // STEWARD: {user.name.toUpperCase()}</p>
                     </div>
                  </div>
+                 <button onClick={() => setShowBidModal(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+              </div>
 
-                 <div className="space-y-8 flex-1">
-                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 space-y-4">
-                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-2 text-left">Project Requirement</p>
-                       <p className="text-white text-lg font-medium italic text-left">"{selectedTenderForBid.requirement}"</p>
+              {/* Progress Terminal */}
+              <div className="px-10 py-6 border-b border-white/5 bg-black/40 flex justify-between gap-4 shrink-0">
+                 {[
+                   { l: 'Evaluation', s: 'evaluation', i: FileSearch },
+                   { l: 'Selection', s: 'selection', i: CheckCircle },
+                   { l: 'Approval', s: 'approval', i: Stamp },
+                   { l: 'Transaction', s: 'transaction', i: Coins },
+                   { l: 'Improvement', s: 'improvement', i: BarChart4 },
+                   { l: 'Development', s: 'development', i: GraduationCap },
+                 ].map((step, i) => {
+                    const stages: BidStep[] = ['evaluation', 'selection', 'approval', 'transaction', 'improvement', 'development', 'success'];
+                    const currentIdx = stages.indexOf(bidStep);
+                    const isActive = step.s === bidStep;
+                    const isDone = stages.indexOf(step.s as any) < currentIdx;
+                    
+                    return (
+                      <div key={step.s} className="flex-1 flex flex-col items-center gap-3 group">
+                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                            isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-amber-500 text-black animate-pulse' : 'bg-white/5 text-slate-700'
+                         }`}>
+                            <step.i className="w-5 h-5" />
+                         </div>
+                         <span className={`text-[7px] font-black uppercase text-center tracking-widest ${isActive ? 'text-amber-500' : isDone ? 'text-emerald-500' : 'text-slate-800'}`}>{step.l}</span>
+                      </div>
+                    );
+                 })}
+              </div>
+
+              <div className="flex-1 p-12 overflow-y-auto custom-scrollbar flex flex-col">
+                 {bidStep === 'evaluation' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-4">
+                          <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic">Initial <span className="text-amber-500">Evaluation</span></h4>
+                          <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-2xl mx-auto italic">"Provision your bid value and authorize node metadata extraction for initial automated selection."</p>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto w-full">
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Proposed Budget (EAC)</label>
+                             <input type="number" value={bidValue} onChange={e => setBidValue(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-3xl font-mono text-emerald-400 outline-none focus:ring-4 focus:ring-amber-500/20 transition-all" />
+                          </div>
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Node Signature</label>
+                             <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-mono text-white outline-none focus:ring-4 focus:ring-amber-500/20 transition-all uppercase" />
+                          </div>
+                       </div>
+                       <button onClick={advanceBidStep} disabled={!esinSign || !bidValue || isProcessing} className="w-full max-w-sm mx-auto py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30">
+                          {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <ChevronRight className="w-6 h-6" />} INITIALIZE SELECTION
+                       </button>
                     </div>
+                 )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Bid Amount (EAC)</label>
-                          <input 
-                             type="number" 
-                             value={bidValue} 
-                             onChange={e => setBidValue(e.target.value)}
-                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-2xl font-mono text-emerald-400 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" 
-                          />
+                 {bidStep === 'selection' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-4">
+                          <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic">Selection <span className="text-emerald-400">Confirmation</span></h4>
+                          <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-2xl mx-auto italic">"Your node has been shortlisted. Final selection is pending consensus approval."</p>
+                       </div>
+                       <div className="grid grid-cols-3 gap-6">
+                          {[
+                            { l: 'Technical Fit', v: '98%', c: 'text-emerald-400' },
+                            { l: 'Price Resonance', v: 'Optimal', c: 'text-blue-400' },
+                            { l: 'Steward Rep.', v: 'A+', c: 'text-amber-500' },
+                          ].map(m => (
+                            <div key={m.l} className="p-8 bg-black/60 border border-white/5 rounded-[40px] text-center space-y-2 group hover:border-emerald-500/40 transition-all">
+                               <p className="text-[9px] text-slate-600 font-black uppercase">{m.l}</p>
+                               <p className={`text-3xl font-mono font-black ${m.c}`}>{m.v}</p>
+                            </div>
+                          ))}
+                       </div>
+                       <button onClick={advanceBidStep} className="w-full max-w-xs mx-auto py-6 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black uppercase text-white hover:bg-white/10 transition-all">Advance to Approval Shard</button>
+                    </div>
+                 )}
+
+                 {bidStep === 'approval' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-4">
+                          <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic">Multi-Sig <span className="text-indigo-400">Approval</span></h4>
+                          <p className="text-slate-400 text-lg font-medium italic">Consensus reached across 14 independent governing nodes.</p>
+                       </div>
+                       <div className="p-10 bg-indigo-900/10 border border-indigo-500/20 rounded-[56px] space-y-8 relative overflow-hidden text-center">
+                          <div className="flex flex-wrap justify-center gap-4">
+                             {[...Array(14)].map((_, i) => (
+                               <div key={i} className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                                  <ShieldCheck size={20} />
+                               </div>
+                             ))}
+                          </div>
+                          <p className="text-indigo-400 font-mono text-xs font-black uppercase tracking-widest">Registry Consensus: 100% OK</p>
+                       </div>
+                       <button onClick={advanceBidStep} className="w-full max-w-sm mx-auto py-8 bg-indigo-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:bg-indigo-500 transition-all">Commit Transaction Shard</button>
+                    </div>
+                 )}
+
+                 {bidStep === 'transaction' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-4">
+                          <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic">Ledger <span className="text-amber-500">Settlement</span></h4>
+                       </div>
+                       <div className="p-10 glass-card rounded-[56px] border-emerald-500/20 bg-emerald-500/5 space-y-6">
+                          <div className="flex justify-between items-center px-4">
+                             <p className="text-[10px] text-slate-500 font-black uppercase">Contract Value Lock</p>
+                             <p className="text-3xl font-mono font-black text-white">{Number(bidValue).toLocaleString()} EAC</p>
+                          </div>
+                          <div className="h-px w-full bg-white/5"></div>
+                          <p className="text-[10px] font-mono text-emerald-400/60 uppercase text-center font-black">BLOCK_HASH: 0x882_TENDER_SETTLE_{Math.random().toString(16).substring(2, 6).toUpperCase()}</p>
+                       </div>
+                       <button onClick={advanceBidStep} className="w-full max-w-md mx-auto py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all">Finalize Improvements Shard</button>
+                    </div>
+                 )}
+
+                 {bidStep === 'improvement' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-4">
+                          <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic">Process <span className="text-blue-400">Optimization</span></h4>
+                       </div>
+                       <div className="grid grid-cols-2 gap-8">
+                          <div className="p-8 glass-card border-blue-500/20 bg-blue-500/5 rounded-[40px] space-y-4">
+                             <h5 className="text-white font-black uppercase text-xs italic">KPI Shards</h5>
+                             <ul className="space-y-2 text-[10px] text-slate-400 font-bold uppercase">
+                                <li>• Latency Benchmarking</li>
+                                <li>• Energy Efficiency Cycle</li>
+                                <li>• Waste Diversion Log</li>
+                             </ul>
+                          </div>
+                          <div className="p-8 glass-card border-emerald-500/20 bg-emerald-500/5 rounded-[40px] flex flex-col items-center justify-center text-center">
+                             <TrendingUp className="w-10 h-10 text-emerald-400 mb-2" />
+                             <h5 className="text-white font-black uppercase text-xs">Resilience Tuning</h5>
+                          </div>
+                       </div>
+                       <button onClick={advanceBidStep} className="w-full max-w-sm mx-auto py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl transition-all">Initialize Development Shard</button>
+                    </div>
+                 )}
+
+                 {bidStep === 'development' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-4">
+                          <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic">Steward <span className="text-amber-500">Scaling</span></h4>
+                       </div>
+                       <div className="p-10 glass-card rounded-[56px] bg-gradient-to-br from-amber-600/10 via-transparent to-indigo-600/10 grid grid-cols-3 gap-6 text-center">
+                          <div><GraduationCap className="mx-auto text-amber-400 mb-2" /><p className="text-[8px] font-black uppercase">Industrial Training</p></div>
+                          <div><Coins className="mx-auto text-emerald-400 mb-2" /><p className="text-[8px] font-black uppercase">Liquidity Bridge</p></div>
+                          <div><ShieldCheck className="mx-auto text-indigo-400 mb-2" /><p className="text-[8px] font-black uppercase">Consensus Authority</p></div>
+                       </div>
+                       <button onClick={advanceBidStep} className="w-full max-w-md mx-auto py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-[1.02] active:scale-95 transition-all">AUTHORIZE FULL REGISTRY ANCHOR</button>
+                    </div>
+                 )}
+
+                 {bidStep === 'success' && (
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
+                       <div className="w-48 h-48 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
+                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
                        </div>
                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">ESIN Signature</label>
-                          <input 
-                             type="text" 
-                             value={esinSign} 
-                             onChange={e => setEsinSign(e.target.value)} 
-                             placeholder="EA-XXXX-XXXX-XXXX"
-                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-mono text-white focus:ring-4 focus:ring-amber-500/20 outline-none transition-all uppercase tracking-widest" 
-                          />
+                          <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Mission <span className="text-emerald-400">Anchored</span></h3>
+                          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.6em] font-mono">Registry Finality Hash: 0x882_PROCURE_OK_{Math.random().toString(16).substring(2, 6).toUpperCase()}</p>
                        </div>
+                       <button onClick={() => setShowBidModal(false)} className="w-full max-w-sm py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command Hub</button>
                     </div>
-
-                    <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-center gap-6">
-                       <ShieldAlert className="w-8 h-8 text-amber-500 shrink-0" />
-                       <p className="text-[10px] text-amber-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
-                          Auction Lock: 10% of bid value will be held in escrow upon shard commitment. Signature verifies node capacity for fulfillment.
-                       </p>
-                    </div>
-
-                    <button 
-                       onClick={handlePlaceBid}
-                       disabled={isProcessing || !bidValue || !esinSign}
-                       className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all"
-                    >
-                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Gavel className="w-8 h-8" />}
-                       {isProcessing ? "COMMITING SHARD..." : "AUTHORIZE BID COMMIT"}
-                    </button>
-                 </div>
+                 )}
               </div>
            </div>
         </div>
       )}
 
-      {/* MODAL: Register Industry Node */}
-      {showIndustryEntry && (
+      {/* 2. Form Shard Group (Register Collective) */}
+      {showRegisterCollective && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowIndustryEntry(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-2">
-              <div className="p-16 space-y-12 flex flex-col relative min-h-[700px]">
-                 <button onClick={() => setShowIndustryEntry(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
+           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterCollective(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2">
+              <div className="p-16 space-y-12">
+                 <button onClick={() => setShowRegisterCollective(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
-                 {industryStep === 'form' && (
-                    <div className="animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
-                       <div className="text-center space-y-6 mb-10">
-                          <div className="w-24 h-24 bg-amber-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-amber-500/20 shadow-2xl">
-                              <Building2 className="w-12 h-12 text-amber-500" />
+                 <div className="text-center space-y-6">
+                    <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
+                       <PlusCircle className="w-12 h-12 text-emerald-400" />
+                    </div>
+                    <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Form <span className="text-emerald-400">Shard Group</span></h3>
+                    <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Initialize a collective node for shared mission goals and resource sharding.</p>
+                 </div>
+
+                 <div className="space-y-8">
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Collective Alias</label>
+                       <input 
+                         type="text" 
+                         value={newColName} 
+                         onChange={e => setNewColName(e.target.value)}
+                         placeholder="e.g. Bantu Soil Guardians" 
+                         className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800" 
+                       />
+                    </div>
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Mission Objective</label>
+                       <textarea 
+                         value={newColMission} 
+                         onChange={e => setNewColMission(e.target.value)}
+                         placeholder="What is the primary goal of this collective?" 
+                         className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white italic outline-none focus:ring-4 focus:ring-emerald-500/20 h-32 resize-none" 
+                       />
+                    </div>
+                 </div>
+
+                 <button 
+                  onClick={handleRegisterCollective}
+                  disabled={isProcessing || !newColName || !newColMission}
+                  className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all"
+                 >
+                    {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <ShieldCheck className="w-6 h-6" />}
+                    AUTHORIZE INCEPTION
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* 3. Initialize New Campaign (Register Mission) */}
+      {showRegisterMission && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterMission(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2">
+              <div className="p-16 space-y-12">
+                 <button onClick={() => setShowRegisterMission(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
+                 
+                 <div className="text-center space-y-6">
+                    <div className="w-24 h-24 bg-indigo-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-2xl">
+                       <Rocket className="w-12 h-12 text-indigo-400" />
+                    </div>
+                    <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Launch <span className="text-indigo-400">Campaign</span></h3>
+                    <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Select a group and initialize a mission bounty for public registry sharding.</p>
+                 </div>
+
+                 <div className="space-y-8">
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Select Sponsoring Collective</label>
+                       <select 
+                         value={selectedColForMission}
+                         onChange={e => setSelectedColForMission(e.target.value)}
+                         className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-bold appearance-none outline-none focus:ring-4 focus:ring-indigo-500/20"
+                       >
+                          <option value="">Choose Collective Node...</option>
+                          {collectives.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                       </select>
+                    </div>
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Mission Capital Target (EAC)</label>
+                       <input 
+                         type="number" 
+                         value={missionGoal} 
+                         onChange={e => setMissionGoal(e.target.value)}
+                         className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-2xl font-mono text-emerald-400 focus:ring-4 focus:ring-indigo-500/20 outline-none" 
+                       />
+                    </div>
+                 </div>
+
+                 <button 
+                  onClick={handleInitiateInternalCampaign}
+                  disabled={isProcessing || !selectedColForMission}
+                  className="w-full py-10 bg-indigo-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all"
+                 >
+                    {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-6 h-6 fill-current" />}
+                    INITIALIZE MISSION HUB
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* 4. View Full Dossier (Steward Profiles) */}
+      {showDossierModal && selectedWorkerForDossier && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl" onClick={() => setShowDossierModal(false)}></div>
+           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[56px] border-blue-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2">
+              <div className="p-16 space-y-12">
+                 <button onClick={() => setShowDossierModal(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 <div className="flex flex-col md:flex-row gap-12 items-center md:items-start">
+                    <div className="w-48 h-48 rounded-[48px] bg-slate-800 border-4 border-white/5 flex items-center justify-center text-8xl font-black text-blue-400 shadow-2xl relative shrink-0">
+                       {selectedWorkerForDossier.name[0]}
+                       <div className="absolute -bottom-2 -right-2 w-14 h-14 rounded-2xl bg-blue-600 border-4 border-[#050706] flex items-center justify-center">
+                          <BadgeCheck className="w-8 h-8 text-white" />
+                       </div>
+                    </div>
+                    <div className="flex-1 space-y-8 text-center md:text-left">
+                       <div>
+                          <h2 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">{selectedWorkerForDossier.name}</h2>
+                          <p className="text-blue-500 font-mono text-[10px] tracking-[0.4em] uppercase mt-4">STEWARD_DOSSIER // {selectedWorkerForDossier.id} // U-SAT: {selectedWorkerForDossier.sustainabilityRating}%</p>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 pt-4">
+                          <div className="p-6 bg-black/40 rounded-3xl border border-white/5">
+                             <p className="text-[9px] text-slate-500 uppercase font-black mb-2">Verified Hours</p>
+                             <p className="text-2xl font-mono text-white font-black">{selectedWorkerForDossier.verifiedHours.toLocaleString()}</p>
                           </div>
-                          <div>
-                              <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Facility <span className="text-amber-500">Registry Ingest</span></h3>
-                              <p className="text-slate-400 text-lg font-medium mt-2">Initialize Layer-2 Industrial Node.</p>
+                          <div className="p-6 bg-black/40 rounded-3xl border border-white/5">
+                             <p className="text-[9px] text-slate-500 uppercase font-black mb-2">Lifetime EAC</p>
+                             <p className="text-2xl font-mono text-emerald-400 font-black">{selectedWorkerForDossier.lifetimeEAC.toLocaleString()}</p>
+                          </div>
+                          <div className="p-6 bg-black/40 rounded-3xl border border-white/5 hidden md:block">
+                             <p className="text-[9px] text-slate-500 uppercase font-black mb-2">Purity Rating</p>
+                             <p className="text-2xl font-mono text-indigo-400 font-black">A+</p>
                           </div>
                        </div>
 
-                       <div className="space-y-8">
-                          <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6">Facility Designation (Alias)</label>
+                       <div className="flex flex-wrap gap-3 justify-center md:justify-start pt-6">
+                          {selectedWorkerForDossier.skills.map(s => (
+                             <span key={s} className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-slate-300 uppercase tracking-widest">{s}</span>
+                          ))}
+                       </div>
+                    </div>
+                 </div>
+
+                 {invitingToColId && (
+                    <div className="p-10 glass-card rounded-[48px] bg-blue-600/5 border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-10">
+                       <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl">
+                             <Handshake className="w-8 h-8" />
+                          </div>
+                          <div className="text-left">
+                             <h4 className="text-xl font-bold text-white uppercase italic">Shard Recruit Phase</h4>
+                             <p className="text-slate-500 text-xs mt-1">Initialize a binding proposal to anchor this steward to your group.</p>
+                          </div>
+                       </div>
+                       <button 
+                         onClick={() => handleSendContractProposal(selectedWorkerForDossier)}
+                         disabled={isProcessing}
+                         className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3"
+                       >
+                          {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                          TRANSMIT PROPOSAL
+                       </button>
+                    </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* 5. Register Industry Node (Facility Ingest) */}
+      {showIndustryEntry && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowIndustryEntry(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2">
+              <div className="p-16 space-y-12">
+                 <button onClick={() => setShowIndustryEntry(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 
+                 {industryStep === 'form' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                       <div className="text-center space-y-4">
+                          <div className="w-24 h-24 bg-amber-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-amber-500/20 shadow-2xl">
+                             <Building2 className="w-12 h-12 text-amber-500" />
+                          </div>
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Facility <span className="text-amber-500">Ingest</span></h3>
+                          <p className="text-slate-400 text-lg">Initialize institutional node registration for industrial facilities.</p>
+                       </div>
+
+                       <div className="space-y-6">
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-4">Entity Legal Name</label>
                              <input 
-                                type="text" 
-                                value={facilityName} 
-                                onChange={e => setFacilityName(e.target.value)}
-                                placeholder="e.g. Blue Harvest Processing Hub"
-                                className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-amber-500/20 outline-none transition-all placeholder:text-slate-800" 
+                               type="text" 
+                               value={legalEntityName}
+                               onChange={e => setLegalEntityName(e.target.value)}
+                               placeholder="e.g. Omaha Processing Shard LLC" 
+                               className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-bold focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" 
                              />
                           </div>
-
-                          <div className="grid grid-cols-2 gap-6">
-                             <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6">Node Type</label>
-                                <select 
-                                   value={facilityType} 
-                                   onChange={e => setFacilityType(e.target.value)}
-                                   className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20"
-                                >
-                                   <option>Processing Hub</option>
-                                   <option>Spectral Lab</option>
-                                   <option>Logistics Relay</option>
-                                   <option>Industrial Shard Vault</option>
-                                </select>
-                             </div>
-                             <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6">Regional Zone</label>
-                                <select 
-                                   value={facilityZone} 
-                                   onChange={e => setFacilityZone(e.target.value)}
-                                   className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-8 text-sm font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20"
-                                >
-                                   <option>Zone 4 (Central)</option>
-                                   <option>Zone 2 (Pacific)</option>
-                                   <option>Zone 8 (EMEA)</option>
-                                   <option>Zone 1 (Global)</option>
-                                </select>
-                             </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-4">Registry Registration No.</label>
+                             <input 
+                               type="text" 
+                               value={registrationNo}
+                               onChange={e => setRegistrationNo(e.target.value)}
+                               placeholder="REG-XXXX-XXXX" 
+                               className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-mono focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" 
+                             />
                           </div>
                        </div>
 
                        <button 
-                         onClick={() => setIndustryStep('legal')}
-                         disabled={!facilityName}
-                         className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all mt-10"
+                        onClick={() => setIndustryStep('legal')}
+                        disabled={!legalEntityName || !registrationNo}
+                        className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
                        >
-                          Next: Legal Compliance <ChevronRight className="w-6 h-6" />
+                          Proceed to Authentication <ChevronRight className="w-6 h-6" />
                        </button>
                     </div>
                  )}
 
-                 {/* ... other industry steps ... */}
                  {industryStep === 'legal' && (
-                    <div className="animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col">
-                       <div className="text-center space-y-6 mb-10">
-                          <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto border border-blue-500/20 shadow-xl">
-                              <Scale className="w-10 h-10 text-blue-400" />
-                          </div>
-                          <div>
-                              <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Legal <span className="text-blue-400">Compliance Ingest</span></h3>
-                              <p className="text-slate-400 text-sm mt-2">Authentic projects require legally registered details for industrial validation.</p>
-                          </div>
+                    <div className="space-y-12 animate-in slide-in-from-right-4 duration-500">
+                       <div className="text-center space-y-4">
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Node <span className="text-amber-500">Authentication</span></h3>
+                          <p className="text-slate-400 text-lg">Authorize facility ingest with your ESIN signature.</p>
                        </div>
 
-                       <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-4">
-                          <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Legal Entity Name</label>
-                             <input type="text" value={legalEntityName} onChange={e => setLegalEntityName(e.target.value)} placeholder="Full Registered Organization Name" className="w-full bg-black/60 border border-white/10 rounded-[28px] py-5 px-8 text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-800" />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Registration Number</label>
-                                <input type="text" value={registrationNo} onChange={e => setRegistrationNo(e.target.value)} placeholder="Reg ID" className="w-full bg-black/60 border border-white/10 rounded-[28px] py-5 px-8 text-white font-mono focus:ring-2 focus:ring-blue-500/20 outline-none placeholder:text-slate-800" />
-                             </div>
-                             <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Tax ID / PIN</label>
-                                <input type="text" value={taxId} onChange={e => setTaxId(e.target.value)} placeholder="Tax ID" className="w-full bg-black/60 border border-white/10 rounded-[28px] py-5 px-8 text-white font-mono focus:ring-2 focus:ring-blue-500/20 outline-none placeholder:text-slate-800" />
-                             </div>
-                          </div>
-                          <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Registered HQ Address</label>
-                             <input type="text" value={hqAddress} onChange={e => setHqAddress(e.target.value)} placeholder="Physical Head Office Address" className="w-full bg-black/60 border border-white/10 rounded-[28px] py-5 px-8 text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-800" />
-                          </div>
-                          <div className="space-y-4 pt-6 border-t border-white/5">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 text-center block">ESIN Institutional Signature</label>
-                             <div className="relative">
-                                <Fingerprint className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-600" />
-                                <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-black/40 border border-white/10 rounded-3xl py-6 pl-16 pr-10 text-white font-mono uppercase tracking-[0.2em] focus:ring-4 focus:ring-blue-500/40 outline-none transition-all" />
-                             </div>
-                          </div>
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-8">Steward Signature (ESIN)</label>
+                          <input 
+                             type="text" 
+                             value={esinSign}
+                             onChange={e => setEsinSign(e.target.value)}
+                             placeholder="EA-XXXX-XXXX-XXXX" 
+                             className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 text-center text-3xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" 
+                          />
                        </div>
 
-                       <div className="flex gap-4 pt-8">
+                       <div className="p-8 bg-amber-500/5 border border-amber-500/10 rounded-[40px] flex items-center gap-6">
+                          <ShieldAlert className="w-12 h-12 text-amber-500 shrink-0" />
+                          <p className="text-xs text-amber-200/50 font-black uppercase tracking-tight leading-relaxed">
+                             INGEST_LOCK: Registry fee of 1,000 EAC will be burned upon signature. Mandatory Physical Audit dispatched within 48h.
+                          </p>
+                       </div>
+
+                       <div className="flex gap-4">
                           <button onClick={() => setIndustryStep('form')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
                           <button 
-                             onClick={handleRegisterIndustry}
-                             disabled={isProcessing || !legalEntityName || !registrationNo || !esinSign}
-                             className="flex-1 py-8 bg-amber-600 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all"
+                            onClick={handleRegisterIndustry}
+                            disabled={isProcessing || !esinSign}
+                            className="flex-1 py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30 transition-all"
                           >
-                             {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Database className="w-8 h-8" />}
-                             {isProcessing ? "ANCHORING FACILITY..." : "AUTHORIZE LEGAL INGEST"}
+                             {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Key className="w-6 h-6 fill-current" />}
+                             Authorize Ingest Shard
                           </button>
                        </div>
                     </div>
                  )}
 
                  {industryStep === 'audit_pending' && (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 text-center animate-in zoom-in duration-500">
-                       <div className="relative">
-                          <div className="w-48 h-48 rounded-full border-8 border-amber-500/10 flex items-center justify-center shadow-2xl relative group">
-                             <MapPin className="w-20 h-20 text-amber-500 animate-bounce" />
-                             <div className="absolute inset-[-15px] border-4 border-amber-500/20 rounded-full animate-ping"></div>
-                          </div>
+                    <div className="space-y-16 animate-in zoom-in duration-700 text-center py-10 flex flex-col justify-center items-center">
+                       <div className="w-48 h-48 bg-amber-500 rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(245,158,11,0.4)] scale-110 relative group">
+                          <HardHat className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
+                          <div className="absolute inset-[-15px] rounded-full border-4 border-amber-500/20 animate-ping opacity-30"></div>
                        </div>
-                       <div className="space-y-6">
-                          <div className="space-y-2">
-                             <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic leading-none">Physical <span className="text-amber-500">Audit Protocol</span></h3>
-                             <p className="text-amber-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Node Provisional // Registry Locked</p>
-                          </div>
-                          <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto leading-relaxed">
-                             "Legal details indexed. The EnvirosAgro Audit Team must now physically verify your facility and documentation to mark this node as 'Authentic' on the global registry."
-                          </p>
-                       </div>
-                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 w-full space-y-4">
-                          <div className="flex items-center gap-4">
-                             <div className="p-3 bg-white/5 rounded-2xl"><Calendar className="w-6 h-6 text-slate-400" /></div>
-                             <div className="text-left">
-                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Audit Window</p>
-                                <p className="text-sm font-bold text-white uppercase tracking-widest">24 - 72 Standard Hours</p>
-                             </div>
-                          </div>
-                       </div>
-                       <button onClick={() => setShowIndustryEntry(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Registry</button>
-                    </div>
-                 )}
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* MODAL: Form Shard Group (Collective) */}
-      {showRegisterCollective && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterCollective(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-2">
-              <div className="p-16 space-y-12 flex flex-col">
-                 <button onClick={() => setShowRegisterCollective(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
-                 
-                 <div className="flex items-center gap-6 mb-2">
-                    <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 shadow-xl">
-                        <Share2 className="w-10 h-10 text-emerald-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none text-left">Form <span className="text-emerald-400">Shard Group</span></h3>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2 text-left">Initialize Social Collective Node</p>
-                    </div>
-                 </div>
-
-                 <div className="space-y-8">
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Collective Alias</label>
-                       <input 
-                          type="text" 
-                          value={newColName} 
-                          onChange={e => setNewColName(e.target.value)}
-                          placeholder="e.g. Bantu Soil Guardians"
-                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all" 
-                       />
-                    </div>
-
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Collective Node Region</label>
-                       <input 
-                          type="text" 
-                          value={newColRegion} 
-                          onChange={e => setNewColRegion(e.target.value)}
-                          placeholder="e.g. Zone 4, Nebraska"
-                          className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all" 
-                       />
-                    </div>
-
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Core Mission Shard</label>
-                       <textarea 
-                          value={newColMission} 
-                          onChange={e => setNewColMission(e.target.value)}
-                          placeholder="What is the common sustainability goal of this shard group?"
-                          className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-sm italic font-medium text-slate-200 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all h-32 resize-none" 
-                       />
-                    </div>
-
-                    <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center gap-6">
-                       <ShieldCheck className="w-10 h-10 text-emerald-400 shrink-0" />
-                       <div className="space-y-1">
-                          <p className="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
-                             REGISTRATION_PROTOCOL: Collective anchors require mandatory physical verification of regional resources to ensure authentic group sharding.
-                          </p>
-                       </div>
-                    </div>
-
-                    <button 
-                       onClick={handleRegisterCollective}
-                       disabled={isProcessing || !newColName || !newColMission}
-                       className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all mt-4"
-                    >
-                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <PlusCircle className="w-8 h-8" />}
-                       {isProcessing ? "MINTING SHARD..." : "AUTHORIZE COLLECTIVE SHARD"}
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* MODAL: Initialize New Campaign */}
-      {showRegisterMission && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterMission(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300 border-2">
-              <div className="p-16 space-y-12 flex flex-col">
-                 <button onClick={() => setShowRegisterMission(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
-                 
-                 <div className="flex items-center gap-6 mb-2">
-                    <div className="p-4 bg-indigo-500/10 rounded-3xl border border-indigo-500/20 shadow-xl">
-                        <Rocket className="w-10 h-10 text-indigo-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none text-left">Initialize <span className="text-indigo-400">Mission Campaign</span></h3>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2 text-left">Scale Social Collective Impact</p>
-                    </div>
-                 </div>
-
-                 <div className="space-y-10">
-                    {!selectedColForMission && (
                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Select Collective Node</label>
-                          <select 
-                             onChange={e => setSelectedColForMission(e.target.value)}
-                             className="w-full bg-black/40 border border-white/10 rounded-[32px] py-6 px-10 text-lg font-black uppercase tracking-widest text-white appearance-none outline-none focus:ring-4 focus:ring-indigo-500/20"
-                          >
-                             <option value="">Choose your collective...</option>
-                             {collectives.filter(c => c.adminEsin === user.esin).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                          </select>
+                          <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Ingest <span className="text-amber-500">Provisional</span></h3>
+                          <p className="text-slate-400 text-lg italic leading-relaxed max-w-sm mx-auto">"Facility metadata indexed. Standing by for physical node verification and environmental sync."</p>
                        </div>
-                    )}
-
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 text-left block">Campaign Designation (Title)</label>
-                       <input 
-                          type="text" 
-                          value={missionName} 
-                          onChange={e => setMissionName(e.target.value)}
-                          placeholder="e.g. Bantu Soil Restoration Shard"
-                          className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-800" 
-                       />
+                       <button onClick={() => setShowIndustryEntry(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Terminal</button>
                     </div>
-
-                    <div className="space-y-4">
-                       <div className="flex justify-between px-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Target Capital Goal</label>
-                          <span className="text-xl font-mono font-black text-indigo-400">{Number(missionGoal).toLocaleString()} EAC</span>
-                       </div>
-                       <input 
-                          type="range" 
-                          min="10000" 
-                          max="1000000" 
-                          step="10000" 
-                          value={missionGoal} 
-                          onChange={e => setMissionGoal(e.target.value)}
-                          className="w-full h-2 bg-black/60 rounded-full appearance-none cursor-pointer accent-indigo-500" 
-                       />
-                       <div className="flex justify-between text-[8px] font-black text-slate-700 uppercase tracking-widest">
-                          <span>10K EAC</span>
-                          <span>1M EAC</span>
-                       </div>
-                    </div>
-
-                    <div className="p-8 bg-black/40 border border-white/5 rounded-[40px] space-y-4">
-                       <div className="flex items-center gap-3">
-                          <ShieldAlert className="w-5 h-5 text-indigo-400" />
-                          <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Investment Integrity Check</h4>
-                       </div>
-                       <ul className="space-y-3">
-                          <li className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-2">
-                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                             50% Internal Collateral Threshold required for registry anchoring.
-                          </li>
-                          <li className="text-[9px] text-amber-500 font-black uppercase flex items-center gap-2">
-                             <MapPin className="w-3.5 h-3.5" />
-                             PHYSICAL_AUDIT_PREREQUISITE: Audit team dispatch required before public listing.
-                          </li>
-                       </ul>
-                    </div>
-
-                    <button 
-                       onClick={handleInitiateInternalCampaign}
-                       disabled={isProcessing || !missionName || !selectedColForMission}
-                       className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-6 disabled:opacity-30 mt-4"
-                    >
-                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Rocket className="w-8 h-8" />}
-                       {isProcessing ? "INITIALIZING STAGING..." : "LAUNCH MISSION STAGING"}
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* MODAL: Performance Injection (Member Feedback Loop) */}
-      {showPerformanceModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowPerformanceModal(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
-              <div className="p-16 space-y-10 min-h-[600px] flex flex-col">
-                 <button onClick={() => setShowPerformanceModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
-                 
-                 <div className="flex items-center gap-6 mb-2">
-                    <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 shadow-xl">
-                        <Activity className="w-10 h-10 text-emerald-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Performance <span className="text-emerald-400">Shard Ingest</span></h3>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Mission Node: {targetMissionId}</p>
-                    </div>
-                 </div>
-
-                 {perfStep === 'input' && (
-                   <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
-                      <div className="space-y-6">
-                        <div className="space-y-4">
-                           <div className="flex justify-between px-4">
-                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reported Yield (Tons/Cycle)</label>
-                              <span className="text-xl font-mono font-black text-emerald-400">{perfYield} T</span>
-                           </div>
-                           <input type="range" min="0" max="500" value={perfYield} onChange={e => setPerfYield(e.target.value)} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500" />
-                        </div>
-                        <div className="space-y-4">
-                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Observations</label>
-                           <textarea value={perfNote} onChange={e => setPerfNote(e.target.value)} placeholder="Describe the current field state..." className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-sm focus:ring-4 focus:ring-emerald-500/20 outline-none h-32 resize-none italic" />
-                        </div>
-                      </div>
-                      <button onClick={handlePerformanceInjection} className="w-full py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4">
-                         <Zap className="w-6 h-6 fill-current" /> Initialize Oracle Sweep
-                      </button>
-                   </div>
-                 )}
-
-                 {perfStep === 'audit' && (
-                   <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 text-center animate-in zoom-in duration-500">
-                      <div className="relative">
-                         <div className="w-48 h-48 rounded-full border-8 border-emerald-500/10 flex items-center justify-center shadow-2xl">
-                            <Microscope className="w-20 h-20 text-emerald-400 animate-pulse" />
-                         </div>
-                         <div className="absolute inset-0 border-t-8 border-emerald-500 rounded-full animate-spin"></div>
-                      </div>
-                      <div className="space-y-4">
-                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Oracle <span className="text-emerald-400">Verifying</span></h3>
-                         <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Cross-analyzing spectral telemetry shards...</p>
-                      </div>
-                   </div>
-                 )}
-
-                 {perfStep === 'success' && (
-                   <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col">
-                      <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 shadow-inner border-l-4 border-l-indigo-500/50">
-                         <div className="flex items-center gap-4 mb-6">
-                            <Bot className="w-6 h-6 text-indigo-400" />
-                            <h4 className="text-xl font-black text-white uppercase tracking-widest italic">Oracle Verdict</h4>
-                         </div>
-                         <p className="text-slate-300 text-lg leading-loose italic whitespace-pre-line">
-                            {auditReport}
-                         </p>
-                      </div>
-                      <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl flex items-center gap-6">
-                         <CheckCircle2 className="w-10 h-10 text-emerald-400" />
-                         <p className="text-[11px] text-emerald-200/50 font-bold uppercase tracking-widest">Yield Verified. Proceed to Anchor Performance Shard and release profit pool.</p>
-                      </div>
-                      <button onClick={() => commitPerformance(targetMissionId!)} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl">
-                         Anchor Shard & release profit
-                      </button>
-                   </div>
-                 )}
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* MODAL: Worker Dossier & Proposal Drafting (ENHANCED WITH PHYSICAL AUDIT HISTORY) */}
-      {showDossierModal && selectedWorkerForDossier && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setShowDossierModal(false)}></div>
-           <div className="relative z-10 w-full max-w-4xl glass-card p-1 rounded-[56px] border-emerald-500/20 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2">
-              <div className="p-12 space-y-12 overflow-y-auto max-h-[85vh] custom-scrollbar">
-                 <button onClick={() => setShowDossierModal(false)} className="absolute top-10 right-10 p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all border border-white/5"><X className="w-8 h-8" /></button>
-                 
-                 {dossierStep === 'profile' ? (
-                   <>
-                     <div className="flex flex-col md:flex-row items-center gap-10 animate-in fade-in duration-500">
-                        <div className="w-48 h-48 rounded-[56px] bg-slate-800 border-4 border-emerald-500/20 flex items-center justify-center text-7xl font-black text-emerald-400 shadow-2xl relative shrink-0">
-                           {selectedWorkerForDossier.name[0]}
-                           <div className="absolute -bottom-2 -right-2 w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center border-4 border-[#050706]">
-                              <BadgeCheck className="w-8 h-8 text-white" />
-                           </div>
-                        </div>
-                        <div className="flex-1 text-center md:text-left space-y-4">
-                           <div>
-                              <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">{selectedWorkerForDossier.name}</h2>
-                              <p className="text-emerald-500 font-mono text-sm tracking-[0.4em] uppercase mt-2">{selectedWorkerForDossier.id} // VERIFIED_STEWARD</p>
-                           </div>
-                           <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                              <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                                 <Trophy className="w-3 h-3" /> U-Score: {selectedWorkerForDossier.sustainabilityRating}%
-                              </span>
-                              <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                                 <History className="w-3 h-3" /> {selectedWorkerForDossier.verifiedHours} Hours
-                              </span>
-                              <span className="px-4 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                                 <Coins className="w-3 h-3" /> {selectedWorkerForDossier.lifetimeEAC.toLocaleString()} EAC
-                              </span>
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div className="space-y-8">
-                           <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.4em] px-2 flex items-center gap-3">
-                              <ClipboardCheck className="w-4 h-4 text-emerald-400" /> Physical Audit Timeline
-                           </h4>
-                           <div className="space-y-4">
-                              {[
-                                { date: '2024.12.10', event: 'Field Inspection: Zone 4 NE', status: 'Passed', icon: HardHat },
-                                { date: '2024.08.22', event: 'Biometric Integrity Shard', status: 'Verified', icon: Fingerprint },
-                                { date: '2024.04.15', event: 'Node Initialization Audit', status: 'Secure', icon: ShieldCheck },
-                              ].map((audit, i) => (
-                                <div key={i} className="flex gap-4 p-4 bg-black/40 rounded-2xl border border-white/5 group hover:border-emerald-500/20 transition-all">
-                                   <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-500 shrink-0">
-                                      <audit.icon size={20} />
-                                   </div>
-                                   <div>
-                                      <p className="text-xs font-bold text-white uppercase">{audit.event}</p>
-                                      <div className="flex items-center gap-2 mt-1">
-                                         <span className="text-[8px] font-mono text-slate-600">{audit.date}</span>
-                                         <div className="w-1 h-1 rounded-full bg-slate-800"></div>
-                                         <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">{audit.status}</span>
-                                      </div>
-                                   </div>
-                                </div>
-                              ))}
-                           </div>
-                        </div>
-                        
-                        <div className="glass-card p-8 rounded-[48px] bg-indigo-600/5 border-indigo-500/20 space-y-6 relative overflow-hidden">
-                           <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:scale-110 transition-transform"><Bot className="w-32 h-32 text-indigo-400" /></div>
-                           <h4 className="text-xs font-black text-indigo-400 uppercase tracking-[0.4em] flex items-center gap-3">
-                              <Bot className="w-4 h-4" /> Professional Oracle Audit
-                           </h4>
-                           <div className="prose prose-invert max-w-none">
-                              <p className="text-slate-300 text-sm italic leading-relaxed whitespace-pre-line border-l-2 border-indigo-500/40 pl-6">
-                                 "Node {selectedWorkerForDossier.id} demonstrates exceptional resilience. Physical audit history indicates high reliability in field telemetry and collective contribution. Secure for high-capital missions."
-                              </p>
-                           </div>
-                           <div className="flex items-center gap-2 pt-4">
-                              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                              <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Signed: Registry_Oracle_08</span>
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="flex gap-6">
-                        <button onClick={() => setShowDossierModal(false)} className="flex-1 py-6 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Dismiss Dossier</button>
-                        {invitingToColId && (
-                           <button 
-                             onClick={() => setDossierStep('draft')}
-                             className="flex-[2] py-6 agro-gradient rounded-[32px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-105 transition-all"
-                           >
-                              <Handshake className="w-6 h-6" />
-                              Initialize Contract Draft
-                           </button>
-                        )}
-                     </div>
-                   </>
-                 ) : (
-                   <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col">
-                      {/* ... contract drafting content remains same ... */}
-                      <div className="flex items-center gap-6 border-b border-white/5 pb-10">
-                         <div className="w-20 h-20 bg-amber-500/10 rounded-[32px] border border-amber-500/30 flex items-center justify-center shadow-xl">
-                            <FileSignature className="w-10 h-10 text-amber-500" />
-                         </div>
-                         <div>
-                            <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Contract <span className="text-amber-500">Drafting Terminal</span></h3>
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Collective Recipient: {selectedWorkerForDossier.name}</p>
-                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                         <div className="space-y-10">
-                            <div className="glass-card p-10 rounded-[48px] border-amber-500/20 bg-amber-500/5 space-y-6 relative overflow-hidden">
-                               <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><Stamp className="w-48 h-48 text-amber-500" /></div>
-                               <h4 className="text-xs font-black text-amber-500 uppercase tracking-[0.4em] flex items-center gap-3 relative z-10">
-                                  <FileBadge className="w-4 h-4" /> Binding Parameters
-                               </h4>
-                               <div className="space-y-6 relative z-10">
-                                  <div className="flex justify-between text-sm">
-                                     <span className="text-slate-500 font-bold uppercase">Collective</span>
-                                     <span className="text-white font-black">{collectives.find(c => c.id === invitingToColId)?.name}</span>
-                                  </div>
-                                  <div className="flex justify-between text-sm">
-                                     <span className="text-slate-500 font-bold uppercase">Reward Value</span>
-                                     <span className="text-emerald-400 font-black">50 EAC (Escrowed)</span>
-                                  </div>
-                                  <div className="flex justify-between text-sm">
-                                     <span className="text-slate-500 font-bold uppercase">U-Score Impact</span>
-                                     <span className="text-blue-400 font-black">+2.4% Momentum</span>
-                                  </div>
-                               </div>
-                            </div>
-
-                            <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 space-y-4">
-                               <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-2">Proposed Mission Shard</p>
-                               <div className="p-4 bg-black/40 rounded-2xl border border-white/5 font-mono text-[11px] text-slate-400 italic">
-                                  "{collectives.find(c => c.id === invitingToColId)?.mission}"
-                               </div>
-                            </div>
-                         </div>
-
-                         <div className="space-y-8">
-                            <div className="glass-card p-10 rounded-[48px] bg-white/[0.01] border border-white/5 space-y-8">
-                               <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.4em]">Handshake Protocol</h4>
-                               <div className="space-y-4">
-                                  <div className="flex items-center gap-4">
-                                     <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-                                     <p className="text-xs text-slate-300 font-medium">Verify node m-constant status: <strong>STABLE</strong></p>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                     <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-                                     <p className="text-xs text-slate-300 font-medium">Allocate EAC rewards from collective vault.</p>
-                                  </div>
-                                  <div className="flex items-center gap-4 opacity-30">
-                                     <div className="w-3 h-3 rounded-full bg-slate-700"></div>
-                                     <p className="text-xs text-slate-300 font-medium">Wait for peer digital signature.</p>
-                                  </div>
-                               </div>
-                               <div className="pt-8 border-t border-white/5">
-                                  <p className="text-[10px] text-slate-500 italic leading-relaxed text-center">
-                                     "Upon signing, the worker will be officially anchored as a member node of the collective ledger."
-                                  </p>
-                               </div>
-                            </div>
-                         </div>
-                      </div>
-
-                      <div className="flex gap-6">
-                         <button onClick={() => setDossierStep('profile')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back to Dossier</button>
-                         <button 
-                           onClick={() => handleSendContractProposal(selectedWorkerForDossier)}
-                           disabled={isProcessing}
-                           className="flex-[2] py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.02] transition-all disabled:opacity-30"
-                         >
-                            {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Send className="w-8 h-8" />}
-                            {isProcessing ? "BROADCASTING SHARD..." : "Transmit Binding Proposal"}
-                         </button>
-                      </div>
-                   </div>
                  )}
               </div>
            </div>

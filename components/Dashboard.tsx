@@ -34,7 +34,6 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
     <div className="relative w-full h-[300px] lg:h-full min-h-[400px] overflow-hidden glass-card rounded-[40px] border border-emerald-500/10 flex items-center justify-center group bg-slate-50 dark:bg-black/40 shadow-2xl text-slate-900 dark:text-slate-100">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')] opacity-10 dark:opacity-30"></div>
       
-      {/* Dynamic Connections */}
       <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none">
         {nodes.map((node, i) => 
           nodes.slice(i + 1).map((target, j) => (
@@ -51,7 +50,6 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
         )}
       </svg>
 
-      {/* Node Markers */}
       {nodes.map(node => (
         <div 
           key={node.id} 
@@ -78,7 +76,6 @@ const GlobalNetworkVisual: React.FC<{ userLoc: string }> = ({ userLoc }) => {
         </div>
       ))}
 
-      {/* UI Overlays */}
       <div className="absolute top-6 left-6 flex flex-col gap-2">
         <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full backdrop-blur-md">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -106,7 +103,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700">
       
-      {/* Live Shard Ticker */}
       <div className="glass-card p-3 rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden">
         <div className="flex items-center gap-3 px-4 border-r border-white/10 shrink-0">
            <Binary className="w-4 h-4 text-emerald-400" />
@@ -119,10 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         </div>
       </div>
 
-      {/* Global Experience Hero */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        
-        {/* Profile Identity Command */}
         <div className="lg:col-span-8">
           <div className="glass-card p-6 md:p-12 rounded-[40px] md:rounded-[56px] relative overflow-hidden group h-full flex flex-col justify-between dark:bg-black/20 bg-white shadow-2xl">
              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.05] to-transparent pointer-events-none"></div>
@@ -175,13 +168,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
           </div>
         </div>
 
-        {/* Global Visualization Column */}
         <div className="lg:col-span-4">
            <GlobalNetworkVisual userLoc={user.location} />
         </div>
       </div>
 
-      {/* Industrial Quick Launchpad (Requested Features Enhanced) */}
       <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden">
         <div className="flex justify-between items-center mb-10 px-2 relative z-10">
            <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.3em] italic flex items-center gap-4 dark:text-white text-slate-900">
@@ -197,8 +188,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
            {[
              { label: 'Live Processing', icon: Sprout, color: 'text-emerald-400', desc: 'Initialize Product Ingest', target: 'live_farming', action: null, priority: true },
              { label: 'Supply Contracts', icon: Briefcase, color: 'text-blue-400', desc: 'Browse Mission Bounties', target: 'contract_farming', action: null, priority: true },
+             { label: 'Global Performance', icon: BarChart3, color: 'text-indigo-400', desc: 'Network Yield Telemetry', target: 'industrial', action: 'VIEW_PERFORMANCE', priority: true },
              { label: 'Vouch Mission Node', icon: Landmark, color: 'text-blue-400', desc: 'Anchor Capital to Registry', target: 'investor', action: 'OPEN_VOUCH', priority: true },
-             { label: 'View Yield Analytics', icon: BarChart3, color: 'text-emerald-400', desc: 'Live Performance Telemetry', target: 'investor', action: 'VIEW_ANALYTICS', priority: true },
              { label: 'Launch Mission Shard', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Scaling Shard', target: 'industrial', action: 'LAUNCH_MISSION', priority: false },
              { label: 'Form Shard Group', icon: PlusCircle, color: 'text-emerald-400', desc: 'Initialize Collective Node', target: 'industrial', action: 'FORM_COLLECTIVE', priority: false },
              { label: 'Register Industry Node', icon: Building2, color: 'text-amber-400', desc: 'Industry Facility Entry', target: 'industrial', action: 'REGISTER_NODE', priority: false },
@@ -233,8 +224,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-        
-        {/* SEHTI Strategy Core */}
         <div className="lg:col-span-2 glass-card p-8 md:p-12 rounded-[40px] border-emerald-500/10 dark:bg-white/[0.01] bg-white relative overflow-hidden group shadow-2xl">
            <div className="flex justify-between items-center mb-10">
               <div className="flex items-center gap-4">
@@ -302,7 +291,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
            </div>
         </div>
 
-        {/* Neural Oracle Module */}
         <div className="glass-card p-10 rounded-[40px] border-indigo-500/20 dark:bg-indigo-950/[0.03] bg-white flex flex-col justify-between group overflow-hidden relative shadow-2xl">
            <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform">
               <BrainCircuit className="w-48 h-48 text-indigo-400" />
@@ -330,7 +318,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         </div>
       </div>
 
-      {/* Global External Environment Nodes */}
       <div className="glass-card p-8 md:p-12 rounded-[40px] md:rounded-[56px] border-slate-200 dark:border-white/5 dark:bg-white/[0.01] bg-white relative overflow-hidden shadow-2xl">
         <div className="flex justify-between items-center mb-10 px-2">
            <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.3em] italic flex items-center gap-4 dark:text-white text-slate-900">
@@ -364,7 +351,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
         </div>
       </div>
 
-      {/* ID Shard Overlay */}
       {showIdentityCard && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl" onClick={() => setShowIdentityCard(false)}></div>
