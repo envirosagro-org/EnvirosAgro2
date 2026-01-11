@@ -147,4 +147,4 @@ export interface AgroTransaction {
   unit: string;
 }
 
-export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research' | 'live_farming' | 'contract_farming' | 'agrowild';
+export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research' | 'live_farming' | 'contract_farming' | 'agrowild' | 'impact';

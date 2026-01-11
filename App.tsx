@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake, Sprout, Briefcase, PawPrint, UserCircle, BellRing, Settings2, Bot, Fingerprint, Network, Binary
+  LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake, Sprout, Briefcase, PawPrint, UserCircle, BellRing, Settings2, Bot, Fingerprint, Network, Binary, TrendingUp
 } from 'lucide-react';
 import { ViewState, User, WorkerProfile, AgroProject, AgroTransaction } from './types';
 import Dashboard from './components/Dashboard';
@@ -32,6 +32,7 @@ import LiveFarming from './components/LiveFarming';
 import ContractFarming from './components/ContractFarming';
 import Agrowild from './components/Agrowild';
 import FloatingConsultant from './components/FloatingConsultant';
+import Impact from './components/Impact';
 import { syncUserToCloud } from './services/firebaseService';
 
 interface Notification {
@@ -408,6 +409,7 @@ const App: React.FC = () => {
   const navigation = [
     { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
     { id: 'wallet', name: 'Agro-Wallet', icon: Wallet },
+    { id: 'impact', name: 'Ecosystem Impact', icon: TrendingUp },
     { id: 'agrowild', name: 'Agrowild Portal', icon: PawPrint },
     { id: 'live_farming', name: 'Live Farming', icon: Sprout },
     { id: 'contract_farming', name: 'Contract Farming', icon: Briefcase },
@@ -652,6 +654,7 @@ const App: React.FC = () => {
         <div className="p-4 md:p-10 flex-1 relative overflow-x-hidden scrollbar-hide">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={handleNavigate} />}
           {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} />}
+          {activeView === 'impact' && <Impact user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'agrowild' && <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onAcceptProposal={handleAcceptProposal} />}
           {activeView === 'investor' && (
@@ -710,7 +713,7 @@ const App: React.FC = () => {
                     n.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 
                     n.type === 'error' ? 'bg-rose-500/20 text-rose-400' : 
                     n.type === 'warning' ? 'bg-amber-500/20 text-amber-400' : 
-                    n.type === 'blue-500/20 text-blue-400'
+                    'bg-blue-500/20 text-blue-400'
                   }`}>
                     {n.type === 'success' ? <CheckCircle2 size={18} /> : 
                      n.type === 'error' ? <AlertTriangle size={18} /> : 
