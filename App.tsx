@@ -518,6 +518,15 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 md:gap-5">
+            {/* Theme Toggle */}
+            <button 
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-emerald-500/10 text-slate-500 hover:text-emerald-500 transition-all active:scale-95"
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
             {/* Global Search Interaction (Mock) */}
             <button className="p-2.5 text-slate-400 hover:text-emerald-500 transition-colors hidden sm:block">
               <Search size={18} />

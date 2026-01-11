@@ -125,7 +125,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 <div className="flex gap-6 items-center">
                   <div className="w-20 h-20 md:w-28 md:h-28 rounded-[32px] md:rounded-[40px] bg-slate-800 dark:bg-slate-700 border-2 border-white/5 flex items-center justify-center text-4xl md:text-5xl font-black text-emerald-400 shadow-2xl relative">
                     {user.name[0]}
-                    <div className="absolute -bottom-1 -right-1 w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-500 flex items-center justify-center border-4 border-white dark:border-[#050706]">
+                    <div className="absolute -bottom-1 -left-1 w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-500 flex items-center justify-center border-4 border-white dark:border-[#050706]">
                       <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                   </div>
