@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Microscope, 
@@ -238,7 +239,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
             onClick={() => setTab(t.id as any)}
             className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${tab === t.id ? 'bg-orange-600 text-white shadow-xl shadow-orange-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
-            <t.icon className="w-4 h-4" /> {t.label}
+            <t.icon className="w-4 h-4" /> {tab.label}
           </button>
         ))}
       </div>
@@ -523,7 +524,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
                    </div>
                    <div className="space-y-4">
                       <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">AgroInPDF <span className="text-amber-500">Patent Vault</span></h4>
-                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with {' > 90% '} Community Consensus graduate into official Industrial Inventions.</p>
+                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with &gt; 90% Community Consensus graduate into official Industrial Inventions.</p>
                    </div>
                 </div>
                 <div className="text-right relative z-10 shrink-0">

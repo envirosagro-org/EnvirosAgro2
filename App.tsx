@@ -31,6 +31,7 @@ import ResearchInnovation from './components/ResearchInnovation';
 import LiveFarming from './components/LiveFarming';
 import ContractFarming from './components/ContractFarming';
 import Agrowild from './components/Agrowild';
+import FloatingConsultant from './components/FloatingConsultant';
 import { syncUserToCloud } from './services/firebaseService';
 
 interface Notification {
@@ -631,7 +632,7 @@ const App: React.FC = () => {
                     n.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 
                     n.type === 'error' ? 'bg-rose-500/20 text-rose-400' : 
                     n.type === 'warning' ? 'bg-amber-500/20 text-amber-400' : 
-                    'bg-blue-500/20 text-blue-400'
+                    n.type === 'blue-500/20 text-blue-400'
                   }`}>
                     {n.type === 'success' ? <CheckCircle2 size={18} /> : 
                      n.type === 'error' ? <AlertTriangle size={18} /> : 
@@ -723,6 +724,9 @@ const App: React.FC = () => {
         user={user} 
         onMinted={(val) => earnEAC(val, 'SCIENTIFIC_EVIDENCE_MINT')}
       />
+      
+      {/* ADDED: Moveable Floating Consultant */}
+      <FloatingConsultant user={user} />
 
       <style>{`
         @keyframes progress-shrink { from { width: 100%; } to { width: 0%; } }
