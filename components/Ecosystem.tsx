@@ -305,11 +305,11 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
     // Drawing a stylized flower (Placeholder for icon)
     ctx.beginPath();
     ctx.arc(500, 500, 150, 0, Math.PI * 2);
-    ctx.fillStyle = user.zodiacFlower.hex + '22';
+    ctx.fillStyle = (user.zodiacFlower.hex || '#10b981') + '22';
     ctx.fill();
     
     ctx.font = 'bold 120px serif';
-    ctx.fillStyle = user.zodiacFlower.hex;
+    ctx.fillStyle = user.zodiacFlower.hex || '#10b981';
     ctx.fillText('❁', 500, 540); // Stylized flower symbol
 
     // User Data
@@ -420,6 +420,58 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
     setAiResult(result);
     setLoading(false);
   };
+
+  const BrandCard: React.FC<{ brand: Brand; onLaunch: (b: Brand) => void }> = ({ brand, onLaunch }) => (
+    <div 
+      onClick={() => onLaunch(brand)}
+      className="glass-card p-8 md:p-10 rounded-[40px] md:rounded-[56px] group hover:border-emerald-500/40 transition-all cursor-pointer relative flex flex-col h-[400px] md:h-[500px] active:scale-[0.98] duration-300 overflow-hidden bg-white/[0.01] shadow-2xl"
+    >
+      <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 via-transparent to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+      
+      <div className="flex justify-between items-start mb-6 md:mb-10 relative z-10">
+        <div className={`w-16 h-16 md:w-24 md:h-24 rounded-[20px] md:rounded-[32px] ${brand.bg} flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-700 shadow-2xl border border-white/5`}>
+          <brand.icon className={`w-8 h-8 md:w-12 md:h-12 ${brand.color}`} />
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <span className="px-3 py-1 md:px-4 md:py-1.5 bg-black/60 backdrop-blur-md rounded-full text-[7px] md:text-[9px] font-black text-white uppercase tracking-widest border border-white/10 group-hover:border-emerald-500/50 transition-colors">
+            {brand.volume}
+          </span>
+          <div className="flex gap-1">
+            {[0,1,2].map(i => <div key={i} className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-emerald-500/20 group-hover:bg-emerald-500 animate-pulse" style={{ animationDelay: `${i*0.2}s` }}></div>)}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-3 md:space-y-4 relative z-10">
+        <h3 className="text-2xl md:text-3xl font-black text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight italic leading-none">
+          {brand.name}
+        </h3>
+        <div className="flex items-center gap-3">
+          <span className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest">{brand.thrust} THRUST</span>
+          <span className="w-1 h-1 rounded-full bg-slate-800"></span>
+          <span className="text-[8px] md:text-[10px] font-bold text-emerald-500/60 font-mono">NODE_ACTIVE_S8</span>
+        </div>
+        <p className="text-sm md:text-lg text-slate-500 leading-relaxed font-medium italic opacity-80 group-hover:opacity-100 group-hover:text-slate-300 transition-all line-clamp-3 md:line-clamp-4 pt-2 md:pt-4">
+          "{brand.desc}"
+        </p>
+      </div>
+
+      <div className="pt-6 md:pt-10 border-t border-white/5 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/5 flex items-center justify-center text-slate-600 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xl">
+             <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
+          </div>
+          <span className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.3em] group-hover:text-white transition-colors">Launch Shard</span>
+        </div>
+        <div className="flex flex-col items-end">
+           <span className="text-[6px] md:text-[8px] text-slate-700 font-black uppercase mb-1">REGISTRY_STANDING</span>
+           <div className="flex gap-0.5 md:gap-1">
+              {[0,1,2,3,4].map(i => <Star key={i} className="w-2 md:w-2.5 h-2 md:h-2.5 text-amber-500 fill-amber-500" />)}
+           </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-20">
@@ -988,7 +1040,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
                               </div>
                            </div>
                            <div className="max-w-2xl mx-auto space-y-6 md:space-y-8">
-                              <h4 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0">Neural <span className="text-emerald-400">Oracle Sync</span></h4>
+                              <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Neural <span className="text-emerald-400">Oracle Sync</span></h4>
                               <p className="text-slate-500 text-sm md:text-2xl leading-relaxed italic font-medium">
                                  Invoke the EnvirosAgro™ high-fidelity oracle to analyze performance shards for this protocol node.
                               </p>
@@ -1018,7 +1070,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
              <span className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] md:tracking-[0.4em]">ZK-REGISTRY_VERIFIED</span>
           </div>
           <div className="flex items-center gap-3">
-             <Activity className="w-4 h-4 text-blue-400" />
+             <Shield className="w-4 h-4 text-blue-400" />
              <span className="text-[7px] md:text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] md:tracking-[0.4em]">STABLE_RESONANCE_FIELD</span>
           </div>
         </div>
@@ -1035,58 +1087,5 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser }) 
     </div>
   );
 };
-
-const BrandCard: React.FC<{ brand: Brand; onLaunch: (b: Brand) => void }> = ({ brand, onLaunch }) => (
-  <div 
-    onClick={() => onLaunch(brand)}
-    className="glass-card p-8 md:p-10 rounded-[40px] md:rounded-[56px] group hover:border-emerald-500/40 transition-all cursor-pointer relative flex flex-col h-[400px] md:h-[500px] active:scale-[0.98] duration-300 overflow-hidden bg-white/[0.01] shadow-2xl"
-  >
-    {/* Animated Gradient Border Overlay */}
-    <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 via-transparent to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-    
-    <div className="flex justify-between items-start mb-6 md:mb-10 relative z-10">
-      <div className={`w-16 h-16 md:w-24 md:h-24 rounded-[20px] md:rounded-[32px] ${brand.bg} flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-700 shadow-2xl border border-white/5`}>
-        <brand.icon className={`w-8 h-8 md:w-12 md:h-12 ${brand.color}`} />
-      </div>
-      <div className="flex flex-col items-end gap-2">
-        <span className="px-3 py-1 md:px-4 md:py-1.5 bg-black/60 backdrop-blur-md rounded-full text-[7px] md:text-[9px] font-black text-white uppercase tracking-widest border border-white/10 group-hover:border-emerald-500/50 transition-colors">
-          {brand.volume}
-        </span>
-        <div className="flex gap-1">
-          {[0,1,2].map(i => <div key={i} className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-emerald-500/20 group-hover:bg-emerald-500 animate-pulse" style={{ animationDelay: `${i*0.2}s` }}></div>)}
-        </div>
-      </div>
-    </div>
-
-    <div className="flex-1 space-y-3 md:space-y-4 relative z-10">
-      <h3 className="text-2xl md:text-3xl font-black text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight italic leading-none">
-        {brand.name}
-      </h3>
-      <div className="flex items-center gap-3">
-        <span className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest">{brand.thrust} THRUST</span>
-        <span className="w-1 h-1 rounded-full bg-slate-800"></span>
-        <span className="text-[8px] md:text-[10px] font-bold text-emerald-500/60 font-mono">NODE_ACTIVE_S8</span>
-      </div>
-      <p className="text-sm md:text-lg text-slate-500 leading-relaxed font-medium italic opacity-80 group-hover:opacity-100 group-hover:text-slate-300 transition-all line-clamp-3 md:line-clamp-4 pt-2 md:pt-4">
-        "{brand.desc}"
-      </p>
-    </div>
-
-    <div className="pt-6 md:pt-10 border-t border-white/5 flex items-center justify-between relative z-10">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/5 flex items-center justify-center text-slate-600 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xl">
-           <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
-        </div>
-        <span className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.3em] group-hover:text-white transition-colors">Launch Shard</span>
-      </div>
-      <div className="flex flex-col items-end">
-         <span className="text-[6px] md:text-[8px] text-slate-700 font-black uppercase mb-1">REGISTRY_STANDING</span>
-         <div className="flex gap-0.5 md:gap-1">
-            {[0,1,2,3,4].map(i => <Star key={i} className="w-2 md:w-2.5 h-2 md:h-2.5 text-amber-500 fill-amber-500" />)}
-         </div>
-      </div>
-    </div>
-  </div>
-);
 
 export default Ecosystem;
