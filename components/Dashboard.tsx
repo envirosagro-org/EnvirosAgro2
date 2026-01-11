@@ -5,7 +5,7 @@ import {
   CreditCard, Layers, Coins, Users, Heart, ArrowRight, BrainCircuit, Bot, 
   TrendingUp, AtSign, Share2, Youtube, Twitter, HelpCircle, Send, Pin, Linkedin,
   Rocket, PlusCircle, Gavel, Building2, Share, ShieldAlert, UserCheck, Handshake,
-  LayoutGrid, Video, Landmark, BarChart3
+  LayoutGrid, Video, Landmark, BarChart3, Fingerprint, Lock
 } from 'lucide-react';
 import { ViewState, User } from '../types';
 import IdentityCard from './IdentityCard';
@@ -104,6 +104,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
 
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700">
+      
+      {/* Live Shard Ticker */}
+      <div className="glass-card p-3 rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden">
+        <div className="flex items-center gap-3 px-4 border-r border-white/10 shrink-0">
+           <Binary className="w-4 h-4 text-emerald-400" />
+           <span className="text-[9px] font-black text-white uppercase tracking-widest">LIVE_LEDGER</span>
+        </div>
+        <div className="flex-1 px-4 overflow-hidden">
+           <div className="whitespace-nowrap animate-marquee text-[10px] text-emerald-400 font-mono font-black uppercase tracking-[0.3em] italic">
+             Shard #{(Math.random()*1000).toFixed(0)} synchronized to Bantu Soil Shard • Node {user.esin} C(a) multiplier active at 1.42x • Physical Audit dispatch successful for Zone 4 Hub • New Investment Vouch committed for PRJ-882 •
+           </div>
+        </div>
+      </div>
+
       {/* Global Experience Hero */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         
@@ -134,7 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                   onClick={() => setShowIdentityCard(true)}
                   className="flex items-center justify-center gap-3 px-8 py-5 bg-white/5 border border-slate-200 dark:border-white/10 rounded-[28px] text-[10px] font-black uppercase tracking-[0.3em] dark:text-white text-slate-900 hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all shadow-lg active:scale-95"
                 >
-                  <CreditCard className="w-4 h-4 text-emerald-400" />
+                  <Fingerprint className="w-4 h-4 text-emerald-400" />
                   ID Shard
                 </button>
              </div>
@@ -279,7 +293,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                           <p className="text-[11px] font-bold dark:text-slate-400 text-slate-600 truncate">Improve I-Thrust Ledger Density</p>
                        </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-1 transition-transform" />
                  </button>
               </div>
            </div>

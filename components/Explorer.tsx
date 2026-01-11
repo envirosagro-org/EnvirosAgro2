@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-// Added RefreshCcw to imports
-import { Search, Hash, Clock, Shield, Box, User, ArrowUpRight, CheckCircle2, Activity, Globe, Zap, Database, Terminal, Layers, RefreshCcw } from 'lucide-react';
+import { Search, Hash, Clock, Shield, Box, User, ArrowUpRight, CheckCircle2, Activity, Globe, Zap, Database, Terminal, Layers, RefreshCcw, X, Binary, Cpu, ShieldCheck, Download, Fingerprint, Lock, ShieldAlert, Maximize2 } from 'lucide-react';
 import { AgroBlock } from '../types';
 
 const mockBlocks: AgroBlock[] = [
@@ -40,6 +39,7 @@ const mockBlocks: AgroBlock[] = [
 const Explorer: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeShard, setActiveShard] = useState<string | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<AgroBlock | null>(null);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto">
@@ -53,7 +53,7 @@ const Explorer: React.FC = () => {
                <div className="w-24 h-24 rounded-[32px] bg-emerald-600 flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.3)] shrink-0">
                   <Globe className="w-12 h-12 text-white" />
                </div>
-               <div className="space-y-4">
+               <div className="space-y-4 text-center md:text-left">
                   <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Network <span className="text-emerald-400">Registry Pulse</span></h2>
                   <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-xl">
                      Live view of the EnvirosAgro™ decentralized ledger. Immutable sharding for every regenerative action committed globally.
@@ -62,7 +62,7 @@ const Explorer: React.FC = () => {
             </div>
          </div>
          
-         <div className="lg:col-span-4 glass-card p-10 rounded-[48px] border-white/5 bg-black/40 flex flex-col justify-center items-center text-center space-y-6">
+         <div className="lg:col-span-4 glass-card p-10 rounded-[48px] border-white/5 bg-black/40 flex flex-col justify-center items-center text-center space-y-6 shadow-xl">
             <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                <Zap className="w-8 h-8 text-emerald-400 animate-pulse" />
             </div>
@@ -90,7 +90,6 @@ const Explorer: React.FC = () => {
             Filter Shards
           </button>
           <button className="p-5 bg-emerald-600 rounded-[32px] text-white shadow-2xl hover:bg-emerald-500 transition-all active:scale-95">
-             {/* RefreshCcw correctly used here after being added to imports */}
              <RefreshCcw className="w-6 h-6" />
           </button>
         </div>
@@ -100,6 +99,7 @@ const Explorer: React.FC = () => {
         {mockBlocks.map((block) => (
           <div 
             key={block.hash} 
+            onClick={() => setSelectedBlock(block)}
             className="glass-card rounded-[44px] p-10 border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer group relative overflow-hidden bg-black/40 shadow-2xl active:scale-[0.99] duration-300"
             onMouseEnter={() => setActiveShard(block.hash)}
             onMouseLeave={() => setActiveShard(null)}
@@ -136,7 +136,7 @@ const Explorer: React.FC = () => {
                   </p>
                 </div>
                 <div className="p-5 bg-white/5 rounded-[24px] border border-white/10 group-hover:bg-emerald-600 group-hover:text-white transition-all active:scale-90">
-                   <ArrowUpRight className="w-8 h-8" />
+                   <Maximize2 className="w-8 h-8" />
                 </div>
               </div>
             </div>
@@ -163,10 +163,94 @@ const Explorer: React.FC = () => {
         <p className="text-[8px] font-mono text-slate-700 uppercase tracking-widest">Final Registry Block: 0x821...F2A (Cycle 12)</p>
       </div>
 
+      {/* Shard Inspector Modal */}
+      {selectedBlock && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setSelectedBlock(null)}></div>
+           <div className="relative z-10 w-full max-w-4xl h-fit glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
+              <div className="p-12 md:p-16 space-y-12">
+                 <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-8">
+                       <div className="w-24 h-24 rounded-[32px] bg-emerald-600 flex items-center justify-center shadow-3xl shrink-0 group-hover:rotate-6 transition-transform">
+                          <Box className="w-12 h-12 text-white" />
+                       </div>
+                       <div>
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Shard <span className="text-emerald-400">Inspector</span></h3>
+                          <p className="text-emerald-500/60 font-mono text-xs tracking-widest uppercase mt-3">LEDGER_BLOCK // {selectedBlock.hash}</p>
+                       </div>
+                    </div>
+                    <button onClick={() => setSelectedBlock(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-8">
+                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-6">
+                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest px-2">
+                             <span className="text-slate-500">Validation Node</span>
+                             <span className="text-white font-mono">{selectedBlock.validator}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest px-2">
+                             <span className="text-slate-500">Block Height</span>
+                             <span className="text-white font-mono">#428,812_A</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest px-2">
+                             <span className="text-slate-500">Block Weight</span>
+                             <span className="text-emerald-400 font-mono">1.24 MB</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest px-2 pt-4 border-t border-white/5">
+                             <span className="text-slate-500">Network Consensus</span>
+                             <span className="text-emerald-400 font-black">100% OK</span>
+                          </div>
+                       </div>
+
+                       <div className="p-8 glass-card rounded-[40px] border-blue-500/20 bg-blue-500/5 space-y-4">
+                          <div className="flex items-center gap-3">
+                             <Fingerprint className="w-5 h-5 text-blue-400" />
+                             <h4 className="text-[10px] font-black text-white uppercase tracking-widest">ZK-Proof Signature</h4>
+                          </div>
+                          <p className="text-[10px] font-mono text-blue-400/60 break-all leading-relaxed">
+                             0x{btoa(selectedBlock.hash + selectedBlock.validator).substring(0, 128).toUpperCase()}
+                          </p>
+                       </div>
+                    </div>
+
+                    <div className="space-y-8">
+                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-6 h-full flex flex-col">
+                          <div className="flex items-center gap-3">
+                             <Terminal className="w-5 h-5 text-indigo-400" />
+                             <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Steward Trace Shards</h4>
+                          </div>
+                          <div className="flex-1 overflow-y-auto custom-scrollbar-terminal space-y-3 pr-4 font-mono text-[9px]">
+                             <p className="text-slate-500"><span className="text-indigo-400">[SYSTEM]</span> HANDSHAKE_INIT_882</p>
+                             <p className="text-slate-500"><span className="text-emerald-400">[AUTH]</span> ZK_SNARK_SUCCESS</p>
+                             <p className="text-slate-500"><span className="text-blue-400">[DATA]</span> PACKET_INGEST: {selectedBlock.transactions[0].value} {selectedBlock.transactions[0].unit}</p>
+                             <p className="text-slate-500"><span className="text-amber-400">[ORACLE]</span> C(a)_INDEX_SYNC_OK</p>
+                             <p className="text-slate-500"><span className="text-emerald-400">[LEDGER]</span> HASH_COMMIT_0x772</p>
+                          </div>
+                          <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-slate-400 hover:text-white transition-all flex items-center justify-center gap-3">
+                             <Download className="w-4 h-4" /> Download Raw Shard
+                          </button>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="p-6 bg-emerald-500/5 border border-emerald-500/10 rounded-[32px] flex items-center gap-6">
+                    <ShieldCheck className="w-10 h-10 text-emerald-400 shrink-0" />
+                    <p className="text-[10px] text-emerald-200/50 font-black uppercase leading-relaxed tracking-widest">
+                       This shard is immutably anchored to the global EnvirosAgro registry. Any tampering with node telemetry results in immediate multiplier slashing.
+                    </p>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
       `}</style>
     </div>
   );

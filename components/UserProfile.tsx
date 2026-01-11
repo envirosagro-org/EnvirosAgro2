@@ -581,6 +581,26 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                      </div>
                   </div>
                </div>
+
+               {/* Danger Zone */}
+               <div className="glass-card p-10 rounded-[40px] border-rose-500/20 bg-rose-500/5 space-y-8">
+                  <div className="flex items-center gap-4">
+                     <AlertTriangle className="w-6 h-6 text-rose-500" />
+                     <h3 className="text-xl font-bold text-white uppercase tracking-tighter">Danger Zone</h3>
+                  </div>
+                  <div className="p-8 bg-black/40 rounded-[32px] border border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                     <div className="space-y-1 text-center md:text-left">
+                        <h4 className="text-white font-bold uppercase tracking-tight">Terminate Session</h4>
+                        <p className="text-xs text-slate-500 italic">"Detach your node from the current registry session."</p>
+                     </div>
+                     <button 
+                        onClick={onLogout}
+                        className="px-10 py-4 bg-rose-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-900/40 hover:bg-rose-500 transition-all active:scale-95 flex items-center gap-3"
+                     >
+                        <LogOut size={16} /> Detach Node
+                     </button>
+                  </div>
+               </div>
             </div>
           )}
         </div>

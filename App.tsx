@@ -119,7 +119,9 @@ const App: React.FC = () => {
       profitsAccrued: 12500,
       investorShareRatio: 0.20, 
       performanceIndex: 88,
-      memberCount: 7
+      memberCount: 7,
+      isPreAudited: true,
+      isPostAudited: true
     },
     { 
       id: 'PRJ-KE-101', 
@@ -138,7 +140,9 @@ const App: React.FC = () => {
       profitsAccrued: 0,
       investorShareRatio: 0.15, 
       performanceIndex: 0,
-      memberCount: 4
+      memberCount: 4,
+      isPreAudited: true,
+      isPostAudited: false
     }
   ]);
 
@@ -171,6 +175,14 @@ const App: React.FC = () => {
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 5000);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('agro_steward');
+    setUser(null);
+    setActiveView('dashboard');
+    setViewHistory([]);
+    addNotification('info', 'SESSION_TERMINATED', 'Your node has been detached from the registry.');
   };
 
   const sendSignal = (signal: Omit<SignalShard, 'id' | 'timestamp' | 'read'>) => {
@@ -334,7 +346,7 @@ const App: React.FC = () => {
       
       {!isMobile && (
         <aside className={`${isSidebarOpen ? 'w-72' : 'w-20'} glass-card border-r border-slate-200 dark:border-white/5 flex flex-col z-50 transition-all duration-300 relative`}>
-          <div className="p-6 flex items-center justify-between overflow-hidden">
+          <div className="p-6 flex items-center justify-between overflow-hidden border-b border-white/5 bg-white/5">
             <div className="flex items-center gap-4 min-w-0">
               <div onClick={() => handleNavigate('dashboard')} className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg group cursor-pointer hover:rotate-12 transition-transform">
                 <Leaf className="text-white w-6 h-6" />
@@ -346,7 +358,7 @@ const App: React.FC = () => {
             </button>
           </div>
           
-          <nav className="flex-1 mt-4 space-y-1 px-3 overflow-y-auto scrollbar-hide pb-20">
+          <nav className="flex-1 mt-4 space-y-1 px-3 overflow-y-auto scrollbar-hide pb-10">
             {navigation.map((item) => (
               <button 
                 key={item.id} 
@@ -363,16 +375,20 @@ const App: React.FC = () => {
             ))}
           </nav>
 
-          {isSidebarOpen && (
-            <div className="p-6 mt-auto border-t border-slate-200 dark:border-white/5 space-y-4">
-              <button 
-                onClick={() => setIsVoiceBridgeOpen(true)}
-                className="w-full flex items-center gap-3 p-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform"
-              >
-                <Mic size={18} /> Initialize Voice
-              </button>
-            </div>
-          )}
+          <div className="p-6 mt-auto border-t border-slate-200 dark:border-white/5 space-y-3">
+            <button 
+              onClick={() => setIsVoiceBridgeOpen(true)}
+              className="w-full flex items-center justify-center gap-3 p-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform"
+            >
+              <Mic size={18} /> {isSidebarOpen && "Initialize Voice"}
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-3 p-4 bg-rose-600/10 border border-rose-500/20 rounded-2xl text-rose-500 font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all"
+            >
+              <LogOut size={18} /> {isSidebarOpen && "Detach Node"}
+            </button>
+          </div>
         </aside>
       )}
 
@@ -443,8 +459,16 @@ const App: React.FC = () => {
         <div className="p-4 md:p-10 flex-1 relative overflow-x-hidden scrollbar-hide">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={handleNavigate} />}
           {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} />}
-          {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} signals={networkSignals} setSignals={setNetworkSignals} onAcceptProposal={handleAcceptProposal} />}
-          {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} projects={projects} />}
+          {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onAcceptProposal={handleAcceptProposal} />}
+          {activeView === 'investor' && (
+             <InvestorPortal 
+               user={user} 
+               onUpdate={handleUpdateUser} 
+               projects={projects} 
+               pendingAction={pendingAction} 
+               clearAction={() => setPendingAction(null)} 
+             />
+          )}
           {activeView === 'vendor' && <VendorPortal user={user} />}
           {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} />}
           {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
@@ -567,6 +591,9 @@ const App: React.FC = () => {
              <div className="pt-8 mt-8 border-t border-white/5 space-y-4">
                 <button onClick={() => { setIsVoiceBridgeOpen(true); setShowMobileMenu(false); }} className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
                    <Mic size={18} /> Initialize Voice
+                </button>
+                <button onClick={handleLogout} className="w-full py-5 bg-rose-600/10 border border-rose-500/20 rounded-3xl text-rose-500 font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
+                   <LogOut size={18} /> Detach Node
                 </button>
              </div>
           </div>
