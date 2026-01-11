@@ -10,7 +10,10 @@ import {
   Key,
   Download,
   BarChart4,
-  Info
+  Info,
+  ExternalLink,
+  ClipboardCheck,
+  HardHat
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { User, AgroProject } from '../types';
@@ -20,6 +23,8 @@ interface InvestorPortalProps {
   user: User;
   onUpdate: (user: User) => void;
   projects: AgroProject[];
+  pendingAction?: string | null;
+  clearAction?: () => void;
 }
 
 const ANALYTICS_TREND_DATA = [
@@ -40,16 +45,28 @@ const THRUST_YIELD_ALLOCATION = [
   { name: 'Industry', value: 5, color: '#8b5cf6' },
 ];
 
-const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, projects }) => {
+const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, projects, pendingAction, clearAction }) => {
   const [activeTab, setActiveTab] = useState<'opportunities' | 'portfolio' | 'analytics'>('opportunities');
   const [selectedProject, setSelectedProject] = useState<AgroProject | null>(null);
   const [isVouching, setIsVouching] = useState(false);
-  const [vouchStep, setVouchStep] = useState<'analysis' | 'signing' | 'success'>('analysis');
+  const [vouchStep, setVouchStep] = useState<'analysis' | 'physical_proof' | 'signing' | 'success'>('analysis');
   const [vouchAmount, setVouchAmount] = useState('5000');
   const [esinSign, setEsinSign] = useState('');
   const [aiOpinion, setAiOpinion] = useState<string | null>(null);
   const [isHarvesting, setIsHarvesting] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Handle deep-linking from Dashboard
+  useEffect(() => {
+    if (pendingAction === 'OPEN_VOUCH') {
+      setActiveTab('opportunities');
+      if (projects.length > 0) handleVouchRequest(projects[0]);
+      clearAction?.();
+    } else if (pendingAction === 'VIEW_ANALYTICS') {
+      setActiveTab('analytics');
+      clearAction?.();
+    }
+  }, [pendingAction]);
 
   const filteredProjects = projects.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -61,7 +78,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
     setVouchStep('analysis');
     setIsVouching(true);
     setAiOpinion(null);
-    const prompt = `Act as an EnvirosAgro Institutional Risk Analyst. Analyze this project for an investor: ${JSON.stringify(project)}. Provide a brief 2-paragraph summary on its EAC yield potential and SEHTI framework alignment. Focus on investor security and risk shards.`;
+    const prompt = `Act as an EnvirosAgro Institutional Risk Analyst. Analyze this project for an investor: ${JSON.stringify(project)}. Provide a brief 2-paragraph summary on its EAC yield potential and SEHTI framework alignment. Focus on investor security and risk shards. Mention the importance of physical verification.`;
     const response = await chatWithAgroExpert(prompt, []);
     setAiOpinion(response.text);
   };
@@ -157,7 +174,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 p-1 glass-card rounded-[24px] w-fit border border-white/5 bg-black/40">
+      <div className="flex gap-4 p-1 glass-card rounded-2xl w-fit border border-white/5 bg-black/40">
         {[
           { id: 'opportunities', label: 'Vetting Registry', icon: Gem },
           { id: 'portfolio', label: 'ROI Harvest', icon: PieChartIcon },
@@ -447,7 +464,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
 
               <div className="flex-1 p-12 overflow-y-auto custom-scrollbar flex flex-col justify-center">
                  {vouchStep === 'analysis' && (
-                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
                        <div className="p-8 bg-black/60 rounded-[44px] border border-white/10 relative overflow-hidden border-l-4 border-l-blue-500/50">
                           <div className="flex items-center gap-3 mb-6">
                              <Bot className="w-6 h-6 text-blue-400" />
@@ -478,17 +495,57 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
                        </div>
 
                        <button 
-                        onClick={() => setVouchStep('signing')}
+                        onClick={() => setVouchStep('physical_proof')}
                         disabled={!aiOpinion}
                         className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-blue-900/40 hover:bg-blue-500 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30"
                        >
-                          Proceed to Signing <ChevronRight className="w-6 h-6" />
+                          Verify Physical Proof <ChevronRight className="w-6 h-6" />
                        </button>
                     </div>
                  )}
 
+                 {vouchStep === 'physical_proof' && (
+                   <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center text-center">
+                      <div className="space-y-6">
+                        <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl relative">
+                           <ClipboardCheck className="w-12 h-12 text-emerald-400" />
+                           <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-[32px] animate-ping"></div>
+                        </div>
+                        <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Physical <span className="text-emerald-400">Authenticity Proof</span></h4>
+                        <p className="text-slate-400 text-lg leading-relaxed max-w-sm mx-auto italic">
+                           This mission node has been 100% physically verified by the EnvirosAgro Audit Team.
+                        </p>
+                      </div>
+
+                      <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-6">
+                        <div className="flex justify-between items-center px-4 border-b border-white/5 pb-4">
+                           <span className="text-[10px] font-black text-slate-500 uppercase">Audit ID</span>
+                           <span className="text-xs font-mono text-emerald-400 font-black">EA_AUD_#{(Math.random()*1000).toFixed(0)}_SEC</span>
+                        </div>
+                        <div className="flex justify-between items-center px-4">
+                           <span className="text-[10px] font-black text-slate-500 uppercase">Verification Date</span>
+                           <span className="text-xs font-mono text-white">2024.12.12</span>
+                        </div>
+                        <div className="flex justify-between items-center px-4">
+                           <span className="text-[10px] font-black text-slate-500 uppercase">Biometric Sync</span>
+                           <span className="text-xs font-mono text-emerald-400 font-black">MATCH_OK</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                         <button onClick={() => setVouchStep('analysis')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                         <button 
+                            onClick={() => setVouchStep('signing')}
+                            className="flex-1 py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95"
+                         >
+                            <ShieldCheck className="w-6 h-6" /> Proceed to Signing
+                         </button>
+                      </div>
+                   </div>
+                 )}
+
                  {vouchStep === 'signing' && (
-                    <div className="space-y-12 animate-in slide-in-from-right-4 duration-500">
+                    <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
                        <div className="text-center space-y-6">
                           <div className="w-24 h-24 bg-blue-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-blue-500/20 shadow-2xl">
                              <Fingerprint className="w-12 h-12 text-blue-400" />
@@ -516,7 +573,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, project
                        </div>
 
                        <div className="flex gap-4">
-                          <button onClick={() => setVouchStep('analysis')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                          <button onClick={() => setVouchStep('physical_proof')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
                           <button 
                             onClick={executeVouch}
                             disabled={!esinSign}
