@@ -5,7 +5,9 @@ import {
   CreditCard, Layers, Coins, Users, Heart, ArrowRight, BrainCircuit, Bot, 
   TrendingUp, AtSign, Share2, Youtube, Twitter, HelpCircle, Send, Pin, Linkedin,
   Rocket, PlusCircle, Gavel, Building2, Share, ShieldAlert, UserCheck, Handshake,
-  LayoutGrid, Video, Landmark, BarChart3, Fingerprint, Lock
+  LayoutGrid, Video, Landmark, BarChart3, Fingerprint, Lock, Sprout, Briefcase,
+  // Added missing LogOut icon
+  LogOut
 } from 'lucide-react';
 import { ViewState, User } from '../types';
 import IdentityCard from './IdentityCard';
@@ -192,14 +194,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
            </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
            {[
+             { label: 'Live Processing', icon: Sprout, color: 'text-emerald-400', desc: 'Initialize Product Ingest', target: 'live_farming', action: null, priority: true },
+             { label: 'Supply Contracts', icon: Briefcase, color: 'text-blue-400', desc: 'Browse Mission Bounties', target: 'contract_farming', action: null, priority: true },
              { label: 'Vouch Mission Node', icon: Landmark, color: 'text-blue-400', desc: 'Anchor Capital to Registry', target: 'investor', action: 'OPEN_VOUCH', priority: true },
              { label: 'View Yield Analytics', icon: BarChart3, color: 'text-emerald-400', desc: 'Live Performance Telemetry', target: 'investor', action: 'VIEW_ANALYTICS', priority: true },
-             { label: 'Launch Mission Shard', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Scaling Shard', target: 'industrial', action: 'LAUNCH_MISSION', priority: true },
+             { label: 'Launch Mission Shard', icon: Rocket, color: 'text-indigo-400', desc: 'Initialize Scaling Shard', target: 'industrial', action: 'LAUNCH_MISSION', priority: false },
              { label: 'Form Shard Group', icon: PlusCircle, color: 'text-emerald-400', desc: 'Initialize Collective Node', target: 'industrial', action: 'FORM_COLLECTIVE', priority: false },
              { label: 'Register Industry Node', icon: Building2, color: 'text-amber-400', desc: 'Industry Facility Entry', target: 'industrial', action: 'REGISTER_NODE', priority: false },
-             { label: 'Place Auction Bid', icon: Gavel, color: 'text-blue-400', desc: 'Tender Ingress Portal', target: 'industrial', action: 'PLACE_BID', priority: false },
+             { label: 'Detach Node', icon: LogOut, color: 'text-rose-400', desc: 'Terminate Node Session', target: 'profile', action: 'LOGOUT_PROMPT', priority: false },
            ].map((action, i) => (
              <button 
               key={i} 
