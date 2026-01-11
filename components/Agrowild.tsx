@@ -786,7 +786,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                  )}
 
                  {discoveryStep === 'analysis' && (
-                    <div className="flex flex-col items-center space-y-12 animate-in fade-in duration-500">
+                    <div className="flex flex-col items-center justify-center space-y-12 animate-in fade-in duration-500">
                        <div className="relative">
                           <div className="absolute inset-[-10px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
                           <div className="w-48 h-48 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
@@ -841,7 +841,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
             </div>
             <div className="space-y-4">
                <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">AgroInPDF <span className="text-amber-500">Patent Vault</span></h4>
-               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with &gt; 90% Community Consensus graduate into official Industrial Inventions.</p>
+               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with {" > "} 90% Community Consensus graduate into official Industrial Inventions.</p>
             </div>
          </div>
          <div className="text-right relative z-10 shrink-0">

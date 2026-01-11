@@ -705,9 +705,9 @@ const InfoPortal: React.FC = () => {
         ) : (
           <>
             {/* Local Backdrop for Support Chat to ensure visual focus */}
-            <div className="fixed inset-0 z-[440] bg-black/30 backdrop-blur-[2px]" onClick={() => setShowSupport(false)}></div>
+            <div className="fixed inset-0 z-[440] bg-black/60 backdrop-blur-md pointer-events-auto" onClick={() => setShowSupport(false)}></div>
             
-            <div className="relative w-[400px] h-[550px] glass-card rounded-[40px] border-emerald-500/40 bg-[#050706]/98 shadow-[0_0_80px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500 border-2 z-[450]">
+            <div className="relative w-[400px] h-[550px] glass-card rounded-[40px] border-emerald-500/40 bg-[#050706]/98 shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500 border-2 z-[450]">
                <div className="p-6 bg-emerald-600/10 border-b border-white/5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                      <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg">
@@ -742,7 +742,7 @@ const InfoPortal: React.FC = () => {
                   )}
                </div>
 
-               <div className="p-6 border-t border-white/5 bg-black/40">
+               <div className="p-6 border-t border-white/5 bg-black/90">
                   <div className="relative">
                      <input 
                       type="text" 

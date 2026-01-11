@@ -161,7 +161,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ user }) => {
     <>
       {/* Dimmed backdrop when consultant is active to emphasize layering */}
       {isOpen && !isMinimized && (
-        <div className={`fixed inset-0 z-[490] bg-black/40 backdrop-blur-sm pointer-events-none transition-opacity duration-300 ${isFullScreen ? 'opacity-100' : 'opacity-100'}`}></div>
+        <div className="fixed inset-0 z-[490] bg-black/60 backdrop-blur-md pointer-events-auto transition-opacity duration-300" onClick={() => setIsMinimized(true)}></div>
       )}
       
       <div 
@@ -169,7 +169,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ user }) => {
         className={`fixed z-[500] select-none transition-all duration-300 ${isDragging ? 'scale-[1.02] cursor-grabbing transition-none' : ''} ${isFullScreen ? 'bg-black/60 backdrop-blur-3xl' : ''}`}
         style={containerStyles}
       >
-        <div className={`glass-card border-2 border-emerald-500/40 bg-[#050706]/98 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden mx-auto transition-all duration-300 ${isFullScreen ? 'w-full max-w-5xl h-[90vh] my-[5vh] rounded-[48px]' : isMinimized ? 'w-24 h-24 rounded-[32px]' : 'w-[350px] h-[520px] rounded-[32px]'}`}>
+        <div className={`glass-card border-2 border-emerald-500/40 bg-[#050706]/98 shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden mx-auto transition-all duration-300 ${isFullScreen ? 'w-full max-w-5xl h-[90vh] my-[5vh] rounded-[48px]' : isMinimized ? 'w-24 h-24 rounded-[32px]' : 'w-[350px] h-[520px] rounded-[32px]'}`}>
           
           {/* Header / Drag Handle */}
           <div 
@@ -233,7 +233,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ user }) => {
                       <div className={`${isFullScreen ? 'max-w-[75%] p-6' : 'max-w-[85%] p-3.5'} rounded-3xl text-[11px] md:text-sm leading-relaxed shadow-lg ${
                         m.role === 'user' 
                           ? 'bg-indigo-600 text-white rounded-tr-none' 
-                          : 'glass-card text-slate-200 border border-white/10 rounded-tl-none italic bg-black/60 backdrop-blur-md'
+                          : 'glass-card text-slate-200 border border-white/10 rounded-tl-none italic bg-black/80 backdrop-blur-md'
                       }`}>
                         {m.text.split('\n').map((line, idx) => (
                           <p key={idx} className={idx > 0 ? 'mt-2' : ''}>{line}</p>
@@ -253,7 +253,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ user }) => {
                 </div>
               </div>
 
-              <div className={`p-4 md:p-8 border-t border-white/5 bg-black/80`}>
+              <div className={`p-4 md:p-8 border-t border-white/5 bg-black/90`}>
                 <div className={`relative ${isFullScreen ? 'max-w-3xl mx-auto' : ''}`}>
                   <input 
                     type="text" 
