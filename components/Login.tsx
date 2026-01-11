@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Leaf, 
   ShieldCheck, 
@@ -7,21 +6,16 @@ import {
   Loader2, 
   UserPlus, 
   Key, 
-  MapPin, 
   CheckCircle2, 
   ArrowLeft,
   AlertCircle,
   Mail,
-  Send,
-  ShieldAlert,
   Inbox,
   X,
   Search,
   Fingerprint,
   RefreshCcw,
-  Lock,
   LocateFixed,
-  Globe,
   Zap,
   Map as MapIcon,
   Navigation,
@@ -29,8 +23,6 @@ import {
   Maximize2,
   Signal,
   Smartphone,
-  Activity,
-  Vibrate,
   ShieldAlert as ShieldAlertIcon,
   Copy
 } from 'lucide-react';
@@ -205,7 +197,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setTimeout(() => {
         setMode('verify');
         setShowMockEmail(true);
-        // Auto fill verification code for seamless UX
+        // Seamlessly auto-fill the code for the demo/simulation flow
         setVCode(code);
       }, 2000);
     } catch (err) {
@@ -386,7 +378,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="space-y-4">
               <h3 className="text-2xl font-black text-white uppercase italic">Enable Location</h3>
               <p className="text-slate-400 text-sm leading-relaxed italic font-medium">
-                GPS signal failed. Please check your device settings and ensure <span className="text-amber-500 font-bold">Location Services</span> are enabled and the browser has permission to access them.
+                GPS signal failed. Please check your device settings and ensure <span className="text-amber-500 font-bold">Location Services</span> are enabled.
               </p>
             </div>
             <div className="flex flex-col gap-3">
@@ -650,9 +642,103 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                          <p className="text-[8px] text-slate-500 font-bold uppercase mt-0.5">Physical Presence (1.1x Resilience Bonus)</p>
                       </div>
                    </div>
-                   <div className="w-12 h-6 rounded-full p-1 transition-all" style={{ backgroundColor: geoAuthEnabled ? '#10b981' : '#1e293b' }}>
+                   <div className={`w-12 h-6 rounded-full p-1 transition-all ${geoAuthEnabled ? 'bg-emerald-600' : 'bg-slate-800'}`}>
                       <div className={`w-4 h-4 rounded-full bg-white transition-all transform ${geoAuthEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
                    </div>
                 </div>
 
-                <button type="submit" disabled={loading || isLocating} className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking
+                <button type="submit" disabled={loading || isLocating} className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-3xl disabled:opacity-50 active:scale-95 transition-all">
+                  {loading || isLocating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
+                  {isLocating ? 'Establishing Geo-Gate...' : 'Authorize Session'}
+                </button>
+                <button type="button" onClick={() => { setMode('recovery'); setRecoveredESIN(null); }} className="text-[10px] font-black text-slate-600 hover:text-blue-400 uppercase tracking-widest transition-colors">Forgot ESIN signature?</button>
+              </form>
+            )}
+
+            {mode === 'recovery' && (
+              <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <button onClick={() => { setMode('login'); setError(null); }} type="button" className="p-2 text-slate-500 hover:text-white transition-colors"><ArrowLeft className="w-5 h-5" /></button>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Node Recovery</h2>
+                </div>
+
+                {!recoveredESIN ? (
+                  <div className="space-y-8">
+                    <div className="flex p-1 bg-white/5 rounded-2xl gap-1">
+                      <button onClick={() => setRecoveryMethod('email')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${recoveryMethod === 'email' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Email Anchor</button>
+                      <button onClick={() => setRecoveryMethod('phrase')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${recoveryMethod === 'phrase' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Seed Phrase</button>
+                    </div>
+
+                    <form onSubmit={handleRecoverySubmit} className="space-y-8">
+                      {recoveryMethod === 'email' ? (
+                        <div className="space-y-8">
+                          <div className="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto border border-blue-500/20 shadow-xl">
+                            <Mail className="w-10 h-10 text-blue-400" />
+                          </div>
+                          <input type="email" required value={recoveryEmail} onChange={e => setRecoveryEmail(e.target.value)} placeholder="steward@registry.node" className="w-full bg-black/60 border border-white/10 rounded-3xl py-6 px-10 text-white outline-none focus:ring-2 focus:ring-blue-500/40" />
+                        </div>
+                      ) : (
+                        <div className="space-y-8">
+                          <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto border border-emerald-500/20 shadow-xl">
+                            <Fingerprint className="w-10 h-10 text-emerald-400" />
+                          </div>
+                          <textarea required value={recoveryPhrase} onChange={e => setRecoveryPhrase(e.target.value)} placeholder="word1 word2 word3..." className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 px-10 text-white text-lg font-mono h-48 focus:ring-2 focus:ring-emerald-500/40 outline-none resize-none" />
+                        </div>
+                      )}
+                      <button type="submit" disabled={loading} className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] flex items-center justify-center gap-4 shadow-3xl active:scale-95">
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                        {loading ? "Searching Registry..." : "Find My Node"}
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  <div className="space-y-8 text-center animate-in zoom-in duration-500">
+                    <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-3xl scale-110">
+                      <CheckCircle2 className="w-12 h-12 text-white" />
+                    </div>
+                    <div className="p-10 bg-black/60 border border-white/10 rounded-[48px] relative group overflow-hidden shadow-inner">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-4">ESIN Signature</p>
+                       <p className="text-2xl font-mono font-black text-emerald-400 tracking-tight">{recoveredESIN}</p>
+                    </div>
+                    <button onClick={handleCopyESIN} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-3xl">
+                       <Copy className="w-5 h-5" /> Copy & Return to Login
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mode === 'success' && generatedUser && (
+              <div className="space-y-12 animate-in zoom-in duration-700 text-center py-6">
+                <div className="flex flex-col items-center">
+                  <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-8 shadow-3xl scale-110 relative">
+                    <CheckCircle2 className="w-12 h-12 text-white" />
+                    <div className="absolute inset-0 border-4 border-emerald-400 rounded-full animate-ping opacity-20"></div>
+                  </div>
+                  <h2 className="text-4xl font-black text-white uppercase tracking-tight italic leading-none">Identity Secure</h2>
+                  <p className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.6em] mt-2">EnvirosAgro™ Cloud Sync Complete</p>
+                </div>
+                <div className="transform scale-90 md:scale-100">
+                  <IdentityCard user={generatedUser} />
+                </div>
+                <button onClick={() => onLogin(generatedUser)} className="w-full max-w-md py-8 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all">
+                  Initialize Command Center
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 12s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  );
+};
+
+export default Login;
