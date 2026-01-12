@@ -161,8 +161,30 @@ const App: React.FC = () => {
   };
 
   const spendEAC = (amount: number, reason: string) => {
-    if (!user || user.wallet.balance < amount) return false;
-    handleUpdateUser({ ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } });
+    if (!user) return false;
+    const totalAvailable = user.wallet.balance + user.wallet.bonusBalance;
+    if (totalAvailable < amount) return false;
+
+    let newBonus = user.wallet.bonusBalance;
+    let newBalance = user.wallet.balance;
+
+    // Prioritize spending bonusBalance (non-withdrawable) first
+    if (newBonus >= amount) {
+      newBonus -= amount;
+    } else {
+      const remaining = amount - newBonus;
+      newBonus = 0;
+      newBalance -= remaining;
+    }
+
+    handleUpdateUser({ 
+      ...user, 
+      wallet: { 
+        ...user.wallet, 
+        balance: newBalance,
+        bonusBalance: newBonus 
+      } 
+    });
     return true;
   };
 
@@ -354,7 +376,7 @@ const App: React.FC = () => {
           <div className="hidden xl:flex items-center gap-12 px-8 border-x border-white/5 h-full">
             <div className="text-center group cursor-pointer" onClick={() => handleNavigate('wallet')}>
               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">EAC Utility</p>
-              <p className="text-2xl font-mono font-black text-emerald-400 group-hover:scale-105 transition-transform">{user.wallet.balance.toFixed(0)}</p>
+              <p className="text-2xl font-mono font-black text-emerald-400 group-hover:scale-105 transition-transform">{(user.wallet.balance + user.wallet.bonusBalance).toFixed(0)}</p>
             </div>
             <div className="text-center group cursor-pointer" onClick={() => handleNavigate('wallet')}>
               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">EAT Equity</p>

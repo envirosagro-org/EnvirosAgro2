@@ -50,26 +50,33 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
     setIsConnecting(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+      
+      // Hardened initialization to prevent Illegal Constructor errors
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) throw new Error("AudioContext not supported");
+      
+      outputAudioContextRef.current = new AudioContextClass({ sampleRate: 24000 });
+      inputAudioContextRef.current = new AudioContextClass({ sampleRate: 16000 });
       
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
       const sessionPromise = ai.live.connect({
-        // Updated to gemini-2.5-flash-native-audio-preview-12-2025 as per GenAI guidelines
         model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         callbacks: {
           onopen: () => {
-            const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
-            const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
+            if (!inputAudioContextRef.current) return;
+            const source = inputAudioContextRef.current.createMediaStreamSource(stream);
+            const scriptProcessor = inputAudioContextRef.current.createScriptProcessor(4096, 1, 1);
             scriptProcessor.onaudioprocess = (e) => {
               const inputData = e.inputBuffer.getChannelData(0);
               const pcmBlob = createAudioBlob(inputData);
-              sessionPromise.then((session) => { session.sendRealtimeInput({ media: pcmBlob }); });
+              sessionPromise.then((session) => { 
+                if (session) session.sendRealtimeInput({ media: pcmBlob }); 
+              });
             };
             source.connect(scriptProcessor);
-            scriptProcessor.connect(inputAudioContextRef.current!.destination);
+            scriptProcessor.connect(inputAudioContextRef.current.destination);
             setIsActive(true);
             setIsConnecting(false);
           },
@@ -99,6 +106,7 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
       });
       sessionRef.current = await sessionPromise;
     } catch (err) {
+      console.error("Voice Bridge Sync Failed:", err);
       setIsConnecting(false);
     }
   };
@@ -151,7 +159,7 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
                  <Mic className="w-8 h-8 text-slate-700" />
               </div>
               <p className="text-slate-500 text-xs font-medium">Initialize a low-latency voice link to the oracle.</p>
-              <button onClick={startSession} className="w-full py-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl">
+              <button onClick={startSession} className="w-full py-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl active:scale-95">
                  Initialize Link
               </button>
             </div>

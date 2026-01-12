@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   PawPrint, 
@@ -54,7 +53,12 @@ import {
   CheckCircle2,
   ArrowRight,
   Users,
-  Coins
+  Coins,
+  Ticket,
+  HardHat,
+  Shield,
+  SearchCode,
+  FileSignature
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 import { runSpecialistDiagnostic } from '../services/geminiService';
@@ -98,14 +102,25 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
   const [showMappingModal, setShowMappingModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showTrendingModal, setShowTrendingModal] = useState(false);
+  const [showRegisterTourModal, setShowRegisterTourModal] = useState(false);
   const [selectedWildlife, setSelectedWildlife] = useState<any | null>(null);
 
-  // Discovery/Mapping Process States
+  // Discovery/Mapping/Tour Registration States
   const [discoveryStep, setDiscoveryStep] = useState<'upload' | 'analysis' | 'success'>('upload');
   const [mappingStep, setMappingStep] = useState<'scan' | 'sync' | 'success'>('scan');
+  const [tourStep, setTourStep] = useState<'form' | 'system_audit' | 'physical_dispatch' | 'success'>('form');
+  
   const [discoveryResult, setDiscoveryResult] = useState<string | null>(null);
+  const [tourAuditReport, setTourAuditReport] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+
+  // New Tour Form State
+  const [tourTitle, setTourTitle] = useState('');
+  const [tourCategory, setTourCategory] = useState('Safari');
+  const [tourLocation, setTourLocation] = useState(user.location);
+  const [tourCost, setTourCost] = useState('100');
+  const [tourDesc, setTourDesc] = useState('');
 
   const stats = [
     { label: 'Species Tracked', val: '1,284', icon: PawPrint, col: 'text-amber-500' },
@@ -128,6 +143,43 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleRegisterTour = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tourTitle.trim() || !tourDesc.trim()) return;
+
+    setTourStep('system_audit');
+    setIsAnalyzing(true);
+
+    try {
+      const prompt = `Act as an Agrowild Tourism Compliance Auditor. Review this proposed tour: 
+      Title: ${tourTitle}
+      Category: ${tourCategory}
+      Location: ${tourLocation}
+      Description: ${tourDesc}
+      Cost: ${tourCost} EAC
+      
+      Analyze its environmental impact on local biodiversity and alignment with the Five Thrusts (SEHTI). Provide a technical audit summary (1-2 paragraphs).`;
+      
+      const res = await runSpecialistDiagnostic("Tourism Node Audit", prompt);
+      setTourAuditReport(res.text);
+      setIsAnalyzing(false);
+    } catch (err) {
+      alert("System Verification Error.");
+      setTourStep('form');
+      setIsAnalyzing(false);
+    }
+  };
+
+  const advanceToPhysicalAudit = () => {
+    if (onSpendEAC(50, 'TOUR_REGISTRATION_AUDIT_FEE')) {
+      setTourStep('physical_dispatch');
+    }
+  };
+
+  const finalizeTourRegistry = () => {
+    setTourStep('success');
   };
 
   const handleMappingPulse = () => {
@@ -191,10 +243,10 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                   <PlusCircle className="w-5 h-5" /> Discover New Plant Shard
                 </button>
                 <button 
-                  onClick={() => setActiveTab('tourism')}
+                  onClick={() => { setShowRegisterTourModal(true); setTourStep('form'); }}
                   className="px-8 py-4 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
                 >
-                  <Binoculars className="w-5 h-5 text-emerald-400" /> Book Nature Walk
+                  <Binoculars className="w-5 h-5 text-emerald-400" /> Register Tour Node
                 </button>
               </div>
            </div>
@@ -309,6 +361,12 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Wild Life <span className="text-emerald-400">Tourism Hub</span></h3>
                    <p className="text-slate-500 text-sm mt-1">Verified eco-experiences and nature walks within protected regional zones.</p>
                 </div>
+                <button 
+                  onClick={() => { setShowRegisterTourModal(true); setTourStep('form'); }}
+                  className="px-8 py-3 bg-emerald-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+                >
+                   <PlusCircle className="w-4 h-4" /> Register Tour Node
+                </button>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -497,6 +555,196 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
 
       {/* --- MODALS --- */}
 
+      {/* 5. Register Tour Modal (NEW) */}
+      {showRegisterTourModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterTourModal(false)}></div>
+          <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2">
+             <div className="p-16 space-y-12 min-h-[700px] flex flex-col">
+                <button onClick={() => setShowRegisterTourModal(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
+                
+                {/* Progress Terminal */}
+                <div className="flex gap-4 mb-4">
+                    {[
+                      { l: 'Metadata Ingest', s: 'form' },
+                      { l: 'System Audit', s: 'system_audit' },
+                      { l: 'Physical Eval', s: 'physical_dispatch' },
+                      { l: 'Registry Final', s: 'success' },
+                    ].map((step, i) => {
+                       const stages = ['form', 'system_audit', 'physical_dispatch', 'success'];
+                       const currentIdx = stages.indexOf(tourStep);
+                       const isActive = i === currentIdx;
+                       const isDone = i < currentIdx;
+                       return (
+                         <div key={step.s} className="flex-1 flex flex-col gap-2">
+                           <div className={`h-2 rounded-full transition-all duration-700 ${isDone ? 'bg-emerald-500' : isActive ? 'bg-emerald-400 animate-pulse' : 'bg-white/10'}`}></div>
+                           <span className={`text-[7px] font-black uppercase text-center tracking-widest ${isActive ? 'text-emerald-400' : 'text-slate-700'}`}>{step.l}</span>
+                         </div>
+                       );
+                    })}
+                </div>
+
+                {tourStep === 'form' && (
+                  <form onSubmit={handleRegisterTour} className="space-y-8 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                    <div className="text-center space-y-4">
+                       <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto border border-emerald-500/20">
+                          <Ticket className="w-10 h-10 text-emerald-400" />
+                       </div>
+                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Register <span className="text-emerald-400">Tour Node</span></h3>
+                       <p className="text-slate-400 text-sm">Define your ecological experience for the global registry.</p>
+                    </div>
+
+                    <div className="space-y-6">
+                       <div className="space-y-2">
+                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Experience Title</label>
+                          <input type="text" required value={tourTitle} onChange={e => setTourTitle(e.target.value)} placeholder="e.g. Spectral Night Safari" className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all placeholder:text-slate-800" />
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Category</label>
+                             <select value={tourCategory} onChange={e => setTourCategory(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                <option>Safari</option>
+                                <option>Nature Walk</option>
+                                <option>Heritage Discovery</option>
+                                <option>Birding Shard</option>
+                             </select>
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Bounty (EAC)</label>
+                             <input type="number" required value={tourCost} onChange={e => setTourCost(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-mono text-xl focus:ring-2 focus:ring-emerald-500/20 outline-none" />
+                          </div>
+                       </div>
+
+                       <div className="space-y-2">
+                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Ecological Narrative</label>
+                          <textarea required value={tourDesc} onChange={e => setTourDesc(e.target.value)} placeholder="Describe the impact and journey..." className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm h-32 resize-none outline-none focus:ring-2 focus:ring-emerald-500/20 placeholder:text-slate-800 italic" />
+                       </div>
+                    </div>
+
+                    <button type="submit" className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
+                       Initialize System Audit <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </form>
+                )}
+
+                {tourStep === 'system_audit' && (
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 text-center animate-in zoom-in duration-500">
+                    {isAnalyzing ? (
+                       <>
+                          <div className="relative">
+                             <div className="absolute inset-[-15px] border-t-4 border-emerald-500 rounded-full animate-spin"></div>
+                             <div className="w-32 h-32 rounded-full bg-emerald-500/10 flex items-center justify-center shadow-2xl">
+                                <Bot className="w-12 h-12 text-emerald-400 animate-pulse" />
+                             </div>
+                          </div>
+                          <div className="space-y-4">
+                             <p className="text-emerald-400 font-black text-xl uppercase tracking-[0.5em] animate-pulse italic">System Verification...</p>
+                             <p className="text-slate-600 font-mono text-[10px]">EOS_TOUR_COMPLIANCE_v3.2 // CHECKING_SEHTI_THRUSTS</p>
+                          </div>
+                       </>
+                    ) : (
+                       <div className="space-y-10 w-full animate-in fade-in duration-700">
+                          <div className="p-8 bg-black/60 rounded-[48px] border-l-4 border-emerald-500 shadow-3xl text-left relative overflow-hidden group">
+                             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><SearchCode size={120} /></div>
+                             <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/5">
+                                <Sparkles className="w-6 h-6 text-emerald-400" />
+                                <h4 className="text-xl font-black text-white uppercase italic">Audit Verdict</h4>
+                             </div>
+                             <div className="prose prose-invert max-w-none text-slate-300 text-lg italic leading-relaxed whitespace-pre-line border-l-2 border-white/5 pl-8">
+                                {tourAuditReport}
+                             </div>
+                          </div>
+                          <div className="flex flex-col gap-4">
+                            <button onClick={advanceToPhysicalAudit} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all">
+                               Proceed to Physical Verification (50 EAC)
+                            </button>
+                            <button onClick={() => setTourStep('form')} className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white">Adjust Metadata Shard</button>
+                          </div>
+                       </div>
+                    )}
+                  </div>
+                )}
+
+                {tourStep === 'physical_dispatch' && (
+                  <div className="flex-1 flex flex-col animate-in slide-in-from-right-6 duration-500 h-full justify-center space-y-12">
+                    <div className="text-center space-y-6">
+                       <div className="w-32 h-32 bg-amber-500/10 rounded-[40px] flex items-center justify-center mx-auto border border-amber-500/20 shadow-2xl relative">
+                          <HardHat className="w-16 h-16 text-amber-500 animate-bounce" />
+                          <div className="absolute inset-0 border-4 border-amber-500/20 rounded-[40px] animate-ping opacity-40"></div>
+                       </div>
+                       <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-amber-500">Validation</span></h3>
+                       <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto leading-relaxed">
+                          "Metadata verified. EnvirosAgro Field Stewards have been dispatched to ${tourLocation} to certify the tour route and safety nodes."
+                       </p>
+                    </div>
+
+                    <div className="p-8 bg-black/60 rounded-[48px] border border-white/5 space-y-6 shadow-inner">
+                       <div className="flex items-center gap-4">
+                          <div className="p-3 bg-white/5 rounded-2xl">
+                             <Calendar className="w-6 h-6 text-slate-400" />
+                          </div>
+                          <div>
+                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Audit Window</p>
+                             <p className="text-sm font-bold text-white uppercase font-mono tracking-widest">48 - 72 Standard Hours</p>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <div className="p-3 bg-white/5 rounded-2xl">
+                             <MapPin className="w-6 h-6 text-slate-400" />
+                          </div>
+                          <div>
+                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Verification Node</p>
+                             <p className="text-sm font-bold text-white uppercase font-mono tracking-widest">{tourLocation.toUpperCase()}</p>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex items-center gap-6">
+                       <ShieldAlert className="w-8 h-8 text-blue-500 shrink-0" />
+                       <p className="text-[10px] text-blue-200/50 font-bold uppercase tracking-widest leading-relaxed">
+                          PROVISIONAL_MINT: Experience node will be listed in the 'Awaiting Audit' registry. Commercial trade requires final physical signature.
+                       </p>
+                    </div>
+
+                    <button 
+                      onClick={finalizeTourRegistry}
+                      className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4"
+                    >
+                       <Database className="w-6 h-6" /> Commit Provisional Shard
+                    </button>
+                  </div>
+                )}
+
+                {tourStep === 'success' && (
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
+                    <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
+                       <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
+                       <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+                    </div>
+                    <div className="space-y-4 text-center">
+                       <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Experience <span className="text-emerald-400">Anchored</span></h3>
+                       <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Audit Ticket: #TOUR-{(Math.random()*10000).toFixed(0)} committed.</p>
+                    </div>
+                    <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-6 text-left relative overflow-hidden shadow-xl">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform"><Database className="w-40 h-40 text-emerald-400" /></div>
+                       <div className="flex justify-between items-center text-xs relative z-10">
+                          <span className="text-slate-500 font-black uppercase tracking-widest">Shard Registry ID</span>
+                          <span className="text-white font-mono font-black text-2xl text-emerald-400">0x772_TOUR_PROV</span>
+                       </div>
+                       <div className="flex justify-between items-center text-xs relative z-10 pt-4 border-t border-white/10">
+                          <span className="text-slate-500 font-black uppercase tracking-widest">Steward Reputation</span>
+                          <span className="text-blue-400 font-mono font-black text-2xl">+50 PTS</span>
+                       </div>
+                    </div>
+                    <button onClick={() => setShowRegisterTourModal(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Tourism Hub</button>
+                  </div>
+                )}
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Mapping Modal */}
       {showMappingModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
@@ -565,7 +813,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
       {showArchiveModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowArchiveModal(false)}></div>
-           <div className="relative z-10 w-full max-w-5xl h-[85vh] glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
+           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
               <div className="p-12 border-b border-white/5 bg-emerald-500/[0.02] flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-6">
                     <div className="w-16 h-16 bg-emerald-600 rounded-[28px] flex items-center justify-center shadow-2xl">
@@ -841,11 +1089,11 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
             </div>
             <div className="space-y-4">
                <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">AgroInPDF <span className="text-amber-500">Patent Vault</span></h4>
-               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Research shards with &gt; 90% Community Consensus graduate into official Industrial Inventions.</p>
+               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-md:text-sm max-w-md">Research shards with &gt; 90% Community Consensus graduate into official Industrial Inventions.</p>
             </div>
          </div>
          <div className="text-right relative z-10 shrink-0">
-            <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em]">TOTAL REGISTERED</p>
+            <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em] px-2 border-b border-white/10 pb-4">TOTAL_REGISTERED</p>
             <p className="text-7xl font-mono font-black text-white tracking-tighter">14</p>
          </div>
       </div>

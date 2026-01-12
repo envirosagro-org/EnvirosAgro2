@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, MapPin, Gavel, ShieldCheck, X, Zap, ChevronRight, Loader2, Users2, Users, RefreshCcw, Briefcase, Layers, Database, PlusCircle, Rocket, ArrowLeft, BarChart3, MessageSquare, Video, Mic, Calendar, Target, Heart, Volume2, Plus, Send, Leaf, Dna, Landmark, Sparkles, Cpu, Monitor, Activity, Bookmark, Share2, Trophy, History, TrendingUp, Globe, Star, Clock, UserCheck, Mail, FileText, BadgeAlert, BadgeCheck, Coins, Hammer, GanttChartSquare, Network, ArrowUpRight, TrendingDown, PieChart as PieChartIcon, HardHat, Factory, Boxes, ShieldAlert, ClipboardCheck, ChevronLeft, ArrowRight, Warehouse, Fingerprint, Link2, Shield, Gauge, Satellite, Radio, Signal, CirclePlay, Maximize, ArrowDownUp, LayoutGrid, HeartPulse, Brain, Waves, LineChart as LucideLineChart, Handshake, FileCode, Lock, Eye, Key, CheckCircle2, Bot, Download, Building2, Paperclip, Flame, Image as ImageIcon, Upload, UserPlus, Podcast, FileUp, BadgeDollarSign, Stamp, FileSignature, FileBadge, AlertTriangle, PlaneTakeoff, Terminal, Trello,
+  Search, MapPin, Gavel, ShieldCheck, X, Zap, ChevronRight, Loader2, Users2, Users, RefreshCcw, Briefcase, Layers, Database, PlusCircle, Rocket, ArrowLeft, BarChart3, MessageSquare, Video, Mic, Calendar, Target, Heart, Volume2, Plus, Send, Leaf, Dna, Landmark, Sparkles, Cpu, Monitor, Activity, Bookmark, Share2, Trophy, History, TrendingUp, Globe, Star, Clock, UserCheck, Mail, FileText, BadgeAlert, BadgeCheck, Coins, Hammer, GanttChartSquare, Network, ArrowUpRight, TrendingDown, PieChart as PieChartIcon, HardHat, Factory, Boxes, ShieldAlert, ClipboardCheck, ChevronLeft, ArrowRight, Warehouse, Fingerprint, Link2, Shield, Gauge, Satellite, Radio, Signal, CirclePlay, Maximize, ArrowDownUp, LayoutGrid, HeartPulse, Brain, Waves, LineChart as LucideLineChart, Handshake, FileCode, Lock, Eye, Key, CheckCircle2, Bot, Download, Building2, Paperclip, Flame, ImageIcon, Upload, UserPlus, Podcast, FileUp, BadgeDollarSign, Stamp, FileSignature, FileBadge, AlertTriangle, PlaneTakeoff, Terminal, Trello,
   Microscope,
   UserCheck2,
   LockKeyhole,
@@ -13,7 +12,14 @@ import {
   BarChart4,
   GraduationCap,
   Info,
-  Smartphone
+  Smartphone,
+  Settings,
+  ShieldX,
+  Trash2,
+  EyeOff,
+  UserMinus,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell, PieChart, Pie
@@ -68,6 +74,7 @@ const Industrial: React.FC<IndustrialProps> = ({
   const [activeView, setActiveView] = useState<'registry' | 'talent' | 'collectives' | 'missions' | 'analytics'>('analytics');
   
   const [selectedCollectiveId, setSelectedCollectiveId] = useState<string | null>(null);
+  const [internalColTab, setInternalColTab] = useState<'stream' | 'members' | 'settings'>('stream');
   const currentCollective = collectives.find(c => c.id === selectedCollectiveId);
   
   const [invitingToColId, setInvitingToColId] = useState<string | null>(null);
@@ -197,6 +204,8 @@ const Industrial: React.FC<IndustrialProps> = ({
         objectives: ['Initialize Shard Objectives'],
         signals: [],
         materials: [],
+        recruitmentActive: true,
+        publicVisible: true,
         missionCampaign: {
           active: false,
           title: '',
@@ -211,6 +220,25 @@ const Industrial: React.FC<IndustrialProps> = ({
       onSpendEAC(200, 'COLLECTIVE_REGISTRATION');
       alert(`GROUP FORMED: ${newColName} node created. Awaiting physical verification of regional resources in ${newColRegion}.`);
     }, 2000);
+  };
+
+  const handleUpdateCollective = (updates: any) => {
+    if (!selectedCollectiveId) return;
+    setCollectives(prev => prev.map(c => c.id === selectedCollectiveId ? { ...c, ...updates } : c));
+  };
+
+  const handleDecommissionCollective = () => {
+    if (!selectedCollectiveId) return;
+    const confirmDelete = confirm("CRITICAL_ACTION: You are about to decommissioning this social shard. All internal EAC pools will be returned to members and the node will be detached from the registry. Proceed?");
+    if (confirmDelete) {
+      setIsProcessing(true);
+      setTimeout(() => {
+        setCollectives(prev => prev.filter(c => c.id !== selectedCollectiveId));
+        setSelectedCollectiveId(null);
+        setIsProcessing(false);
+        alert("SHARD DECOMMISSIONED: Node hash removed from live registry.");
+      }, 2000);
+    }
   };
 
   const handleRegisterIndustry = () => {
@@ -700,7 +728,7 @@ const Industrial: React.FC<IndustrialProps> = ({
            <div className="animate-in fade-in duration-700">
               {selectedCollectiveId && currentCollective ? (
                 <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                   <div className="flex items-center justify-between border-b border-white/5 pb-8">
+                   <div className="flex flex-col md:flex-row items-center justify-between border-b border-white/5 pb-8 gap-6">
                       <div className="flex items-center gap-4">
                          <button onClick={() => setSelectedCollectiveId(null)} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all group/back">
                              <ChevronLeft className="w-6 h-6 group-hover/back:-translate-x-1 transition-transform" />
@@ -715,113 +743,269 @@ const Industrial: React.FC<IndustrialProps> = ({
                              </div>
                          </div>
                       </div>
+
+                      {/* Internal Tabs */}
+                      <div className="flex p-1 bg-black/40 border border-white/5 rounded-2xl gap-2">
+                         {[
+                           { id: 'stream', label: 'Stream', icon: MessageSquare },
+                           { id: 'members', label: 'Nodes', icon: Users },
+                           { id: 'settings', label: 'Shard Settings', icon: Settings },
+                         ].map(t => (
+                           <button 
+                             key={t.id}
+                             onClick={() => setInternalColTab(t.id as any)}
+                             className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${internalColTab === t.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                           >
+                             <t.icon size={14} /> {t.label}
+                           </button>
+                         ))}
+                      </div>
                    </div>
 
-                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                      <div className="lg:col-span-8 space-y-8">
-                         <div className="glass-card p-10 rounded-[56px] border-white/5 bg-black/40 h-[650px] flex flex-col shadow-2xl overflow-hidden relative">
-                            <div className="absolute inset-0 opacity-[0.01] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]"></div>
-                            <div className="flex justify-between items-center mb-10 px-4 relative z-10">
-                                 <h4 className="text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-3">
-                                     <MessageSquare className="w-5 h-5 text-emerald-400 animate-pulse" /> Shard <span className="text-emerald-400">Stream</span>
-                                 </h4>
-                                 <div className="flex gap-4">
-                                     <button className="p-2.5 bg-white/5 rounded-xl text-slate-500 hover:text-rose-400 transition-all"><Video className="w-5 h-5" /></button>
-                                     <button className="p-2.5 bg-white/5 rounded-xl text-slate-500 hover:text-indigo-400 transition-all"><Podcast className="w-5 h-5" /></button>
-                                 </div>
-                            </div>
-                            <div className="flex-1 space-y-6 overflow-y-auto custom-scrollbar p-4 relative z-10">
-                                 {currentCollective.signals?.map((sig: any, i: number) => (
-                                     <div key={i} className={`flex gap-6 group ${sig.from === user.name ? 'flex-row-reverse' : ''}`}>
-                                         <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 border border-white/5 shadow-xl">
-                                             <span className="text-xs font-black text-emerald-500">{sig.from[0]}</span>
-                                         </div>
-                                         <div className={`p-6 glass-card rounded-[28px] border-white/5 bg-white/[0.02] max-w-[70%] relative overflow-hidden group-hover:bg-emerald-500/5 transition-colors ${sig.from === user.name ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
-                                             <div className="flex justify-between items-center gap-6 mb-2">
-                                                 <p className="text-[10px] text-slate-500 font-black uppercase">{sig.from}</p>
-                                                 <p className="text-[8px] text-slate-700 font-mono">{sig.timestamp}</p>
-                                             </div>
-                                             <p className="text-slate-300 text-sm italic font-medium leading-relaxed">"{sig.text}"</p>
-                                         </div>
-                                     </div>
-                                 )) || <p className="text-center text-slate-600 py-20 italic">No signals in current shard.</p>}
-                            </div>
-                            <div className="p-8 border-t border-white/5 relative z-10 flex gap-4">
-                                 <button className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all"><Paperclip className="w-6 h-6" /></button>
-                                 <div className="relative flex-1 group">
-                                     <input 
-                                         type="text" 
-                                         value={chatMessage}
-                                         onChange={e => setChatMessage(e.target.value)}
-                                         onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-                                         placeholder="Broadcast signal to members..." 
-                                         className="w-full bg-black/60 border border-white/10 rounded-full py-6 pl-10 pr-20 text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all placeholder:text-slate-800 font-bold italic" 
-                                     />
-                                     <button onClick={handleSendMessage} className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-emerald-600 rounded-full text-white shadow-xl hover:scale-110 active:scale-95 transition-all">
-                                         <Send className="w-5 h-5" />
-                                     </button>
-                                 </div>
-                            </div>
-                         </div>
-                      </div>
-
-                      <div className="lg:col-span-4 space-y-8">
-                         <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-2xl">
-                            <div className="space-y-6 pt-2">
-                                 <div className="flex justify-between items-center mb-6">
-                                    <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2"><Users className="w-4 h-4" /> Member Registry</h5>
-                                    {(currentCollective.adminEsin === user.esin) && (
-                                       <button 
-                                          onClick={() => { setInvitingToColId(currentCollective.id); setActiveView('talent'); }}
-                                          className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-lg"
-                                          title="Add member from Worker Cloud"
-                                       >
-                                          <UserPlus className="w-4 h-4" />
+                   {internalColTab === 'stream' && (
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                        <div className="lg:col-span-8 space-y-8">
+                           <div className="glass-card p-10 rounded-[56px] border-white/5 bg-black/40 h-[650px] flex flex-col shadow-2xl overflow-hidden relative">
+                              <div className="absolute inset-0 opacity-[0.01] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]"></div>
+                              <div className="flex justify-between items-center mb-10 px-4 relative z-10">
+                                   <h4 className="text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-3">
+                                       <MessageSquare className="w-5 h-5 text-emerald-400 animate-pulse" /> Shard <span className="text-emerald-400">Stream</span>
+                                   </h4>
+                                   <div className="flex gap-4">
+                                       <button className="p-2.5 bg-white/5 rounded-xl text-slate-500 hover:text-rose-400 transition-all"><Video className="w-5 h-5" /></button>
+                                       <button className="p-2.5 bg-white/5 rounded-xl text-slate-500 hover:text-indigo-400 transition-all"><Podcast className="w-5 h-5" /></button>
+                                   </div>
+                              </div>
+                              <div className="flex-1 space-y-6 overflow-y-auto custom-scrollbar p-4 relative z-10">
+                                   {currentCollective.signals?.map((sig: any, i: number) => (
+                                       <div key={i} className={`flex gap-6 group ${sig.from === user.name ? 'flex-row-reverse' : ''}`}>
+                                           <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 border border-white/5 shadow-xl">
+                                               <span className="text-xs font-black text-emerald-500">{sig.from[0]}</span>
+                                           </div>
+                                           <div className={`p-6 glass-card rounded-[28px] border-white/5 bg-white/[0.02] max-w-[70%] relative overflow-hidden group-hover:bg-emerald-500/5 transition-colors ${sig.from === user.name ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
+                                               <div className="flex justify-between items-center gap-6 mb-2">
+                                                   <p className="text-[10px] text-slate-500 font-black uppercase">{sig.from}</p>
+                                                   <p className="text-[8px] text-slate-700 font-mono">{sig.timestamp}</p>
+                                               </div>
+                                               <p className="text-slate-300 text-sm italic font-medium leading-relaxed">"{sig.text}"</p>
+                                           </div>
+                                       </div>
+                                   )) || <p className="text-center text-slate-600 py-20 italic">No signals in current shard.</p>}
+                              </div>
+                              <div className="p-8 border-t border-white/5 relative z-10 flex gap-4">
+                                   <button className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all"><Paperclip className="w-6 h-6" /></button>
+                                   <div className="relative flex-1 group">
+                                       <input 
+                                           type="text" 
+                                           value={chatMessage}
+                                           onChange={e => setChatMessage(e.target.value)}
+                                           onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                                           placeholder="Broadcast signal to members..." 
+                                           className="w-full bg-black/60 border border-white/10 rounded-full py-6 pl-10 pr-20 text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all placeholder:text-slate-800 font-bold italic" 
+                                       />
+                                       <button onClick={handleSendMessage} className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-emerald-600 rounded-full text-white shadow-xl hover:scale-110 active:scale-95 transition-all">
+                                           <Send className="w-5 h-5" />
                                        </button>
-                                    )}
-                                 </div>
-                                 <div className="space-y-4">
-                                     {currentCollective.members?.map((m: any) => (
-                                         <div key={m.id} className="flex items-center justify-between group">
-                                             <div className="flex items-center gap-3">
-                                                 <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-indigo-400 border border-white/5">{m.name[0]}</div>
-                                                 <div>
-                                                     <p className="text-xs font-bold text-white uppercase">{m.name}</p>
-                                                     <p className="text-[8px] text-slate-600 font-mono">NODE_VERIFIED</p>
-                                                 </div>
-                                             </div>
-                                             <div className="flex items-center gap-1 text-amber-500">
-                                                <Star className="w-2.5 h-2.5 fill-current" />
-                                                <span className="text-[9px] font-mono font-black">{m.sustainabilityRating}%</span>
-                                             </div>
-                                         </div>
-                                     )) || <p className="text-center text-slate-700 italic py-4">No contracted members.</p>}
-                                 </div>
-                            </div>
+                                   </div>
+                              </div>
+                           </div>
+                        </div>
 
-                            <div className="space-y-6 pt-10 border-t border-white/10">
-                               <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2"><Target className="w-4 h-4" /> Shard Objectives</h5>
-                               <div className="space-y-3">
-                                  {currentCollective.objectives?.map((o: string) => (
-                                    <div key={o} className="flex items-center gap-4 p-4 bg-black/40 rounded-2xl border border-white/5 group hover:border-emerald-500/40 transition-colors">
-                                       <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform shadow-[0_0_10px_#10b981]"></div>
-                                       <span className="text-xs font-bold text-slate-400 uppercase group-hover:text-white transition-colors">{o}</span>
-                                    </div>
-                                  )) || <p className="text-xs text-slate-700 italic">No objectives set.</p>}
+                        <div className="lg:col-span-4 space-y-8">
+                           <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-2xl">
+                              <div className="space-y-6 pt-10 border-t border-white/10">
+                                 <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2"><Target className="w-4 h-4" /> Shard Objectives</h5>
+                                 <div className="space-y-3">
+                                    {currentCollective.objectives?.map((o: string) => (
+                                      <div key={o} className="flex items-center gap-4 p-4 bg-black/40 rounded-2xl border border-white/5 group hover:border-emerald-500/40 transition-colors">
+                                         <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform shadow-[0_0_10px_#10b981]"></div>
+                                         <span className="text-xs font-bold text-slate-400 uppercase group-hover:text-white transition-colors">{o}</span>
+                                      </div>
+                                    )) || <p className="text-xs text-slate-700 italic">No objectives set.</p>}
+                                 </div>
+                              </div>
+
+                              {currentCollective.adminEsin === user.esin && !currentCollective.missionCampaign?.active && (
+                                <button 
+                                 onClick={() => { setSelectedColForMission(currentCollective.id); setMissionName(''); setMissionGoal('50000'); setShowRegisterMission(true); }}
+                                 className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl flex items-center justify-center gap-3 active:scale-95"
+                                >
+                                   <Rocket className="w-5 h-5" /> Launch Group Mission
+                                </button>
+                              )}
+                           </div>
+                        </div>
+                      </div>
+                   )}
+
+                   {internalColTab === 'members' && (
+                      <div className="animate-in fade-in duration-500 space-y-10">
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {currentCollective.members?.map((m: any) => (
+                               <div key={m.id} className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/40 hover:border-emerald-500/20 transition-all group flex flex-col items-center text-center">
+                                  <div className="w-20 h-20 rounded-[32px] bg-white/5 border border-white/10 flex items-center justify-center text-2xl font-black text-indigo-400 mb-6 group-hover:rotate-6 transition-transform">
+                                     {m.name[0]}
+                                  </div>
+                                  <h4 className="text-xl font-black text-white uppercase italic leading-none m-0">{m.name}</h4>
+                                  <p className="text-[10px] text-slate-500 font-mono mt-2 tracking-widest uppercase">{m.id === currentCollective.adminEsin ? 'SHARD_ADMIN' : 'NODE_MEMBER'}</p>
+                                  
+                                  <div className="grid grid-cols-2 gap-4 w-full mt-8 pt-6 border-t border-white/5">
+                                     <div>
+                                        <p className="text-[8px] text-slate-600 font-black uppercase">U-Score</p>
+                                        <p className="text-sm font-mono font-black text-emerald-400">{m.sustainabilityRating}%</p>
+                                     </div>
+                                     <div>
+                                        <p className="text-[8px] text-slate-600 font-black uppercase">Reputation</p>
+                                        <p className="text-sm font-mono font-black text-white">A+</p>
+                                     </div>
+                                  </div>
                                </div>
-                            </div>
-
-                            {currentCollective.adminEsin === user.esin && !currentCollective.missionCampaign?.active && (
-                              <button 
-                               onClick={() => { setSelectedColForMission(currentCollective.id); setMissionName(''); setMissionGoal('50000'); setShowRegisterMission(true); }}
-                               className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl flex items-center justify-center gap-3 active:scale-95"
-                              >
-                                 <Rocket className="w-5 h-5" /> Launch Group Mission
-                              </button>
+                            ))}
+                            {currentCollective.adminEsin === user.esin && (
+                               <button 
+                                 onClick={() => { setInvitingToColId(currentCollective.id); setActiveView('talent'); }}
+                                 className="glass-card p-8 rounded-[40px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-center space-y-6 hover:border-emerald-500/40 transition-all group active:scale-95 min-h-[300px]"
+                               >
+                                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-emerald-500/10 transition-colors shadow-2xl">
+                                     <UserPlus className="w-8 h-8 text-slate-700 group-hover:text-emerald-400" />
+                                  </div>
+                                  <div className="space-y-2">
+                                     <h4 className="text-xl font-black text-white uppercase tracking-tighter italic">Recruit Nodes</h4>
+                                     <p className="text-slate-500 text-xs italic max-w-xs mx-auto">Browse the worker cloud to expand your social shard.</p>
+                                  </div>
+                               </button>
                             )}
                          </div>
                       </div>
-                   </div>
+                   )}
+
+                   {internalColTab === 'settings' && (
+                      <div className="animate-in fade-in duration-500 max-w-4xl mx-auto space-y-10">
+                         {currentCollective.adminEsin !== user.esin ? (
+                            <div className="glass-card p-16 rounded-[64px] border-amber-500/20 bg-amber-500/5 text-center space-y-8 shadow-2xl">
+                               <div className="w-20 h-20 bg-amber-500/10 rounded-3xl flex items-center justify-center mx-auto border border-amber-500/20">
+                                  <LockKeyhole size={32} className="text-amber-500" />
+                               </div>
+                               <div className="space-y-4">
+                                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Admin <span className="text-amber-500">Node Lock</span></h3>
+                                  <p className="text-slate-400 text-lg leading-relaxed italic max-w-md mx-auto">"Registered shard settings are only accessible by the originating administrator ESIN node."</p>
+                               </div>
+                            </div>
+                         ) : (
+                            <div className="space-y-10">
+                               <div className="glass-card p-10 md:p-14 rounded-[56px] border-white/5 bg-black/40 space-y-12 shadow-3xl">
+                                  <div className="flex items-center gap-6 border-b border-white/5 pb-8 mb-4">
+                                     <div className="p-4 bg-indigo-500/10 rounded-2xl">
+                                        <Settings className="w-8 h-8 text-indigo-400" />
+                                     </div>
+                                     <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Shard <span className="text-indigo-400">Configuration</span></h4>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                     <div className="space-y-6">
+                                        <div className="space-y-3">
+                                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Collective Alias</label>
+                                           <input 
+                                             type="text" 
+                                             value={currentCollective.name}
+                                             onChange={e => handleUpdateCollective({ name: e.target.value })}
+                                             className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
+                                           />
+                                        </div>
+                                        <div className="space-y-3">
+                                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Shard Type</label>
+                                           <select 
+                                             value={currentCollective.type}
+                                             onChange={e => handleUpdateCollective({ type: e.target.value })}
+                                             className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-4 focus:ring-indigo-500/20"
+                                           >
+                                              <option>Team</option>
+                                              <option>Clan</option>
+                                              <option>Society</option>
+                                           </select>
+                                        </div>
+                                     </div>
+                                     <div className="space-y-6">
+                                        <div className="space-y-3">
+                                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Mission Narrative</label>
+                                           <textarea 
+                                             value={currentCollective.mission}
+                                             onChange={e => handleUpdateCollective({ mission: e.target.value })}
+                                             className="w-full bg-black/60 border border-white/10 rounded-3xl p-6 text-white text-sm h-40 focus:ring-2 focus:ring-indigo-500/40 outline-none transition-all italic font-medium resize-none"
+                                           />
+                                        </div>
+                                     </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                                     <div className="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-indigo-500/20 transition-all">
+                                        <div className="flex items-center gap-4">
+                                           <div className={`p-3 rounded-xl ${currentCollective.recruitmentActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-slate-600'}`}>
+                                              <UserPlus size={20} />
+                                           </div>
+                                           <div>
+                                              <p className="text-[10px] font-black text-white uppercase tracking-widest">Recruitment Protocol</p>
+                                              <p className="text-[8px] text-slate-500 uppercase font-black">Allow new applications</p>
+                                           </div>
+                                        </div>
+                                        <button 
+                                          onClick={() => handleUpdateCollective({ recruitmentActive: !currentCollective.recruitmentActive })}
+                                          className={`p-1 rounded-full w-12 h-6 flex items-center transition-all ${currentCollective.recruitmentActive ? 'bg-emerald-600 justify-end' : 'bg-slate-800 justify-start'}`}
+                                        >
+                                           <div className="w-4 h-4 bg-white rounded-full"></div>
+                                        </button>
+                                     </div>
+
+                                     <div className="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-indigo-500/20 transition-all">
+                                        <div className="flex items-center gap-4">
+                                           <div className={`p-3 rounded-xl ${currentCollective.publicVisible ? 'bg-blue-500/10 text-blue-400' : 'bg-white/5 text-slate-600'}`}>
+                                              {currentCollective.publicVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+                                           </div>
+                                           <div>
+                                              <p className="text-[10px] font-black text-white uppercase tracking-widest">Public Visibility</p>
+                                              <p className="text-[8px] text-slate-500 uppercase font-black">List on Global Hub</p>
+                                           </div>
+                                        </div>
+                                        <button 
+                                          onClick={() => handleUpdateCollective({ publicVisible: !currentCollective.publicVisible })}
+                                          className={`p-1 rounded-full w-12 h-6 flex items-center transition-all ${currentCollective.publicVisible ? 'bg-blue-600 justify-end' : 'bg-slate-800 justify-start'}`}
+                                        >
+                                           <div className="w-4 h-4 bg-white rounded-full"></div>
+                                        </button>
+                                     </div>
+                                  </div>
+                               </div>
+
+                               <div className="glass-card p-12 rounded-[56px] border-rose-500/20 bg-rose-500/5 space-y-10 shadow-3xl">
+                                  <div className="flex items-center gap-6">
+                                     <div className="w-16 h-16 bg-rose-600 text-white rounded-3xl flex items-center justify-center shadow-xl shadow-rose-900/40">
+                                        <ShieldX className="w-8 h-8" />
+                                     </div>
+                                     <div>
+                                        <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Danger <span className="text-rose-500">Zone</span></h4>
+                                        <p className="text-rose-400/60 text-[10px] font-black uppercase tracking-widest mt-1">Irreversible Shard Termination</p>
+                                     </div>
+                                  </div>
+                                  
+                                  <div className="p-8 bg-black/40 rounded-[40px] border border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
+                                     <div className="space-y-2 text-center md:text-left">
+                                        <h5 className="text-lg font-black text-white uppercase">Decommission Social Shard</h5>
+                                        <p className="text-xs text-slate-500 italic max-w-sm">"This will permanently detach the node from the EOS Industrial Cloud. All history shards will be archived to the Cold Storage Registry."</p>
+                                     </div>
+                                     <button 
+                                       onClick={handleDecommissionCollective}
+                                       disabled={isProcessing}
+                                       className="px-10 py-5 bg-rose-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-rose-900/40 hover:bg-rose-500 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30"
+                                     >
+                                        {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                                        Decommission Node
+                                     </button>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
+                      </div>
+                   )}
                 </div>
               ) : (
                 <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
@@ -837,7 +1021,7 @@ const Industrial: React.FC<IndustrialProps> = ({
 
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                       {collectives.map(col => (
-                        <div key={col.id} onClick={() => setSelectedCollectiveId(col.id)} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/40 transition-all flex flex-col h-full group active:scale-[0.98] duration-300 bg-black/20 relative overflow-hidden cursor-pointer">
+                        <div key={col.id} onClick={() => { setSelectedCollectiveId(col.id); setInternalColTab('stream'); }} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/40 transition-all flex flex-col h-full group active:scale-[0.98] duration-300 bg-black/20 relative overflow-hidden cursor-pointer">
                            <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform"><Share2 className="w-48 h-48 text-white" /></div>
                            <div className="flex justify-between items-start mb-10 relative z-10">
                               <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center shadow-2xl border border-emerald-500/20 group-hover:rotate-6 transition-transform">
@@ -1396,7 +1580,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                  {industryStep === 'form' && (
                     <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
                        <div className="text-center space-y-4">
-                          <div className="w-24 h-24 bg-amber-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-amber-500/20 shadow-2xl">
+                          <div className="w-24 h-24 bg-amber-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
                              <Building2 className="w-12 h-12 text-amber-500" />
                           </div>
                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Facility <span className="text-amber-500">Ingest</span></h3>
@@ -1483,7 +1667,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                        </div>
                        <div className="space-y-4">
                           <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Ingest <span className="text-amber-500">Provisional</span></h3>
-                          <p className="text-slate-400 text-lg italic leading-relaxed max-w-sm mx-auto">"Facility metadata indexed. Standing by for physical node verification and environmental sync."</p>
+                          <p className="text-slate-400 text-lg italic leading-relaxed max-sm:text-sm max-w-sm mx-auto">"Facility metadata indexed. Standing by for physical node verification and environmental sync."</p>
                        </div>
                        <button onClick={() => setShowIndustryEntry(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Terminal</button>
                     </div>

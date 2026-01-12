@@ -1,4 +1,13 @@
 
+export interface LinkedProvider {
+  id: string;
+  type: 'Mobile' | 'Bank' | 'Web3' | 'Card';
+  name: string;
+  accountFragment: string;
+  status: 'Active' | 'Pending' | 'Verification_Required';
+  lastSync: string;
+}
+
 export interface User {
   name: string;
   email: string;
@@ -25,18 +34,22 @@ export interface User {
 }
 
 export interface EACWallet {
-  balance: number;
+  balance: number; // EAC - "The Cash" (Utility)
+  eatBalance: number; // EAT - "The Gold" (Equity/Asset)
+  exchangeRate: number; // Personalized EAC -> EAT rate based on 'm'
   bonusBalance: number; // Non-withdrawable registration incentives
   tier: 'Seed' | 'Sprout' | 'Harvest';
   lifetimeEarned: number; // Used for "Reputation Score"
+  linkedProviders: LinkedProvider[];
 }
 
 export interface SustainabilityMetrics {
-  agriculturalCodeU: number; 
-  timeConstantTau: number;  
+  agriculturalCodeU: number; // C(a)
+  timeConstantTau: number;  // m-constant
   sustainabilityScore: number;
   socialImmunity: number; // 0-100: Resistance to SID
   viralLoadSID: number;   // 0-100: Presence of Social Influenza
+  baselineM: number; // Historical m-constant for Delta EAT calculation
 }
 
 export interface LiveAgroProduct {
@@ -140,11 +153,11 @@ export interface AgroBlock {
 
 export interface AgroTransaction {
   id: string;
-  type: 'Harvest' | 'Audit' | 'Transfer' | 'CarbonMint' | 'ReactionMining' | 'MarketTrade' | 'EvidenceUpload' | 'Reward' | 'Burn' | 'Recycle' | 'Dividend';
+  type: 'Harvest' | 'Audit' | 'Transfer' | 'CarbonMint' | 'ReactionMining' | 'MarketTrade' | 'EvidenceUpload' | 'Reward' | 'Burn' | 'Recycle' | 'Dividend' | 'TokenzMint' | 'NodeSwap' | 'Gateway_Deposit' | 'Gateway_Withdrawal';
   farmId: string;
   details: string;
   value: number;
-  unit: string;
+  unit: 'EAC' | 'EAT' | 'CO2e' | 'kg' | 'pH' | 'USD' | 'KES' | 'ETH';
 }
 
 export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research' | 'live_farming' | 'contract_farming' | 'agrowild' | 'impact';

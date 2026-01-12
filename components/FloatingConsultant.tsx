@@ -225,7 +225,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ user }) => {
 
               <div 
                 ref={scrollRef}
-                className={`flex-1 overflow-y-auto p-4 md:p-10 space-y-6 custom-scrollbar select-text bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')] bg-opacity-5`}
+                className={`flex-1 overflow-y-auto p-4 md:p-10 space-y-6 custom-scrollbar select-text bg-[#050706]`}
               >
                 <div className={isFullScreen ? "max-w-3xl mx-auto space-y-8" : "space-y-4"}>
                   {messages.map((m, i) => (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Store, 
@@ -50,9 +49,11 @@ import { optimizeSupplyChain, AIResponse } from '../services/geminiService';
 
 interface VendorPortalProps {
   user: User;
+  pendingAction?: string | null;
+  clearAction?: () => void;
 }
 
-const VendorPortal: React.FC<VendorPortalProps> = ({ user }) => {
+const VendorPortal: React.FC<VendorPortalProps> = ({ user, pendingAction, clearAction }) => {
   const [activeView, setActiveView] = useState<'inventory' | 'shipments' | 'ledger'>('inventory');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -64,6 +65,17 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user }) => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationResult, setOptimizationResult] = useState<AIResponse | null>(null);
   const [scanPulse, setScanPulse] = useState(0);
+
+  // Handle incoming navigation shards
+  useEffect(() => {
+    if (pendingAction === 'OPEN_INVENTORY') {
+      setActiveView('inventory');
+      clearAction?.();
+    } else if (pendingAction === 'OPEN_SHIPMENTS') {
+      setActiveView('shipments');
+      clearAction?.();
+    }
+  }, [pendingAction, clearAction]);
 
   useEffect(() => {
     if (showMap) {
@@ -447,11 +459,11 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user }) => {
                              <div className="absolute inset-0 border-2 border-blue-500/20 rounded-full animate-ping"></div>
                           </div>
                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Physical <span className="text-blue-400">Audit Protocol</span></h3>
-                          <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto">"Metadata recorded. Our team must now conduct a physical site audit to certify asset integrity."</p>
+                          <p className="text-slate-400 text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto">"Metadata recorded. Our team must now conduct a physical site audit to certify asset integrity."</p>
                        </div>
 
                        <div className="space-y-6">
-                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-6">
+                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-6 shadow-inner">
                              <div className="flex items-center gap-4">
                                 <div className="p-3 bg-white/5 rounded-2xl">
                                    <Calendar className="w-6 h-6 text-slate-400" />
@@ -493,7 +505,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user }) => {
                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
                       <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
-                         <div className="absolute inset-[-10px] rounded-full border-4 border-emerald-500/20 animate-ping"></div>
+                         <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping"></div>
                       </div>
                       <div className="space-y-4">
                          <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Minting <span className="text-emerald-400">Provisional</span></h3>

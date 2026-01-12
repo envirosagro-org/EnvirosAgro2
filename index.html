@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
@@ -17,13 +16,14 @@
                 primary: '#10b981',
                 secondary: '#3b82f6',
                 accent: '#f59e0b',
-                bg: '#050706'
+                bg: '#020403'
               }
             },
             animation: {
               'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
               'float': 'float 6s ease-in-out infinite',
               'marquee': 'marquee 45s linear infinite',
+              'glow': 'glow 3s ease-in-out infinite alternate',
             },
             keyframes: {
               float: {
@@ -33,6 +33,10 @@
               marquee: {
                 '0%': { transform: 'translateX(100%)' },
                 '100%': { transform: 'translateX(-100%)' },
+              },
+              glow: {
+                '0%': { boxShadow: '0 0 5px rgba(16, 185, 129, 0.2)' },
+                '100%': { boxShadow: '0 0 20px rgba(16, 185, 129, 0.6)' },
               }
             }
           }
@@ -48,61 +52,81 @@
       }
       body {
         font-family: 'Inter', sans-serif;
+        background-color: #020403;
+        color: #e2e8f0;
         overflow: hidden;
         overscroll-behavior-y: contain;
       }
       
       /* Global Glass Styles */
       .glass-card {
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
       }
       .dark .glass-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
       }
-      .light .glass-card {
-        background: rgba(255, 255, 255, 0.8);
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
-      }
-
+      
       .agro-gradient {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
       }
 
-      /* Scanline Effect - Dark Only */
+      .agro-glow-emerald {
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+      }
+      
+      .agro-glow-rose {
+        box-shadow: 0 0 15px rgba(225, 29, 72, 0.3);
+      }
+
+      /* Scanline Effect */
       .scanline {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%);
+        background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.03) 50%);
         background-size: 100% 4px;
         z-index: 9999;
         pointer-events: none;
-        opacity: 0.1;
+        opacity: 0.15;
       }
-      .light .scanline { display: none; }
 
       /* Visual Shimmer */
       .shimmer {
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
         background-size: 200% 100%;
-        animation: shimmer 2s infinite linear;
+        animation: shimmer 3s infinite linear;
       }
       @keyframes shimmer {
         from { background-position: -200% 0; }
         to { background-position: 200% 0; }
       }
 
-      /* Scrollbars */
-      ::-webkit-scrollbar { width: 4px; height: 4px; }
-      .dark ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-      .light ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      /* Custom Scrollbars */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
+      ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+      ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
       .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+      
+      /* Noise texture overlay */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: url('https://grainy-gradients.vercel.app/noise.svg');
+        opacity: 0.03;
+        pointer-events: none;
+        z-index: 10000;
+      }
     </style>
     <script type="importmap">
 {

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { 
   PlayCircle, 
@@ -36,7 +35,17 @@ import {
   FileBarChart,
   BarChart4,
   ExternalLink,
-  MapPin
+  MapPin,
+  Fingerprint,
+  Activity,
+  History,
+  BadgeCheck,
+  Dna,
+  Lock,
+  SearchCode,
+  // Added Target and Bot to resolve find name errors
+  Target,
+  Bot
 } from 'lucide-react';
 import { User } from '../types';
 import { findAgroResources, GroundingChunk } from '../services/geminiService';
@@ -53,12 +62,46 @@ const CHAPTERS = [
   { id: 3, title: "Agricultural Code C(a)", content: "The C(a) is the core biometric of your land. It is calculated based on cumulative sustainable practices. A high C(a) directly correlates with lower registry fees and higher EAC minting multipliers." },
 ];
 
+const MOCK_DOSSIERS: Record<string, any> = {
+  "@BANTU_STEWARD": {
+    name: "Bantu Steward Alpha",
+    esin: "EA-2024-BANTU-01",
+    role: "Lineage Guardian",
+    location: "Nairobi Hub, KE",
+    rep: 4280,
+    hours: 3500,
+    thrusts: [
+      { label: 'Societal', val: 98, col: 'bg-rose-400' },
+      { label: 'Environmental', val: 92, col: 'bg-emerald-400' },
+      { label: 'Human', val: 85, col: 'bg-teal-400' },
+    ],
+    milestones: ["Genesis Anchor", "100t Carbon Offset", "Master Seed Curator"]
+  },
+  "@SOILSAGE": {
+    name: "Marcus Aurelius Soil",
+    esin: "EA-2023-SAGE-88",
+    role: "Pathology Expert",
+    location: "Zone 4, Nebraska",
+    rep: 3150,
+    hours: 2100,
+    thrusts: [
+      { label: 'Technological', val: 96, col: 'bg-blue-400' },
+      { label: 'Industry', val: 88, col: 'bg-purple-400' },
+      { label: 'Environmental', val: 94, col: 'bg-emerald-400' },
+    ],
+    milestones: ["Anomaly Detection v2", "Registry Validator", "T-Thrust Pioneer"]
+  }
+};
+
 const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC }) => {
   const [activeTab, setActiveTab] = useState<'hub' | 'lms' | 'manual' | 'report'>('hub');
   const [isPosting, setIsPosting] = useState(false);
   const [postContent, setPostContent] = useState('');
   const [selectedChapter, setSelectedChapter] = useState(CHAPTERS[0]);
   
+  // Dossier State
+  const [selectedDossier, setSelectedDossier] = useState<any | null>(null);
+
   // New States for screenshot-driven features
   const [isSearchingResources, setIsSearchingResources] = useState(false);
   const [resourceResults, setResourceResults] = useState<{ text: string, sources?: GroundingChunk[] } | null>(null);
@@ -246,7 +289,10 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                          <div className="flex items-center gap-2.5 text-xs text-slate-500 hover:text-blue-400 transition-colors cursor-pointer font-bold">
                             <MessageSquare className="w-5 h-5" /> {post.replies}
                          </div>
-                         <button className="ml-auto text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                         <button 
+                          onClick={() => setSelectedDossier(MOCK_DOSSIERS[post.author])}
+                          className="ml-auto text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2 group-hover:translate-x-1 transition-transform"
+                         >
                             FULL DOSSIER <ChevronRight className="w-4 h-4" />
                          </button>
                       </div>
@@ -422,7 +468,7 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                       { l: 'THRUST LEVEL', v: 'TIER 2', c: 'text-amber-500' },
                     ].map((stat, i) => (
                       <div key={i} className="p-5 glass-card rounded-3xl border-white/5 bg-black/40 group hover:border-white/10 transition-all">
-                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em] mb-2">{stat.l}</p>
+                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">{stat.l}</p>
                          <p className={`text-xl font-black ${stat.c}`}>{stat.v}</p>
                       </div>
                     ))}
@@ -455,7 +501,7 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                  <div className="w-24 h-24 bg-blue-500/20 rounded-[32px] flex items-center justify-center border border-blue-500/40 shadow-2xl group-hover:rotate-12 transition-transform duration-500 relative z-10">
                     <ShieldCheck className="w-12 h-12 text-blue-400" />
                  </div>
-                 <div className="space-y-4 relative z-10">
+                 <div className="space-y-4 relative z-10 max-w-xs mx-auto">
                     <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic">Verified Standing</h4>
                     <p className="text-slate-400 text-lg max-w-xs leading-relaxed font-medium">Your node contributions have been cross-verified by 24 independent industrial validator nodes.</p>
                  </div>
@@ -467,10 +513,109 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
         </div>
       )}
 
+      {/* Dossier Modal */}
+      {selectedDossier && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-10">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setSelectedDossier(null)}></div>
+           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[85vh]">
+              <div className="p-10 md:p-14 border-b border-white/5 bg-emerald-500/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-6">
+                    <div className="w-20 h-20 bg-slate-800 rounded-[32px] flex items-center justify-center text-4xl font-black text-emerald-400 shadow-2xl border-2 border-white/5">
+                       {selectedDossier.name[0]}
+                    </div>
+                    <div>
+                       <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">{selectedDossier.name}</h3>
+                       <p className="text-emerald-500/60 font-mono text-xs tracking-widest uppercase mt-3">REGISTRY_ID: {selectedDossier.esin}</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setSelectedDossier(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 md:p-14 custom-scrollbar space-y-12">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 text-center space-y-2">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Reputation</p>
+                       <p className="text-3xl font-mono font-black text-emerald-400">{selectedDossier.rep.toLocaleString()}</p>
+                    </div>
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 text-center space-y-2">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Verified Hours</p>
+                       <p className="text-3xl font-mono font-black text-blue-400">{selectedDossier.hours.toLocaleString()}</p>
+                    </div>
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 text-center space-y-2">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Location Hub</p>
+                       <p className="text-xl font-black text-white uppercase tracking-tighter truncate px-2">{selectedDossier.location}</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-8">
+                    <h4 className="text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-3">
+                       <Target className="w-6 h-6 text-indigo-400" /> SEHTI <span className="text-indigo-400">Pillar Proficiency</span>
+                    </h4>
+                    <div className="space-y-6">
+                       {selectedDossier.thrusts.map((t: any) => (
+                          <div key={t.label} className="space-y-2">
+                             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                <span className="text-slate-500">{t.label} Thrust</span>
+                                <span className="text-white">{t.val}%</span>
+                             </div>
+                             <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
+                                <div className={`h-full rounded-full ${t.col} shadow-[0_0_10px_current]`} style={{ width: `${t.val}%` }}></div>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="space-y-8">
+                    <h4 className="text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-3">
+                       <Award className="w-6 h-6 text-amber-500" /> Verified <span className="text-amber-500">Milestones</span>
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {selectedDossier.milestones.map((m: string, idx: number) => (
+                          <div key={idx} className="flex items-center gap-4 p-5 bg-white/5 border border-white/5 rounded-3xl group hover:border-emerald-500/40 transition-all">
+                             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                                <BadgeCheck size={24} />
+                             </div>
+                             <span className="text-sm font-black text-slate-200 uppercase tracking-tight">{m}</span>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="p-8 bg-indigo-600/5 border border-indigo-500/20 rounded-[48px] space-y-6">
+                    <div className="flex items-center gap-4">
+                       <Bot className="w-6 h-6 text-indigo-400" />
+                       <p className="text-xs font-black text-white uppercase tracking-widest">AI Integrity Scan</p>
+                    </div>
+                    <p className="text-sm text-slate-400 italic leading-relaxed">
+                       "Steward node {selectedDossier.esin} maintains a 100% data fidelity score. Highly recommended for Technological (T) Thrust collaborations."
+                    </p>
+                 </div>
+              </div>
+
+              <div className="p-10 border-t border-white/5 bg-white/[0.01] flex justify-between items-center shrink-0">
+                 <div className="flex items-center gap-3 text-slate-500">
+                    <Fingerprint size={16} />
+                    <span className="text-[10px] font-mono uppercase font-black">ZK-Proof Validated Shard</span>
+                 </div>
+                 <button className="px-10 py-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2">
+                    Send Engagement Signal <ArrowUpRight className="w-4 h-4" />
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(249, 115, 22, 0.2); border-radius: 10px; }
+        .animate-marquee { animation: marquee 45s linear infinite; }
+        @keyframes marquee { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+        .animate-spin-slow { animation: spin 20s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
