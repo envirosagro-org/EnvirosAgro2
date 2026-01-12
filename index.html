@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
@@ -50,6 +51,14 @@
       * {
         transition: background-color var(--transition-speed), border-color var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed);
       }
+      html {
+        font-size: 14px;
+      }
+      @media (min-width: 768px) {
+        html {
+          font-size: 16px;
+        }
+      }
       body {
         font-family: 'Inter', sans-serif;
         background-color: #020403;
@@ -60,13 +69,13 @@
       
       /* Global Glass Styles */
       .glass-card {
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
       }
       .dark .glass-card {
         background: rgba(255, 255, 255, 0.02);
         border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.37);
       }
       
       .agro-gradient {
@@ -74,11 +83,11 @@
       }
 
       .agro-glow-emerald {
-        box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
       }
       
       .agro-glow-rose {
-        box-shadow: 0 0 15px rgba(225, 29, 72, 0.3);
+        box-shadow: 0 0 12px rgba(225, 29, 72, 0.25);
       }
 
       /* Scanline Effect */
@@ -88,16 +97,16 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.03) 50%);
+        background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.02) 50%);
         background-size: 100% 4px;
         z-index: 9999;
         pointer-events: none;
-        opacity: 0.15;
+        opacity: 0.12;
       }
 
       /* Visual Shimmer */
       .shimmer {
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent);
         background-size: 200% 100%;
         animation: shimmer 3s infinite linear;
       }
@@ -107,9 +116,9 @@
       }
 
       /* Custom Scrollbars */
-      ::-webkit-scrollbar { width: 6px; height: 6px; }
-      ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
-      ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
+      ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
       ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
       .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
@@ -123,7 +132,7 @@
         width: 100vw;
         height: 100vh;
         background: url('https://grainy-gradients.vercel.app/noise.svg');
-        opacity: 0.03;
+        opacity: 0.02;
         pointer-events: none;
         z-index: 10000;
       }
