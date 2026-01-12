@@ -349,7 +349,7 @@ const App: React.FC = () => {
       )}
 
       <main className="flex-1 overflow-y-auto relative flex flex-col bg-[#050706]">
-        <header className="flex justify-between items-center sticky top-0 bg-black/60 backdrop-blur-3xl z-40 py-4 px-4 md:px-10 border-b border-white/5 shadow-xl">
+        <header className="flex justify-between items-center sticky top-0 bg-black/60 backdrop-blur-3xl z-40 py-3 px-4 md:px-8 border-b border-white/5 shadow-xl">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
@@ -451,7 +451,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="p-4 md:p-10 flex-1 relative max-w-[1920px] mx-auto w-full">
+        <div className="p-3 md:p-6 flex-1 relative max-w-[1920px] mx-auto w-full overflow-x-hidden">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={handleNavigate} />}
           {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} />}
           {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
@@ -485,8 +485,8 @@ const App: React.FC = () => {
       <EvidenceModal isOpen={isEvidenceModalOpen} onClose={() => setIsEvidenceModalOpen(false)} user={user} onMinted={(v: number) => earnEAC(v, 'MANUAL_MINT')} />
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.15); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
       `}</style>
     </div>
   );

@@ -200,6 +200,16 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
     }, 50);
   };
 
+  const orbitalParticles = useMemo(() => {
+    return [...Array(8)].map((_, i) => ({
+      id: i,
+      size: 4 + Math.random() * 6,
+      duration: 10 + Math.random() * 20,
+      delay: -(Math.random() * 20),
+      radius: 60 + Math.random() * 40
+    }));
+  }, []);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto">
       
@@ -559,7 +569,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
       {showRegisterTourModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterTourModal(false)}></div>
-          <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2">
+          <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
              <div className="p-16 space-y-12 min-h-[700px] flex flex-col">
                 <button onClick={() => setShowRegisterTourModal(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                 
@@ -674,7 +684,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                           <div className="absolute inset-0 border-4 border-amber-500/20 rounded-[40px] animate-ping opacity-40"></div>
                        </div>
                        <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-amber-500">Validation</span></h3>
-                       <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto leading-relaxed">
+                       <p className="text-slate-400 text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto leading-relaxed">
                           "Metadata verified. EnvirosAgro Field Stewards have been dispatched to ${tourLocation} to certify the tour route and safety nodes."
                        </p>
                     </div>
@@ -914,93 +924,93 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
         </div>
       )}
 
-      {/* 4. Wildlife Dossier Modal */}
+      {/* 4. Wildlife Dossier Modal - MOBILE ENHANCED */}
       {selectedWildlife && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-2 md:p-10">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setSelectedWildlife(null)}></div>
-           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
+           <div className="relative z-10 w-full max-w-4xl max-h-[90vh] glass-card rounded-[32px] md:rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
               
-              <div className="p-12 border-b border-white/5 bg-amber-500/[0.02] flex items-center justify-between shrink-0">
-                 <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 bg-amber-600 rounded-[32px] flex items-center justify-center shadow-3xl">
-                       <PawPrint className="w-10 h-10 text-white" />
+              <div className="p-6 md:p-12 border-b border-white/5 bg-amber-500/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-4 md:gap-6">
+                    <div className="w-14 h-14 md:w-20 md:h-20 bg-amber-600 rounded-[20px] md:rounded-[32px] flex items-center justify-center shadow-3xl shrink-0">
+                       <PawPrint className="w-7 h-7 md:w-10 md:h-10 text-white" />
                     </div>
-                    <div>
-                       <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">{selectedWildlife.species} <span className="text-amber-500">Dossier</span></h3>
-                       <p className="text-[10px] text-amber-500/60 font-mono tracking-widest uppercase mt-3">NODE_ID: {selectedWildlife.id} // REGISTRY_SECURED</p>
+                    <div className="min-w-0">
+                       <h3 className="text-xl md:text-4xl font-black text-white uppercase tracking-tighter italic m-0 truncate">{selectedWildlife.species} <span className="text-amber-500">Dossier</span></h3>
+                       <p className="text-[8px] md:text-[10px] text-amber-500/60 font-mono tracking-widest uppercase mt-1 md:mt-3 truncate">NODE_ID: {selectedWildlife.id} // SECURED</p>
                     </div>
                  </div>
-                 <button onClick={() => setSelectedWildlife(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X className="w-8 h-8" /></button>
+                 <button onClick={() => setSelectedWildlife(null)} className="p-2.5 md:p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all shrink-0"><X className="w-5 h-5 md:w-8 md:h-8" /></button>
               </div>
 
-              <div className="flex-1 p-12 overflow-y-auto custom-scrollbar flex flex-col lg:flex-row gap-12">
-                 <div className="lg:w-1/2 space-y-10">
-                    <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 space-y-8 relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Activity className="w-48 h-48 text-white" /></div>
-                       <h4 className="text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-3 relative z-10">
-                          <Activity className="w-5 h-5 text-amber-500" /> Biometric Sync
+              <div className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar flex flex-col lg:flex-row gap-8 md:gap-12">
+                 <div className="lg:w-1/2 space-y-8 md:space-y-10">
+                    <div className="glass-card p-6 md:p-10 rounded-[32px] md:rounded-[48px] border-white/5 bg-black/40 space-y-6 md:space-y-8 relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-4 md:p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Activity className="w-32 h-32 md:w-48 md:h-48 text-white" /></div>
+                       <h4 className="text-lg md:text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-3 relative z-10">
+                          <Activity className="w-4 h-4 md:w-5 md:h-5 text-amber-500" /> Biometric Sync
                        </h4>
-                       <div className="grid grid-cols-2 gap-6 relative z-10">
-                          <div className="p-6 bg-white/5 rounded-3xl border border-white/5 text-center">
-                             <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Health Index</p>
-                             <p className="text-3xl font-mono font-black text-emerald-400">{selectedWildlife.health}%</p>
+                       <div className="grid grid-cols-2 gap-4 md:gap-6 relative z-10">
+                          <div className="p-4 md:p-6 bg-white/5 rounded-2xl md:rounded-3xl border border-white/5 text-center">
+                             <p className="text-[7px] md:text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 leading-none">Health Index</p>
+                             <p className="text-xl md:text-3xl font-mono font-black text-emerald-400 leading-none">{selectedWildlife.health}%</p>
                           </div>
-                          <div className="p-6 bg-white/5 rounded-3xl border border-white/5 text-center">
-                             <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Registry Signal</p>
-                             <p className="text-3xl font-mono font-black text-blue-400">NOMINAL</p>
+                          <div className="p-4 md:p-6 bg-white/5 rounded-2xl md:rounded-3xl border border-white/5 text-center">
+                             <p className="text-[7px] md:text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 leading-none">Registry Signal</p>
+                             <p className="text-lg md:text-2xl font-mono font-black text-blue-400 leading-none truncate">NOMINAL</p>
                           </div>
                        </div>
-                       <div className="space-y-4 pt-4 relative z-10">
-                          <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
-                             <span>Node Integrity Buffer</span>
+                       <div className="space-y-2 md:space-y-4 pt-2 md:pt-4 relative z-10">
+                          <div className="flex justify-between items-center text-[8px] md:text-[10px] font-black uppercase text-slate-600">
+                             <span>Integrity Buffer</span>
                              <span className="text-white">Active</span>
                           </div>
-                          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-1 md:h-1.5 bg-white/5 rounded-full overflow-hidden">
                              <div className="h-full bg-amber-500 animate-pulse shadow-[0_0_15px_#f59e0b]" style={{ width: '92%' }}></div>
                           </div>
                        </div>
                     </div>
 
-                    <div className="p-10 glass-card rounded-[48px] bg-blue-600/5 border-blue-500/20 space-y-4">
+                    <div className="p-6 md:p-10 glass-card rounded-[32px] md:rounded-[48px] bg-blue-600/5 border-blue-500/20 space-y-3 md:space-y-4">
                        <div className="flex items-center gap-3">
-                          <MapPin className="w-6 h-6 text-blue-400" />
-                          <h4 className="text-xl font-bold text-white uppercase tracking-tighter">Geospatial Range</h4>
+                          <MapPin className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
+                          <h4 className="text-lg md:text-xl font-bold text-white uppercase tracking-tighter leading-none">Geospatial Range</h4>
                        </div>
-                       <p className="text-slate-400 text-lg italic leading-relaxed font-medium pl-9 border-l-2 border-blue-500/20">
+                       <p className="text-slate-400 text-sm md:text-lg italic leading-relaxed font-medium pl-8 md:pl-9 border-l-2 border-blue-500/20">
                           This species shard actively monitors {selectedWildlife.range} within the {selectedWildlife.name}.
                        </p>
                     </div>
                  </div>
 
-                 <div className="lg:w-1/2 space-y-8">
-                    <div className="p-10 glass-card rounded-[48px] bg-white/[0.01] border border-white/5 space-y-10">
-                       <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] border-b border-white/5 pb-6">Population Shards</h4>
-                       <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-6">
-                             <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center border border-white/10 shadow-2xl">
-                                <Users size={28} className="text-amber-500" />
+                 <div className="lg:w-1/2 space-y-6 md:space-y-8">
+                    <div className="p-6 md:p-10 glass-card rounded-[32px] md:rounded-[48px] bg-white/[0.01] border border-white/5 space-y-8 md:space-y-10">
+                       <h4 className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] border-b border-white/5 pb-4 md:pb-6">Population Shards</h4>
+                       <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                          <div className="flex items-center gap-4 md:gap-6">
+                             <div className="w-12 h-12 md:w-16 md:h-16 rounded-[18px] md:rounded-[24px] bg-white/5 flex items-center justify-center border border-white/10 shadow-2xl">
+                                <Users size={22} className="text-amber-500" />
                              </div>
                              <div>
-                                <p className="text-4xl font-mono font-black text-white">{selectedWildlife.population}</p>
-                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">EST_RESONANCE_LOAD</p>
+                                <p className="text-2xl md:text-4xl font-mono font-black text-white leading-none">{selectedWildlife.population}</p>
+                                <p className="text-[7px] md:text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1 md:mt-2">RESONANCE_LOAD</p>
                              </div>
                           </div>
-                          <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center">
-                             <p className="text-[8px] text-emerald-500 font-black uppercase mb-1">Status</p>
-                             <p className="text-xs font-black text-white uppercase tracking-widest">{selectedWildlife.status}</p>
+                          <div className="p-3 md:p-4 bg-emerald-500/10 rounded-xl md:rounded-2xl border border-emerald-500/20 text-center w-full sm:w-auto">
+                             <p className="text-[6px] md:text-[8px] text-emerald-500 font-black uppercase mb-1">Status</p>
+                             <p className="text-[9px] md:text-xs font-black text-white uppercase tracking-widest leading-none">{selectedWildlife.status}</p>
                           </div>
                        </div>
-                       <div className="p-8 bg-black/60 rounded-[32px] border border-white/5 space-y-4">
-                          <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><History size={12} /> Registry Feed</h5>
-                          <div className="space-y-3 font-mono text-[9px]">
-                             <p className="text-slate-600 italic">{" >> "} PACKET_INGEST: 2024.12.12_14:20</p>
-                             <p className="text-emerald-500">{" >> "} SIGNAL_MATCH_ZK_PROOF: SUCCESS</p>
-                             <p className="text-slate-600 italic">{" >> "} COMMITTING_TELEMETRY: SHARD_V4</p>
+                       <div className="p-6 md:p-8 bg-black/60 rounded-[24px] md:rounded-[32px] border border-white/5 space-y-3 md:space-y-4">
+                          <h5 className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><History size={10} /> Registry Feed</h5>
+                          <div className="space-y-2 md:space-y-3 font-mono text-[7px] md:text-[9px]">
+                             <p className="text-slate-600 italic">{" >> "} PACKET_INGEST: {new Date().toLocaleDateString().replace(/\//g, '.')}</p>
+                             <p className="text-emerald-500">{" >> "} MATCH_ZK_PROOF: SUCCESS</p>
+                             <p className="text-slate-600 italic truncate">{" >> "} COMMITTING: 0x882_SHARD_ACTIVE</p>
                           </div>
                        </div>
                     </div>
-                    <button className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all">
-                       <ShieldCheck className="w-6 h-6" /> Anchor Audit Sign-off
+                    <button className="w-full py-6 md:py-8 agro-gradient rounded-[24px] md:rounded-[40px] text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] md:tracking-[0.5em] shadow-2xl flex items-center justify-center gap-3 md:gap-4 hover:scale-[1.02] active:scale-95 transition-all">
+                       <ShieldCheck className="w-5 h-5 md:w-6 md:h-6" /> Anchor Audit Sign-off
                     </button>
                  </div>
               </div>
@@ -1036,7 +1046,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                  {discoveryStep === 'analysis' && (
                     <div className="flex flex-col items-center justify-center space-y-12 animate-in fade-in duration-500">
                        <div className="relative">
-                          <div className="absolute inset-[-10px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
+                          <div className="absolute inset-[-15px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
                           <div className="w-48 h-48 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
                              <Dna className="w-20 h-20 text-emerald-400 animate-pulse" />
                           </div>
