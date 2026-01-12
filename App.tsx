@@ -161,8 +161,30 @@ const App: React.FC = () => {
   };
 
   const spendEAC = (amount: number, reason: string) => {
-    if (!user || user.wallet.balance < amount) return false;
-    handleUpdateUser({ ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } });
+    if (!user) return false;
+    const totalAvailable = user.wallet.balance + user.wallet.bonusBalance;
+    if (totalAvailable < amount) return false;
+
+    let newBonus = user.wallet.bonusBalance;
+    let newBalance = user.wallet.balance;
+
+    // Prioritize spending bonusBalance (non-withdrawable) first
+    if (newBonus >= amount) {
+      newBonus -= amount;
+    } else {
+      const remaining = amount - newBonus;
+      newBonus = 0;
+      newBalance -= remaining;
+    }
+
+    handleUpdateUser({ 
+      ...user, 
+      wallet: { 
+        ...user.wallet, 
+        balance: newBalance,
+        bonusBalance: newBonus 
+      } 
+    });
     return true;
   };
 
@@ -354,7 +376,7 @@ const App: React.FC = () => {
           <div className="hidden xl:flex items-center gap-12 px-8 border-x border-white/5 h-full">
             <div className="text-center group cursor-pointer" onClick={() => handleNavigate('wallet')}>
               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">EAC Utility</p>
-              <p className="text-2xl font-mono font-black text-emerald-400 group-hover:scale-105 transition-transform">{user.wallet.balance.toFixed(0)}</p>
+              <p className="text-2xl font-mono font-black text-emerald-400 group-hover:scale-105 transition-transform">{(user.wallet.balance + user.wallet.bonusBalance).toFixed(0)}</p>
             </div>
             <div className="text-center group cursor-pointer" onClick={() => handleNavigate('wallet')}>
               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">EAT Equity</p>
@@ -459,7 +481,7 @@ const App: React.FC = () => {
         <div className="p-6 md:p-12 flex-1 relative max-w-[1920px] mx-auto w-full">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={handleNavigate} />}
           {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} />}
-          {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
+          {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} />}
           {activeView === 'economy' && <Economy user={user} onNavigate={handleNavigate} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} projects={projects} />}
@@ -487,7 +509,7 @@ const App: React.FC = () => {
 
       <LiveVoiceBridge isOpen={isVoiceBridgeOpen} onClose={() => setIsVoiceBridgeOpen(false)} />
       <FloatingConsultant user={user} />
-      <EvidenceModal isOpen={isEvidenceModalOpen} onClose={() => setIsEvidenceModalOpen(false)} user={user} onMinted={(v) => earnEAC(v, 'MANUAL_MINT')} />
+      <EvidenceModal isOpen={isEvidenceModalOpen} onClose={() => setIsEvidenceModalOpen(false)} user={user} onMinted={(v: number) => earnEAC(v, 'MANUAL_MINT')} />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }

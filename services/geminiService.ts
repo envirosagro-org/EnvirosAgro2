@@ -83,7 +83,6 @@ export const analyzeSustainability = async (farmData: any): Promise<AIResponse> 
   try {
     const result = await requestWithRetry(async () => {
       const response = await getAI().models.generateContent({
-        // Switched to Flash for better quota handling
         model: 'gemini-3-flash-preview',
         contents: `Analyze sustainability: ${JSON.stringify(farmData)}. Context: ${FRAMEWORK_CONTEXT}`,
         config: { thinkingConfig: { thinkingBudget: 16000 } }
@@ -121,7 +120,6 @@ export const generateAgroResearch = async (title: string, thrust: string, iotTel
   try {
     return await requestWithRetry(async () => {
       const response = await getAI().models.generateContent({
-        // Switched to Flash for better quota handling
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: { thinkingConfig: { thinkingBudget: 24000 } }
