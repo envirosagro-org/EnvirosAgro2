@@ -279,7 +279,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     placeholder="Search ledger shards..." 
-                    className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-white focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-mono"
+                    className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-mono"
                    />
                 </div>
              </div>
@@ -657,117 +657,110 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
         )}
       </div>
 
-      {/* Return Ingest Modal */}
+      {/* Return Ingest Modal - ENHANCED FOR MOBILE */}
       {showReturnModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4">
            <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowReturnModal(false)}></div>
            
-           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2 flex flex-col">
-              <div className="p-16 space-y-12 min-h-[700px] flex flex-col">
-                 <button onClick={() => setShowReturnModal(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[32px] md:rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2 flex flex-col max-h-[95vh]">
+              <div className="p-6 md:p-16 space-y-6 md:space-y-12 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+                 <button onClick={() => setShowReturnModal(false)} className="absolute top-6 right-6 md:top-12 md:right-12 p-3 md:p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-5 h-5 md:w-8 md:h-8" /></button>
                  
-                 {/* Progress Terminal */}
-                 <div className="flex gap-4 mb-4">
+                 {/* Progress Terminal - Mobile Scaled */}
+                 <div className="flex gap-2 mb-2 md:mb-4">
                     {[
-                      { l: 'Metadata Ingest', s: 'form' },
-                      { l: 'Digital Audit', s: 'audit' },
-                      { l: 'Physical Eval', s: 'physical_req' },
-                      { l: 'Registry Final', s: 'success' },
+                      { l: 'Ingest', s: 'form' },
+                      { l: 'Audit', s: 'audit' },
+                      { l: 'Eval', s: 'physical_req' },
+                      { l: 'Final', s: 'success' },
                     ].map((step, i) => {
                        const stages = ['form', 'audit', 'physical_req', 'success'];
                        const currentIdx = stages.indexOf(returnStep);
                        const isActive = i === currentIdx;
                        const isDone = i < currentIdx;
                        return (
-                         <div key={step.s} className="flex-1 flex flex-col gap-2">
-                           <div className={`h-2 rounded-full transition-all duration-700 ${isDone ? 'bg-emerald-500' : isActive ? 'bg-emerald-400 animate-pulse' : 'bg-white/10'}`}></div>
-                           <span className={`text-[7px] font-black uppercase text-center tracking-widest ${isActive ? 'text-emerald-400' : 'text-slate-700'}`}>{step.l}</span>
+                         <div key={step.s} className="flex-1 flex flex-col gap-1 md:gap-2">
+                           <div className={`h-1.5 md:h-2 rounded-full transition-all duration-700 ${isDone ? 'bg-emerald-500' : isActive ? 'bg-emerald-400 animate-pulse' : 'bg-white/10'}`}></div>
+                           <span className={`text-[6px] md:text-[7px] font-black uppercase text-center tracking-widest ${isActive ? 'text-emerald-400' : 'text-slate-700'}`}>{step.l}</span>
                          </div>
                        );
                     })}
                  </div>
 
                  {returnStep === 'form' && (
-                   <form onSubmit={handleReturnInitiate} className="space-y-10 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
-                      <div className="text-center space-y-6">
-                         <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
-                            <RotateCcw className="w-12 h-12 text-emerald-400" />
+                   <form onSubmit={handleReturnInitiate} className="space-y-6 md:space-y-10 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                      <div className="text-center space-y-3 md:space-y-6">
+                         <div className="w-16 h-16 md:w-24 md:h-24 bg-emerald-500/10 rounded-2xl md:rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
+                            <RotateCcw className="w-8 h-8 md:w-12 md:h-12 text-emerald-400" />
                          </div>
-                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Asset <span className="text-emerald-400">Return Ingest</span></h3>
-                         <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Commit your hardware or material node back to the regional registry for second-life sharding.</p>
+                         <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter italic m-0">Asset <span className="text-emerald-400">Return Ingest</span></h3>
+                         <p className="text-slate-400 text-sm md:text-lg font-medium leading-relaxed max-w-md mx-auto">Commit your hardware node back to the registry for second-life sharding.</p>
                       </div>
 
-                      <div className="space-y-8">
-                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Reverse Category</label>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                               {REVERSE_CATEGORIES.map(cat => (
+                      <div className="space-y-6 md:space-y-8">
+                         <div className="space-y-3 md:space-y-4">
+                            <label className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 md:px-6">Reverse Category</label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                               {REVERSE_CATEGORIES.slice(0, 4).map(cat => (
                                  <button 
                                    key={cat.id}
                                    type="button"
                                    onClick={() => setAssetCategory(cat.id)}
-                                   className={`p-4 rounded-3xl border flex flex-col items-center gap-2 transition-all ${assetCategory === cat.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-xl' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'}`}
+                                   className={`p-3 md:p-4 rounded-2xl md:rounded-3xl border flex flex-col items-center gap-1 md:gap-2 transition-all ${assetCategory === cat.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-xl' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'}`}
                                  >
-                                    <cat.icon size={20} />
+                                    <cat.icon size={16} />
                                     <div className="text-center">
-                                       <p className="text-[9px] font-black uppercase">{cat.label}</p>
-                                       <p className="text-[7px] opacity-60 font-bold uppercase">{cat.desc}</p>
-                                       <div className="flex gap-1 mt-1 justify-center">
-                                          {cat.actions.map(a => (
-                                            <span key={a} className="text-[5px] px-1 border border-current rounded uppercase font-black opacity-40">{a}</span>
-                                          ))}
-                                       </div>
+                                       <p className="text-[8px] md:text-[9px] font-black uppercase truncate w-full">{cat.label}</p>
                                     </div>
                                  </button>
                                ))}
                             </div>
                          </div>
 
-                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Asset Designation</label>
+                         <div className="space-y-3 md:space-y-4">
+                            <label className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 md:px-6">Asset Designation</label>
                             <input 
                               type="text" 
                               required 
                               value={assetName}
                               onChange={e => setAssetName(e.target.value)}
-                              placeholder={`e.g. ${assetCategory === 'Hardware' ? 'Spectral Drone T-02' : assetCategory === 'Plastics' ? 'Poly-Drip 50m Line' : 'Asset Description'}`} 
-                              className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800 shadow-inner font-mono" 
+                              placeholder="Asset Description..." 
+                              className="w-full bg-black/60 border border-white/10 rounded-2xl md:rounded-[32px] py-4 md:py-6 px-6 md:px-10 text-lg md:text-2xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800 shadow-inner font-mono" 
                             />
                          </div>
 
-                         <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Deployment Cycle</label>
+                         <div className="grid grid-cols-2 gap-4 md:gap-6">
+                            <div className="space-y-2 md:space-y-4">
+                               <label className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 md:px-6">Cycle</label>
                                <select 
                                 value={assetUsage}
                                 onChange={e => setAssetUsage(e.target.value)}
-                                className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-bold appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20 shadow-inner"
+                                className="w-full bg-black/60 border border-white/10 rounded-xl md:rounded-[32px] py-3 md:py-6 px-4 md:px-10 text-sm md:text-base text-white font-bold appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20 shadow-inner"
                                >
-                                  <option>0-6 Months</option>
-                                  <option>6-12 Months</option>
-                                  <option>12-24 Months</option>
-                                  <option>24+ Months</option>
+                                  <option>0-6 Mo</option>
+                                  <option>6-12 Mo</option>
+                                  <option>12-24 Mo</option>
+                                  <option>24+ Mo</option>
                                </select>
                             </div>
-                            <div className="space-y-4">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Integrity Level</label>
+                            <div className="space-y-2 md:space-y-4">
+                               <label className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 md:px-6">Integrity</label>
                                <select 
                                 value={assetCondition}
                                 onChange={e => setAssetCondition(e.target.value)}
-                                className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-white font-bold appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20 shadow-inner"
+                                className="w-full bg-black/60 border border-white/10 rounded-xl md:rounded-[32px] py-3 md:py-6 px-4 md:px-10 text-sm md:text-base text-white font-bold appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20 shadow-inner"
                                >
                                   <option>Functional</option>
-                                  <option>Degraded Node</option>
-                                  <option>Mechanical Fault</option>
-                                  <option>Chemical Wear</option>
-                                  <option>End of Shard</option>
+                                  <option>Degraded</option>
+                                  <option>Faulty</option>
+                                  <option>End Life</option>
                                </select>
                             </div>
                          </div>
                       </div>
 
-                      <button type="submit" className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 mt-6">
-                         <Zap className="w-6 h-6 fill-current" /> Initialize {assetCategory} Audit
+                      <button type="submit" className="w-full py-6 md:py-10 agro-gradient rounded-2xl md:rounded-[40px] text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] md:tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 md:gap-4 mt-4 md:mt-6">
+                         <Zap className="w-5 h-5 md:w-6 md:h-6 fill-current" /> Initialize {assetCategory} Audit
                       </button>
                    </form>
                  )}
@@ -775,52 +768,52 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                  {returnStep === 'audit' && (
                     <div className="flex-1 flex flex-col animate-in slide-in-from-right-6 duration-500 h-full">
                        {isAuditing ? (
-                         <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 text-center">
+                         <div className="flex-1 flex flex-col items-center justify-center space-y-8 md:space-y-12 py-10 text-center">
                             <div className="relative">
-                               <div className="absolute inset-[-10px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
-                               <div className="w-48 h-48 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
-                                  <Bot className="w-20 h-20 text-emerald-400 animate-pulse" />
+                               <div className="absolute inset-[-8px] md:inset-[-10px] border-t-4 md:border-t-8 border-emerald-500 rounded-full animate-spin"></div>
+                               <div className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
+                                  <Bot className="w-14 h-14 md:w-20 md:h-20 text-emerald-400 animate-pulse" />
                                </div>
                             </div>
-                            <div className="space-y-4">
-                               <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Digital <span className="text-emerald-400">Auditor</span></h3>
-                               <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Analyzing {assetCategory.toLowerCase()} shards...</p>
+                            <div className="space-y-2 md:space-y-4">
+                               <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter italic">Digital <span className="text-emerald-400">Auditor</span></h3>
+                               <p className="text-emerald-500/60 font-mono text-[10px] md:text-sm animate-pulse uppercase tracking-[0.2em] md:tracking-[0.4em]">Analyzing {assetCategory.toLowerCase()} shards...</p>
                             </div>
                          </div>
                        ) : (
-                         <div className="space-y-8 flex-1 flex flex-col h-full">
-                            <div className="flex items-center gap-6 border-b border-white/5 pb-10">
-                               <div className="w-16 h-16 bg-blue-500/10 rounded-[28px] flex items-center justify-center border border-blue-500/20 shadow-2xl shrink-0">
-                                  <Sparkles className="w-8 h-8 text-blue-400" />
+                         <div className="space-y-6 md:space-y-8 flex-1 flex flex-col h-full">
+                            <div className="flex items-center gap-4 md:gap-6 border-b border-white/5 pb-6 md:pb-10">
+                               <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-500/10 rounded-xl md:rounded-[28px] flex items-center justify-center border border-blue-500/20 shadow-2xl shrink-0">
+                                  <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
                                </div>
                                <div>
-                                  <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Digital <span className="text-blue-400">Sync Complete</span></h4>
-                                  <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-1 font-mono">
-                                     <ShieldCheck className="w-3 h-3" /> Oracle Verified // provisional_shard
+                                  <h4 className="text-xl md:text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Digital <span className="text-blue-400">Sync Complete</span></h4>
+                                  <p className="text-blue-400 text-[8px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-1 font-mono">
+                                     <ShieldCheck className="w-2 h-2 md:w-3 md:h-3" /> Oracle Verified
                                   </p>
                                </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto max-h-[250px] custom-scrollbar pr-4">
-                               <div className="p-10 bg-black/60 rounded-[48px] border border-white/10 prose prose-invert max-w-none shadow-inner border-l-4 border-l-blue-500/50">
-                                  <p className="text-slate-300 text-lg leading-loose italic whitespace-pre-line font-medium">
+                            <div className="flex-1 overflow-y-auto max-h-[300px] custom-scrollbar pr-2 md:pr-4">
+                               <div className="p-6 md:p-10 bg-black/60 rounded-3xl md:rounded-[48px] border border-white/10 prose prose-invert max-w-none shadow-inner border-l-4 border-l-blue-500/50">
+                                  <p className="text-slate-300 text-sm md:text-lg leading-relaxed italic whitespace-pre-line font-medium">
                                      {auditText}
                                   </p>
                                </div>
                             </div>
 
-                            <div className="p-8 bg-blue-500/5 border border-blue-500/10 rounded-[40px] flex items-center gap-8">
-                               <AlertTriangle className="w-10 h-10 text-blue-400 shrink-0" />
-                               <p className="text-[10px] text-blue-200/50 font-black uppercase leading-relaxed tracking-widest text-left">
-                                  REGISTRY_LOCK: Digital audit finished. To ensure 100% authenticity for second-life trade ({assetCategory.toLowerCase()} reuse), a Physical Field Evaluation is MANDATORY.
+                            <div className="p-4 md:p-8 bg-blue-500/5 border border-blue-500/10 rounded-2xl md:rounded-[40px] flex items-center gap-4 md:gap-8">
+                               <AlertTriangle className="w-6 h-6 md:w-10 md:h-10 text-blue-400 shrink-0" />
+                               <p className="text-[8px] md:text-[10px] text-blue-200/50 font-black uppercase leading-relaxed tracking-widest text-left">
+                                  REGISTRY_LOCK: Final settlement requires a physical evaluation by the EnvirosAgro team.
                                 </p>
                             </div>
 
                             <button 
                               onClick={finalizeReturnRequest}
-                              className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-blue-900/40 hover:bg-blue-500 transition-all flex items-center justify-center gap-4 active:scale-95"
+                              className="w-full py-5 md:py-8 bg-blue-600 rounded-2xl md:rounded-[40px] text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] md:tracking-[0.5em] shadow-2xl shadow-blue-900/40 hover:bg-blue-500 transition-all flex items-center justify-center gap-3 md:gap-4 active:scale-95"
                             >
-                               <ChevronRight className="w-8 h-8" /> Proceed to Physical Evaluation
+                               <ChevronRight className="w-6 h-6 md:w-8 md:h-8" /> Physical Evaluation
                             </button>
                          </div>
                        )}
@@ -828,81 +821,68 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                  )}
 
                  {returnStep === 'physical_req' && (
-                    <div className="flex-1 flex flex-col animate-in slide-in-from-right-6 duration-500 h-full justify-center space-y-12">
-                       <div className="text-center space-y-6">
-                          <div className="w-32 h-32 bg-amber-500/10 rounded-[40px] flex items-center justify-center mx-auto border border-amber-500/20 shadow-2xl relative">
-                             <HardHat className="w-16 h-16 text-amber-500 animate-bounce" />
-                             <div className="absolute inset-0 border-4 border-amber-500/20 rounded-[40px] animate-ping opacity-40"></div>
+                    <div className="flex-1 flex flex-col animate-in slide-in-from-right-6 duration-500 h-full justify-center space-y-8 md:space-y-12">
+                       <div className="text-center space-y-4 md:space-y-6">
+                          <div className="w-20 h-20 md:w-32 md:h-32 bg-amber-500/10 rounded-[24px] md:rounded-[40px] flex items-center justify-center mx-auto border border-amber-500/20 shadow-2xl relative">
+                             <HardHat className="w-10 h-10 md:w-16 md:h-16 text-amber-500 animate-bounce" />
+                             <div className="absolute inset-0 border-2 md:border-4 border-amber-500/20 rounded-[24px] md:rounded-[40px] animate-ping opacity-40"></div>
                        </div>
-                       <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-amber-500">Validation</span></h3>
-                       <p className="text-slate-400 text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto leading-relaxed text-center">
-                          "Metadata verified. EnvirosAgro Field Stewards have been dispatched to verify your {assetCategory.toLowerCase()} biometrics and structural integrity."
+                       <h3 className="text-2xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-amber-500">Validation</span></h3>
+                       <p className="text-slate-400 text-sm md:text-lg font-medium italic max-w-sm mx-auto leading-relaxed text-center">
+                          "Metadata verified. Stewards have been dispatched to verify your {assetCategory.toLowerCase()} biometrics."
                        </p>
                     </div>
 
-                    <div className="p-8 bg-black/60 rounded-[48px] border border-white/5 space-y-6 shadow-inner">
+                    <div className="p-6 md:p-8 bg-black/60 rounded-3xl md:rounded-[48px] border border-white/5 space-y-4 md:space-y-6 shadow-inner">
                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-white/5 rounded-2xl">
-                             <Calendar className="w-6 h-6 text-slate-400" />
+                          <div className="p-2.5 md:p-3 bg-white/5 rounded-xl md:rounded-2xl">
+                             <Calendar className="w-5 h-5 md:w-6 md:h-6 text-slate-400" />
                           </div>
                           <div>
-                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Audit Window</p>
-                             <p className="text-sm font-bold text-white uppercase font-mono tracking-widest">48 - 72 Standard Hours</p>
-                          </div>
-                       </div>
-                       <div className="flex items-center gap-4">
-                          <div className="p-3 bg-white/5 rounded-2xl">
-                             <Activity className="w-6 h-6 text-slate-400" />
-                          </div>
-                          <div>
-                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Dispatch Node</p>
-                             <p className="text-sm font-bold text-white uppercase font-mono tracking-widest">Regional Hub: {user.location.toUpperCase()}</p>
+                             <p className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-widest">Audit Window</p>
+                             <p className="text-xs md:text-sm font-bold text-white uppercase font-mono tracking-widest">48 - 72 Hours</p>
                           </div>
                        </div>
                     </div>
                     
-                    <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-center gap-6">
-                       <ShieldAlert className="w-8 h-8 text-amber-500 shrink-0" />
-                       <p className="text-[10px] text-amber-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
-                          PROVISIONAL_MINT: You will receive {mintValue.toFixed(1)} EAC now, but it will remain 'ESCROW_LOCKED' until the physical signature is committed.
+                    <div className="p-4 md:p-6 bg-amber-500/5 border border-amber-500/10 rounded-2xl md:rounded-3xl flex items-center gap-4 md:gap-6">
+                       <ShieldAlert className="w-6 h-6 md:w-8 md:h-8 text-amber-500 shrink-0" />
+                       <p className="text-[8px] md:text-[10px] text-amber-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
+                          PROVISIONAL_MINT: {mintValue.toFixed(1)} EAC will be 'ESCROW_LOCKED' until signature commitment.
                        </p>
                     </div>
 
                     <button 
                       onClick={commitToLedger}
-                      className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4"
+                      className="w-full py-6 md:py-10 agro-gradient rounded-2xl md:rounded-[48px] text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] md:tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 md:gap-4"
                     >
-                       <Database className="w-6 h-6" /> COMMITTED PROVISIONAL SHARD
+                       <Database className="w-5 h-5 md:w-6 md:h-6" /> COMMIT PROVISIONAL SHARD
                     </button>
                     </div>
                  )}
 
                  {returnStep === 'success' && (
-                   <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
-                      <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
-                         <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
-                         <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+                   <div className="flex-1 flex flex-col items-center justify-center space-y-10 md:space-y-16 py-6 md:py-10 animate-in zoom-in duration-700 text-center">
+                      <div className="w-32 h-32 md:w-48 md:h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
+                         <CheckCircle2 className="w-16 h-16 md:w-24 md:h-24 text-white group-hover:scale-110 transition-transform" />
+                         <div className="absolute inset-[-10px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
                       </div>
-                      <div className="space-y-4">
-                         <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Provisional <span className="text-emerald-400">Sync</span></h3>
-                         <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.6em] font-mono">Return Hash: 0x772_PROV_{Math.random().toString(16).substring(2, 6).toUpperCase()}</p>
+                      <div className="space-y-2 md:space-y-4">
+                         <h3 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic">Provisional <span className="text-emerald-400">Sync</span></h3>
+                         <p className="text-emerald-500 text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] font-mono">Return Hash: 0x772_PROV_{Math.random().toString(16).substring(2, 6).toUpperCase()}</p>
                       </div>
-                      <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-6 text-left relative overflow-hidden shadow-xl">
-                         <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform"><Activity className="w-40 h-40 text-emerald-400" /></div>
-                         <div className="flex justify-between items-center text-xs relative z-10">
+                      <div className="w-full glass-card p-6 md:p-12 rounded-3xl md:rounded-[56px] border-white/5 bg-emerald-500/5 space-y-4 md:space-y-6 text-left relative overflow-hidden shadow-xl">
+                         <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform"><Activity className="w-24 h-24 md:w-40 md:h-40 text-emerald-400" /></div>
+                         <div className="flex justify-between items-center text-[10px] relative z-10">
                             <span className="text-slate-500 font-black uppercase tracking-widest">Escrowed Credit</span>
-                            <span className="text-white font-mono font-black text-3xl text-emerald-400">+{mintValue.toFixed(1)} EAC</span>
+                            <span className="text-white font-mono font-black text-2xl md:text-3xl text-emerald-400">+{mintValue.toFixed(1)} EAC</span>
                          </div>
-                         <div className="flex justify-between items-center text-xs relative z-10 pt-4 border-t border-white/10">
-                            <span className="text-slate-500 font-black uppercase tracking-widest">Category Shard</span>
+                         <div className="flex justify-between items-center text-[10px] relative z-10 pt-3 md:pt-4 border-t border-white/10">
+                            <span className="text-slate-500 font-black uppercase tracking-widest">Category</span>
                             <span className="text-blue-400 font-black uppercase">{assetCategory}</span>
                          </div>
-                         <div className="flex justify-between items-center text-xs relative z-10 pt-4">
-                            <span className="text-slate-500 font-black uppercase tracking-widest">Verification Status</span>
-                            <span className="text-amber-500 font-black uppercase bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/20 tracking-widest animate-pulse">Awaiting Physical Evaluation</span>
-                         </div>
                       </div>
-                      <button onClick={() => setShowReturnModal(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command Hub</button>
+                      <button onClick={() => setShowReturnModal(false)} className="w-full py-6 md:py-8 bg-white/5 border border-white/10 rounded-2xl md:rounded-[40px] text-white font-black text-[10px] uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Hub</button>
                    </div>
                  )}
               </div>

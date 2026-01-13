@@ -245,7 +245,7 @@ const App: React.FC = () => {
       items: [
         { id: 'wallet', name: 'Treasury Node', icon: Wallet },
         { id: 'investor', name: 'Investor Portal', icon: Landmark },
-        { id: 'economy', name: 'Market and Mining', icon: Pickaxe },
+        { id: 'economy', name: 'Market Cloud & Mining', icon: Globe },
         { id: 'contract_farming', name: 'Capital Bridge', icon: Briefcase },
         { id: 'vendor', name: 'Vendor Registry', icon: Store },
         { id: 'circular', name: 'Circular Grid', icon: Recycle },
@@ -360,7 +360,7 @@ const App: React.FC = () => {
             
             <div className="flex flex-col">
               <h1 className="text-lg md:text-2xl font-black tracking-tighter uppercase italic leading-none text-white truncate max-w-[150px] md:max-w-none">
-                {activeView.replace(/_/g, ' ')} Shard
+                {activeView === 'economy' ? 'Market Cloud' : activeView.replace(/_/g, ' ')} Shard
               </h1>
               <div className="flex items-center gap-2 mt-1">
                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
