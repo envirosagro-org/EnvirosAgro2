@@ -37,7 +37,11 @@ import {
   ExternalLink,
   Cpu,
   Loader2,
-  Globe
+  Globe,
+  // Added missing icon imports
+  Star,
+  Binary,
+  ShieldAlert
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 
@@ -304,6 +308,7 @@ const Economy: React.FC<EconomyProps> = ({ user, onEarnEAC, onSpendEAC, onNaviga
                       <div className="py-2">
                         {item.category === 'Services' && (
                            <div className="flex items-center gap-1.5">
+                              {/* Fixed: Use imported Star icon */}
                               <Star size={12} className="text-amber-500 fill-current" />
                               <span className="text-xs font-mono font-bold text-white">{item.trust}% Trust Rating</span>
                            </div>
@@ -408,6 +413,7 @@ const Economy: React.FC<EconomyProps> = ({ user, onEarnEAC, onSpendEAC, onNaviga
 
            <div className="lg:col-span-4 space-y-8">
               <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-500/5 space-y-8 shadow-xl relative overflow-hidden group">
+                 {/* Fixed: Use imported Binary icon */}
                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform"><Binary className="w-48 h-48 text-indigo-400" /></div>
                  <div className="flex items-center gap-4 relative z-10">
                     <div className="p-3 bg-indigo-500/20 rounded-2xl border border-indigo-500/30">
@@ -428,6 +434,7 @@ const Economy: React.FC<EconomyProps> = ({ user, onEarnEAC, onSpendEAC, onNaviga
               </div>
 
               <div className="p-8 glass-card rounded-[40px] border-amber-500/20 bg-amber-500/5 flex items-center gap-6 group">
+                 {/* Fixed: Use imported ShieldAlert icon */}
                  <div className="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center text-white shadow-xl shrink-0 group-hover:rotate-12 transition-transform"><ShieldAlert size={24} /></div>
                  <p className="text-[10px] text-slate-400 leading-relaxed font-black uppercase tracking-tight">
                     "Mining rewards are calculated via the Reaction Index. Validate community shards to maintain your daily minting quota."
