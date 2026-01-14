@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   User as UserIcon, 
@@ -48,7 +49,13 @@ import {
   Coins,
   Flower2,
   Download,
-  Gift
+  Gift,
+  Share2,
+  Twitter,
+  Linkedin,
+  Youtube,
+  AtSign,
+  Facebook
 } from 'lucide-react';
 import { User } from '../types';
 import IdentityCard from './IdentityCard';
@@ -65,6 +72,29 @@ interface UserProfileProps {
   onAcceptProposal?: (id: string) => void;
 }
 
+const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string; desc: string }> = {
+  'January': { flower: 'Carnation', color: 'text-pink-400', hex: '#f472b6', desc: 'Symbol of fascination and divine love.' },
+  'February': { flower: 'Violet', color: 'text-purple-400', hex: '#c084fc', desc: 'Symbol of loyalty, wisdom, and hope.' },
+  'March': { flower: 'Daffodil', color: 'text-yellow-400', hex: '#facc15', desc: 'Symbol of rebirth and new beginnings.' },
+  'April': { flower: 'Daisy', color: 'text-stone-200', hex: '#e7e5e4', desc: 'Symbol of purity, innocence, and true love.' },
+  'May': { flower: 'Lily of the Valley', color: 'text-emerald-100', hex: '#ecfdf5', desc: 'Symbol of sweetness and return of happiness.' },
+  'June': { flower: 'Rose', color: 'text-rose-500', hex: '#f43f5e', desc: 'Symbol of passion, beauty, and friendship.' },
+  'July': { flower: 'Larkspur', color: 'text-blue-400', hex: '#60a5fa', desc: 'Symbol of positivity, dignity, and open heart.' },
+  'August': { flower: 'Gladiolus', color: 'text-orange-500', hex: '#f97316', desc: 'Symbol of strength and moral integrity.' },
+  'September': { flower: 'Aster', color: 'text-indigo-400', hex: '#818cf8', desc: 'Symbol of love, wisdom, and faith.' },
+  'October': { flower: 'Marigold', color: 'text-amber-500', hex: '#f59e0b', desc: 'Symbol of optimism and prosperity.' },
+  'November': { flower: 'Chrysanthemum', color: 'text-red-500', hex: '#ef4444', desc: 'Symbol of joy and abundance.' },
+  'December': { flower: 'Narcissus', color: 'text-blue-100', hex: '#f0f9ff', desc: 'Symbol of respect and faithfulness.' },
+};
+
+const SOCIAL_LINKS = [
+  { name: 'X', icon: Twitter, url: 'https://x.com/EnvirosAgro', color: 'hover:text-blue-400' },
+  { name: 'LinkedIn', icon: Linkedin, url: 'https://www.linkedin.com/company/modern-agrarian-revolution', color: 'hover:text-blue-600' },
+  { name: 'Threads', icon: AtSign, url: 'https://www.threads.com/@envirosagro', color: 'hover:text-white' },
+  { name: 'Facebook', icon: Facebook, url: 'https://www.facebook.com/share/1MuDmrsDo9/', color: 'hover:text-blue-700' },
+  { name: 'YouTube', icon: Youtube, url: 'https://youtube.com/@envirosagro', color: 'hover:text-red-500' },
+];
+
 const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onDeleteAccount, signals, setSignals, onAcceptProposal }) => {
   const [activeTab, setActiveTab] = useState<'general' | 'dossier' | 'signals' | 'security'>('general');
   const [isEditing, setIsEditing] = useState(false);
@@ -79,6 +109,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
   const [countryCode, setCountryCode] = useState(user.countryCode || '+254');
   const [lineNumber, setLineNumber] = useState(user.lineNumber || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   const unreadCount = signals.filter(n => !n.read).length;
 
@@ -96,6 +127,50 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
       setIsSaving(false);
       setIsEditing(false);
     }, 1500);
+  };
+
+  const handleShareApp = async () => {
+    const shareData = {
+      title: 'EnvirosAgro™ - Decentralized Sustainability',
+      text: 'Join me on the EnvirosAgro network and contribute to a sustainable agricultural future!',
+      url: window.location.origin,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Share cancelled or failed');
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(shareData.url);
+      alert('Network Link Copied to Clipboard!');
+    }
+  };
+
+  const handleGenerateFlowerBadge = () => {
+    if (!selectedMonth) return;
+    setIsGeneratingBadge(true);
+    
+    setTimeout(() => {
+      const data = MONTH_FLOWERS[selectedMonth];
+      onUpdate({
+        ...user,
+        wallet: {
+          ...user.wallet,
+          lifetimeEarned: user.wallet.lifetimeEarned + 100 // Rep reward
+        },
+        zodiacFlower: {
+          month: selectedMonth,
+          flower: data.flower,
+          color: data.color,
+          hex: data.hex,
+          pointsAdded: true
+        }
+      });
+      setIsGeneratingBadge(false);
+    }, 3000);
   };
 
   const markRead = (id: string) => {
@@ -386,37 +461,119 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
 
           {activeTab === 'general' && (
             <div className="space-y-8">
-              {/* Zodiac Flower Gift Badge Section */}
-              {user.zodiacFlower && (
-                <div className="glass-card p-10 rounded-[48px] border-pink-500/20 bg-pink-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-10 animate-in slide-in-from-top-4 duration-700">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
-                      <Gift className="w-64 h-64 text-pink-400" />
-                   </div>
-                   <div className="w-32 h-32 rounded-[40px] bg-pink-500/10 border border-pink-500/20 flex items-center justify-center shadow-2xl shrink-0 group hover:rotate-12 transition-transform duration-500 relative">
-                      <Flower2 className={`w-16 h-16 ${user.zodiacFlower.color}`} />
-                      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[40px] backdrop-blur-sm">
-                         <Download className="w-8 h-8 text-white" />
+              {/* Ecosystem Outreach & App Sharing Section */}
+              <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden animate-in slide-in-from-top-4 duration-700">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+                  <Share2 className="w-64 h-64 text-indigo-400" />
+                </div>
+                
+                <div className="space-y-8 relative z-10">
+                   <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-xl shrink-0 group-hover:scale-110 transition-transform">
+                         <Share2 size={28} />
                       </div>
-                   </div>
-                   <div className="flex-1 space-y-4 text-center md:text-left relative z-10">
                       <div>
-                         <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Zodiac <span className="text-pink-400">Flower Shard</span></h3>
-                         <p className="text-[10px] text-pink-400 font-black uppercase tracking-[0.4em] mt-2">Lilies Around x EnvirosAgro™ Gift</p>
+                         <h3 className="text-2xl font-black text-white uppercase italic m-0">Ecosystem <span className="text-indigo-400">Outreach</span></h3>
+                         <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-1">Broadcast the EOS Industrial Node to external networks.</p>
                       </div>
-                      <p className="text-slate-400 text-sm font-medium italic">
-                         Your {user.zodiacFlower.flower} badge is anchored to the {user.zodiacFlower.month} registry. This shard grants 100 bonus reputation points for your worker dossier.
-                      </p>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                       <button 
-                        onClick={downloadZodiacBadge}
-                        disabled={isGeneratingBadge}
-                        className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-pink-600 hover:border-pink-500 transition-all shadow-xl group/btn disabled:opacity-50"
+                        onClick={handleShareApp}
+                        className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all group/btn"
                       >
-                         {isGeneratingBadge ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 group-hover/btn:-translate-y-1 transition-transform" />}
-                         Download Identity Shard (PNG)
+                         <Share2 className="w-5 h-5 group-hover/btn:rotate-12 transition-transform" />
+                         Broadcast Node Link
                       </button>
+                      
+                      <div className="flex justify-center md:justify-end gap-5">
+                         {SOCIAL_LINKS.map((social) => (
+                            <a 
+                              key={social.name} 
+                              href={social.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className={`p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-500 transition-all shadow-lg active:scale-90 ${social.color}`}
+                              title={`Share on ${social.name}`}
+                            >
+                               <social.icon size={22} />
+                            </a>
+                         ))}
+                      </div>
+                   </div>
+
+                   <div className="p-6 bg-black/40 rounded-[32px] border border-white/5">
+                      <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.4em] text-center italic">
+                        External sharding expands the network's m-constant resilience by increasing global node consensus.
+                      </p>
                    </div>
                 </div>
-              )}
+              </div>
+
+              {/* Zodiac Flower Gift Badge Section */}
+              <div className="glass-card p-10 rounded-[48px] border-pink-500/20 bg-pink-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-10 animate-in slide-in-from-top-4 duration-700">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+                  <Gift className="w-64 h-64 text-pink-400" />
+                </div>
+                
+                {user.zodiacFlower ? (
+                  <>
+                    <div className="w-32 h-32 rounded-[40px] bg-pink-500/10 border border-pink-500/20 flex items-center justify-center shadow-2xl shrink-0 group hover:rotate-12 transition-transform duration-500 relative">
+                       <Flower2 className={`w-16 h-16 ${user.zodiacFlower.color}`} />
+                       <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[40px] backdrop-blur-sm cursor-pointer" onClick={downloadZodiacBadge}>
+                          <Download className="w-8 h-8 text-white" />
+                       </div>
+                    </div>
+                    <div className="flex-1 space-y-4 text-center md:text-left relative z-10">
+                       <div>
+                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Zodiac <span className="text-pink-400">Flower Shard</span></h3>
+                          <p className="text-[10px] text-pink-400 font-black uppercase tracking-[0.4em] mt-2">Lilies Around x EnvirosAgro™ Gift</p>
+                       </div>
+                       <p className="text-slate-400 text-sm font-medium italic">
+                          "Your {user.zodiacFlower.flower} badge is anchored to the {user.zodiacFlower.month} registry. This shard grants 100 bonus reputation points for your worker dossier."
+                       </p>
+                       <button onClick={downloadZodiacBadge} className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-pink-600 hover:border-pink-500 transition-all shadow-xl group/btn">
+                          <Download className="w-4 h-4 group-hover/btn:-translate-y-1 transition-transform" />
+                          Download Identity Shard (PNG)
+                       </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-24 h-24 rounded-[32px] bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center shrink-0">
+                       <Flower2 className="w-10 h-10 text-slate-800" />
+                    </div>
+                    <div className="flex-1 space-y-6 relative z-10">
+                       <div className="space-y-2">
+                          <h3 className="text-2xl font-black text-white uppercase italic m-0">Astro-Botanical <span className="text-pink-400">Ingest</span></h3>
+                          <p className="text-slate-500 text-xs font-medium">Select your birth month to synthesize your "Lilies Around" gift badge.</p>
+                       </div>
+                       
+                       <div className="flex flex-wrap gap-2">
+                          {Object.keys(MONTH_FLOWERS).map(m => (
+                            <button 
+                              key={m} 
+                              onClick={() => setSelectedMonth(m)}
+                              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${selectedMonth === m ? 'bg-pink-600 border-pink-500 text-white shadow-lg' : 'bg-black/40 border-white/5 text-slate-500 hover:text-white'}`}
+                            >
+                              {m}
+                            </button>
+                          ))}
+                       </div>
+
+                       <button 
+                        onClick={handleGenerateFlowerBadge}
+                        disabled={!selectedMonth || isGeneratingBadge}
+                        className="w-full md:w-auto px-10 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30"
+                       >
+                          {isGeneratingBadge ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                          {isGeneratingBadge ? 'MINING IDENTITY...' : 'GENERATE IDENTITY SHARD (+100 REP)'}
+                       </button>
+                    </div>
+                  </>
+                )}
+              </div>
 
               <div className="glass-card p-10 rounded-[40px] space-y-8 relative overflow-hidden">
                  <div className="flex justify-between items-center mb-2">
@@ -594,7 +751,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                      </div>
                      <button 
                         onClick={onLogout}
-                        className="px-10 py-4 bg-rose-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-900/40 hover:bg-rose-500 transition-all active:scale-95 flex items-center gap-3"
+                        className="px-10 py-4 bg-rose-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-900/40 hover:bg-rose-500 transition-all active:scale-95 flex items-center justify-center gap-3"
                      >
                         <LogOut size={16} /> Detach Node
                      </button>
