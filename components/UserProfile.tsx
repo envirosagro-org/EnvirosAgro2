@@ -55,7 +55,8 @@ import {
   Linkedin,
   Youtube,
   AtSign,
-  Facebook
+  Facebook,
+  Star
 } from 'lucide-react';
 import { User } from '../types';
 import IdentityCard from './IdentityCard';
@@ -72,19 +73,19 @@ interface UserProfileProps {
   onAcceptProposal?: (id: string) => void;
 }
 
-const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string; desc: string }> = {
-  'January': { flower: 'Carnation', color: 'text-pink-400', hex: '#f472b6', desc: 'Symbol of fascination and divine love.' },
-  'February': { flower: 'Violet', color: 'text-purple-400', hex: '#c084fc', desc: 'Symbol of loyalty, wisdom, and hope.' },
-  'March': { flower: 'Daffodil', color: 'text-yellow-400', hex: '#facc15', desc: 'Symbol of rebirth and new beginnings.' },
-  'April': { flower: 'Daisy', color: 'text-stone-200', hex: '#e7e5e4', desc: 'Symbol of purity, innocence, and true love.' },
-  'May': { flower: 'Lily of the Valley', color: 'text-emerald-100', hex: '#ecfdf5', desc: 'Symbol of sweetness and return of happiness.' },
-  'June': { flower: 'Rose', color: 'text-rose-500', hex: '#f43f5e', desc: 'Symbol of passion, beauty, and friendship.' },
-  'July': { flower: 'Larkspur', color: 'text-blue-400', hex: '#60a5fa', desc: 'Symbol of positivity, dignity, and open heart.' },
-  'August': { flower: 'Gladiolus', color: 'text-orange-500', hex: '#f97316', desc: 'Symbol of strength and moral integrity.' },
-  'September': { flower: 'Aster', color: 'text-indigo-400', hex: '#818cf8', desc: 'Symbol of love, wisdom, and faith.' },
-  'October': { flower: 'Marigold', color: 'text-amber-500', hex: '#f59e0b', desc: 'Symbol of optimism and prosperity.' },
-  'November': { flower: 'Chrysanthemum', color: 'text-red-500', hex: '#ef4444', desc: 'Symbol of joy and abundance.' },
-  'December': { flower: 'Narcissus', color: 'text-blue-100', hex: '#f0f9ff', desc: 'Symbol of respect and faithfulness.' },
+const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string; desc: string; zodiac: string }> = {
+  'January': { flower: 'Carnation', zodiac: 'Capricorn/Aquarius', color: 'text-pink-400', hex: '#f472b6', desc: 'Symbol of fascination and divine love.' },
+  'February': { flower: 'Violet', zodiac: 'Aquarius/Pisces', color: 'text-purple-400', hex: '#c084fc', desc: 'Symbol of loyalty, wisdom, and hope.' },
+  'March': { flower: 'Daffodil', zodiac: 'Pisces/Aries', color: 'text-yellow-400', hex: '#facc15', desc: 'Symbol of rebirth and new beginnings.' },
+  'April': { flower: 'Daisy', zodiac: 'Aries/Taurus', color: 'text-stone-200', hex: '#e7e5e4', desc: 'Symbol of purity, innocence, and true love.' },
+  'May': { flower: 'Lily of the Valley', zodiac: 'Taurus/Gemini', color: 'text-emerald-100', hex: '#ecfdf5', desc: 'Symbol of sweetness and return of happiness.' },
+  'June': { flower: 'Rose', zodiac: 'Gemini/Cancer', color: 'text-rose-500', hex: '#f43f5e', desc: 'Symbol of passion, beauty, and friendship.' },
+  'July': { flower: 'Larkspur', zodiac: 'Cancer/Leo', color: 'text-blue-400', hex: '#60a5fa', desc: 'Symbol of positivity, dignity, and open heart.' },
+  'August': { flower: 'Gladiolus', zodiac: 'Leo/Virgo', color: 'text-orange-500', hex: '#f97316', desc: 'Symbol of strength and moral integrity.' },
+  'September': { flower: 'Aster', zodiac: 'Virgo/Libra', color: 'text-indigo-400', hex: '#818cf8', desc: 'Symbol of love, wisdom, and faith.' },
+  'October': { flower: 'Marigold', zodiac: 'Libra/Scorpio', color: 'text-amber-500', hex: '#f59e0b', desc: 'Symbol of optimism and prosperity.' },
+  'November': { flower: 'Chrysanthemum', zodiac: 'Scorpio/Sagittarius', color: 'text-red-500', hex: '#ef4444', desc: 'Symbol of joy and abundance.' },
+  'December': { flower: 'Narcissus', zodiac: 'Sagittarius/Capricorn', color: 'text-blue-100', hex: '#f0f9ff', desc: 'Symbol of respect and faithfulness.' },
 };
 
 const SOCIAL_LINKS = [
@@ -143,7 +144,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
         console.log('Share cancelled or failed');
       }
     } else {
-      // Fallback: Copy to clipboard
       navigator.clipboard.writeText(shareData.url);
       alert('Network Link Copied to Clipboard!');
     }
@@ -173,6 +173,139 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
     }, 3000);
   };
 
+  const downloadZodiacBadge = async () => {
+    if (!user.zodiacFlower) return;
+    setIsGeneratingBadge(true);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 1600;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const flowerData = MONTH_FLOWERS[user.zodiacFlower.month];
+    const themeColor = user.zodiacFlower.hex || '#f472b6';
+
+    // 1. Background Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 1200, 1600);
+    bgGrad.addColorStop(0, '#050706');
+    bgGrad.addColorStop(0.5, '#0a0d0c');
+    bgGrad.addColorStop(1, '#050706');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 1200, 1600);
+
+    // 2. Mesh Pattern Watermark
+    ctx.strokeStyle = themeColor + '11';
+    ctx.lineWidth = 1;
+    for(let i=0; i<1600; i+=40) {
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(1200, i + 200);
+      ctx.stroke();
+    }
+
+    // 3. Professional Border
+    ctx.strokeStyle = themeColor + '66';
+    ctx.lineWidth = 40;
+    ctx.strokeRect(40, 40, 1120, 1520);
+    
+    ctx.strokeStyle = '#ffffff22';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(80, 80, 1040, 1440);
+
+    // 4. Header Section
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    
+    ctx.fillStyle = themeColor;
+    ctx.font = '900 24px monospace';
+    ctx.fillText('LILIES AROUND × ENVIROSAGRO™', 600, 140);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 60px serif';
+    ctx.fillText('Identity Shard Certificate', 600, 190);
+
+    // 5. Centerpiece: The Flower Shard
+    // Glow behind flower
+    const radial = ctx.createRadialGradient(600, 600, 50, 600, 600, 400);
+    radial.addColorStop(0, themeColor + '33');
+    radial.addColorStop(1, 'transparent');
+    ctx.fillStyle = radial;
+    ctx.beginPath();
+    ctx.arc(600, 600, 400, 0, Math.PI * 2);
+    ctx.fill();
+
+    // The Icon (❁)
+    ctx.fillStyle = themeColor;
+    ctx.font = '400px serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('❁', 600, 600);
+    
+    // Decorative Ring
+    ctx.strokeStyle = themeColor + '88';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([20, 10]);
+    ctx.beginPath();
+    ctx.arc(600, 600, 350, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 6. Content Section
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 80px monospace';
+    ctx.fillText(user.zodiacFlower.month.toUpperCase(), 600, 950);
+    
+    ctx.fillStyle = themeColor;
+    ctx.font = 'bold 50px serif';
+    ctx.fillText(user.zodiacFlower.flower, 600, 1040);
+
+    // Description text (centered and wrapped)
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'italic 30px serif';
+    const desc = `"${flowerData.desc}"`;
+    ctx.fillText(desc, 600, 1120);
+
+    // 7. Recipient Details
+    ctx.fillStyle = '#ffffff22';
+    ctx.fillRect(200, 1220, 800, 200);
+    
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'black 20px monospace';
+    ctx.fillText('HOLDER ALIAS', 240, 1250);
+    ctx.fillText('REGISTRY ESIN', 240, 1310);
+    ctx.fillText('ZODIAC ARCHIVE', 240, 1370);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 30px monospace';
+    ctx.fillText(user.name.toUpperCase(), 450, 1245);
+    ctx.fillStyle = themeColor;
+    ctx.fillText(user.esin, 450, 1305);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(flowerData.zodiac, 450, 1365);
+
+    // 8. Footer & Authentication
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#475569';
+    ctx.font = '900 18px monospace';
+    const hash = 'ZK_PROOF: 0x' + btoa(user.esin + user.zodiacFlower.month).substring(0, 32).toUpperCase();
+    ctx.fillText(hash, 600, 1480);
+    
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText('VALIDATED BY ENVIROSAGRO OS REGISTRY', 600, 1515);
+
+    // 9. Download
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `EnvirosAgro_Shard_${user.zodiacFlower.month}_${user.name}.png`;
+    link.href = dataUrl;
+    link.click();
+    
+    setIsGeneratingBadge(false);
+  };
+
   const markRead = (id: string) => {
     setSignals(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
@@ -196,63 +329,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
       setIsVerifying(null);
       setViewingContract(null);
     }, 2500);
-  };
-
-  const downloadZodiacBadge = async () => {
-    if (!user.zodiacFlower) return;
-    setIsGeneratingBadge(true);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 1000;
-    canvas.height = 1000;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Background
-    ctx.fillStyle = '#050706';
-    ctx.fillRect(0, 0, 1000, 1000);
-
-    // Glow Effect
-    const gradient = ctx.createRadialGradient(500, 500, 0, 500, 500, 500);
-    gradient.addColorStop(0, '#10b98111');
-    gradient.addColorStop(1, 'transparent');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1000, 1000);
-
-    // Badge Ring
-    ctx.beginPath();
-    ctx.arc(500, 500, 400, 0, Math.PI * 2);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#10b981';
-    ctx.stroke();
-
-    // Stylized Flower
-    ctx.font = 'bold 180px serif';
-    ctx.fillStyle = user.zodiacFlower.hex || '#f472b6';
-    ctx.textAlign = 'center';
-    ctx.fillText('❁', 500, 550);
-
-    // User Data
-    ctx.font = 'black 45px monospace';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(user.name.toUpperCase(), 500, 720);
-    
-    ctx.font = 'bold 35px monospace';
-    ctx.fillStyle = '#10b981';
-    ctx.fillText(user.esin, 500, 780);
-
-    ctx.font = 'bold 25px Arial';
-    ctx.fillStyle = '#666';
-    ctx.fillText('STWD_ZODIAC_RECOGNITION_NODE', 500, 850);
-
-    // Download
-    const dataUrl = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.download = `EnvirosAgro_Identity_Shard_${user.zodiacFlower.flower}.png`;
-    link.href = dataUrl;
-    link.click();
-    
-    setIsGeneratingBadge(false);
   };
 
   return (
@@ -519,24 +595,38 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onUpdate, onLogout, onD
                 
                 {user.zodiacFlower ? (
                   <>
-                    <div className="w-32 h-32 rounded-[40px] bg-pink-500/10 border border-pink-500/20 flex items-center justify-center shadow-2xl shrink-0 group hover:rotate-12 transition-transform duration-500 relative">
-                       <Flower2 className={`w-16 h-16 ${user.zodiacFlower.color}`} />
-                       <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[40px] backdrop-blur-sm cursor-pointer" onClick={downloadZodiacBadge}>
-                          <Download className="w-8 h-8 text-white" />
-                       </div>
+                    <div className="relative group shrink-0">
+                      <div className="w-32 h-32 rounded-[40px] bg-pink-500/10 border border-pink-500/20 flex items-center justify-center shadow-2xl group hover:rotate-12 transition-transform duration-500 relative overflow-hidden">
+                         <div className="absolute inset-0 bg-gradient-to-tr from-pink-500/20 via-transparent to-white/10 animate-pulse"></div>
+                         <Flower2 className={`w-16 h-16 ${user.zodiacFlower.color} relative z-10`} />
+                         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[40px] backdrop-blur-sm cursor-pointer z-20" onClick={downloadZodiacBadge}>
+                            <Download className="w-8 h-8 text-white" />
+                         </div>
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-pink-600 flex items-center justify-center border-4 border-[#050706] shadow-xl">
+                        <Check className="text-white w-5 h-5" />
+                      </div>
                     </div>
                     <div className="flex-1 space-y-4 text-center md:text-left relative z-10">
-                       <div>
+                       <div className="flex items-center justify-center md:justify-start gap-4">
                           <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Zodiac <span className="text-pink-400">Flower Shard</span></h3>
-                          <p className="text-[10px] text-pink-400 font-black uppercase tracking-[0.4em] mt-2">Lilies Around x EnvirosAgro™ Gift</p>
+                          <div className="px-3 py-1 bg-pink-500/10 border border-pink-500/20 rounded-lg flex items-center gap-2">
+                             <Star size={10} className="text-pink-400 fill-current" />
+                             <span className="text-[8px] font-black text-pink-400 uppercase tracking-widest">AUTHENTIC_GIFT</span>
+                          </div>
                        </div>
-                       <p className="text-slate-400 text-sm font-medium italic">
-                          "Your {user.zodiacFlower.flower} badge is anchored to the {user.zodiacFlower.month} registry. This shard grants 100 bonus reputation points for your worker dossier."
+                       <p className="text-slate-400 text-sm font-medium italic leading-relaxed">
+                          "Your premium <strong>{user.zodiacFlower.flower}</strong> shard is anchored to your {user.zodiacFlower.month} registry. This identity artifact grants +100 bonus reputation for your worker dossier."
                        </p>
-                       <button onClick={downloadZodiacBadge} className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-pink-600 hover:border-pink-500 transition-all shadow-xl group/btn">
-                          <Download className="w-4 h-4 group-hover/btn:-translate-y-1 transition-transform" />
-                          Download Identity Shard (PNG)
-                       </button>
+                       <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                          <button onClick={downloadZodiacBadge} className="flex items-center gap-3 px-8 py-3.5 bg-pink-600 border border-pink-500 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-white hover:bg-pink-500 transition-all shadow-xl active:scale-95 group/btn">
+                             <Download className="w-4 h-4 group-hover/btn:-translate-y-1 transition-transform" />
+                             Download Certificate Shard
+                          </button>
+                          <div className="px-6 py-3.5 bg-black/40 border border-white/5 rounded-2xl text-[10px] font-mono text-pink-400 font-bold flex items-center gap-2">
+                             <Fingerprint size={14} /> 0x{btoa(user.esin).substring(0, 8).toUpperCase()}
+                          </div>
+                       </div>
                     </div>
                   </>
                 ) : (
