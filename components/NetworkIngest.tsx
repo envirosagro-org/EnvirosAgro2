@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Cable, 
@@ -41,8 +40,8 @@ import {
   ShieldAlert,
   ChevronRight,
   Clock,
-  // Added missing Box icon
-  Box
+  Box,
+  Coins
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -67,6 +66,10 @@ interface APIKey {
   lastUsed: string;
   relay: string;
   trustLevel: number; // 0-100
+}
+
+interface NetworkIngestProps {
+  onSpendEAC?: (amount: number, reason: string) => boolean;
 }
 
 const INITIAL_KEYS: APIKey[] = [
@@ -97,7 +100,9 @@ const INITIAL_KEYS: APIKey[] = [
   },
 ];
 
-const NetworkIngest: React.FC = () => {
+const PROVISIONING_FEE = 500;
+
+const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'api' | 'analyzer' | 'docs'>('overview');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [keys, setKeys] = useState<APIKey[]>(INITIAL_KEYS);
@@ -158,6 +163,14 @@ const NetworkIngest: React.FC = () => {
   };
 
   const generateNewKey = () => {
+    if (onSpendEAC) {
+        const paymentSuccessful = onSpendEAC(PROVISIONING_FEE, `NETWORK_INGEST_PROVISIONING_${newKeyName}`);
+        if (!paymentSuccessful) {
+            alert("LIQUIDITY ERROR: Insufficient EAC for node provisioning fee.");
+            return;
+        }
+    }
+
     setIsGeneratingKey(true);
     setTimeout(() => {
       const prefix = newKeyEnv === 'Production' ? 'EA_LIVE' : 'EA_TEST';
@@ -590,7 +603,7 @@ const NetworkIngest: React.FC = () => {
       {showKeyModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-2xl" onClick={() => setShowKeyModal(false)}></div>
-           <div className="relative z-10 w-full max-w-2xl glass-card p-1 rounded-[64px] border-indigo-500/20 overflow-hidden shadow-[0_0_100px_rgba(99,102,241,0.15)]">
+           <div className="relative z-10 w-full max-w-xl glass-card p-1 rounded-[64px] border-indigo-500/20 overflow-hidden shadow-[0_0_100px_rgba(99,102,241,0.15)]">
               <div className="bg-[#050706] p-16 space-y-10 flex flex-col min-h-[650px]">
                  <button onClick={() => setShowKeyModal(false)} className="absolute top-10 right-10 p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-colors border border-white/5"><X className="w-8 h-8" /></button>
                  
@@ -601,7 +614,7 @@ const NetworkIngest: React.FC = () => {
                            <Network className="w-12 h-12 text-indigo-400" />
                         </div>
                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter m-0 italic">Node <span className="text-indigo-400">Designation</span></h3>
-                        <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Provide a registry label for this integration node to initialize the ZK-Handshake.</p>
+                        <p className="text-slate-400 text-lg font-medium leading-relaxed max-md:text-sm max-w-md mx-auto">Provide a registry label for this integration node to initialize the ZK-Handshake.</p>
                       </div>
                       
                       <div className="space-y-4">
@@ -679,6 +692,15 @@ const NetworkIngest: React.FC = () => {
                                    className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 pl-16 pr-6 text-white font-mono text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-800"
                                 />
                              </div>
+                          </div>
+
+                          {/* Registry Fee Display */}
+                          <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[32px] flex items-center justify-between shadow-inner">
+                             <div className="flex items-center gap-4">
+                                <Coins className="text-emerald-400" />
+                                <span className="text-[10px] font-black text-white uppercase tracking-widest">Registry Provisioning Fee</span>
+                             </div>
+                             <span className="text-xl font-mono font-black text-emerald-400">{PROVISIONING_FEE} EAC</span>
                           </div>
                        </div>
 

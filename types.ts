@@ -119,6 +119,15 @@ export interface WorkerProfile {
   lifetimeEAC: number;
 }
 
+// Added ProjectTask interface to fix line 33 error in components/Industrial.tsx
+export interface ProjectTask {
+  id: string;
+  title: string;
+  status: string;
+  thrust: string;
+  esinSign: string;
+}
+
 export interface AgroProject {
   id: string;
   name: string;
@@ -160,4 +169,35 @@ export interface AgroTransaction {
   unit: 'EAC' | 'EAT' | 'CO2e' | 'kg' | 'pH' | 'USD' | 'KES' | 'ETH';
 }
 
-export type ViewState = 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research' | 'live_farming' | 'contract_farming' | 'agrowild' | 'impact';
+export type ViewState = 
+  | 'dashboard' 
+  | 'wallet' 
+  | 'sustainability' 
+  | 'economy' 
+  | 'industrial' 
+  | 'intelligence' 
+  | 'community' 
+  | 'explorer' 
+  | 'ecosystem' 
+  | 'media' 
+  | 'info' 
+  | 'profile' 
+  | 'investor' 
+  | 'vendor' 
+  | 'ingest' 
+  | 'tools' 
+  | 'channelling' 
+  | 'circular' 
+  | 'crm' 
+  | 'tqm' 
+  | 'research' 
+  | 'live_farming' 
+  | 'contract_farming' 
+  | 'agrowild' 
+  | 'impact'
+  | 'animal_world'
+  | 'plants_world'
+  | 'aqua_portal'
+  | 'soil_portal'
+  | 'air_portal'
+  | 'intranet';

@@ -42,18 +42,22 @@ import {
   ClipboardCheck,
   HardHat,
   Eye,
-  FileCheck
+  FileCheck,
+  Coins
 } from 'lucide-react';
 import { User } from '../types';
 import { optimizeSupplyChain, AIResponse } from '../services/geminiService';
 
 interface VendorPortalProps {
   user: User;
+  onSpendEAC: (amount: number, reason: string) => boolean;
   pendingAction?: string | null;
   clearAction?: () => void;
 }
 
-const VendorPortal: React.FC<VendorPortalProps> = ({ user, pendingAction, clearAction }) => {
+const VENDOR_REGISTRY_FEE = 100;
+
+const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, pendingAction, clearAction }) => {
   const [activeView, setActiveView] = useState<'inventory' | 'shipments' | 'ledger'>('inventory');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -114,6 +118,13 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, pendingAction, clearA
 
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Process Payment First
+    if (!onSpendEAC(VENDOR_REGISTRY_FEE, 'VENDOR_PRODUCT_REGISTRY_FEE')) {
+      alert("LIQUIDITY ERROR: Insufficient EAC in treasury for registry fee.");
+      return;
+    }
+
     setIsSubmitting(true);
     setTimeout(() => {
       setSubStep('verification');
@@ -213,7 +224,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, pendingAction, clearA
                     </div>
                     <div className="flex flex-col items-end">
                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${item.status === 'Awaiting Audit' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>{item.status}</span>
-                       <span className="text-[9px] text-slate-600 font-mono mt-1">QTY: {item.stock}</span>
+                       <span className="text-[9px] text-slate-600 font-mono mt-1">STOCK: {item.stock}</span>
                     </div>
                  </div>
                  
@@ -413,7 +424,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, pendingAction, clearA
       {showAddProduct && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowAddProduct(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(245,158,11,0.15)] animate-in zoom-in duration-300">
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(245,158,11,0.15)] animate-in zoom-in duration-300 border-2">
               <div className="p-16 space-y-12 min-h-[650px] flex flex-col">
                  <button onClick={() => setShowAddProduct(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                  
@@ -444,7 +455,15 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, pendingAction, clearA
                          </div>
                       </div>
 
-                      <button type="submit" disabled={isSubmitting} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 mt-6">
+                      <div className="p-8 bg-amber-500/5 border border-amber-500/10 rounded-[32px] flex items-center justify-between">
+                         <div className="flex items-center gap-4">
+                            <Coins className="text-amber-500" />
+                            <span className="text-xs font-black text-white uppercase tracking-widest">Registry Fee</span>
+                         </div>
+                         <span className="text-xl font-mono font-black text-amber-500">{VENDOR_REGISTRY_FEE} EAC</span>
+                      </div>
+
+                      <button type="submit" disabled={isSubmitting} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 mt-2">
                          {isSubmitting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-6 h-6" />}
                          {isSubmitting ? "COMMITING TO SHARDS..." : "AUTHORIZE REGISTRY MINT"}
                       </button>
@@ -458,8 +477,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, pendingAction, clearA
                              <MapPin className="w-12 h-12 text-blue-400 animate-bounce" />
                              <div className="absolute inset-0 border-2 border-blue-500/20 rounded-full animate-ping"></div>
                           </div>
-                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Physical <span className="text-blue-400">Audit Protocol</span></h3>
-                          <p className="text-slate-400 text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto">"Metadata recorded. Our team must now conduct a physical site audit to certify asset integrity."</p>
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-blue-400">Audit Protocol</span></h3>
+                          <p className="text-slate-400 text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto text-center">"Metadata recorded. Our team must now conduct a physical site audit to certify asset integrity."</p>
                        </div>
 
                        <div className="space-y-6">

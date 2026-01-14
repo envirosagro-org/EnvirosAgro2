@@ -49,14 +49,18 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
   const startSession = async () => {
     setIsConnecting(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
       
-      // Hardened initialization to prevent Illegal Constructor errors
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) throw new Error("AudioContext not supported");
-      
-      outputAudioContextRef.current = new AudioContextClass({ sampleRate: 24000 });
-      inputAudioContextRef.current = new AudioContextClass({ sampleRate: 16000 });
+      // Use the global constructors explicitly from window to avoid "Illegal constructor" errors
+      // which can occur when constructor names are shadowed or referenced incorrectly in some environments.
+      const AudioContextCtor = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextCtor) {
+        throw new Error("AudioContext not supported in this browser environment.");
+      }
+
+      // Safe instantiation with specific sample rates for input/output as required by the Live API
+      outputAudioContextRef.current = new AudioContextCtor({ sampleRate: 24000 });
+      inputAudioContextRef.current = new AudioContextCtor({ sampleRate: 16000 });
       
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -91,7 +95,7 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
               source.addEventListener('ended', () => { sourcesRef.current.delete(source); });
               source.start(nextStartTimeRef.current);
               nextStartTimeRef.current += audioBuffer.duration;
-              sourcesRef.current.add(source);
+              sourcesRef.add(source);
             }
             if (message.serverContent?.interrupted) stopAllAudio();
           },
@@ -108,16 +112,27 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
     } catch (err) {
       console.error("Voice Bridge Sync Failed:", err);
       setIsConnecting(false);
+      cleanup();
     }
   };
 
   const cleanup = () => {
-    sessionRef.current?.close();
-    sessionRef.current = null;
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    stopAllAudio();
     setIsActive(false);
     setIsConnecting(false);
+    sessionRef.current?.close();
+    sessionRef.current = null;
+    if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+    }
+    stopAllAudio();
+    if (outputAudioContextRef.current) {
+      outputAudioContextRef.current.close();
+      outputAudioContextRef.current = null;
+    }
+    if (inputAudioContextRef.current) {
+      inputAudioContextRef.current.close();
+      inputAudioContextRef.current = null;
+    }
   };
 
   if (!isOpen) return null;
@@ -138,7 +153,9 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
         <div className="flex-1 p-8 flex flex-col items-center justify-center space-y-8 min-h-[250px]">
           {isConnecting ? (
             <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+              <div className="relative">
+                 <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+              </div>
               <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Syncing Shards...</p>
             </div>
           ) : isActive ? (

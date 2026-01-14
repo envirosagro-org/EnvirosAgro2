@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Info, 
   Handshake, 
@@ -54,7 +53,10 @@ import {
   Shield,
   Award,
   CheckCircle2,
-  BadgeCheck
+  BadgeCheck,
+  Headphones,
+  Terminal,
+  MessagesSquare
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -252,56 +254,67 @@ const EnvirosAgroRocket: React.FC = () => {
 };
 
 const InfoPortal: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'guidelines' | 'privacy' | 'contact' | 'trademarks'>('about');
-  const [showSupport, setShowSupport] = useState(false);
-  const [supportChat, setSupportChat] = useState<{ role: 'user' | 'bot', text: string }[]>([
-    { role: 'bot', text: "Hello Steward. I am the EnvirosAgro™ Governance Assistant. How can I resolve your network dispute or Five Thrusts™ protocol question today?" }
+  const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'crm_chat' | 'trademarks' | 'privacy' | 'contact'>('about');
+  const [supportChat, setSupportChat] = useState<{ role: 'user' | 'bot', text: string, time: string }[]>([
+    { role: 'bot', text: "Hello Steward. I am the EnvirosAgro™ Governance Assistant. If you are encountering friction, technical problems, or challenges within the ecosystem, please describe them here.", time: new Date().toLocaleTimeString() }
   ]);
   const [supportInput, setSupportInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [supportChat]);
+
+  const handleSupportSend = async () => {
+    if (!supportInput.trim() || isTyping) return;
+    const msg = supportInput.trim();
+    setSupportInput('');
+    setSupportChat(prev => [...prev, { role: 'user', text: msg, time: new Date().toLocaleTimeString() }]);
+    setIsTyping(true);
+
+    try {
+        const response = await chatWithAgroExpert(msg, supportChat.map(c => ({ role: c.role === 'bot' ? 'model' : 'user', parts: [{ text: c.text }] })));
+        setSupportChat(prev => [...prev, { role: 'bot', text: response.text, time: new Date().toLocaleTimeString() }]);
+    } catch (e) {
+        setSupportChat(prev => [...prev, { role: 'bot', text: "Governance Oracle Sync Timeout. Please retry or contact HQ directly.", time: new Date().toLocaleTimeString() }]);
+    } finally {
+        setIsTyping(false);
+    }
+  };
 
   const tabs = [
     { id: 'about', label: 'About & Mission', icon: Info },
-    { id: 'environments', label: 'Official Environments', icon: Share2 },
-    { id: 'faq', label: 'Expert Q&A (Quora)', icon: MessageCircleQuestion },
-    { id: 'guidelines', label: 'Code of Conduct', icon: Handshake },
+    { id: 'crm_chat', label: 'CRM Support Shard', icon: MessagesSquare },
+    { id: 'environments', label: 'Environments', icon: Share2 },
+    { id: 'faq', label: 'Expert Q&A', icon: MessageCircleQuestion },
     { id: 'trademarks', label: 'Trademarks & IP', icon: Copyright },
     { id: 'privacy', label: 'Privacy & Data', icon: ShieldCheck },
-    { id: 'contact', label: 'Contact & HQ', icon: Globe },
+    { id: 'contact', label: 'HQ Contact', icon: Globe },
   ];
-
-  const handleSupportSend = async () => {
-    if (!supportInput.trim()) return;
-    const msg = supportInput.trim();
-    setSupportInput('');
-    setSupportChat(prev => [...prev, { role: 'user', text: msg }]);
-    setIsTyping(true);
-
-    const response = await chatWithAgroExpert(msg, supportChat.map(c => ({ role: c.role === 'bot' ? 'model' : 'user', parts: [{ text: c.text }] })));
-    setSupportChat(prev => [...prev, { role: 'bot', text: response.text }]);
-    setIsTyping(false);
-  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      <div className="flex flex-wrap gap-4 p-1 glass-card rounded-2xl w-fit mx-auto">
+      <div className="flex flex-wrap gap-4 p-1 glass-card rounded-2xl w-fit mx-auto overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
               activeTab === tab.id 
                 ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' 
                 : 'text-slate-500 hover:text-white hover:bg-white/5'
             }`}
           >
-            <tab.icon className="w-4 h-4" />
+            <tab.icon className="w-3.5 h-3.5" />
             {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="glass-card rounded-[40px] overflow-hidden min-h-[600px]">
+      <div className="glass-card rounded-[40px] overflow-hidden min-h-[600px] border border-white/5">
         {activeTab === 'about' && (
           <div className="p-12 space-y-16 animate-in fade-in duration-500">
             <div className="space-y-6 text-center max-w-4xl mx-auto">
@@ -311,484 +324,224 @@ const InfoPortal: React.FC = () => {
                 </div>
               </div>
               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em]">EnvirosAgro™ Ecosystem</span>
-              <h2 className="text-6xl font-black text-white leading-tight tracking-tighter">About <span className="text-emerald-400 italic">EnvirosAgro™</span></h2>
+              <h2 className="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter">About <span className="text-emerald-400 italic">EnvirosAgro™</span></h2>
               <p className="text-xl text-slate-400 leading-relaxed font-medium">
-                EnvirosAgro™ is a pioneering organization committed to establishing a comprehensive network that advances and supports agricultural sustainability. By linking farmers, researchers, and diverse stakeholders, we catalyze transformation within the global agricultural community.
+                EnvirosAgro™ establishes a comprehensive network that advances agricultural sustainability. By linking farmers, researchers, and diverse stakeholders, we catalyze transformation within the global agricultural community.
               </p>
             </div>
 
-            {/* Trademarks Sidebar/Footer for visibility */}
             <div className="p-10 glass-card rounded-[48px] border-emerald-500/20 bg-emerald-500/5 grid grid-cols-1 md:grid-cols-3 gap-8 shadow-inner">
                <div className="flex items-center gap-4">
                   <BadgeCheck className="w-10 h-10 text-emerald-500" />
                   <div>
                     <h4 className="text-lg font-black text-white uppercase italic">Registry Protection</h4>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">EnvirosAgro™ is a registered mark.</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Registered Mark.</p>
                   </div>
                </div>
                <div className="flex items-center gap-4">
                   <Award className="w-10 h-10 text-amber-500" />
                   <div>
                     <h4 className="text-lg font-black text-white uppercase italic">Protocol Authority</h4>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">C(a)™ & m™ are proprietary sharding codes.</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">C(a)™ & m™ Proprietary.</p>
                   </div>
                </div>
                <div className="flex items-center gap-4">
                   <ShieldCheck className="w-10 h-10 text-indigo-400" />
                   <div>
                     <h4 className="text-lg font-black text-white uppercase italic">Legal Consensus</h4>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Five Thrusts™ (SEHTI) Framework certified.</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">SEHTI™ Certified.</p>
                   </div>
                </div>
             </div>
 
-            {/* INTEGRATED ROCKET DESIGN */}
             <EnvirosAgroRocket />
+          </div>
+        )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-white/5">
-              <div className="space-y-6 glass-card p-10 rounded-[48px] bg-emerald-500/5 border-emerald-500/10 group">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 mb-4 group-hover:scale-110 transition-transform">
-                   <Target className="w-8 h-8 text-emerald-400" />
+        {activeTab === 'crm_chat' && (
+          <div className="flex flex-col h-[700px] animate-in zoom-in duration-500">
+             <div className="p-8 border-b border-white/5 bg-emerald-600/10 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                   <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-xl">
+                      <Bot className="w-8 h-8" />
+                   </div>
+                   <div>
+                      <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic m-0">CRM <span className="text-emerald-400">Support Terminal</span></h3>
+                      <p className="text-emerald-400/60 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Official Ecosystem Resolution Shard</p>
+                   </div>
                 </div>
-                <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Industrial Ingest</h3>
-                <p className="text-slate-300 leading-loose text-lg font-medium">
-                  EnvirosAgro™ aims to promote environmentally responsible practices, facilitate knowledge exchange, and develop sustainable technologies. Our network links farmers, researchers, and diverse stakeholders within the agricultural sector.
-                </p>
-              </div>
-
-              <div className="space-y-6 glass-card p-10 rounded-[48px] bg-blue-500/5 border-blue-500/10 group">
-                <div className="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30 mb-4 group-hover:scale-110 transition-transform">
-                   <Eye className="w-8 h-8 text-blue-400" />
+                <div className="flex items-center gap-4">
+                   <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-slate-400 hidden md:block">
+                      <span className="text-[10px] font-mono uppercase font-black">NODE_AUTH: SECURE_BY_ZK</span>
+                   </div>
                 </div>
-                <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Global Transformation</h3>
-                <p className="text-slate-300 leading-loose text-lg font-medium">
-                  Through collaboration and the dissemination of best practices, EnvirosAgro™ strives to catalyze positive transformation within the agricultural community, fostering a more sustainable approach.
-                </p>
-              </div>
-            </div>
+             </div>
 
-            <div className="p-12 glass-card rounded-[56px] bg-gradient-to-br from-[#050706] via-emerald-950/10 to-black border-emerald-500/20 text-center">
-               <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Ensuring Longevity</h4>
-               <p className="text-slate-400 max-w-3xl mx-auto text-lg italic leading-relaxed">
-                  "By linking researchers and stakeholders, we ensure the long-term viability of farming for future generations, reducing environmental impact and improving resilience."
-               </p>
-            </div>
+             <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-black/40">
+                {supportChat.map((chat, i) => (
+                  <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
+                     <div className={`flex flex-col gap-2 max-w-[80%] ${chat.role === 'user' ? 'items-end' : 'items-start'}`}>
+                        <div className={`p-6 rounded-[32px] text-sm md:text-base leading-relaxed shadow-2xl ${
+                          chat.role === 'user' 
+                            ? 'bg-indigo-600 text-white rounded-tr-none' 
+                            : 'glass-card border border-white/10 rounded-tl-none italic bg-[#0B0F0D] text-slate-200'
+                        }`}>
+                           {chat.text}
+                        </div>
+                        <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest px-2">{chat.time}</span>
+                     </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                     <div className="bg-white/5 border border-white/10 p-4 rounded-3xl rounded-tl-none flex gap-2">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce"></div>
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-200"></div>
+                     </div>
+                  </div>
+                )}
+             </div>
+
+             <div className="p-8 border-t border-white/5 bg-black/90">
+                <div className="relative max-w-4xl mx-auto">
+                   <textarea 
+                    value={supportInput}
+                    onChange={e => setSupportInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSupportSend())}
+                    placeholder="Describe your ecosystem friction, problem, or challenge..."
+                    className="w-full bg-white/5 border border-white/10 rounded-[32px] py-6 pl-8 pr-24 text-sm md:text-lg text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all placeholder:text-slate-800 resize-none h-24 shadow-inner italic" 
+                   />
+                   <button 
+                    onClick={handleSupportSend}
+                    disabled={isTyping || !supportInput.trim()}
+                    className="absolute right-4 bottom-4 p-4 bg-emerald-600 rounded-2xl text-white shadow-xl hover:bg-emerald-500 transition-all disabled:opacity-30 active:scale-90"
+                   >
+                      <Send size={24} />
+                   </button>
+                </div>
+                <p className="text-center mt-4 text-[9px] font-black text-slate-700 uppercase tracking-[0.4em]">Governance AI Protocol v5.0 // End-to-End Encrypted Shard</p>
+             </div>
           </div>
         )}
 
         {activeTab === 'trademarks' && (
           <div className="p-12 space-y-12 animate-in fade-in duration-500">
-             <div className="flex items-center gap-6 border-b border-white/5 pb-8 mb-10">
+             <div className="flex items-center gap-6 border-b border-white/5 pb-8">
                 <div className="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center border border-emerald-500/20 shadow-2xl">
                    <Shield className="w-8 h-8 text-emerald-400" />
                 </div>
                 <div>
-                   <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Intellectual <span className="text-emerald-400">Property Shards</span></h2>
-                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 mt-1">
-                      <ShieldCheck className="w-3 h-3" /> Registered Trademarks & Registry Protocols
-                   </p>
+                   <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Intellectual <span className="text-emerald-400">Property</span></h2>
+                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">Registered Trademarks & Registry Protocols</p>
                 </div>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {TRADEMARKS.map((tm, i) => (
-                   <div key={i} className="glass-card p-10 rounded-[44px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full bg-black/40 shadow-xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform">
-                         <Award className="w-40 h-40 text-white" />
+                   <div key={i} className="glass-card p-10 rounded-[44px] border border-white/5 bg-black/40 shadow-xl relative overflow-hidden">
+                      <div className="flex justify-between items-start mb-8">
+                         <div className="p-4 rounded-2xl bg-white/5"><Sparkles className="w-7 h-7 text-emerald-400" /></div>
+                         <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest">{tm.type}</span>
                       </div>
-                      <div className="flex justify-between items-start mb-8 relative z-10">
-                         <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-emerald-500/10 transition-colors">
-                            <Sparkles className="w-7 h-7 text-emerald-400" />
-                         </div>
-                         <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest">
-                            {tm.type}
-                         </span>
-                      </div>
-                      <h4 className="text-3xl font-black text-white uppercase tracking-tight italic mb-4 group-hover:text-emerald-400 transition-colors leading-tight">{tm.name}</h4>
-                      <p className="text-slate-400 text-base italic leading-relaxed mb-6 flex-1 group-hover:text-slate-200 transition-colors">
-                         {tm.desc}
-                      </p>
-                      <div className="pt-6 border-t border-white/5 flex items-center gap-2">
-                         <CheckCircle2 size={12} className="text-emerald-500" />
-                         <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">EnvirosAgro™ Legal Registry</span>
-                      </div>
+                      <h4 className="text-2xl font-black text-white uppercase italic mb-4">{tm.name}</h4>
+                      <p className="text-slate-400 text-base italic leading-relaxed">{tm.desc}</p>
                    </div>
                 ))}
-             </div>
-
-             <div className="p-12 glass-card rounded-[56px] border-emerald-500/20 bg-emerald-500/5 shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-                <div className="space-y-6 relative z-10">
-                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter">The Official <span className="text-emerald-400 italic">WhatIsAG™</span> Protocol</h3>
-                   <div className="p-10 bg-black/80 rounded-[40px] border border-white/10 shadow-inner">
-                      <p className="text-2xl text-slate-200 leading-relaxed italic font-medium border-l-4 border-emerald-500/40 pl-10">
-                         "Agriculture is an application of art or science from nature by human beings towards natural resources such as Animals, plants, water, soil and air for sustainability."
-                      </p>
-                   </div>
-                   <p className="text-slate-500 text-xs text-center font-bold uppercase tracking-widest opacity-60">
-                      © {new Date().getFullYear()} EnvirosAgro™ • All Framework Shards Reserved
-                   </p>
-                </div>
              </div>
           </div>
         )}
 
         {activeTab === 'environments' && (
           <div className="p-12 space-y-12 animate-in slide-in-from-right-4 duration-500">
-             <div className="space-y-4 text-center max-w-4xl mx-auto">
-                <h2 className="text-5xl font-black text-white uppercase tracking-tighter italic">Network <span className="text-blue-400">Environments</span></h2>
-                <p className="text-slate-400 text-lg leading-relaxed">Official external shards of the EnvirosAgro™ ecosystem. Connect and interact with the global community while outside the protocol.</p>
-             </div>
-             
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {ENVIRONMENTS.map((env, i) => (
-                  <a 
-                    key={i} 
-                    href={env.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="glass-card p-8 rounded-[40px] border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all flex flex-col group active:scale-[0.98] relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform">
-                       <env.icon className="w-32 h-32 text-white" />
-                    </div>
+                  <a key={i} href={env.url} target="_blank" rel="noopener noreferrer" className="glass-card p-8 rounded-[40px] border border-white/5 hover:border-blue-500/30 transition-all flex flex-col group relative overflow-hidden">
                     <div className="flex items-center gap-4 mb-6">
-                       <div className={`w-16 h-16 rounded-[24px] ${env.bg} flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform border border-white/10`}>
-                          <env.icon className={`w-8 h-8 ${env.color}`} />
-                       </div>
-                       <div>
-                          <h4 className="text-xl font-black text-white tracking-tight">{env.name}</h4>
-                          <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">OFFICIAL_ENVIRONMENT</span>
-                       </div>
+                       <div className={`w-16 h-16 rounded-[24px] ${env.bg} flex items-center justify-center border border-white/10`}><env.icon className={`w-8 h-8 ${env.color}`} /></div>
+                       <h4 className="text-xl font-black text-white tracking-tight">{env.name}</h4>
                     </div>
-                    <p className="text-sm text-slate-500 font-medium leading-relaxed italic flex-1 group-hover:text-slate-300 transition-colors">"{env.desc}"</p>
-                    <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-                       <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest group-hover:translate-x-1 transition-transform">Sync Node Shard</span>
-                       <ExternalLink className="w-4 h-4 text-slate-700 group-hover:text-blue-400 transition-colors" />
+                    <p className="text-sm text-slate-500 font-medium italic flex-1">"{env.desc}"</p>
+                    <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between text-[9px] font-black text-blue-400 uppercase tracking-widest">
+                       Connect Shard <ExternalLink className="w-4 h-4" />
                     </div>
                   </a>
                 ))}
-             </div>
-             
-             <div className="p-10 glass-card rounded-[48px] bg-blue-600/5 border-blue-500/20 text-center space-y-4">
-                <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em]">Environmental Notice</p>
-                <p className="text-slate-400 text-sm italic max-w-2xl mx-auto">
-                   "Stewards interacting in these environments are expected to maintain the Code of Conduct integrity. Reward payouts for external interactions are calculated via the Archive Ledger."
-                </p>
              </div>
           </div>
         )}
 
         {activeTab === 'faq' && (
           <div className="p-12 space-y-12 animate-in fade-in duration-500">
-             <div className="flex flex-col lg:flex-row gap-12">
+             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
                 <div className="lg:col-span-1 space-y-8">
                    <div className="glass-card p-10 rounded-[40px] border-red-500/20 bg-red-500/5 space-y-6">
-                      <div className="w-16 h-16 rounded-[24px] bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-xl">
-                         <HelpCircle className="w-8 h-8 text-red-500" />
-                      </div>
-                      <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Expert <span className="text-red-500">Shard</span></h3>
-                      <p className="text-slate-400 text-sm leading-relaxed italic font-medium">
-                         The official EnvirosAgro™ Expert Shard is hosted on Quora. Access deep scientific discussions and technical agriculture inquiries directly from the registry source.
-                      </p>
-                      <a 
-                        href="https://www.quora.com/profile/EnvirosAgro?ch=10&oid=2274202272&share=cee3144a&srid=3uVNlE&target_type=user" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="w-full py-5 bg-red-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl shadow-red-900/40 hover:scale-105 transition-all flex items-center justify-center gap-3"
-                      >
-                         <ExternalLink className="w-4 h-4" /> Open Official Quora
-                      </a>
-                   </div>
-                   
-                   <div className="p-8 glass-card border-white/5 rounded-[32px] space-y-4">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">Agricultural Categories</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {['Regenerative', 'Blockchain', 'IoT Sensors', 'Soil Biome', 'Bantu Lineage', 'Carbon Offset'].map(tag => (
-                          <span key={tag} className="px-3 py-1 bg-white/5 text-[9px] font-black text-slate-400 uppercase tracking-widest rounded-lg border border-white/10">{tag}</span>
-                        ))}
-                      </div>
+                      <HelpCircle className="w-12 h-12 text-red-500" />
+                      <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Expert Quora Shard</h3>
+                      <p className="text-slate-400 text-sm italic font-medium">Access deep scientific discussions directly from the registry source.</p>
+                      <a href="https://www.quora.com/profile/EnvirosAgro" target="_blank" rel="noopener noreferrer" className="w-full py-5 bg-red-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3"><ExternalLink className="w-4 h-4" /> Open Quora</a>
                    </div>
                 </div>
-
-                <div className="flex-1 space-y-8">
-                   <div className="flex items-center gap-4 mb-2">
-                      <MessageCircleQuestion className="w-6 h-6 text-emerald-400" />
-                      <h3 className="text-2xl font-black text-white uppercase tracking-widest italic">Frequently Asked <span className="text-emerald-400">Questions</span></h3>
-                   </div>
-                   <div className="grid gap-6">
-                      {FAQS.map((faq, i) => (
-                        <div key={i} className="glass-card p-8 rounded-[40px] border border-white/5 hover:border-emerald-500/20 transition-all group">
-                           <div className="flex justify-between items-start mb-4">
-                              <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-slate-500 uppercase tracking-widest">{faq.category}</span>
-                              <QuestionIcon className="w-5 h-5 text-slate-700 group-hover:text-emerald-400 transition-colors" />
-                           </div>
-                           <h4 className="text-xl font-bold text-white mb-4 leading-tight group-hover:text-emerald-400 transition-colors">"{faq.q}"</h4>
-                           <p className="text-slate-400 text-sm leading-relaxed border-l-2 border-emerald-500/20 pl-6 italic mb-6">
-                              {faq.a}
-                           </p>
-                           <a 
-                             href="https://www.quora.com/profile/EnvirosAgro" 
-                             target="_blank" 
-                             rel="noopener noreferrer"
-                             className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.3em] flex items-center gap-2 hover:translate-x-1 transition-transform"
-                           >
-                              Full Thread on Quora <ArrowRight className="w-3 h-3" />
-                           </a>
-                        </div>
-                      ))}
-                   </div>
+                <div className="lg:col-span-3 grid gap-6">
+                   {FAQS.map((faq, i) => (
+                     <div key={i} className="glass-card p-8 rounded-[40px] border border-white/5 group">
+                        <span className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 inline-block">{faq.category}</span>
+                        <h4 className="text-xl font-bold text-white mb-4 italic">"{faq.q}"</h4>
+                        <p className="text-slate-400 text-sm leading-relaxed border-l-2 border-emerald-500/20 pl-6 italic">{faq.a}</p>
+                     </div>
+                   ))}
                 </div>
-             </div>
-          </div>
-        )}
-        
-        {activeTab === 'guidelines' && (
-          <div className="p-12 space-y-10 animate-in fade-in duration-500">
-             <div className="space-y-4">
-                <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Steward Code <span className="text-blue-400">of Conduct</span></h2>
-                <p className="text-slate-400 text-lg leading-relaxed italic">"Integrity is the bedrock of EnvirosAgro™ decentralized consensus."</p>
-             </div>
-             
-             <div className="space-y-8">
-                {[
-                  { title: "Veracity of Evidence", desc: "All spectral scans and soil logs must be captured using verified hardware relays or approved third-party nodes." },
-                  { title: "Economic Fair Play", desc: "Collateralized projects must maintain the 50% ratio. Gaming the multiplier via falsified C(a)™ Agro Code inputs triggers auto-slashing." },
-                  { title: "Community Vouching", desc: "Vouching for a node is a scientific commitment. False vouches decrease your regional reputation score." },
-                ].map(g => (
-                  <div key={g.title} className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-blue-500/20 transition-all">
-                     <h4 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">{g.title}</h4>
-                     <p className="text-slate-500 text-sm leading-relaxed">{g.desc}</p>
-                  </div>
-                ))}
              </div>
           </div>
         )}
 
         {activeTab === 'privacy' && (
           <div className="p-12 space-y-10 animate-in fade-in duration-500">
-             <div className="flex items-center gap-6 border-b border-white/5 pb-8">
-                <div className="w-16 h-16 bg-blue-500/10 rounded-3xl flex items-center justify-center border border-blue-500/20 shadow-2xl">
-                   <Lock className="w-8 h-8 text-blue-400" />
-                </div>
-                <div>
-                   <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Identity & ZK-Privacy</h2>
-                   <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-1">
-                      <ShieldCheck className="w-3 h-3" /> Zero-Knowledge Protocols
-                   </p>
-                </div>
-             </div>
-
+             <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Identity & ZK-Privacy</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-6">
-                   <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                      <Fingerprint className="w-6 h-6 text-emerald-400" />
-                      ESIN Anonymity
-                   </h3>
-                   <p className="text-slate-400 leading-relaxed font-medium">
-                      While your ESIN is unique, the EnvirosAgro™ network uses ZK-SNARKs to prove your C(a)™ Agro Code metrics to the marketplace without revealing farm location.
-                   </p>
+                   <h3 className="text-xl font-bold text-white flex items-center gap-3"><Fingerprint className="w-6 h-6 text-emerald-400" /> ESIN Anonymity</h3>
+                   <p className="text-slate-400 leading-relaxed font-medium">EnvirosAgro™ uses ZK-SNARKs to prove metrics without revealing location shards.</p>
                 </div>
                 <div className="space-y-6">
-                   <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                      <Zap className="w-6 h-6 text-amber-500" />
-                      Data Sovereignty
-                   </h3>
-                   <p className="text-slate-400 leading-relaxed font-medium">
-                      Farmers retain 100% ownership of their raw telemetry and m™ Time Signatures. Only proofs are recorded on the industrial blockchain.
-                   </p>
+                   <h3 className="text-xl font-bold text-white flex items-center gap-3"><Zap className="w-6 h-6 text-amber-500" /> Data Sovereignty</h3>
+                   <p className="text-slate-400 leading-relaxed font-medium">Farmers retain ownership of raw telemetry. Only consensus proofs are anchored.</p>
                 </div>
-             </div>
-
-             <div className="mt-10 p-8 glass-card rounded-[32px] border-white/10 bg-indigo-500/5">
-                <h4 className="text-sm font-bold text-white uppercase tracking-widest mb-4">Institutional Compliance</h4>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                   EnvirosAgro™ is compliant with global ESG standards and GDPR-Agri mandates. Our data shards are stored across decentralized validator nodes.
-                </p>
              </div>
           </div>
         )}
 
         {activeTab === 'contact' && (
           <div className="p-12 space-y-12 animate-in fade-in duration-500">
-             <div className="space-y-4">
-                <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Contact & <span className="text-emerald-400">Hub HQ</span></h2>
-                <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">Connect with the EnvirosAgro™ industrial core for administrative inquiries or governance disputes.</p>
-             </div>
-
+             <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">HQ <span className="text-emerald-400">Contact</span></h2>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="glass-card p-8 rounded-[40px] border-emerald-500/10 bg-emerald-500/5 space-y-6 flex flex-col group hover:border-emerald-500/30 transition-all">
-                   <div className="w-16 h-16 rounded-[24px] bg-emerald-500/10 flex items-center justify-center text-emerald-400 shadow-xl group-hover:scale-110 transition-transform">
-                      <MapPin className="w-8 h-8" />
-                   </div>
-                   <div className="space-y-2 flex-1">
-                      <h4 className="text-xl font-bold text-white uppercase tracking-widest">Headquarters</h4>
-                      <p className="text-slate-400 text-sm font-mono leading-relaxed">
-                         9X6C+P6, Kiriaini<br/>
-                         Global Zone Node
-                      </p>
-                   </div>
-                   <a 
-                    href="https://www.google.com/maps/search/9X6C%2BP6,+Kiriaini" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-full py-4 bg-emerald-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 hover:bg-emerald-500 transition-all"
-                   >
-                      <Globe className="w-4 h-4" /> Open in Google Maps
-                   </a>
+                <div className="glass-card p-8 rounded-[40px] space-y-6">
+                   <MapPin className="w-10 h-10 text-emerald-400" />
+                   <h4 className="text-xl font-bold text-white uppercase italic">Headquarters</h4>
+                   <p className="text-slate-400 text-sm font-mono leading-relaxed">9X6C+P6, Kiriaini<br/>Global Zone Node</p>
                 </div>
-
-                <div className="glass-card p-8 rounded-[40px] border-blue-500/10 bg-blue-500/5 space-y-6 flex flex-col group hover:border-blue-500/30 transition-all">
-                   <div className="w-16 h-16 rounded-[24px] bg-blue-500/10 flex items-center justify-center text-blue-400 shadow-xl group-hover:scale-110 transition-transform">
-                      <Phone className="w-8 h-8" />
-                   </div>
-                   <div className="space-y-2 flex-1">
-                      <h4 className="text-xl font-bold text-white uppercase tracking-widest">Line Number</h4>
-                      <p className="text-slate-400 text-lg font-mono font-black">0740161447</p>
-                      <p className="text-[10px] text-slate-500 uppercase font-black">24/7 NETWORK SUPPORT</p>
-                   </div>
-                   <a 
-                    href="tel:0740161447"
-                    className="w-full py-4 bg-blue-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 hover:bg-blue-500 transition-all"
-                   >
-                      <Zap className="w-4 h-4 fill-current" /> Initialize Call
-                   </a>
+                <div className="glass-card p-8 rounded-[40px] space-y-6">
+                   <Phone className="w-10 h-10 text-blue-400" />
+                   <h4 className="text-xl font-bold text-white uppercase italic">Registry Support</h4>
+                   <p className="text-slate-400 text-lg font-mono font-black">0740161447</p>
                 </div>
-
-                <div className="glass-card p-8 rounded-[40px] border-indigo-500/10 bg-indigo-500/5 space-y-6 flex flex-col group hover:border-indigo-500/30 transition-all">
-                   <div className="w-16 h-16 rounded-[24px] bg-indigo-500/10 flex items-center justify-center text-indigo-400 shadow-xl group-hover:scale-110 transition-transform">
-                      <Mail className="w-8 h-8" />
-                   </div>
-                   <div className="space-y-2 flex-1">
-                      <h4 className="text-xl font-bold text-white uppercase tracking-widest">Official Email</h4>
-                      <p className="text-slate-400 text-sm font-mono break-all leading-relaxed">envirosagro.com@gmail.com</p>
-                   </div>
-                   <a 
-                    href="mailto:envirosagro.com@gmail.com"
-                    className="w-full py-4 bg-indigo-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all"
-                   >
-                      <Send className="w-4 h-4" /> Send Registry Signal
-                   </a>
+                <div className="glass-card p-8 rounded-[40px] space-y-6">
+                   <Mail className="w-10 h-10 text-indigo-400" />
+                   <h4 className="text-xl font-bold text-white uppercase italic">Official Ingest</h4>
+                   <p className="text-slate-400 text-sm font-mono break-all leading-relaxed">envirosagro.com@gmail.com</p>
                 </div>
-             </div>
-
-             <div className="p-10 glass-card rounded-[48px] bg-white/[0.02] flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                   <div className="w-16 h-16 rounded-[28px] bg-emerald-500 flex items-center justify-center shadow-2xl">
-                      <HeartHandshake className="w-8 h-8 text-white" />
-                   </div>
-                   <div>
-                      <h4 className="text-xl font-bold text-white uppercase tracking-tighter italic">Stakeholder Resolution</h4>
-                      <p className="text-slate-500 text-xs font-medium">All corporate inquiries are indexed on the EOS industrial shard within 24 hours.</p>
-                   </div>
-                </div>
-                <button 
-                  onClick={() => setActiveTab('faq')}
-                  className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-white hover:bg-white/10 transition-all flex items-center gap-2"
-                >
-                   Institutional FAQ <ArrowRight className="w-4 h-4" />
-                </button>
              </div>
           </div>
         )}
       </div>
 
-      {/* Support Chat Overlay (ADJUSTED POSITION and LAYER) */}
-      <div className="fixed bottom-44 right-10 z-[450]">
-        {!showSupport ? (
-          <button 
-            onClick={() => setShowSupport(true)}
-            className="w-16 h-16 agro-gradient rounded-full flex items-center justify-center text-white shadow-2xl shadow-emerald-900/40 hover:scale-110 active:scale-95 transition-all animate-bounce border-2 border-white/20"
-          >
-            <MessageSquare className="w-8 h-8" />
-          </button>
-        ) : (
-          <>
-            {/* Local Backdrop for Support Chat to ensure visual focus */}
-            <div className="fixed inset-0 z-[440] bg-black/60 backdrop-blur-md pointer-events-auto" onClick={() => setShowSupport(false)}></div>
-            
-            <div className="relative w-[400px] h-[550px] glass-card rounded-[40px] border-emerald-500/40 bg-[#050706]/98 shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500 border-2 z-[450]">
-               <div className="p-6 bg-emerald-600/10 border-b border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg">
-                        <Bot className="w-6 h-6" />
-                     </div>
-                     <div>
-                        <h4 className="text-sm font-black text-white uppercase tracking-widest">Governance AI</h4>
-                        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Online // Registry 01</p>
-                     </div>
-                  </div>
-                  <button onClick={() => setShowSupport(false)} className="p-2 text-slate-500 hover:text-white transition-colors">
-                     <X className="w-5 h-5" />
-                  </button>
-               </div>
-
-               <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                  {supportChat.map((chat, i) => (
-                    <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                       <div className={`max-w-[85%] p-4 rounded-3xl text-xs leading-relaxed ${chat.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white/5 text-slate-300 border border-white/10 rounded-tl-none italic'}`}>
-                          {chat.text}
-                       </div>
-                    </div>
-                  ))}
-                  {isTyping && (
-                    <div className="flex justify-start">
-                       <div className="bg-white/5 border border-white/10 p-4 rounded-3xl rounded-tl-none flex gap-1">
-                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce"></div>
-                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
-                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-200"></div>
-                       </div>
-                    </div>
-                  )}
-               </div>
-
-               <div className="p-6 border-t border-white/5 bg-black/90">
-                  <div className="relative">
-                     <input 
-                      type="text" 
-                      value={supportInput}
-                      onChange={e => setSupportInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleSupportSend()}
-                      placeholder="Ask about trademarks or SEHTI™..."
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-6 pr-14 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40" 
-                     />
-                     <button 
-                      onClick={handleSupportSend}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-emerald-600 rounded-xl text-white shadow-lg hover:bg-emerald-400 transition-all"
-                     >
-                        <Send className="w-4 h-4" />
-                     </button>
-                  </div>
-               </div>
-            </div>
-          </>
-        )}
-      </div>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+      `}</style>
     </div>
   );
 };
-
-interface BookOpenCheckProps extends React.SVGProps<SVGSVGElement> {
-  size?: number | string;
-}
-
-const BookOpenCheck: React.FC<BookOpenCheckProps> = ({ size = 24, ...props }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    <path d="m9 12 2 2 4-4" />
-  </svg>
-);
 
 export default InfoPortal;

@@ -67,6 +67,8 @@ interface CircularGridProps {
   onSpendEAC: (amount: number, reason: string) => boolean;
 }
 
+const RETURN_REG_FEE = 25;
+
 const CIRCULAR_REGISTRY = [
   { id: 'REG-X882', name: 'Decommissioned Pivot Arm', category: 'Machinery', grade: 'α-Grade', potential: 88, status: 'Ready', weight: '1.2 Tons', lastNode: 'Node_Paris_04', impact: '+0.12m' },
   { id: 'REG-B104', name: 'Surplus Organic Husk Shards', category: 'Biologicals', grade: 'β-Grade', potential: 92, status: 'Processing', weight: '450 kg', lastNode: 'Stwd_Nairobi', impact: '+0.05m' },
@@ -107,7 +109,8 @@ const REVERSE_CATEGORIES = [
 ];
 
 const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC }) => {
-  const [activeView, setActiveView] = useState<'registry' | 'returns' | 'market' | 'repair' | 'hubs'>('registry');
+  /* Fix: Rename activeView to activeTab and update all occurrences for consistency and to resolve 'Cannot find name activeTab' error. */
+  const [activeTab, setActiveTab] = useState<'registry' | 'returns' | 'market' | 'repair' | 'hubs'>('registry');
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [returnStep, setReturnStep] = useState<'form' | 'audit' | 'physical_req' | 'success'>('form');
   const [isAuditing, setIsAuditing] = useState(false);
@@ -136,6 +139,13 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
 
   const handleReturnInitiate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // SPEND REGISTRATION FEE FIRST
+    if (!onSpendEAC(RETURN_REG_FEE, 'REVERSE_INGEST_REGISTRATION_FEE')) {
+      alert("LIQUIDITY ERROR: Insufficient EAC for return registration fee.");
+      return;
+    }
+
     setReturnStep('audit');
     setIsAuditing(true);
     
@@ -207,7 +217,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                     <Recycle className="w-10 h-10 text-white" />
                  </div>
                  <div>
-                    <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">Circular <span className="text-emerald-400">Hub</span></h2>
+                    <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Circular <span className="text-emerald-400">Hub</span></h2>
                     <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1 flex items-center gap-2">
                        <ShieldCheck className="w-3 h-3" /> Zero-Waste Protocol V4.2
                     </p>
@@ -224,7 +234,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                     <RotateCcw className="w-5 h-5" /> Initialize Return
                  </button>
                  <button 
-                  onClick={() => setActiveView('market')}
+                  onClick={() => setActiveTab('market')}
                   className="px-10 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3"
                  >
                     <ShoppingCart className="w-5 h-5" /> Second-Life Store
@@ -255,8 +265,8 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
         ].map(tab => (
           <button 
             key={tab.id}
-            onClick={() => { setActiveView(tab.id as any); setSelectedHub(null); }}
-            className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeView === tab.id ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            onClick={() => { setActiveTab(tab.id as any); setSelectedHub(null); }}
+            className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
           </button>
@@ -265,7 +275,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
 
       {/* Views */}
       <div className="min-h-[700px]">
-        {activeView === 'registry' && (
+        {activeTab === 'registry' && (
           <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
              <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-white/5 pb-8 px-4">
                 <div className="space-y-1">
@@ -279,7 +289,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     placeholder="Search ledger shards..." 
-                    className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-mono"
+                    className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all font-mono"
                    />
                 </div>
              </div>
@@ -324,7 +334,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border backdrop-blur-md ${
                                asset.status === 'Ready' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                                asset.status === 'Processing' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' : 
-                               'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                               'bg-amber-500/10 text-amber-500 border-amber-500/20'
                             }`}>
                                {asset.status}
                             </span>
@@ -354,7 +364,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
           </div>
         )}
 
-        {activeView === 'returns' && (
+        {activeTab === 'returns' && (
           <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
              <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8 px-4">
                 <div className="space-y-1">
@@ -421,7 +431,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
           </div>
         )}
 
-        {activeView === 'market' && (
+        {activeTab === 'market' && (
           <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
              <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8 px-4">
                 <div className="space-y-1">
@@ -479,7 +489,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
           </div>
         )}
 
-        {activeView === 'repair' && (
+        {activeTab === 'repair' && (
            <div className="max-w-4xl mx-auto space-y-10 animate-in zoom-in duration-500">
               <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-950/5 relative overflow-hidden shadow-2xl">
                  <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
@@ -539,7 +549,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
            </div>
         )}
 
-        {activeView === 'hubs' && (
+        {activeTab === 'hubs' && (
           <div className="space-y-10 animate-in zoom-in duration-500">
              {selectedHub ? (
                 <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
@@ -600,7 +610,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                       <div className="flex justify-between items-start">
                          <div className="space-y-2">
                             <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Regional <span className="text-amber-500">Reverse Hubs</span></h3>
-                            <p className="text-slate-400 text-lg max-w-xl font-medium">Processing and auditing returned industrial shards for the global second-life market.</p>
+                            <p className="text-slate-400 text-lg max-xl:text-sm font-medium">Processing and auditing returned industrial shards for the global second-life market.</p>
                          </div>
                          <div className="flex gap-4">
                             <div className="p-6 bg-black/60 rounded-3xl border border-white/10 text-center shadow-xl">
@@ -731,7 +741,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
 
                          <div className="grid grid-cols-2 gap-4 md:gap-6">
                             <div className="space-y-2 md:space-y-4">
-                               <label className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 md:px-6">Cycle</label>
+                               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4 md:px-6">Cycle</label>
                                <select 
                                 value={assetUsage}
                                 onChange={e => setAssetUsage(e.target.value)}
@@ -744,7 +754,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                                </select>
                             </div>
                             <div className="space-y-2 md:space-y-4">
-                               <label className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 md:px-6">Integrity</label>
+                               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4 md:px-6">Integrity</label>
                                <select 
                                 value={assetCondition}
                                 onChange={e => setAssetCondition(e.target.value)}
@@ -759,6 +769,14 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                          </div>
                       </div>
 
+                      <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[32px] flex items-center justify-between">
+                         <div className="flex items-center gap-4">
+                            <Coins className="text-emerald-500" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Registry Fee</span>
+                         </div>
+                         <span className="text-xl font-mono font-black text-emerald-500">{RETURN_REG_FEE} EAC</span>
+                      </div>
+
                       <button type="submit" className="w-full py-6 md:py-10 agro-gradient rounded-2xl md:rounded-[40px] text-white font-black text-xs md:text-sm uppercase tracking-[0.3em] md:tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 md:gap-4 mt-4 md:mt-6">
                          <Zap className="w-5 h-5 md:w-6 md:h-6 fill-current" /> Initialize {assetCategory} Audit
                       </button>
@@ -770,7 +788,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                        {isAuditing ? (
                          <div className="flex-1 flex flex-col items-center justify-center space-y-8 md:space-y-12 py-10 text-center">
                             <div className="relative">
-                               <div className="absolute inset-[-8px] md:inset-[-10px] border-t-4 md:border-t-8 border-emerald-500 rounded-full animate-spin"></div>
+                               <div className="absolute inset-[-15px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
                                <div className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
                                   <Bot className="w-14 h-14 md:w-20 md:h-20 text-emerald-400 animate-pulse" />
                                </div>
@@ -827,8 +845,8 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                              <HardHat className="w-10 h-10 md:w-16 md:h-16 text-amber-500 animate-bounce" />
                              <div className="absolute inset-0 border-2 md:border-4 border-amber-500/20 rounded-[24px] md:rounded-[40px] animate-ping opacity-40"></div>
                        </div>
-                       <h3 className="text-2xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-amber-500">Validation</span></h3>
-                       <p className="text-slate-400 text-sm md:text-lg font-medium italic max-w-sm mx-auto leading-relaxed text-center">
+                       <h3 className="text-2xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0 text-center leading-none">Physical <span className="text-amber-500">Validation</span></h3>
+                       <p className="text-slate-400 text-sm md:text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto leading-relaxed text-center px-4">
                           "Metadata verified. Stewards have been dispatched to verify your {assetCategory.toLowerCase()} biometrics."
                        </p>
                     </div>
@@ -839,8 +857,8 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                              <Calendar className="w-5 h-5 md:w-6 md:h-6 text-slate-400" />
                           </div>
                           <div>
-                             <p className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-widest">Audit Window</p>
-                             <p className="text-xs md:text-sm font-bold text-white uppercase font-mono tracking-widest">48 - 72 Hours</p>
+                             <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Audit Window</p>
+                             <p className="text-xs md:sm font-bold text-white uppercase font-mono tracking-widest">48 - 72 Hours</p>
                           </div>
                        </div>
                     </div>
@@ -869,7 +887,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                       </div>
                       <div className="space-y-2 md:space-y-4">
                          <h3 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic">Provisional <span className="text-emerald-400">Sync</span></h3>
-                         <p className="text-emerald-500 text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] font-mono">Return Hash: 0x772_PROV_{Math.random().toString(16).substring(2, 6).toUpperCase()}</p>
+                         <p className="text-emerald-50 text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] font-mono">Return Hash: 0x772_PROV_{Math.random().toString(16).substring(2, 6).toUpperCase()}</p>
                       </div>
                       <div className="w-full glass-card p-6 md:p-12 rounded-3xl md:rounded-[56px] border-white/5 bg-emerald-500/5 space-y-4 md:space-y-6 text-left relative overflow-hidden shadow-xl">
                          <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform"><Activity className="w-24 h-24 md:w-40 md:h-40 text-emerald-400" /></div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Landmark, 
@@ -41,6 +40,8 @@ interface ContractFarmingProps {
   onSpendEAC: (amount: number, reason: string) => boolean;
   onNavigate: (view: ViewState, action?: string | null) => void;
 }
+
+const CONTRACT_INDEXING_FEE = 75;
 
 const MOCK_CONTRACTS: FarmingContract[] = [
   { 
@@ -96,6 +97,14 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   const handleDeploy = (e: React.FormEvent) => {
     e.preventDefault();
     if (!esinSign) return;
+
+    // Process Total Capital + Indexing Fee
+    const totalCost = Number(deployBudget) + CONTRACT_INDEXING_FEE;
+    if (!onSpendEAC(totalCost, 'CONTRACT_MISSION_DEPLOYMENT')) {
+      alert("LIQUIDITY ERROR: Insufficient EAC in treasury for total capital escrow + indexing fee.");
+      return;
+    }
+
     setIsSubmitting(true);
     setTimeout(() => {
        const newContract: FarmingContract = {
@@ -113,7 +122,6 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
        setContracts([newContract, ...contracts]);
        setIsSubmitting(false);
        setShowDeploy(false);
-       onSpendEAC(Number(deployBudget), 'CONTRACT_CAPITAL_ESCROW');
        alert("MISSION CAPITAL DEPLOYED: Contract initialized. Awaiting steward applications and audit triggers.");
     }, 2000);
   };
@@ -274,7 +282,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                             <Briefcase className="w-12 h-12 text-blue-400" />
                          </div>
                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Steward <span className="text-blue-400">Application</span></h3>
-                         <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto text-center">Commit your land and labor resources. physical verification required.</p>
+                         <p className="text-slate-400 text-lg font-medium leading-relaxed max-md:text-sm max-w-md mx-auto text-center">Commit your land and labor resources. physical verification required.</p>
                       </div>
 
                       <div className="space-y-8">
@@ -317,7 +325,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                              <div className="absolute inset-0 border-2 border-amber-500/20 rounded-full animate-ping"></div>
                           </div>
                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-amber-500">Audit Protocol</span></h3>
-                          <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto text-center">"Metadata recorded. The EnvirosAgro Field Team must physically verify your resources to authorize resource ingest."</p>
+                          <p className="text-slate-400 text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto text-center">"Metadata recorded. The EnvirosAgro Field Team must physically verify your resources to authorize resource ingest."</p>
                        </div>
 
                        <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-4">
@@ -352,7 +360,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
                       <div className="w-48 h-48 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(37,99,235,0.4)] scale-110 relative group">
                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
-                         <div className="absolute inset-[-10px] rounded-full border-4 border-blue-500/20 animate-ping"></div>
+                         <div className="absolute inset-[-10px] rounded-full border-4 border-blue-500/20 animate-ping opacity-30"></div>
                       </div>
                       <div className="space-y-4 text-center">
                          <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Application <span className="text-blue-400">Committed</span></h3>
@@ -371,7 +379,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowDeploy(false)}></div>
             <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-blue-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(37,99,235,0.15)] animate-in zoom-in duration-300 border-2">
-               <div className="p-16 space-y-12 min-h-[600px] flex flex-col justify-center">
+               <div className="p-16 space-y-12 min-h-[650px] flex flex-col justify-center">
                   <button onClick={() => setShowDeploy(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                   
                   <div className="text-center space-y-6">
@@ -404,6 +412,15 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                            className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-3xl font-mono text-emerald-400 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all" 
                         />
                      </div>
+
+                     <div className="p-8 bg-blue-500/5 border border-blue-500/10 rounded-[32px] flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                           <Coins className="text-blue-400" />
+                           <span className="text-xs font-black text-white uppercase tracking-widest">Indexing Fee</span>
+                        </div>
+                        <span className="text-xl font-mono font-black text-blue-400">{CONTRACT_INDEXING_FEE} EAC</span>
+                     </div>
+
                      <div className="space-y-4 pt-4 border-t border-white/5">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6 text-center block">ESIN Institutional Signature</label>
                         <div className="relative">
@@ -421,7 +438,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
 
                      <button type="submit" disabled={isSubmitting || !esinSign} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-blue-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 mt-6 disabled:opacity-30">
                         {isSubmitting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Database className="w-6 h-6" />}
-                        {isSubmitting ? "COMMITING CAPITAL..." : "INITIALIZE MISSION ESCROW"}
+                        {isSubmitting ? "COMMITING CAPITAL..." : "AUTHORIZE MISSION ESCROW"}
                      </button>
                   </form>
                </div>

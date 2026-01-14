@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { 
   PlayCircle, 
@@ -43,9 +44,18 @@ import {
   Dna,
   Lock,
   SearchCode,
-  // Added Target and Bot to resolve find name errors
   Target,
-  Bot
+  Bot,
+  Brain,
+  ShieldAlert,
+  HeartPulse,
+  Activity as PulseIcon,
+  BrainCircuit,
+  AlertTriangle,
+  Waves,
+  Atom,
+  RefreshCcw,
+  Scale
 } from 'lucide-react';
 import { User } from '../types';
 import { findAgroResources, GroundingChunk } from '../services/geminiService';
@@ -54,6 +64,7 @@ interface CommunityProps {
   user: User;
   onContribution: (type: 'post' | 'upload' | 'module' | 'quiz', category: string) => void;
   onSpendEAC: (amount: number, reason: string) => boolean;
+  onEarnEAC: (amount: number, reason: string) => void;
 }
 
 const CHAPTERS = [
@@ -93,12 +104,25 @@ const MOCK_DOSSIERS: Record<string, any> = {
   }
 };
 
-const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC }) => {
+const LMS_MODULES = [
+  { id: 'MOD-01', title: "Precision Drip Irrigation", category: "IRRIGATION TECH", eac: 100, pts: 20, col: 'text-blue-400' },
+  { id: 'MOD-02', title: "Bantu Clan Agronomy", category: "SOCIOLOGICAL", eac: 100, pts: 20, col: 'text-amber-500' },
+  { id: 'MOD-03', title: "Agricultural Psychology & SID", category: "HUMAN THRUST", eac: 150, pts: 35, col: 'text-teal-400', special: 'psych' },
+  { id: 'MOD-04', title: "Industry 4.0 Agro-Logistics", category: "INDUSTRY", eac: 120, pts: 25, col: 'text-indigo-400' },
+];
+
+const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onContribution }) => {
   const [activeTab, setActiveTab] = useState<'hub' | 'lms' | 'manual' | 'report'>('hub');
   const [isPosting, setIsPosting] = useState(false);
   const [postContent, setPostContent] = useState('');
   const [selectedChapter, setSelectedChapter] = useState(CHAPTERS[0]);
   
+  // Learning States
+  const [selectedModule, setSelectedModule] = useState<any | null>(null);
+  const [psychStep, setPsychStep] = useState(1);
+  const [psychResonance, setPsychResonance] = useState(70);
+  const [isSyncingPsych, setIsSyncingPsych] = useState(false);
+
   // Dossier State
   const [selectedDossier, setSelectedDossier] = useState<any | null>(null);
 
@@ -159,6 +183,17 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
     }
   };
 
+  const finalizePsychModule = () => {
+    setIsSyncingPsych(true);
+    setTimeout(() => {
+      onContribution('module', 'HUMAN');
+      onEarnEAC(150, 'AG_PSYCH_SID_COMPLETION');
+      setIsSyncingPsych(false);
+      setSelectedModule(null);
+      alert("MODULE COMPLETE: Human Thrust Shard synchronized to node registry. +150 EAC.");
+    }, 2500);
+  };
+
   return (
     <div className="space-y-8 pb-20 animate-in fade-in duration-500">
       {/* Navigation Tabs */}
@@ -171,7 +206,7 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
         ].map(t => (
           <button 
             key={t.id}
-            onClick={() => setActiveTab(t.id as any)}
+            onClick={() => { setActiveTab(t.id as any); setSelectedModule(null); }}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === t.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <t.icon className="w-4 h-4" />
@@ -182,7 +217,6 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
 
       {activeTab === 'hub' && (
         <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               {/* Posting Interface */}
@@ -232,7 +266,6 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                    </div>
                 </form>
 
-                {/* Resource Results Dropdown */}
                 {resourceResults && (
                   <div className="mt-6 p-6 bg-black/60 border border-emerald-500/20 rounded-3xl animate-in fade-in slide-in-from-top-2">
                     <div className="flex justify-between items-center mb-4">
@@ -311,7 +344,7 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                     </div>
                     <svg className="absolute inset-0 w-32 h-32 transform -rotate-90">
                        <circle cx="64" cy="64" r="58" fill="transparent" stroke="currentColor" strokeWidth="8" className="text-white/5" />
-                       <circle cx="64" cy="64" r="58" fill="transparent" stroke="currentColor" strokeWidth="8" strokeDasharray={364} strokeDashoffset={364 - (364 * (user.wallet.lifetimeEarned % 2000) / 2000)} className="text-emerald-500 transition-all duration-1000 shadow-[0_0_10px_#10b981]" />
+                       <circle cx="64" cy="64" r="58" fill="transparent" stroke="currentColor" strokeWidth="8" strokeDasharray={364} strokeDashoffset={364 - (364 * (user.wallet.lifetimeEarned % 2000) / 2000)} className="text-emerald-500 transition-all duration-1000 shadow-[0_0_100px_rgba(16,185,129,0.3)]" />
                     </svg>
                   </div>
                   <div className="space-y-2">
@@ -355,44 +388,149 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
 
       {activeTab === 'lms' && (
         <div className="space-y-8 animate-in fade-in duration-500">
-           <div className="glass-card rounded-[48px] p-16 bg-indigo-600/5 border-indigo-500/20 relative overflow-hidden flex flex-col md:flex-row items-center gap-14">
-              <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
-                 <Library className="w-80 h-80 text-indigo-400" />
-              </div>
-              <div className="w-24 h-24 bg-indigo-500/20 rounded-[32px] flex items-center justify-center border border-indigo-500/30 shrink-0 shadow-2xl relative z-10">
-                 <GraduationCap className="w-12 h-12 text-indigo-400" />
-              </div>
-              <div className="flex-1 space-y-4 relative z-10 text-center md:text-left">
-                 <h2 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Learning <span className="text-indigo-400">Hub</span></h2>
-                 <p className="text-slate-400 text-xl font-medium leading-relaxed">Deconstruct complex agro-architectures. Earn EAC and verified registry reputation shards.</p>
-              </div>
-           </div>
+           {!selectedModule ? (
+             <>
+               <div className="glass-card rounded-[48px] p-16 bg-indigo-600/5 border-indigo-500/20 relative overflow-hidden flex flex-col md:flex-row items-center gap-14">
+                  <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                     <Library className="w-80 h-80 text-indigo-400" />
+                  </div>
+                  <div className="w-24 h-24 bg-indigo-500/20 rounded-[32px] flex items-center justify-center border border-indigo-500/30 shrink-0 shadow-2xl relative z-10">
+                     <GraduationCap className="w-12 h-12 text-indigo-400" />
+                  </div>
+                  <div className="flex-1 space-y-4 relative z-10 text-center md:text-left">
+                     <h2 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Learning <span className="text-indigo-400">Hub</span></h2>
+                     <p className="text-slate-400 text-xl font-medium leading-relaxed">Deconstruct complex agro-architectures. Earn EAC and verified registry reputation shards.</p>
+                  </div>
+               </div>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {[
-                { title: "Precision Drip Irrigation", category: "IRRIGATION TECH", eac: 100, pts: 20 },
-                { title: "Bantu Clan Agronomy", category: "SOCIOLOGICAL", eac: 100, pts: 20 },
-                { title: "Carbon-Neutral Composting", category: "PRECISION FARMING", eac: 100, pts: 20 },
-                { title: "Industry 4.0 Agro-Logistics", category: "INDUSTRY", eac: 120, pts: 25 },
-              ].map((m, i) => (
-                <div key={i} className="glass-card p-10 rounded-[48px] border border-white/5 hover:border-indigo-500/30 transition-all group cursor-pointer flex flex-col h-full active:scale-95 duration-300">
-                   <div className="flex justify-between items-start mb-10">
-                      <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">{m.category}</span>
-                      <div className="text-right">
-                         <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">+{m.eac} EAC</p>
-                         <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">+{m.pts} SKILL PTS</p>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                  {LMS_MODULES.map((m, i) => (
+                    <div key={i} className={`glass-card p-10 rounded-[48px] border border-white/5 hover:border-indigo-500/30 transition-all group cursor-pointer flex flex-col h-full active:scale-95 duration-300 ${m.special ? 'bg-teal-500/5 border-teal-500/20' : 'bg-black/20'}`}>
+                       <div className="flex justify-between items-start mb-10">
+                          <span className={`px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.3em] ${m.col}`}>{m.category}</span>
+                          <div className="text-right">
+                             <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">+{m.eac} EAC</p>
+                             <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">+{m.pts} SKILL PTS</p>
+                          </div>
+                       </div>
+                       <h4 className="text-2xl font-black text-white mb-10 leading-tight flex-1 tracking-tighter uppercase italic">{m.title}</h4>
+                       <button 
+                        onClick={() => setSelectedModule(m)}
+                        className={`w-full py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.4em] hover:bg-indigo-600 hover:border-indigo-500 transition-all flex items-center justify-center gap-3 shadow-xl group-hover:scale-105 active:scale-95 ${m.special ? 'hover:bg-teal-600 border-teal-500/40' : ''}`}
+                       >
+                          <PlayCircle className="w-5 h-5" /> START MODULE
+                       </button>
+                    </div>
+                  ))}
+               </div>
+             </>
+           ) : (
+             <div className="animate-in zoom-in duration-500">
+                {selectedModule.special === 'psych' ? (
+                   <div className="max-w-5xl mx-auto space-y-12">
+                      <div className="flex justify-between items-center">
+                         <button onClick={() => setSelectedModule(null)} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                            <ChevronRight className="w-4 h-4 rotate-180" /> Cancel Session
+                         </button>
+                         <div className="text-right">
+                            <p className="text-[10px] font-black text-teal-400 uppercase tracking-[0.4em]">HUMAN_THRUST_SHARD</p>
+                            <p className="text-xs font-mono text-slate-600">MOD_ID: EA_PSYCH_001</p>
+                         </div>
+                      </div>
+
+                      <div className="glass-card p-12 md:p-20 rounded-[64px] border-teal-500/20 bg-teal-500/5 relative overflow-hidden flex flex-col items-center text-center space-y-12 shadow-3xl">
+                         <div className="absolute top-0 right-0 p-12 opacity-[0.03] animate-pulse">
+                            <Brain size={400} className="text-teal-400" />
+                         </div>
+
+                         {psychStep === 1 && (
+                            <div className="space-y-10 relative z-10 animate-in fade-in duration-700">
+                               <div className="w-24 h-24 bg-teal-500 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-2xl animate-float relative overflow-hidden">
+                                  <HeartPulse size={48} />
+                                  <div className="absolute inset-0 border-4 border-white/20 rounded-[32px] animate-pulse"></div>
+                               </div>
+                               <div className="space-y-6">
+                                  <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">Agricultural <span className="text-teal-400">Psychology</span></h3>
+                                  <p className="text-slate-400 text-xl font-medium leading-relaxed max-w-2xl mx-auto italic">
+                                     "Agriculture is an application of art or science from nature by human beings..." The Human Thrust (H) explores the mental and behavioral load of stewards.
+                                  </p>
+                               </div>
+                               <div className="p-10 bg-black/60 rounded-[48px] border border-white/5 grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
+                                  <div className="space-y-4">
+                                     <h5 className="text-lg font-black text-teal-400 uppercase italic flex items-center gap-3"><Atom className="w-5 h-5" /> The Cognitive Seed</h5>
+                                     <p className="text-slate-400 text-sm leading-relaxed italic font-medium">Understanding the psychological anchor between a steward and their natural resource nodes.</p>
+                                  </div>
+                                  <div className="space-y-4">
+                                     <h5 className="text-lg font-black text-rose-400 uppercase italic flex items-center gap-3"><ShieldAlert className="w-5 h-5" /> SID Vulnerability</h5>
+                                     <p className="text-slate-400 text-sm leading-relaxed italic font-medium">Social Influenza Disease (SID) impacts node resilience by introducing friction into the community resonance.</p>
+                                  </div>
+                               </div>
+                               <button onClick={() => setPsychStep(2)} className="px-16 py-8 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                                  INITIALIZE SID SCANNER
+                                </button>
+                            </div>
+                         )}
+
+                         {psychStep === 2 && (
+                            <div className="space-y-12 relative z-10 animate-in slide-in-from-right-10 duration-700 w-full max-w-3xl">
+                               <div className="text-center space-y-4">
+                                  <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter flex items-center justify-center gap-4">
+                                     <ShieldAlert className="text-rose-500 animate-pulse" /> SID <span className="text-rose-500">Awareness Lab</span>
+                                  </h4>
+                                  <p className="text-slate-500 text-lg font-medium italic">"Identify social pathogens to strengthen regional immunity (x)."</p>
+                               </div>
+
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                  <div className="p-8 bg-black/60 rounded-[48px] border-l-4 border-rose-500 text-left space-y-6 shadow-xl">
+                                     <div className="flex items-center gap-4">
+                                        <AlertTriangle className="w-6 h-6 text-rose-500" />
+                                        <h5 className="text-lg font-black text-white uppercase italic">Ideological Overcrowding</h5>
+                                     </div>
+                                     <p className="text-slate-400 text-sm leading-relaxed italic">Excessive conflicting signals within a social shard leading to trust decay.</p>
+                                     <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-rose-500 animate-pulse" style={{ width: '85%' }}></div>
+                                     </div>
+                                  </div>
+                                  <div className="p-8 bg-black/60 rounded-[48px] border-l-4 border-amber-500 text-left space-y-6 shadow-xl">
+                                     <div className="flex items-center gap-4">
+                                        <RefreshCcw className="w-6 h-6 text-amber-500" />
+                                        <h5 className="text-lg font-black text-white uppercase italic">Resonance Friction</h5>
+                                     </div>
+                                     <p className="text-slate-400 text-sm leading-relaxed italic">The mental load of managing multi-stakeholder expectations across the SEHTI pillars.</p>
+                                     <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-amber-500 animate-pulse" style={{ width: '42%' }}></div>
+                                     </div>
+                                  </div>
+                               </div>
+
+                               <div className="space-y-6 pt-10">
+                                  <div className="flex justify-between px-6">
+                                     <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Tune Social Immunity (x)</span>
+                                     <span className="text-3xl font-mono font-black text-teal-400">{psychResonance}%</span>
+                                  </div>
+                                  <input 
+                                    type="range" min="0" max="100" value={psychResonance}
+                                    onChange={e => setPsychResonance(Number(e.target.value))}
+                                    className="w-full h-4 bg-stone-100 rounded-full appearance-none cursor-pointer accent-teal-500 shadow-inner"
+                                  />
+                               </div>
+
+                               <button onClick={finalizePsychModule} className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all">
+                                  {isSyncingPsych ? <Loader2 className="w-6 h-6 animate-spin" /> : <ShieldCheck className="w-6 h-6" />}
+                                  {isSyncingPsych ? 'ANCHORING HUMAN THRUST...' : 'COMMIT PSYCHOLOGICAL SHARD'}
+                               </button>
+                            </div>
+                         )}
                       </div>
                    </div>
-                   <h4 className="text-2xl font-black text-white mb-10 leading-tight flex-1 tracking-tighter">{m.title}</h4>
-                   <button 
-                    onClick={() => onContribution('module', m.category)}
-                    className="w-full py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.4em] hover:bg-indigo-600 hover:border-indigo-500 transition-all flex items-center justify-center gap-3 shadow-xl group-hover:scale-105 active:scale-95"
-                   >
-                      <PlayCircle className="w-5 h-5" /> START MODULE
-                   </button>
-                </div>
-              ))}
-           </div>
+                ) : (
+                   <div className="glass-card p-20 rounded-[64px] text-center space-y-8">
+                      <Loader2 className="w-16 h-16 text-indigo-500 animate-spin mx-auto" />
+                      <p className="text-2xl font-black uppercase tracking-[0.5em] text-white animate-pulse">Initializing Shard...</p>
+                   </div>
+                )}
+             </div>
+           )}
         </div>
       )}
 
@@ -449,7 +587,7 @@ const Community: React.FC<CommunityProps> = ({ user, onContribution, onSpendEAC 
                  <p className="text-[11px] font-black text-white/60 uppercase tracking-[0.4em] mb-1">GLOBAL RANK</p>
                  <h4 className="text-7xl font-black text-white tracking-tighter">#842</h4>
                  <div className="mt-4 flex gap-1.5">
-                    {[0,1,2,3].map(i => <div key={i} className="w-1.5 h-4 bg-white/40 rounded-full animate-pulse" style={{animationDelay: `${i*0.2}s`}}></div>)}
+                    {[0,1,2,3].map(i => <div key={i} className="w-1.5 h-4 bg-white/40 rounded-full animate-pulse" style={{animationDelay: `${i*0.2}s` }}></div>)}
                  </div>
               </div>
 

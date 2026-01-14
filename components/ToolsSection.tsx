@@ -34,7 +34,9 @@ import {
   Fingerprint,
   Key,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  // Added Coins import to fix line 520 error
+  Coins
 } from 'lucide-react';
 import { 
   LineChart as RechartsLineChart, 
@@ -51,10 +53,13 @@ import {
 import { chatWithAgroExpert } from '../services/geminiService';
 
 interface ToolsSectionProps {
-  user?: any; // Added user prop for ESIN verification
+  user?: any; 
+  onSpendEAC: (amount: number, reason: string) => boolean;
   pendingAction?: string | null;
   clearAction?: () => void;
 }
+
+const TASK_INGEST_FEE = 10;
 
 const CONTROL_CHART_DATA = [
   { batch: 'B1', val: 62 }, { batch: 'B2', val: 65 }, { batch: 'B3', val: 61 },
@@ -70,7 +75,7 @@ const INITIAL_KANBAN = [
   { id: 'T-4', title: 'Carbon Credit Minting', status: 'syncing', thrust: 'Industry', owner: 'Node_NY_01', priority: 'High' },
 ];
 
-const ToolsSection: React.FC<ToolsSectionProps> = ({ user, pendingAction, clearAction }) => {
+const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, pendingAction, clearAction }) => {
   const [activeTool, setActiveTool] = useState<'sigma' | 'kpis' | 'kanban'>('kanban');
   const [kanbanData, setKanbanData] = useState(INITIAL_KANBAN);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -123,6 +128,12 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, pendingAction, clearA
   const executeInitShard = () => {
     if (user && esinSign.toUpperCase() !== user.esin.toUpperCase()) {
       alert("SIGNATURE ERROR: ESIN node mismatch.");
+      return;
+    }
+
+    // MANDATORY TASK INGEST FEE
+    if (!onSpendEAC(TASK_INGEST_FEE, 'TASK_SHARD_REGISTRATION')) {
+      alert("LIQUIDITY ERROR: Insufficient EAC for task registration fee.");
       return;
     }
     
@@ -264,159 +275,12 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, pendingAction, clearA
                    </div>
                    <div className="space-y-4">
                       <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Distributed Task Ledger</h4>
-                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Every task commitment is signed and hashed into the local node shard for accountability.</p>
+                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-md:text-sm max-w-md">Every task commitment is signed and hashed into the local node shard for accountability.</p>
                    </div>
                 </div>
                 <div className="text-center md:text-right relative z-10 shrink-0">
                    <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em] px-2 border-b border-white/10 pb-4">TOTAL_SYNC_TASKS</p>
                    <p className="text-7xl font-mono font-black text-white tracking-tighter">{kanbanData.length}</p>
-                </div>
-             </div>
-          </div>
-        )}
-
-        {/* --- MODALS --- */}
-        
-        {/* 1. Initialize Task Shard Modal */}
-        {showInitTask && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-             <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={closeTaskModal}></div>
-             <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2">
-                <div className="p-16 space-y-12 min-h-[600px] flex flex-col justify-center">
-                   <button onClick={closeTaskModal} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
-                   
-                   {initStep === 'form' && (
-                     <form onSubmit={handleInitializeTask} className="space-y-10 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
-                        <div className="text-center space-y-6">
-                           <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
-                              <Trello className="w-12 h-12 text-emerald-400" />
-                           </div>
-                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Initialize <span className="text-emerald-400">Task Shard</span></h3>
-                           <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Commit a new mission objective to the regional task node grid.</p>
-                        </div>
-
-                        <div className="space-y-6">
-                           <div className="space-y-3">
-                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Task Narrative</label>
-                              <input 
-                                type="text" 
-                                required 
-                                value={taskTitle}
-                                onChange={e => setTaskTitle(e.target.value)}
-                                placeholder="What needs to be achieved?" 
-                                className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-8 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800" 
-                              />
-                           </div>
-                           
-                           <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Pillar Anchor</label>
-                                 <select 
-                                  value={taskThrust}
-                                  onChange={e => setTaskThrust(e.target.value)}
-                                  className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
-                                 >
-                                    <option>Environmental</option>
-                                    <option>Technological</option>
-                                    <option>Societal</option>
-                                    <option>Industry</option>
-                                    <option>Human</option>
-                                 </select>
-                              </div>
-                              <div className="space-y-2">
-                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Priority</label>
-                                 <select 
-                                  value={taskPriority}
-                                  onChange={e => setTaskPriority(e.target.value)}
-                                  className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
-                                 >
-                                    <option>Low</option>
-                                    <option>Medium</option>
-                                    <option>High</option>
-                                    <option>Critical</option>
-                                 </select>
-                              </div>
-                           </div>
-                        </div>
-
-                        <button type="submit" className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
-                           Sign Task Proposal <ChevronRight className="w-4 h-4" />
-                        </button>
-                     </form>
-                   )}
-
-                   {initStep === 'sign' && (
-                     <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
-                        <div className="text-center space-y-6">
-                           <div className="w-24 h-24 bg-blue-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-blue-500/20 shadow-2xl relative">
-                              <Fingerprint className="w-12 h-12 text-blue-400" />
-                              <div className="absolute inset-0 border-2 border-blue-500/20 rounded-[32px] animate-ping opacity-30"></div>
-                           </div>
-                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Cryptographic <span className="text-blue-400">Anchor</span></h3>
-                           <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto leading-relaxed">
-                              "Sign the task shard with your ESIN node signature to commit it to the industrial archive."
-                           </p>
-                        </div>
-
-                        <div className="space-y-4">
-                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-8 text-center block">Steward Signature (ESIN)</label>
-                           <input 
-                              type="text" 
-                              value={esinSign}
-                              onChange={e => setEsinSign(e.target.value)}
-                              placeholder="EA-XXXX-XXXX-XXXX" 
-                              className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 text-center text-3xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-blue-500/20 outline-none transition-all uppercase placeholder:text-slate-900" 
-                           />
-                        </div>
-
-                        <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex items-center gap-6">
-                           <ShieldAlert className="w-8 h-8 text-blue-500 shrink-0" />
-                           <p className="text-[10px] text-blue-200/50 font-bold uppercase tracking-widest leading-relaxed">
-                              REGISTRY_COMMIT: Task metadata will be hashed and mirrored to 64 global validator nodes. 
-                           </p>
-                        </div>
-
-                        <div className="flex gap-4">
-                           <button onClick={() => setInitStep('form')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
-                           <button 
-                             onClick={executeInitShard}
-                             disabled={!esinSign}
-                             className="flex-1 py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30 transition-all"
-                           >
-                              <Key className="w-6 h-6 fill-current" /> Initialize Shard
-                           </button>
-                        </div>
-                     </div>
-                   )}
-
-                   {initStep === 'minting' && (
-                     <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 text-center animate-in fade-in duration-500">
-                        <div className="relative">
-                           <div className="absolute inset-[-15px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
-                           <div className="w-48 h-48 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
-                              <Bot className="w-20 h-20 text-emerald-400 animate-pulse" />
-                           </div>
-                        </div>
-                        <div className="space-y-4">
-                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Minting <span className="text-emerald-400">Shard</span></h3>
-                           <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Propagating to global registry...</p>
-                        </div>
-                     </div>
-                   )}
-
-                   {initStep === 'success' && (
-                     <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
-                        <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
-                           <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
-                           <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
-                        </div>
-                        <div className="space-y-4 text-center">
-                           <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Shard <span className="text-emerald-400">Settled</span></h3>
-                           <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Hash commit: 0x{(Math.random()*1000000).toFixed(0).padStart(6, '0')} locked.</p>
-                        </div>
-                        <button onClick={closeTaskModal} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Grid</button>
-                     </div>
-                   )}
                 </div>
              </div>
           </div>
@@ -561,11 +425,159 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, pendingAction, clearA
         )}
       </div>
 
+      {/* --- MODALS --- */}
+      
+      {/* 1. Initialize Task Shard Modal */}
+      {showInitTask && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={closeTaskModal}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2">
+                <div className="p-16 space-y-12 min-h-[600px] flex flex-col justify-center">
+                   <button onClick={closeTaskModal} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
+                   
+                   {initStep === 'form' && (
+                     <form onSubmit={handleInitializeTask} className="space-y-10 animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
+                        <div className="text-center space-y-6">
+                           <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
+                              <Trello className="w-12 h-12 text-emerald-400" />
+                           </div>
+                           <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Initialize <span className="text-emerald-400">Task Shard</span></h3>
+                           <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Commit a new mission objective to the regional task node grid.</p>
+                        </div>
+
+                        <div className="space-y-6">
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Task Narrative</label>
+                              <input 
+                                type="text" 
+                                required 
+                                value={taskTitle}
+                                onChange={e => setTaskTitle(e.target.value)}
+                                placeholder="What needs to be achieved?" 
+                                className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-8 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800" 
+                              />
+                           </div>
+                           
+                           <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Pillar Anchor</label>
+                                 <select 
+                                  value={taskThrust}
+                                  onChange={e => setTaskThrust(e.target.value)}
+                                  className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                 >
+                                    <option>Environmental</option>
+                                    <option>Technological</option>
+                                    <option>Societal</option>
+                                    <option>Human</option>
+                                    <option>Industry</option>
+                                 </select>
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Priority</label>
+                                 <select 
+                                  value={taskPriority}
+                                  onChange={e => setTaskPriority(e.target.value)}
+                                  className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                 >
+                                    <option>Low</option>
+                                    <option>Medium</option>
+                                    <option>High</option>
+                                    <option>Critical</option>
+                                 </select>
+                              </div>
+                           </div>
+                        </div>
+
+                        <button type="submit" className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                           Proceed to Authentication <ChevronRight size={20} />
+                        </button>
+                     </form>
+                   )}
+
+                   {initStep === 'sign' && (
+                      <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                         <div className="text-center space-y-6">
+                            <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl relative group">
+                               <Fingerprint className="w-12 h-12 text-emerald-400 group-hover:scale-110 transition-transform" />
+                               <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-[32px] animate-ping opacity-30"></div>
+                            </div>
+                            <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Node <span className="text-emerald-400">Signature</span></h3>
+                            <p className="text-slate-400 text-lg">Sign the task shard to commit resources and settle ingest fees.</p>
+                         </div>
+
+                         <div className="space-y-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center block">Steward ID (ESIN)</label>
+                            <input 
+                               type="text" 
+                               value={esinSign}
+                               onChange={e => setEsinSign(e.target.value)}
+                               placeholder="EA-XXXX-XXXX-XXXX" 
+                               className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 text-center text-3xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all uppercase placeholder:text-slate-900" 
+                            />
+                         </div>
+
+                         <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                               <Coins className="text-emerald-400" />
+                               <span className="text-xs font-black text-white uppercase tracking-widest">Ingest Fee</span>
+                            </div>
+                            <span className="text-xl font-mono font-black text-emerald-400">{TASK_INGEST_FEE} EAC</span>
+                         </div>
+
+                         <div className="flex gap-4">
+                            <button onClick={() => setInitStep('form')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                            <button 
+                               onClick={executeInitShard}
+                               disabled={!esinSign}
+                               className="flex-1 py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30 transition-all"
+                            >
+                               <Key className="w-6 h-6 fill-current" /> Authorize Shard Mint
+                            </button>
+                         </div>
+                      </div>
+                   )}
+
+                   {initStep === 'minting' && (
+                      <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 text-center animate-in fade-in duration-500">
+                         <div className="relative">
+                            <div className="absolute inset-[-15px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
+                            <div className="w-48 h-48 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl">
+                               <RefreshCcw className="w-20 h-20 text-emerald-400 animate-pulse" />
+                            </div>
+                         </div>
+                         <div className="space-y-4">
+                            <p className="text-emerald-400 font-black text-xl uppercase tracking-[0.5em] animate-pulse italic">Minting Task Shard...</p>
+                            <p className="text-slate-600 font-mono text-[10px]">EOS_TASK_COMMIT_#{(Math.random()*1000).toFixed(0)}</p>
+                         </div>
+                      </div>
+                   )}
+
+                   {initStep === 'success' && (
+                     <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
+                        <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
+                           <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
+                           <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+                        </div>
+                        <div className="space-y-4">
+                           <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Shard <span className="text-emerald-400">Committed</span></h3>
+                           <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.5em] font-mono">Registry Hash: 0x882_TASK_OK_{Math.random().toString(16).substring(2, 6).toUpperCase()}</p>
+                        </div>
+                        <button onClick={closeTaskModal} className="w-full max-w-sm py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Mission Hub</button>
+                     </div>
+                   )}
+                </div>
+           </div>
+        </div>
+      )}
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 12s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>

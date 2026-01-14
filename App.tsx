@@ -1,10 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Cpu, ShoppingCart, Users, BrainCircuit, Library, Database, Wallet, Leaf, Menu, X, Layers, Radio, ShieldAlert, LogOut, User as UserIcon, Loader2, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Upload, Power, Mic, Coins, Activity, Globe, Share2, Server, Terminal, Shield, ExternalLink, Moon, Sun, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, Info, Timer, AlertTriangle, Microscope, UserPlus, Handshake, Sprout, Briefcase, PawPrint, UserCircle, BellRing, Settings2, Bot, Fingerprint, Network, Binary, TrendingUp, Maximize, Minimize, Baby, HeartPulse, SearchCode, Command, Play, Newspaper, Film, Pickaxe, HardHat,
   Trash2,
-  Inbox
+  Inbox,
+  Warehouse,
+  Users2,
+  TreePine,
+  Droplets,
+  Mountain,
+  Wind,
+  ShieldPlus,
+  Building,
+  ScrollText
 } from 'lucide-react';
-import { ViewState, User, WorkerProfile, AgroProject, AgroTransaction } from './types';
+import { ViewState, User, WorkerProfile, AgroProject, AgroTransaction, FarmingContract } from './types';
 import Dashboard from './components/Dashboard';
 import Sustainability from './components/Sustainability';
 import Economy from './components/Economy';
@@ -34,6 +44,8 @@ import ContractFarming from './components/ContractFarming';
 import Agrowild from './components/Agrowild';
 import FloatingConsultant from './components/FloatingConsultant';
 import Impact from './components/Impact';
+import NaturalResources from './components/NaturalResources';
+import IntranetPortal from './components/IntranetPortal';
 import { syncUserToCloud } from './services/firebaseService';
 
 export interface SignalShard {
@@ -56,6 +68,7 @@ const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
+  const [subAction, setSubAction] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
@@ -114,12 +127,11 @@ const App: React.FC = () => {
       investorShareRatio: 0.20, performanceIndex: 88, memberCount: 7, isPreAudited: true, isPostAudited: true
     }
   ]);
-  
+
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
 
   useEffect(() => {
     const bootTimer = setTimeout(() => setIsBooting(false), 2000);
-    // Dark mode is default in index.html, ensure it stays active
     document.documentElement.classList.add('dark');
     
     const savedUser = localStorage.getItem('agro_steward');
@@ -134,8 +146,9 @@ const App: React.FC = () => {
     setActiveView('dashboard');
   };
 
-  const handleNavigate = (newView: ViewState) => {
+  const handleNavigate = (newView: ViewState, action: string | null = null) => {
     setActiveView(newView);
+    setSubAction(action);
     setShowSignalDropdown(false);
     setIsMobileMenuOpen(false);
   };
@@ -168,7 +181,6 @@ const App: React.FC = () => {
     let newBonus = user.wallet.bonusBalance;
     let newBalance = user.wallet.balance;
 
-    // Prioritize spending bonusBalance (non-withdrawable) first
     if (newBonus >= amount) {
       newBonus -= amount;
     } else {
@@ -217,11 +229,11 @@ const App: React.FC = () => {
   if (isBooting) return (
     <div className="fixed inset-0 z-[500] bg-[#050706] flex items-center justify-center overflow-hidden">
       <div className="text-center space-y-8 animate-in fade-in duration-1000">
-        <div className="w-40 h-40 rounded-[56px] bg-black/60 border-2 border-emerald-500/30 flex items-center justify-center mx-auto relative animate-float shadow-3xl">
-          <Leaf className="w-20 h-20 text-emerald-500" />
+        <div className="w-32 h-32 md:w-40 md:h-40 rounded-[48px] bg-black/60 border-2 border-emerald-500/30 flex items-center justify-center mx-auto relative animate-float shadow-2xl">
+          <Leaf className="w-16 h-16 md:w-20 md:h-20 text-emerald-500" />
         </div>
-        <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic">ENVIROS<span className="text-emerald-400">AGRO OS</span></h1>
-        <div className="w-64 h-1 bg-white/5 rounded-full mx-auto overflow-hidden">
+        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase italic">ENVIROS<span className="text-emerald-400">AGRO OS</span></h1>
+        <div className="w-56 md:w-64 h-1 bg-white/5 rounded-full mx-auto overflow-hidden">
           <div className="h-full bg-emerald-500/60 animate-boot-progress"></div>
         </div>
       </div>
@@ -238,7 +250,7 @@ const App: React.FC = () => {
         { id: 'dashboard', name: 'Command Hub', icon: LayoutDashboard },
         { id: 'impact', name: 'Global Impact', icon: TrendingUp },
         { id: 'intelligence', name: 'Science and IoT', icon: Microscope },
-        { id: 'research', name: 'Research and Innovation', icon: BrainCircuit },
+        { id: 'research', name: 'Research Shard Forge', icon: BrainCircuit },
       ]
     },
     { 
@@ -246,7 +258,7 @@ const App: React.FC = () => {
       items: [
         { id: 'wallet', name: 'Treasury Node', icon: Wallet },
         { id: 'investor', name: 'Investor Portal', icon: Landmark },
-        { id: 'economy', name: 'Market and Mining', icon: Pickaxe },
+        { id: 'economy', name: 'Market Cloud & Mining', icon: Globe },
         { id: 'contract_farming', name: 'Capital Bridge', icon: Briefcase },
         { id: 'vendor', name: 'Vendor Registry', icon: Store },
         { id: 'circular', name: 'Circular Grid', icon: Recycle },
@@ -264,6 +276,16 @@ const App: React.FC = () => {
       ]
     },
     { 
+      category: 'Natural Resources', 
+      items: [
+        { id: 'animal_world', name: 'Animal World', icon: PawPrint },
+        { id: 'plants_world', name: 'Plants World', icon: TreePine },
+        { id: 'aqua_portal', name: 'Aqua Portal', icon: Droplets },
+        { id: 'soil_portal', name: 'Soil Portal', icon: Mountain },
+        { id: 'air_portal', name: 'Air Portal', icon: Wind },
+      ]
+    },
+    { 
       category: 'Registry & Ops', 
       items: [
         { id: 'industrial', name: 'Industrial Cloud', icon: HardHat },
@@ -278,6 +300,7 @@ const App: React.FC = () => {
       category: 'Governance & Identity', 
       items: [
         { id: 'info', name: 'Governance', icon: ShieldAlert },
+        { id: 'intranet', name: 'Intranet Portal', icon: ShieldPlus },
         { id: 'profile', name: 'Node Dossier', icon: UserIcon },
       ]
     }
@@ -285,38 +308,38 @@ const App: React.FC = () => {
 
   const SidebarContent = () => (
     <>
-      <div className="p-8 flex items-center justify-between border-b border-white/5">
-        <div className="flex items-center gap-4 overflow-hidden">
-          <div className="w-12 h-12 agro-gradient rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
-            <Leaf className="text-white w-7 h-7" />
+      <div className="p-6 md:p-8 flex items-center justify-between border-b border-white/5">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="w-10 h-10 agro-gradient rounded-xl flex items-center justify-center shrink-0 shadow-lg">
+            <Leaf className="text-white w-6 h-6" />
           </div>
-          {isSidebarOpen && <span className="text-2xl font-black uppercase tracking-tighter italic whitespace-nowrap">Enviros<span className="text-emerald-400">Agro</span></span>}
+          {isSidebarOpen && <span className="text-xl font-black uppercase tracking-tighter italic whitespace-nowrap">Enviros<span className="text-emerald-400">Agro</span></span>}
         </div>
         {!isMobile && (
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-500 hover:text-white transition-colors">
-            {isSidebarOpen ? <ChevronLeft size={20} /> : <Menu size={20} />}
+            {isSidebarOpen ? <ChevronLeft size={18} /> : <Menu size={18} />}
           </button>
         )}
         {isMobile && (
           <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-500 hover:text-white">
-            <X size={24} />
+            <X size={20} />
           </button>
         )}
       </div>
       
-      <div className="flex-1 mt-6 space-y-8 px-4 overflow-y-auto custom-scrollbar pb-10">
+      <div className="flex-1 mt-4 space-y-6 px-3 overflow-y-auto custom-scrollbar pb-8">
         {registryNodes.map((group, idx) => (
-          <div key={idx} className="space-y-3">
-             {isSidebarOpen && <h5 className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] px-4">{group.category}</h5>}
+          <div key={idx} className="space-y-2">
+             {isSidebarOpen && <h5 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.25em] px-3">{group.category}</h5>}
              <div className="space-y-1">
                {group.items.map((item) => (
                  <button 
                    key={item.id} 
                    onClick={() => handleNavigate(item.id as ViewState)} 
-                   className={`w-full flex items-center gap-5 p-4 rounded-2xl transition-all group ${activeView === item.id ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                   className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all group ${activeView === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
                  >
-                   <item.icon className={`w-6 h-6 shrink-0 ${activeView === item.id ? 'text-white' : 'group-hover:scale-110 transition-transform'}`} />
-                   {isSidebarOpen && <span className="font-black text-[10px] uppercase tracking-[0.2em] truncate">{item.name}</span>}
+                   <item.icon className={`w-5 h-5 shrink-0 ${activeView === item.id ? 'text-white' : 'group-hover:scale-105 transition-transform'}`} />
+                   {isSidebarOpen && <span className="font-black text-[9px] uppercase tracking-[0.15em] truncate">{item.name}</span>}
                  </button>
                ))}
              </div>
@@ -324,105 +347,99 @@ const App: React.FC = () => {
         ))}
       </div>
 
-      <div className="p-8 border-t border-white/5 space-y-4">
-        <button onClick={() => setIsVoiceBridgeOpen(true)} className="w-full flex items-center justify-center gap-3 p-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-          <Mic size={20} /> {isSidebarOpen && "ORACLE VOICE"}
+      <div className="p-6 border-t border-white/5 space-y-3">
+        <button onClick={() => setIsVoiceBridgeOpen(true)} className="w-full flex items-center justify-center gap-3 p-4 agro-gradient rounded-2xl text-white font-black text-[9px] uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all">
+          <Mic size={18} /> {isSidebarOpen && "ORACLE VOICE"}
         </button>
       </div>
     </>
   );
 
+  const getHeaderTitle = () => {
+    if (activeView === 'research') return 'RESEARCH SHARD';
+    if (activeView === 'economy') return 'MARKET CLOUD';
+    return activeView.replace(/_/g, ' ').toUpperCase();
+  };
+
   return (
     <div className={`flex h-screen overflow-hidden bg-[#050706] text-slate-200`}>
       <div className="scanline"></div>
       
-      {/* DESKTOP PERSISTENT SIDEBAR */}
-      <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-80' : 'w-24'} glass-card border-r border-white/5 flex flex-col z-50 transition-all duration-300 relative shadow-2xl bg-black/40`}>
+      <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-72' : 'w-20'} glass-card border-r border-white/5 flex flex-col z-50 transition-all duration-300 relative shadow-2xl bg-black/40`}>
         <SidebarContent />
       </aside>
 
-      {/* MOBILE DRAWER OVERLAY */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[100] lg:hidden">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
-          <aside className="absolute inset-y-0 left-0 w-[85%] max-w-sm glass-card border-r border-white/10 bg-[#050706] flex flex-col animate-in slide-in-from-left duration-300">
+          <aside className="absolute inset-y-0 left-0 w-[80%] max-w-sm glass-card border-r border-white/10 bg-[#050706] flex flex-col animate-in slide-in-from-left duration-300">
              <SidebarContent />
           </aside>
         </div>
       )}
 
       <main className="flex-1 overflow-y-auto relative flex flex-col bg-[#050706]">
-        {/* NETWORK TICKER HEADER */}
-        <header className="flex justify-between items-center sticky top-0 bg-black/60 backdrop-blur-3xl z-40 py-6 px-4 md:px-12 border-b border-white/5 shadow-2xl">
-          <div className="flex items-center gap-6">
+        <header className="flex justify-between items-center sticky top-0 bg-black/60 backdrop-blur-3xl z-40 py-3 px-4 md:px-8 border-b border-white/5 shadow-xl">
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-4 bg-white/5 rounded-2xl text-emerald-500 border border-white/10 shadow-xl active:scale-90 transition-all"
+              className="lg:hidden p-3 bg-white/5 rounded-xl text-emerald-500 border border-white/10 shadow-lg active:scale-90 transition-all"
             >
-              <Menu size={24} />
+              <Menu size={20} />
             </button>
             
             <div className="flex flex-col">
-              <h1 className="text-xl md:text-3xl font-black tracking-tighter uppercase italic leading-none text-white truncate max-w-[200px] md:max-w-none">
-                {activeView.replace(/_/g, ' ')} Registry
+              <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase italic leading-none text-white truncate max-w-[200px] md:max-w-none">
+                {getHeaderTitle()}
               </h1>
-              <div className="flex items-center gap-3 mt-2">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
-                 <p className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] font-mono">NODE_AUTH: {user.esin}</p>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                 <p className="text-[7px] md:text-[9px] text-slate-500 font-black uppercase tracking-[0.2em] font-mono">NODE_AUTH: {user.esin}</p>
               </div>
             </div>
           </div>
 
-          <div className="hidden xl:flex items-center gap-12 px-8 border-x border-white/5 h-full">
+          <div className="hidden xl:flex items-center gap-8 px-6 border-x border-white/5 h-full">
             <div className="text-center group cursor-pointer" onClick={() => handleNavigate('wallet')}>
-              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">EAC Utility</p>
-              <p className="text-2xl font-mono font-black text-emerald-400 group-hover:scale-105 transition-transform">{(user.wallet.balance + user.wallet.bonusBalance).toFixed(0)}</p>
+              <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-1">EAC Shards</p>
+              <p className="text-xl font-mono font-black text-emerald-400 group-hover:scale-105 transition-transform">{(user.wallet.balance + user.wallet.bonusBalance).toFixed(0)}</p>
             </div>
             <div className="text-center group cursor-pointer" onClick={() => handleNavigate('wallet')}>
-              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">EAT Equity</p>
-              <p className="text-2xl font-mono font-black text-yellow-500 group-hover:scale-105 transition-transform">{user.wallet.eatBalance.toFixed(3)}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">Pulse</p>
-              <div className="flex items-center gap-1 text-blue-400 font-mono font-black text-xl">
-                 <Activity size={18} /> 14ms
-              </div>
+              <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-1">EAT Equity</p>
+              <p className="text-xl font-mono font-black text-yellow-500 group-hover:scale-105 transition-transform">{user.wallet.eatBalance.toFixed(3)}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-4">
             <div className="relative">
               <button 
                 onClick={() => setShowSignalDropdown(!showSignalDropdown)} 
-                className={`p-3.5 rounded-2xl border transition-all relative ${showSignalDropdown ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-900/40' : 'bg-[#0B0F0D] border-white/10 text-slate-500 hover:text-white'}`}
+                className={`p-2.5 rounded-xl border transition-all relative ${showSignalDropdown ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' : 'bg-[#0B0F0D] border-white/10 text-slate-500 hover:text-white'}`}
               >
-                <Bell size={20} />
+                <Bell size={18} />
                 {unreadSignals.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-[#050706] animate-pulse">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-[#050706] animate-pulse">
                     {unreadSignals.length}
                   </span>
                 )}
               </button>
 
-              {/* NOTIFICATION DROPDOWN */}
               {showSignalDropdown && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowSignalDropdown(false)}></div>
-                  <div className="absolute right-0 mt-4 w-[400px] rounded-[32px] border border-white/10 bg-[#0B0F0D] shadow-[0_32px_64px_rgba(0,0,0,0.8)] z-50 overflow-hidden animate-in slide-in-from-top-4 duration-300">
-                    <div className="p-6 bg-emerald-600/10 border-b border-white/5 flex items-center justify-between">
-                      <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                  <div className="absolute right-0 mt-3 w-[350px] md:w-[400px] rounded-[32px] border border-white/10 bg-[#0B0F0D] shadow-[0_24px_48px_rgba(0,0,0,0.8)] z-50 overflow-hidden animate-in slide-in-from-top-2 duration-300">
+                    <div className="p-4 bg-emerald-600/10 border-b border-white/5 flex items-center justify-between">
+                      <h4 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
                         <Radio className="w-4 h-4 text-emerald-400" /> Network Signals
                       </h4>
-                      <div className="flex gap-4">
-                        <button onClick={clearAllSignals} className="text-[9px] font-black text-slate-500 hover:text-rose-400 uppercase transition-colors">Wipe Buffer</button>
-                      </div>
+                      <button onClick={clearAllSignals} className="text-[8px] font-black text-slate-500 hover:text-rose-400 uppercase transition-colors">Wipe</button>
                     </div>
                     
-                    <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
+                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
                       {networkSignals.length === 0 ? (
-                        <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 opacity-40">
-                          <Inbox size={48} className="text-slate-600" />
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Registry Ticker Empty</p>
+                        <div className="py-16 flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                          <Inbox size={40} className="text-slate-600" />
+                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Buffer Empty</p>
                         </div>
                       ) : (
                         <div className="divide-y divide-white/5">
@@ -430,80 +447,73 @@ const App: React.FC = () => {
                             <div 
                               key={sig.id} 
                               onClick={() => markSignalRead(sig.id)}
-                              className={`p-6 hover:bg-white/[0.03] transition-all cursor-pointer relative group ${!sig.read ? 'bg-emerald-500/[0.02]' : 'opacity-60'}`}
+                              className={`p-5 hover:bg-white/[0.03] transition-all cursor-pointer relative group ${!sig.read ? 'bg-emerald-500/[0.02]' : 'opacity-60'}`}
                             >
                               {!sig.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>}
                               <div className="flex gap-4">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-white/5 ${sig.type === 'system' ? 'bg-blue-600/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
-                                  {sig.type === 'system' ? <ShieldAlert size={18} /> : <Zap size={18} />}
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border border-white/5 ${sig.type === 'system' ? 'bg-blue-600/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                                  {sig.type === 'system' ? <ShieldAlert size={16} /> : <Zap size={16} />}
                                 </div>
                                 <div className="flex-1 space-y-1">
                                   <div className="flex justify-between items-start">
-                                    <h5 className="text-xs font-black text-white uppercase tracking-tight italic">{sig.title}</h5>
-                                    <span className="text-[8px] font-mono text-slate-600">{sig.timestamp}</span>
+                                    <h5 className="text-[10px] font-black text-white uppercase tracking-tight italic">{sig.title}</h5>
+                                    <span className="text-[7px] font-mono text-slate-600">{sig.timestamp}</span>
                                   </div>
-                                  <p className="text-11px text-slate-400 leading-relaxed line-clamp-2">"{sig.message}"</p>
+                                  <p className="text-[10px] text-slate-400 leading-relaxed line-clamp-2">"{sig.message}"</p>
                                 </div>
-                              </div>
-                              <div className="absolute right-6 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button className="p-1.5 bg-white/5 rounded-lg text-slate-600 hover:text-emerald-400 border border-white/5">
-                                  <CheckCircle2 size={12} />
-                                </button>
                               </div>
                             </div>
                           ))}
                         </div>
                       )}
                     </div>
-
-                    <div className="p-4 bg-black/60 border-t border-white/5">
-                      <button 
-                        onClick={() => handleNavigate('profile')}
-                        className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                      >
-                        Launch Detailed Registry <ArrowRight size={14} />
-                      </button>
-                    </div>
                   </div>
                 </>
               )}
             </div>
-            <button onClick={() => handleNavigate('profile')} className="flex items-center gap-4 p-2 md:pr-6 glass-card rounded-2xl border border-white/10 bg-white/5 hover:bg-emerald-600/10 transition-all shadow-xl">
-              <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-lg font-black text-emerald-500 shadow-lg">{user.name[0]}</div>
+            <button onClick={() => handleNavigate('profile')} className="flex items-center gap-3 p-1.5 md:pr-4 glass-card rounded-xl border border-white/10 bg-white/5 hover:bg-emerald-600/10 transition-all shadow-lg">
+              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-sm font-black text-emerald-500">{user.name[0]}</div>
               <div className="text-left hidden md:block">
-                <p className="text-xs font-black text-white uppercase">{user.name}</p>
-                <p className="text-[9px] text-emerald-500/60 font-mono uppercase font-black">m-Sync: {user.metrics.timeConstantTau.toFixed(2)}</p>
+                <p className="text-[10px] font-black text-white uppercase">{user.name}</p>
+                <p className="text-[8px] text-emerald-500/60 font-mono font-black">SYNC_OK</p>
               </div>
             </button>
           </div>
         </header>
 
-        <div className="p-6 md:p-12 flex-1 relative max-w-[1920px] mx-auto w-full">
+        <div className="p-3 md:p-6 flex-1 relative max-w-[1920px] mx-auto w-full overflow-x-hidden">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={handleNavigate} />}
-          {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} />}
+          {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} projects={projects} />}
           {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} />}
           {activeView === 'economy' && <Economy user={user} onNavigate={handleNavigate} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} projects={projects} />}
-          {activeView === 'media' && <MediaHub userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
+          {activeView === 'media' && <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
           {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={earnEAC} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
           {activeView === 'impact' && <Impact user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
-          {activeView === 'industrial' && <Industrial user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={collectives} setCollectives={setCollectives} />}
+          {activeView === 'industrial' && <Industrial user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={collectives} setCollectives={setCollectives} pendingAction={subAction} clearAction={() => setSubAction(null)} />}
           {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
           {activeView === 'live_farming' && <LiveFarming user={user} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'contract_farming' && <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'vendor' && <VendorPortal user={user} />}
+          {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} />}
           {activeView === 'agrowild' && <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
-          {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} pendingAction={subAction} clearAction={() => setSubAction(null)} />}
           {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} />}
           {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} />}
           {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} />}
-          {activeView === 'community' && <Community user={user} onContribution={() => earnEAC(5, 'CONTRIB')} onSpendEAC={spendEAC} />}
+          {/* Fix: Pass onEarnEAC to the Community component */}
+          {activeView === 'community' && <Community user={user} onContribution={() => earnEAC(5, 'CONTRIB')} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'explorer' && <Explorer />}
-          {activeView === 'ingest' && <NetworkIngest />}
-          {activeView === 'tools' && <ToolsSection user={user} />}
+          {activeView === 'ingest' && <NetworkIngest onSpendEAC={spendEAC} />}
+          {activeView === 'tools' && <ToolsSection user={user} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
+          {activeView === 'intranet' && <IntranetPortal user={user} onSpendEAC={spendEAC} />}
+          {activeView === 'animal_world' && <NaturalResources user={user} type="animal_world" onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'plants_world' && <NaturalResources user={user} type="plants_world" onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'aqua_portal' && <NaturalResources user={user} type="aqua_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'soil_portal' && <NaturalResources user={user} type="soil_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'air_portal' && <NaturalResources user={user} type="air_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
         </div>
       </main>
 

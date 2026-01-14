@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Wallet, 
@@ -17,7 +18,7 @@ import {
   X,
   Loader2,
   CheckCircle2,
-  AlertTriangle,
+  AlertCircle,
   Landmark,
   PlusCircle,
   Pickaxe,
@@ -59,9 +60,15 @@ import {
   Banknote,
   Repeat,
   Gift,
-  Info
+  Info,
+  Trello,
+  Briefcase,
+  FileSignature,
+  Database,
+  BarChart4,
+  Unlock
 } from 'lucide-react';
-import { User, AgroTransaction, ViewState, LinkedProvider } from '../types';
+import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, FarmingContract } from '../types';
 
 interface AgroWalletProps {
   user: User;
@@ -70,6 +77,7 @@ interface AgroWalletProps {
   pendingAction?: string | null;
   clearAction?: () => void;
   onSwap: (eatAmount: number) => boolean;
+  projects?: AgroProject[];
 }
 
 const FOREX_RATES = {
@@ -86,8 +94,8 @@ const MOCK_HISTORY: AgroTransaction[] = [
   { id: 'TX-G-001', type: 'Gateway_Deposit', farmId: 'GLOBAL-GW', details: 'Fiat Ingest: Linked M-Pesa Shard', value: 1200.00, unit: 'KES' },
 ];
 
-const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser, pendingAction, clearAction, onSwap }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'harvest' | 'gateway' | 'history'>('overview');
+const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser, pendingAction, clearAction, onSwap, projects = [] }) => {
+  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'harvest' | 'gateway' | 'projects' | 'history'>('overview');
   const [isClaiming, setIsClaiming] = useState(false);
   const [unclaimedEAC, setUnclaimedEAC] = useState(12.45);
   const [harvestCycle, setHarvestCycle] = useState(0);
@@ -105,6 +113,9 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
   const [esinSign, setEsinSign] = useState('');
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
   const [gatewayStep, setGatewayStep] = useState<'config' | 'sign' | 'success'>('config');
+
+  // Admin Finance Action States
+  const [isRequisitioning, setIsRequisitioning] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeSubTab === 'harvest') {
@@ -213,36 +224,50 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
     }, 3000);
   };
 
+  const handleProjectRequisition = (project: AgroProject) => {
+    if (project.adminEsin !== user.esin) return;
+    setIsRequisitioning(project.id);
+    setTimeout(() => {
+      alert(`CAPITAL REQUISITIONED: ${project.fundedAmount} EAC from ${project.name} has been transferred to active industrial operations.`);
+      setIsRequisitioning(null);
+    }, 2000);
+  };
+
   const totalSpendable = user.wallet.balance + user.wallet.bonusBalance;
   const totalFiatUSD = (totalSpendable * FOREX_RATES.EAC_USD) + (user.wallet.eatBalance * FOREX_RATES.EAT_USD);
+
+  // Filter for items where user is Admin
+  const managedProjects = projects.filter(p => p.adminEsin === user.esin);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1400px] mx-auto">
       
       {/* Dual Token Status HUD */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-6 glass-card rounded-[32px] bg-emerald-500/5 border-emerald-500/20 text-center space-y-1">
+        <div className="p-6 glass-card rounded-[32px] bg-emerald-500/5 border-emerald-500/20 text-center space-y-1 shadow-lg">
            <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest leading-none">Total Spendable (Utility)</p>
            <h4 className="text-3xl font-mono font-black text-white">{totalSpendable.toFixed(0)}</h4>
         </div>
-        <div className="p-6 glass-card rounded-[32px] bg-yellow-500/5 border-yellow-500/20 text-center space-y-1">
+        <div className="p-6 glass-card rounded-[32px] bg-yellow-500/5 border-yellow-500/20 text-center space-y-1 shadow-lg">
            <p className="text-[10px] text-yellow-500 font-black uppercase tracking-widest leading-none">EAT Gold (Equity)</p>
            <h4 className="text-3xl font-mono font-black text-white">{user.wallet.eatBalance.toFixed(4)}</h4>
         </div>
-        <div className="p-6 glass-card rounded-[32px] bg-blue-500/5 border-blue-500/20 text-center space-y-1">
+        <div className="p-6 glass-card rounded-[32px] bg-blue-500/5 border-blue-500/20 text-center space-y-1 shadow-lg">
            <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest leading-none">Total Value (USD)</p>
            <h4 className="text-3xl font-mono font-black text-white">${totalFiatUSD.toFixed(2)}</h4>
         </div>
-        <div className="p-6 glass-card rounded-[32px] bg-indigo-500/5 border-indigo-500/20 text-center space-y-1">
+        <div className="p-6 glass-card rounded-[32px] bg-indigo-500/5 border-indigo-500/20 text-center space-y-1 shadow-lg">
            <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest leading-none">Institutional Rate</p>
            <h4 className="text-xl font-mono font-black text-white">{user.wallet.exchangeRate.toFixed(2)} <span className="text-[10px]">EAC/EAT</span></h4>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 p-1.5 glass-card rounded-[28px] w-fit border border-white/5 bg-black/40 shadow-sm">
+      {/* Main Navigation - Horizontally Scrollable for mobile */}
+      <div className="flex flex-wrap gap-3 p-1.5 glass-card rounded-[28px] w-fit border border-white/5 bg-black/40 shadow-sm overflow-x-auto scrollbar-hide">
         {[
           { id: 'overview', label: 'Treasury Node', icon: Wallet },
           { id: 'gateway', label: 'Institutional Bridges', icon: Globe2 },
+          { id: 'projects', label: 'Project Financials', icon: Trello },
           { id: 'harvest', label: 'Reaction Harvest', icon: Pickaxe },
           { id: 'history', label: 'Registry Ledger', icon: History },
         ].map(tab => (
@@ -303,7 +328,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                   </div>
 
                   <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 mt-12 pt-10 border-t border-white/5">
-                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 group hover:border-emerald-500/30 transition-all">
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 group hover:border-emerald-500/30 transition-all shadow-inner">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
                               <Coins className="w-4 h-4 text-emerald-400" />
@@ -313,7 +338,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                         </div>
                         <p className="text-4xl font-mono font-black text-white">{user.wallet.balance.toFixed(0)}</p>
                     </div>
-                    <div className="p-8 bg-black/60 rounded-[40px] border border-emerald-500/20 group hover:border-emerald-500/5 transition-all">
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-emerald-500/20 group hover:border-emerald-500/5 transition-all shadow-inner">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
                               <Gift className="w-4 h-4 text-emerald-400" />
@@ -343,7 +368,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                            { pair: 'EAT / USD', rate: FOREX_RATES.EAT_USD, trend: '+4.8%', col: 'text-yellow-500' },
                            { pair: 'KES / USD', rate: FOREX_RATES.USD_KES, trend: '-0.2%', col: 'text-slate-400', isInverse: true },
                         ].map(f => (
-                           <div key={f.pair} className="p-4 bg-black/60 rounded-2xl border border-white/5 flex justify-between items-center group-hover:border-blue-500/20 transition-all">
+                           <div key={f.pair} className="p-4 bg-black/60 rounded-2xl border border-white/5 flex justify-between items-center group-hover:border-blue-500/20 transition-all shadow-sm">
                               <div>
                                  <p className="text-[8px] text-slate-500 font-black uppercase mb-1">{f.pair}</p>
                                  <p className={`text-xl font-mono font-black ${f.col}`}>
@@ -356,7 +381,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                      </div>
                   </div>
 
-                  <div className="p-8 glass-card rounded-[40px] bg-emerald-600/5 border border-emerald-500/20 space-y-4">
+                  <div className="p-8 glass-card rounded-[40px] bg-emerald-600/5 border border-emerald-500/20 space-y-4 shadow-md">
                      <div className="flex items-center gap-3">
                         <Info className="w-5 h-5 text-emerald-400" />
                         <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Non-Withdrawable Incentive</h4>
@@ -367,6 +392,77 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                   </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* --- PROJECT FINANCIALS --- */}
+        {activeSubTab === 'projects' && (
+          <div className="space-y-8 animate-in slide-in-from-right duration-500">
+             <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
+                <div>
+                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Project <span className="text-emerald-400">Financials</span></h3>
+                   <p className="text-slate-500 text-sm mt-1">Admin view: Manage invested capital and operational requisitions.</p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="p-6 bg-black/40 border border-white/10 rounded-3xl text-center min-w-[140px] shadow-xl">
+                      <p className="text-[8px] text-slate-500 font-black uppercase mb-1">Managed Capital</p>
+                      <p className="text-2xl font-mono font-black text-emerald-400">
+                        {managedProjects.reduce((acc, curr) => acc + curr.fundedAmount, 0).toLocaleString()} <span className="text-xs">EAC</span>
+                      </p>
+                  </div>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 px-4">
+                {managedProjects.length === 0 ? (
+                  <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-4 opacity-20 border-2 border-dashed border-white/5 rounded-[48px]">
+                      <Trello size={64} className="text-slate-500" />
+                      <p className="text-xl font-black uppercase tracking-[0.4em]">No Managed Project Shards</p>
+                  </div>
+                ) : (
+                  managedProjects.map(proj => (
+                    <div key={proj.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col bg-black/40 shadow-2xl relative overflow-hidden">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Database size={160} /></div>
+                       <div className="flex justify-between items-start mb-8 relative z-10">
+                          <div className="p-5 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shadow-xl group-hover:rotate-6 transition-all">
+                             <Trello size={28} />
+                          </div>
+                          <div className="text-right">
+                             <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black text-slate-400 uppercase tracking-widest">{proj.status}</span>
+                             <p className="text-[10px] text-slate-600 font-mono mt-2 font-black">NODE_ID: {proj.id}</p>
+                          </div>
+                       </div>
+                       
+                       <h4 className="text-3xl font-black text-white uppercase italic leading-none group-hover:text-emerald-400 transition-colors mb-6">{proj.name}</h4>
+                       
+                       <div className="grid grid-cols-2 gap-6 mb-10 relative z-10">
+                          <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 space-y-1 shadow-inner">
+                             <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Funded Amount</p>
+                             <p className="text-2xl font-mono font-black text-white">{proj.fundedAmount.toLocaleString()} EAC</p>
+                          </div>
+                          <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 space-y-1 shadow-inner">
+                             <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Total Goal</p>
+                             <p className="text-2xl font-mono font-black text-slate-400">{proj.totalCapital.toLocaleString()} EAC</p>
+                          </div>
+                       </div>
+
+                       <div className="pt-8 border-t border-white/5 flex gap-4 relative z-10">
+                          <button 
+                            onClick={() => handleProjectRequisition(proj)}
+                            disabled={isRequisitioning === proj.id}
+                            className="flex-1 py-5 agro-gradient rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] text-white shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                          >
+                             {isRequisitioning === proj.id ? <Loader2 size={16} className="animate-spin" /> : <ArrowRightLeft size={16} />}
+                             Requisition Capital
+                          </button>
+                          <button className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all">
+                             <BarChart4 size={20} />
+                          </button>
+                       </div>
+                    </div>
+                  ))
+                )}
+             </div>
           </div>
         )}
 
@@ -385,12 +481,12 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                 </button>
              </div>
 
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 px-4">
                 <div className="lg:col-span-2 space-y-8">
                    <h4 className="text-xl font-bold text-white uppercase tracking-widest px-4">Provider Registry</h4>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {(user.wallet.linkedProviders || []).map(lp => (
-                        <div key={lp.id} className="p-8 glass-card rounded-[44px] border border-white/5 hover:border-indigo-500/30 transition-all group relative overflow-hidden bg-black/40">
+                        <div key={lp.id} className="p-8 glass-card rounded-[44px] border border-white/5 hover:border-indigo-500/30 transition-all group relative overflow-hidden bg-black/40 shadow-xl">
                            <div className="flex justify-between items-start mb-8">
                               <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-indigo-600/10 transition-colors">
                                  {lp.type === 'Mobile' ? <SmartphoneNfc className="w-8 h-8 text-indigo-400" /> : <Building2 className="w-8 h-8 text-indigo-400" />}
@@ -415,8 +511,10 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                 </div>
 
                 <div className="space-y-8">
-                   <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-500/5 space-y-8 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform"><Bot className="w-48 h-48 text-indigo-400" /></div>
+                   <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-500/5 space-y-8 shadow-2xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform duration-700">
+                        <Bot className="w-48 h-48 text-indigo-400" />
+                      </div>
                       <div className="flex items-center gap-4 relative z-10">
                          <div className="p-3 bg-indigo-500/20 rounded-2xl border border-indigo-500/30">
                             <Bot className="w-6 h-6 text-indigo-400" />
@@ -447,7 +545,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
         )}
 
         {activeSubTab === 'harvest' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in zoom-in duration-500">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in zoom-in duration-500 px-4">
              <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-black/40 relative overflow-hidden flex flex-col items-center justify-center text-center shadow-3xl">
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')] opacity-10 pointer-events-none"></div>
                 
@@ -487,7 +585,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                       <div className="p-4 bg-indigo-500 rounded-2xl shadow-2xl">
                          <Gauge className="w-8 h-8 text-white" />
                       </div>
-                      <h4 className="text-xl font-black text-white uppercase italic">Impact <span className="text-indigo-400">Minting</span></h4>
+                      <h4 className="text-xl font-black text-white uppercase italic">Impact <span className="text-emerald-400">Minting</span></h4>
                    </div>
                    <div className="space-y-6 relative z-10">
                       <p className="text-slate-400 text-sm italic font-medium leading-relaxed pl-6 border-l-2 border-indigo-500/30">
@@ -503,7 +601,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
         )}
 
         {activeSubTab === 'history' && (
-          <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500 px-4">
              <div className="glass-card rounded-[40px] overflow-hidden border border-white/5 bg-black/40 shadow-xl">
                 <div className="grid grid-cols-5 p-8 border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                    <span className="col-span-2">Transaction Shard</span>
@@ -619,7 +717,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                           </div>
                           
                           {/* Conversion Estimate */}
-                          <div className="p-6 bg-emerald-500/5 border border-emerald-500/10 rounded-3xl flex justify-between items-center">
+                          <div className="p-6 bg-emerald-500/5 border border-emerald-500/10 rounded-3xl flex justify-between items-center shadow-inner">
                              <div className="flex items-center gap-3">
                                 <Repeat className="w-4 h-4 text-emerald-400" />
                                 <span className="text-[10px] font-black text-slate-500 uppercase">Estimated Inflow</span>
@@ -635,7 +733,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                        <button 
                         onClick={() => setGatewayStep('sign')}
                         disabled={!selectedProvider || !gatewayAmount}
-                        className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4 disabled:opacity-30"
+                        className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
                        >
                           Proceed to Authentication <ChevronRight size={20} />
                        </button>
@@ -664,7 +762,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                           />
                        </div>
 
-                       <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex items-center gap-6">
+                       <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex items-center gap-6 shadow-inner">
                           <ShieldAlert className="w-8 h-8 text-blue-500 shrink-0" />
                           <p className="text-[10px] text-blue-200/50 font-black uppercase leading-relaxed tracking-tight text-left">
                              INGEST_SYNC: Value will be locked until the external bridge confirms settlement (typically 12-24h).
@@ -678,7 +776,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                              disabled={isProcessingGateway || !esinSign}
                              className="flex-1 py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30 transition-all"
                           >
-                             {isProcessingGateway ? <Loader2 className="w-8 h-8 animate-spin" /> : <Key className="w-6 h-6 fill-current" />}
+                             {isProcessingGateway ? <Loader2 className="w-6 h-6 animate-spin" /> : <Key className="w-6 h-6 fill-current" />}
                              {isProcessingGateway ? "Syncing Shard..." : `Authorize ${showGatewayModal}`}
                           </button>
                        </div>
@@ -703,7 +801,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
         </div>
       )}
 
-      {/* Swap Modal (Modified for Fiat Estimates) */}
+      {/* Swap Modal */}
       {showSwapModal && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-2xl" onClick={() => setShowSwapModal(false)}></div>
@@ -711,7 +809,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
               <div className="space-y-10 py-4 flex flex-col min-h-[500px]">
                  <div className="flex justify-between items-start">
                     <div className="flex items-center gap-6">
-                       <div className="w-16 h-16 rounded-2xl bg-yellow-600 flex items-center justify-center text-black shadow-xl">
+                       <div className={`w-16 h-16 rounded-2xl bg-yellow-600 flex items-center justify-center text-black shadow-xl`}>
                           <ArrowRightLeft size={32} />
                        </div>
                        <div>
@@ -728,7 +826,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mint EAT (Equity)</span>
                           <span className="text-[10px] font-black text-slate-700 uppercase">Balance: {user.wallet.eatBalance.toFixed(4)} EAT</span>
                        </div>
-                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 flex items-center justify-between group overflow-hidden">
+                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 flex items-center justify-between group overflow-hidden shadow-inner">
                           <input 
                             type="number" 
                             value={swapInputEAT}
@@ -753,7 +851,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Spend EAC (Utility)</span>
                           <span className="text-[10px] font-black text-slate-700 uppercase">Balance: {totalSpendable.toFixed(0)} EAC</span>
                        </div>
-                       <div className="p-8 bg-white/5 rounded-[40px] border border-white/5 flex items-center justify-between opacity-80">
+                       <div className="p-8 bg-white/5 rounded-[40px] border border-white/5 flex items-center justify-between opacity-80 shadow-inner">
                           <p className="text-4xl font-mono font-black text-emerald-500">
                              {(Number(swapInputEAT) * user.wallet.exchangeRate).toFixed(0)}
                           </p>
@@ -761,7 +859,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                        </div>
                     </div>
                     
-                    <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex justify-between items-center">
+                    <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex justify-between items-center shadow-inner">
                        <div className="flex items-center gap-3">
                           <Activity size={16} className="text-blue-400" />
                           <span className="text-[10px] font-black text-slate-500 uppercase">Net USD Impact</span>
@@ -810,7 +908,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                  </div>
                  <div className="space-y-2 text-left px-2">
                     <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Provider Handle/UID</label>
-                    <input type="text" placeholder="07XX XXX XXX" className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-8 text-white font-mono text-center text-xl tracking-widest outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                    <input type="text" placeholder="07XX XXX XXX" className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-8 text-white font-mono text-center text-xl tracking-widest outline-none focus:ring-4 focus:ring-indigo-500/20 shadow-inner" />
                  </div>
               </div>
 

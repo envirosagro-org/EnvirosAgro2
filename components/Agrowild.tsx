@@ -70,6 +70,8 @@ interface AgrowildProps {
   onNavigate: (view: ViewState, action?: string | null) => void;
 }
 
+const TOUR_REG_FEE = 150;
+
 const WILDLIFE_NODES = [
   { id: 'WLF-01', name: 'Northern Savannah Corridor', species: 'African Elephant', status: 'Protected', health: 94, tracking: 'ACTIVE', col: 'text-amber-500', population: '1.2K', range: '450 sq km' },
   { id: 'WLF-02', name: 'Coastal Mangrove Sanctuary', species: 'Hawksbill Turtle', status: 'Endangered', health: 88, tracking: 'STABLE', col: 'text-emerald-500', population: '840', range: '120 sq km' },
@@ -149,6 +151,12 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
     e.preventDefault();
     if (!tourTitle.trim() || !tourDesc.trim()) return;
 
+    // MANDATORY REGISTRATION FEE CHECK
+    if (!onSpendEAC(TOUR_REG_FEE, 'AGROWILD_TOUR_NODE_REGISTRATION')) {
+      alert("LIQUIDITY ERROR: Insufficient EAC for tour node registration fee.");
+      return;
+    }
+
     setTourStep('system_audit');
     setIsAnalyzing(true);
 
@@ -173,9 +181,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
   };
 
   const advanceToPhysicalAudit = () => {
-    if (onSpendEAC(50, 'TOUR_REGISTRATION_AUDIT_FEE')) {
-      setTourStep('physical_dispatch');
-    }
+    setTourStep('physical_dispatch');
   };
 
   const finalizeTourRegistry = () => {
@@ -284,7 +290,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl text-xs font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
           </button>
@@ -301,7 +307,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                    <p className="text-slate-500 text-sm mt-1">Real-time status of protected regional nodes and ecosystem health.</p>
                 </div>
                 <div className="flex gap-3">
-                   <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[9px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest flex items-center gap-2">
+                   <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                       Consensus Verified
                    </span>
@@ -565,16 +571,16 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
 
       {/* --- MODALS --- */}
 
-      {/* 5. Register Tour Modal (NEW) */}
+      {/* 5. Register Tour Modal (UPDATED WITH PAYMENT STEP) */}
       {showRegisterTourModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowRegisterTourModal(false)}></div>
-          <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
+          <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
              <div className="p-16 space-y-12 min-h-[700px] flex flex-col">
                 <button onClick={() => setShowRegisterTourModal(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X className="w-8 h-8" /></button>
                 
                 {/* Progress Terminal */}
-                <div className="flex gap-4 mb-4">
+                <div className="flex gap-4 mb-4 shrink-0">
                     {[
                       { l: 'Metadata Ingest', s: 'form' },
                       { l: 'System Audit', s: 'system_audit' },
@@ -587,7 +593,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                        const isDone = i < currentIdx;
                        return (
                          <div key={step.s} className="flex-1 flex flex-col gap-2">
-                           <div className={`h-2 rounded-full transition-all duration-700 ${isDone ? 'bg-emerald-500' : isActive ? 'bg-emerald-400 animate-pulse' : 'bg-white/10'}`}></div>
+                           <div className={`h-2 rounded-full transition-all duration-700 ${isDone ? 'bg-emerald-500 shadow-[0_0_15px_#10b981]' : isActive ? 'bg-emerald-400 animate-pulse' : 'bg-white/10'}`}></div>
                            <span className={`text-[7px] font-black uppercase text-center tracking-widest ${isActive ? 'text-emerald-400' : 'text-slate-700'}`}>{step.l}</span>
                          </div>
                        );
@@ -607,7 +613,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                     <div className="space-y-6">
                        <div className="space-y-2">
                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Experience Title</label>
-                          <input type="text" required value={tourTitle} onChange={e => setTourTitle(e.target.value)} placeholder="e.g. Spectral Night Safari" className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all placeholder:text-slate-800" />
+                          <input type="text" required value={tourTitle} onChange={e => setTourTitle(e.target.value)} placeholder="e.g. Spectral Night Safari" className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all placeholder:text-slate-800 shadow-inner" />
                        </div>
                        
                        <div className="grid grid-cols-2 gap-4">
@@ -621,19 +627,27 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                              </select>
                           </div>
                           <div className="space-y-2">
-                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Bounty (EAC)</label>
+                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Bounty (EAC)</label>
                              <input type="number" required value={tourCost} onChange={e => setTourCost(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-mono text-xl focus:ring-2 focus:ring-emerald-500/20 outline-none" />
                           </div>
                        </div>
 
                        <div className="space-y-2">
                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Ecological Narrative</label>
-                          <textarea required value={tourDesc} onChange={e => setTourDesc(e.target.value)} placeholder="Describe the impact and journey..." className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm h-32 resize-none outline-none focus:ring-2 focus:ring-emerald-500/20 placeholder:text-slate-800 italic" />
+                          <textarea required value={tourDesc} onChange={e => setTourDesc(e.target.value)} placeholder="Describe the impact and journey..." className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm h-28 resize-none outline-none focus:ring-2 focus:ring-emerald-500/20 placeholder:text-slate-800 italic" />
                        </div>
                     </div>
 
-                    <button type="submit" className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
-                       Initialize System Audit <ChevronRight className="w-4 h-4" />
+                    <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[32px] flex items-center justify-between shadow-inner">
+                       <div className="flex items-center gap-4">
+                          <Coins className="text-emerald-500" />
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest">Registry Entry Fee</span>
+                       </div>
+                       <span className="text-2xl font-mono font-black text-emerald-500">{TOUR_REG_FEE} <span className="text-xs">EAC</span></span>
+                    </div>
+
+                    <button type="submit" className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all">
+                       <Zap className="w-5 h-5 fill-current" /> AUTHORIZE PAYMENT & AUDIT
                     </button>
                   </form>
                 )}
@@ -667,7 +681,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                           </div>
                           <div className="flex flex-col gap-4">
                             <button onClick={advanceToPhysicalAudit} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all">
-                               Proceed to Physical Verification (50 EAC)
+                               Proceed to Physical Verification
                             </button>
                             <button onClick={() => setTourStep('form')} className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white">Adjust Metadata Shard</button>
                           </div>
@@ -685,7 +699,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                        </div>
                        <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0 text-center">Physical <span className="text-amber-500">Validation</span></h3>
                        <p className="text-slate-400 text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto leading-relaxed">
-                          "Metadata verified. EnvirosAgro Field Stewards have been dispatched to ${tourLocation} to certify the tour route and safety nodes."
+                          "Metadata verified. EnvirosAgro Field Stewards have been dispatched to {tourLocation} to certify the tour route and safety nodes."
                        </p>
                     </div>
 
