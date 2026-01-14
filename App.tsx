@@ -502,13 +502,13 @@ const App: React.FC = () => {
           {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} />}
           {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} />}
-          {/* Fix: Pass onEarnEAC to the Community component */}
           {activeView === 'community' && <Community user={user} onContribution={() => earnEAC(5, 'CONTRIB')} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'explorer' && <Explorer />}
           {activeView === 'ingest' && <NetworkIngest onSpendEAC={spendEAC} />}
           {activeView === 'tools' && <ToolsSection user={user} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
-          {activeView === 'intranet' && <IntranetPortal user={user} onSpendEAC={spendEAC} />}
+          {/* Fixed: Pass handleNavigate function to IntranetPortal */}
+          {activeView === 'intranet' && <IntranetPortal user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'animal_world' && <NaturalResources user={user} type="animal_world" onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'plants_world' && <NaturalResources user={user} type="plants_world" onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'aqua_portal' && <NaturalResources user={user} type="aqua_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}

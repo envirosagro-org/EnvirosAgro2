@@ -34,18 +34,19 @@ import {
   Send,
   Stamp,
   Link2,
-  // Added missing icon imports
   Info,
   MapPin,
   User as UserIcon,
   PlusCircle,
-  ChevronRight
+  ChevronRight,
+  ArrowLeftCircle
 } from 'lucide-react';
-import { User } from '../types';
+import { User, ViewState } from '../types';
 
 interface IntranetPortalProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => boolean;
+  onNavigate: (view: ViewState) => void;
 }
 
 interface AuditTask {
@@ -67,7 +68,7 @@ const MOCK_AUDIT_QUEUE: AuditTask[] = [
   { id: 'ADT-1122', source: 'Industrial Inflow', customerName: 'Neo Harvest', customerEsin: 'EA-2025-W12', title: 'Product Purity Sharding', priority: 'high', timestamp: '3h ago', status: 'PENDING' },
 ];
 
-const IntranetPortal: React.FC<IntranetPortalProps> = ({ user, onSpendEAC }) => {
+const IntranetPortal: React.FC<IntranetPortalProps> = ({ user, onSpendEAC, onNavigate }) => {
   const [authStep, setAuthStep] = useState<'login' | 'pending' | 'success'>('login');
   const [email, setEmail] = useState('');
   const [activeInternalTab, setActiveInternalTab] = useState<'auditing' | 'inspection' | 'compliance' | 'control' | 'tasks'>('auditing');
@@ -75,6 +76,7 @@ const IntranetPortal: React.FC<IntranetPortalProps> = ({ user, onSpendEAC }) => 
   const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
   const [evidenceStep, setEvidenceStep] = useState<'upload' | 'processing' | 'committed'>('upload');
   const [evidenceFile, setEvidenceFile] = useState<string | null>(null);
+  const [auditQueue, setAuditQueue] = useState(MOCK_AUDIT_QUEUE);
 
   const handleRequestAccess = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,12 +98,19 @@ const IntranetPortal: React.FC<IntranetPortalProps> = ({ user, onSpendEAC }) => 
     }, 2500);
   };
 
-  const [auditQueue, setAuditQueue] = useState(MOCK_AUDIT_QUEUE);
-
   if (authStep !== 'success') {
     return (
       <div className="min-h-[700px] flex items-center justify-center p-4">
-        <div className="max-w-md w-full glass-card p-10 rounded-[48px] border-emerald-500/20 bg-black/40 text-center space-y-8 shadow-3xl">
+        <div className="max-w-md w-full glass-card p-10 rounded-[48px] border-emerald-500/20 bg-black/40 text-center space-y-8 shadow-3xl relative overflow-hidden">
+          {/* Back Button added to login screen */}
+          <button 
+            onClick={() => onNavigate('dashboard')}
+            className="absolute top-6 left-6 p-3 bg-white/5 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all group z-20"
+            title="Back to Dashboard"
+          >
+            <ArrowLeftCircle className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          </button>
+
           <div className="flex flex-col items-center gap-4">
             <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center border border-emerald-500/20 shadow-2xl">
               <ShieldPlus className="w-10 h-10 text-emerald-500" />
@@ -543,7 +552,7 @@ const IntranetPortal: React.FC<IntranetPortalProps> = ({ user, onSpendEAC }) => 
                              <span className="text-slate-500 font-black uppercase tracking-widest">Process Authorized</span>
                              <span className="text-white font-mono font-black text-xl text-emerald-400 uppercase italic">SYNC_STABLE</span>
                           </div>
-                          <div className="h-px bg-white/5 w-full"></div>
+                          <div className="h-px w-full bg-white/10"></div>
                           <div className="flex justify-between items-center text-xs relative z-10 px-2">
                              <span className="text-slate-500 font-black uppercase tracking-widest">Audit Shard ID</span>
                              <span className="text-blue-400 font-mono font-black text-lg">#{selectedTask.id}</span>
