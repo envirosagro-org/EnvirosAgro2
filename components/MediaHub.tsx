@@ -70,25 +70,41 @@ import {
   History,
   FileDown,
   Atom,
-  Quote
+  Quote,
+  Music,
+  PlusCircle,
+  AudioLines,
+  Mic2,
+  FileSearch,
+  CheckCircle
 } from 'lucide-react';
-// Added User import to fix scope errors
 import { User } from '../types';
 import { searchAgroTrends, chatWithAgroExpert, AIResponse } from '../services/geminiService';
 
 interface MediaHubProps {
-  // Added user object to props to fix line 584 error
   user: User;
   userBalance: number;
   onSpendEAC: (amount: number, reason: string) => boolean;
 }
 
-// Added VIDEO_NODES mock data constant to fix line 329 error
 const VIDEO_NODES = [
   { id: 'VID-01', title: 'SkyScout Spectral Stream', thumb: 'https://images.unsplash.com/photo-1444858291040-58f756a3bdd6?q=80&w=1200', viewers: 1240, status: 'LIVE', thrust: 'ENVIRONMENTAL', desc: 'Real-time spectral telemetry ingest from autonomous satellite relays.' },
   { id: 'VID-02', title: 'Nebraska Ingest Node #82', thumb: 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=800', viewers: 842, status: 'LIVE', thrust: 'INDUSTRIAL', desc: 'Active processing feed from the regional bio-refinery cluster.' },
   { id: 'VID-03', title: 'Bantu Seed Shard Verification', thumb: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800', viewers: 3200, status: 'ARCHIVE', thrust: 'SOCIETAL', desc: 'Audit log of lineage seed curation and registry anchoring.' },
-  { id: 'VID-04', title: 'Drone Swarm Thermal Scan', thumb: 'https://images.unsplash.com/photo-1615461066870-40c1440ad7ea?q=80&w=800', viewers: 412, status: 'LIVE', thrust: 'TECHNOLOGICAL', desc: 'Multi-node thermal mapping of soil moisture variances.' },
+  { id: 'VID-04', title: 'Drone Swarm Thermal Scan', thumb: 'https://images.unsplash.com/photo-1615461066870-40ad1440ad7ea?q=80&w=800', viewers: 412, status: 'LIVE', thrust: 'TECHNOLOGICAL', desc: 'Multi-node thermal mapping of soil moisture variances.' },
+];
+
+const INITIAL_AUDIO_TRACKS = [
+  { title: "PLANT WAVE SYNTHESIS V1.0", type: "BIO-ELECTRIC", duration: "32:00", cost: "50 EAC", icon: Sprout, free: false },
+  { title: "M-CONSTANT RESONANCE V2.1", type: "SOIL STIMULATION", duration: "45:00", cost: "FREE", icon: Radio, free: true },
+  { title: "SID TRAUMA CLEARING PROTOCOL", type: "WELLNESS", duration: "20:00", cost: "5 EAC", icon: Heart, free: false },
+  { title: "BANTU RHYTHMIC INGEST", type: "ANCESTRAL HERITAGE", duration: "60:00", cost: "FREE", icon: Globe, free: true },
+];
+
+const MOCK_INGEST_LOGS = [
+  { id: 'SONIC-882', source: 'Rose Flower', date: '2h ago', status: 'ANCHORED', hash: '0x882_ROSE_SYNC' },
+  { id: 'SONIC-421', source: 'Bamboo Shard', date: '5h ago', status: 'VERIFIED', hash: '0x421_BAMBOO_OK' },
+  { id: 'SONIC-104', source: 'Aloe Vera Node', date: '1d ago', status: 'ANCHORED', hash: '0x104_ALOE_FINAL' },
 ];
 
 const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) => {
@@ -106,6 +122,16 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
   // Subscriptions logic
   const [subscriptions, setSubscriptions] = useState<string[]>([]);
   const [isSubscribing, setIsSubscribing] = useState<string | null>(null);
+
+  // Audio Upload States
+  const [showAudioUpload, setShowAudioUpload] = useState(false);
+  const [showIngestLogs, setShowIngestLogs] = useState(false);
+  const [audioUploadStep, setAudioUploadStep] = useState<'upload' | 'metadata' | 'sync' | 'success'>('upload');
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [plantSource, setPlantSource] = useState('Rose Flower');
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const [audioTracks, setAudioTracks] = useState(INITIAL_AUDIO_TRACKS);
 
   // Blog States
   const [blogTopic, setBlogTopic] = useState('');
@@ -125,16 +151,9 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
 
   const agribizFeed = [
     { id: 'ART-01', title: "Plant Wave Resonators show 14% Boost in Zone 2 Maize", author: "AGROMUSIKA LAB", time: "30M AGO", img: "https://images.unsplash.com/photo-1530836361253-efad5cb2fcc2?q=80&w=400", content: "Laboratory findings confirm that 432Hz modulation accelerations nutrient intake in Zone 2 clusters..." },
-    { id: 'ART-02', title: "Bantu Lineage Seeds Surge 400% in Trade Volume", author: "AGROINPDF CORE", time: "1H AGO", img: "https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400", content: "Market trends show a massive influx of capital into ancestral Bantu soil shards as resilience metrics peak..." },
+    { id: 'ART-02', title: "Bantu Lineage Seeds Surge 400% in Trade Volume", author: "AGROINPDF CORE", time: "1H AGO", img: "https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=800", content: "Market trends show a massive influx of capital into ancestral Bantu soil shards as resilience metrics peak..." },
     { id: 'ART-03', title: "MedicAg Shards Authorized for Global Ingest", author: "REGISTRY AUDIT", time: "4H AGO", img: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=400", content: "The global registry has finalized the verification of 12 new health nodes across the central corridor..." },
     { id: 'ART-04', title: "Sonic Remediation: 432Hz Impact Reports", author: "AGROMUSIKA", time: "1D AGO", img: "https://images.unsplash.com/photo-1615461066870-40ad1440ad7ea?q=80&w=400", content: "Comprehensive impact studies highlight the success of sound-based soil repair in the previous harvest cycle..." },
-  ];
-
-  const audioTracks = [
-    { title: "PLANT WAVE SYNTHESIS V1.0", type: "BIO-ELECTRIC", duration: "32:00", cost: "50 EAC", icon: Sprout, free: false },
-    { title: "M-CONSTANT RESONANCE V2.1", type: "SOIL STIMULATION", duration: "45:00", cost: "FREE", icon: Radio, free: true },
-    { title: "SID TRAUMA CLEARING PROTOCOL", type: "WELLNESS", duration: "20:00", cost: "5 EAC", icon: Heart, free: false },
-    { title: "BANTU RHYTHMIC INGEST", type: "ANCESTRAL HERITAGE", duration: "60:00", cost: "FREE", icon: Globe, free: true },
   ];
 
   useEffect(() => {
@@ -159,6 +178,32 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
       }
       setIsSubscribing(null);
     }, 1500);
+  };
+
+  const handleAudioFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAudioFile(file);
+      setAudioUploadStep('metadata');
+    }
+  };
+
+  const handleFinalizeAudioUpload = () => {
+    setIsUploadingAudio(true);
+    setAudioUploadStep('sync');
+    setTimeout(() => {
+      const newTrack = {
+        title: `${plantSource.toUpperCase()} RHYTHM SHARD`,
+        type: "PLANT WAVE TECHNOLOGY",
+        duration: "04:20",
+        cost: "FREE",
+        icon: Mic2,
+        free: true
+      };
+      setAudioTracks([newTrack, ...audioTracks]);
+      setIsUploadingAudio(false);
+      setAudioUploadStep('success');
+    }, 3000);
   };
 
   const handleForgeBlog = async () => {
@@ -266,7 +311,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
                        <Globe className="w-10 h-10 text-white" />
                     </div>
                     <div>
-                      <span className="px-4 py-1.5 bg-red-600/20 text-red-500 text-[10px] font-black uppercase rounded-full border border-red-500/40 tracking-[0.3em]">LIVE SPECTRAL FEED</span>
+                      <span className="px-4 py-1.5 bg-red-600/20 text-red-500 text-[10px] font-black uppercase rounded-full border border-red-500/40 tracking-[0.3em]">LIVE_SPECTRAL_FEED</span>
                       <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase italic leading-none mt-2">SKYSCOUT <br/><span className="text-blue-400">SPECTRAL STREAM</span></h2>
                     </div>
                   </div>
@@ -620,7 +665,21 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
                       <span className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.5em]">EOS_ACOUSTIC_NODE</span>
                       <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">AGROMUSIKA <span className="text-indigo-400">LIBRARY</span></h2>
                    </div>
-                   <p className="text-slate-400 text-xl leading-relaxed font-medium italic">Bio-electric Plant Wave protocols and scientific rhythmic signatures for soil molecular repair.</p>
+                   <p className="text-slate-400 text-xl font-medium italic">Bio-electric Plant Wave protocols and scientific rhythmic signatures for soil molecular repair.</p>
+                   <div className="pt-4 flex gap-4 justify-center md:justify-start">
+                      <button 
+                        onClick={() => { setAudioUploadStep('upload'); setShowAudioUpload(true); }}
+                        className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
+                      >
+                         <PlusCircle className="w-5 h-5" /> Plant Rhythm Ingest
+                      </button>
+                      <button 
+                        onClick={() => setShowIngestLogs(true)}
+                        className="px-10 py-5 bg-white/5 border border-white/10 rounded-3xl text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all flex items-center gap-3"
+                      >
+                         <History className="w-5 h-5" /> Ingest Logs
+                      </button>
+                   </div>
                 </div>
              </div>
 
@@ -707,7 +766,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
                              >
                                 {subscriptions.includes('plant_wave_pro_lab') ? 'ACTIVE LINK' : 'SUBSCRIBE 150 EAC'}
                              </button>
-                             <div className="absolute inset-0 bg-amber-500/[0.02] animate-pulse"></div>
+                             <div className="absolute inset-0 bg-amber-50/[0.02] animate-pulse"></div>
                           </div>
                        </div>
                        <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-[32px] text-center shadow-xl">
@@ -722,6 +781,160 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
       </div>
 
       {/* --- MODALS --- */}
+
+      {/* 0. Plant Rhythm Upload Modal */}
+      {showAudioUpload && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowAudioUpload(false)}></div>
+           <div className="relative z-[610] w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2">
+              <div className="p-12 md:p-16 space-y-10 min-h-[650px] flex flex-col justify-center">
+                 <button onClick={() => setShowAudioUpload(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X size={32} /></button>
+                 
+                 {audioUploadStep === 'upload' && (
+                    <div className="space-y-10 text-center animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
+                          <Music className="w-12 h-12 text-emerald-400" />
+                       </div>
+                       <div className="space-y-4">
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Sonic <span className="text-emerald-400">Ingest</span></h3>
+                          <p className="text-slate-400 text-lg italic leading-relaxed">Upload rhythms generated from your plant wave technology device.</p>
+                       </div>
+                       
+                       <div 
+                         onClick={() => audioInputRef.current?.click()}
+                         className={`p-16 border-4 border-dashed rounded-[48px] transition-all flex flex-col items-center justify-center cursor-pointer group ${audioFile ? 'bg-emerald-600/10 border-emerald-500' : 'bg-black/40 border-white/10 hover:border-emerald-500/40'}`}
+                       >
+                          <input type="file" ref={audioInputRef} onChange={handleAudioFileSelect} className="hidden" accept="audio/*" />
+                          {audioFile ? (
+                             <div className="text-center space-y-4">
+                                <div className="p-6 bg-emerald-500/10 rounded-full">
+                                   <AudioLines className="w-16 h-16 text-emerald-500 animate-pulse" />
+                                </div>
+                                <p className="text-sm font-black text-white uppercase">{audioFile.name}</p>
+                                <p className="text-[10px] text-slate-500 font-mono">FILE_BUFFERED_OK</p>
+                             </div>
+                          ) : (
+                             <>
+                                <Mic2 className="w-14 h-14 text-slate-800 group-hover:text-emerald-500 transition-all mb-4" />
+                                <p className="text-xs font-black uppercase text-slate-700 group-hover:text-emerald-400 tracking-widest">Select Audio Shard</p>
+                             </>
+                          )}
+                       </div>
+                    </div>
+                 )}
+
+                 {audioUploadStep === 'metadata' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="space-y-4">
+                          <h4 className="text-xl font-black text-white uppercase italic tracking-widest text-center">Shard <span className="text-emerald-400">Identity</span></h4>
+                          <p className="text-slate-500 text-sm text-center">Define the biological source of the rhythmic signature.</p>
+                       </div>
+                       <div className="space-y-8">
+                          <div className="space-y-3 px-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Plant Source</label>
+                             <select value={plantSource} onChange={e => setPlantSource(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-6 text-white font-black appearance-none outline-none focus:ring-4 focus:ring-emerald-500/20 uppercase text-xs">
+                                <option>Rose Flower</option>
+                                <option>Bamboo Shard</option>
+                                <option>Aloe Vera Node</option>
+                                <option>Ancient Baobab</option>
+                                <option>Sunflower Relay</option>
+                             </select>
+                          </div>
+                          <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center gap-6">
+                             <ShieldCheck className="w-10 h-10 text-emerald-400" />
+                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight leading-relaxed">
+                                By anchoring this signature, you prove the biological resonance of your regional node.
+                             </p>
+                          </div>
+                       </div>
+                       <button 
+                         onClick={handleFinalizeAudioUpload}
+                         className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                       >
+                          COMMENCE ZK-SYNC
+                       </button>
+                    </div>
+                 )}
+
+                 {audioUploadStep === 'sync' && (
+                    <div className="flex flex-col items-center justify-center space-y-12 animate-in fade-in duration-500 py-10 text-center">
+                       <div className="relative">
+                          <Loader2 className="w-24 h-24 text-emerald-500 animate-spin" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                             <Fingerprint className="w-10 h-10 text-emerald-400 animate-pulse" />
+                          </div>
+                       </div>
+                       <div className="space-y-4">
+                          <p className="text-emerald-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">Anchoring Shard...</p>
+                          <p className="text-slate-600 font-mono text-[10px]">SYNCING_ACOUSTIC_REGISTRY // 0x882_SONIC</p>
+                       </div>
+                    </div>
+                 )}
+
+                 {audioUploadStep === 'success' && (
+                    <div className="space-y-12 animate-in zoom-in duration-700 flex flex-col items-center text-center">
+                       <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(16,185,129,0.3)] relative group">
+                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
+                          <div className="absolute inset-[-10px] border-4 border-emerald-500/20 rounded-full animate-ping"></div>
+                       </div>
+                       <div className="space-y-4">
+                          <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic m-0">Acoustic <span className="text-emerald-400">Anchored</span></h3>
+                          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Registry ID: 0x882_OK_{Math.random().toString(16).substring(2,6).toUpperCase()}</p>
+                       </div>
+                       <button onClick={() => setShowAudioUpload(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Finalize Ingest</button>
+                    </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* 0.1 Ingest Logs Modal */}
+      {showIngestLogs && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowIngestLogs(false)}></div>
+          <div className="relative z-[610] w-full max-w-2xl glass-card rounded-[64px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[80vh]">
+            <div className="p-12 border-b border-white/5 bg-indigo-500/[0.02] flex items-center justify-between shrink-0">
+               <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-indigo-600 rounded-[28px] flex items-center justify-center shadow-2xl">
+                     <History className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                     <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Ingest <span className="text-indigo-400">Ledger</span></h3>
+                     <p className="text-[10px] text-indigo-400/60 font-mono tracking-widest uppercase mt-2">SONIC_SHARD_HISTORY // SECURED</p>
+                  </div>
+               </div>
+               <button onClick={() => setShowIngestLogs(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X size={32} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-6">
+               {MOCK_INGEST_LOGS.map(log => (
+                  <div key={log.id} className="p-8 glass-card border border-white/5 rounded-[40px] hover:bg-white/[0.02] transition-all group flex items-center justify-between cursor-pointer active:scale-[0.99]">
+                     <div className="flex items-center gap-8">
+                        <div className="p-5 rounded-2xl bg-white/5 group-hover:bg-indigo-600/10 transition-all border border-white/5">
+                           <Mic2 size={24} className="text-indigo-400" />
+                        </div>
+                        <div>
+                           <h4 className="text-xl font-bold text-white uppercase tracking-tight italic leading-none">{log.source} Rhythm</h4>
+                           <p className="text-[10px] text-slate-500 mt-2 uppercase font-black">{log.date} // {log.id}</p>
+                        </div>
+                     </div>
+                     <div className="text-right">
+                        <div className="flex items-center gap-2 justify-end text-emerald-400 font-mono font-black text-xs mb-1">
+                           <BadgeCheck size={14} className="text-emerald-500" /> {log.status}
+                        </div>
+                        <span className="text-[8px] text-slate-700 font-mono tracking-widest">{log.hash}</span>
+                     </div>
+                  </div>
+               ))}
+               <div className="p-8 bg-black/40 rounded-[40px] border border-white/5 flex flex-col items-center justify-center text-center space-y-4 opacity-30 mt-6">
+                  <FileSearch size={32} className="text-slate-600" />
+                  <p className="text-[10px] font-black uppercase tracking-widest">End of Industrial Shard History</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1. Video Modal */}
       {activeVideoNode && (
@@ -796,26 +1009,28 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
         </div>
       )}
 
-      {/* 2. Article Reader Modal */}
+      {/* 2. Article Reader Modal - ENHANCED TO MATCH SCREENSHOT */}
       {activeArticle && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setActiveArticle(null)}></div>
-           <div className="relative z-[510] w-full max-w-4xl h-[90vh] glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_150px_rgba(16,185,129,0.1)] animate-in zoom-in duration-300 border-2 flex flex-col">
+           <div className="relative z-510 w-full max-w-4xl h-[90vh] glass-card rounded-[64px] border-emerald-500/30 bg-[#050706]/95 overflow-hidden shadow-[0_0_150px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2 flex flex-col">
               <div className="h-96 relative overflow-hidden shrink-0">
                  <img src={activeArticle.img} className="w-full h-full object-cover opacity-40" alt="Article" />
                  <div className="absolute inset-0 bg-gradient-to-t from-[#050706] via-[#050706]/20 to-transparent"></div>
-                 <button onClick={() => setActiveArticle(null)} className="absolute top-10 right-10 p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:text-emerald-400 transition-all shadow-2xl"><X size={32} /></button>
+                 <button onClick={() => setActiveArticle(null)} className="absolute top-10 right-10 p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:text-emerald-400 transition-all shadow-2xl z-50"><X size={32} /></button>
                  <div className="absolute bottom-12 left-12 right-12 space-y-4">
                     <span className="px-5 py-2 bg-emerald-600 rounded-full text-[10px] font-black text-white uppercase tracking-widest shadow-2xl border border-white/20">{activeArticle.author}</span>
-                    <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">{activeArticle.title}</h2>
+                    <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">{activeArticle.title}</h2>
                  </div>
               </div>
+
               <div className="flex-1 overflow-y-auto p-12 md:p-20 custom-scrollbar bg-white/[0.01]">
-                 <div className="max-w-3xl mx-auto prose prose-invert prose-emerald">
-                    <div className="flex items-center gap-6 mb-12 pb-8 border-b border-white/5">
+                 <div className="max-w-3xl mx-auto space-y-12">
+                    {/* Metadata Header */}
+                    <div className="flex items-center gap-6 pb-8 border-b border-white/5">
                        <div className="flex items-center gap-3">
                           <History className="w-5 h-5 text-emerald-400" />
-                          <span className="text-xs font-mono font-bold text-slate-500">{activeArticle.time}</span>
+                          <span className="text-xs font-mono font-bold text-slate-500 uppercase">{activeArticle.time}</span>
                        </div>
                        <div className="flex items-center gap-3">
                           <Eye className="w-5 h-5 text-emerald-400" />
@@ -826,31 +1041,67 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC }) =>
                           <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">REGISTRY_VERIFIED_SHARD</span>
                        </div>
                     </div>
-                    <p className="text-slate-300 text-2xl leading-relaxed italic font-medium mb-12">
-                       {activeArticle.content}
-                    </p>
-                    <p className="text-slate-400 text-lg leading-loose">
-                       Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.
-                    </p>
-                    <div className="mt-16 p-10 bg-black rounded-[48px] border border-white/5 space-y-8 relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Bot size={120} /></div>
-                       <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-4">
-                          <Sparkles className="w-6 h-6 text-emerald-400" /> SHARD_INSIGHT
-                       </h4>
-                       <p className="text-slate-400 italic font-medium text-lg leading-relaxed border-l-2 border-emerald-500/30 pl-8">
-                          "This research node establishes a new baseline for C(a) constant stability in tropical clusters. Recommended implementation cycle: Q4."
+
+                    {/* Main Content Area */}
+                    <div className="space-y-12">
+                       <p className="text-slate-300 text-3xl leading-relaxed italic font-medium">
+                          {activeArticle.content}
                        </p>
+                       
+                       <p className="text-slate-400 text-xl leading-[1.8] font-medium">
+                          This breakthrough in bio-resonance demonstrates the network's ability to scale biological optimization through decentralized industrial nodes. By synchronizing regional frequencies with the global m-constant registry, we ensure a higher sustainability score across all participating shards, driving the agricultural revolution forward.
+                       </p>
+                       
+                       {/* Shard Insight Box */}
+                       <div className="p-10 bg-black rounded-[48px] border border-white/5 space-y-8 relative overflow-hidden group">
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Bot size={120} /></div>
+                          <div className="flex items-center gap-4">
+                             <Sparkles className="w-7 h-7 text-emerald-400" />
+                             <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">SHARD_INSIGHT</h4>
+                          </div>
+                          <p className="text-slate-400 italic font-medium text-lg md:text-xl leading-relaxed border-l-2 border-emerald-500/30 pl-10">
+                             "This research node establishes a new baseline for C(a) constant stability in tropical clusters. Recommended implementation cycle: Q4."
+                          </p>
+                       </div>
+
+                       {/* Read Shard Link */}
+                       <div className="flex justify-end pt-12">
+                          <button className="flex items-center gap-3 text-emerald-400 font-black text-xs uppercase tracking-[0.5em] group hover:text-white transition-colors">
+                             READ SHARD <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                          </button>
+                       </div>
                     </div>
                  </div>
               </div>
-              <div className="p-10 border-t border-white/5 bg-black/60 flex justify-between items-center shrink-0 px-16">
-                 <div className="flex items-center gap-4">
-                    <Fingerprint className="w-6 h-6 text-slate-600" />
-                    <span className="text-[9px] font-mono text-slate-600 font-bold uppercase tracking-[0.4em]">ZK-PROOF: 0x882_ARTICLE_SYNC</span>
+
+              {/* Redesigned Footer Section */}
+              <div className="h-64 md:h-80 relative overflow-hidden shrink-0 border-t border-white/10">
+                 <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1200" className="w-full h-full object-cover opacity-60 grayscale-[0.2]" alt="Footer bg" />
+                 <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent"></div>
+                 
+                 <div className="absolute inset-0 p-12 flex flex-col md:flex-row items-center justify-between gap-12">
+                    <div className="space-y-6">
+                       <span className="px-6 py-2 bg-black/80 backdrop-blur-xl rounded-full text-xs font-black text-white uppercase tracking-widest border border-white/20 shadow-2xl">REGISTRY AUDIT</span>
+                       <div className="flex items-center gap-6">
+                          <Fingerprint className="w-10 h-10 text-slate-500" />
+                          <div className="space-y-1">
+                             <p className="text-[10px] font-mono text-slate-500 font-black uppercase tracking-[0.4em]">ZK-PROOF: AUTH_SYNC_OK</p>
+                             <p className="text-lg font-mono text-slate-400 font-bold uppercase tracking-widest">0x882_ARTICLE_SYNC</p>
+                          </div>
+                       </div>
+                    </div>
+                    
+                    <div className="relative group">
+                       <button className="px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-5 ring-8 ring-white/5">
+                          <FileDown className="w-8 h-8" />
+                          DOWNLOAD SHARD (PDF)
+                       </button>
+                       {/* Bot Mini Icon Overlap */}
+                       <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-[#050706] rounded-2xl flex items-center justify-center border-2 border-emerald-500 shadow-2xl group-hover:rotate-12 transition-transform">
+                          <Bot className="w-6 h-6 text-emerald-500" />
+                       </div>
+                    </div>
                  </div>
-                 <button className="px-12 py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-3xl active:scale-95 transition-all flex items-center gap-3">
-                    <Download className="w-5 h-5" /> Download Shard (PDF)
-                 </button>
               </div>
            </div>
         </div>

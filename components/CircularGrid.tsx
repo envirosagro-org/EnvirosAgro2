@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Recycle, 
@@ -70,19 +71,15 @@ interface CircularGridProps {
 const RETURN_REG_FEE = 25;
 
 const CIRCULAR_REGISTRY = [
-  { id: 'REG-X882', name: 'Decommissioned Pivot Arm', category: 'Machinery', grade: 'α-Grade', potential: 88, status: 'Ready', weight: '1.2 Tons', lastNode: 'Node_Paris_04', impact: '+0.12m' },
-  { id: 'REG-B104', name: 'Surplus Organic Husk Shards', category: 'Biologicals', grade: 'β-Grade', potential: 92, status: 'Processing', weight: '450 kg', lastNode: 'Stwd_Nairobi', impact: '+0.05m' },
-  { id: 'REG-T042', name: 'Reclaimed Poly-Drip Node', category: 'Plastics', grade: 'γ-Grade', potential: 74, status: 'In-Transit', weight: '200 m', lastNode: 'Global_Alpha', impact: '+0.08m' },
-  { id: 'REG-S091', name: 'Cracked Solar Cell Shard', category: 'Hardware', grade: 'ω-Grade', potential: 45, status: 'Auditing', weight: '12 Units', lastNode: 'Node_NY_01', impact: '+0.02m' },
-  { id: 'REG-W221', name: 'Refurbished Hydro-Pump', category: 'Machinery', grade: 'α-Grade', potential: 95, status: 'Ready', weight: '85 kg', lastNode: 'Local_Edge_P4', impact: '+0.15m' },
-  { id: 'REG-M442', name: 'Aluminium Framing Hub', category: 'Hardware', grade: 'β-Grade', potential: 82, status: 'Ready', weight: '140 kg', lastNode: 'Node_Paris_04', impact: '+0.10m' },
-  { id: 'REG-Z991', name: 'Decommissioned Drone Chassis', category: 'Hardware', grade: 'γ-Grade', potential: 60, status: 'Auditing', weight: '2.4 kg', lastNode: 'Node_SF_12', impact: '+0.04m' },
-  { id: 'REG-E441', name: 'Bio-Polymer Mulch Roll', category: 'Plastics', grade: 'β-Grade', potential: 88, status: 'Ready', weight: '500 m', lastNode: 'Stwd_Berlin', impact: '+0.07m' },
-  { id: 'REG-H112', name: 'Harvest Residue Pellets', category: 'Biologicals', grade: 'α-Grade', potential: 97, status: 'Ready', weight: '4 Tons', lastNode: 'Zone_4_NE', impact: '+0.20m' },
-  { id: 'REG-C004', name: 'Recycled Copper Wiring Shard', category: 'Industrial', grade: 'α-Grade', potential: 94, status: 'In-Transit', weight: '12 kg', lastNode: 'Node_Tokyo_01', impact: '+0.06m' },
-  { id: 'REG-P881', name: 'Modular Power Inverter', category: 'Hardware', grade: 'β-Grade', potential: 85, status: 'Processing', weight: '18 kg', lastNode: 'Global_Beta', impact: '+0.11m' },
-  { id: 'REG-L003', name: 'Salvaged Net Shading', category: 'Textiles', grade: 'β-Grade', potential: 78, status: 'Ready', weight: '200 sq m', lastNode: 'Node_SF_08', impact: '+0.09m' },
-  { id: 'REG-K291', name: 'Refurbished Soil PH Probe', category: 'Hardware', grade: 'α-Grade', potential: 91, status: 'Ready', weight: '0.5 kg', lastNode: 'Stwd_London', impact: '+0.13m' },
+  { id: 'REG-X882', name: 'PIVOT ARM', category: 'MACHINERY', grade: 'A-GRADE', potential: 88, status: 'READY', weight: '1.2 Tons', lastNode: 'Node_Paris_04', impact: '+0.12m', isDecommissioned: true },
+  { id: 'REG-B104', name: 'SURPLUS ORGANIC HUSK SHARDS', category: 'BIOLOGICALS', grade: 'B-GRADE', potential: 92, status: 'PROCESSING', weight: '450 kg', lastNode: 'Stwd_Nairobi', impact: '+0.05m', isDecommissioned: false },
+  { id: 'REG-T042', name: 'RECLAIMED POLY-DRIP NODE', category: 'PLASTICS', grade: 'Γ-GRADE', potential: 74, status: 'TRANSIT', weight: '200 m', lastNode: 'Global_Alpha', impact: '+0.08m', isDecommissioned: false },
+  { id: 'REG-S091', name: 'CRACKED SOLAR CELL SHARD', category: 'HARDWARE', grade: 'Ω-GRADE', potential: 45, status: 'AUDITING', weight: '12 Units', lastNode: 'Node_NY_01', impact: '+0.02m', isDecommissioned: false },
+  { id: 'REG-W221', name: 'REFURBISHED HYDRO-PUMP', category: 'MACHINERY', grade: 'A-GRADE', potential: 95, status: 'READY', weight: '85 kg', lastNode: 'Local_Edge_P4', impact: '+0.15m', isDecommissioned: false },
+  { id: 'REG-M442', name: 'ALUMINIUM FRAMING HUB', category: 'HARDWARE', grade: 'B-GRADE', potential: 82, status: 'READY', weight: '140 kg', lastNode: 'Node_Paris_04', impact: '+0.10m', isDecommissioned: false },
+  { id: 'REG-Z991', name: 'DECOMMISSIONED DRONE CHASSIS', category: 'HARDWARE', grade: 'Γ-GRADE', potential: 60, status: 'AUDITING', weight: '2.4 kg', lastNode: 'Node_SF_12', impact: '+0.04m', isDecommissioned: true },
+  { id: 'REG-E441', name: 'BIO-POLYMER MULCH ROLL', category: 'PLASTICS', grade: 'B-GRADE', potential: 88, status: 'READY', weight: '500 m', lastNode: 'Stwd_Berlin', impact: '+0.07m', isDecommissioned: false },
+  { id: 'REG-H112', name: 'HARVEST RESIDUE PELLETS', category: 'BIOLOGICALS', grade: 'A-GRADE', potential: 97, status: 'READY', weight: '4 Tons', lastNode: 'Zone_4_NE', impact: '+0.20m', isDecommissioned: false },
 ];
 
 const REFURBISHED_STORE = [
@@ -109,7 +106,6 @@ const REVERSE_CATEGORIES = [
 ];
 
 const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC }) => {
-  /* Fix: Rename activeView to activeTab and update all occurrences for consistency and to resolve 'Cannot find name activeTab' error. */
   const [activeTab, setActiveTab] = useState<'registry' | 'returns' | 'market' | 'repair' | 'hubs'>('registry');
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [returnStep, setReturnStep] = useState<'form' | 'audit' | 'physical_req' | 'success'>('form');
@@ -140,7 +136,6 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
   const handleReturnInitiate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // SPEND REGISTRATION FEE FIRST
     if (!onSpendEAC(RETURN_REG_FEE, 'REVERSE_INGEST_REGISTRATION_FEE')) {
       alert("LIQUIDITY ERROR: Insufficient EAC for return registration fee.");
       return;
@@ -223,10 +218,10 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                     </p>
                  </div>
               </div>
-              <p className="text-slate-400 text-xl leading-relaxed max-w-2xl font-medium italic">
+              <p className="text-slate-400 text-xl font-medium leading-relaxed max-w-2xl italic">
                 "Promoting recycling, reusing, and refurbishing to maximize m™ resilience. Every asset in this registry is physically verified before second-life release."
               </p>
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-wrap gap-4 pt-4">
                  <button 
                   onClick={() => { setShowReturnModal(true); setReturnStep('form'); }}
                   className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-2xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
@@ -273,7 +268,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
         ))}
       </div>
 
-      {/* Views */}
+      {/* Main Views */}
       <div className="min-h-[700px]">
         {activeTab === 'registry' && (
           <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
@@ -295,69 +290,89 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
              </div>
 
              <div className="glass-card rounded-[40px] overflow-hidden border border-white/5 bg-black/40 shadow-2xl">
-                <div className="grid grid-cols-6 p-8 border-b border-white/10 bg-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                   <span className="col-span-2">Asset Identity Shard</span>
-                   <span>Material Category</span>
-                   <span>Grade</span>
-                   <span className="text-center">Resilience Impact</span>
-                   <span className="text-right">Registry Status</span>
+                <div className="grid grid-cols-12 p-8 border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                   <span className="col-span-5">ASSET IDENTITY SHARD</span>
+                   <span className="col-span-2">MATERIAL CATEGORY</span>
+                   <span className="col-span-1">GRADE</span>
+                   <span className="col-span-2 text-center">RESILIENCE IMPACT</span>
+                   <span className="col-span-2 text-right">REGISTRY STATUS</span>
                 </div>
                 <div className="divide-y divide-white/5">
                    {filteredRegistry.map(asset => (
-                      <div key={asset.id} className="grid grid-cols-6 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer">
-                         <div className="col-span-2 flex items-center gap-6">
-                            <div className="p-4 rounded-2xl bg-white/5 group-hover:bg-emerald-600/10 transition-colors border border-white/5 shadow-xl">
-                               <Package className="w-6 h-6 text-emerald-400" />
+                      <div key={asset.id} className="grid grid-cols-12 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer">
+                         {/* Asset Identity Shard */}
+                         <div className="col-span-5 flex items-center gap-8">
+                            <div className="p-4 rounded-3xl bg-white/5 group-hover:bg-emerald-600/10 transition-all border border-white/5 shadow-xl relative overflow-hidden">
+                               <Package className="w-10 h-10 text-emerald-400 relative z-10" />
+                               <div className="absolute inset-0 bg-emerald-400 opacity-5 animate-pulse"></div>
                             </div>
-                            <div>
-                               <p className="text-lg font-bold text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{asset.name}</p>
-                               <p className="text-[10px] text-slate-600 font-mono mt-1 font-black">{asset.id} // PREV_NODE: {asset.lastNode}</p>
+                            <div className="space-y-1">
+                               {asset.isDecommissioned && (
+                                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">DECOMMISSIONED</p>
+                               )}
+                               <p className="text-xl font-black text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors leading-none italic">{asset.name}</p>
+                               <p className="text-[11px] text-slate-600 font-mono mt-3 font-bold">
+                                  {asset.id} <span className="text-slate-800 mx-2">//</span> PREV_NODE: <span className="text-slate-400">{asset.lastNode}</span>
+                               </p>
                             </div>
                          </div>
-                         <div>
-                            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-slate-400 uppercase tracking-widest">{asset.category}</span>
+
+                         {/* Material Category */}
+                         <div className="col-span-2">
+                            <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest shadow-inner">{asset.category}</span>
                          </div>
-                         <div>
-                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                               asset.grade.includes('α') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                               asset.grade.includes('β') ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+
+                         {/* Grade */}
+                         <div className="col-span-1">
+                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                               asset.grade.includes('A') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]' :
+                               asset.grade.includes('B') ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                'bg-amber-500/10 text-amber-500 border-amber-500/20'
                             }`}>{asset.grade}</span>
                          </div>
-                         <div className="text-center">
-                            <div className="flex flex-col items-center gap-1">
-                               <span className="text-xl font-mono font-black text-emerald-400">{asset.impact}</span>
-                               <span className="text-[7px] text-slate-600 uppercase font-black">m™ RESONANCE BOOST</span>
-                            </div>
+
+                         {/* Resilience Impact */}
+                         <div className="col-span-2 text-center flex flex-col items-center">
+                            <span className="text-3xl font-mono font-black text-emerald-400 tracking-tighter">{asset.impact}</span>
+                            <span className="text-[8px] text-slate-600 uppercase font-black tracking-widest mt-1">M™ RESONANCE BOOST</span>
                          </div>
-                         <div className="flex justify-end items-center gap-4">
-                            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border backdrop-blur-md ${
-                               asset.status === 'Ready' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                               asset.status === 'Processing' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' : 
-                               'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                            }`}>
-                               {asset.status}
-                            </span>
-                            <button className="p-3 bg-white/5 rounded-xl text-slate-600 hover:text-white border border-white/5 transition-all active:scale-90 shadow-xl">
-                               <Maximize className="w-4 h-4" />
+
+                         {/* Registry Status */}
+                         <div className="col-span-2 flex justify-end items-center gap-6">
+                            <div className="flex flex-col items-end">
+                               <div className="relative flex items-center justify-center">
+                                  <div className={`px-5 py-2 rounded-[20px] text-[10px] font-black uppercase tracking-widest border backdrop-blur-md min-w-[100px] text-center ${
+                                     asset.status === 'READY' ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 
+                                     asset.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400 border-blue-500/40 animate-pulse' : 
+                                     'bg-amber-600/20 text-amber-400 border-amber-500/40'
+                                  }`}>
+                                     {asset.status}
+                                  </div>
+                               </div>
+                            </div>
+                            <button className="p-4 bg-white/5 rounded-2xl text-slate-700 hover:text-white border border-white/5 transition-all active:scale-90 shadow-xl">
+                               <Maximize className="w-5 h-5" />
                             </button>
                          </div>
                       </div>
                    ))}
                    {filteredRegistry.length === 0 && (
-                      <div className="p-20 text-center space-y-4 opacity-30">
-                         <SearchCode size={48} className="mx-auto" />
-                         <p className="text-lg font-black uppercase tracking-widest italic">No matches in current ledger shard</p>
+                      <div className="p-24 text-center space-y-4 opacity-30">
+                         <SearchCode size={64} className="mx-auto text-slate-500" />
+                         <p className="text-2xl font-black uppercase tracking-widest italic text-white">No matches in current ledger shard</p>
                       </div>
                    )}
                 </div>
-                <div className="p-8 bg-black/60 border-t border-white/10 flex justify-between items-center px-12">
-                   <div className="flex items-center gap-4">
-                      <div className="p-2 bg-emerald-500/20 rounded-lg"><ShieldCheck size={16} className="text-emerald-400" /></div>
-                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Validated Registry Shards: {filteredRegistry.length}</p>
+                <div className="p-10 bg-black/60 border-t border-white/10 flex justify-between items-center px-14">
+                   <div className="flex items-center gap-6">
+                      <div className="p-3 bg-emerald-500/20 rounded-2xl border border-emerald-500/30 shadow-xl"><ShieldCheck size={24} className="text-emerald-400" /></div>
+                      <div>
+                         <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.3em]">Registry Integrity Status</p>
+                         <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-1">Validated Registry Shards: {filteredRegistry.length} // Sync Cycle: 12A</p>
+                      </div>
                    </div>
-                   <button className="text-emerald-400 hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2">
-                      Request Archive Sync <History size={16} />
+                   <button className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-emerald-400 hover:text-white hover:bg-emerald-600 transition-all text-[11px] font-black uppercase tracking-[0.4em] flex items-center gap-3 shadow-2xl group">
+                      Request Full Archive Sync <History size={18} className="group-hover:rotate-180 transition-transform duration-700" />
                    </button>
                 </div>
              </div>
@@ -772,7 +787,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                       <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-[32px] flex items-center justify-between">
                          <div className="flex items-center gap-4">
                             <Coins className="text-emerald-500" />
-                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Registry Fee</span>
+                            <span className="text-xs font-black text-white uppercase tracking-widest">Registry Fee</span>
                          </div>
                          <span className="text-xl font-mono font-black text-emerald-500">{RETURN_REG_FEE} EAC</span>
                       </div>
@@ -794,7 +809,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({ user, onEarnEAC, onSpendEAC
                                </div>
                             </div>
                             <div className="space-y-2 md:space-y-4">
-                               <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter italic">Digital <span className="text-emerald-400">Auditor</span></h3>
+                               <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic">Digital <span className="text-emerald-400">Auditor</span></h3>
                                <p className="text-emerald-500/60 font-mono text-[10px] md:text-sm animate-pulse uppercase tracking-[0.2em] md:tracking-[0.4em]">Analyzing {assetCategory.toLowerCase()} shards...</p>
                             </div>
                          </div>
