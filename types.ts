@@ -273,4 +273,5 @@ export type ViewState =
   | 'emergency_portal'
   | 'agro_regency'
   | 'code_of_laws'
+  | 'agro_calendar'
   | 'envirosagro_store';

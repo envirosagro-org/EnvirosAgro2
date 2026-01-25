@@ -18,7 +18,8 @@ import {
   History,
   Infinity,
   Scale,
-  FileSignature
+  FileSignature,
+  CalendarDays
 } from 'lucide-react';
 import { ViewState, User, WorkerProfile, AgroProject, AgroTransaction, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from './types';
 import Dashboard from './components/Dashboard';
@@ -59,6 +60,7 @@ import Permaculture from './components/Permaculture';
 import EmergencyPortal from './components/EmergencyPortal';
 import AgroRegency from './components/AgroRegency';
 import CodeOfLaws from './components/CodeOfLaws';
+import AgroCalendar from './components/AgroCalendar';
 import { syncUserToCloud } from './services/firebaseService';
 
 export interface SignalShard {
@@ -351,6 +353,7 @@ const App: React.FC = () => {
         { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
         { id: 'impact', name: 'Network Impact', icon: TrendingUp },
         { id: 'code_of_laws', name: 'Code of Laws', icon: Scale },
+        { id: 'agro_calendar', name: 'Liturgical Calendar', icon: CalendarDays },
         { id: 'intelligence', name: 'Science Oracle', icon: Microscope },
         { id: 'biotech_hub', name: 'Genetic Hub', icon: Dna },
         { id: 'research', name: 'Research Forge', icon: BrainCircuit }
@@ -601,6 +604,7 @@ const App: React.FC = () => {
           {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={collectives} setCollectives={setCollectives} pendingAction={subAction} clearAction={() => setSubAction(null)} />}
           {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
           {activeView === 'code_of_laws' && <CodeOfLaws user={user} />}
+          {activeView === 'agro_calendar' && <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'biotech_hub' && <Biotechnology user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} pendingAction={subAction} clearAction={() => setSubAction(null)} />}
           {activeView === 'impact' && <Impact user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
