@@ -1,4 +1,5 @@
-import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
+
+import { GoogleGenAI, GenerateContentResponse, Modality, Type } from "@google/genai";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -10,6 +11,21 @@ EnvirosAgro™ Sustainability Framework (EOS):
 - Total Quality Management (TQM): Tracking and tracing products from Production to Consumption.
 - Traceability Shards: Immutable ledger entries for every stage of a product's life.
 - Quality Grade: A score derived from multi-thrust audits (Purity, Cleanliness, Feedback).
+`;
+
+const GENETIC_DECODER_SYSTEM_INSTRUCTION = `
+You are the "EnvirosAgro Genetic Decoder," a specialized AI engine responsible for visualizing the health of an agricultural ecosystem as DNA strands.
+The Framework (The "Agro-Genetic Code"):
+1. A (Agro-Bio): Plant health, soil moisture, bio-signals.
+2. T (Technology): Robotics status, sensor efficiency, AI uptime.
+3. C (Consumption): Sales volume, market demand, food ratings.
+4. G (Governance): Token value, financial stability, compliance.
+Pairing Rules:
+- A pairs with T: Nature must be supported by Technology. Bond Strength = 1 - abs(A - T).
+- C pairs with G: Consumption must be supported by Governance/Finance. Bond Strength = 1 - abs(C - G).
+The Backbone (Stability Factor): Average of SEHTI thrusts.
+- < 0.5: "Unstable" (Wobbly/Denatured).
+- > 0.8: "Robust" (Tight/Vibrant).
 `;
 
 // Simple LRU Cache to conserve quota
@@ -71,6 +87,45 @@ const requestWithRetry = async (fn: () => Promise<any>, retries = 3, initialDela
       }
       throw error;
     }
+  }
+};
+
+export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Decode this agricultural telemetry: ${JSON.stringify(telemetry)}. Follow the Genetic Decoder rules and return JSON only.`,
+      config: {
+        systemInstruction: GENETIC_DECODER_SYSTEM_INSTRUCTION,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            helix_status: { type: Type.STRING },
+            backbone_integrity: { type: Type.NUMBER },
+            base_pairs: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  type: { type: Type.STRING },
+                  bond_strength: { type: Type.NUMBER },
+                  visual_cue: { type: Type.STRING },
+                  diagnosis: { type: Type.STRING }
+                },
+                required: ["type", "bond_strength", "visual_cue", "diagnosis"]
+              }
+            },
+            recommendation: { type: Type.STRING }
+          },
+          required: ["helix_status", "backbone_integrity", "base_pairs", "recommendation"]
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (err) {
+    console.error("Genetic Decoder Failure:", err);
+    throw err;
   }
 };
 

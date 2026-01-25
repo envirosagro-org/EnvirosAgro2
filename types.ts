@@ -52,6 +52,73 @@ export interface SustainabilityMetrics {
   baselineM: number; // Historical m-constant for Delta EAT calculation
 }
 
+export interface VendorProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  category: 'Seed' | 'Input' | 'Tool' | 'Technology' | 'Logistics' | 'Produce' | 'Service';
+  thrust: 'Societal' | 'Environmental' | 'Human' | 'Technological' | 'Industry';
+  supplierEsin: string;
+  supplierName: string;
+  supplierType: 'REVERSE_RETURN' | 'RAW_MATERIALS' | 'FINISHED_PRODUCTS' | 'SERVICE_PROVIDER';
+  status: 'PROVISIONAL' | 'AWAITING_AUDIT' | 'AUTHORIZED' | 'REVOKED';
+  image?: string;
+  timestamp: string;
+}
+
+export type OrderStatus = 
+  | 'ORD_PLACED' 
+  | 'AVAILABILITY_VERIFIED'
+  | 'ORD_VERIFIED' 
+  | 'PAYMENT_HELD' 
+  | 'LOGISTICS_PEND' 
+  | 'DISPATCHED' 
+  | 'DELIVERED' 
+  | 'COMPLETED';
+
+export interface Order {
+  id: string;
+  itemId: string;
+  itemName: string;
+  itemType: string;
+  itemImage?: string;
+  cost: number;
+  status: OrderStatus;
+  logisticsNode?: string;
+  supplierEsin: string;
+  customerEsin: string;
+  logisticProviderId?: string;
+  logisticCost?: number;
+  timestamp: string;
+  trackingHash: string;
+  isReceiptIssued: boolean;
+  isPrnSigned: boolean;
+  receiptUrl?: string;
+  sourceTab: 'market' | 'circular' | 'store' | 'agrowild';
+}
+
+export interface LogisticProvider {
+  id: string;
+  name: string;
+  mResonance: number;
+  sustainabilityScore: number;
+  costEAC: number;
+  speed: string;
+  status: 'ACTIVE' | 'IDLE';
+}
+
+export interface RegisteredUnit {
+  id: string;
+  type: 'LOGISTICS' | 'WAREHOUSING' | 'MANUFACTURING' | 'TRANSFORMATION';
+  name: string;
+  location: string;
+  capacity: string;
+  status: 'ACTIVE' | 'AUDITING' | 'IDLE';
+  efficiency: number;
+}
+
 export interface LiveAgroProduct {
   id: string;
   stewardEsin: string;
@@ -119,7 +186,6 @@ export interface WorkerProfile {
   lifetimeEAC: number;
 }
 
-// Added ProjectTask interface to fix line 33 error in components/Industrial.tsx
 export interface ProjectTask {
   id: string;
   title: string;
@@ -200,4 +266,11 @@ export type ViewState =
   | 'aqua_portal'
   | 'soil_portal'
   | 'air_portal'
-  | 'intranet';
+  | 'intranet'
+  | 'cea_portal'
+  | 'biotech_hub'
+  | 'permaculture_hub'
+  | 'emergency_portal'
+  | 'agro_regency'
+  | 'code_of_laws'
+  | 'envirosagro_store';

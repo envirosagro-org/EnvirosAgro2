@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, 
   Cpu, 
@@ -73,7 +73,11 @@ import {
   School,
   Heart,
   MessageSquare,
-  AlertTriangle
+  AlertTriangle,
+  Play,
+  RotateCcw,
+  // Added Mountain icon to fix the error on line 715
+  Mountain
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -86,7 +90,8 @@ import {
   RadarChart, 
   PolarGrid, 
   PolarAngleAxis, 
-  Radar as RechartsRadar 
+  Radar as RechartsRadar,
+  Legend
 } from 'recharts';
 import { chatWithAgroExpert, analyzeMedia, AIResponse } from '../services/geminiService';
 
@@ -120,6 +125,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC }) 
   const [simRainfall, setSimRainfall] = useState(800);
   const [simSoil, setSimSoil] = useState(70);
   const [simPractice, setSimPractice] = useState(5);
+  const [isRunningSimulation, setIsRunningSimulation] = useState(false);
   
   // SID States
   const [sidLoad, setSidLoad] = useState(35);
@@ -134,13 +140,45 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC }) 
   const [simulationReport, setSimulationReport] = useState<string | null>(null);
 
   // Calculated Immutability Index for SID
-  // Logic: Immutability is the depth to which a social pathogen is anchored in the cultural registry.
   const immutabilityIndex = Math.min(100, 
     (transmissionIndex * 0.35) + 
     (overcrowdingIndex * 0.25) + 
     (languageVolatility * 0.20) + 
     (socialStress * 0.20)
   );
+
+  // Simulation Logic: Generates Time-Series Shards
+  const simulationData = useMemo(() => {
+    const data = [];
+    let baseCa = (simRainfall * simSoil) / 1000;
+    let baseM = (simPractice * simSoil) / 10;
+    
+    for (let i = 0; i < 12; i++) {
+      const noise = (Math.random() - 0.5) * 0.2;
+      const caTrend = baseCa * (1 + (i * 0.05)) + noise;
+      const mTrend = baseM * (1 + (Math.sin(i * 0.5) * 0.1)) + noise;
+      const sustainability = Math.min(100, (caTrend * mTrend) / (5 + noise));
+      
+      data.push({
+        cycle: `C-${i + 1}`,
+        ca: Number(caTrend.toFixed(2)),
+        m: Number(mTrend.toFixed(2)),
+        score: Number(sustainability.toFixed(1))
+      });
+    }
+    return data;
+  }, [simRainfall, simSoil, simPractice]);
+
+  // Five Thrusts Resonance Data based on simulation params
+  const thrustsResonance = useMemo(() => {
+    return [
+      { subject: 'Societal', A: 40 + (simPractice * 5) + (simSoil * 0.1), fullMark: 100 },
+      { subject: 'Environmental', A: 30 + (simSoil * 0.5) + (simRainfall * 0.01), fullMark: 100 },
+      { subject: 'Human', A: 50 + (simPractice * 4), fullMark: 100 },
+      { subject: 'Technological', A: 20 + (simPractice * 7), fullMark: 100 },
+      { subject: 'Industry', A: 10 + (simRainfall * 0.02) + (simPractice * 5), fullMark: 100 },
+    ];
+  }, [simRainfall, simSoil, simPractice]);
 
   // Evidence States
   const [evidenceList, setEvidenceList] = useState([
@@ -167,14 +205,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC }) 
   const [fileBase64, setFileBase64] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'authorizing' | 'success' | 'failed'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const calculateSimulator = () => {
-    const ca = (simRainfall * simSoil) / 1000;
-    const m = (simPractice * simSoil) / 10;
-    return { ca, m, score: Math.min((ca * m) / 5, 100) };
-  };
-
-  const simResult = calculateSimulator();
 
   const runSIDRemediation = () => {
     setRemediationStep('scanning');
@@ -321,6 +351,13 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC }) 
     }
   };
 
+  const handleRunFullSimulation = () => {
+    setIsRunningSimulation(true);
+    setTimeout(() => {
+      setIsRunningSimulation(false);
+    }, 2000);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1600px] mx-auto">
       
@@ -366,7 +403,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC }) 
       <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4 md:ml-4">
         {[
           { id: 'twin', label: 'IoT Digital Twin', icon: Monitor },
-          { id: 'simulator', label: 'Framework Simulator', icon: LineChart },
+          { id: 'simulator', label: 'Industrial Simulator', icon: LucideLineChart },
           { id: 'eos_ai', label: 'EnvirosAgro AI', icon: BrainCircuit },
           { id: 'sid', label: 'SID Remediation (S)', icon: HeartPulse },
           { id: 'evidence', label: 'Evidence Portal', icon: History },
@@ -648,97 +685,154 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC }) 
           </div>
         )}
 
-        {/* 2. FRAMEWORK SIMULATOR */}
+        {/* 2. INDUSTRIAL SIMULATOR (ENHANCED) */}
         {activeTab === 'simulator' && (
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in zoom-in duration-500">
-              <div className="lg:col-span-4 glass-card p-12 rounded-[56px] border-blue-500/20 bg-black/40 space-y-12 shadow-2xl">
-                 <div className="flex items-center gap-6">
-                    <div className="p-4 bg-blue-600 rounded-3xl shadow-xl">
-                       <LineChart className="w-8 h-8 text-white" />
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in zoom-in duration-700">
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border-blue-500/20 bg-black/40 space-y-10 shadow-2xl">
+                    <div className="flex items-center gap-6">
+                       <div className="p-4 bg-blue-600 rounded-3xl shadow-xl">
+                          <LucideLineChart className="w-8 h-8 text-white" />
+                       </div>
+                       <div>
+                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">EOS <span className="text-blue-400">Simulator</span></h3>
+                          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Model Agricultural Outcomes</p>
+                       </div>
                     </div>
-                    <div>
-                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">EOS <span className="text-blue-400">Simulator</span></h3>
-                       <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Model Agricultural Outcomes</p>
+
+                    <div className="space-y-10">
+                       <div className="space-y-4">
+                          <div className="flex justify-between items-center px-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Droplets size={12} /> Rainfall (mm)</label>
+                             <span className="text-xl font-mono font-black text-white">{simRainfall}</span>
+                          </div>
+                          <input 
+                            type="range" min="0" max="2500" value={simRainfall} 
+                            onChange={e => setSimRainfall(Number(e.target.value))}
+                            className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500"
+                          />
+                       </div>
+                       <div className="space-y-4">
+                          <div className="flex justify-between items-center px-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Mountain size={12} /> Soil Purity (%)</label>
+                             <span className="text-xl font-mono font-black text-white">{simSoil}%</span>
+                          </div>
+                          <input 
+                            type="range" min="0" max="100" value={simSoil} 
+                            onChange={e => setSimSoil(Number(e.target.value))}
+                            className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500"
+                          />
+                       </div>
+                       <div className="space-y-4">
+                          <div className="flex justify-between items-center px-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Zap size={12} /> Practice Lvl</label>
+                             <span className="text-xl font-mono font-black text-white">Lvl {simPractice}</span>
+                          </div>
+                          <input 
+                            type="range" min="1" max="10" value={simPractice} 
+                            onChange={e => setSimPractice(Number(e.target.value))}
+                            className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                          />
+                       </div>
                     </div>
+
+                    <button 
+                      onClick={handleRunFullSimulation}
+                      disabled={isRunningSimulation}
+                      className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.3em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4"
+                    >
+                       {isRunningSimulation ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+                       {isRunningSimulation ? 'SYNCING FORECAST...' : 'RUN MULTI-CYCLE SIMULATION'}
+                    </button>
                  </div>
 
-                 <div className="space-y-10">
-                    <div className="space-y-4">
-                       <div className="flex justify-between items-center px-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Annual Rainfall (mm)</label>
-                          <span className="text-xl font-mono font-black text-white">{simRainfall}</span>
-                       </div>
-                       <input 
-                         type="range" min="0" max="2500" value={simRainfall} 
-                         onChange={e => setSimRainfall(Number(e.target.value))}
-                         className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500"
-                       />
+                 <div className="p-10 glass-card rounded-[48px] border-indigo-500/20 bg-indigo-500/5 space-y-8 shadow-xl relative overflow-hidden group">
+                    <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3 relative z-10">
+                       <Target className="w-6 h-6 text-indigo-400" /> Five Thrusts <span className="text-indigo-400">Resonance</span>
+                    </h4>
+                    <div className="h-64 w-full relative z-10">
+                       <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={thrustsResonance}>
+                             <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                             <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={10} fontStyle="italic" />
+                             <RechartsRadar name="Alignment" dataKey="A" stroke="#818cf8" fill="#818cf8" fillOpacity={0.3} />
+                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: 'none', borderRadius: '12px' }} />
+                          </RadarChart>
+                       </ResponsiveContainer>
                     </div>
-                    <div className="space-y-4">
-                       <div className="flex justify-between items-center px-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Soil Purity Shard (%)</label>
-                          <span className="text-xl font-mono font-black text-white">{simSoil}%</span>
-                       </div>
-                       <input 
-                         type="range" min="0" max="100" value={simSoil} 
-                         onChange={e => setSimSoil(Number(e.target.value))}
-                         className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500"
-                       />
-                    </div>
-                    <div className="space-y-4">
-                       <div className="flex justify-between items-center px-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Practice Shard Lvl (1-10)</label>
-                          <span className="text-xl font-mono font-black text-white">Lvl {simPractice}</span>
-                       </div>
-                       <input 
-                         type="range" min="1" max="10" value={simPractice} 
-                         onChange={e => setSimPractice(Number(e.target.value))}
-                         className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-indigo-500"
-                       />
-                    </div>
-                 </div>
-
-                 <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-[32px] flex items-center gap-6">
-                    <Info className="w-6 h-6 text-blue-400 shrink-0" />
-                    <p className="text-[10px] text-blue-200/50 font-black uppercase italic leading-relaxed">
-                       Simulations use the m™ Time Signature logic to calculate potential EAC yield per crop cycle.
-                    </p>
                  </div>
               </div>
 
               <div className="lg:col-span-8 flex flex-col gap-8">
-                 <div className="grid grid-cols-2 gap-8">
-                    <div className="p-10 glass-card rounded-[56px] border border-white/5 bg-black/60 flex flex-col items-center justify-center text-center space-y-4 group">
-                       <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-emerald-500/10 transition-colors">
-                          <Binary className="w-8 h-8 text-emerald-400" />
+                 <div className="glass-card p-12 rounded-[56px] border-white/5 bg-black/60 flex-1 flex flex-col relative overflow-hidden shadow-3xl">
+                    <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none"></div>
+                    <div className="flex justify-between items-center mb-10 relative z-10">
+                       <div className="flex items-center gap-4">
+                          <Activity className="w-6 h-6 text-emerald-400" />
+                          <h4 className="text-2xl font-black text-white uppercase italic">Longitudinal <span className="text-emerald-400">Sustainability Shards</span></h4>
                        </div>
-                       <div>
-                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Predicted C(a)</p>
-                          <p className="text-6xl font-mono font-black text-white">{simResult.ca.toFixed(2)}</p>
+                       <div className="flex gap-2">
+                          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                             <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">REALTIME_M_SYNC</span>
+                          </div>
                        </div>
                     </div>
-                    <div className="p-10 glass-card rounded-[56px] border border-white/5 bg-black/60 flex flex-col items-center justify-center text-center space-y-4 group">
-                       <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-blue-500/10 transition-colors">
-                          <Gauge className="w-8 h-8 text-blue-400" />
+
+                    <div className="flex-1 h-[450px] w-full min-h-0 relative z-10">
+                       <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={simulationData}>
+                             <defs>
+                                <linearGradient id="colorCa" x1="0" y1="0" x2="0" y2="1">
+                                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                                   <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                </linearGradient>
+                                <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                </linearGradient>
+                             </defs>
+                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                             <XAxis dataKey="cycle" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                             <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px' }} />
+                             <Area type="monotone" name="Agro Code C(a)" dataKey="ca" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorCa)" />
+                             <Area type="monotone" name="Sustainability" dataKey="score" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorScore)" />
+                             <Area type="monotone" name="m-Constant" dataKey="m" stroke="#818cf8" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
+                             <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '10px', textTransform: 'uppercase', fontWeight: 'bold' }} />
+                          </AreaChart>
+                       </ResponsiveContainer>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-8 mt-12 pt-8 border-t border-white/5 relative z-10">
+                       <div className="text-center group">
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 group-hover:text-emerald-400 transition-colors">Final Cycle C(a)</p>
+                          <p className="text-4xl font-mono font-black text-white">{simulationData[11].ca}</p>
                        </div>
-                       <div>
-                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Predicted m-Resilience</p>
-                          <p className="text-6xl font-mono font-black text-white">{simResult.m.toFixed(1)}</p>
+                       <div className="text-center group">
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 group-hover:text-blue-400 transition-colors">m-Resilience Peak</p>
+                          <p className="text-4xl font-mono font-black text-white">{Math.max(...simulationData.map(d => d.m))}</p>
+                       </div>
+                       <div className="text-center group">
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 group-hover:text-indigo-400 transition-colors">Avg Sustain Grade</p>
+                          <p className="text-4xl font-mono font-black text-emerald-400">{simulationData[11].score}%</p>
                        </div>
                     </div>
                  </div>
-
-                 <div className="flex-1 glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col items-center justify-center text-center group shadow-3xl">
-                    <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none"></div>
-                    <div className="relative z-10 space-y-4">
-                       <p className="text-xl font-black text-emerald-400 uppercase tracking-[0.5em] italic">Projected Sustainability Shard</p>
-                       <h4 className="text-9xl font-black text-white tracking-tighter drop-shadow-2xl">{simResult.score.toFixed(1)}%</h4>
-                       <div className="pt-8">
-                          <button className="px-16 py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all">
-                             COMMIT SIMULATION TO SHARD
-                          </button>
+                 
+                 <div className="p-8 glass-card rounded-[40px] bg-emerald-600/5 border border-emerald-500/20 flex flex-col md:flex-row items-center justify-between gap-8 group">
+                    <div className="flex items-center gap-6">
+                       <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:rotate-12 transition-transform">
+                          <Sparkles size={28} />
+                       </div>
+                       <div className="space-y-1">
+                          <h5 className="text-xl font-black text-white uppercase italic">Optimal Ingest Path Found</h5>
+                          <p className="text-sm text-slate-500 italic">"Simulation identifies 12% boost in carbon credits via current practice Lvl."</p>
                        </div>
                     </div>
+                    <button className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-white hover:bg-emerald-600 transition-all shadow-xl">
+                       ANCHOR SIMULATION SHARD
+                    </button>
                  </div>
               </div>
            </div>
@@ -934,7 +1028,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC }) 
                     </div>
                     <div className="space-y-4">
                        <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Zero-Knowledge Evidence</h4>
-                       <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md mx-auto md:mx-0">Every upload is cryptographically masked to ensure data privacy while proving physical integrity to the network.</p>
+                       <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-md:text-sm max-w-md mx-auto md:mx-0">Every upload is cryptographically masked to ensure data privacy while proving physical integrity to the network.</p>
                     </div>
                  </div>
                  <div className="text-center md:text-right relative z-10 shrink-0">
