@@ -24,7 +24,6 @@ import {
   ChevronRight,
   ArrowLeftCircle,
   Gauge,
-  // Added missing Bot icon import
   Bot
 } from 'lucide-react';
 import { 
@@ -262,20 +261,20 @@ const Impact: React.FC<ImpactProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                       "Strategic analysis suggests a <span className="text-emerald-500 font-bold">14% surplus</span> in Environmental sharding. Advise re-allocating social energy to the Human (H) pillar."
                    </p>
                    <button className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                      <Zap className="w-4 h-4 fill-current" /> Run Remediation
+                      <Zap className="w-4 h-4 fill-current" /> Run Remediation Protocol
                    </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                    <div className="p-10 glass-card rounded-[40px] border dark:border-white/5 bg-white dark:bg-black/40 text-center group hover:bg-emerald-500/5 transition-all">
-                      <Leaf className="w-8 h-8 text-emerald-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                      <Leaf className="w-8 h-8 text-emerald-400 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                       <p className="text-[10px] text-slate-500 font-black uppercase mb-1">E-Impact</p>
                       <h5 className="text-3xl font-mono font-black dark:text-white text-slate-900">94%</h5>
                    </div>
                    <div className="p-10 glass-card rounded-[40px] border dark:border-white/5 bg-white dark:bg-black/40 text-center group hover:bg-rose-500/5 transition-all">
                       <Heart className="w-8 h-8 text-rose-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                      <p className="text-[10px] text-slate-500 font-black uppercase mb-1">S-Impact</p>
-                      <h5 className="text-3xl font-mono font-black dark:text-white text-slate-900">82%</h5>
+                      <p className="text-[10px] text-slate-500 font-black uppercase mb-1">H-Impact</p>
+                      <h5 className="text-3xl font-mono font-black dark:text-white text-slate-900">76%</h5>
                    </div>
                 </div>
              </div>
@@ -283,26 +282,26 @@ const Impact: React.FC<ImpactProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
         )}
       </div>
 
-      {/* Persistence Footer */}
-      <div className="p-16 glass-card rounded-[64px] border-emerald-500/20 bg-emerald-500/5 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-sm">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12">
-            <ShieldCheck className="w-96 h-96 text-emerald-400" />
+      <div className="p-16 glass-card rounded-[64px] border-emerald-500/10 bg-emerald-500/[0.02] flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-sm mx-4 mt-12 backdrop-blur-2xl">
+         <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none rotate-12">
+            <TrendingUp className="w-96 h-96 text-emerald-400" />
          </div>
          <div className="flex items-center gap-10 relative z-10 text-center md:text-left flex-col md:flex-row">
-            <div className="w-32 h-32 agro-gradient rounded-full flex items-center justify-center shadow-3xl animate-pulse ring-[20px] ring-white/5">
-               <Binary className="w-16 h-16 text-white" />
+            <div className="w-24 h-24 bg-emerald-600 rounded-[32px] flex items-center justify-center shadow-[0_0_50px_rgba(16,185,129,0.3)] animate-pulse ring-[15px] ring-white/5 shrink-0">
+               <ShieldCheck className="w-12 h-12 text-white" />
             </div>
             <div className="space-y-4">
-               <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Immutable Ledger Impact</h4>
-               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-md">Every gram of offset is verified via ZK-Proof consensus across 64 global scientific nodes.</p>
+               <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Sustainability Verified</h4>
+               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-md:text-sm max-w-lg mx-auto md:mx-0">
+                 Impact metrics are immutably anchored. Every point of progress is a contribution to the global C(a) constant.
+               </p>
             </div>
          </div>
-         <div className="text-center md:text-right relative z-10 shrink-0">
-            <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em] px-2 border-b border-white/10 pb-4">TOTAL_ECO_SHARDS</p>
-            <p className="text-7xl font-mono font-black text-white tracking-tighter">42,882</p>
+         <div className="text-center md:text-right relative z-10 shrink-0 border-l border-white/10 pl-20 hidden lg:block">
+            <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em] px-4">NETWORK_QUORUM</p>
+            <p className="text-8xl font-mono font-black text-white tracking-tighter leading-none">100<span className="text-4xl text-emerald-400 ml-1">%</span></p>
          </div>
       </div>
-
     </div>
   );
 };

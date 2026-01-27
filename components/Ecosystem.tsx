@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
-  Flower2, Music, Heart, Bot, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, Sparkles, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCcw,
+  Flower2, Music, Heart, Bot, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, Sparkles, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCcw, Handshake,
   // MedicAg Icons
   Stethoscope as DoctorIcon,
   ShieldPlus,
@@ -461,7 +460,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                            {MOCK_MISSIONS.map(msn => (
-                             <div key={msn.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full bg-black/40 shadow-2xl relative overflow-hidden active:scale-[0.98] duration-300">
+                             <div key={msn.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full active:scale-[0.98] duration-300 bg-black/40 shadow-2xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform"><Target size={120} className="text-white" /></div>
                                 <div className="flex justify-between items-start mb-10 relative z-10">
                                    <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:rotate-12 transition-transform">
@@ -880,7 +879,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                          <h3 className="text-4xl font-black text-stone-900 uppercase tracking-tighter italic border-b border-stone-200 pb-6">Trust <span className="text-rose-800">Ledger</span></h3>
                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {['Steward Alpha', 'Green Root Node', 'Maize Master 04'].map((s, i) => (
-                               <div key={i} className="p-10 bg-white border border-stone-200 rounded-[48px] shadow-xl space-y-6 group hover:border-rose-800/30 transition-all">
+                               <div key={i} className="p-10 bg-white border border-rose-200 rounded-[48px] shadow-xl space-y-6 group hover:border-rose-800/30 transition-all">
                                   <div className="flex justify-between items-start">
                                      <div className="w-16 h-16 bg-stone-100 rounded-2xl flex items-center justify-center text-rose-800 group-hover:rotate-12 transition-transform">{s[0]}</div>
                                      <span className="text-[10px] font-mono text-stone-400">#EA-{(882 + i * 4).toString()}</span>
@@ -1059,7 +1058,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                     )}
 
                     {portalTab === 'astrology' && (
-                       <div className="max-w-4xl mx-auto space-y-12 text-center animate-in zoom-in duration-700">
+                       <div className="max-w-4xl mx-auto space-y-12 text-center animate-in zoom-in duration-500">
                           <div className="p-16 bg-stone-50 border border-fuchsia-200 rounded-[64px] shadow-3xl space-y-10 relative overflow-hidden">
                              <div className="absolute inset-0 opacity-[0.03]"><Moon size={400} className="text-fuchsia-900" /></div>
                              <div className="w-24 h-24 bg-fuchsia-100 text-fuchsia-800 rounded-[32px] flex items-center justify-center mx-auto shadow-xl relative z-10"><Moon size={48} /></div>
@@ -1322,7 +1321,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                     )}
 
                     {portalTab === 'batch_audit' && (
-                       <div className="max-w-4xl mx-auto space-y-12 text-center animate-in zoom-in duration-700">
+                       <div className="max-w-4xl mx-auto space-y-12 text-center animate-in zoom-in duration-500">
                           <div className="p-16 bg-white border border-orange-200 rounded-[64px] shadow-3xl space-y-10 relative overflow-hidden">
                              <div className="absolute top-0 right-0 p-12 opacity-[0.02]"><Activity size={400} className="text-orange-900" /></div>
                              <div className="w-24 h-24 bg-orange-100 text-orange-800 rounded-[32px] flex items-center justify-center mx-auto shadow-xl relative z-10"><ClipboardCheck size={48} /></div>
@@ -1333,7 +1332,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                              <div className="relative z-10 max-w-lg mx-auto">
                                 <input type="text" placeholder="Enter Batch Shard ID (e.g. COOK-882)..." className="w-full bg-stone-50 border border-stone-200 rounded-full py-6 px-10 text-xl font-mono text-orange-800 outline-none focus:ring-4 focus:ring-orange-500/10 transition-all text-center" />
                              </div>
-                             <button className="px-16 py-8 bg-orange-800 text-white rounded-[40px] text-xs font-black uppercase tracking-[0.5em] shadow-2xl relative z-10 active:scale-95">INITIALIZE AUDIT TRACE</button>
+                             <button className="px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-xs uppercase tracking-[0.5em] shadow-2xl relative z-10 active:scale-95">INITIALIZE AUDIT TRACE</button>
                           </div>
                        </div>
                     )}

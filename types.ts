@@ -274,4 +274,5 @@ export type ViewState =
   | 'agro_regency'
   | 'code_of_laws'
   | 'agro_calendar'
+  | 'chroma_system'
   | 'envirosagro_store';
