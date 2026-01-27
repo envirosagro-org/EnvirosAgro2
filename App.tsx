@@ -1,8 +1,7 @@
-
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from './types';
 import Dashboard from './components/Dashboard';
@@ -231,6 +230,10 @@ const App: React.FC = () => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status, ...meta } : o));
   };
 
+  const handleRegisterProduct = (product: VendorProduct) => {
+    setVendorProducts(prev => [product, ...prev]);
+  };
+
   const swapEACforEAT = (eatAmount: number) => {
     if (!user) return false;
     const cost = eatAmount * user.wallet.exchangeRate;
@@ -323,6 +326,7 @@ const App: React.FC = () => {
     {
       category: 'Governance & Infrastructure',
       items: [
+        { id: 'vendor', name: 'Supplier Command', icon: Warehouse },
         { id: 'ingest', name: 'Network Ingest', icon: Cable },
         { id: 'emergency_portal', name: 'Crisis Command', icon: Siren },
         { id: 'agro_regency', name: 'Agro Regency', icon: Infinity },
@@ -478,6 +482,7 @@ const App: React.FC = () => {
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
           {activeView === 'ingest' && <NetworkIngest onSpendEAC={spendEAC} />}
+          {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} />}
           {['animal_world', 'plants_world', 'aqua_portal', 'soil_portal', 'air_portal'].includes(activeView) && (
             <NaturalResources user={user} type={activeView} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />
           )}
