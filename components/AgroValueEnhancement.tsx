@@ -155,7 +155,7 @@ const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({ user, onSpe
                  <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest italic">Engineering Logic</h4>
               </div>
               <p className="text-xs text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100">
-                 "The EnvirosAgro Engine applies thermodynamics and green chemistry to convert waste into sharded assets. Every process must possess an EVA score > 1.0."
+                 "The EnvirosAgro Engine applies thermodynamics and green chemistry to convert waste into sharded assets. Every process must possess an EVA score &gt; 1.0."
               </p>
            </div>
         </div>
