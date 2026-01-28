@@ -43,7 +43,6 @@ You must return a JSON object with the following schema:
 }
 `;
 
-// Fix for line 131: Define missing GENETIC_DECODER_SYSTEM_INSTRUCTION
 const GENETIC_DECODER_SYSTEM_INSTRUCTION = `
 You are the **EnvirosAgro Genetic Decoder**. Your task is to decode multi-dimensional agricultural telemetry into biological insights.
 Interpret the relationship between different node metrics (Bio-Signal, Tech-Status, Market-Demand, Gov-Integrity) as genetic base pairs.
@@ -165,6 +164,25 @@ export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
   } catch (err) {
     console.error("Genetic Decoder Failure:", err);
     throw err;
+  }
+};
+
+export const getWeatherForecast = async (location: string): Promise<AIResponse> => {
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Fetch current weather and a 3-day forecast for ${location}. Structure the response for an industrial agricultural OS. Mention temperature, humidity, and wind. Be technical and precise.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        systemInstruction: "You are the EnvirosAgro Atmospheric Oracle. Provide real-time weather telemetry shards grounded in search data."
+      }
+    });
+    return { 
+      text: response.text || "Atmospheric ingest failed.", 
+      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any 
+    };
+  } catch (err) {
+    return handleAIError(err);
   }
 };
 

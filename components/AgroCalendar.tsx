@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Calendar, Clock, Sun, Moon, CloudRain, Snowflake, Wheat, 
@@ -16,9 +15,16 @@ import {
   Sunset,
   Ear,
   Wind,
-  BadgeCheck
+  BadgeCheck,
+  ExternalLink,
+  MapPin,
+  Cloud,
+  ThermometerSun,
+  // Added RefreshCw to fix 'Cannot find name' error on line 275
+  RefreshCw
 } from 'lucide-react';
 import { User } from '../types';
+import { getWeatherForecast, AIResponse } from '../services/geminiService';
 
 interface AgroCalendarProps {
   user: User;
@@ -166,11 +172,28 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Weather States
+  const [weatherData, setWeatherData] = useState<AIResponse | null>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    fetchWeather();
     return () => clearInterval(timer);
   }, []);
+
+  const fetchWeather = async () => {
+    setIsLoadingWeather(true);
+    try {
+      const data = await getWeatherForecast(user.location);
+      setWeatherData(data);
+    } catch (e) {
+      console.error("Weather ingest failed");
+    } finally {
+      setIsLoadingWeather(false);
+    }
+  };
 
   const currentOffice = useMemo(() => {
     const hour = currentTime.getHours();
@@ -226,6 +249,99 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
          </div>
+      </div>
+
+      {/* 1.5 Atmospheric Telemetry Shard (Weather Forecast) */}
+      <div className="px-4 relative z-10">
+        <div className="glass-card p-10 rounded-[56px] border-blue-500/20 bg-blue-500/[0.02] shadow-3xl relative overflow-hidden group">
+           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[10s]"><Cloud className="w-80 h-80 text-blue-400" /></div>
+           
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-10 border-b border-white/5 pb-8 relative z-10">
+              <div className="flex items-center gap-6">
+                 <div className="p-4 bg-blue-600 rounded-[28px] shadow-2xl">
+                    <ThermometerSun className="w-10 h-10 text-white" />
+                 </div>
+                 <div>
+                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Atmospheric <span className="text-blue-400">Telemetry Ingest</span></h3>
+                    <p className="text-[10px] text-blue-400/60 font-mono tracking-[0.4em] uppercase mt-2 flex items-center gap-2">
+                       <MapPin className="w-3 h-3" /> NODE_LOC: {user.location.toUpperCase()}
+                    </p>
+                 </div>
+              </div>
+              <button 
+                onClick={fetchWeather}
+                disabled={isLoadingWeather}
+                className="flex items-center gap-3 px-8 py-4 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-400 transition-all active:scale-95 disabled:opacity-30"
+              >
+                {isLoadingWeather ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                {isLoadingWeather ? 'SYNCING ORACLE...' : 'Refresh Telemetry'}
+              </button>
+           </div>
+
+           <div className="relative z-10">
+              {isLoadingWeather ? (
+                 <div className="py-20 flex flex-col items-center justify-center space-y-6">
+                    <Loader2 className="w-12 h-12 text-blue-400 animate-spin" />
+                    <p className="text-blue-400 font-black text-xs uppercase tracking-[0.5em] animate-pulse italic">Connecting to Gaseous Oracle Shards...</p>
+                 </div>
+              ) : weatherData ? (
+                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    <div className="lg:col-span-8 p-10 bg-black/60 rounded-[48px] border border-white/10 shadow-inner relative overflow-hidden group/text">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.02]"><Wind size={300} /></div>
+                       <div className="prose prose-invert prose-blue max-w-none text-slate-300 text-xl leading-relaxed italic whitespace-pre-line border-l-4 border-blue-500/40 pl-10 font-medium relative z-10">
+                          {weatherData.text}
+                       </div>
+                       
+                       {/* Grounding Sources */}
+                       {weatherData.sources && weatherData.sources.length > 0 && (
+                          <div className="mt-10 pt-6 border-t border-white/5 flex flex-wrap gap-4 relative z-10">
+                             <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest w-full mb-2">Grounding Shards:</p>
+                             {weatherData.sources.map((source, idx) => (
+                                <a 
+                                  key={idx} 
+                                  href={source.web?.uri || source.maps?.uri} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] text-slate-400 hover:text-blue-400 hover:border-blue-500/40 transition-all"
+                                >
+                                   <ExternalLink size={12} />
+                                   {source.web?.title || "Registry Source"}
+                                </a>
+                             ))}
+                          </div>
+                       )}
+                    </div>
+                    
+                    <div className="lg:col-span-4 flex flex-col gap-6">
+                       {[
+                          { l: 'Temp Calibration', v: '24°C', i: ThermometerSun, c: 'text-amber-500', bg: 'bg-amber-500/10' },
+                          { l: 'Moisture Sink', v: '64%', i: Droplets, c: 'text-blue-400', bg: 'bg-blue-400/10' },
+                          { l: 'Gaseous Flow', v: '12km/h', i: Wind, c: 'text-slate-400', bg: 'bg-white/5' },
+                       ].map((m, i) => (
+                          <div key={i} className="p-8 glass-card border border-white/5 rounded-[40px] flex items-center justify-between group hover:border-blue-500/40 transition-all bg-black/40 shadow-xl">
+                             <div className="flex items-center gap-4">
+                                <div className={`p-3 rounded-2xl ${m.bg} border border-white/5 group-hover:scale-110 transition-transform`}><m.i size={24} className={m.c} /></div>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{m.l}</span>
+                             </div>
+                             <span className="text-3xl font-mono font-black text-white">{m.v}</span>
+                          </div>
+                       ))}
+                       <div className="p-8 bg-blue-500/5 border border-blue-500/10 rounded-[40px] flex items-center gap-6 shadow-inner group">
+                          <Bot className="w-10 h-10 text-blue-400 shrink-0 group-hover:scale-110 transition-transform" />
+                          <p className="text-[10px] text-blue-200/50 font-black uppercase tracking-tight leading-relaxed text-left italic">
+                             "Atmospheric sharding confirmed. Seasonal Equation Δ factors updated for Cycle 12."
+                          </p>
+                       </div>
+                    </div>
+                 </div>
+              ) : (
+                 <div className="py-20 text-center opacity-20 flex flex-col items-center gap-4">
+                    <CloudRain size={80} className="text-slate-600 animate-pulse" />
+                    <p className="text-2xl font-black uppercase tracking-[0.4em]">Node Telemetry Standby</p>
+                 </div>
+              )}
+           </div>
+        </div>
       </div>
 
       {/* 2. Daily Routine Shards */}
@@ -284,7 +400,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                   <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
                      <div className="flex items-center gap-2">
                         {isCurrent && <div className={`w-2 h-2 rounded-full animate-pulse ${office.color.replace('text', 'bg')}`}></div>}
-                        <span className={`text-[9px] font-black uppercase tracking-widest ${isCurrent ? office.color : 'text-slate-800'}`}>
+                        <span className={`px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-widest ${isCurrent ? office.color : 'text-slate-800'}`}>
                            {isCurrent ? 'ACTIVE_SYNC' : 'STANDBY'}
                         </span>
                      </div>
@@ -438,7 +554,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
 
                     <div className="space-y-12">
                        <div className="space-y-6">
-                          <h4 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-3">
+                          <h4 className="text-2xl font-black text-white uppercase italic tracking-widest flex items-center gap-4">
                              <Waves className={`w-6 h-6 ${activeOffice.color}`} /> Musika Frequency
                           </h4>
                           <div className={`p-12 glass-card border rounded-[56px] flex flex-col items-center text-center space-y-10 relative overflow-hidden group shadow-2xl ${activeOffice.border} bg-black/40`}>
@@ -510,7 +626,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                        </p>
                     </div>
                  </div>
-                 <button onClick={() => setActiveSeason(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all active:scale-90 hover:rotate-90"><X size={32} /></button>
+                 <button onClick={() => setActiveSeason(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all active:scale-90 hover:rotate-90"><X size={32} /></button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-12 md:p-20 custom-scrollbar space-y-16 bg-black/20 relative z-10">
@@ -607,7 +723,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
               <div className="p-12 border-t border-white/5 bg-white/[0.01] flex justify-center shrink-0">
                  <button 
                   onClick={() => { setActiveSeason(null); setIsPlaying(false); }}
-                  className="px-32 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-5 ring-8 ring-white/5"
+                  className="px-32 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-5 ring-8 ring-white/5"
                  >
                     <BadgeCheck size={24} /> Acknowledge & Anchor Shard
                  </button>
@@ -621,7 +737,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7); }
-        .animate-spin-slow { animation: spin 15s linear infinite; }
+        .animate-spin-slow { animation: spin 12s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes marquee { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
         .animate-marquee { animation: marquee 45s linear infinite; }
