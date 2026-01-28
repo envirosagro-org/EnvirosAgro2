@@ -275,4 +275,5 @@ export type ViewState =
   | 'code_of_laws'
   | 'agro_calendar'
   | 'chroma_system'
-  | 'envirosagro_store';
+  | 'envirosagro_store'
+  | 'agro_value_enhancement';

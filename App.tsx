@@ -1,7 +1,8 @@
+
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from './types';
 import Dashboard from './components/Dashboard';
@@ -44,6 +45,7 @@ import AgroRegency from './components/AgroRegency';
 import CodeOfLaws from './components/CodeOfLaws';
 import AgroCalendar from './components/AgroCalendar';
 import ChromaSystem from './components/ChromaSystem';
+import AgroValueEnhancement from './components/AgroValueEnhancement';
 import { syncUserToCloud } from './services/firebaseService';
 
 export interface SignalShard {
@@ -279,6 +281,16 @@ const App: React.FC = () => {
       ]
     },
     {
+      category: 'Value & Production',
+      items: [
+        { id: 'agro_value_enhancement', name: 'Value Enhancement', icon: FlaskConical },
+        { id: 'wallet', name: 'Treasury Node', icon: Wallet },
+        { id: 'economy', name: 'Market Cloud', icon: Globe },
+        { id: 'industrial', name: 'Industrial Cloud', icon: Briefcase },
+        { id: 'ecosystem', name: 'Brand Multiverse', icon: Layers }
+      ]
+    },
+    {
       category: 'Natural Resources',
       items: [
         { id: 'animal_world', name: 'Animal World', icon: AnimalIcon },
@@ -286,15 +298,6 @@ const App: React.FC = () => {
         { id: 'aqua_portal', name: 'Aqua Portal', icon: Droplets },
         { id: 'soil_portal', name: 'Soil Portal', icon: Mountain },
         { id: 'air_portal', name: 'Air Portal', icon: Wind }
-      ]
-    },
-    { 
-      category: 'Value & Economy', 
-      items: [
-        { id: 'wallet', name: 'Treasury Node', icon: Wallet },
-        { id: 'economy', name: 'Market Cloud', icon: Globe },
-        { id: 'industrial', name: 'Industrial Cloud', icon: Briefcase },
-        { id: 'ecosystem', name: 'Brand Multiverse', icon: Layers }
       ]
     },
     {
@@ -483,6 +486,7 @@ const App: React.FC = () => {
           {activeView === 'info' && <InfoPortal />}
           {activeView === 'ingest' && <NetworkIngest onSpendEAC={spendEAC} />}
           {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} />}
+          {activeView === 'agro_value_enhancement' && <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {['animal_world', 'plants_world', 'aqua_portal', 'soil_portal', 'air_portal'].includes(activeView) && (
             <NaturalResources user={user} type={activeView} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />
           )}

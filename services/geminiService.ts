@@ -13,19 +13,41 @@ EnvirosAgro™ Sustainability Framework (EOS):
 - Quality Grade: A score derived from multi-thrust audits (Purity, Cleanliness, Feedback).
 `;
 
+const VALUE_ENHANCEMENT_SYSTEM_INSTRUCTION = `
+You are the **EnvirosAgro Engine**, an expert agricultural engineer and sustainability economist. Your goal is to design a "Value Enhancement Process" for agricultural materials to mint value.
+
+**Framework Constraints:**
+1. **Eco-Efficiency:** Prioritize processes that minimize waste (entropy) and use renewable energy.
+2. **Viability:** Engineering must be physically possible and chemically sound.
+3. **EOS Alignment:** Connect the process to the Five Thrusts (SEHTI).
+
+**Return Format:**
+You must return a JSON object with the following schema:
+{
+  "process_name": string,
+  "strategy_abstract": string,
+  "unit_operations": string[],
+  "mass_balance": {
+    "input": string,
+    "outputs": string[],
+    "waste_mitigation": string
+  },
+  "financial_delta": {
+    "raw_value_est": number,
+    "enhanced_value_est": number,
+    "currency": "USD",
+    "eva_score": number
+  },
+  "sustainability_index": number,
+  "sehti_impact": string
+}
+`;
+
+// Fix for line 131: Define missing GENETIC_DECODER_SYSTEM_INSTRUCTION
 const GENETIC_DECODER_SYSTEM_INSTRUCTION = `
-You are the "EnvirosAgro Genetic Decoder," a specialized AI engine responsible for visualizing the health of an agricultural ecosystem as DNA strands.
-The Framework (The "Agro-Genetic Code"):
-1. A (Agro-Bio): Plant health, soil moisture, bio-signals.
-2. T (Technology): Robotics status, sensor efficiency, AI uptime.
-3. C (Consumption): Sales volume, market demand, food ratings.
-4. G (Governance): Token value, financial stability, compliance.
-Pairing Rules:
-- A pairs with T: Nature must be supported by Technology. Bond Strength = 1 - abs(A - T).
-- C pairs with G: Consumption must be supported by Governance/Finance. Bond Strength = 1 - abs(C - G).
-The Backbone (Stability Factor): Average of SEHTI thrusts.
-- < 0.5: "Unstable" (Wobbly/Denatured).
-- > 0.8: "Robust" (Tight/Vibrant).
+You are the **EnvirosAgro Genetic Decoder**. Your task is to decode multi-dimensional agricultural telemetry into biological insights.
+Interpret the relationship between different node metrics (Bio-Signal, Tech-Status, Market-Demand, Gov-Integrity) as genetic base pairs.
+Evaluate the backbone integrity based on the alignment of the Five Thrusts.
 `;
 
 // Simple LRU Cache to conserve quota
@@ -87,6 +109,23 @@ const requestWithRetry = async (fn: () => Promise<any>, retries = 3, initialDela
       }
       throw error;
     }
+  }
+};
+
+export const generateValueEnhancementStrategy = async (material: string, weight: string, context: string): Promise<any> => {
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Design a value enhancement strategy for ${weight} of ${material}. User Context: ${context}. Follow EnvirosAgro principles.`,
+      config: {
+        systemInstruction: VALUE_ENHANCEMENT_SYSTEM_INSTRUCTION,
+        responseMimeType: "application/json"
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (err) {
+    console.error("Value Enhancement Engine Failure:", err);
+    throw err;
   }
 };
 
