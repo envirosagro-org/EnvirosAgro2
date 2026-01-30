@@ -1,4 +1,3 @@
-
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
@@ -461,7 +460,8 @@ const App: React.FC = () => {
           {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'economy' && <Economy user={user} onNavigate={handleNavigate} onSpendEAC={spendEAC} onEarnEAC={earnEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} />}
           {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} />}
-          {activeView === 'intelligence' && <Intelligence userBalance={user.wallet.balance} onSpendEAC={spendEAC} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
+          {/* Added missing onEarnEAC prop to satisfy child requirement and resolve build error */}
+          {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
           {activeView === 'code_of_laws' && <CodeOfLaws user={user} />}
           {activeView === 'chroma_system' && <ChromaSystem user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'agro_calendar' && <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
@@ -482,23 +482,24 @@ const App: React.FC = () => {
           {activeView === 'permaculture_hub' && <Permaculture user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'cea_portal' && <CEA user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'emergency_portal' && <EmergencyPortal user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
-          {activeView === 'agro_regency' && <AgroRegency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'agro_regency' && <Agro Regency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'intranet' && <IntranetPortal user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'envirosagro_store' && <EnvirosAgroStore user={user} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} />}
           {activeView === 'media' && <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
-          {activeView === 'ingest' && <NetworkIngest onSpendEAC={spendEAC} />}
+          {activeView === 'ingest' && <NetworkIngest user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} />}
           {activeView === 'agro_value_enhancement' && <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
-          {activeView === 'digital_mrv' && <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
-          {activeView === 'registry_handshake' && <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} />}
+          {activeView === 'digital_mrv' && <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
+          {activeView === 'registry_handshake' && <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
           {['animal_world', 'plants_world', 'aqua_portal', 'soil_portal', 'air_portal'].includes(activeView) && (
             <NaturalResources user={user} type={activeView} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />
           )}
         </div>
       </main>
 
+      {/* Re-added EvidenceModal in root layout for quick access */}
       <EvidenceModal isOpen={isEvidenceModalOpen} onClose={() => setIsEvidenceModalOpen(false)} user={user} onMinted={(v) => earnEAC(v, 'EVIDENCE_VERIFIED')} />
       <FloatingConsultant user={user} />
     </div>

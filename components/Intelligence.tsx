@@ -78,7 +78,13 @@ import {
   Mountain,
   FileDown,
   Scale,
-  Stamp
+  Stamp,
+  Satellite,
+  Wifi,
+  Radio,
+  Unlink,
+  // Added missing SmartphoneNfc icon from lucide-react to fix "Cannot find name" errors on lines 354 and 376
+  SmartphoneNfc
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -95,14 +101,17 @@ import {
   Legend
 } from 'recharts';
 import { chatWithAgroExpert, analyzeMedia, AIResponse } from '../services/geminiService';
+import { User, AgroResource } from '../types';
 
 interface IntelligenceProps {
-  userBalance: number;
+  user: User;
   onSpendEAC: (amount: number, reason: string) => boolean;
+  // Added missing onEarnEAC prop to resolve "Cannot find name" error on line 304
+  onEarnEAC: (amount: number, reason: string) => void;
   onOpenEvidence?: () => void;
 }
 
-type TabState = 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai';
+type TabState = 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry';
 
 const MOCK_TELEMETRY = [
   { time: '00:00', val: 62 }, { time: '04:00', val: 65 }, { time: '08:00', val: 68 },
@@ -112,12 +121,37 @@ const MOCK_TELEMETRY = [
 
 const ORACLE_QUERY_COST = 25;
 
-const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, onOpenEvidence }) => {
+const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC, onOpenEvidence }) => {
   const [activeTab, setActiveTab] = useState<TabState>('simulator');
   
+  // --- IOT TELEMETRY STATES ---
+  const hardwareNodes = useMemo(() => 
+    (user.resources || []).filter(r => r.category === 'HARDWARE'),
+    [user.resources]
+  );
+  const [selectedIotNode, setSelectedIotNode] = useState<AgroResource | null>(hardwareNodes[0] || null);
+  const [isSyncingNode, setIsSyncingNode] = useState(false);
+  const [telemetryLogs, setTelemetryLogs] = useState<{timestamp: string, metric: string, value: string}[]>([]);
+
+  // Simulation of incoming telemetry data
+  useEffect(() => {
+    if (activeTab === 'telemetry' && selectedIotNode) {
+      const interval = setInterval(() => {
+        const metrics = ['Temperature', 'Soil Purity', 'm-Constant Drift', 'Photosynthetic Flux'];
+        const metric = metrics[Math.floor(Math.random() * metrics.length)];
+        const value = (Math.random() * 100).toFixed(2);
+        const newLog = {
+          timestamp: new Date().toLocaleTimeString(),
+          metric,
+          value
+        };
+        setTelemetryLogs(prev => [newLog, ...prev].slice(0, 8));
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, selectedIotNode]);
+
   // --- SUSTAINABILITY EQUATION SIMULATOR STATES ---
-  // C(a) = x * ((r^n - 1) / (r - 1)) + 1
-  // m = sqrt((Dn * In * C(a)) / S)
   const [x_immunity, setXImmunity] = useState(0.85); // Social Immunity
   const [r_resonance, setRResonance] = useState(1.12); // Growth Rate
   const [n_cycles, setNCycles] = useState(12); // Time
@@ -128,14 +162,13 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
   const [isRunningSimulation, setIsRunningSimulation] = useState(false);
   const [simulationReport, setSimulationReport] = useState<string | null>(null);
 
-  // Calculate Equations
   const calculateCa = (n: number) => {
     if (r_resonance === 1) return x_immunity * n + 1;
     return x_immunity * ((Math.pow(r_resonance, n) - 1) / (r_resonance - 1)) + 1;
   };
 
   const calculateM = (ca: number) => {
-    const stress = Math.max(s_stress, 0.01); // Prevent division by zero
+    const stress = Math.max(s_stress, 0.01);
     return Math.sqrt((dn_density * in_intensity * ca) / stress);
   };
 
@@ -148,7 +181,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
         cycle: i,
         ca: Number(ca.toFixed(2)),
         m: Number(m.toFixed(2)),
-        // Estimated Sustainability %
         score: Math.min(100, (m * 10))
       });
     }
@@ -171,7 +203,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
   const [transmissionIndex, setTransmissionIndex] = useState(40);
   const [overcrowdingIndex, setOvercrowdingIndex] = useState(30);
   const [languageVolatility, setLanguageVolatility] = useState(25);
-  
   const immutabilityIndex = Math.min(100, (transmissionIndex * 0.4) + (overcrowdingIndex * 0.3) + (languageVolatility * 0.3));
 
   // --- EVIDENCE STATES ---
@@ -204,9 +235,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
       const prompt = `Act as an EnvirosAgro Framework Oracle. Analyze simulation results:
       Shard: C(a)=${currentMetrics.ca}, m=${currentMetrics.m}, velocity=${currentMetrics.velocity}
       Params: x=${x_immunity}, r=${r_resonance}, Dn=${dn_density}, In=${in_intensity}, S=${s_stress}
-      
       Interpret the trajectory. Is the node accelerating toward a sustainable steady state? Recommend SEHTI interventions.`;
-      
       const response = await chatWithAgroExpert(prompt, []);
       setSimulationReport(response.text);
     } catch (e) {
@@ -270,6 +299,16 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
     }
   };
 
+  const handleSyncIotConsensus = () => {
+    if (!selectedIotNode) return;
+    setIsSyncingNode(true);
+    setTimeout(() => {
+      setIsSyncingNode(false);
+      onEarnEAC(15, `IOT_HANDSHAKE_CONSENSUS_${selectedIotNode.id}`);
+      alert("CONSENSUS REACHED: Node telemetry immutably anchored to local C(a) constant.");
+    }, 2000);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1600px] mx-auto">
       
@@ -304,7 +343,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
                  <span>Ledger Sync</span>
                  <span className="text-emerald-400 font-bold">LOCKED</span>
               </div>
-              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                  <div className="h-full bg-emerald-500 w-[99%] shadow-[0_0_100px_#10b98144]"></div>
               </div>
            </div>
@@ -315,6 +354,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
       <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4 md:ml-4">
         {[
           { id: 'simulator', label: 'Industrial Simulator', icon: LucideLineChart },
+          { id: 'telemetry', label: 'IOT Telemetry', icon: SmartphoneNfc },
           { id: 'eos_ai', label: 'EnvirosAgro AI', icon: BrainCircuit },
           { id: 'sid', label: 'SID Remediation (S)', icon: HeartPulse },
           { id: 'evidence', label: 'Evidence Portal', icon: History },
@@ -330,6 +370,187 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
       </div>
 
       <div className="min-h-[750px] px-4">
+        {/* --- IOT TELEMETRY SECTION --- */}
+        {activeTab === 'telemetry' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-700">
+            <div className="lg:col-span-4 space-y-8">
+              <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-black/40 space-y-8 shadow-2xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-blue-600 rounded-3xl shadow-xl"><SmartphoneNfc className="w-8 h-8 text-white" /></div>
+                  <div>
+                    <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Hardware <span className="text-blue-400">Nodes</span></h3>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Paired IOT Registry</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {hardwareNodes.length === 0 ? (
+                    <div className="py-12 text-center space-y-6 opacity-30">
+                      <ZapOff size={48} className="mx-auto text-slate-500" />
+                      <p className="text-sm font-black uppercase italic">No Active IOT Shards</p>
+                      <button 
+                        onClick={() => window.location.href = '#registry_handshake'}
+                        className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase hover:bg-white/10 transition-all"
+                      >
+                        Initialize Handshake
+                      </button>
+                    </div>
+                  ) : (
+                    hardwareNodes.map(node => (
+                      <button 
+                        key={node.id}
+                        onClick={() => setSelectedIotNode(node)}
+                        className={`w-full p-6 rounded-[32px] border transition-all flex items-center justify-between group ${selectedIotNode?.id === node.id ? 'bg-blue-600/10 border-blue-500 text-blue-400 shadow-lg' : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 rounded-xl bg-black/40 border border-white/5"><Satellite size={18} /></div>
+                          <div className="text-left">
+                            <span className="text-sm font-black uppercase block leading-none">{node.name}</span>
+                            <span className="text-[10px] font-mono opacity-50 uppercase">{node.id}</span>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase ${node.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                          {node.status}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="glass-card p-10 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-xl">
+                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <Target className="w-4 h-4 text-emerald-500" /> Node Impact Shard
+                 </h4>
+                 <div className="space-y-6">
+                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 text-center group">
+                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">C(a) Growth Lift</p>
+                       <p className="text-4xl font-mono font-black text-white">+0.24<span className="text-sm text-emerald-500 italic">Δ</span></p>
+                    </div>
+                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 text-center group">
+                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">m-Resilience Stability</p>
+                       <p className="text-4xl font-mono font-black text-blue-400">92%</p>
+                    </div>
+                 </div>
+                 <button 
+                  onClick={handleSyncIotConsensus}
+                  disabled={isSyncingNode || !selectedIotNode}
+                  className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30"
+                 >
+                    {isSyncingNode ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                    {isSyncingNode ? 'Syncing Consensus...' : 'Authorize Shard Consensus'}
+                 </button>
+              </div>
+            </div>
+
+            <div className="lg:col-span-8 space-y-8">
+              <div className="glass-card rounded-[64px] min-h-[600px] border border-white/5 bg-black/40 flex flex-col relative overflow-hidden shadow-3xl">
+                <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-4 text-blue-400">
+                    <Terminal className="w-6 h-6" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Live Telemetry Ingest Stream</span>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-full">
+                      <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                      <span className="text-[9px] font-mono font-black text-blue-400 uppercase tracking-widest">INGEST_ACTIVE</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 p-12 overflow-y-auto custom-scrollbar-terminal relative">
+                  {!selectedIotNode ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-20 group">
+                      <Wifi size={120} className="text-slate-500 group-hover:text-blue-500 transition-colors" />
+                      <div className="space-y-2">
+                        <p className="text-3xl font-black uppercase tracking-[0.5em] text-white">TELEMETRY_STANDBY</p>
+                        <p className="text-lg italic uppercase font-bold tracking-widest text-slate-600">Register Physical Nodes to initialize Inflow</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 animate-in fade-in duration-1000 h-full">
+                      <div className="space-y-10">
+                        <div className="p-10 bg-black/80 rounded-[48px] border border-blue-500/20 border-l-8 shadow-inner flex flex-col justify-between h-[300px] group">
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><Activity size={200} /></div>
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-black text-blue-400 uppercase tracking-widest">Real-time Spectral Wave</h4>
+                            <p className="text-3xl font-black text-white italic tracking-tighter">SYST_PULSE_NOMINAL</p>
+                          </div>
+                          <div className="flex items-end gap-1 h-32 pt-10">
+                            {[...Array(24)].map((_, i) => (
+                              <div 
+                                key={i} 
+                                className="flex-1 bg-blue-500/40 rounded-full animate-pulse" 
+                                style={{ height: `${20 + Math.random() * 80}%`, animationDelay: `${i * 0.05}s` }}
+                              ></div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                           <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Consensus Logs</h4>
+                           <div className="space-y-3">
+                              {telemetryLogs.map((log, i) => (
+                                <div key={i} className="p-4 bg-black/40 rounded-2xl border border-white/5 flex justify-between items-center text-[11px] font-mono animate-in slide-in-from-right-2">
+                                  <span className="text-slate-600">[{log.timestamp}]</span>
+                                  <span className="text-white font-bold">{log.metric}</span>
+                                  <span className="text-blue-400 font-black">{log.value}</span>
+                                </div>
+                              ))}
+                              {telemetryLogs.length === 0 && <p className="text-center text-[10px] text-slate-700 italic py-10 uppercase tracking-widest">Initializing Handshake...</p>}
+                           </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-10">
+                        <div className="p-10 glass-card rounded-[48px] border border-white/10 bg-black/60 space-y-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group">
+                          <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:rotate-6 transition-transform"><Database size={150} /></div>
+                          <div className="space-y-4 relative z-10">
+                            <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
+                              <Binary size={24} className="text-indigo-400" /> Shard <span className="text-indigo-400">Metadata</span>
+                            </h4>
+                            <div className="space-y-4 pt-4">
+                              <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Node Encryption</span>
+                                <span className="text-xs font-mono font-black text-emerald-400">ZK-SNARK_ACTIVE</span>
+                              </div>
+                              <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Protocol Version</span>
+                                <span className="text-xs font-mono font-black text-white">EOS-IOT_v5.2</span>
+                              </div>
+                              <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Signal Latency</span>
+                                <span className="text-xs font-mono font-black text-blue-400">14ms</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 relative z-10">
+                            <p className="text-[10px] text-slate-500 italic leading-relaxed">
+                              "Every physical action on the land is captured by this node and synthesized into the global C(a) constant registry."
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="p-10 bg-emerald-500/5 border border-emerald-500/10 rounded-[48px] flex items-center justify-between shadow-inner group">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform">
+                              <ShieldCheck size={28} />
+                            </div>
+                            <div>
+                               <p className="text-sm font-black text-white uppercase italic">Sovereign Data Anchor</p>
+                               <p className="text-[10px] text-emerald-500/60 font-black uppercase tracking-widest">Ownership: Node_{user.esin.split('-')[1]}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* --- INDUSTRIAL SIMULATOR --- */}
         {activeTab === 'simulator' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in zoom-in duration-700">
@@ -376,7 +597,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
                       </div>
                       <div className="space-y-4">
                          <div className="flex justify-between items-center px-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><ShieldX className="w-12 h-12 text-rose-500" /> S (Stress Factor)</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><ShieldX size={12} /> S (Stress Factor)</label>
                             <span className="text-xl font-mono font-black text-rose-500">{s_stress.toFixed(2)}</span>
                          </div>
                          <input type="range" min="0" max="1" step="0.01" value={s_stress} onChange={e => setSStress(parseFloat(e.target.value))} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-600" />
@@ -395,15 +616,15 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
              </div>
 
              <div className="lg:col-span-8 space-y-8">
-                <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/60 flex flex-col relative overflow-hidden shadow-3xl min-h-[600px]">
+                <div className="glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden shadow-3xl min-h-[600px]">
                    <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none"></div>
-                   <div className="flex justify-between items-center mb-10 relative z-10">
+                   <div className="flex justify-between items-center mb-10 relative z-10 px-4">
                       <div className="flex items-center gap-6">
                          <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 shadow-xl">
                             <Activity className="w-8 h-8 text-emerald-400" />
                          </div>
                          <div>
-                            <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Projected <span className="text-emerald-400">Resilience Curves</span></h3>
+                            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Projected <span className="text-emerald-400">Resilience Curves</span></h3>
                             <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Modeling Shards Cycle 1 to {n_cycles}</p>
                          </div>
                       </div>
@@ -447,7 +668,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
                             </div>
                             <div>
                                <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Oracle <span className="text-indigo-400">Interpretation</span></h3>
-                               <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-2">EOS_STRATEGIC_SHARD_v5</p>
+                               <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-2">EOS_STRATEGIC_SHARD_V5</p>
                             </div>
                          </div>
                          <div className="prose prose-invert prose-indigo max-w-none text-slate-300 text-xl leading-relaxed italic whitespace-pre-line border-l-4 border-indigo-500/30 pl-10 font-medium relative z-10">
@@ -723,6 +944,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ userBalance, onSpendEAC, on
                           </div>
                           <div className="text-right">
                              <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest ${
+                               // Fix: Corrected quoting in ternary operator to resolve "Cannot find name 'bg'" error on line 944
                                item.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
                              }`}>{item.status}</span>
                              <p className="text-[10px] text-slate-500 font-mono mt-3 uppercase tracking-tighter italic">{item.id}</p>

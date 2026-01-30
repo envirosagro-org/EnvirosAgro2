@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Cable, 
   DatabaseZap, 
@@ -41,8 +42,14 @@ import {
   ChevronRight,
   Clock,
   Box,
-  Coins
+  Coins,
+  Smartphone,
+  SmartphoneNfc,
+  Gamepad2,
+  QrCode,
+  Binary
 } from 'lucide-react';
+import { User, ViewState, AgroResource } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
 
 interface LogEntry {
@@ -69,7 +76,9 @@ interface APIKey {
 }
 
 interface NetworkIngestProps {
+  user: User;
   onSpendEAC?: (amount: number, reason: string) => boolean;
+  onNavigate: (view: ViewState) => void;
 }
 
 const INITIAL_KEYS: APIKey[] = [
@@ -102,8 +111,8 @@ const INITIAL_KEYS: APIKey[] = [
 
 const PROVISIONING_FEE = 500;
 
-const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'api' | 'analyzer' | 'docs'>('overview');
+const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onSpendEAC, onNavigate }) => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'api' | 'nodes' | 'analyzer' | 'docs'>('overview');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [keys, setKeys] = useState<APIKey[]>(INITIAL_KEYS);
   
@@ -122,6 +131,12 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+
+  // Derived Physical Hardware Nodes
+  const physicalNodes = useMemo(() => 
+    (user.resources || []).filter(r => r.category === 'HARDWARE'),
+    [user.resources]
+  );
 
   useEffect(() => {
     const sources = ['SAT-EOS-04', 'Drone-NE-82', 'Soil-Array-P4', 'ThirdParty-API-C1'];
@@ -222,7 +237,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 glass-card p-12 rounded-[48px] bg-gradient-to-br from-indigo-600/10 to-transparent border-indigo-500/20 relative overflow-hidden flex flex-col justify-between group">
+        <div className="lg:col-span-2 glass-card p-12 rounded-[48px] bg-gradient-to-br from-indigo-600/10 to-transparent border-indigo-500/20 relative overflow-hidden flex flex-col justify-between group shadow-2xl">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform pointer-events-none">
               <Cable className="w-80 h-80 text-indigo-400" />
            </div>
@@ -241,24 +256,24 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
               <p className="text-slate-400 text-lg leading-relaxed max-w-xl font-medium">
                  Link satellite constellations, private IoT arrays, and external scientific datasets directly to the EOS industrial framework.
               </p>
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-wrap gap-4 pt-4">
                  <button 
                   onClick={handleStartProvision}
-                  className="px-8 py-5 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-emerald-900/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                  className="px-8 py-4 bg-indigo-600 rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl hover:bg-indigo-500 transition-all flex items-center gap-3 active:scale-95"
                  >
-                    <PlusCircle className="w-5 h-5" /> Initialize Integration
+                    <PlusCircle size={20} /> Virtual Node Key
                  </button>
                  <button 
-                  onClick={() => setActiveTab('docs')}
-                  className="px-8 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3"
+                  onClick={() => onNavigate('registry_handshake')}
+                  className="px-8 py-4 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 transition-all flex items-center gap-3"
                  >
-                    <Code className="w-5 h-5 text-indigo-400" /> API Docs
+                    <SmartphoneNfc size={20} /> Pair Physical Hardware
                  </button>
               </div>
            </div>
         </div>
 
-        <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8 flex flex-col justify-center">
+        <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8 flex flex-col justify-center shadow-xl">
            <div className="text-center space-y-2">
               <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em]">Network Throughput</p>
               <h3 className="text-6xl font-black text-white tracking-tighter">14.2 <span className="text-lg">GB/s</span></h3>
@@ -269,8 +284,8 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
            </div>
            <div className="space-y-3 pt-6 border-t border-white/5">
               {[
-                { label: "Active Connections", val: `${keys.length + 426} Nodes`, icon: Wifi, col: "text-emerald-400" },
-                { label: "Avg Node Latency", val: "18ms", icon: Activity, col: "text-blue-400" },
+                { label: "Active Connections", val: `${keys.length + physicalNodes.length + 426} Nodes`, icon: Wifi, col: "text-emerald-400" },
+                { label: "Physical Shards", val: `${physicalNodes.length} Paired`, icon: Smartphone, col: "text-blue-400" },
                 { label: "Validation Integrity", val: "99.98%", icon: ShieldCheck, col: "text-amber-400" },
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
@@ -287,25 +302,31 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="space-y-4">
-           <div className="glass-card p-4 rounded-[32px] space-y-2 bg-black/40">
+           <div className="glass-card p-4 rounded-[32px] space-y-2 bg-black/40 shadow-xl">
               {[
                 { id: 'overview', label: 'Live Stream', icon: Activity },
+                { id: 'nodes', label: 'Physical Nodes', icon: SmartphoneNfc, badge: physicalNodes.length },
+                { id: 'api', label: 'Registry Keys', icon: Key, badge: keys.length },
                 { id: 'analyzer', label: 'Stream Analyzer', icon: Sparkles },
-                { id: 'api', label: 'Registry Keys', icon: Key },
                 { id: 'docs', label: 'Technical Docs', icon: BookOpen },
               ].map(tab => (
                 <button 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
                 >
-                  <tab.icon className="w-5 h-5" />
-                  <span className="text-sm font-bold uppercase tracking-widest">{tab.label}</span>
+                  <div className="flex items-center gap-3">
+                    <tab.icon className="w-5 h-5" />
+                    <span className="text-sm font-bold uppercase tracking-widest">{tab.label}</span>
+                  </div>
+                  {tab.badge !== undefined && tab.badge > 0 && (
+                    <span className="px-2 py-0.5 rounded-lg bg-black/40 text-[9px] font-mono font-black">{tab.badge}</span>
+                  )}
                 </button>
               ))}
            </div>
 
-           <div className="glass-card p-8 rounded-[32px] bg-amber-500/5 border-amber-500/20 space-y-4">
+           <div className="glass-card p-8 rounded-[32px] bg-amber-500/5 border-amber-500/20 space-y-4 shadow-lg">
               <div className="flex gap-3">
                  <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
                  <h4 className="text-xs font-black text-amber-500 uppercase tracking-widest">Security Protocol</h4>
@@ -316,7 +337,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
            </div>
         </div>
 
-        <div className="lg:col-span-3 glass-card rounded-[48px] flex flex-col overflow-hidden border-white/5 bg-black/40 shadow-2xl min-h-[750px]">
+        <div className="lg:col-span-3 glass-card rounded-[48px] flex flex-col overflow-hidden border-white/5 bg-black/40 shadow-3xl min-h-[750px]">
            {activeTab === 'overview' && (
              <div className="flex-1 flex flex-col animate-in fade-in duration-500">
                 <div className="p-8 border-b border-white/5 bg-white/5 flex items-center justify-between">
@@ -345,6 +366,77 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
                         }`}>{log.status}</span>
                      </div>
                    ))}
+                </div>
+             </div>
+           )}
+
+           {activeTab === 'nodes' && (
+             <div className="flex-1 p-12 overflow-y-auto animate-in slide-in-from-right-4 duration-500 space-y-12">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/5 pb-10 gap-6">
+                   <div className="space-y-4">
+                      <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Physical <span className="text-blue-400">Node Hub</span></h3>
+                      <p className="text-slate-400 leading-relaxed text-lg max-w-xl">Monitor and manage physical sensors and robotic units paired via Registry Handshake.</p>
+                   </div>
+                   <button 
+                    onClick={() => onNavigate('registry_handshake')}
+                    className="px-8 py-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all flex items-center gap-3 active:scale-95"
+                   >
+                      <PlusCircle size={20} /> Pair New Device
+                   </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   {physicalNodes.map(node => (
+                     <div key={node.id} className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/60 hover:border-blue-500/30 transition-all group relative overflow-hidden flex flex-col justify-between shadow-xl">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform duration-[10s]"><Smartphone size={200} /></div>
+                        
+                        <div className="space-y-6 relative z-10">
+                           <div className="flex justify-between items-start">
+                              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 group-hover:bg-blue-600/10 transition-colors shadow-inner">
+                                 <SmartphoneNfc className="w-8 h-8 text-blue-400" />
+                              </div>
+                              <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest ${
+                                 node.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
+                              }`}>{node.status}</span>
+                           </div>
+                           <div>
+                              <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-blue-400 transition-colors">{node.name}</h4>
+                              <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-2">{node.type} // {node.id}</p>
+                           </div>
+                           <div className="flex flex-wrap gap-2">
+                              {node.capabilities.map(cap => (
+                                 <span key={cap} className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-slate-400 border border-white/5 uppercase">{cap}</span>
+                              ))}
+                           </div>
+                        </div>
+
+                        <div className="pt-8 mt-6 border-t border-white/5 flex items-center justify-between relative z-10">
+                           <div className="flex items-center gap-3">
+                              <Activity size={16} className="text-emerald-400 animate-pulse" />
+                              <span className="text-[9px] font-black text-slate-600 uppercase">TELEM_ACTIVE</span>
+                           </div>
+                           <button className="text-[10px] font-black text-blue-400 uppercase tracking-widest hover:text-white transition-colors">Manage Shard</button>
+                        </div>
+                     </div>
+                   ))}
+                   {physicalNodes.length === 0 && (
+                     <div className="col-span-full py-40 flex flex-col items-center justify-center text-center space-y-8 opacity-30 group">
+                        <div className="relative">
+                           <Smartphone size={80} className="text-slate-600 group-hover:text-blue-500 transition-colors" />
+                           <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+                        </div>
+                        <div className="space-y-2">
+                           <p className="text-xl font-black uppercase tracking-[0.5em] text-white">Registry Handshake Required</p>
+                           <p className="text-sm italic uppercase font-bold tracking-widest text-slate-600">Pair your physical hardware devices to initialize automated ingest.</p>
+                        </div>
+                        <button 
+                          onClick={() => onNavigate('registry_handshake')}
+                          className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                        >
+                           <QrCode size={18} /> INITIALIZE HANDSHAKE
+                        </button>
+                     </div>
+                   )}
                 </div>
              </div>
            )}
@@ -506,7 +598,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
                       </div>
                    </div>
                 </div>
-                <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-8">
+                <div className="glass-card p-10 rounded-[40px] border-white/5 space-y-8 shadow-xl">
                    <div className="flex items-center gap-3">
                       <FileCode className="w-6 h-6 text-blue-400" />
                       <h4 className="text-lg font-bold text-white uppercase tracking-widest">Payload Schema (JSON)</h4>
@@ -614,7 +706,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
                            <Network className="w-12 h-12 text-indigo-400" />
                         </div>
                         <h3 className="text-4xl font-black text-white uppercase tracking-tighter m-0 italic">Node <span className="text-indigo-400">Designation</span></h3>
-                        <p className="text-slate-400 text-lg font-medium leading-relaxed max-md:text-sm max-w-md mx-auto">Provide a registry label for this integration node to initialize the ZK-Handshake.</p>
+                        <p className="text-slate-400 text-lg font-medium leading-relaxed max-md:text-sm max-w-md mx-auto">Provide a registry label for this virtual integration node to initialize the ZK-Handshake.</p>
                       </div>
                       
                       <div className="space-y-4">
@@ -763,6 +855,8 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ onSpendEAC }) => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

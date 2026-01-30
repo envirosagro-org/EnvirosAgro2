@@ -28,19 +28,21 @@ import {
   Signal,
   BadgeCheck,
   Compass,
-  /* Added missing icon imports */
   ArrowRight,
   ShieldAlert,
-  LocateFixed
+  LocateFixed,
+  ArrowLeftCircle,
+  Cable
 } from 'lucide-react';
-import { User, AgroResource } from '../types';
+import { User, AgroResource, ViewState } from '../types';
 
 interface RegistryHandshakeProps {
   user: User;
   onUpdateUser: (user: User) => void;
+  onNavigate?: (view: ViewState) => void;
 }
 
-const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUser }) => {
+const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUser, onNavigate }) => {
   const [activeWorkflow, setActiveWorkflow] = useState<'hardware' | 'land' | 'ledger' | null>(null);
   const [step, setStep] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -130,6 +132,16 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1200px] mx-auto px-4">
       {/* HUD Header */}
+      <div className="flex justify-between items-center px-4">
+        <button 
+          onClick={() => onNavigate?.('dashboard')}
+          className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-indigo-600/10 transition-all group"
+        >
+          <ArrowLeftCircle className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          Return to Command Center
+        </button>
+      </div>
+
       <div className="glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none">
             <QrCode className="w-96 h-96 text-indigo-400" />
@@ -248,7 +260,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
                         className="w-full bg-black border border-white/10 rounded-[32px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
                       />
                    </div>
-                   <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex items-center gap-6 max-w-xl mx-auto">
+                   <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex items-center gap-6 max-xl:mx-auto">
                       <ShieldAlert className="w-10 h-10 text-indigo-400 shrink-0" />
                       <p className="text-[10px] text-indigo-200/50 font-black uppercase leading-relaxed tracking-tight text-left italic">
                          "Pairing commits your node to immediate telemetry sharding. Unauthorized pairing attempts will be logged by the Registry Oracle."
@@ -275,7 +287,20 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
                      <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic">Pairing <span className="text-emerald-400">Finalized</span></h3>
                      <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.8em] font-mono">REGISTRY_HASH: 0xNODE_SYNC_OK</p>
                   </div>
-                  <button onClick={reset} className="px-16 py-7 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Registry Hub</button>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                     <button 
+                        onClick={() => onNavigate?.('ingest')}
+                        className="flex-1 px-8 py-6 agro-gradient rounded-[32px] text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                     >
+                        <Cable size={18} /> Manage Ingest
+                     </button>
+                     <button 
+                        onClick={reset} 
+                        className="flex-1 px-8 py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-white/10 transition-all shadow-xl active:scale-95"
+                     >
+                        Return to Registry Hub
+                     </button>
+                  </div>
                </div>
              )}
           </div>
@@ -399,7 +424,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
                       className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all"
                    >
                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Stamp className="w-8 h-8 fill-current" />}
-                      {isProcessing ? "ANCHORING ON-CHAIN..." : "COMMIT LAND SHARD"}
+                      {isProcessing ? "MINTING SHARD..." : "COMMIT LAND SHARD"}
                    </button>
                 </div>
              )}
