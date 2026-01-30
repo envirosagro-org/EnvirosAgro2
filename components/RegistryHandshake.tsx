@@ -32,7 +32,8 @@ import {
   ShieldAlert,
   LocateFixed,
   ArrowLeftCircle,
-  Cable
+  Cable,
+  History
 } from 'lucide-react';
 import { User, AgroResource, ViewState } from '../types';
 
@@ -131,13 +132,12 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1200px] mx-auto px-4">
-      {/* HUD Header */}
       <div className="flex justify-between items-center px-4">
         <button 
           onClick={() => onNavigate?.('dashboard')}
           className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-indigo-600/10 transition-all group"
         >
-          <ArrowLeftCircle className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeftCircle size={20} className="h-5 group-hover:-translate-x-1 transition-transform" />
           Return to Command Center
         </button>
       </div>
@@ -304,150 +304,8 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
                </div>
              )}
           </div>
-        ) : activeWorkflow === 'land' ? (
-          <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
-             <div className="flex justify-between items-center px-4">
-                <button onClick={reset} className="flex items-center gap-2 text-slate-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">
-                   <ChevronRight size={16} className="rotate-180" /> Back to Selector
-                </button>
-                <div className="flex gap-2">
-                   {[0,1,2,3].map(i => (
-                      <div key={i} className={`h-1.5 w-12 rounded-full transition-all duration-700 ${i <= step ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-white/10'}`}></div>
-                   ))}
-                </div>
-             </div>
-
-             {step === 0 && (
-                <div className="glass-card p-16 rounded-[64px] border border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col lg:flex-row items-center gap-16 shadow-3xl">
-                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[10s]"><Globe size={400} className="text-emerald-400" /></div>
-                   <div className="w-64 h-64 bg-emerald-600 rounded-full flex flex-col items-center justify-center shadow-3xl shrink-0 animate-float relative overflow-hidden group">
-                      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <LocateFixed size={96} className="text-white relative z-10" />
-                      <div className="absolute inset-[-10px] border-2 border-dashed border-white/20 rounded-full animate-spin-slow"></div>
-                   </div>
-                   <div className="flex-1 space-y-8 relative z-10 text-center lg:text-left">
-                      <div className="space-y-2">
-                         <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20 shadow-inner">TIER_1: GEO_LOCK_PROTOCOL</span>
-                         <h2 className="text-5xl md:text-7xl font-black text-white leading-none tracking-tighter uppercase italic m-0">ACQUIRE <br/> <span className="text-emerald-400">SIGNAL.</span></h2>
-                      </div>
-                      <p className="text-slate-400 text-2xl font-medium italic leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                         "To register a plot, stand physically on the land to commit your node coordinates to the global sharded map."
-                      </p>
-                      <button 
-                        onClick={handleGeoLock}
-                        disabled={isProcessing}
-                        className="px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-5 ring-8 ring-white/5"
-                      >
-                         {isProcessing ? <Loader2 size={24} className="animate-spin" /> : <Compass size={24} />}
-                         INITIALIZE GEO-LOCK
-                      </button>
-                   </div>
-                </div>
-             )}
-
-             {step === 1 && (
-                <div className="glass-card p-12 rounded-[64px] border border-emerald-500/20 bg-black/40 space-y-12 shadow-3xl text-center animate-in slide-in-from-right-4">
-                   <div className="w-24 h-24 bg-blue-600/10 rounded-3xl flex items-center justify-center mx-auto border border-blue-500/20 shadow-2xl animate-float">
-                      <Upload size={48} className="text-blue-400" />
-                   </div>
-                   <div className="space-y-4">
-                      <h3 className="text-4xl font-black text-white uppercase italic">Tier 2: <span className="text-blue-400">Stewardship Proof</span></h3>
-                      <p className="text-slate-400 text-lg font-medium italic">"Upload a registry shard (Land Title, Lease, or Chief Letter) for Layer-2 Vetting."</p>
-                   </div>
-                   
-                   <div 
-                      onClick={() => setUploadedDoc('MOCK_DOC_SYNCED')}
-                      className={`p-20 border-4 border-dashed rounded-[48px] transition-all flex flex-col items-center justify-center text-center space-y-6 group/upload cursor-pointer bg-black/40 ${uploadedDoc ? 'border-emerald-500 bg-emerald-500/5' : 'border-white/10 hover:border-blue-500/40'}`}
-                   >
-                      {!uploadedDoc ? (
-                         <>
-                            <FileText className="w-14 h-14 text-slate-700 group-hover:text-blue-400 transition-all duration-500" />
-                            <div className="space-y-2">
-                               <p className="text-xl font-black text-white uppercase italic tracking-widest leading-none">Choose Doc Shard</p>
-                               <p className="text-slate-500 text-xs font-black uppercase tracking-widest font-mono">PDF_OR_IMAGE_REQUIRED</p>
-                            </div>
-                         </>
-                      ) : (
-                         <div className="text-center space-y-4">
-                            <CheckCircle2 className="w-14 h-14 text-emerald-400" />
-                            <p className="text-xl font-black text-emerald-400 uppercase italic">SHARD_BUFFERED_OK</p>
-                            <button onClick={(e) => { e.stopPropagation(); setUploadedDoc(null); }} className="text-[10px] font-black text-slate-600 uppercase hover:text-rose-500 transition-colors">Discard and Retry</button>
-                         </div>
-                      )}
-                   </div>
-
-                   <div className="flex gap-4">
-                      <button onClick={() => setStep(0)} className="px-10 py-10 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
-                      <button 
-                        onClick={() => setStep(2)}
-                        disabled={!uploadedDoc}
-                        className="flex-1 py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-30"
-                      >
-                         Proceed to Authorization <ChevronRight size={20} />
-                      </button>
-                   </div>
-                </div>
-             )}
-
-             {step === 2 && (
-                <div className="glass-card p-12 rounded-[64px] border border-indigo-500/30 bg-black/40 space-y-12 shadow-3xl text-center animate-in slide-in-from-right-4">
-                   <div className="w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto border border-indigo-500/20 shadow-3xl">
-                      <Fingerprint className="w-12 h-12 text-indigo-400" />
-                   </div>
-                   <h3 className="text-4xl font-black text-white uppercase italic">Registry <span className="text-indigo-400">Anchor</span></h3>
-                   
-                   <div className="space-y-8">
-                      <div className="p-8 bg-black/60 rounded-[48px] border border-white/10 text-left space-y-4 shadow-inner">
-                         <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
-                            <span>Locked Lat</span>
-                            <span className="text-white font-mono">{currentCoords?.lat.toFixed(6)}</span>
-                         </div>
-                         <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
-                            <span>Locked Lng</span>
-                            <span className="text-white font-mono">{currentCoords?.lng.toFixed(6)}</span>
-                         </div>
-                      </div>
-
-                      <div className="space-y-4 max-w-md mx-auto">
-                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] block text-center">Node Signature (ESIN)</label>
-                         <input 
-                           type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
-                           placeholder="EA-XXXX-XXXX-XXXX" 
-                           className="w-full bg-black border border-white/10 rounded-[32px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
-                         />
-                      </div>
-                   </div>
-
-                   <button 
-                      onClick={() => finalizeVerification('LAND')}
-                      disabled={isProcessing || !esinSign}
-                      className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all"
-                   >
-                      {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Stamp className="w-8 h-8 fill-current" />}
-                      {isProcessing ? "MINTING SHARD..." : "COMMIT LAND SHARD"}
-                   </button>
-                </div>
-             )}
-
-             {step === 3 && (
-               <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 animate-in zoom-in duration-700 text-center">
-                  <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(16,185,129,0.4)] scale-110 relative group">
-                     <BadgeCheck className="w-28 h-28 text-white group-hover:scale-110 transition-transform" />
-                     <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
-                  </div>
-                  <div className="space-y-4">
-                     <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic">Provisional <br/> <span className="text-emerald-400">Anchored</span></h3>
-                     <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.8em] font-mono">REGISTRY_HASH: 0xLAND_MINT_OK</p>
-                  </div>
-                  <p className="text-slate-500 text-lg max-sm:text-sm max-w-sm mx-auto leading-relaxed italic">
-                    "Geo-lock committed. Document shard uploaded. Standing by for Registry Vetting Node final consensus (Tier 2 Verified status)."
-                  </p>
-                  <button onClick={reset} className="px-16 py-7 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Registry Hub</button>
-               </div>
-             )}
-          </div>
         ) : (
-          <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
              <div className="flex justify-between items-end border-b border-white/5 pb-10 px-4">
                 <div>
                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Resource <span className="text-indigo-400">Ledger Shards</span></h3>
@@ -490,16 +348,6 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
                       </div>
                    </div>
                 ))}
-                {(user.resources || []).length === 0 && (
-                   <div className="col-span-full py-40 flex flex-col items-center justify-center text-center space-y-8 opacity-20 group">
-                      <div className="relative">
-                         <Database size={80} className="text-slate-600 animate-pulse" />
-                         <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
-                      </div>
-                      <p className="text-xl font-black uppercase tracking-[0.5em] text-white">Registry Standby</p>
-                      <button onClick={reset} className="text-[10px] font-black text-indigo-400 hover:text-white uppercase underline underline-offset-4 tracking-[0.2em]">Pair First Physical Asset</button>
-                   </div>
-                )}
              </div>
           </div>
         )}
@@ -509,7 +357,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 10s linear infinite; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
       `}</style>

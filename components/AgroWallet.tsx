@@ -66,7 +66,13 @@ import {
   FileSignature,
   Database,
   BarChart4,
-  Unlock
+  Unlock,
+  ThumbsUp,
+  MessageSquare,
+  Sparkles,
+  Heart,
+  // Added Settings to fix error on line 831
+  Settings
 } from 'lucide-react';
 import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, FarmingContract } from '../types';
 
@@ -94,12 +100,23 @@ const MOCK_HISTORY: AgroTransaction[] = [
   { id: 'TX-G-001', type: 'Gateway_Deposit', farmId: 'GLOBAL-GW', details: 'Fiat Ingest: Linked M-Pesa Shard', value: 1200.00, unit: 'KES' },
 ];
 
+const REACTION_LEDGER = [
+  { id: 'VCH-001', stwd: 'BANTU_04', msg: 'Verified m-constant stability in local node.', val: '+1.5', type: 'Vouch', time: '12m ago' },
+  { id: 'VCH-002', stwd: 'STWD_KE', msg: 'Vouched: Verified Purity Shard.', val: '+2.0', type: 'Consensus', time: '2h ago' },
+  { id: 'VCH-003', stwd: 'AGRO_X', msg: 'Resonance Sync Successful.', val: '+0.8', type: 'Vouch', time: '5h ago' },
+  { id: 'VCH-004', stwd: 'ECO_AUDIT', msg: 'Quality Ingest Validated.', val: '+3.2', type: 'Vouch', time: '8_h ago' },
+];
+
 const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser, pendingAction, clearAction, onSwap, projects = [] }) => {
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'harvest' | 'gateway' | 'projects' | 'history'>('overview');
   const [isClaiming, setIsClaiming] = useState(false);
   const [unclaimedEAC, setUnclaimedEAC] = useState(12.45);
   const [harvestCycle, setHarvestCycle] = useState(0);
   
+  // Reaction Mining Specific States
+  const [pendingVouches, setPendingVouches] = useState(42);
+  const [socialResonance, setSocialResonance] = useState(94.2);
+
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [showGatewayModal, setShowGatewayModal] = useState<'deposit' | 'withdrawal' | null>(null);
   const [showLinkProvider, setShowLinkProvider] = useState(false);
@@ -122,6 +139,8 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
       const interval = setInterval(() => {
         setUnclaimedEAC(prev => prev + 0.0012);
         setHarvestCycle(prev => (prev + 1) % 100);
+        // Simulate organic growth of social consensus
+        if (Math.random() > 0.8) setPendingVouches(p => p + 1);
       }, 1000);
       return () => clearInterval(interval);
     }
@@ -142,7 +161,9 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
         });
       }
       setUnclaimedEAC(0);
+      setPendingVouches(0);
       setIsClaiming(false);
+      alert(`REACTION MINING SUCCESS: ${unclaimedEAC.toFixed(2)} EAC synchronized from social consensus shards.`);
     }, 2000);
   };
 
@@ -180,6 +201,14 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
       setShowLinkProvider(false);
       setSelectedProvider(newProvider);
     }, 2000);
+  };
+
+  // Added resetPortal function to fix "Cannot find name 'resetPortal'" error on line 844
+  const resetPortal = () => {
+    setGatewayStep('config');
+    setShowGatewayModal(null);
+    setEsinSign('');
+    setIsProcessingGateway(false);
   };
 
   const handleGatewayAction = () => {
@@ -262,17 +291,17 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
         </div>
       </div>
 
-      {/* Main Navigation - Horizontally Scrollable for mobile */}
+      {/* Main Navigation */}
       <div className="flex flex-wrap gap-3 p-1.5 glass-card rounded-[28px] w-fit border border-white/5 bg-black/40 shadow-sm overflow-x-auto scrollbar-hide">
         {[
           { id: 'overview', label: 'Treasury Node', icon: Wallet },
           { id: 'gateway', label: 'Institutional Bridges', icon: Globe2 },
           { id: 'projects', label: 'Project Financials', icon: Trello },
-          { id: 'harvest', label: 'Reaction Harvest', icon: Pickaxe },
+          { id: 'harvest', label: 'Reaction Harvest', icon: Sparkles },
           { id: 'history', label: 'Registry Ledger', icon: History },
         ].map(tab => (
           <button 
-            key={tab.id}
+            key={tab.id} 
             onClick={() => setActiveSubTab(tab.id as any)}
             className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[9px] font-black uppercase transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
           >
@@ -395,6 +424,110 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
           </div>
         )}
 
+        {/* --- REACTION HARVEST (Reaction Mining Integrated) --- */}
+        {activeSubTab === 'harvest' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-500 px-4">
+             <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-black/40 relative overflow-hidden flex flex-col items-center justify-center text-center shadow-3xl">
+                <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform duration-[10s]"><Sparkles size={500} className="text-emerald-400" /></div>
+                
+                <div className="relative z-10 space-y-12 w-full">
+                   <div className="flex flex-col items-center space-y-6">
+                      <div className="w-72 h-72 rounded-full border-4 border-dashed border-emerald-500/20 flex items-center justify-center relative group">
+                         <div className="absolute inset-4 rounded-full border-2 border-emerald-500/40 animate-spin-slow"></div>
+                         <div className="w-56 h-56 rounded-full bg-emerald-500/10 flex flex-col items-center justify-center shadow-[0_0_120px_rgba(16,185,129,0.25)] group-hover:bg-emerald-500/20 transition-all duration-700">
+                            <Pickaxe className="w-16 h-16 text-emerald-400 mb-4 animate-bounce" />
+                            <p className="text-5xl font-mono font-black text-white tracking-tighter">{unclaimedEAC.toFixed(3)}</p>
+                            <p className="text-[11px] text-emerald-500 font-black uppercase tracking-[0.4em] mt-3">MINTABLE REACTION SHARDS</p>
+                         </div>
+                         <svg className="absolute inset-0 w-72 h-72 transform -rotate-90">
+                            <circle cx="144" cy="144" r="135" fill="transparent" stroke="rgba(16,185,129,0.1)" strokeWidth="6" />
+                            <circle cx="144" cy="144" r="135" fill="transparent" stroke="#10b981" strokeWidth="6" strokeDasharray={848} strokeDashoffset={848 - (848 * harvestCycle / 100)} strokeLinecap="round" />
+                         </svg>
+                      </div>
+                   </div>
+
+                   <div className="max-w-md mx-auto space-y-4">
+                      <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">REACTION <span className="text-emerald-400">MINING HUB</span></h3>
+                      <p className="text-slate-400 text-base font-medium italic leading-relaxed">
+                        "Consolidating social consensus from Live Farming and Online Garden shards into utility EAC. Social sentiment is a verified industrial data point."
+                      </p>
+                   </div>
+
+                   <button 
+                    onClick={handleHarvestManual}
+                    disabled={isClaiming || unclaimedEAC < 0.1}
+                    className={`w-full max-w-md py-8 rounded-[40px] font-black text-sm uppercase tracking-[0.5em] shadow-3xl transition-all flex items-center justify-center gap-6 mx-auto ${
+                       unclaimedEAC >= 0.1 ? 'agro-gradient text-white hover:scale-[1.02] active:scale-95 shadow-emerald-900/40' : 'bg-white/5 text-slate-700 border border-white/5 cursor-not-allowed'
+                    }`}
+                   >
+                      {isClaiming ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
+                      {isClaiming ? 'ANCHORING SHARDS...' : 'SYNC REACTION CREDITS'}
+                   </button>
+                </div>
+             </div>
+
+             <div className="lg:col-span-4 space-y-8">
+                <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-xl relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><ThumbsUp className="w-48 h-48 text-indigo-400" /></div>
+                   <div className="flex items-center gap-4 relative z-10">
+                      <div className="p-4 bg-indigo-500 rounded-2xl shadow-2xl">
+                         <Users size={28} className="text-white" />
+                      </div>
+                      <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0">Consensus <span className="text-indigo-400">Registry</span></h4>
+                   </div>
+                   
+                   <div className="space-y-6 relative z-10">
+                      <div className="p-6 bg-black/60 rounded-3xl border border-white/5 flex justify-between items-center group-hover:border-indigo-500/30 transition-all">
+                         <div>
+                            <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Pending Vouches</p>
+                            <p className="text-3xl font-mono font-black text-white">{pendingVouches}</p>
+                         </div>
+                         <ThumbsUp className="text-emerald-400 animate-pulse" size={24} />
+                      </div>
+                      <div className="p-6 bg-black/60 rounded-3xl border border-white/5 flex justify-between items-center group-hover:border-blue-500/30 transition-all">
+                         <div>
+                            <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Network Resonance</p>
+                            <p className="text-3xl font-mono font-black text-white">{socialResonance}%</p>
+                         </div>
+                         <Activity className="text-blue-400" size={24} />
+                      </div>
+                   </div>
+
+                   <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-6 shadow-inner relative z-10 overflow-hidden">
+                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                         <MessageSquare size={14} className="text-indigo-400" /> Vouch Inflow Ledger
+                      </h5>
+                      <div className="space-y-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                         {REACTION_LEDGER.map((r, i) => (
+                            <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2 group/vouch hover:border-indigo-500/40 transition-all">
+                               <div className="flex justify-between items-center">
+                                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-tighter">@{r.stwd}</span>
+                                  <span className="text-emerald-500 font-mono font-black text-xs">{r.val}</span>
+                               </div>
+                               <p className="text-[10px] text-slate-400 italic">"{r.msg}"</p>
+                               <div className="flex justify-between items-center pt-2 border-t border-white/5 mt-2 opacity-50 group-hover/vouch:opacity-100 transition-opacity">
+                                  <span className="text-[8px] font-black text-slate-600 uppercase">{r.type}</span>
+                                  <span className="text-[8px] font-mono text-slate-700">{r.time}</span>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                </div>
+
+                <div className="p-10 glass-card rounded-[48px] border border-amber-500/10 bg-amber-500/[0.02] space-y-4 group">
+                   <div className="flex items-center gap-3">
+                      <Heart className="w-5 h-5 text-amber-500" />
+                      <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest italic">Mining Policy</h4>
+                   </div>
+                   <p className="text-[10px] text-slate-500 leading-relaxed italic border-l-2 border-amber-500/20 pl-4">
+                      "Reaction Mining translates social consensus into utility value. Consumer sentiment for your industrial output is synthesized into AEC credits based on the volume of verified vouchers."
+                   </p>
+                </div>
+             </div>
+          </div>
+        )}
+
         {/* --- PROJECT FINANCIALS --- */}
         {activeSubTab === 'projects' && (
           <div className="space-y-8 animate-in slide-in-from-right duration-500">
@@ -421,7 +554,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                   </div>
                 ) : (
                   managedProjects.map(proj => (
-                    <div key={proj.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col bg-black/40 shadow-2xl relative overflow-hidden">
+                    <div key={proj.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full bg-black/40 shadow-3xl relative overflow-hidden">
                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Database size={160} /></div>
                        <div className="flex justify-between items-start mb-8 relative z-10">
                           <div className="p-5 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shadow-xl group-hover:rotate-6 transition-all">
@@ -522,78 +655,22 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
                          <h4 className="text-xl font-black text-white uppercase tracking-widest italic">Bridge <span className="text-indigo-400">Oracle</span></h4>
                       </div>
                       <p className="text-slate-300 text-sm italic font-medium leading-relaxed border-l-2 border-indigo-500/40 pl-6 relative z-10">
-                        "Your current m-Constant allows for a 1.2% reduction in gateway sharding fees. Sync external KES or USD shards for immediate utility."
+                        "Institutional bridges allow stewards to settle EAC balances directly into local fiat nodes. Current liquidity reserves: <span className="text-indigo-400">STABLE</span>."
                       </p>
-                      <div className="flex gap-4 relative z-10 pt-4">
+                      <div className="grid grid-cols-2 gap-4 relative z-10">
                          <button 
-                          onClick={() => setShowGatewayModal('deposit')}
-                          className="flex-1 py-4 agro-gradient rounded-2xl text-[10px] font-black uppercase text-white shadow-xl active:scale-95"
+                           onClick={() => { setShowGatewayModal('deposit'); setGatewayStep('config'); }}
+                           className="py-5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-xl"
                          >
-                            Ingest Capital
+                            <ArrowDownLeft className="w-4 h-4 text-emerald-400" /> Deposit Shard
                          </button>
                          <button 
-                          onClick={() => setShowGatewayModal('withdrawal')}
-                          className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-white hover:bg-white/10 active:scale-95"
+                           onClick={() => { setShowGatewayModal('withdrawal'); setGatewayStep('config'); }}
+                           className="py-5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-xl"
                          >
-                            Release Funds
+                            <ArrowUpRight className="w-4 h-4 text-rose-500" /> Withdraw Shard
                          </button>
                       </div>
-                   </div>
-                </div>
-             </div>
-          </div>
-        )}
-
-        {activeSubTab === 'harvest' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in zoom-in duration-500 px-4">
-             <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border-emerald-500/20 bg-black/40 relative overflow-hidden flex flex-col items-center justify-center text-center shadow-3xl">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')] opacity-10 pointer-events-none"></div>
-                
-                <div className="relative z-10 space-y-10 w-full">
-                   <div className="flex flex-col items-center space-y-4">
-                      <div className="w-64 h-64 rounded-full border-4 border-dashed border-emerald-500/20 flex items-center justify-center relative group">
-                         <div className="absolute inset-4 rounded-full border-2 border-emerald-500/40 animate-spin-slow"></div>
-                         <div className="w-48 h-48 rounded-full bg-emerald-500/10 flex flex-col items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.2)] group-hover:bg-emerald-500/20 transition-all duration-700">
-                            <Pickaxe className="w-16 h-16 text-emerald-400 mb-4 animate-bounce" />
-                            <p className="text-4xl font-mono font-black text-white tracking-tighter">{unclaimedEAC.toFixed(3)}</p>
-                            <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest mt-1">Unsettled EAC (Utility)</p>
-                         </div>
-                         <svg className="absolute inset-0 w-64 h-64 transform -rotate-90">
-                            <circle cx="128" cy="128" r="120" fill="transparent" stroke="rgba(16,185,129,0.1)" strokeWidth="4" />
-                            <circle cx="128" cy="128" r="120" fill="transparent" stroke="#10b981" strokeWidth="4" strokeDasharray={754} strokeDashoffset={754 - (754 * harvestCycle / 100)} strokeLinecap="round" />
-                         </svg>
-                      </div>
-                   </div>
-
-                   <button 
-                    onClick={handleHarvestManual}
-                    disabled={isClaiming || unclaimedEAC < 0.1}
-                    className={`w-full max-w-md py-8 rounded-[40px] font-black text-sm uppercase tracking-[0.5em] shadow-3xl transition-all flex items-center justify-center gap-6 mx-auto ${
-                       unclaimedEAC >= 0.1 ? 'agro-gradient text-white hover:scale-[1.02] active:scale-95 shadow-emerald-900/40' : 'bg-white/5 text-slate-700 border border-white/5 cursor-not-allowed'
-                    }`}
-                   >
-                      {isClaiming ? <Loader2 className="w-8 h-8 animate-spin" /> : <RefreshCw className="w-8 h-8" />}
-                      {isClaiming ? 'SIGNING LEDGER...' : 'SYNC REACTION CREDITS'}
-                   </button>
-                </div>
-             </div>
-
-             <div className="lg:col-span-4 space-y-8">
-                <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-xl relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Binary className="w-48 h-48 text-indigo-400" /></div>
-                   <div className="flex items-center gap-4 relative z-10">
-                      <div className="p-4 bg-indigo-500 rounded-2xl shadow-2xl">
-                         <Gauge className="w-8 h-8 text-white" />
-                      </div>
-                      <h4 className="text-xl font-black text-white uppercase italic">Impact <span className="text-emerald-400">Minting</span></h4>
-                   </div>
-                   <div className="space-y-6 relative z-10">
-                      <p className="text-slate-400 text-sm italic font-medium leading-relaxed pl-6 border-l-2 border-indigo-500/30">
-                        "Improve your m™ Constant to mint deflationary EAT. Current baseline: <span className="text-yellow-500 font-bold">{user.metrics.baselineM.toFixed(2)}</span>."
-                      </p>
-                      <button onClick={() => onNavigate('sustainability')} className="w-full py-5 bg-yellow-500 rounded-3xl text-[10px] font-black text-black uppercase tracking-widest hover:bg-yellow-400 transition-all flex items-center justify-center gap-3 relative z-10 active:scale-95 shadow-xl">
-                         <Sprout className="w-4 h-4" /> Improve Sustainability
-                      </button>
                    </div>
                 </div>
              </div>
@@ -601,325 +678,258 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
         )}
 
         {activeSubTab === 'history' && (
-          <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500 px-4">
-             <div className="glass-card rounded-[40px] overflow-hidden border border-white/5 bg-black/40 shadow-xl">
-                <div className="grid grid-cols-5 p-8 border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                   <span className="col-span-2">Transaction Shard</span>
-                   <span>Asset Unit</span>
-                   <span className="text-right">Value Delta</span>
-                   <span className="text-right">Registry Auth</span>
-                </div>
-                <div className="divide-y divide-white/5">
-                   {MOCK_HISTORY.map(tx => (
-                     <div key={tx.id} className="grid grid-cols-5 p-8 hover:bg-white/[0.02] transition-all items-center group cursor-pointer">
-                        <div className="col-span-2 flex items-center gap-6">
-                           <div className={`w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                              <Binary className={`w-6 h-6 ${tx.unit === 'EAT' ? 'text-yellow-500' : tx.unit === 'EAC' ? 'text-emerald-400' : 'text-blue-400'}`} />
-                           </div>
-                           <div>
-                              <p className="text-lg font-bold text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{tx.details}</p>
-                              <p className="text-[10px] text-slate-600 font-mono mt-1 font-black uppercase">{tx.id}</p>
-                           </div>
-                        </div>
-                        <div>
-                           <span className={`px-3 py-1 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-widest ${tx.unit === 'EAT' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-emerald-500/10 text-emerald-400'}`}>{tx.unit}</span>
-                        </div>
-                        <div className="text-right">
-                           <p className={`text-xl font-mono font-black ${tx.value > 0 ? (tx.unit === 'EAT' ? 'text-yellow-500' : 'text-emerald-400') : 'text-rose-500'}`}>
-                              {tx.value > 0 ? '+' : ''}{tx.value.toFixed(tx.unit === 'EAT' ? 4 : 1)}
-                           </p>
-                        </div>
-                        <div className="flex justify-end pr-4">
-                           <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 shadow-xl">
-                              <ShieldCheck size={16} />
-                           </div>
-                        </div>
-                     </div>
-                   ))}
-                </div>
-             </div>
+          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 px-4">
+            <div className="glass-card rounded-[40px] overflow-hidden border border-white/5 bg-black/40 shadow-xl">
+               <div className="grid grid-cols-5 p-8 border-b border-white/10 bg-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                  <span className="col-span-2">Transaction Shard</span>
+                  <span>Type</span>
+                  <span>Impact Node</span>
+                  <span className="text-right">Ledger Value</span>
+               </div>
+               <div className="divide-y divide-white/5">
+                  {MOCK_HISTORY.map(tx => (
+                    <div key={tx.id} className="grid grid-cols-5 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer">
+                       <div className="col-span-2 flex items-center gap-6">
+                          <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform shadow-inner">
+                             {tx.value > 0 ? <ArrowDown className="w-5 h-5 text-emerald-400" /> : <ArrowUp className="w-5 h-5 text-rose-400" />}
+                          </div>
+                          <div>
+                             <p className="text-base font-bold text-white uppercase italic truncate group-hover:text-emerald-400 transition-colors">{tx.details}</p>
+                             <p className="text-[10px] text-slate-500 font-mono mt-1">{tx.id}</p>
+                          </div>
+                       </div>
+                       <div>
+                          <span className="px-3 py-1 bg-white/5 border border-white/10 text-[8px] font-black uppercase text-slate-400 rounded-full tracking-widest">{tx.type}</span>
+                       </div>
+                       <div className="text-xs text-slate-500 font-mono font-bold">{tx.farmId}</div>
+                       <div className="text-right">
+                          <p className={`text-xl font-mono font-black ${tx.value > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {tx.value > 0 ? '+' : ''}{tx.value.toFixed(2)}
+                          </p>
+                          <p className="text-[9px] text-slate-700 font-bold uppercase tracking-tighter">{tx.unit}</p>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+               <div className="p-8 bg-black/80 flex justify-between items-center border-t border-white/5">
+                  <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Aggregate Registry Depth: 1,424 Shards</p>
+                  <button className="flex items-center gap-2 text-[10px] font-black text-emerald-400 hover:text-white transition-all uppercase tracking-[0.3em]">
+                    <Download className="w-4 h-4" /> Download Audit Archive
+                  </button>
+               </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Bridge Modals */}
-      {showGatewayModal && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowGatewayModal(null)}></div>
-           <div className="relative z-10 w-full max-w-lg glass-card p-10 rounded-[56px] border-indigo-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2">
-              <div className="space-y-8 py-4">
-                 <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-6">
-                       <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-xl ${showGatewayModal === 'deposit' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
-                          {showGatewayModal === 'deposit' ? <ArrowDownLeft size={32} /> : <ArrowUpRight size={32} />}
-                       </div>
-                       <div>
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">{showGatewayModal} <span className="text-indigo-400">Shard</span></h3>
-                          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Institutional Bridge Relay</p>
-                       </div>
-                    </div>
-                    <button onClick={() => setShowGatewayModal(null)} className="p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all"><X size={20} /></button>
-                 </div>
-
-                 {gatewayStep === 'config' && (
-                    <div className="space-y-8 animate-in slide-in-from-right duration-300">
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Select Linked Provider</label>
-                          <div className="grid grid-cols-1 gap-3">
-                             {(user.wallet.linkedProviders || []).map(lp => (
-                                <button 
-                                  key={lp.id}
-                                  onClick={() => setSelectedProvider(lp)}
-                                  className={`p-6 rounded-[32px] border transition-all flex items-center justify-between group ${selectedProvider?.id === lp.id ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400' : 'bg-black border-white/5 text-slate-500 hover:bg-white/5'}`}
-                                >
-                                   <div className="flex items-center gap-4">
-                                      {lp.type === 'Mobile' ? <Smartphone size={20} /> : <Building2 size={20} />}
-                                      <div className="text-left">
-                                         <p className="text-sm font-black uppercase">{lp.name}</p>
-                                         <p className="text-[10px] font-mono">{lp.accountFragment}</p>
-                                      </div>
-                                   </div>
-                                   {selectedProvider?.id === lp.id && <CheckCircle2 size={20} />}
-                                </button>
-                             ))}
-                             <button 
-                               onClick={() => { setShowLinkProvider(true); setShowGatewayModal(null); }}
-                               className="p-4 rounded-[28px] border-2 border-dashed border-white/10 text-slate-700 flex items-center justify-center gap-3 hover:border-white/20 transition-all"
-                             >
-                                <PlusCircle size={18} /> <span className="text-[10px] font-black uppercase">Add New Node</span>
-                             </button>
-                          </div>
-                       </div>
-
-                       <div className="space-y-4">
-                          <div className="flex justify-between items-center px-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Fiat Capital Shard</label>
-                             <div className="flex p-1 bg-black rounded-xl border border-white/5">
-                                {['KES', 'USD'].map(c => (
-                                   <button 
-                                      key={c} 
-                                      onClick={() => setGatewayCurrency(c as any)}
-                                      className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${gatewayCurrency === c ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}
-                                   >
-                                      {c}
-                                   </button>
-                                ))}
-                             </div>
-                          </div>
-                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 flex items-center justify-between group overflow-hidden">
-                             <input 
-                              type="number" 
-                              value={gatewayAmount}
-                              onChange={e => setGatewayAmount(e.target.value)}
-                              className="bg-transparent text-5xl font-mono font-black text-white outline-none w-full"
-                             />
-                             <span className="text-xl font-black text-blue-400">{gatewayCurrency}</span>
-                          </div>
-                          
-                          {/* Conversion Estimate */}
-                          <div className="p-6 bg-emerald-500/5 border border-emerald-500/10 rounded-3xl flex justify-between items-center shadow-inner">
-                             <div className="flex items-center gap-3">
-                                <Repeat className="w-4 h-4 text-emerald-400" />
-                                <span className="text-[10px] font-black text-slate-500 uppercase">Estimated Inflow</span>
-                             </div>
-                             <p className="text-xl font-mono font-black text-emerald-400">
-                                {showGatewayModal === 'deposit' ? '+' : '-'}
-                                {(Number(gatewayAmount) / (gatewayCurrency === 'USD' ? FOREX_RATES.EAC_USD : FOREX_RATES.EAC_KES)).toFixed(0)}
-                                <span className="text-xs ml-1">EAC</span>
-                             </p>
-                          </div>
-                       </div>
-
-                       <button 
-                        onClick={() => setGatewayStep('sign')}
-                        disabled={!selectedProvider || !gatewayAmount}
-                        className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
-                       >
-                          Proceed to Authentication <ChevronRight size={20} />
-                       </button>
-                    </div>
-                 )}
-
-                 {gatewayStep === 'sign' && (
-                    <div className="space-y-10 animate-in slide-in-from-right duration-300 flex-1 flex flex-col justify-center">
-                       <div className="text-center space-y-4">
-                          <div className="w-20 h-20 bg-indigo-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-2xl relative">
-                             <Fingerprint className="w-10 h-10 text-indigo-400" />
-                             <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-[32px] animate-ping opacity-30"></div>
-                          </div>
-                          <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic">Signature <span className="text-indigo-400">Required</span></h4>
-                          <p className="text-slate-400 text-lg font-medium italic">Sign the gateway shard with your ESIN node signature.</p>
-                       </div>
-
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center block">Steward Signature (ESIN)</label>
-                          <input 
-                             type="text" 
-                             value={esinSign}
-                             onChange={e => setEsinSign(e.target.value)}
-                             placeholder="EA-XXXX-XXXX-XXXX" 
-                             className="w-full bg-black/60 border border-white/10 rounded-[32px] py-8 text-center text-3xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900" 
-                          />
-                       </div>
-
-                       <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex items-center gap-6 shadow-inner">
-                          <ShieldAlert className="w-8 h-8 text-blue-500 shrink-0" />
-                          <p className="text-[10px] text-blue-200/50 font-black uppercase leading-relaxed tracking-tight text-left">
-                             INGEST_SYNC: Value will be locked until the external bridge confirms settlement (typically 12-24h).
-                          </p>
-                       </div>
-
-                       <div className="flex gap-4">
-                          <button onClick={() => setGatewayStep('config')} className="px-8 py-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
-                          <button 
-                             onClick={handleGatewayAction}
-                             disabled={isProcessingGateway || !esinSign}
-                             className="flex-1 py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30 transition-all"
-                          >
-                             {isProcessingGateway ? <Loader2 className="w-6 h-6 animate-spin" /> : <Key className="w-6 h-6 fill-current" />}
-                             {isProcessingGateway ? "Syncing Shard..." : `Authorize ${showGatewayModal}`}
-                          </button>
-                       </div>
-                    </div>
-                 )}
-
-                 {gatewayStep === 'success' && (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
-                       <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
-                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
-                          <div className="absolute inset-[-10px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
-                       </div>
-                       <div className="space-y-4 text-center">
-                          <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Shard <span className="text-emerald-400">Settled</span></h3>
-                          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Hash commit: 0xGW_SETTLE_{(Math.random()*1000).toFixed(0)} locked.</p>
-                       </div>
-                       <button onClick={() => setShowGatewayModal(null)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Treasury</button>
-                    </div>
-                 )}
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* Swap Modal */}
+      {/* SWAP MODAL */}
       {showSwapModal && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/95 backdrop-blur-2xl" onClick={() => setShowSwapModal(false)}></div>
-           <div className="relative z-10 w-full max-w-lg glass-card p-12 rounded-[56px] border-yellow-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2">
-              <div className="space-y-10 py-4 flex flex-col min-h-[500px]">
-                 <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-6">
-                       <div className={`w-16 h-16 rounded-2xl bg-yellow-600 flex items-center justify-center text-black shadow-xl`}>
-                          <ArrowRightLeft size={32} />
-                       </div>
-                       <div>
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Institutional <span className="text-yellow-500">Swap</span></h3>
-                          <p className="text-slate-500 text-[10px] font-black uppercase mt-2 tracking-widest">Converting Utility to Equity Shards</p>
-                       </div>
-                    </div>
-                    <button onClick={() => setShowSwapModal(false)} className="p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all"><X size={20} /></button>
-                 </div>
-
-                 <div className="space-y-8 flex-1">
-                    <div className="space-y-4">
-                       <div className="flex justify-between px-4">
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mint EAT (Equity)</span>
-                          <span className="text-[10px] font-black text-slate-700 uppercase">Balance: {user.wallet.eatBalance.toFixed(4)} EAT</span>
-                       </div>
-                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 flex items-center justify-between group overflow-hidden shadow-inner">
-                          <input 
-                            type="number" 
-                            value={swapInputEAT}
-                            onChange={e => setSwapInputEAT(e.target.value)}
-                            className="bg-transparent text-5xl font-mono font-black text-white outline-none w-full"
-                          />
-                          <span className="text-xl font-black text-yellow-500 italic">EAT</span>
-                       </div>
-                    </div>
-
-                    <div className="flex justify-center relative py-2">
-                       <div className="p-4 bg-white/5 rounded-full border border-white/10 shadow-lg relative z-10">
-                          <ArrowDown size={20} className="text-yellow-500" />
-                       </div>
-                       <div className="absolute inset-0 flex items-center">
-                          <div className="h-px w-full bg-white/5"></div>
-                       </div>
-                    </div>
-
-                    <div className="space-y-4">
-                       <div className="flex justify-between px-4">
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Spend EAC (Utility)</span>
-                          <span className="text-[10px] font-black text-slate-700 uppercase">Balance: {totalSpendable.toFixed(0)} EAC</span>
-                       </div>
-                       <div className="p-8 bg-white/5 rounded-[40px] border border-white/5 flex items-center justify-between opacity-80 shadow-inner">
-                          <p className="text-4xl font-mono font-black text-emerald-500">
-                             {(Number(swapInputEAT) * user.wallet.exchangeRate).toFixed(0)}
-                          </p>
-                          <span className="text-xl font-black text-emerald-400 italic">EAC</span>
-                       </div>
-                    </div>
-                    
-                    <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex justify-between items-center shadow-inner">
-                       <div className="flex items-center gap-3">
-                          <Activity size={16} className="text-blue-400" />
-                          <span className="text-[10px] font-black text-slate-500 uppercase">Net USD Impact</span>
-                       </div>
-                       <p className="text-lg font-mono font-black text-white">+${(Number(swapInputEAT) * FOREX_RATES.EAT_USD).toFixed(2)}</p>
-                    </div>
-                 </div>
-
-                 <button 
-                  onClick={handleExecuteSwap}
-                  disabled={isSwapping || Number(swapInputEAT) <= 0}
-                  className="w-full py-8 bg-yellow-600 rounded-[32px] text-black font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:bg-yellow-400 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30"
-                 >
-                    {isSwapping ? <Loader2 className="w-8 h-8 animate-spin" /> : <ShieldCheck className="w-8 h-8" />}
-                    {isSwapping ? "AUTHORIZING SWAP..." : "CONFIRM INSTITUTIONAL SWAP"}
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* Link Provider Modal */}
-      {showLinkProvider && (
-        <div className="fixed inset-0 z-[610] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-2xl" onClick={() => setShowLinkProvider(false)}></div>
-           <div className="relative z-10 w-full max-w-md glass-card p-12 rounded-[56px] border-indigo-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2 text-center space-y-10">
-              <div className="w-24 h-24 bg-indigo-500/10 rounded-[40px] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-2xl relative group overflow-hidden">
-                 <Link className="w-10 h-10 text-indigo-400 group-hover:rotate-12 transition-transform" />
-                 <div className="absolute inset-0 bg-indigo-500/5 animate-pulse"></div>
+          <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowSwapModal(false)}></div>
+          <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] p-10 md:p-14 shadow-3xl text-center space-y-12 animate-in zoom-in duration-300 border-2">
+            <button onClick={() => setShowSwapModal(false)} className="absolute top-10 right-10 p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all"><X size={24} /></button>
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-24 h-24 bg-yellow-500/10 rounded-[40px] flex items-center justify-center mx-auto border border-yellow-500/20 shadow-2xl relative group overflow-hidden">
+                <Gem size={48} className="text-yellow-500 group-hover:scale-110 transition-transform" />
+                <div className="absolute inset-0 bg-yellow-500/5 animate-pulse"></div>
               </div>
               <div>
-                 <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Provider <span className="text-indigo-400">Sync</span></h3>
-                 <p className="text-slate-400 text-lg font-medium italic mt-6 leading-relaxed">
-                   Link your external financial identity to the EOS registry.
-                 </p>
+                <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Institutional <span className="text-yellow-500">Gold Swap</span></h3>
+                <p className="text-slate-400 text-lg mt-4 italic font-medium leading-relaxed">Exchange utility EAC for deflationary EAT equity shards anchored to network m-resilience.</p>
+              </div>
+            </div>
+
+            <div className="space-y-10">
+              <div className="space-y-4">
+                <div className="flex justify-between px-8">
+                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">EAT Target Amount</span>
+                  <span className="text-2xl font-mono font-black text-yellow-500">{swapInputEAT} EAT</span>
+                </div>
+                <input 
+                  type="range" min="0.1" max="10" step="0.1" value={swapInputEAT}
+                  onChange={e => setSwapInputEAT(e.target.value)}
+                  className="w-full h-4 bg-white/5 rounded-full appearance-none cursor-pointer accent-yellow-500 shadow-inner border border-white/5"
+                />
               </div>
 
-              <div className="space-y-6">
-                 <div className="grid grid-cols-3 gap-3">
-                    {['Mobile', 'Bank', 'Web3'].map(p => (
-                       <div key={p} className="p-4 bg-white/5 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white hover:border-indigo-500/40 cursor-pointer transition-all">
-                          {p === 'Mobile' ? <Smartphone size={16} className="mx-auto mb-2" /> : p === 'Bank' ? <Building2 size={16} className="mx-auto mb-2" /> : <Activity size={16} className="mx-auto mb-2" />}
-                          {p}
-                       </div>
-                    ))}
-                 </div>
-                 <div className="space-y-2 text-left px-2">
-                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Provider Handle/UID</label>
-                    <input type="text" placeholder="07XX XXX XXX" className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-8 text-white font-mono text-center text-xl tracking-widest outline-none focus:ring-4 focus:ring-indigo-500/20 shadow-inner" />
-                 </div>
+              <div className="p-10 bg-black/60 rounded-[48px] border border-white/10 space-y-8 shadow-inner">
+                <div className="flex justify-between items-center px-4 text-slate-500 font-black text-[10px] uppercase">
+                  <span>Current Index Rate</span>
+                  <span className="text-white font-mono">{user.wallet.exchangeRate.toFixed(2)} EAC</span>
+                </div>
+                <div className="h-px w-full bg-white/5"></div>
+                <div className="flex justify-between items-end px-4">
+                  <div className="text-left">
+                    <p className="text-[10px] text-slate-600 font-black uppercase mb-2">Registry Settlement</p>
+                    <p className="text-5xl font-mono font-black text-white tracking-tighter">
+                      {(Number(swapInputEAT) * user.wallet.exchangeRate).toFixed(0)} <span className="text-xl italic text-emerald-400">EAC</span>
+                    </p>
+                  </div>
+                  <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400 shadow-xl">
+                    <BadgeCheck size={24} />
+                  </div>
+                </div>
               </div>
 
               <button 
-                onClick={handleLinkProvider}
-                disabled={isProcessingGateway}
-                className="w-full py-8 agro-gradient rounded-[32px] text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4"
+                onClick={handleExecuteSwap}
+                disabled={isSwapping || (Number(swapInputEAT) * user.wallet.exchangeRate) > user.wallet.balance}
+                className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30"
               >
-                 {isProcessingGateway ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
-                 {isProcessingGateway ? 'AUTHENTICATING...' : 'AUTHORIZE HANDSHAKE'}
+                {isSwapping ? <Loader2 className="w-8 h-8 animate-spin" /> : <RefreshCw className="w-8 h-8" />}
+                {isSwapping ? 'ANCHORING SHARDS...' : 'AUTHORIZE SWAP'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GATEWAY MODAL (Deposit/Withdrawal) */}
+      {showGatewayModal && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowGatewayModal(null)}></div>
+          <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-indigo-500/30 bg-[#050706] p-10 md:p-14 shadow-[0_0_150px_rgba(79,70,229,0.15)] animate-in zoom-in duration-300 border-2 flex flex-col min-h-[750px]">
+            <button onClick={() => setShowGatewayModal(null)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X size={32} /></button>
+            
+            <div className="flex-1 flex flex-col justify-center">
+               {gatewayStep === 'config' && (
+                 <div className="space-y-12 animate-in slide-in-from-right-4">
+                    <div className="text-center space-y-6">
+                      <div className="w-24 h-24 bg-indigo-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-3xl">
+                         {showGatewayModal === 'deposit' ? <ArrowDownLeft size={48} className="text-emerald-400" /> : <ArrowUpRight size={48} className="text-rose-500" />}
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">{showGatewayModal === 'deposit' ? 'Fiat Ingest' : 'Fiat Egress'} <span className="text-indigo-400">Bridge</span></h3>
+                        <p className="text-slate-400 text-lg italic leading-relaxed max-sm:text-sm max-w-sm mx-auto">"Bridging decentralized utility with legacy financial nodes."</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-10">
+                       <div className="grid grid-cols-2 gap-6 px-4">
+                          <button onClick={() => setGatewayCurrency('KES')} className={`p-8 rounded-[40px] border-2 transition-all flex flex-col items-center gap-4 ${gatewayCurrency === 'KES' ? 'border-indigo-500 bg-indigo-600/10 text-white' : 'border-white/5 bg-black/40 text-slate-600'}`}>
+                             <Banknote size={32} />
+                             <span className="text-xs font-black uppercase">KES Gateway</span>
+                          </button>
+                          <button onClick={() => setGatewayCurrency('USD')} className={`p-8 rounded-[40px] border-2 transition-all flex flex-col items-center gap-4 ${gatewayCurrency === 'USD' ? 'border-indigo-500 bg-indigo-600/10 text-white' : 'border-white/5 bg-black/40 text-slate-600'}`}>
+                             <Globe2 size={32} />
+                             <span className="text-xs font-black uppercase">USD Gateway</span>
+                          </button>
+                       </div>
+
+                       <div className="space-y-4 px-4">
+                          <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Payload Value ({gatewayCurrency})</label>
+                          <div className="p-10 bg-black/60 rounded-[56px] border border-white/10 flex items-center justify-between shadow-inner">
+                             <input 
+                               type="number" value={gatewayAmount} onChange={e => setGatewayAmount(e.target.value)}
+                               className="bg-transparent text-6xl font-mono font-black text-white outline-none w-full" 
+                             />
+                             <span className="text-2xl font-black text-indigo-400 italic">{gatewayCurrency}</span>
+                          </div>
+                       </div>
+
+                       {selectedProvider ? (
+                          <div className="mx-4 p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex justify-between items-center shadow-xl group">
+                             <div className="flex items-center gap-6">
+                                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-indigo-400 shadow-inner group-hover:rotate-6 transition-transform">
+                                   {selectedProvider.type === 'Mobile' ? <SmartphoneNfc size={28} /> : <Building2 size={28} />}
+                                </div>
+                                <div>
+                                   <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Target Relay Node</p>
+                                   <p className="text-xl font-black text-white uppercase italic">{selectedProvider.name}</p>
+                                </div>
+                             </div>
+                             {/* Fixed: Added Settings icon from lucide-react */}
+                             <button onClick={() => setShowLinkProvider(true)} className="text-slate-500 hover:text-white p-3"><Settings size={20} /></button>
+                          </div>
+                       ) : (
+                          <button onClick={() => setShowLinkProvider(true)} className="mx-4 py-8 border-4 border-dashed border-white/5 rounded-[44px] text-slate-700 font-black uppercase tracking-widest hover:border-indigo-500/20 hover:text-indigo-400 transition-all flex items-center justify-center gap-4">
+                             <PlusCircle size={24} /> Link Gateway Provider
+                          </button>
+                       )}
+                    </div>
+
+                    <button 
+                      onClick={gatewayStep === 'success' ? resetPortal : handleGatewayAction}
+                      disabled={!selectedProvider || !gatewayAmount}
+                      className="mx-4 py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all disabled:opacity-30"
+                    >
+                       Initialize ZK-Auth Handshake <ChevronRight className="inline ml-2" />
+                    </button>
+                 </div>
+               )}
+
+               {gatewayStep === 'sign' && (
+                  <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex flex-col justify-center flex-1">
+                     <div className="text-center space-y-6">
+                        <div className="w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto border border-indigo-500/20 shadow-3xl">
+                           <Fingerprint className="w-12 h-12 text-indigo-400" />
+                        </div>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Registry <span className="text-indigo-400">Audit</span></h3>
+                     </div>
+                     <div className="space-y-4 max-w-md mx-auto w-full">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] block text-center">Node Signature (ESIN)</label>
+                        <input 
+                           type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
+                           placeholder="EA-XXXX-XXXX-XXXX" 
+                           className="w-full bg-black border border-white/10 rounded-[32px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
+                        />
+                     </div>
+                     <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex items-center gap-6 mx-4 shadow-inner">
+                        <ShieldAlert className="w-10 h-10 text-indigo-400 shrink-0" />
+                        <p className="text-[10px] text-indigo-200/50 font-black uppercase leading-relaxed tracking-tight text-left italic">
+                           "Cross-ledger settlement initiated. Non-withdrawable registration shards are excluded from egress protocols. Bridge fee: 0.2%"
+                        </p>
+                     </div>
+                     <button 
+                        onClick={handleGatewayAction}
+                        disabled={isProcessingGateway || !esinSign}
+                        className="mx-4 py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all"
+                     >
+                        {isProcessingGateway ? <Loader2 className="w-8 h-8 animate-spin" /> : <Lock size={28} className="fill-current" />}
+                        {isProcessingGateway ? "ANCHORING BRIDGE..." : "AUTHORIZE SETTLEMENT"}
+                     </button>
+                  </div>
+               )}
+
+               {gatewayStep === 'success' && (
+                  <div className="space-y-16 py-10 animate-in zoom-in duration-700 flex-1 flex flex-col justify-center items-center text-center">
+                     <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(79,70,229,0.3)] relative group scale-110">
+                        <CheckCircle2 className="w-28 h-28 text-white group-hover:scale-110 transition-transform" />
+                        <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+                     </div>
+                     <div className="space-y-4">
+                        <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic m-0">Bridge <span className="text-emerald-400">Finalized</span></h3>
+                        <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.8em] font-mono">SETTLEMENT_HASH: 0xGW_{Math.random().toString(16).substring(2,6).toUpperCase()}_OK</p>
+                     </div>
+                     <button onClick={() => setShowGatewayModal(null)} className="w-full max-w-sm py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Node</button>
+                  </div>
+               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LINK PROVIDER MODAL */}
+      {showLinkProvider && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowLinkProvider(false)}></div>
+           <div className="relative z-10 w-full max-md glass-card p-12 rounded-[56px] border border-white/10 bg-[#050706] shadow-3xl text-center space-y-10 border-2">
+              <div className="w-20 h-20 bg-indigo-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-2xl animate-float">
+                 <Link2 size={40} className="text-indigo-400" />
+              </div>
+              <div className="space-y-4">
+                 <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Link <span className="text-indigo-400">Node</span></h3>
+                 <p className="text-slate-500 text-sm leading-relaxed">Connect your M-Pesa or Bank account shard to enable institutional capital ingest.</p>
+              </div>
+              <div className="space-y-4">
+                 <button onClick={handleLinkProvider} disabled={isProcessingGateway} className="w-full py-6 bg-indigo-600 hover:bg-indigo-500 rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                    {isProcessingGateway ? <Loader2 className="animate-spin" /> : <SmartphoneNfc size={20} />} Link M-Pesa Business Node
+                 </button>
+                 <button className="w-full py-6 bg-white/5 border border-white/10 rounded-3xl text-slate-400 font-black text-xs uppercase tracking-widest hover:text-white transition-all flex items-center justify-center gap-3">
+                    <Building2 size={20} /> Bank Transfer Node
+                 </button>
+              </div>
+              <button onClick={() => setShowLinkProvider(false)} className="text-[10px] font-black text-slate-700 uppercase tracking-widest hover:text-rose-500">Cancel Protocol</button>
            </div>
         </div>
       )}
@@ -927,9 +937,11 @@ const AgroWallet: React.FC<AgroWalletProps> = ({ user, onNavigate, onUpdateUser,
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         .animate-spin-slow { animation: spin 10s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );

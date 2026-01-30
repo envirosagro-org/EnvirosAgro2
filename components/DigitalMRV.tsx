@@ -37,7 +37,6 @@ import {
   ShieldAlert,
   Landmark,
   ArrowLeftCircle,
-  // Added missing Info icon import
   Info
 } from 'lucide-react';
 import { User, AgroResource, ViewState } from '../types';
@@ -51,7 +50,6 @@ interface DigitalMRVProps {
 }
 
 const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate }) => {
-  // Check if user has any LAND resources registered
   const landResources = useMemo(() => 
     (user.resources || []).filter(r => r.category === 'LAND'),
     [user.resources]
@@ -60,7 +58,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
   const hasLandRegistered = landResources.length > 0;
 
   const [pipelineStep, setPipelineStep] = useState<'land_select' | 'ingest' | 'verify' | 'mint' | 'success'>(
-    hasLandRegistered ? 'land_select' : 'land_select'
+    'land_select'
   );
   
   const [selectedLand, setSelectedLand] = useState<AgroResource | null>(null);
@@ -73,8 +71,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Constants for Equation Integration
-  const MINTING_FACTOR = 100; // Tokens per tonne of carbon
+  const MINTING_FACTOR = 100;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,7 +123,6 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
     }, 3000);
   };
 
-  // Locked State Render
   if (!hasLandRegistered) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-12 animate-in fade-in zoom-in duration-700 max-w-2xl mx-auto text-center px-6">
@@ -147,7 +143,6 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
 
         <div className="p-8 glass-card rounded-[40px] border-white/5 bg-white/[0.02] w-full text-left space-y-4 shadow-inner">
            <div className="flex items-center gap-4">
-              {/* Corrected Info icon usage */}
               <Info className="w-5 h-5 text-indigo-400" />
               <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Protocol Pre-requisite</p>
            </div>
@@ -158,7 +153,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
 
         <button 
           onClick={() => onNavigate?.('registry_handshake')}
-          className="w-full py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 ring-8 ring-emerald-500/5"
+          className="w-full py-8 bg-blue-600 hover:bg-blue-500 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 ring-8 ring-emerald-500/5"
         >
           <Landmark size={24} /> INITIALIZE LAND REGISTRY
         </button>
@@ -194,7 +189,6 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
       </div>
 
       <div className="min-h-[500px] py-6">
-        {/* Step 0: Land Selection */}
         {pipelineStep === 'land_select' && (
           <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
              <div className="text-center space-y-4">
@@ -220,7 +214,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                          <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-2">{land.id}</p>
                       </div>
                       <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase border tracking-widest ${
-                         land.status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                         land.status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/20 text-amber-400 border-amber-500/20'
                       }`}>
                          {land.status}
                       </span>
@@ -230,7 +224,6 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
           </div>
         )}
 
-        {/* Stage 1: Evidence Ingest (Layer 1) */}
         {pipelineStep === 'ingest' && (
            <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
               <button 
@@ -303,7 +296,6 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
            </div>
         )}
 
-        {/* Stage 3: AI Verification (Layer 2) */}
         {pipelineStep === 'verify' && (
            <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
               <div className="glass-card rounded-[64px] min-h-[500px] border border-white/5 bg-black/40 flex flex-col relative overflow-hidden shadow-3xl">
@@ -386,7 +378,6 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
            </div>
         )}
 
-        {/* Stage 4: Blockchain Mint (Layer 3) */}
         {pipelineStep === 'mint' && (
            <div className="max-w-3xl mx-auto space-y-12 animate-in zoom-in duration-500">
               <div className="glass-card p-16 rounded-[64px] border-emerald-500/20 bg-[#050706] shadow-3xl text-center space-y-12 border-2 relative overflow-hidden group">
@@ -453,7 +444,6 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
            </div>
         )}
 
-        {/* Stage 5: Success */}
         {pipelineStep === 'success' && (
            <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 animate-in zoom-in duration-700 text-center">
               <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(16,185,129,0.5)] scale-110 relative group">

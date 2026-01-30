@@ -155,6 +155,8 @@ export interface LiveAgroProduct {
   image?: string;
   isAuthentic: boolean; // Result of Physical Audit
   auditStatus: 'Pending' | 'In-Progress' | 'Verified' | 'Rejected';
+  tasks?: string[]; // IDs of linked industrial tasks
+  telemetryNodes?: string[]; // IDs of linked IoT hardware nodes
 }
 
 export interface FarmingContract {
@@ -299,4 +301,5 @@ export type ViewState =
   | 'envirosagro_store'
   | 'agro_value_enhancement'
   | 'digital_mrv'
-  | 'registry_handshake';
+  | 'registry_handshake'
+  | 'online_garden';

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, 
@@ -83,8 +84,10 @@ import {
   Wifi,
   Radio,
   Unlink,
-  // Added missing SmartphoneNfc icon from lucide-react to fix "Cannot find name" errors on lines 354 and 376
-  SmartphoneNfc
+  SmartphoneNfc,
+  BoxSelect,
+  Boxes,
+  Maximize2
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -98,7 +101,10 @@ import {
   PolarGrid, 
   PolarAngleAxis, 
   Radar as RechartsRadar,
-  Legend
+  Legend,
+  BarChart,
+  Bar,
+  Cell
 } from 'recharts';
 import { chatWithAgroExpert, analyzeMedia, AIResponse } from '../services/geminiService';
 import { User, AgroResource } from '../types';
@@ -106,18 +112,11 @@ import { User, AgroResource } from '../types';
 interface IntelligenceProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => boolean;
-  // Added missing onEarnEAC prop to resolve "Cannot find name" error on line 304
   onEarnEAC: (amount: number, reason: string) => void;
   onOpenEvidence?: () => void;
 }
 
 type TabState = 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry';
-
-const MOCK_TELEMETRY = [
-  { time: '00:00', val: 62 }, { time: '04:00', val: 65 }, { time: '08:00', val: 68 },
-  { time: '12:00', val: 64 }, { time: '16:00', val: 72 }, { time: '20:00', val: 70 },
-  { time: '24:00', val: 75 },
-];
 
 const ORACLE_QUERY_COST = 25;
 
@@ -150,6 +149,20 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
       return () => clearInterval(interval);
     }
   }, [activeTab, selectedIotNode]);
+
+  // --- DIGITAL TWIN STATES ---
+  const [isTwinSyncing, setIsTwinSyncing] = useState(false);
+  const [twinResonance, setTwinResonance] = useState(94.2);
+  const [activeLayer, setActiveLayer] = useState<'biological' | 'structural' | 'thermal'>('biological');
+
+  const handleTwinRefresh = () => {
+    setIsTwinSyncing(true);
+    setTimeout(() => {
+      setTwinResonance(94 + Math.random() * 5);
+      setIsTwinSyncing(false);
+      onEarnEAC(5, 'TWIN_MODEL_CALIBRATION');
+    }, 2000);
+  };
 
   // --- SUSTAINABILITY EQUATION SIMULATOR STATES ---
   const [x_immunity, setXImmunity] = useState(0.85); // Social Immunity
@@ -353,8 +366,9 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
       {/* Tabs */}
       <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4 md:ml-4">
         {[
+          { id: 'twin', label: 'Digital Twin', icon: BoxSelect },
           { id: 'simulator', label: 'Industrial Simulator', icon: LucideLineChart },
-          { id: 'telemetry', label: 'IOT Telemetry', icon: SmartphoneNfc },
+          { id: 'telemetry', label: 'Registered IOT Telemetry', icon: SmartphoneNfc },
           { id: 'eos_ai', label: 'EnvirosAgro AI', icon: BrainCircuit },
           { id: 'sid', label: 'SID Remediation (S)', icon: HeartPulse },
           { id: 'evidence', label: 'Evidence Portal', icon: History },
@@ -370,6 +384,88 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
       </div>
 
       <div className="min-h-[750px] px-4">
+        
+        {/* --- DIGITAL TWIN SECTION --- */}
+        {activeTab === 'twin' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in zoom-in duration-500">
+             <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden flex flex-col justify-center min-h-[650px] shadow-3xl group">
+                <div className="absolute inset-0 bg-emerald-500/[0.02] pointer-events-none"></div>
+                
+                <div className="relative z-10 flex flex-col items-center justify-center space-y-12">
+                   <div className="w-96 h-96 relative flex items-center justify-center">
+                      {/* Virtual Farm Core */}
+                      <div className={`absolute w-48 h-48 rounded-[64px] flex items-center justify-center border-4 shadow-[0_0_100px_rgba(16,185,129,0.3)] transition-all duration-[2s] ${isTwinSyncing ? 'scale-110 bg-emerald-500/20 border-emerald-400' : 'bg-black/60 border-emerald-500/40'}`}>
+                         <Boxes size={64} className={`${isTwinSyncing ? 'text-white' : 'text-emerald-500'} animate-pulse`} />
+                      </div>
+                      
+                      {/* Rotating Sensor Orbits */}
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="absolute border-2 border-dashed border-white/5 rounded-full" style={{ width: `${200 + i * 80}px`, height: `${200 + i * 80}px`, animation: `spin ${20 + i * 10}s linear infinite`, animationDirection: i % 2 === 0 ? 'normal' : 'reverse' }}>
+                           <div className="absolute -top-3 left-1/2 -translate-x-1/2 p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981]"></div>
+                           </div>
+                        </div>
+                      ))}
+                   </div>
+
+                   <div className="text-center space-y-4">
+                      <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Node <span className="text-emerald-400">Digital Mirror</span></h3>
+                      <p className="text-slate-500 text-xl font-medium italic">"Real-time industrial sharding of your physical farm node."</p>
+                   </div>
+                </div>
+
+                <div className="absolute bottom-10 left-10 p-6 glass-card rounded-3xl border border-white/5 space-y-4 bg-black/40">
+                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-2">
+                      <Activity size={12} className="text-emerald-400" /> Mesh Resonance
+                   </p>
+                   <p className="text-3xl font-mono font-black text-white">{twinResonance.toFixed(1)}%</p>
+                </div>
+
+                <div className="absolute top-10 right-10 flex flex-col gap-3">
+                   {['biological', 'structural', 'thermal'].map(layer => (
+                      <button 
+                        key={layer}
+                        onClick={() => setActiveLayer(layer as any)}
+                        className={`px-6 py-3 rounded-2xl border text-[9px] font-black uppercase tracking-widest transition-all ${activeLayer === layer ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-black/60 border-white/10 text-slate-500 hover:text-white'}`}
+                      >
+                         {layer} Layer
+                      </button>
+                   ))}
+                </div>
+             </div>
+
+             <div className="lg:col-span-4 space-y-8">
+                <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-blue-950/10 space-y-10 shadow-xl">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-600 rounded-2xl shadow-xl"><RefreshCw className="w-6 h-6 text-white" /></div>
+                      <h4 className="text-xl font-black text-white uppercase tracking-widest italic">Model <span className="text-blue-400">Sync</span></h4>
+                   </div>
+                   <div className="space-y-6">
+                      <p className="text-slate-400 text-sm italic leading-relaxed">"Synchronize the virtual model with the latest 432Hz spectral data shards from your local IoT cluster."</p>
+                      <button 
+                        onClick={handleTwinRefresh}
+                        disabled={isTwinSyncing}
+                        className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.5em] shadow-3xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
+                      >
+                         {isTwinSyncing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 fill-current" />}
+                         {isTwinSyncing ? 'CALIBRATING...' : 'INITIALIZE SYNC'}
+                      </button>
+                   </div>
+                </div>
+
+                <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 space-y-6">
+                   <div className="flex items-center gap-3">
+                      <Info className="w-5 h-5 text-indigo-400" />
+                      <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Twin Integrity</h4>
+                   </div>
+                   <p className="text-xs text-slate-500 leading-relaxed italic border-l-2 border-indigo-500/20 pl-4">
+                      "Digital twins allow stewards to test 'What-If' scenarios without risking physical C(a) constant decay. Every simulation is logged for registry validation."
+                   </p>
+                </div>
+             </div>
+          </div>
+        )}
+
         {/* --- IOT TELEMETRY SECTION --- */}
         {activeTab === 'telemetry' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-700">
@@ -409,7 +505,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
                             <span className="text-[10px] font-mono opacity-50 uppercase">{node.id}</span>
                           </div>
                         </div>
-                        <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase ${node.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                        <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase ${node.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-400'}`}>
                           {node.status}
                         </span>
                       </button>
@@ -650,7 +746,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                             <XAxis dataKey="cycle" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
                             <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '16px' }} />
+                            <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
                             <Area type="monotone" name="Agro Code C(a)" dataKey="ca" stroke="#10b981" strokeWidth={5} fillOpacity={1} fill="url(#colorCa)" strokeLinecap="round" />
                             <Area type="monotone" name="Resilience (m)" dataKey="m" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorM)" strokeDasharray="5 5" />
                          </AreaChart>
@@ -944,7 +1040,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
                           </div>
                           <div className="text-right">
                              <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest ${
-                               // Fix: Corrected quoting in ternary operator to resolve "Cannot find name 'bg'" error on line 944
                                item.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
                              }`}>{item.status}</span>
                              <p className="text-[10px] text-slate-500 font-mono mt-3 uppercase tracking-tighter italic">{item.id}</p>

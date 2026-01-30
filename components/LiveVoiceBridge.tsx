@@ -95,7 +95,8 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
               source.addEventListener('ended', () => { sourcesRef.current.delete(source); });
               source.start(nextStartTimeRef.current);
               nextStartTimeRef.current += audioBuffer.duration;
-              sourcesRef.add(source);
+              // Added .current to sourcesRef to fix property access error
+              sourcesRef.current.add(source);
             }
             if (message.serverContent?.interrupted) stopAllAudio();
           },

@@ -1,7 +1,8 @@
+
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from './types';
 import Dashboard from './components/Dashboard';
@@ -47,6 +48,7 @@ import ChromaSystem from './components/ChromaSystem';
 import AgroValueEnhancement from './components/AgroValueEnhancement';
 import DigitalMRV from './components/DigitalMRV';
 import RegistryHandshake from './components/RegistryHandshake';
+import OnlineGarden from './components/OnlineGarden';
 import { syncUserToCloud } from './services/firebaseService';
 
 export interface SignalShard {
@@ -109,6 +111,7 @@ const App: React.FC = () => {
       productType: 'Maize Farming Node', 
       requiredLand: '50-100 Hectares', 
       requiredLabour: '20 Steward Units', 
+      // Removed non-existent 'border' property to fix TypeScript error on line 114
       budget: 50000, 
       status: 'Open', 
       applications: [],
@@ -292,23 +295,15 @@ const App: React.FC = () => {
       ]
     },
     {
-      category: 'Natural Resources',
-      items: [
-        { id: 'animal_world', name: 'Animal World', icon: AnimalIcon },
-        { id: 'plants_world', name: 'Plants World', icon: Sprout },
-        { id: 'aqua_portal', name: 'Aqua Portal', icon: Droplets },
-        { id: 'soil_portal', name: 'Soil Portal', icon: Mountain },
-        { id: 'air_portal', name: 'Air Portal', icon: Wind }
-      ]
-    },
-    {
       category: 'Operations & Trace',
       items: [
+        { id: 'online_garden', name: 'Online Garden', icon: Flower },
         { id: 'digital_mrv', name: 'Digital MRV', icon: Scan },
         { id: 'live_farming', name: 'Product Processing', icon: Wheat },
         { id: 'tqm', name: 'TQM Trace Hub', icon: ClipboardCheck },
         { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake },
-        { id: 'circular', name: 'Circular Grid', icon: Recycle }
+        { id: 'circular', name: 'Circular Grid', icon: Recycle },
+        { id: 'tools', name: 'Industrial Tools', icon: Wrench }
       ]
     },
     {
@@ -460,7 +455,6 @@ const App: React.FC = () => {
           {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'economy' && <Economy user={user} onNavigate={handleNavigate} onSpendEAC={spendEAC} onEarnEAC={earnEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} />}
           {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} />}
-          {/* Added missing onEarnEAC prop to satisfy child requirement and resolve build error */}
           {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
           {activeView === 'code_of_laws' && <CodeOfLaws user={user} />}
           {activeView === 'chroma_system' && <ChromaSystem user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
@@ -474,6 +468,7 @@ const App: React.FC = () => {
           {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} />}
           {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onNavigate={handleNavigate} orders={orders} />}
           {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />}
+          {activeView === 'tools' && <ToolsSection user={user} onSpendEAC={spendEAC} />}
           {activeView === 'contract_farming' && <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} contracts={contracts} setContracts={setContracts} />}
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} onSpendEAC={spendEAC} projects={projects} onNavigate={handleNavigate} />}
           {activeView === 'agrowild' && <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />}
@@ -482,7 +477,7 @@ const App: React.FC = () => {
           {activeView === 'permaculture_hub' && <Permaculture user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'cea_portal' && <CEA user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'emergency_portal' && <EmergencyPortal user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
-          {activeView === 'agro_regency' && <Agro Regency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'agro_regency' && <AgroRegency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'intranet' && <IntranetPortal user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'envirosagro_store' && <EnvirosAgroStore user={user} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} />}
           {activeView === 'media' && <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
@@ -493,6 +488,7 @@ const App: React.FC = () => {
           {activeView === 'agro_value_enhancement' && <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'digital_mrv' && <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'registry_handshake' && <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
+          {activeView === 'online_garden' && <OnlineGarden user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {['animal_world', 'plants_world', 'aqua_portal', 'soil_portal', 'air_portal'].includes(activeView) && (
             <NaturalResources user={user} type={activeView} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />
           )}

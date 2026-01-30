@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   ShoppingBag, 
@@ -41,7 +40,9 @@ import {
   Package,
   Truck,
   Box,
-  ArrowLeft
+  ArrowLeft,
+  ThumbsUp,
+  LineChart as LineChartIcon
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -52,7 +53,7 @@ import {
   Tooltip, 
   ResponsiveContainer
 } from 'recharts';
-import { User, ViewState, Order, VendorProduct, AgroProject, FarmingContract, RegisteredUnit } from '../types';
+import { User, ViewState, Order, VendorProduct, AgroProject, FarmingContract, RegisteredUnit, LiveAgroProduct } from '../types';
 
 interface EconomyProps {
   user: User;
@@ -102,6 +103,12 @@ const Economy: React.FC<EconomyProps> = ({
   const [checkoutStep, setCheckoutStep] = useState<'summary' | 'sign' | 'success'>('summary');
   const [esinSign, setEsinSign] = useState('');
   const [isFinalizing, setIsFinalizing] = useState(false);
+
+  // Reaction Mining / Demand Logic (Simulated integration from LiveFarming)
+  const [highDemandShards] = useState([
+    { id: 'PRD-402', name: 'Bio-Organic Fertilizer', vouches: 128, trend: 'UP' },
+    { id: 'PRD-401', name: 'Maize Shards', vouches: 42, trend: 'STABLE' },
+  ]);
 
   const cartTotal = cart.reduce((acc, item) => acc + item.price, 0);
 
@@ -257,7 +264,7 @@ const Economy: React.FC<EconomyProps> = ({
                      </div>
                      <div className="p-8 flex-1 flex flex-col justify-between">
                         <div className="space-y-4">
-                           <h4 className="text-2xl font-black text-white uppercase italic leading-tight group-hover:text-emerald-400 transition-colors m-0 tracking-tight">{item.name}</h4>
+                           <h4 className="text-2xl font-black text-white uppercase italic leading-tight group-hover:text-emerald-400 transition-colors m-0 tracking-tighter">{item.name}</h4>
                            <p className="text-[11px] text-slate-400 leading-relaxed italic line-clamp-3">"{item.desc}"</p>
                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.25em] italic">Provider: {item.provider}</p>
                         </div>
@@ -332,12 +339,35 @@ const Economy: React.FC<EconomyProps> = ({
                    </div>
                    <div className="space-y-2">
                       <h4 className="text-xl font-bold text-white uppercase italic">Market Oracle Insights</h4>
-                      <p className="text-slate-400 text-sm leading-relaxed italic px-4">"Aggregate demand for bio-organic shards in Zone 4 is predicted to peak at Cycle 6. Advise increasing supply ingest by 14%."</p>
+                      <p className="text-slate-400 text-sm leading-relaxed italic px-4">"Reaction mining from Live Processing shards indicates peak consumer vouching for Bio-Organic Shards. Demand forecast adjusted to Cycle 6."</p>
                    </div>
                    <div className="p-6 bg-white/5 rounded-3xl border border-white/5 w-[80%]">
                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Confidence Score</p>
                       <p className="text-4xl font-mono font-black text-emerald-400">92.4%</p>
                    </div>
+                </div>
+             </div>
+
+             {/* Live Reaction / Demand Shards Integration */}
+             <div className="space-y-6">
+                <div className="flex items-center gap-3 px-6">
+                   <ThumbsUp className="text-amber-500" />
+                   <h4 className="text-xl font-black text-white uppercase italic">High-Demand <span className="text-amber-500">Live Shards</span></h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
+                   {highDemandShards.map(shard => (
+                     <div key={shard.id} className="p-8 glass-card border border-white/5 rounded-[40px] bg-black/60 shadow-xl space-y-6 group hover:border-amber-500/30 transition-all">
+                        <div className="flex justify-between items-center">
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{shard.id}</span>
+                           <TrendingUp size={16} className="text-emerald-500" />
+                        </div>
+                        <h5 className="text-xl font-black text-white uppercase italic truncate">{shard.name}</h5>
+                        <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex justify-between items-center shadow-inner">
+                           <span className="text-[10px] font-black text-slate-500 uppercase">Live Vouches</span>
+                           <span className="text-2xl font-mono font-black text-amber-500">{shard.vouches}</span>
+                        </div>
+                     </div>
+                   ))}
                 </div>
              </div>
           </div>
