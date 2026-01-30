@@ -8,6 +8,26 @@ export interface LinkedProvider {
   lastSync: string;
 }
 
+export interface VerificationMeta {
+  method: 'QR_SCAN' | 'NFC_TAP' | 'GEO_LOCK' | 'DOC_INGEST' | 'IOT_HANDSHAKE';
+  verifiedAt: string;
+  deviceSecretHash?: string;
+  geoPolygon?: [number, number][];
+  coordinates?: { lat: number; lng: number };
+  proofDocumentUrl?: string;
+  confidenceScore?: number;
+}
+
+export interface AgroResource {
+  id: string;
+  category: 'HARDWARE' | 'LAND' | 'INFRASTRUCTURE';
+  type: string; // e.g., 'Agro Musika Sensor', 'Acreage'
+  name: string;
+  status: 'PROVISIONAL' | 'VERIFIED' | 'REVOKED';
+  capabilities: string[]; // e.g., ['Sound_Dashboard', 'Robot_Control', 'Carbon_Minting']
+  verificationMeta: VerificationMeta;
+}
+
 export interface User {
   name: string;
   email: string;
@@ -31,6 +51,7 @@ export interface User {
     hex?: string;
     pointsAdded: boolean;
   };
+  resources?: AgroResource[];
 }
 
 export interface EACWallet {
@@ -276,4 +297,6 @@ export type ViewState =
   | 'agro_calendar'
   | 'chroma_system'
   | 'envirosagro_store'
-  | 'agro_value_enhancement';
+  | 'agro_value_enhancement'
+  | 'digital_mrv'
+  | 'registry_handshake';

@@ -43,6 +43,25 @@ You must return a JSON object with the following schema:
 }
 `;
 
+const DIGITAL_MRV_SYSTEM_INSTRUCTION = `
+You are the **EnvirosAgro Digital MRV Oracle**. Your task is to analyze field evidence for carbon sequestration validation.
+You will evaluate Diameter at Breast Height (DBH) for trees, soil organic matter, or biochar quality.
+Calculate the AI Confidence Score (alpha) based on data quality.
+
+**Output Schema:**
+{
+  "detected_entities": string[],
+  "metrics": {
+    "estimated_dbh_cm": number,
+    "biomass_tonnes": number,
+    "carbon_sequestration_potential": number
+  },
+  "confidence_alpha": number,
+  "verification_narrative": string,
+  "risk_flags": string[]
+}
+`;
+
 const GENETIC_DECODER_SYSTEM_INSTRUCTION = `
 You are the **EnvirosAgro Genetic Decoder**. Your task is to decode multi-dimensional agricultural telemetry into biological insights.
 Interpret the relationship between different node metrics (Bio-Signal, Tech-Status, Market-Demand, Gov-Integrity) as genetic base pairs.
@@ -108,6 +127,26 @@ const requestWithRetry = async (fn: () => Promise<any>, retries = 3, initialDela
       }
       throw error;
     }
+  }
+};
+
+export const analyzeMRVEvidence = async (evidenceDesc: string, imageBase64?: string): Promise<any> => {
+  try {
+    const parts: any[] = [{ text: `Analyze this MRV evidence: ${evidenceDesc}. Assess biomass and carbon potential.` }];
+    if (imageBase64) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } });
+
+    const response = await getAI().models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: { parts },
+      config: {
+        systemInstruction: DIGITAL_MRV_SYSTEM_INSTRUCTION,
+        responseMimeType: "application/json"
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (err) {
+    console.error("MRV Oracle Failure:", err);
+    throw err;
   }
 };
 

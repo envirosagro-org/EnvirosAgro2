@@ -2,7 +2,7 @@
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from './types';
 import Dashboard from './components/Dashboard';
@@ -46,6 +46,8 @@ import CodeOfLaws from './components/CodeOfLaws';
 import AgroCalendar from './components/AgroCalendar';
 import ChromaSystem from './components/ChromaSystem';
 import AgroValueEnhancement from './components/AgroValueEnhancement';
+import DigitalMRV from './components/DigitalMRV';
+import RegistryHandshake from './components/RegistryHandshake';
 import { syncUserToCloud } from './services/firebaseService';
 
 export interface SignalShard {
@@ -303,6 +305,7 @@ const App: React.FC = () => {
     {
       category: 'Operations & Trace',
       items: [
+        { id: 'digital_mrv', name: 'Digital MRV', icon: Scan },
         { id: 'live_farming', name: 'Product Processing', icon: Wheat },
         { id: 'tqm', name: 'TQM Trace Hub', icon: ClipboardCheck },
         { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake },
@@ -329,6 +332,7 @@ const App: React.FC = () => {
     {
       category: 'Governance & Infrastructure',
       items: [
+        { id: 'registry_handshake', name: 'Registry Handshake', icon: QrCode },
         { id: 'vendor', name: 'Supplier Command', icon: Warehouse },
         { id: 'ingest', name: 'Network Ingest', icon: Cable },
         { id: 'emergency_portal', name: 'Crisis Command', icon: Siren },
@@ -487,6 +491,8 @@ const App: React.FC = () => {
           {activeView === 'ingest' && <NetworkIngest onSpendEAC={spendEAC} />}
           {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} />}
           {activeView === 'agro_value_enhancement' && <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
+          {activeView === 'digital_mrv' && <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
+          {activeView === 'registry_handshake' && <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} />}
           {['animal_world', 'plants_world', 'aqua_portal', 'soil_portal', 'air_portal'].includes(activeView) && (
             <NaturalResources user={user} type={activeView} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />
           )}

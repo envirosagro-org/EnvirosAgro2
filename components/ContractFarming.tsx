@@ -23,7 +23,6 @@ import {
   HardHat,
   Handshake,
   FileSignature,
-  // Added missing Key and FileSearch icons
   Key,
   FileSearch,
   FileCheck,
@@ -43,9 +42,13 @@ import {
   Sparkles,
   ClipboardCheck,
   Building2,
-  Users
+  Users,
+  TreePine,
+  ShieldPlus,
+  Info,
+  Stamp
 } from 'lucide-react';
-import { User, FarmingContract, ContractApplication, ViewState } from '../types';
+import { User, FarmingContract, ContractApplication, ViewState, AgroResource } from '../types';
 import { runSpecialistDiagnostic } from '../services/geminiService';
 
 interface ContractFarmingProps {
@@ -62,6 +65,13 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   const [activeTab, setActiveTab] = useState<'browse' | 'deployments' | 'engagements'>('browse');
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Registry Gate Logic
+  const landResources = useMemo(() => 
+    (user.resources || []).filter(r => r.category === 'LAND'),
+    [user.resources]
+  );
+  const hasLandRegistered = landResources.length > 0;
+
   // Modals
   const [showApplyModal, setShowApplyModal] = useState<FarmingContract | null>(null);
   const [showDeployModal, setShowDeployModal] = useState(false);
@@ -69,7 +79,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
 
   // Application Workflow States
   const [applyStep, setApplyStep] = useState<'form' | 'vetting' | 'commitment' | 'success'>('form');
-  const [landResources, setLandResources] = useState('');
+  const [selectedLandForApp, setSelectedLandForApp] = useState<AgroResource | null>(null);
   const [labourCapacity, setLabourCapacity] = useState('');
   const [isVetting, setIsVetting] = useState(false);
   const [vettingReport, setVettingReport] = useState<string | null>(null);
@@ -93,9 +103,10 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   );
 
   const handleApplyStart = (contract: FarmingContract) => {
+    if (!hasLandRegistered) return;
     setApplyStep('form');
     setShowApplyModal(contract);
-    setLandResources('');
+    setSelectedLandForApp(landResources[0]);
     setLabourCapacity('');
     setVettingReport(null);
   };
@@ -105,7 +116,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
     setApplyStep('vetting');
     try {
       const prompt = `Perform an initial risk assessment for a farmer application. 
-      Land Resources: ${landResources}
+      Land Resource Shard: ${selectedLandForApp?.name} (${selectedLandForApp?.id})
       Labour Capacity: ${labourCapacity}
       Contract Goal: ${showApplyModal?.productType}
       
@@ -129,7 +140,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
       id: `APP-${Math.random().toString(36).substring(7).toUpperCase()}`,
       farmerEsin: user.esin,
       farmerName: user.name,
-      landResources,
+      landResources: selectedLandForApp?.name || 'Unknown Shard',
       labourCapacity,
       auditStatus: 'Pending',
       paymentEscrowed: 0
@@ -176,6 +187,45 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
     }, 2000);
   };
 
+  // Locked State Render
+  if (!hasLandRegistered) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-12 animate-in fade-in zoom-in duration-700 max-w-2xl mx-auto text-center px-6">
+        <div className="relative">
+          <div className="w-32 h-32 bg-indigo-600/10 rounded-[40px] border-2 border-indigo-500/20 flex items-center justify-center text-indigo-500 shadow-2xl relative z-10">
+             <ShieldAlert size={64} />
+          </div>
+          <div className="absolute inset-0 bg-indigo-500 blur-[80px] opacity-20"></div>
+          <div className="absolute inset-[-20px] rounded-full border border-dashed border-indigo-500/20 animate-spin-slow"></div>
+        </div>
+
+        <div className="space-y-6">
+          <h2 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter leading-none m-0">RESTRICTED <span className="text-indigo-500">MISSION ACCESS</span></h2>
+          <p className="text-slate-400 text-lg md:text-xl font-medium leading-relaxed italic">
+            "Contract Farming requires a verified physical anchor. You have no **LAND** resources registered in your node profile."
+          </p>
+        </div>
+
+        <div className="p-8 glass-card rounded-[40px] border-white/5 bg-white/[0.02] w-full text-left space-y-4 shadow-inner">
+           <div className="flex items-center gap-4">
+              <Info className="w-5 h-5 text-blue-400" />
+              <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Protocol Pre-requisite</p>
+           </div>
+           <p className="text-sm text-slate-300 italic leading-loose">
+             To apply for missions or initialize new capital deployments, you must first register your land via the **Registry Handshake** protocol to prove stewardship capacity.
+           </p>
+        </div>
+
+        <button 
+          onClick={() => onNavigate('registry_handshake')}
+          className="w-full py-8 bg-blue-600 hover:bg-blue-500 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(37,99,235,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 ring-8 ring-blue-500/5"
+        >
+          <Landmark size={24} /> INITIALIZE LAND REGISTRY
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto px-4 md:px-0">
       
@@ -206,7 +256,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
            </div>
            <div className="space-y-6 relative z-10 text-center md:text-left">
               <div className="space-y-2">
-                 <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-blue-500/20">ESCROW_MISSION_INTERFACE_v4</span>
+                 <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-blue-500/20 shadow-inner">ESCROW_MISSION_INTERFACE_v4</span>
                  <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 leading-none">Contract <span className="text-blue-400">Farming</span></h2>
               </div>
               <p className="text-slate-400 text-lg md:text-xl leading-relaxed max-w-2xl font-medium italic">
@@ -270,7 +320,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
         {/* TAB: BROWSE MISSIONS */}
         {activeTab === 'browse' && (
           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
-             <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-white/5 pb-8">
+             <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-white/5 pb-8 px-4">
                 <div>
                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Mission <span className="text-blue-400">Ledger</span></h3>
                    <p className="text-slate-500 text-sm mt-1">Institutional nodes seeking land steward partnerships.</p>
@@ -457,7 +507,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
       {showApplyModal && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowApplyModal(null)}></div>
-           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-blue-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-blue-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
               <div className="p-10 md:p-16 space-y-12 overflow-y-auto custom-scrollbar">
                  <button onClick={() => setShowApplyModal(null)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X size={24} /></button>
                  
@@ -486,15 +536,25 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                        
                        <div className="space-y-8">
                           <div className="space-y-3 px-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Land Resource Availability</label>
-                             <input 
-                               type="text" 
-                               required 
-                               value={landResources}
-                               onChange={e => setLandResources(e.target.value)}
-                               placeholder="e.g. 75 Hectares in Zone 4" 
-                               className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-blue-500/10 shadow-inner" 
-                             />
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Select Registered Land Shard</label>
+                             <div className="grid grid-cols-1 gap-3">
+                                {landResources.map(land => (
+                                   <button 
+                                      key={land.id}
+                                      onClick={() => setSelectedLandForApp(land)}
+                                      className={`p-6 rounded-3xl border transition-all flex items-center justify-between group ${selectedLandForApp?.id === land.id ? 'bg-blue-600/10 border-blue-500 text-blue-400 shadow-lg' : 'bg-black border-white/5 text-slate-500'}`}
+                                   >
+                                      <div className="flex items-center gap-4">
+                                         <TreePine size={20} className={selectedLandForApp?.id === land.id ? 'text-blue-400' : 'text-slate-700'} />
+                                         <div className="text-left">
+                                            <p className="text-sm font-black uppercase">{land.name}</p>
+                                            <p className="text-[10px] font-mono">{land.id}</p>
+                                         </div>
+                                      </div>
+                                      {selectedLandForApp?.id === land.id && <CheckCircle2 size={20} />}
+                                   </button>
+                                ))}
+                             </div>
                           </div>
                           <div className="space-y-3 px-4">
                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Labour Unit Capacity</label>
@@ -511,7 +571,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
 
                        <button 
                         onClick={handleRunVetting}
-                        disabled={!landResources || !labourCapacity}
+                        disabled={!selectedLandForApp || !labourCapacity}
                         className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:bg-blue-500 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-30"
                        >
                           Initialize Oracle Vetting <ChevronRight className="w-6 h-6" />
@@ -619,7 +679,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
       {showDeployModal && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowDeployModal(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
               <div className="p-10 md:p-16 space-y-12 overflow-y-auto custom-scrollbar">
                  <button onClick={() => setShowDeployModal(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X size={24} /></button>
                  
