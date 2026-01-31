@@ -1,12 +1,15 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Upload, ShieldCheck, Zap, Loader2, Cpu, Camera, 
   FileText, Microscope, Binary, Coins, Sparkles, Bot,
   ArrowRight, Heart, Leaf, Dna, Database, CheckCircle2,
-  AlertCircle, Cloud, MapPin, ClipboardCheck, Lock
+  AlertCircle, Cloud, MapPin, ClipboardCheck, Lock,
+  Radio, Archive, Info, History, ArrowLeftCircle, Video,
+  ChevronRight,
+  Target,
+  Trello
 } from 'lucide-react';
-import { User } from '../types';
+import { User, ViewState } from '../types';
 import { diagnoseCropIssue } from '../services/geminiService';
 
 interface EvidenceModalProps {
@@ -14,12 +17,14 @@ interface EvidenceModalProps {
   onClose: () => void;
   user: User;
   onMinted: (value: number) => void;
+  onNavigate: (view: ViewState) => void;
+  taskToIngest?: any | null; // Optional task context passed from the system
 }
 
-type Step = 'thrust' | 'upload' | 'audit' | 'settlement' | 'success';
+type Step = 'ingest_type' | 'task_summary' | 'thrust' | 'upload' | 'audit' | 'settlement' | 'success';
 
-const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, onMinted }) => {
-  const [step, setStep] = useState<Step>('thrust');
+const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, onMinted, onNavigate, taskToIngest }) => {
+  const [step, setStep] = useState<Step>('ingest_type');
   const [thrust, setThrust] = useState<string>('Technological');
   const [evidenceType, setEvidenceType] = useState<string>('Soil Scan');
   const [file, setFile] = useState<string | null>(null);
@@ -29,6 +34,15 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
   const [mintedValue, setMintedValue] = useState(45.00);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // If a task is passed, auto-redirect to task summary or specific ingest flow
+  useEffect(() => {
+    if (isOpen && taskToIngest) {
+      setStep('task_summary');
+      setThrust(taskToIngest.thrust);
+      setEvidenceType(taskToIngest.title);
+    }
+  }, [isOpen, taskToIngest]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -46,9 +60,13 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
   const runAudit = async () => {
     setIsAuditing(true);
     try {
-      const res = await diagnoseCropIssue(`Evaluate this ${evidenceType} evidence for the ${thrust} thrust. Assess C(a) growth potential and resilience factors.`);
+      const contextDesc = taskToIngest 
+        ? `Task: ${taskToIngest.title} (ID: ${taskToIngest.id}) fulfillment evidence.`
+        : `New ${evidenceType} evidence ingest.`;
+      
+      const res = await diagnoseCropIssue(`${contextDesc} Evaluate this proof for the ${thrust} thrust. Assess industrial alignment and resilience factors.`);
       setAuditReport(res.text);
-      setMintedValue(Math.floor(Math.random() * 50) + 25);
+      setMintedValue(Math.floor(Math.random() * 50) + 40); // Higher reward for task-based work
       setStep('settlement');
     } catch (err) {
       alert("Registry Audit Failed. Check node connection.");
@@ -67,8 +85,13 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
     }, 2500);
   };
 
+  const handleLiveIngest = () => {
+    onClose();
+    onNavigate('media');
+  };
+
   const reset = () => {
-    setStep('thrust');
+    setStep('ingest_type');
     setFile(null);
     setAuditReport(null);
     onClose();
@@ -80,7 +103,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={reset}></div>
       
-      <div className="relative z-10 w-full max-w-2xl glass-card rounded-[56px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300">
+      <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2">
         <div className="p-12 space-y-10 min-h-[650px] flex flex-col">
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-4">
@@ -96,20 +119,115 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
           </div>
 
           <div className="flex gap-2">
-            {(['thrust', 'upload', 'settlement', 'success'] as Step[]).map((s, i) => {
-              const stages = ['thrust', 'upload', 'settlement', 'success'];
-              const currentIndex = stages.indexOf(step === 'audit' ? 'upload' : step);
+            {(['ingest_type', 'thrust', 'upload', 'settlement', 'success'] as Step[]).map((s, i) => {
+              const stages = ['ingest_type', 'thrust', 'upload', 'settlement', 'success'];
+              // Map task_summary to the beginning if active
+              const actualStep = step === 'task_summary' ? 'ingest_type' : (step === 'audit' ? 'upload' : step);
+              const currentIndex = stages.indexOf(actualStep as any);
               return (
                 <div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${i <= currentIndex ? 'bg-emerald-500 shadow-[0_0_15px_#10b981]' : 'bg-white/10'}`}></div>
               );
             })}
           </div>
 
+          {step === 'ingest_type' && (
+            <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500 flex-1 flex flex-col justify-center">
+              <div className="text-center space-y-4">
+                <h4 className="text-2xl font-black text-white uppercase tracking-widest">Select Ingest Protocol</h4>
+                <p className="text-slate-400 text-lg italic">Choose how you want to synchronize your field evidence.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button 
+                  onClick={handleLiveIngest}
+                  className="glass-card p-10 rounded-[48px] border-2 border-white/5 hover:border-blue-500/40 bg-blue-950/10 flex flex-col items-center text-center space-y-6 transition-all group"
+                >
+                  <div className="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center text-white shadow-2xl group-hover:scale-110 transition-transform">
+                    <Radio size={40} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <h5 className="text-xl font-black text-white uppercase italic">Live Stream Ingest</h5>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 tracking-widest leading-relaxed">
+                      Broadcast real-time field data shards. Origin of high-frequency public proof.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-blue-400 font-black text-[9px] uppercase tracking-widest">
+                    Direct to Media Hub <ArrowRight size={12} />
+                  </div>
+                </button>
+
+                <button 
+                  onClick={() => setStep('thrust')}
+                  className="glass-card p-10 rounded-[48px] border-2 border-white/5 hover:border-emerald-500/40 bg-emerald-950/10 flex flex-col items-center text-center space-y-6 transition-all group"
+                >
+                  <div className="w-20 h-20 bg-emerald-600 rounded-[32px] flex items-center justify-center text-white shadow-2xl group-hover:scale-110 transition-transform">
+                    <Archive size={40} />
+                  </div>
+                  <div>
+                    <h5 className="text-xl font-black text-white uppercase italic">Stored Archive Ingest</h5>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 tracking-widest leading-relaxed">
+                      Upload existing multi-spectral shards from your local node storage.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-400 font-black text-[9px] uppercase tracking-widest">
+                    Initialize Upload <ArrowRight size={12} />
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 'task_summary' && taskToIngest && (
+            <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+              <div className="text-center space-y-6">
+                <div className="w-24 h-24 bg-indigo-600/20 border border-indigo-500/30 rounded-[36px] flex items-center justify-center text-indigo-400 mx-auto shadow-2xl animate-pulse">
+                   <Target size={48} />
+                </div>
+                <div>
+                   <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Task <span className="text-indigo-400">Fulfillment</span></h4>
+                   <p className="text-slate-500 text-lg mt-4 italic">"Physical ingest for an internally committed mission shard."</p>
+                </div>
+              </div>
+
+              <div className="p-10 bg-black/80 rounded-[48px] border border-white/10 shadow-inner space-y-6 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform"><Trello size={160} /></div>
+                 <div className="flex justify-between items-start relative z-10">
+                    <div className="space-y-1">
+                       <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none">Target Task</p>
+                       <h5 className="text-2xl font-black text-white uppercase italic">{taskToIngest.title}</h5>
+                    </div>
+                    <span className="px-3 py-1 bg-indigo-600/20 text-indigo-400 text-[8px] font-black uppercase rounded border border-indigo-500/30 tracking-widest">{taskToIngest.priority}</span>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4 relative z-10 pt-4 border-t border-white/5">
+                    <div className="space-y-1">
+                       <p className="text-[9px] text-slate-700 font-black uppercase">Pillar Alignment</p>
+                       <p className="text-sm font-black text-indigo-400 uppercase tracking-widest">{taskToIngest.thrust}</p>
+                    </div>
+                    <div className="space-y-1 text-right">
+                       <p className="text-[9px] text-slate-700 font-black uppercase">Shard ID</p>
+                       <p className="text-sm font-mono text-slate-500">{taskToIngest.id}</p>
+                    </div>
+                 </div>
+              </div>
+
+              <button 
+                onClick={() => setStep('upload')}
+                className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6"
+              >
+                <Upload size={20} /> COMMENCE PHYSICAL INGEST
+              </button>
+            </div>
+          )}
+
           {step === 'thrust' && (
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
-              <div className="text-center space-y-4">
-                <h4 className="text-2xl font-black text-white uppercase tracking-widest">Select Scientific Pillar</h4>
-                <p className="text-slate-400 text-lg italic">Which thrust does this evidence secure?</p>
+              <div className="flex items-center gap-4 px-2">
+                <button onClick={() => setStep('ingest_type')} className="p-2 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all">
+                  <ChevronRight size={20} className="rotate-180" />
+                </button>
+                <div className="text-left space-y-1">
+                  <h4 className="text-2xl font-black text-white uppercase tracking-widest">Select Scientific Pillar</h4>
+                  <p className="text-slate-400 text-sm italic">Which thrust does this evidence secure?</p>
+                </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {[
@@ -141,32 +259,37 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                </div>
                
                <div className="space-y-6">
-                 <div className="grid grid-cols-2 gap-4">
-                   {['Soil Scan', 'Drone Map', 'Carbon Audit', 'Genetic Shard'].map(type => (
-                     <button 
-                      key={type} 
-                      onClick={() => setEvidenceType(type)}
-                      className={`py-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${evidenceType === type ? 'bg-emerald-600 border-white text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
-                     >
-                       {type}
-                     </button>
-                   ))}
-                 </div>
+                 {!taskToIngest && (
+                    <div className="grid grid-cols-2 gap-4">
+                      {['Soil Scan', 'Drone Map', 'Carbon Audit', 'Genetic Shard'].map(type => (
+                        <button 
+                          key={type} 
+                          onClick={() => setEvidenceType(type)}
+                          className={`py-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${evidenceType === type ? 'bg-emerald-600 border-white text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                 )}
 
                  <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-20 border-4 border-dashed border-white/5 rounded-[48px] bg-black/40 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/[0.02] transition-all group"
+                  className="p-20 border-4 border-dashed border-white/5 rounded-[48px] bg-black/40 flex flex-col items-center justify-center text-center space-y-6 group hover:border-emerald-500/40 hover:bg-emerald-500/[0.02] transition-all cursor-pointer shadow-inner"
                  >
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,application/pdf" />
-                    <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                        <Cloud className="w-10 h-10 text-emerald-400" />
                     </div>
                     <p className="text-xl font-black text-white uppercase tracking-tighter">Choose Shard File</p>
-                    <p className="text-slate-500 text-xs mt-2 uppercase font-bold tracking-widest">Spectral Scan or Research Shard</p>
+                    <p className="text-slate-500 text-xs uppercase font-bold tracking-widest">Spectral Scan or Research Shard</p>
                  </div>
                </div>
 
-               <button onClick={() => setStep('thrust')} className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Change Thrust Anchor</button>
+               <div className="flex justify-between items-center px-4">
+                  <button onClick={() => setStep(taskToIngest ? 'task_summary' : 'thrust')} className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Change Ingest Anchor</button>
+                  <button onClick={() => setStep('ingest_type')} className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Change Ingest Method</button>
+               </div>
             </div>
           )}
 
@@ -230,7 +353,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
             <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
                <div className="w-40 h-40 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] scale-110 relative group">
                   <CheckCircle2 className="w-20 h-20 text-white group-hover:scale-110 transition-transform" />
-                  <div className="absolute inset-[-10px] rounded-full border-4 border-emerald-500/20 animate-ping"></div>
+                  <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping"></div>
                </div>
                <div className="space-y-4">
                   <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">Minting <span className="text-emerald-400">Success</span></h3>
@@ -255,11 +378,16 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                      </div>
                   </div>
                </div>
-               <button onClick={reset} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl">Return to Evidence Ledger</button>
+               <button onClick={reset} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
             </div>
           )}
         </div>
       </div>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+      `}</style>
     </div>
   );
 };

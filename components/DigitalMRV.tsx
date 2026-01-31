@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { 
   Scan, 
   Upload, 
@@ -37,7 +36,8 @@ import {
   ShieldAlert,
   Landmark,
   ArrowLeftCircle,
-  Info
+  Info,
+  Network
 } from 'lucide-react';
 import { User, AgroResource, ViewState } from '../types';
 import { analyzeMRVEvidence } from '../services/geminiService';
@@ -50,6 +50,8 @@ interface DigitalMRVProps {
 }
 
 const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate }) => {
+  const [isAccessVerifying, setIsAccessVerifying] = useState(true);
+  
   const landResources = useMemo(() => 
     (user.resources || []).filter(r => r.category === 'LAND'),
     [user.resources]
@@ -70,6 +72,11 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
   const [mintedValue, setMintedValue] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsAccessVerifying(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const MINTING_FACTOR = 100;
 
@@ -123,40 +130,19 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
     }, 3000);
   };
 
-  if (!hasLandRegistered) {
+  if (isAccessVerifying) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-12 animate-in fade-in zoom-in duration-700 max-w-2xl mx-auto text-center px-6">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-in fade-in duration-700">
         <div className="relative">
-          <div className="w-32 h-32 bg-rose-600/10 rounded-[40px] border-2 border-rose-500/20 flex items-center justify-center text-rose-500 shadow-2xl relative z-10">
-             <ShieldAlert size={64} />
+          <div className="w-24 h-24 rounded-3xl bg-blue-600/10 border-2 border-blue-500/20 flex items-center justify-center text-blue-500 shadow-2xl">
+            <Lock size={32} className="animate-pulse" />
           </div>
-          <div className="absolute inset-0 bg-rose-500 blur-[80px] opacity-20"></div>
-          <div className="absolute inset-[-20px] rounded-full border border-dashed border-rose-500/20 animate-spin-slow"></div>
+          <div className="absolute inset-0 border-2 border-blue-500/30 rounded-3xl animate-ping opacity-20"></div>
         </div>
-
-        <div className="space-y-6">
-          <h2 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter leading-none m-0">RESTRICTED <span className="text-rose-500">NODE ACCESS</span></h2>
-          <p className="text-slate-400 text-lg md:text-xl font-medium leading-relaxed italic">
-            "Digital MRV sharding requires an anchored physical location. You have no **LAND** resources registered in your node profile."
-          </p>
+        <div className="text-center space-y-2">
+          <h3 className="text-xl font-black text-white uppercase tracking-[0.4em] italic">Handshaking Node...</h3>
+          <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">Registry_Access_Check // Secure_Ingest_v5</p>
         </div>
-
-        <div className="p-8 glass-card rounded-[40px] border-white/5 bg-white/[0.02] w-full text-left space-y-4 shadow-inner">
-           <div className="flex items-center gap-4">
-              <Info className="w-5 h-5 text-indigo-400" />
-              <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Protocol Pre-requisite</p>
-           </div>
-           <p className="text-sm text-slate-300 italic leading-loose">
-             To initialize carbon mining, you must first register your plot via the **Registry Handshake** protocol to establish a baseline coordinate mesh.
-           </p>
-        </div>
-
-        <button 
-          onClick={() => onNavigate?.('registry_handshake')}
-          className="w-full py-8 bg-blue-600 hover:bg-blue-500 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 ring-8 ring-emerald-500/5"
-        >
-          <Landmark size={24} /> INITIALIZE LAND REGISTRY
-        </button>
       </div>
     );
   }
@@ -199,28 +185,60 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                 <p className="text-slate-400 text-lg font-medium italic max-w-lg mx-auto">Select a registered land shard to associate your carbon mining evidence.</p>
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-                {landResources.map(land => (
-                   <button 
-                     key={land.id}
-                     onClick={() => { setSelectedLand(land); setPipelineStep('ingest'); }}
-                     className="glass-card p-10 rounded-[48px] border-2 border-white/5 hover:border-emerald-500/40 bg-black/40 flex flex-col items-center text-center space-y-6 transition-all group active:scale-[0.98] shadow-2xl"
-                   >
-                      <div className="w-20 h-20 bg-emerald-500/10 rounded-[32px] flex items-center justify-center text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                         <TreePine size={32} />
-                      </div>
-                      <div>
-                         <h4 className="text-2xl font-black text-white uppercase italic truncate m-0">{land.name}</h4>
-                         <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-2">{land.id}</p>
-                      </div>
-                      <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase border tracking-widest ${
-                         land.status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/20 text-amber-400 border-amber-500/20'
-                      }`}>
-                         {land.status}
-                      </span>
-                   </button>
-                ))}
-             </div>
+             {hasLandRegistered ? (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                  {landResources.map(land => (
+                    <button 
+                      key={land.id}
+                      onClick={() => { setSelectedLand(land); setPipelineStep('ingest'); }}
+                      className="glass-card p-10 rounded-[48px] border-2 border-white/5 hover:border-emerald-500/40 bg-black/40 flex flex-col items-center text-center space-y-6 transition-all group active:scale-[0.98] shadow-2xl"
+                    >
+                        <div className="w-20 h-20 bg-emerald-500/10 rounded-[32px] flex items-center justify-center text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                          <TreePine size={32} />
+                        </div>
+                        <div>
+                          <h4 className="text-2xl font-black text-white uppercase italic truncate m-0">{land.name}</h4>
+                          <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-2">{land.id}</p>
+                        </div>
+                        <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase border tracking-widest ${
+                          land.status === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/20 text-amber-400 border-amber-500/20'
+                        }`}>
+                          {land.status}
+                        </span>
+                    </button>
+                  ))}
+               </div>
+             ) : (
+               <div className="max-w-2xl mx-auto text-center p-12 glass-card rounded-[64px] border-rose-500/20 bg-rose-500/5 space-y-10 shadow-3xl">
+                  <div className="relative mx-auto w-24 h-24">
+                    <div className="w-24 h-24 bg-rose-600/10 rounded-[32px] border-2 border-rose-500/20 flex items-center justify-center text-rose-500 shadow-2xl relative z-10">
+                      <ShieldAlert size={48} />
+                    </div>
+                    <div className="absolute inset-[-10px] rounded-full border border-dashed border-rose-500/20 animate-spin-slow"></div>
+                  </div>
+                  <div className="space-y-4">
+                    <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">REGISTRY <span className="text-rose-500">GATE</span></h2>
+                    <p className="text-slate-400 text-base font-medium leading-relaxed italic">
+                      "Digital MRV sharding requires an anchored physical location. No **LAND** resources detected on this node."
+                    </p>
+                  </div>
+                  <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 text-left space-y-4 shadow-inner group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-600/20 rounded-lg text-indigo-400"><Info size={16} /></div>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Reaction</p>
+                    </div>
+                    <p className="text-xs text-slate-300 italic leading-relaxed">
+                      To initiate carbon mining, you must first pair your physical plot with the network. This establishes the geofence shards needed for satellite verification.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => onNavigate?.('registry_handshake')}
+                    className="w-full py-6 bg-blue-600 hover:bg-blue-500 rounded-[32px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 ring-4 ring-emerald-500/5"
+                  >
+                    <Landmark size={20} /> INITIALIZE HANDSHAKE
+                  </button>
+               </div>
+             )}
           </div>
         )}
 

@@ -45,6 +45,7 @@ interface IndustrialProps {
   onNavigate: (view: ViewState, action?: string | null) => void;
   industrialUnits: RegisteredUnit[];
   setIndustrialUnits: React.Dispatch<React.SetStateAction<RegisteredUnit[]>>;
+  onInitializeLiveProcess?: (params: any) => void;
 }
 
 const MOCK_TENDERS = [
@@ -63,7 +64,7 @@ const SHARD_REG_FEE = 100;
 
 const Industrial: React.FC<IndustrialProps> = ({ 
   user, onSpendEAC, collectives, setCollectives, industrialUnits, setIndustrialUnits,
-  pendingAction, clearAction, onNavigate 
+  pendingAction, clearAction, onNavigate, onInitializeLiveProcess 
 }) => {
   const [activeTab, setActiveTab] = useState<'facilities' | 'workers' | 'shards' | 'tenders'>('facilities');
   const [searchTerm, setSearchTerm] = useState('');
@@ -114,6 +115,18 @@ const Industrial: React.FC<IndustrialProps> = ({
           objectives: ['Sync Registry', 'Onboard Stewards']
         };
         setCollectives([newShard, ...collectives]);
+        
+        // AUTO-INITIALIZE LIVE PROCESS for shard mission
+        if (onInitializeLiveProcess) {
+          onInitializeLiveProcess({
+            title: `Shard Mission: ${shardName}`,
+            category: 'Manufactured',
+            stewardName: user.name,
+            stewardEsin: user.esin,
+            location: user.location
+          });
+        }
+
         setIsProcessingShard(false);
         setShardStep('success');
       }, 2500);

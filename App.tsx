@@ -1,10 +1,9 @@
-
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine
 } from 'lucide-react';
-import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from './types';
+import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit, LiveAgroProduct } from './types';
 import Dashboard from './components/Dashboard';
 import Sustainability from './components/Sustainability';
 import Economy from './components/Economy';
@@ -67,6 +66,43 @@ export interface SignalShard {
 const BASE_EXCHANGE_RATE = 100.0;
 const PENALTY_FACTOR = 10.0;
 
+const INITIAL_LIVE_PRODUCTS: LiveAgroProduct[] = [
+  { 
+    id: 'PRD-401', 
+    stewardEsin: 'EA-2024-X1', 
+    stewardName: 'Sarah’s Organic', 
+    productType: 'Maize Shards', 
+    category: 'Produce',
+    stage: 'Processing', 
+    progress: 15, 
+    votes: 42, 
+    location: 'Zone 4, Nebraska', 
+    timestamp: '2d ago', 
+    lastUpdate: '10m ago',
+    isAuthentic: true,
+    auditStatus: 'Verified',
+    tasks: ['T-882', 'T-104'],
+    telemetryNodes: []
+  },
+  { 
+    id: 'PRD-402', 
+    stewardEsin: 'EA-2024-X2', 
+    stewardName: 'BioFix Industrial', 
+    productType: 'Bio-Organic Fertilizer', 
+    category: 'Manufactured',
+    stage: 'Quality_Audit', 
+    progress: 85, 
+    votes: 128, 
+    location: 'Nairobi, KE Hub', 
+    timestamp: '2w ago', 
+    lastUpdate: '10m ago',
+    isAuthentic: true,
+    auditStatus: 'Verified',
+    tasks: ['T-042'],
+    telemetryNodes: ['NODE-01']
+  }
+];
+
 const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -75,10 +111,12 @@ const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
+  const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<any>(null);
   
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>(INITIAL_LIVE_PRODUCTS);
   const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([
     {
       id: 'VPR-882',
@@ -209,6 +247,39 @@ const App: React.FC = () => {
     return true;
   };
 
+  const handleInitializeLiveProcess = (params: { title: string, category: 'Produce' | 'Manufactured' | 'Input', stewardName: string, stewardEsin: string, location: string }) => {
+    const newProcess: LiveAgroProduct = {
+      id: `PRD-${Math.floor(Math.random() * 9000 + 1000)}`,
+      stewardEsin: params.stewardEsin,
+      stewardName: params.stewardName,
+      productType: params.title,
+      category: params.category,
+      stage: 'Inception',
+      progress: 1,
+      votes: 0,
+      location: params.location,
+      timestamp: 'Just now',
+      lastUpdate: 'Now',
+      isAuthentic: false,
+      auditStatus: 'Pending',
+      tasks: [],
+      telemetryNodes: []
+    };
+    setLiveProducts(prev => [newProcess, ...prev]);
+    
+    // Add signal notification
+    const signal: SignalShard = {
+      id: `SIG-${Date.now()}`,
+      type: 'system',
+      title: 'Live Processing Sync',
+      message: `Automatic initialization of processing node for: ${params.title}`,
+      timestamp: 'Now',
+      read: false,
+      priority: 'medium'
+    };
+    setNetworkSignals(prev => [signal, ...prev]);
+  };
+
   const handlePlaceOrder = (orderData: Partial<Order>) => {
     if (!user) return;
     const newOrder: Order = {
@@ -228,6 +299,16 @@ const App: React.FC = () => {
       sourceTab: orderData.sourceTab || 'market'
     };
     setOrders(prev => [newOrder, ...prev]);
+
+    // Side-effect: When a produce order is verified, it should initialize a live processing shard if it doesn't exist
+    handleInitializeLiveProcess({
+      title: newOrder.itemName,
+      category: 'Produce',
+      stewardName: user.name,
+      stewardEsin: user.esin,
+      location: user.location
+    });
+
     return newOrder;
   };
 
@@ -237,6 +318,14 @@ const App: React.FC = () => {
 
   const handleRegisterProduct = (product: VendorProduct) => {
     setVendorProducts(prev => [product, ...prev]);
+    // Synchronize with Live Processing
+    handleInitializeLiveProcess({
+      title: product.name,
+      category: product.category as any,
+      stewardName: user?.name || 'Unknown',
+      stewardEsin: user?.esin || 'Unknown',
+      location: user?.location || 'Unmapped'
+    });
   };
 
   const swapEACforEAT = (eatAmount: number) => {
@@ -463,8 +552,8 @@ const App: React.FC = () => {
           {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} projects={projects} />}
           {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'economy' && <Economy user={user} onNavigate={handleNavigate} onSpendEAC={spendEAC} onEarnEAC={earnEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} />}
-          {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} />}
-          {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
+          {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} onInitializeLiveProcess={handleInitializeLiveProcess} />}
+          {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onOpenEvidence={(task?: any) => { setActiveTaskForEvidence(task || null); setIsEvidenceModalOpen(true); }} />}
           {activeView === 'code_of_laws' && <CodeOfLaws user={user} />}
           {activeView === 'chroma_system' && <ChromaSystem user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'agro_calendar' && <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
@@ -473,12 +562,21 @@ const App: React.FC = () => {
           {activeView === 'profile' && <UserProfile user={user} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} />}
           {activeView === 'explorer' && <Explorer />}
           {activeView === 'community' && <Community user={user} onContribution={() => earnEAC(5, 'CONTRIBUTION')} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
-          {activeView === 'live_farming' && <LiveFarming user={user} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
-          {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} />}
+          {activeView === 'live_farming' && <LiveFarming user={user} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
+          {activeView === 'tqm' && (
+            <TQMGrid 
+              user={user} 
+              onSpendEAC={spendEAC} 
+              orders={orders} 
+              onUpdateOrderStatus={handleUpdateOrderStatus} 
+              liveProducts={liveProducts}
+              onNavigate={handleNavigate}
+            />
+          )}
           {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onNavigate={handleNavigate} orders={orders} />}
           {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />}
-          {activeView === 'tools' && <ToolsSection user={user} onSpendEAC={spendEAC} />}
-          {activeView === 'contract_farming' && <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} contracts={contracts} setContracts={setContracts} />}
+          {activeView === 'tools' && <ToolsSection user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onOpenEvidence={(task) => { setActiveTaskForEvidence(task); setIsEvidenceModalOpen(true); }} />}
+          {activeView === 'contract_farming' && <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} contracts={contracts} setContracts={setContracts} onInitializeLiveProcess={handleInitializeLiveProcess} />}
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} onSpendEAC={spendEAC} projects={projects} onNavigate={handleNavigate} />}
           {activeView === 'agrowild' && <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />}
           {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
@@ -489,7 +587,7 @@ const App: React.FC = () => {
           {activeView === 'agro_regency' && <AgroRegency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'intranet' && <IntranetPortal user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'envirosagro_store' && <EnvirosAgroStore user={user} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} />}
-          {activeView === 'media' && <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} />}
+          {activeView === 'media' && <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'info' && <InfoPortal />}
           {activeView === 'ingest' && <NetworkIngest user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
@@ -505,7 +603,14 @@ const App: React.FC = () => {
       </main>
 
       {/* Re-added EvidenceModal in root layout for quick access */}
-      <EvidenceModal isOpen={isEvidenceModalOpen} onClose={() => setIsEvidenceModalOpen(false)} user={user} onMinted={(v) => earnEAC(v, 'EVIDENCE_VERIFIED')} />
+      <EvidenceModal 
+        isOpen={isEvidenceModalOpen} 
+        onClose={() => { setIsEvidenceModalOpen(false); setActiveTaskForEvidence(null); }} 
+        user={user} 
+        onMinted={(v) => earnEAC(v, 'EVIDENCE_VERIFIED')}
+        onNavigate={handleNavigate}
+        taskToIngest={activeTaskForEvidence}
+      />
       <FloatingConsultant user={user} />
     </div>
   );

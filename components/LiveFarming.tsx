@@ -55,12 +55,22 @@ import {
   Link2,
   Unlink,
   History as HistoryIcon,
-  Target
+  Target,
+  Search,
+  Plus,
+  ArrowUpRight,
+  CircleStop,
+  Stamp,
+  Boxes,
+  Workflow,
+  Globe
 } from 'lucide-react';
 import { User, LiveAgroProduct, ViewState, AgroResource } from '../types';
 
 interface LiveFarmingProps {
   user: User;
+  products: LiveAgroProduct[];
+  setProducts: React.Dispatch<React.SetStateAction<LiveAgroProduct[]>>;
   onEarnEAC: (amount: number, reason: string) => void;
   onNavigate: (view: ViewState, action?: string | null) => void;
 }
@@ -73,73 +83,17 @@ interface IngestLog {
   timestamp: string;
 }
 
-// Simulated Task Shards available for linking
 const INDUSTRIAL_TASK_POOL = [
-  { id: 'T-882', title: 'Substrate Sterilization', thrust: 'Technological', duration: '2h' },
-  { id: 'T-104', title: 'Lineage DNA Handshake', thrust: 'Societal', duration: '1h' },
-  { id: 'T-042', title: 'Bio-Electric Pulse Calibration', thrust: 'Environmental', duration: '4h' },
-  { id: 'T-991', title: 'Thermal Ingest Audit', thrust: 'Industry', duration: '6h' },
+  { id: 'T-1', title: 'Substrate DNA Sequence', thrust: 'Environmental', duration: '2h', seq: 1 },
+  { id: 'T-2', title: 'Spectral Drone Calibration', thrust: 'Technological', duration: '1h', seq: 2 },
+  { id: 'T-3', title: 'Yield Shard Finality', thrust: 'Industry', duration: '4h', seq: 3 },
+  { id: 'T-4', title: 'Carbon Minting Vouch', thrust: 'Industry', duration: '6h', seq: 1 },
 ];
 
-const MOCK_LIVE_PRODUCTS: LiveAgroProduct[] = [
-  { 
-    id: 'PRD-401', 
-    stewardEsin: 'EA-2024-X1', 
-    stewardName: 'Sarah’s Organic', 
-    productType: 'Maize Shards', 
-    category: 'Produce',
-    stage: 'Processing', 
-    progress: 15, 
-    votes: 42, 
-    location: 'Zone 4, Nebraska', 
-    timestamp: '2d ago', 
-    lastUpdate: '10m ago',
-    isAuthentic: true,
-    auditStatus: 'Verified',
-    tasks: ['T-882', 'T-104'],
-    telemetryNodes: []
-  },
-  { 
-    id: 'PRD-402', 
-    stewardEsin: 'EA-2024-X2', 
-    stewardName: 'BioFix Industrial', 
-    productType: 'Bio-Organic Fertilizer', 
-    category: 'Manufactured',
-    stage: 'Quality_Audit', 
-    progress: 85, 
-    votes: 128, 
-    location: 'Nairobi, KE Hub', 
-    timestamp: '2w ago', 
-    lastUpdate: '10m ago',
-    isAuthentic: true,
-    auditStatus: 'Verified',
-    tasks: ['T-042'],
-    telemetryNodes: ['NODE-01']
-  },
-  { 
-    id: 'PRD-007', 
-    stewardEsin: 'EA-2025-W12', 
-    stewardName: 'Neo Harvest', 
-    productType: 'Genetic Cotton', 
-    category: 'Produce',
-    stage: 'Inception', 
-    progress: 5, 
-    votes: 12, 
-    location: 'Zone 1, NY', 
-    timestamp: '1h ago', 
-    lastUpdate: '10m ago',
-    isAuthentic: false,
-    auditStatus: 'Pending',
-    tasks: [],
-    telemetryNodes: []
-  },
-];
-
-const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }) => {
-  const [products, setProducts] = useState<LiveAgroProduct[]>(MOCK_LIVE_PRODUCTS);
+const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, setProducts, onEarnEAC, onNavigate }) => {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [selectedDossier, setSelectedDossier] = useState<LiveAgroProduct | null>(null);
-  const [dossierTab, setDossierTab] = useState<'lifecycle' | 'live_inflow' | 'twin'>('lifecycle');
+  const [dossierTab, setDossierTab] = useState<'lifecycle' | 'live_inflow' | 'twin' | 'traceability'>('lifecycle');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newProductName, setNewProductName] = useState('');
   const [newProductCategory, setNewProductCategory] = useState<'Produce' | 'Manufactured' | 'Input'>('Produce');
@@ -150,8 +104,6 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
   const logEndRef = useRef<HTMLDivElement>(null);
 
   const [votedProducts, setVotedProducts] = useState<string[]>([]);
-
-  // Linking States
   const [showLinkModal, setShowLinkModal] = useState<'task' | 'node' | null>(null);
   const hardwareResources = useMemo(() => (user.resources || []).filter(r => r.category === 'HARDWARE'), [user.resources]);
 
@@ -193,7 +145,6 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
           step++;
         } else {
           setIsIngesting(false);
-          // Loop logs for visual effect
           step = 0;
         }
       }, 3000);
@@ -310,7 +261,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
            </div>
            <div className="space-y-6 relative z-10 text-center md:text-left">
               <div className="space-y-2">
-                 <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20">LIVE_INDUSTRIAL_INFLOW</span>
+                 <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20 shadow-inner">LIVE_INDUSTRIAL_INFLOW</span>
                  <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 leading-none">Product <span className="text-emerald-400">Processing</span></h2>
               </div>
               <p className="text-slate-400 text-lg md:text-xl leading-relaxed max-w-2xl font-medium">
@@ -351,7 +302,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
             </div>
          </div>
 
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
             {products.map(product => (
                <div key={product.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full active:scale-[0.98] duration-300 relative overflow-hidden bg-black/20 shadow-xl">
                   <div className="flex justify-between items-start mb-10 relative z-10">
@@ -514,7 +465,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                          onClick={() => setShowLinkModal('task')}
                          className="px-8 py-4 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl text-[10px] font-black text-indigo-400 uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-3"
                        >
-                          <Wrench className="w-4 h-4" /> Link Task Shard
+                          <Wrench className="w-4 h-4" /> Link Ledger Task
                        </button>
                        <button 
                          onClick={() => setShowLinkModal('node')}
@@ -532,7 +483,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                   className={`flex-1 py-8 text-[11px] font-black uppercase tracking-[0.4em] transition-all border-b-4 ${dossierTab === 'lifecycle' ? 'border-emerald-500 text-white bg-emerald-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}
                  >
                     <div className="flex items-center justify-center gap-3">
-                       <Layers className="w-4 h-4" /> Sequence Shards
+                       <Layers className="w-4 h-4" /> Processing Pipeline
                     </div>
                  </button>
                  <button 
@@ -541,6 +492,14 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                  >
                     <div className="flex items-center justify-center gap-3">
                        <Zap className="w-4 h-4" /> Live Inflow (IoT)
+                    </div>
+                 </button>
+                 <button 
+                  onClick={() => setDossierTab('traceability')}
+                  className={`flex-1 py-8 text-[11px] font-black uppercase tracking-[0.4em] transition-all border-b-4 ${dossierTab === 'traceability' ? 'border-amber-500 text-white bg-amber-500/5' : 'border-transparent text-slate-500 hover:text-white'}`}
+                 >
+                    <div className="flex items-center justify-center gap-3">
+                       <Workflow className="w-4 h-4" /> Traceability Map
                     </div>
                  </button>
                  <button 
@@ -558,15 +517,15 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                    <div className="h-full overflow-y-auto p-10 md:p-14 custom-scrollbar flex flex-col lg:flex-row gap-14">
                       <div className="lg:w-7/12 space-y-12">
                          <div className="space-y-8 relative py-4">
-                            <div className="absolute left-7 top-10 bottom-10 w-0.5 bg-white/5"></div>
+                            {/* Sequence Connective Line */}
+                            <div className="absolute left-7 top-10 bottom-10 w-0.5 bg-gradient-to-b from-blue-500 via-indigo-500 to-emerald-500 opacity-20"></div>
                             
-                            {/* Static Baseline Steps */}
                             {[
                                { stage: 'Genesis Ingest', time: selectedDossier.timestamp, desc: 'Initial registry node initialized by steward ESIN.', status: 'SIGNED', icon: Database, color: 'text-blue-400' },
                                { stage: 'Physical Audit', time: '1d ago', desc: 'EnvirosAgro field team performed site inspection and verified biometrics.', status: selectedDossier.auditStatus.toUpperCase(), icon: ShieldCheck, color: selectedDossier.isAuthentic ? 'text-emerald-400' : 'text-amber-400' },
                             ].map((step, i) => (
                                <div key={i} className="flex gap-8 relative z-10 group">
-                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 transition-all bg-[#050706] border-white/10 text-white group-hover:border-emerald-500/40`}>
+                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 transition-all bg-[#050706] border-white/10 text-white group-hover:border-emerald-500/40 shadow-xl`}>
                                      <step.icon className={`w-6 h-6 ${step.color}`} />
                                   </div>
                                   <div className="flex-1 space-y-2">
@@ -582,27 +541,33 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                                </div>
                             ))}
 
-                            {/* Dynamic Task Shards */}
+                            {/* Integrated Kanban Task Shards */}
                             {(selectedDossier.tasks || []).map((taskId, i) => {
-                               const task = INDUSTRIAL_TASK_POOL.find(t => t.id === taskId) || { title: 'Unknown Task', thrust: 'General', duration: 'N/A' };
+                               const task = INDUSTRIAL_TASK_POOL.find(t => t.id === taskId) || { title: 'Unknown Task', thrust: 'General', duration: 'N/A', seq: 0 };
                                return (
                                  <div key={taskId} className="flex gap-8 relative z-10 group animate-in slide-in-from-left duration-500">
-                                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 transition-all bg-indigo-900/10 border-indigo-500/20 group-hover:border-indigo-400">
+                                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 transition-all bg-indigo-900/10 border-indigo-500/20 group-hover:border-indigo-400 shadow-xl">
                                        <Wrench className="w-6 h-6 text-indigo-400" />
                                     </div>
-                                    <div className="flex-1 space-y-2">
+                                    <div className="flex-1 space-y-2 p-6 bg-white/[0.02] border border-white/5 rounded-3xl group-hover:bg-indigo-900/5 group-hover:border-indigo-500/20 transition-all">
                                        <div className="flex justify-between items-center">
                                           <h5 className="text-lg font-black text-white uppercase tracking-tight italic">{task.title}</h5>
-                                          <span className="text-[8px] font-black uppercase px-2 py-1 rounded border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">INDUSTRIAL_TASK</span>
+                                          <div className="flex items-center gap-3">
+                                            <span className="text-[7px] font-black text-indigo-400 uppercase border border-indigo-500/30 px-2 py-0.5 rounded">SHARD_SEQ_{task.seq}</span>
+                                            <span className="text-[8px] font-black uppercase px-2 py-1 rounded border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">KANBAN_LEAD</span>
+                                          </div>
                                        </div>
-                                       <p className="text-xs text-slate-500 font-medium italic">"{task.thrust} Thrust shard processing cycle."</p>
-                                       <p className="text-[9px] text-indigo-500/60 font-mono font-black uppercase tracking-widest">DURATION: {task.duration} // SYNC_ACTIVE</p>
+                                       <p className="text-xs text-slate-500 font-medium italic">"{task.thrust} Thrust task following industrial sequence."</p>
+                                       <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                                          <p className="text-[9px] text-indigo-500/60 font-mono font-black uppercase tracking-widest">EST_DURATION: {task.duration} // SYNC_ACTIVE</p>
+                                          <button className="text-[8px] font-black text-indigo-400 hover:text-white uppercase">Finalize Shard</button>
+                                       </div>
                                     </div>
                                  </div>
                                );
                             })}
 
-                            <div className="flex gap-8 relative z-10 opacity-40 grayscale">
+                            <div className="flex gap-8 relative z-10 opacity-40 grayscale pointer-events-none">
                                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border-2 bg-black border-white/5 text-slate-800">
                                   <Lock className="w-6 h-6" />
                                </div>
@@ -615,35 +580,35 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                       </div>
                       
                       <div className="lg:w-5/12 space-y-10">
-                         <div className="glass-card p-10 rounded-[48px] bg-emerald-600/5 border border-emerald-500/20 space-y-8 relative overflow-hidden group/trace">
+                         <div className="glass-card p-10 rounded-[48px] bg-emerald-600/5 border border-emerald-500/20 space-y-8 relative overflow-hidden group/trace shadow-2xl">
                             <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/trace:scale-110 transition-transform duration-[10s]"><ClipboardList size={300} className="text-emerald-400" /></div>
                             <div className="flex items-center gap-4 relative z-10">
                                <div className="p-3 bg-emerald-600 rounded-2xl shadow-xl"><Monitor size={24} className="text-white" /></div>
-                               <h4 className="text-xl font-black text-white uppercase tracking-widest italic">Traceability <span className="text-emerald-400">Oracle</span></h4>
+                               <h4 className="text-xl font-black text-white uppercase tracking-widest italic">Sequence <span className="text-emerald-400">Oracle</span></h4>
                             </div>
-                            <p className="text-slate-300 text-sm leading-relaxed italic border-l-2 border-emerald-500/40 pl-6 relative z-10">
-                               "Industrial task sharding increases m-constant stability by 12% per verified sequence. Current processing reliability: <span className="text-emerald-400 font-black">STABLE</span>."
+                            <p className="text-slate-300 text-sm leading-relaxed italic border-l-2 border-emerald-500/40 pl-6 relative z-10 font-medium">
+                               "Industrial task sharding follows a specific processing sequence. Currently, your node is in the <span className="text-indigo-400 font-black">PROCESSING</span> flow. Complete active Kanban shards to proceed."
                             </p>
                             <div className="pt-4 border-t border-white/5 relative z-10">
                                <div className="flex justify-between items-center px-2">
-                                  <span className="text-[10px] font-black text-slate-600 uppercase">Sequence Integrity</span>
-                                  <span className="text-xl font-mono font-black text-emerald-400">99.8%</span>
+                                  <span className="text-[10px] font-black text-slate-600 uppercase">Routing Status</span>
+                                  <span className="text-xl font-mono font-black text-emerald-400">STABLE</span>
                                </div>
                             </div>
                          </div>
 
-                         <div className="p-8 glass-card rounded-[40px] border border-indigo-500/20 bg-indigo-500/5 space-y-6">
-                            <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-3">
-                               <Target size={14} /> Industrial Metrics
+                         <div className="p-8 glass-card rounded-[40px] border border-indigo-500/20 bg-indigo-500/5 space-y-6 shadow-xl">
+                            <h5 className="text-[11px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-3">
+                               <Target size={14} /> Sequence Stats
                             </h5>
                             <div className="grid grid-cols-2 gap-4">
-                               <div className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center">
-                                  <p className="text-[8px] text-slate-500 uppercase font-black">C(a) Index</p>
-                                  <p className="text-2xl font-mono font-black text-white">1.84</p>
+                               <div className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center shadow-inner group hover:border-white/20 transition-all">
+                                  <p className="text-[8px] text-slate-500 uppercase font-black">Tasks Linked</p>
+                                  <p className="text-2xl font-mono font-black text-white">{selectedDossier.tasks?.length || 0}</p>
                                </div>
-                               <div className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center">
-                                  <p className="text-[8px] text-slate-500 uppercase font-black">m-Resilience</p>
-                                  <p className="text-2xl font-mono font-black text-emerald-400">1.42x</p>
+                               <div className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center shadow-inner group hover:border-white/20 transition-all">
+                                  <p className="text-[8px] text-slate-500 uppercase font-black">Routing Seq</p>
+                                  <p className="text-2xl font-mono font-black text-emerald-400">0x{(Math.random()*100).toFixed(0)}</p>
                                </div>
                             </div>
                          </div>
@@ -651,6 +616,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                    </div>
                  )}
 
+                 {/* Other tabs maintained... */}
                  {dossierTab === 'live_inflow' && (
                    <div className="h-full flex flex-col lg:flex-row animate-in fade-in duration-500 overflow-hidden bg-black/40">
                       <div className="flex-1 p-10 md:p-14 overflow-y-auto custom-scrollbar-terminal space-y-8 bg-[#050706]">
@@ -746,6 +712,72 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                    </div>
                  )}
 
+                 {dossierTab === 'traceability' && (
+                    <div className="h-full p-10 md:p-14 overflow-y-auto custom-scrollbar bg-black/20 animate-in zoom-in duration-500">
+                       <div className="text-center mb-16 space-y-4">
+                          <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Traceability <span className="text-amber-500">Node Map</span></h3>
+                          <p className="text-slate-500 text-lg italic">"Mapping the industrial promotion logic from Ingest to Ledger."</p>
+                       </div>
+
+                       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center relative">
+                          {/* Visualization of the promotion logic */}
+                          <div className="space-y-8">
+                             <div className="p-8 glass-card rounded-3xl border border-blue-500/20 bg-blue-600/5 text-center space-y-4 group hover:scale-105 transition-all">
+                                <Cable className="w-10 h-10 text-blue-400 mx-auto" />
+                                <h5 className="text-xs font-black uppercase text-blue-400">Network Ingest</h5>
+                                <p className="text-[9px] text-slate-500 italic uppercase">Raw Telemetry Shards</p>
+                             </div>
+                             <div className="p-8 glass-card rounded-3xl border border-indigo-500/20 bg-indigo-600/5 text-center space-y-4 group hover:scale-105 transition-all">
+                                <Wrench className="w-10 h-10 text-indigo-400 mx-auto" />
+                                <h5 className="text-xs font-black uppercase text-indigo-400">Industrial Tools</h5>
+                                <p className="text-[9px] text-slate-500 italic uppercase">Sigma Process Tuning</p>
+                             </div>
+                          </div>
+
+                          <div className="flex justify-center lg:col-span-2">
+                             <div className="relative">
+                                <div className="w-64 h-64 rounded-full border-4 border-dashed border-white/10 flex items-center justify-center relative">
+                                   <div className="w-48 h-48 agro-gradient rounded-[48px] flex flex-col items-center justify-center text-white shadow-[0_0_100px_rgba(16,185,129,0.3)] animate-pulse">
+                                      <Monitor size={48} />
+                                      <p className="text-[8px] font-black uppercase mt-4 tracking-widest">LIVE_PROCESS_CORE</p>
+                                   </div>
+                                   <div className="absolute inset-[-40px] border-2 border-indigo-500/20 rounded-full animate-spin-slow"></div>
+                                   <div className="absolute inset-[-60px] border-2 border-blue-500/10 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse' }}></div>
+                                </div>
+                             </div>
+                          </div>
+
+                          <div className="space-y-8">
+                             <div className="p-8 glass-card rounded-3xl border border-emerald-500/20 bg-emerald-600/5 text-center space-y-4 group hover:scale-105 transition-all">
+                                <Database className="w-10 h-10 text-emerald-400 mx-auto" />
+                                <h5 className="text-xs font-black uppercase text-emerald-400">Permanent Ledger</h5>
+                                <p className="text-[9px] text-slate-500 italic uppercase">Immutable Value Anchor</p>
+                             </div>
+                             <div className="p-8 glass-card rounded-3xl border border-amber-500/20 bg-amber-600/5 text-center space-y-4 group hover:scale-105 transition-all">
+                                <Scan className="w-10 h-10 text-amber-500 mx-auto" />
+                                <h5 className="text-xs font-black uppercase text-amber-500">Biometric MRV</h5>
+                                <p className="text-[9px] text-slate-500 italic uppercase">C(a) Constant Proof</p>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="mt-20 p-10 bg-black/60 rounded-[56px] border border-white/5 space-y-8">
+                          <h4 className="text-xl font-black text-white uppercase italic px-4 flex items-center gap-3">
+                             <Workflow className="w-5 h-5 text-indigo-400" /> Evidence Pipeline
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                             {['Telemetry Ingest', 'Biometric Scan', 'Sigma Audit', 'Registry Sign'].map((step, i) => (
+                                <div key={step} className="p-6 bg-white/[0.02] border border-white/10 rounded-3xl flex flex-col items-center text-center space-y-3 group hover:border-emerald-500/40 transition-all shadow-xl">
+                                   <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-mono text-[10px] text-emerald-400">{i+1}</div>
+                                   <p className="text-xs font-black text-white uppercase">{step}</p>
+                                   <span className="text-[8px] text-slate-600 uppercase font-black tracking-widest">Status: COMMITTED</span>
+                                </div>
+                             ))}
+                          </div>
+                       </div>
+                    </div>
+                 )}
+
                  {dossierTab === 'twin' && (
                    <div className="h-full flex flex-col lg:flex-row animate-in fade-in zoom-in duration-500 overflow-hidden bg-black/40">
                       <div className="flex-1 relative flex items-center justify-center overflow-hidden border-r border-white/5 min-h-[400px]">
@@ -794,7 +826,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                             <div className="absolute w-[200px] h-[200px] border border-white/[0.05] rounded-full"></div>
                          </div>
 
-                         <div className="absolute top-10 left-10 p-6 glass-card rounded-[32px] border-emerald-500/20 bg-black/60 space-y-4">
+                         <div className="absolute top-10 left-10 p-6 glass-card rounded-[32px] border-emerald-500/20 bg-black/60 space-y-4 shadow-xl">
                             <h5 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
                                <Signal className="w-3 h-3" /> Live Shard Pulse
                             </h5>
@@ -804,7 +836,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                             <p className="text-[9px] text-slate-500 font-mono">RESONANCE_FREQ: 1.42x_STABLE</p>
                          </div>
 
-                         <div className="absolute bottom-10 right-10 p-6 glass-card rounded-[32px] border-indigo-500/20 bg-black/60 text-right space-y-4">
+                         <div className="absolute bottom-10 right-10 p-6 glass-card rounded-[32px] border-indigo-500/20 bg-black/60 text-right space-y-4 shadow-xl">
                             <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center justify-end gap-2">
                                Interaction Hub <Smartphone className="w-3 h-3" />
                             </h5>
@@ -824,7 +856,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                                  { label: 'Quality Vouch', val: '8.2/10', icon: Star, col: 'text-amber-500' },
                                  { label: 'Social Vitality', val: 'HIGH', icon: Heart, col: 'text-rose-400' },
                                ].map((m, i) => (
-                                 <div key={i} className="p-6 bg-white/[0.02] border border-white/10 rounded-3xl flex justify-between items-center group hover:border-emerald-500/30 transition-all">
+                                 <div key={i} className="p-6 bg-white/[0.02] border border-white/10 rounded-3xl flex justify-between items-center group hover:border-emerald-500/30 transition-all shadow-md">
                                     <div className="flex items-center gap-4">
                                        <m.icon className={`w-5 h-5 ${m.col}`} />
                                        <span className="text-xs font-black text-slate-400 uppercase">{m.label}</span>
@@ -845,7 +877,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                                  { user: 'ECO_AUDIT_NY', text: 'Spectral signature matches registry A+ tier.', time: '2h ago', type: 'Audit' },
                                  { user: 'VITAL_FARM_04', text: 'Shard interaction reward released.', time: '5h ago', type: 'Credit' },
                                ].map((log, i) => (
-                                 <div key={i} className="p-6 bg-black rounded-3xl border border-white/5 space-y-3 group hover:border-indigo-500/20 transition-all">
+                                 <div key={i} className="p-6 bg-black rounded-3xl border border-white/5 space-y-3 group hover:border-indigo-500/20 transition-all shadow-md">
                                     <div className="flex justify-between items-center">
                                        <span className="text-[10px] font-black text-indigo-400 uppercase">{log.user}</span>
                                        <span className="text-[8px] text-slate-600 font-mono font-bold uppercase">{log.type}</span>
@@ -857,7 +889,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                             </div>
                          </div>
 
-                         <div className="p-8 glass-card rounded-[40px] border-emerald-500/10 bg-emerald-500/5 text-center space-y-4">
+                         <div className="p-8 glass-card rounded-[40px] border-emerald-500/10 bg-emerald-500/5 text-center space-y-4 shadow-inner">
                             <Bot className="w-8 h-8 text-emerald-400 mx-auto" />
                             <p className="text-[10px] text-slate-400 leading-relaxed italic">
                                "Digital Twin interactions are audited by the Consumer Sentiment Oracle to ensure verified feedback loops."
@@ -878,97 +910,6 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
         </div>
       )}
 
-      {/* Initialize Product Shard Modal */}
-      {showAddProduct && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowAddProduct(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-in zoom-in duration-300 border-2">
-              <div className="p-16 space-y-12 flex flex-col min-h-[600px]">
-                 <button onClick={() => setShowAddProduct(false)} className="absolute top-12 right-12 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X size={32} /></button>
-                 
-                 {auditStep === 'form' && (
-                    <div className="animate-in slide-in-from-right-6 duration-500 flex-1 flex flex-col justify-center">
-                       <div className="text-center space-y-6 mb-10">
-                          <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl">
-                             <Package className="w-12 h-12 text-emerald-400" />
-                          </div>
-                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Initialize <span className="text-emerald-400">Processing</span></h3>
-                          <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">Register a raw product or industrial tool for live network sharding.</p>
-                       </div>
-
-                       <form onSubmit={handleAddProduct} className="space-y-10">
-                          <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Product Designation</label>
-                             <input 
-                               type="text" 
-                               required 
-                               value={newProductName}
-                               onChange={e => setNewProductName(e.target.value)}
-                               placeholder="e.g. Maize Shards, Organic Feed..." 
-                               className="w-full bg-black/60 border border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-800" 
-                             />
-                          </div>
-
-                          <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Category Anchor</label>
-                             <div className="grid grid-cols-3 gap-3">
-                                {['Produce', 'Manufactured', 'Input'].map(cat => (
-                                   <button 
-                                      key={cat} 
-                                      type="button"
-                                      onClick={() => setNewProductCategory(cat as any)}
-                                      className={`py-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${newProductCategory === cat ? 'bg-emerald-600 border-white text-black shadow-xl' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'}`}
-                                   >
-                                      {cat}
-                                   </button>
-                                ))}
-                             </div>
-                          </div>
-
-                          <div className="p-8 bg-amber-500/5 border border-amber-500/10 rounded-[40px] flex items-center gap-6">
-                             <ShieldAlert className="w-10 h-10 text-amber-500 shrink-0" />
-                             <p className="text-[10px] text-amber-200/50 font-bold uppercase tracking-widest leading-relaxed text-left">
-                                AUDIT_REQ: Newly initialized products require a Physical Field Audit before being marked 'Authentic'.
-                             </p>
-                          </div>
-
-                          <button type="submit" disabled={isSubmitting || !newProductName} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl shadow-emerald-900/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4">
-                             {isSubmitting ? <Loader2 className="w-8 h-8 animate-spin" /> : <PlusCircle className="w-6 h-6" />}
-                             {isSubmitting ? "COMMITING SHARD..." : "AUTHORIZE LIVE REGISTRY"}
-                          </button>
-                       </form>
-                    </div>
-                 )}
-
-                 {auditStep === 'audit_pending' && (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 text-center animate-in zoom-in duration-500">
-                       <div className="relative">
-                          <div className="w-48 h-48 rounded-full border-8 border-amber-500/10 flex items-center justify-center shadow-2xl">
-                             <HardHat className="w-20 h-20 text-amber-500 animate-bounce" />
-                          </div>
-                          <div className="absolute inset-[-10px] border-4 border-amber-500/20 rounded-full animate-ping"></div>
-                       </div>
-                       <div className="space-y-4">
-                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic text-center">Physical <span className="text-amber-500 text-center">Verification Pending</span></h3>
-                          <p className="text-slate-400 text-lg font-medium italic max-sm:text-sm max-w-sm mx-auto leading-relaxed">"Product initialized. EnvirosAgro team has been dispatched for a site audit to verify authenticity."</p>
-                       </div>
-                       <div className="p-6 bg-white/5 border border-white/10 rounded-3xl w-full max-sm:max-w-sm">
-                          <div className="flex items-center gap-4 text-left">
-                             <Clock className="w-6 h-6 text-amber-400" />
-                             <div>
-                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Audit Window</p>
-                                <p className="text-sm font-bold text-white uppercase tracking-widest">24 - 48 Hours</p>
-                             </div>
-                          </div>
-                       </div>
-                       <button onClick={() => setShowAddProduct(false)} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl">Return to Terminal</button>
-                    </div>
-                 )}
-              </div>
-           </div>
-        </div>
-      )}
-
       {/* LINK SHARD MODAL (Tasks or IoT Nodes) */}
       {showLinkModal && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
@@ -979,7 +920,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                     <div className={`p-4 rounded-2xl ${showLinkModal === 'task' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-blue-600/20 text-blue-400'}`}>
                        {showLinkModal === 'task' ? <Wrench size={24} /> : <SmartphoneNfc size={24} />}
                     </div>
-                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Link <span className={showLinkModal === 'task' ? 'text-indigo-400' : 'text-blue-400'}>{showLinkModal === 'task' ? 'Industrial Task' : 'IoT Node'}</span></h3>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Link <span className={showLinkModal === 'task' ? 'text-indigo-400' : 'text-blue-400'}>{showLinkModal === 'task' ? 'Ledger Task' : 'IoT Node'}</span></h3>
                  </div>
                  <button onClick={() => setShowLinkModal(null)} className="p-3 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X size={20} /></button>
               </div>
@@ -991,7 +932,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                         <button 
                           key={task.id}
                           onClick={() => handleLinkTask(task.id)}
-                          className="w-full p-6 bg-black border border-white/10 rounded-[32px] hover:border-indigo-500/40 transition-all flex items-center justify-between group active:scale-[0.98]"
+                          className="w-full p-6 bg-black border border-white/10 rounded-[32px] hover:border-indigo-500/40 transition-all flex items-center justify-between group active:scale-[0.98] shadow-lg"
                         >
                            <div className="flex items-center gap-6">
                               <div className="p-3 bg-indigo-500/10 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-all"><ClipboardList size={18} /></div>
@@ -1000,7 +941,10 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                                  <p className="text-[9px] text-slate-600 font-mono mt-2">{task.id} // {task.thrust}</p>
                               </div>
                            </div>
-                           <PlusCircle className="text-slate-700 group-hover:text-indigo-400" size={20} />
+                           <div className="flex items-center gap-4">
+                              <span className="text-[7px] font-black text-indigo-500/50 uppercase">SEQ: {task.seq}</span>
+                              <PlusCircle className="text-slate-700 group-hover:text-indigo-400" size={20} />
+                           </div>
                         </button>
                       ))}
                    </div>
@@ -1016,7 +960,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, onEarnEAC, onNavigate }
                            <button 
                              key={node.id}
                              onClick={() => handleLinkNode(node.id)}
-                             className="w-full p-6 bg-black border border-white/10 rounded-[32px] hover:border-blue-500/40 transition-all flex items-center justify-between group active:scale-[0.98]"
+                             className="w-full p-6 bg-black border border-white/10 rounded-[32px] hover:border-blue-500/40 transition-all flex items-center justify-between group active:scale-[0.98] shadow-lg"
                            >
                               <div className="flex items-center gap-6">
                                  <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition-all"><Cpu size={18} /></div>
