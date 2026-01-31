@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse, Modality, Type } from "@google/genai";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -127,6 +126,57 @@ const requestWithRetry = async (fn: () => Promise<any>, retries = 3, initialDela
       }
       throw error;
     }
+  }
+};
+
+export const generateAgroExam = async (topic: string): Promise<any[]> => {
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Generate a 5-question professional certification exam shard for EnvirosAgro stewards on the topic: "${topic}". 
+      Context: ${FRAMEWORK_CONTEXT}.
+      Return a JSON array of objects with schema: { "q": string, "options": string[], "correct": number, "category": string }.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              q: { type: Type.STRING },
+              options: { type: Type.ARRAY, items: { type: Type.STRING } },
+              correct: { type: Type.INTEGER },
+              category: { type: Type.STRING }
+            },
+            required: ["q", "options", "correct", "category"]
+          }
+        }
+      }
+    });
+    return JSON.parse(response.text || "[]");
+  } catch (err) {
+    console.error("Exam Generation Failure:", err);
+    throw err;
+  }
+};
+
+export const getGroundedAgroResources = async (query: string, lat?: number, lng?: number): Promise<AIResponse> => {
+  try {
+    // Requirements specified gemini-2.5-flash for Maps Grounding tasks
+    const response = await getAI().models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Provide current information about ${query}. If location is relevant, find resources near ${lat}, ${lng}.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        toolConfig: { retrievalConfig: { latLng: lat && lng ? { latitude: lat, longitude: lng } : undefined } }
+      }
+    });
+    return {
+      text: response.text || "",
+      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any
+    };
+  } catch (err) {
+    return handleAIError(err);
   }
 };
 
@@ -410,7 +460,7 @@ export const findAgroResources = async (query: string, lat?: number, lng?: numbe
       const response = await getAI().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: query,
-        config: { tools: [{ googleMaps: {} }], toolConfig: { retrievalConfig: { latLng: lat && lng ? { latitude: lat, longitude: lng } : undefined } } }
+        config: { tools: [{ googleSearch: {} }], toolConfig: { retrievalConfig: { latLng: lat && lng ? { latitude: lat, longitude: lng } : undefined } } }
       }) as GenerateContentResponse;
       return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
     });

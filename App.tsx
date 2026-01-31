@@ -1,7 +1,8 @@
+
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit, LiveAgroProduct } from './types';
 import Dashboard from './components/Dashboard';
@@ -48,6 +49,7 @@ import AgroValueEnhancement from './components/AgroValueEnhancement';
 import DigitalMRV from './components/DigitalMRV';
 import RegistryHandshake from './components/RegistryHandshake';
 import OnlineGarden from './components/OnlineGarden';
+import FarmOS from './components/FarmOS';
 import { syncUserToCloud } from './services/firebaseService';
 
 export interface SignalShard {
@@ -364,6 +366,7 @@ const App: React.FC = () => {
       category: 'Command & Strategy', 
       items: [
         { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
+        { id: 'farm_os', name: 'Farm OS', icon: Binary },
         { id: 'impact', name: 'Network Impact', icon: TrendingUp },
         { id: 'code_of_laws', name: 'Code of Laws', icon: Scale },
         { id: 'chroma_system', name: 'Chroma-SEHTI', icon: Palette },
@@ -526,7 +529,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex-1 flex justify-center">
-            <h1 className="text-xl md:text-3xl font-black tracking-tighter uppercase italic text-white flex items-center gap-2">
+            <h1 className="text-xl md:text-3xl font-black tracking-tighter uppercase italic text-white flex items-center gap-2 text-center">
               {activeView.replace(/_/g, ' ').toUpperCase()} <span className="text-emerald-400">SHARD</span>
             </h1>
           </div>
@@ -549,11 +552,12 @@ const App: React.FC = () => {
 
         <div className="p-4 md:p-10 flex-1 relative max-w-[1920px] mx-auto w-full">
           {activeView === 'dashboard' && <Dashboard user={user} onNavigate={handleNavigate} orders={orders} />}
+          {activeView === 'farm_os' && <FarmOS user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'wallet' && <AgroWallet user={user} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} projects={projects} />}
           {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'economy' && <Economy user={user} onNavigate={handleNavigate} onSpendEAC={spendEAC} onEarnEAC={earnEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} />}
           {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} onInitializeLiveProcess={handleInitializeLiveProcess} />}
-          {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onOpenEvidence={(task?: any) => { setActiveTaskForEvidence(task || null); setIsEvidenceModalOpen(true); }} />}
+          {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onOpenEvidence={(task?: any) => { setActiveTaskForEvidence(task || null); setIsEvidenceModalOpen(true); }} />}
           {activeView === 'code_of_laws' && <CodeOfLaws user={user} />}
           {activeView === 'chroma_system' && <ChromaSystem user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'agro_calendar' && <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}

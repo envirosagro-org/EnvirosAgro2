@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   PlayCircle, 
@@ -71,6 +70,7 @@ import {
   FileDigit,
   Shield,
   Stamp,
+  Scan,
   Dna as DNAIcon,
   User as UserIcon,
   Share2,
@@ -92,10 +92,12 @@ import {
   Binary,
   Bookmark,
   ArrowLeftCircle,
-  ArrowLeft
+  ArrowLeft,
+  Database,
+  Map as MapIcon
 } from 'lucide-react';
 import { User, ViewState } from '../types';
-import { findAgroResources, GroundingChunk, chatWithAgroExpert } from '../services/geminiService';
+import { generateAgroExam, getGroundedAgroResources, AIResponse, GroundingChunk } from '../services/geminiService';
 
 interface CommunityProps {
   user: User;
@@ -108,14 +110,6 @@ const CHAPTERS = [
   { id: 1, title: "The SEHTI Philosophy", content: "Agriculture is not just land management; it is a complex system of human psychology, social structures, and scientific data. SEHTI integrates five core thrusts to achieve 100% sustainability.\n\nS: Societal - Anthropological agriculture.\nE: Environmental - Stewardship of physical resources.\nH: Human - Health and behavioral processes.\nT: Technological - Modern agrarian innovations.\nI: Industry - Data-driven industrial optimization and blockchain registries." },
   { id: 2, title: "Industry Thrust (I)", content: "The 'I' pillar focuses on industrial optimization. By leveraging decentralized ledgers (ESIN), we create an immutable record of agricultural output, carbon capture, and resource efficiency. This allows farms to act as independent economic nodes in a global grid." },
   { id: 3, title: "Agricultural Code C(a)", content: "The C(a) is the core biometric of your land. It is calculated based on cumulative sustainable practices. A high C(a) directly correlates with lower registry fees and higher EAC minting multipliers." },
-];
-
-const EXAM_QUESTIONS = [
-  { id: 1, category: 'SOCIETAL', q: "In the EnvirosAgro framework, what does the variable 'x' represent in the C(a) Agro Code formula?", options: ["Rainfall Multiplier", "Social Immunity / Resistance to SID", "Seed Purity Shard", "Industrial Capacity"], correct: 1 },
-  { id: 2, category: 'ENVIRONMENTAL', q: "Which sequestration method involves high-fidelity 'No-Till' sharding in Zone 4 Nebraska?", options: ["Hydroponic Ingest", "Regenerative Tilling Shards", "Bio-Nitrogen Array Installation", "Atmospheric Gaseous Sync"], correct: 1 },
-  { id: 3, category: 'HUMAN', q: "Social Influenza Disease (SID) primarily attacks which aspect of a farming cluster?", options: ["Soil Microbiome Purity", "Community Trust and Ideological Consensus", "Satellite Signal Stability", "Irrigation Flow Velocity"], correct: 1 },
-  { id: 4, category: 'TECHNOLOGICAL', q: "The m-constant formula m = sqrt((Dn * In * C(a)) / S) is specifically used to calculate:", options: ["Daily Water Loss", "Time Constant Resilience of an Industrial Node", "EAC Minting Multiplier", "Consumer Vouch Score"], correct: 1 },
-  { id: 5, category: 'INDUSTRY', q: "What is the primary role of ZK-SNARKs in the EnvirosAgro registry?", options: ["Increasing crop yield", "Enabling privacy-preserving telemetry verification", "Cooling industrial hardware", "Managing employee payroll"], correct: 1 },
 ];
 
 const LMS_MODULES = [
@@ -176,36 +170,48 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
   const [selectedModule, setSelectedModule] = useState<any | null>(null);
 
   // Exam States
-  const [examStep, setExamStep] = useState<'intro' | 'payment' | 'active' | 'grading' | 'results'>('intro');
+  const [examStep, setExamStep] = useState<'intro' | 'payment' | 'generation' | 'active' | 'grading' | 'results'>('intro');
+  const [examTopic, setExamTopic] = useState('EnvirosAgro Ecosystem');
+  const [examQuestions, setExamQuestions] = useState<any[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [esinSign, setEsinSign] = useState('');
   const [isProcessingExam, setIsProcessingExam] = useState(false);
   const [examResult, setExamResult] = useState<{ score: number; percentage: number; passed: boolean } | null>(null);
+  const [studyResources, setStudyResources] = useState<AIResponse | null>(null);
 
   const handleAnswerSelect = (index: number) => {
     const newAnswers = [...answers, index];
     setAnswers(newAnswers);
     
-    if (currentQuestion < EXAM_QUESTIONS.length - 1) {
+    if (currentQuestion < examQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setExamStep('grading');
       setIsProcessingExam(true);
       
-      const score = EXAM_QUESTIONS.reduce((acc, q, idx) => {
+      const score = examQuestions.reduce((acc, q, idx) => {
         return acc + (q.correct === newAnswers[idx] ? 1 : 0);
       }, 0);
       
-      const percentage = (score / EXAM_QUESTIONS.length) * 100;
+      const percentage = (score / examQuestions.length) * 100;
       const passed = percentage >= 80;
       
-      setTimeout(() => {
+      setTimeout(async () => {
         setExamResult({ score, percentage, passed });
         setIsProcessingExam(false);
         setExamStep('results');
+        
         if (passed) {
           onEarnEAC(EXAM_REWARD_BOUNTY, 'AGBOARD_EXAMINATION_SUCCESS');
+        } else {
+          // Fetch grounded resources for failing stewards using requested 2.5 Maps-aware logic
+          try {
+            const resources = await getGroundedAgroResources(`Scientific resources and learning materials for ${examTopic} and sustainable industrial agriculture`);
+            setStudyResources(resources);
+          } catch (e) {
+            console.error("Study resource ingest failed");
+          }
         }
       }, 3000);
     }
@@ -216,7 +222,7 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!postContent.trim()) return;
-    setIsPosting(true);
+    setIsPosting(false);
     setTimeout(() => {
       onContribution('post', 'Sociological');
       setIsPosting(false);
@@ -250,19 +256,27 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
     onEarnEAC(0.5, 'MISSION_REACTION_MINING');
   };
 
-  const handleAuthorizeExam = () => {
+  const handleAuthorizeExam = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
       alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     if (onSpendEAC(EXAM_FEE, "INDUSTRIAL_EXAMINATION_INGEST")) {
+      setExamStep('generation');
       setIsProcessingExam(true);
-      setTimeout(() => {
-        setIsProcessingExam(false);
+      try {
+        const questions = await generateAgroExam(examTopic);
+        setExamQuestions(questions);
         setExamStep('active');
         setCurrentQuestion(0);
         setAnswers([]);
-      }, 2000);
+      } catch (e) {
+        alert("ORACLE ERROR: Exam shard synthesis failed. EAC refunded.");
+        onEarnEAC(EXAM_FEE, "EXAM_SYNTHESIS_REFUND");
+        setExamStep('intro');
+      } finally {
+        setIsProcessingExam(false);
+      }
     } else {
       alert("LIQUIDITY ERROR: Insufficient EAC for exam registration.");
     }
@@ -309,6 +323,7 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
                        onChange={(e) => setPostContent(e.target.value)}
                        placeholder="Share knowledge, ancestral lineages, or field updates..." 
                        className="w-full bg-black/60 border border-white/10 rounded-3xl p-6 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none min-h-[160px]"
+                       style={{ minHeight: '160px' }}
                       />
                       <div className="flex justify-between items-center">
                          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-emerald-500/20 transition-all">
@@ -383,7 +398,7 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
                          <div key={shard.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-indigo-500/30 transition-all group flex flex-col h-full bg-black/40 shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform"><Share2 size={200} /></div>
                             <div className="flex justify-between items-start mb-8 relative z-10">
-                               <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 text-indigo-400 group-hover:rotate-6 transition-transform shadow-xl"><Users2 size={28} /></div>
+                               <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 text-indigo-400 shadow-xl group-hover:rotate-6 transition-all shadow-xl"><Users2 size={28} /></div>
                                <div className="text-right">
                                   <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black uppercase text-slate-500 tracking-widest">{shard.memberCount} Members</span>
                                   <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase font-black">{shard.id}</p>
@@ -421,7 +436,6 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
                 </div>
              ) : (
                 <div className="space-y-10 animate-in zoom-in duration-500 px-1 md:px-4">
-                   {/* SHARD LAB HEADER - Redesigned based on screenshot */}
                    <div className="p-10 md:p-14 glass-card rounded-[56px] border border-white/5 bg-black/40 flex flex-col md:flex-row justify-between items-center gap-10 shadow-3xl relative overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-transparent opacity-20"></div>
                       <div className="flex items-center gap-8 relative z-10">
@@ -444,7 +458,6 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
                       </div>
                    </div>
 
-                   {/* LAB INTERNAL TABS - Scroll Across Effect */}
                    <div className="flex overflow-x-auto scrollbar-hide border-b border-white/5 px-2 md:px-8 gap-2">
                       {[
                         { id: 'feed', label: 'ENGAGEMENT FEED', icon: Radio },
@@ -464,7 +477,6 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
                       ))}
                    </div>
 
-                   {/* LAB CONTENT */}
                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                       <div className="lg:col-span-8 space-y-10">
                          {labTab === 'feed' && (
@@ -575,7 +587,6 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
                       </div>
 
                       <div className="lg:col-span-4 space-y-10">
-                         {/* RESONANCE CARD - Updated based on screenshot */}
                          <div className="glass-card p-14 rounded-[56px] border border-blue-500/20 bg-blue-950/10 space-y-12 shadow-3xl relative overflow-hidden group/audit">
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] group-hover/audit:scale-110 transition-transform duration-[15s] pointer-events-none"><Scale size={400} className="text-white" /></div>
                             <div className="flex items-center gap-4 relative z-10">
@@ -659,10 +670,10 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
           </div>
         )}
 
-        {/* --- OTHER TABS (LMS, MANUAL, REPORT) --- */}
+        {/* --- TAB: LEARNING HUB --- */}
         {activeTab === 'lms' && (
            <div className="space-y-8 animate-in fade-in duration-500">
-              <div className="flex gap-4 p-1.5 glass-card rounded-2xl w-fit mx-auto border border-white/5 bg-black/40 mb-8">
+              <div className="flex gap-4 p-1.5 glass-card rounded-2xl w-fit mx-auto border border-white/5 bg-black/40 mb-8 shadow-xl">
                  {[
                    { id: 'modules', name: 'Curriculum Shards', icon: LayoutGrid },
                    { id: 'exams', name: 'AgBoard Examination', icon: FileSignature },
@@ -670,7 +681,7 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
                    <button 
                      key={sub.id}
                      onClick={() => setLmsSubTab(sub.id as any)}
-                     className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${lmsSubTab === sub.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                     className={`flex items-center gap-2 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${lmsSubTab === sub.id ? 'bg-indigo-600 text-white shadow-xl scale-105' : 'text-slate-500 hover:text-white'}`}
                    >
                      <sub.icon size={14} /> {sub.name}
                    </button>
@@ -680,16 +691,22 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
               {lmsSubTab === 'modules' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 px-4 md:px-0">
                     {LMS_MODULES.map((m, i) => (
-                      <div key={i} className={`glass-card p-10 rounded-[48px] border border-white/5 hover:border-indigo-500/30 transition-all group cursor-pointer flex flex-col h-full active:scale-95 duration-300 bg-black/20`}>
-                        <div className="flex justify-between items-start mb-10">
+                      <div key={i} className={`glass-card p-10 rounded-[48px] border-2 border-white/5 hover:border-indigo-500/30 transition-all group cursor-pointer flex flex-col h-full active:scale-95 duration-300 bg-black/20 shadow-2xl relative overflow-hidden`}>
+                        <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover:scale-110 transition-transform">
+                           <Database className="w-16 h-16 text-white" />
+                        </div>
+                        <div className="flex justify-between items-start mb-10 relative z-10">
                             <span className={`px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.3em] ${m.col}`}>{m.category}</span>
                             <div className="text-right">
                               <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">+{m.eac} EAC</p>
                             </div>
                         </div>
-                        <h4 className="text-2xl font-black text-white mb-10 leading-tight flex-1 tracking-tighter uppercase italic">{m.title}</h4>
-                        <button onClick={() => setSelectedModule(m)} className="w-full py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.4em] hover:bg-indigo-600 transition-all flex items-center justify-center gap-3">
-                            <PlayCircle className="w-5 h-5" /> START MODULE
+                        <h4 className="text-2xl font-black text-white mb-10 leading-tight flex-1 tracking-tighter uppercase italic group-hover:text-indigo-400 transition-colors">{m.title}</h4>
+                        <button 
+                          onClick={() => { setSelectedModule(m); setExamTopic(m.title); setLmsSubTab('exams'); setExamStep('intro'); }} 
+                          className="w-full py-5 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-white uppercase tracking-[0.4em] hover:bg-indigo-600 transition-all flex items-center justify-center gap-3 relative z-10 shadow-lg"
+                        >
+                            <PlayCircle className="w-5 h-5" /> INITIALIZE EXAM
                         </button>
                       </div>
                     ))}
@@ -697,22 +714,218 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
               )}
 
               {lmsSubTab === 'exams' && (
-                <div className="max-w-3xl mx-auto animate-in zoom-in duration-500 px-4">
+                <div className="max-w-4xl mx-auto animate-in zoom-in duration-500 px-4">
                   {examStep === 'intro' && (
-                    <div className="glass-card p-16 rounded-[64px] border border-white/10 bg-black/60 shadow-3xl text-center space-y-12">
-                       <div className="w-32 h-32 bg-indigo-600 rounded-[48px] flex items-center justify-center mx-auto shadow-2xl animate-float"><FileSignature size={64} className="text-white" /></div>
-                       <div className="space-y-4">
-                          <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">AGBOARD <span className="text-indigo-400">EXAMINATION</span></h3>
-                          <p className="text-slate-400 text-xl font-medium italic">"The ultimate validation of a steward’s knowledge. Passed exams earn industrial certification shards and a massive EAC bounty."</p>
+                    <div className="glass-card p-16 md:p-20 rounded-[80px] border-2 border-white/10 bg-black/60 shadow-3xl text-center space-y-12 relative overflow-hidden">
+                       <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/5 via-transparent to-indigo-600/5 opacity-50"></div>
+                       <div className="w-36 h-36 bg-indigo-600 rounded-[48px] flex items-center justify-center mx-auto shadow-3xl animate-float border-2 border-white/20 relative z-10">
+                          <FileSignature size={80} className="text-white" />
                        </div>
-                       <div className="grid grid-cols-2 gap-6 p-8 bg-black/60 rounded-[40px] border border-white/5 shadow-inner">
-                          <div className="text-center"><p className="text-[10px] text-slate-500 font-black uppercase">Ingest Fee</p><p className="text-3xl font-mono font-black text-rose-500">{EXAM_FEE} EAC</p></div>
-                          <div className="text-center"><p className="text-[10px] text-slate-500 font-black uppercase">Staking Reward</p><p className="text-3xl font-mono font-black text-emerald-400">{EXAM_REWARD_BOUNTY} EAC</p></div>
+                       <div className="space-y-6 relative z-10">
+                          <h3 className="text-6xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">AGBOARD <span className="text-indigo-400">EXAMINATION</span></h3>
+                          <p className="text-slate-400 text-2xl font-medium italic leading-relaxed max-w-2xl mx-auto">"Proctored certification on <b>{examTopic}</b>. Maintain registry standing through high-fidelity knowledge validation."</p>
                        </div>
-                       <button onClick={() => setExamStep('payment')} className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl active:scale-95 transition-all">INITIALIZE EXAM SHARD</button>
+                       <div className="grid grid-cols-2 gap-8 p-10 bg-black/80 rounded-[48px] border border-white/10 shadow-inner relative z-10">
+                          <div className="text-center space-y-2"><p className="text-[11px] text-slate-500 font-black uppercase tracking-widest">Ingest Fee</p><p className="text-5xl font-mono font-black text-rose-500">{EXAM_FEE} <span className="text-sm">EAC</span></p></div>
+                          <div className="text-center space-y-2"><p className="text-[11px] text-slate-500 font-black uppercase tracking-widest">Staking Reward</p><p className="text-5xl font-mono font-black text-emerald-400">{EXAM_REWARD_BOUNTY} <span className="text-sm">EAC</span></p></div>
+                       </div>
+                       <div className="flex gap-4">
+                          <button onClick={() => setLmsSubTab('modules')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest">Select Different Shard</button>
+                          <button onClick={() => setExamStep('payment')} className="flex-[2] py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl active:scale-95 transition-all relative z-10 ring-8 ring-white/5">INITIALIZE AUTH</button>
+                       </div>
                     </div>
                   )}
-                  {/* ... Exam workflow continued ... */}
+
+                  {examStep === 'payment' && (
+                    <div className="glass-card p-16 md:p-20 rounded-[80px] border-2 border-indigo-500/30 bg-black/60 shadow-3xl text-center space-y-12 animate-in slide-in-from-right-10">
+                       <div className="flex flex-col items-center gap-8">
+                          <div className="w-24 h-24 bg-indigo-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-2xl relative group">
+                             <Fingerprint className="w-12 h-12 text-indigo-400 group-hover:scale-110 transition-transform" />
+                             <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-[32px] animate-ping opacity-30"></div>
+                          </div>
+                          <h4 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Registry <span className="text-indigo-400">Authorization</span></h4>
+                       </div>
+                       <div className="space-y-6">
+                          <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.6em] block text-center">Node Signature (ESIN)</label>
+                          <input 
+                             type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
+                             placeholder="EA-XXXX-XXXX-XXXX" 
+                             className="w-full bg-black border border-white/10 rounded-[40px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
+                          />
+                       </div>
+                       <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex items-center gap-8 shadow-inner">
+                          <ShieldAlert className="w-12 h-12 text-indigo-400 shrink-0" />
+                          <p className="text-[11px] text-indigo-200/50 font-black uppercase leading-relaxed tracking-tight text-left italic leading-loose">
+                             "Examination ingest confirms your willingness to shard professional knowledge. AI proctoring will be active."
+                          </p>
+                       </div>
+                       <div className="flex gap-6">
+                          <button onClick={() => setExamStep('intro')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all">Back</button>
+                          <button 
+                             onClick={handleAuthorizeExam}
+                             disabled={isProcessingExam || !esinSign}
+                             className="flex-[2] py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30"
+                          >
+                             {isProcessingExam ? <Loader2 className="w-8 h-8 animate-spin" /> : <Stamp className="w-8 h-8 fill-current" />}
+                             {isProcessingExam ? 'ANCHORING...' : 'AUTHORIZE SETTLEMENT'}
+                          </button>
+                       </div>
+                    </div>
+                  )}
+
+                  {examStep === 'generation' && (
+                    <div className="glass-card p-24 rounded-[80px] border-2 border-indigo-500/20 bg-black/60 shadow-3xl text-center space-y-12 flex flex-col items-center justify-center min-h-[600px] animate-in zoom-in">
+                       <div className="relative">
+                          <Loader2 className="w-32 h-32 text-indigo-500 animate-spin" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                             <Sparkles className="w-12 h-12 text-emerald-400 animate-pulse" />
+                          </div>
+                       </div>
+                       <div className="space-y-4">
+                          <p className="text-emerald-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic">MINTING EXAM SHARD...</p>
+                          <p className="text-slate-600 font-mono text-[11px] uppercase tracking-widest">Consulting Knowledge Oracle for {examTopic}</p>
+                       </div>
+                    </div>
+                  )}
+
+                  {examStep === 'active' && (
+                    <div className="glass-card p-12 md:p-16 rounded-[80px] border-2 border-white/10 bg-black/60 shadow-3xl space-y-12 animate-in slide-in-from-bottom-10 relative overflow-hidden">
+                       <div className="absolute top-0 left-0 w-full h-1.5 bg-white/5 overflow-hidden">
+                          <div className="h-full bg-emerald-500 animate-scan"></div>
+                       </div>
+                       <div className="flex justify-between items-center px-4 pt-4">
+                          <div className="flex items-center gap-4">
+                             <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 animate-pulse border border-blue-500/40">
+                                <Scan size={20} />
+                             </div>
+                             <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">AI_PROCTORING_ACTIVE</span>
+                          </div>
+                          <span className="px-4 py-1.5 bg-white/5 text-white text-[10px] font-mono font-black border border-white/10 rounded-full">
+                             SHARD {currentQuestion + 1} / {examQuestions.length}
+                          </span>
+                       </div>
+                       <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-600 transition-all duration-700 shadow-[0_0_15px_#3b82f6]" style={{ width: `${((currentQuestion + 1) / examQuestions.length) * 100}%` }}></div>
+                       </div>
+                       <div className="space-y-10 py-6">
+                          <div className="p-10 bg-black/80 rounded-[48px] border border-white/10 shadow-inner relative overflow-hidden group">
+                             <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><Database size={200} /></div>
+                             <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-6 block px-4 border-l-2 border-indigo-500/50">{examQuestions[currentQuestion].category} MODULE</span>
+                             <h4 className="text-3xl font-black text-white leading-relaxed italic px-4 relative z-10">"{examQuestions[currentQuestion].q}"</h4>
+                          </div>
+                          <div className="grid grid-cols-1 gap-4">
+                             {examQuestions[currentQuestion].options.map((opt: string, i: number) => (
+                                <button 
+                                   key={i} 
+                                   onClick={() => handleAnswerSelect(i)}
+                                   className="w-full p-8 rounded-[32px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 hover:bg-indigo-600/5 text-left transition-all group flex items-center gap-6"
+                                >
+                                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center font-mono font-black text-slate-500 group-hover:text-indigo-400 transition-all border border-white/5 group-hover:rotate-6">0{i+1}</div>
+                                   <span className="text-xl font-bold text-slate-400 group-hover:text-white transition-colors">{opt}</span>
+                                </button>
+                             ))}
+                          </div>
+                       </div>
+                    </div>
+                  )}
+
+                  {examStep === 'grading' && (
+                    <div className="glass-card p-24 rounded-[80px] border-2 border-indigo-500/20 bg-black/60 shadow-3xl text-center space-y-12 flex flex-col items-center justify-center min-h-[600px] animate-in zoom-in">
+                       <div className="relative">
+                          <div className="absolute inset-[-20px] border-t-8 border-emerald-500 rounded-full animate-spin"></div>
+                          <div className="w-48 h-48 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-2xl relative overflow-hidden">
+                             <Binary className="w-20 h-20 text-indigo-400 animate-pulse" />
+                             <div className="absolute inset-0 bg-white/5 animate-pulse"></div>
+                          </div>
+                       </div>
+                       <div className="space-y-4">
+                          <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic">GRADING SHARD...</p>
+                          <p className="text-slate-600 font-mono text-[11px] uppercase tracking-widest">Cross-referencing global consensus models</p>
+                       </div>
+                    </div>
+                  )}
+
+                  {examStep === 'results' && examResult && (
+                    <div className="glass-card p-16 md:p-24 rounded-[80px] border-2 bg-black/60 shadow-3xl text-center space-y-16 animate-in zoom-in duration-700 relative overflow-hidden">
+                       <div className={`absolute inset-0 opacity-[0.03] pointer-events-none ${examResult.passed ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                       
+                       <div className="relative z-10 space-y-12">
+                          <div className={`w-64 h-64 rounded-[48px] flex items-center justify-center mx-auto shadow-3xl relative group ${examResult.passed ? 'bg-emerald-600 border-emerald-400' : 'bg-rose-600 border-rose-400'} border-4`}>
+                             {examResult.passed ? <Trophy size={96} className="text-white group-hover:scale-110 transition-transform" /> : <ShieldAlert size={96} className="text-white" />}
+                             <div className="absolute inset-[-15px] border-4 border-current opacity-20 rounded-[56px] animate-ping"></div>
+                          </div>
+
+                          <div className="space-y-4">
+                             <h3 className="text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">
+                                {examResult.passed ? 'CERTIFIED' : 'RETRY_REQUIRED'}
+                             </h3>
+                             <p className={`text-xl font-black uppercase tracking-[0.4em] ${examResult.passed ? 'text-emerald-400' : 'text-rose-500'}`}>
+                                REGISTRY_SCORE: {examResult.percentage}%
+                             </p>
+                          </div>
+
+                          <div className="p-12 bg-black/80 rounded-[64px] border border-white/5 grid grid-cols-2 gap-12 shadow-inner">
+                             <div className="text-center space-y-2 border-r border-white/10 pr-12">
+                                <p className="text-[11px] text-slate-500 font-black uppercase tracking-widest">Correct Shards</p>
+                                <p className="text-5xl font-mono font-black text-white">{examResult.score}/{examQuestions.length}</p>
+                             </div>
+                             <div className="text-center space-y-2 pl-12">
+                                <p className="text-[11px] text-slate-500 font-black uppercase tracking-widest">Shard Bounty</p>
+                                <p className={`text-5xl font-mono font-black ${examResult.passed ? 'text-emerald-400' : 'text-slate-700'}`}>
+                                   {examResult.passed ? `+${EXAM_REWARD_BOUNTY}` : '0'} <span className="text-xs italic">EAC</span>
+                                </p>
+                             </div>
+                          </div>
+
+                          {!examResult.passed && studyResources && (
+                            <div className="p-10 bg-indigo-600/5 border border-indigo-500/20 rounded-[48px] text-left space-y-8 animate-in slide-in-from-bottom-4 shadow-2xl">
+                               <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                                  <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-xl"><Search size={20} /></div>
+                                  <h4 className="text-xl font-black text-white uppercase italic">Study Remediation Shards</h4>
+                               </div>
+                               <p className="text-slate-400 italic text-sm leading-relaxed border-l-4 border-indigo-500/40 pl-6">
+                                  "Steward missed critical <b>{examTopic}</b> benchmarks. Access grounded search shards to remediate knowledge gaps before next sync."
+                               </p>
+                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  {studyResources.sources?.map((source, idx) => (
+                                    <a 
+                                      key={idx} 
+                                      href={source.web?.uri || source.maps?.uri} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="p-5 glass-card rounded-2xl border border-white/10 flex items-center justify-between group hover:border-blue-400 transition-all"
+                                    >
+                                       <div className="flex items-center gap-4">
+                                          {source.maps ? <MapIcon size={16} className="text-emerald-400" /> : <Globe size={16} className="text-blue-400" />}
+                                          <span className="text-[10px] font-black text-slate-300 uppercase truncate max-w-[150px]">{source.web?.title || source.maps?.title || "Registry Resource"}</span>
+                                       </div>
+                                       <ArrowUpRight size={14} className="text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                                    </a>
+                                  ))}
+                               </div>
+                            </div>
+                          )}
+                       </div>
+
+                       <div className="relative z-10 flex flex-col md:flex-row gap-6 justify-center pt-10">
+                          <button 
+                             onClick={() => setExamStep('intro')}
+                             className="px-16 py-8 bg-white/5 border border-white/10 rounded-[40px] text-slate-400 font-black text-xs uppercase tracking-[0.4em] hover:text-white transition-all shadow-xl"
+                          >
+                             Return to Intro
+                          </button>
+                          {examResult.passed ? (
+                             <button onClick={() => setActiveTab('hub')} className="px-20 py-8 agro-gradient rounded-[40px] text-white font-black text-xs uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(16,185,129,0.3)] active:scale-95 transition-all">
+                                Back to Hub
+                             </button>
+                          ) : (
+                             <button onClick={() => setExamStep('payment')} className="px-20 py-8 bg-rose-600 hover:bg-rose-500 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(244,63,94,0.3)] active:scale-95 transition-all">
+                                Retry Examination
+                             </button>
+                          )}
+                       </div>
+                    </div>
+                  )}
                 </div>
               )}
            </div>
@@ -773,6 +986,8 @@ const Community: React.FC<CommunityProps> = ({ user, onEarnEAC, onSpendEAC, onCo
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
+        @keyframes scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );

@@ -1,55 +1,54 @@
-
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine
 } from 'lucide-react';
-import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from './types';
-import Dashboard from './components/Dashboard';
-import Sustainability from './components/Sustainability';
-import Economy from './components/Economy';
-import Industrial from './components/Industrial';
-import Intelligence from './components/Intelligence';
-import Community from './components/Community';
-import Explorer from './components/Explorer';
-import Ecosystem from './components/Ecosystem';
-import MediaHub from './components/MediaHub';
-import InfoPortal from './components/InfoPortal';
-import Login from './components/Login';
-import AgroWallet from './components/AgroWallet';
-import UserProfile from './components/UserProfile';
-import InvestorPortal from './components/InvestorPortal';
-import VendorPortal from './components/VendorPortal';
-import NetworkIngest from './components/NetworkIngest';
-import ToolsSection from './components/ToolsSection';
-import LiveVoiceBridge from './components/LiveVoiceBridge';
-import Channelling from './components/Channelling';
-import EvidenceModal from './components/EvidenceModal';
-import CircularGrid from './components/CircularGrid';
-import NexusCRM from './components/NexusCRM';
-import TQMGrid from './components/TQMGrid';
-import ResearchInnovation from './components/ResearchInnovation';
-import LiveFarming from './components/LiveFarming';
-import ContractFarming from './components/ContractFarming';
-import Agrowild from './components/Agrowild';
-import FloatingConsultant from './components/FloatingConsultant';
-import Impact from './components/Impact';
-import NaturalResources from './components/NaturalResources';
-import IntranetPortal from './components/IntranetPortal';
-import EnvirosAgroStore from './components/EnvirosAgroStore';
-import CEA from './components/CEA';
-import Biotechnology from './components/Biotechnology';
-import Permaculture from './components/Permaculture';
-import EmergencyPortal from './components/EmergencyPortal';
-import AgroRegency from './components/AgroRegency';
-import CodeOfLaws from './components/CodeOfLaws';
-import AgroCalendar from './components/AgroCalendar';
-import ChromaSystem from './components/ChromaSystem';
-import AgroValueEnhancement from './components/AgroValueEnhancement';
-import DigitalMRV from './components/DigitalMRV';
-import RegistryHandshake from './components/RegistryHandshake';
-import OnlineGarden from './components/OnlineGarden';
-import { syncUserToCloud } from './services/firebaseService';
+import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from '../types';
+import Dashboard from './Dashboard';
+import Sustainability from './Sustainability';
+import Economy from './Economy';
+import Industrial from './Industrial';
+import Intelligence from './Intelligence';
+import Community from './Community';
+import Explorer from './Explorer';
+import Ecosystem from './Ecosystem';
+import MediaHub from './MediaHub';
+import InfoPortal from './InfoPortal';
+import Login from './Login';
+import AgroWallet from './AgroWallet';
+import UserProfile from './UserProfile';
+import InvestorPortal from './InvestorPortal';
+import VendorPortal from './VendorPortal';
+import NetworkIngest from './NetworkIngest';
+import ToolsSection from './ToolsSection';
+import LiveVoiceBridge from './LiveVoiceBridge';
+import Channelling from './Channelling';
+import EvidenceModal from './EvidenceModal';
+import CircularGrid from './CircularGrid';
+import NexusCRM from './NexusCRM';
+import TQMGrid from './TQMGrid';
+import ResearchInnovation from './ResearchInnovation';
+import LiveFarming from './LiveFarming';
+import ContractFarming from './ContractFarming';
+import Agrowild from './Agrowild';
+import FloatingConsultant from './FloatingConsultant';
+import Impact from './Impact';
+import NaturalResources from './NaturalResources';
+import IntranetPortal from './IntranetPortal';
+import EnvirosAgroStore from './EnvirosAgroStore';
+import CEA from './CEA';
+import Biotechnology from './Biotechnology';
+import Permaculture from './Permaculture';
+import EmergencyPortal from './EmergencyPortal';
+import AgroRegency from './AgroRegency';
+import CodeOfLaws from './CodeOfLaws';
+import AgroCalendar from './AgroCalendar';
+import ChromaSystem from './ChromaSystem';
+import AgroValueEnhancement from './AgroValueEnhancement';
+import DigitalMRV from './DigitalMRV';
+import RegistryHandshake from './RegistryHandshake';
+import OnlineGarden from './OnlineGarden';
+import { syncUserToCloud } from '../services/firebaseService';
 
 export interface SignalShard {
   id: string;
@@ -309,10 +308,8 @@ const App: React.FC = () => {
       category: 'Natural Resources',
       items: [
         { id: 'animal_world', name: 'Animal World', icon: PawPrint },
-        // Fixed: TreePine icon used here (was missing from imports)
         { id: 'plants_world', name: 'Plants World', icon: TreePine },
         { id: 'aqua_portal', name: 'Aqua Portal', icon: Droplets },
-        { id: 'soil_portal', name: 'Soil Portal', icon: Mountain },
         { id: 'soil_portal', name: 'Soil Portal', icon: Mountain },
         { id: 'air_portal', name: 'Air Portal', icon: Wind }
       ]
@@ -466,7 +463,8 @@ const App: React.FC = () => {
           {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'economy' && <Economy user={user} onNavigate={handleNavigate} onSpendEAC={spendEAC} onEarnEAC={earnEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} />}
           {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} />}
-          {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
+          {/* Fixed: Passed handleNavigate to Intelligence to resolve Cannot find name error */}
+          {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
           {activeView === 'code_of_laws' && <CodeOfLaws user={user} />}
           {activeView === 'chroma_system' && <ChromaSystem user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'agro_calendar' && <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
@@ -488,7 +486,6 @@ const App: React.FC = () => {
           {activeView === 'permaculture_hub' && <Permaculture user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'cea_portal' && <CEA user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'emergency_portal' && <EmergencyPortal user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
-          {/* Fixed: Component name corrected from <Agro Regency ... /> */}
           {activeView === 'agro_regency' && <AgroRegency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'intranet' && <IntranetPortal user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'envirosagro_store' && <EnvirosAgroStore user={user} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} />}

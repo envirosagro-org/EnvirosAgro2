@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, 
@@ -107,20 +106,24 @@ import {
   Cell
 } from 'recharts';
 import { chatWithAgroExpert, analyzeMedia, AIResponse } from '../services/geminiService';
-import { User, AgroResource } from '../types';
+// Added ViewState to imports
+import { User, AgroResource, ViewState } from '../types';
 
 interface IntelligenceProps {
   user: User;
-  onSpendEAC: (amount: number, reason: string) => boolean;
   onEarnEAC: (amount: number, reason: string) => void;
+  onSpendEAC: (amount: number, reason: string) => boolean;
   onOpenEvidence?: () => void;
+  // Added onNavigate to props to fix 'Cannot find name' error
+  onNavigate: (view: ViewState) => void;
 }
 
 type TabState = 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry';
 
 const ORACLE_QUERY_COST = 25;
 
-const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC, onOpenEvidence }) => {
+// Added onNavigate to destructuring
+const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC, onOpenEvidence, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<TabState>('simulator');
   
   // --- IOT TELEMETRY STATES ---
@@ -470,25 +473,26 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
         {activeTab === 'telemetry' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-700">
             <div className="lg:col-span-4 space-y-8">
-              <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-black/40 space-y-8 shadow-2xl">
-                <div className="flex items-center gap-4">
-                  <div className="p-4 bg-blue-600 rounded-3xl shadow-xl"><SmartphoneNfc className="w-8 h-8 text-white" /></div>
+              <div className="glass-card p-10 rounded-[56px] border border-white/10 bg-black/40 space-y-8 shadow-2xl relative overflow-hidden">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl"><Radio size={32} /></div>
                   <div>
-                    <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Hardware <span className="text-blue-400">Nodes</span></h3>
+                    <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">HARDWARE <span className="text-blue-400">NODES</span></h3>
                     <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Paired IOT Registry</p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 min-h-[250px] flex flex-col justify-center">
                   {hardwareNodes.length === 0 ? (
-                    <div className="py-12 text-center space-y-6 opacity-30">
-                      <ZapOff size={48} className="mx-auto text-slate-500" />
-                      <p className="text-sm font-black uppercase italic">No Active IOT Shards</p>
+                    <div className="text-center space-y-8 py-8">
+                      <p className="text-sm font-black uppercase italic text-slate-600">No active IOT Shards</p>
+                      {/* Fixed call to onNavigate */}
                       <button 
-                        onClick={() => window.location.href = '#registry_handshake'}
-                        className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase hover:bg-white/10 transition-all"
+                        onClick={() => onNavigate('registry_handshake')}
+                        className="w-full py-4 bg-black border border-white/10 rounded-sm text-white font-black text-[10px] uppercase tracking-[0.4em] relative overflow-hidden group shadow-xl"
                       >
-                        Initialize Handshake
+                        <div className="absolute inset-y-0 left-0 bg-blue-600/20 w-[45%] transition-all group-hover:w-[100%] duration-1000"></div>
+                        <span className="relative z-10">INITIALIZE HANDSHAKE</span>
                       </button>
                     </div>
                   ) : (
@@ -514,27 +518,30 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
                 </div>
               </div>
 
-              <div className="glass-card p-10 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-xl">
-                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <Target className="w-4 h-4 text-emerald-500" /> Node Impact Shard
-                 </h4>
-                 <div className="space-y-6">
-                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 text-center group">
-                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">C(a) Growth Lift</p>
-                       <p className="text-4xl font-mono font-black text-white">+0.24<span className="text-sm text-emerald-500 italic">Δ</span></p>
+              <div className="glass-card p-10 rounded-[56px] border border-white/10 bg-black/40 space-y-6 shadow-xl">
+                 <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border border-emerald-500/40 flex items-center justify-center">
+                      <div className="w-1 h-1 bg-emerald-500 rounded-full"></div>
                     </div>
-                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 text-center group">
-                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">m-Resilience Stability</p>
-                       <p className="text-4xl font-mono font-black text-blue-400">92%</p>
+                    NODE IMPACT SHARD
+                 </h4>
+                 <div className="space-y-4">
+                    <div className="p-8 bg-[#0a0a0a] rounded-3xl border border-white/5 text-center group">
+                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">C(A) GROWTH LIFT</p>
+                       <p className="text-5xl font-mono font-black text-white tracking-tighter">+0.24<span className="text-sm text-emerald-500 italic ml-1">Δ</span></p>
+                    </div>
+                    <div className="p-8 bg-[#0a0a0a] rounded-3xl border border-white/5 text-center group">
+                       <p className="text-[9px] text-slate-500 font-black uppercase mb-1">M-RESILIENCE STABILITY</p>
+                       <p className="text-5xl font-mono font-black text-blue-400 tracking-tighter">92%</p>
                     </div>
                  </div>
                  <button 
                   onClick={handleSyncIotConsensus}
                   disabled={isSyncingNode || !selectedIotNode}
-                  className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30"
+                  className="w-full py-6 bg-emerald-950/40 border border-emerald-500/20 rounded-3xl text-emerald-500/80 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30 transition-all hover:bg-emerald-900/60"
                  >
-                    {isSyncingNode ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-                    {isSyncingNode ? 'Syncing Consensus...' : 'Authorize Shard Consensus'}
+                    {isSyncingNode ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                    AUTHORIZE SHARD CONSENSUS
                  </button>
               </div>
             </div>
@@ -542,9 +549,9 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
             <div className="lg:col-span-8 space-y-8">
               <div className="glass-card rounded-[64px] min-h-[600px] border border-white/5 bg-black/40 flex flex-col relative overflow-hidden shadow-3xl">
                 <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-4 text-blue-400">
-                    <Terminal className="w-6 h-6" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Live Telemetry Ingest Stream</span>
+                  <div className="flex items-center gap-4 text-slate-400">
+                    <ChevronRight className="w-5 h-5" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">LIVE TELEMETRY INGEST STREAM</span>
                   </div>
                   <div className="flex gap-4">
                     <div className="flex items-center gap-2 px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-full">
@@ -556,11 +563,11 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
 
                 <div className="flex-1 p-12 overflow-y-auto custom-scrollbar-terminal relative">
                   {!selectedIotNode ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-20 group">
-                      <Wifi size={120} className="text-slate-500 group-hover:text-blue-500 transition-colors" />
-                      <div className="space-y-2">
-                        <p className="text-3xl font-black uppercase tracking-[0.5em] text-white">TELEMETRY_STANDBY</p>
-                        <p className="text-lg italic uppercase font-bold tracking-widest text-slate-600">Register Physical Nodes to initialize Inflow</p>
+                    <div className="h-full flex flex-col items-center justify-center text-center space-y-10 py-20">
+                      <Wifi size={160} className="text-slate-800" />
+                      <div className="space-y-4">
+                        <p className="text-6xl font-black uppercase tracking-[0.4em] text-white opacity-20">ELEMETRY_STANDBY</p>
+                        <p className="text-sm font-black uppercase tracking-widest text-slate-700 italic">REGISTER PHYSICAL NODES TO INITIALIZE INFLOW</p>
                       </div>
                     </div>
                   ) : (
@@ -764,7 +771,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onSpendEAC, onEarnEAC
                             </div>
                             <div>
                                <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Oracle <span className="text-indigo-400">Interpretation</span></h3>
-                               <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-2">EOS_STRATEGIC_SHARD_V5</p>
+                               <p className="text-indigo-400/60 text-[9px] font-mono tracking-widest uppercase mt-2">EOS_STRATEGIC_SHARD_V5</p>
                             </div>
                          </div>
                          <div className="prose prose-invert prose-indigo max-w-none text-slate-300 text-xl leading-relaxed italic whitespace-pre-line border-l-4 border-indigo-500/30 pl-10 font-medium relative z-10">

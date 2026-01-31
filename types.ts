@@ -302,4 +302,5 @@ export type ViewState =
   | 'agro_value_enhancement'
   | 'digital_mrv'
   | 'registry_handshake'
-  | 'online_garden';
+  | 'online_garden'
+  | 'farm_os';

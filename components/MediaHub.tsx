@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Play, 
@@ -39,6 +40,8 @@ import {
   Sprout,
   Activity as WaveIcon,
   CirclePlay,
+  // Added PlayCircle to resolve "Cannot find name 'PlayCircle'" error
+  PlayCircle,
   Monitor,
   Video as VideoIcon,
   Users,
@@ -95,7 +98,8 @@ import {
   Podcast,
   PencilRuler,
   ThumbsUp,
-  MessageSquare
+  MessageSquare,
+  CircleDot
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 import { searchAgroTrends, chatWithAgroExpert, AIResponse } from '../services/geminiService';
@@ -191,7 +195,6 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
         setLatency(12 + Math.floor(Math.random() * 6));
       }, 1000);
 
-      // Simulate Inbound Reactions from "Public Referendum"
       reactionInterval = setInterval(() => {
         const types = ['heart', 'zap', 'check'];
         const type = types[Math.floor(Math.random() * types.length)];
@@ -205,7 +208,6 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
           check: type === 'check' ? prev.check + 1 : prev.check,
         }));
         
-        // Broadcaster earns EAC from reactions
         const reward = type === 'zap' ? 0.5 : type === 'check' ? 1.0 : 0.2;
         setTotalEacEarnedFromStream(prev => prev + reward);
         onEarnEAC(reward, `LIVE_REACTION_REWARD_${streamTitle}`);
@@ -352,13 +354,14 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // added useMemo to fixed "Cannot find name 'useMemo'" error on line 356
-  // Referral / Proof Effectiveness calculation based on reactions
   const publicProofWeight = useMemo(() => {
     const total = reactionStats.hearts + reactionStats.zaps + reactionStats.check;
     if (total === 0) return 0;
     return Math.min(100, (reactionStats.check * 2 + reactionStats.zaps * 1.5 + reactionStats.hearts) * 0.5);
   }, [reactionStats]);
+
+  const liveNodes = VIDEO_NODES.filter(n => n.status === 'LIVE');
+  const archiveNodes = VIDEO_NODES.filter(n => n.status === 'ARCHIVE');
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto px-1 md:px-4">
@@ -507,7 +510,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                               <CircleStop className="w-6 h-6 fill-current animate-pulse" /> TERMINATE INGEST
                            </button>
                          ) : (
-                           <button onClick={handleStartStream} disabled={isInitializing} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-xs uppercase tracking-[0.5em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4">
+                           <button onClick={handleStartStream} disabled={isInitializing} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4">
                               {isInitializing ? <Loader2 size={24} className="animate-spin" /> : <Play size={24} className="fill-current" />}
                               {isInitializing ? 'CALIBRATING...' : 'GO LIVE ON REGISTRY'}
                            </button>
@@ -648,26 +651,84 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
           </div>
         )}
 
-        {/* TAB: VIDEO NODES */}
+        {/* TAB: VIDEO NODES - ENHANCED FOR LIVE STREAMS */}
         {tab === 'video' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 animate-in slide-in-from-right-4 duration-500">
-             {VIDEO_NODES.map(node => (
-                <div key={node.id} className="glass-card rounded-[56px] overflow-hidden border border-white/5 hover:border-indigo-500/30 transition-all flex flex-col group active:scale-[0.98] duration-300 bg-black/40 shadow-3xl relative h-full">
-                   <div className="h-80 relative overflow-hidden">
-                      <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[8s]" alt={node.title} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#050706] to-transparent"></div>
-                      <div className="absolute top-8 left-8 flex gap-3">
-                         <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-xl ${node.status === 'LIVE' ? 'bg-rose-500/20 text-rose-400 border-rose-500/40' : 'bg-slate-500/20 text-slate-400 border-slate-500/40'}`}>{node.status}</span>
-                         <span className="px-4 py-1.5 bg-black/60 backdrop-blur-xl rounded-full text-[10px] font-black text-white border border-white/10">{node.thrust}</span>
+          <div className="space-y-16 animate-in slide-in-from-right-4 duration-500 px-2 md:px-0">
+             {/* Live Section */}
+             <div className="space-y-8">
+                <div className="flex justify-between items-end px-4 border-b border-white/5 pb-6">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-rose-600 rounded-2xl animate-pulse shadow-[0_0_20px_rgba(225,29,72,0.4)]">
+                         <Cast size={24} className="text-white" />
                       </div>
+                      <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Live Ingest <span className="text-rose-500">Nodes</span></h3>
                    </div>
-                   <div className="p-12 space-y-6">
-                      <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter group-hover:text-indigo-400 transition-colors">{node.title}</h4>
-                      <p className="text-sm text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100">"{node.desc}"</p>
-                      <button className="w-full py-5 bg-indigo-600 rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl">CONNECT TO NODE</button>
-                   </div>
+                   <button 
+                    onClick={() => setTab('streaming')}
+                    className="px-8 py-3 bg-rose-600 hover:bg-rose-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl transition-all"
+                   >
+                     Initialize My Stream
+                   </button>
                 </div>
-             ))}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                   {liveNodes.map(node => (
+                      <div key={node.id} className="glass-card rounded-[56px] overflow-hidden border-2 border-rose-500/20 hover:border-rose-500 transition-all flex flex-col group active:scale-[0.98] duration-300 bg-black/60 shadow-3xl relative">
+                         <div className="h-64 relative overflow-hidden">
+                            <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[5s]" alt={node.title} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
+                            <div className="absolute top-6 left-6 flex gap-3">
+                               <div className="px-4 py-1.5 bg-rose-600 rounded-full text-white text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl animate-pulse">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></div> LIVE NOW
+                               </div>
+                               <span className="px-4 py-1.5 bg-black/60 backdrop-blur-xl rounded-full text-[9px] font-black text-white border border-white/10 uppercase tracking-widest">{node.thrust}</span>
+                            </div>
+                            <div className="absolute bottom-6 right-6 flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] text-white font-mono border border-white/10">
+                               <Users size={12} className="text-rose-500" /> {node.viewers.toLocaleString()}
+                            </div>
+                         </div>
+                         <div className="p-10 space-y-6">
+                            <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight leading-none group-hover:text-rose-500 transition-colors">{node.title}</h4>
+                            <p className="text-xs text-slate-400 leading-relaxed italic line-clamp-2">"{node.desc}"</p>
+                            <button className="w-full py-5 bg-rose-600 hover:bg-rose-500 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
+                               <Eye size={16} /> Enter Stream
+                            </button>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+
+             {/* Archive Section */}
+             <div className="space-y-8">
+                <div className="flex items-center gap-4 px-4 border-b border-white/5 pb-6">
+                   <div className="p-3 bg-slate-800 rounded-2xl">
+                      <History size={24} className="text-slate-400" />
+                   </div>
+                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Historic <span className="text-slate-500">Registry Shards</span></h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                   {archiveNodes.map(node => (
+                      <div key={node.id} className="glass-card rounded-[56px] overflow-hidden border border-white/5 hover:border-indigo-500/30 transition-all flex flex-col group active:scale-[0.98] duration-300 bg-black/20 shadow-xl relative">
+                         <div className="h-64 relative overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 opacity-60 group-hover:opacity-100">
+                            <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[8s]" alt={node.title} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#050706] to-transparent"></div>
+                            <div className="absolute top-6 left-6">
+                               <span className="px-4 py-1.5 bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-400">ARCHIVED_NODE</span>
+                            </div>
+                         </div>
+                         <div className="p-10 space-y-6">
+                            <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tighter group-hover:text-indigo-400 transition-colors">{node.title}</h4>
+                            <p className="text-[9px] text-slate-500 font-mono tracking-widest uppercase">REGISTRY_REF: {node.id}</p>
+                            <button className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[9px] font-black uppercase text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2">
+                               <PlayCircle size={14} /> Download Shard
+                            </button>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
           </div>
         )}
 
@@ -776,10 +837,8 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
            </div>
         )}
 
-        {/* TAB: ACOUSTIC REGISTRY maintained... */}
         {tab === 'audio' && (
            <div className="space-y-12 animate-in slide-in-from-right-4 duration-500">
-              {/* Audio tracks maintained... */}
               <div className="glass-card p-14 rounded-[64px] border border-indigo-500/20 bg-indigo-600/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-14 shadow-3xl">
                  <div className="w-28 h-28 bg-indigo-500 rounded-[40px] flex items-center justify-center shadow-3xl relative group">
                     <AudioLines className="w-12 h-12 text-white group-hover:scale-110 transition-transform" /><div className="absolute inset-0 bg-white/10 rounded-[40px] animate-pulse"></div>
@@ -810,7 +869,6 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
            </div>
         )}
 
-        {/* TAB: PLANT WAVE LAB maintained... */}
         {tab === 'waves' && (
           <div className="max-w-5xl mx-auto space-y-12 animate-in zoom-in duration-500">
              <div className="p-16 glass-card rounded-[80px] border border-emerald-500/20 bg-emerald-950/5 relative overflow-hidden flex flex-col items-center text-center space-y-12 shadow-3xl group">
@@ -876,6 +934,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
         .animate-marquee { animation: marquee 45s linear infinite; }
         .shadow-3xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
       `}</style>
     </div>

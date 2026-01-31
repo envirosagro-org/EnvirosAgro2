@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { 
   ShieldCheck, Zap, Globe, Activity, Cpu, Sparkles, Binary, 
   Coins, Users, ArrowRight, BrainCircuit, Bot, 
   TrendingUp, Fingerprint, Lock, Sprout, Briefcase, Database, Wallet, Pickaxe, History, Package, Trello,
   LayoutGrid, ArrowUpRight, ShoppingBag, Radio, Signal, Eye, ChevronRight,
-  Gem, Landmark
+  Gem, Landmark, PlayCircle, BookOpen, Lightbulb, CheckCircle2,
+  AlertCircle, Target, Waves, ShieldAlert
 } from 'lucide-react';
 import { ViewState, User, Order } from '../types';
 import IdentityCard from './IdentityCard';
@@ -27,6 +27,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, orders = [] }) 
     { id: 'M-4', name: 'Purity Audit Vouch', price: 150, icon: ShieldCheck, col: 'text-indigo-400' },
   ];
 
+  const TUTORIAL_SHARDS = [
+    { id: 'tut-1', title: 'Registry 101', type: 'BASICS', dur: '3m', icon: BookOpen, target: 'info', desc: 'Understanding the EnvirosAgro ledger and ESIN logic.' },
+    { id: 'tut-2', title: 'Minting EAC', type: 'ECONOMY', dur: '5m', icon: Zap, target: 'digital_mrv', desc: 'Step-by-step guide to verifying field evidence.' },
+    { id: 'tut-3', title: 'Node Calibration', type: 'TECHNICAL', dur: '4m', icon: Cpu, target: 'intelligence', desc: 'How to sync your physical hardware with the mirror.' },
+    { id: 'tut-4', title: 'Handshake Protocol', type: 'GOVERNANCE', dur: '2m', icon: Landmark, target: 'registry_handshake', desc: 'Securing your land mass within the registry.' },
+  ];
+
+  const RECOMMENDATIONS = [
+    { id: 'rec-1', title: 'Optimize m-Constant', priority: 'High', icon: TrendingUp, target: 'intelligence', col: 'text-blue-400', desc: 'Your regional stability is below 1.42x. Initiate a remediation shard.' },
+    { id: 'rec-2', title: 'Diversify Crop DNA', priority: 'Medium', icon: Binary, target: 'biotech_hub', col: 'text-emerald-400', desc: 'Market demand for Bantu Rice is surging. Forge a new genetic shard.' },
+    /* Fix: Added ShieldAlert to imports to resolve the "Cannot find name" error */
+    { id: 'rec-3', title: 'Audit Field Proofs', priority: 'Critical', icon: ShieldAlert, target: 'tqm', col: 'text-rose-500', desc: '3 shipments are awaiting your digital GRN signature.' },
+  ];
+
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700 max-w-full overflow-hidden pb-20 px-1 md:px-4">
       
@@ -44,10 +58,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, orders = [] }) 
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* 2. Main Identity & Metrics - Updated to match screenshot */}
+        {/* 2. Main Identity & Metrics */}
         <div className="xl:col-span-8">
           <div className="glass-card p-8 md:p-12 rounded-[56px] relative overflow-hidden group h-full flex flex-col justify-between shadow-3xl bg-black/40 border border-white/5">
-             {/* Fingerprint decorative background from screenshot */}
              <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none group-hover:scale-105 transition-transform duration-[10s]">
                 <Fingerprint className="w-[600px] h-[600px] text-white" />
              </div>
@@ -99,7 +112,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, orders = [] }) 
           </div>
         </div>
 
-        {/* 3. Oracle Hub - Updated to match screenshot */}
+        {/* 3. Oracle Hub */}
         <div className="xl:col-span-4">
           <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 h-full flex flex-col justify-between group overflow-hidden relative shadow-3xl">
              <div className="absolute top-0 right-0 p-8 opacity-[0.04] group-hover:rotate-12 transition-transform duration-700">
@@ -128,7 +141,82 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, orders = [] }) 
         </div>
       </div>
 
-      {/* 4. Operational Shards - Updated with screenshot aesthetics */}
+      {/* 4. Strategic Recommendations - NEW SECTION */}
+      <div className="space-y-8 pt-6">
+        <div className="flex items-center justify-between px-10">
+          <h3 className="text-base md:text-lg font-black uppercase tracking-[0.5em] italic flex items-center gap-4 text-white">
+             <Lightbulb className="w-6 h-6 text-amber-500" /> Strategic <span className="text-emerald-400">Path</span>
+          </h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-10">
+           {RECOMMENDATIONS.map((rec) => (
+             <div key={rec.id} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/20 transition-all flex flex-col justify-between">
+                <div className="space-y-6">
+                   <div className="flex justify-between items-start">
+                      <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 ${rec.col} shadow-inner`}>
+                         <rec.icon size={28} />
+                      </div>
+                      <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase border tracking-widest ${
+                         rec.priority === 'High' ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 
+                         rec.priority === 'Critical' ? 'bg-rose-600/10 text-rose-500 border-rose-500/20 animate-pulse' : 
+                         'bg-emerald-600/10 text-emerald-400 border-emerald-500/20'
+                      }`}>
+                         {rec.priority} Priority
+                      </span>
+                   </div>
+                   <h4 className="text-2xl font-black text-white uppercase italic tracking-tight">{rec.title}</h4>
+                   <p className="text-sm text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100">"{rec.desc}"</p>
+                </div>
+                <button 
+                  onClick={() => onNavigate(rec.target as ViewState)}
+                  className="w-full py-4 mt-8 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                >
+                   Execute Strategy <ArrowRight size={14} />
+                </button>
+             </div>
+           ))}
+        </div>
+      </div>
+
+      {/* 5. Knowledge Shards (Tutorials) - NEW SECTION */}
+      <div className="space-y-8 pt-6">
+        <div className="flex items-center justify-between px-10">
+          <h3 className="text-base md:text-lg font-black uppercase tracking-[0.5em] italic flex items-center gap-4 text-white">
+             <BookOpen className="w-6 h-6 text-indigo-400" /> Knowledge <span className="text-indigo-400">Shards</span>
+          </h3>
+        </div>
+        
+        <div className="flex gap-8 overflow-x-auto scrollbar-hide px-10 py-2 snap-x">
+           {TUTORIAL_SHARDS.map((tut) => (
+             <button 
+              key={tut.id} 
+              onClick={() => onNavigate(tut.target as ViewState)}
+              className="glass-card p-10 min-w-[300px] md:min-w-[380px] rounded-[56px] border border-white/5 bg-black/40 transition-all text-left flex flex-col gap-8 group active:scale-[0.98] shadow-2xl hover:border-emerald-500/20 snap-center relative overflow-hidden"
+             >
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="flex justify-between items-start relative z-10">
+                   <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                      <tut.icon size={32} />
+                   </div>
+                   <div className="text-right">
+                      <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">{tut.type}</span>
+                      <p className="text-[9px] text-slate-700 font-mono mt-2 font-bold uppercase tracking-widest">{tut.dur} read</p>
+                   </div>
+                </div>
+                <div className="space-y-3 relative z-10">
+                   <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-emerald-400 transition-colors">{tut.title}</h4>
+                   <p className="text-sm text-slate-500 leading-relaxed italic line-clamp-2">"{tut.desc}"</p>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mt-auto">
+                   Open Shard <ArrowUpRight size={14} />
+                </div>
+             </button>
+           ))}
+        </div>
+      </div>
+
+      {/* 6. Operational Shards */}
       <div className="space-y-8 pt-6">
         <div className="flex items-center justify-between px-10">
           <h3 className="text-base md:text-lg font-black uppercase tracking-[0.5em] italic flex items-center gap-4 text-white">
@@ -169,7 +257,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, orders = [] }) 
         </div>
       </div>
 
-      {/* 5. Market Trends & Ledger Stream */}
+      {/* 7. Market Trends & Ledger Stream */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl relative overflow-hidden">
           <div className="flex justify-between items-center px-4 relative z-10">

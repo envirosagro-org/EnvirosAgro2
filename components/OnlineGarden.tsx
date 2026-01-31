@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Flower, 
@@ -58,8 +57,10 @@ import {
   LayoutGrid, 
   Trophy,
   HardHat,
-  // Added Coins to resolve the ReferenceError
-  Coins
+  Coins,
+  Compass,
+  Scale,
+  Trees
 } from 'lucide-react';
 import { User, ViewState, AgroResource } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
@@ -119,6 +120,9 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
   // Care phase states
   const [careCycles, setCareCycles] = useState(0);
   const [resonance, setResonance] = useState(75);
+
+  // Permaculture Integration States
+  const [permacultureSyncLevel, setPermacultureSyncLevel] = useState(88);
 
   const landResources = useMemo(() => 
     (user.resources || []).filter(r => r.category === 'LAND'),
@@ -180,7 +184,8 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
-      setCareCycles(prev => prev + 1);
+      setCareCycles(prev => prev.map ? (prev as any) + 1 : 1); // fix for any state logic
+      setCareCycles(c => c + 1);
       setResonance(prev => Math.min(100, prev + 5));
       onEarnEAC(2, 'RESOURCE_CARE_SYNC');
     }, 1500);
@@ -294,10 +299,173 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       <div className="min-h-[750px]">
+        {/* --- TAB: UNIVERSAL TWIN --- */}
+        {activeTab === 'twin' && (
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-500">
+              <div className="lg:col-span-8 space-y-10">
+                 <div className="glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden flex flex-col items-center justify-center min-h-[650px] shadow-3xl group">
+                    <div className={`absolute inset-0 transition-all duration-[2s] bg-cover opacity-10 grayscale group-hover:grayscale-0 ${hasPhysicalLand ? "bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1600')]" : "bg-[url('https://images.unsplash.com/photo-1558494949-ef010cbdcc48?q=80&w=1600')]"}`}></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
+                    
+                    <div className="relative z-10 flex flex-col items-center gap-12 w-full">
+                       <div className="relative w-96 h-96 flex items-center justify-center">
+                          <div className="absolute inset-0 border-4 border-dashed border-white/5 rounded-full animate-spin-slow"></div>
+                          <div className={`w-56 h-56 rounded-[64px] flex items-center justify-center shadow-[0_0_100px_current] border-2 transition-all duration-[2s] ${hasPhysicalLand ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-indigo-500/20 border-indigo-500 text-indigo-400'}`}>
+                             {hasPhysicalLand ? <Flower size={96} className="animate-pulse" /> : <Boxes size={96} className="animate-float" />}
+                             {!hasPhysicalLand && (
+                               <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 whitespace-nowrap bg-indigo-500/90 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-2xl">
+                                  <ShieldAlert size={12} /> Conceptual Shard Active
+                               </div>
+                             )}
+                          </div>
+                          
+                          {orbitalParticles.map((p) => (
+                            <div 
+                              key={p.id}
+                              className="absolute"
+                              style={{
+                                width: `${p.radius * 2}px`,
+                                height: `${p.radius * 2}px`,
+                                animation: `spin ${p.duration}s linear infinite`,
+                                animationDelay: `${p.delay}s`
+                              }}
+                            >
+                              <div 
+                                className={`absolute rounded-xl border flex items-center justify-center shadow-lg transition-all group-hover:scale-125 ${p.type === 'bio' ? 'bg-emerald-500/10 border-emerald-500/20' : p.type === 'ind' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-amber-500/10 border-amber-500/20'}`}
+                                style={{
+                                  width: `${p.size * 5}px`,
+                                  height: `${p.size * 5}px`,
+                                  top: '0',
+                                  left: '50%',
+                                  transform: 'translateX(-50%)'
+                                }}
+                                title={`${p.type.toUpperCase()} Contribution`}
+                              >
+                                {p.type === 'bio' ? <Sprout size={p.size * 2} className="text-emerald-500" /> : 
+                                 p.type === 'ind' ? <Factory size={p.size * 2} className="text-blue-500" /> : 
+                                 <Activity size={p.size * 2} className="text-amber-500" />}
+                              </div>
+                            </div>
+                          ))}
+                       </div>
+
+                       <div className="text-center space-y-4">
+                          <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Consolidated <span className={hasPhysicalLand ? 'text-emerald-400' : 'text-indigo-400'}>{hasPhysicalLand ? 'Bio-Shard' : 'Industrial Shard'}</span></h3>
+                          <p className="text-slate-400 text-xl font-medium italic">"Consolidating work from Live Farming, TQM, and Marketplace nodes."</p>
+                       </div>
+
+                       <button 
+                         onClick={handleSyncTelemetry}
+                         disabled={isSyncing}
+                         className={`px-16 py-8 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-6 disabled:opacity-50 ${hasPhysicalLand ? 'agro-gradient' : 'bg-indigo-600 shadow-indigo-900/40'}`}
+                       >
+                          {isSyncing ? <Loader2 size={24} className="animate-spin" /> : <RefreshCw size={24} />}
+                          {isSyncing ? 'SYNCING NETWORK...' : 'INITIALIZE REGISTRY SYNC'}
+                       </button>
+                    </div>
+                 </div>
+
+                 {/* NEW: PERMACULTURE ALIGNMENT INTEGRATION */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-2xl relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform duration-700"><Compass size={300} className="text-emerald-400" /></div>
+                       <div className="flex items-center gap-4 relative z-10">
+                          <div className="p-3 bg-emerald-600 rounded-2xl shadow-xl border border-emerald-400/20"><Compass size={28} className="text-white" /></div>
+                          <h3 className="text-2xl font-black text-white uppercase italic m-0">Permaculture <span className="text-emerald-400">Alignment</span></h3>
+                       </div>
+                       <div className="space-y-6 relative z-10">
+                          <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 space-y-4 shadow-inner group/zonation">
+                             <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
+                                <span>Design Resonance (Sc)</span>
+                                <span className="text-emerald-400 font-mono">{permacultureSyncLevel}%</span>
+                             </div>
+                             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-[2s]" style={{ width: `${permacultureSyncLevel}%` }}></div>
+                             </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-slate-300 text-sm italic font-medium leading-relaxed border-l-2 border-emerald-500/40 pl-6">
+                             "Your node design follows Zone 1 zonation principles. Optimal nutrient sharding detected."
+                          </div>
+                          <button 
+                            onClick={() => onNavigate('permaculture_hub')}
+                            className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center justify-center gap-3 transition-all"
+                          >
+                             OPEN PERMACULTURE HUB <ArrowUpRight size={16} />
+                          </button>
+                       </div>
+                    </div>
+
+                    <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-950/10 space-y-8 shadow-2xl relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform duration-700"><Scale size={300} className="text-indigo-400" /></div>
+                       <div className="flex items-center gap-4 relative z-10">
+                          <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl border border-indigo-400/20"><Scale size={28} className="text-white" /></div>
+                          <h3 className="text-2xl font-black text-white uppercase italic m-0">Ethical <span className="text-indigo-400">Resilience</span></h3>
+                       </div>
+                       <div className="space-y-6 relative z-10">
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="p-5 bg-black/60 border border-white/5 rounded-[32px] text-center shadow-inner">
+                                <p className="text-[8px] text-slate-500 uppercase font-black mb-1">People Care</p>
+                                <p className="text-2xl font-mono font-black text-indigo-400">92%</p>
+                             </div>
+                             <div className="p-5 bg-black/60 border border-white/5 rounded-[32px] text-center shadow-inner">
+                                <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Earth Care</p>
+                                <p className="text-2xl font-mono font-black text-emerald-400">98%</p>
+                             </div>
+                          </div>
+                          <div className="p-6 bg-white/5 rounded-[32px] border border-white/5 flex items-center gap-4">
+                             <ShieldCheck size={20} className="text-emerald-400 shrink-0" />
+                             <p className="text-[10px] text-slate-400 italic">"Design shard v1.2: Ethical sharding protocol verified for Cycle 12."</p>
+                          </div>
+                          <button 
+                            onClick={() => onNavigate('chroma_system')}
+                            className="w-full py-5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.3em] flex items-center justify-center gap-3 transition-all"
+                          >
+                             CALIBRATE ARCHITECTURAL CHROMA
+                          </button>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-10 shadow-xl">
+                    <h4 className="text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-4">
+                       <Terminal className="w-6 h-6 text-indigo-400" /> Unified <span className="text-indigo-400">HUD</span>
+                    </h4>
+                    <div className="space-y-6">
+                       {MOCK_TELEM.map(t => (
+                          <div key={t.label} className="p-6 bg-black/60 rounded-[32px] border border-white/5 flex justify-between items-center group hover:border-white/20 transition-all shadow-inner">
+                             <div>
+                                <p className="text-[9px] text-slate-500 font-black uppercase mb-1">{t.label}</p>
+                                <p className={`text-2xl font-mono font-black ${t.col}`}>{t.val}</p>
+                             </div>
+                             <span className="text-[8px] font-black text-slate-700 bg-white/5 px-2 py-1 rounded uppercase tracking-widest">{t.status}</span>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="p-10 glass-card rounded-[48px] border border-amber-500/10 bg-amber-500/[0.02] space-y-6 group">
+                    <div className="flex items-center gap-3">
+                       <Info className="w-5 h-5 text-amber-500" />
+                       <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Universal Land Sharding</h4>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100">
+                       "All users have access to an Online Garden. It represents your virtual footprint on the EnvirosAgro blockchain. Consolidate your work here to build your Dossier Strength."
+                    </p>
+                 </div>
+                 
+                 <button onClick={() => onNavigate('registry_handshake')} className="w-full py-6 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-slate-500 hover:text-white transition-all flex items-center justify-center gap-3 shadow-xl">
+                    <Fingerprint size={16} /> Strengthen Dossier Integrity
+                 </button>
+              </div>
+           </div>
+        )}
+
         {/* --- TAB: SEEDING PROGRAM --- */}
         {activeTab === 'seeding_program' && (
           <div className="space-y-12 animate-in slide-in-from-right-4 duration-500">
-             {/* SEEDING PROGRESS TRACKER - Scrollable for small frames */}
+             {/* SEEDING PROGRESS TRACKER */}
              <div className="flex overflow-x-auto scrollbar-hide py-4 px-2 gap-4">
                 {SEEDING_STEPS.map((s, i) => (
                   <div 
@@ -419,7 +587,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                    {/* PHASE 2: CARE */}
                    {seedingPhase === 'care' && (
                       <div className="space-y-10 animate-in slide-in-from-right-4">
-                         <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-black/60 relative overflow-hidden group shadow-3xl">
+                         <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-black/60 relative overflow-hidden group shadow-3xl">
                             <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[10s]"><Heart size={300} className="text-rose-500" /></div>
                             <div className="flex items-center gap-6 relative z-10 mb-12">
                                <div className="w-20 h-20 bg-rose-600/10 rounded-[32px] flex items-center justify-center border border-rose-500/20 shadow-xl group-hover:rotate-6 transition-transform">
@@ -509,7 +677,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                             <button 
                               onClick={handleFinalHarvest}
                               disabled={isProcessing}
-                              className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all relative z-10 flex items-center justify-center gap-6 ring-8 ring-white/5"
+                              className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-0_0_100px_rgba(16,185,129,0.3) hover:scale-105 active:scale-95 transition-all relative z-10 flex items-center justify-center gap-6 ring-8 ring-white/5"
                             >
                                {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Target size={80} />}
                                {isProcessing ? 'FINALIZING LEDGER...' : 'AUTHORIZE FINAL HARVEST'}
@@ -617,105 +785,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
           </div>
         )}
 
-        {activeTab === 'twin' && (
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-500">
-              <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden flex flex-col items-center justify-center min-h-[650px] shadow-3xl group">
-                 <div className={`absolute inset-0 transition-all duration-[2s] bg-cover opacity-10 grayscale group-hover:grayscale-0 ${hasPhysicalLand ? "bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1600')]" : "bg-[url('https://images.unsplash.com/photo-1558494949-ef010cbdcc48?q=80&w=1600')]"}`}></div>
-                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
-                 
-                 <div className="relative z-10 flex flex-col items-center gap-12 w-full">
-                    <div className="relative w-96 h-96 flex items-center justify-center">
-                       <div className="absolute inset-0 border-4 border-dashed border-white/5 rounded-full animate-spin-slow"></div>
-                       <div className={`w-56 h-56 rounded-[64px] flex items-center justify-center shadow-[0_0_100px_current] border-2 transition-all duration-[2s] ${hasPhysicalLand ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-indigo-500/20 border-indigo-500 text-indigo-400'}`}>
-                          {hasPhysicalLand ? <Flower size={96} className="animate-pulse" /> : <Boxes size={96} className="animate-float" />}
-                          {!hasPhysicalLand && (
-                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-2 whitespace-nowrap bg-indigo-500/90 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-2xl">
-                               <ShieldAlert size={12} /> Conceptual Shard Active
-                            </div>
-                          )}
-                       </div>
-                       
-                       {orbitalParticles.map((p) => (
-                         <div 
-                           key={p.id}
-                           className="absolute"
-                           style={{
-                             width: `${p.radius * 2}px`,
-                             height: `${p.radius * 2}px`,
-                             animation: `spin ${p.duration}s linear infinite`,
-                             animationDelay: `${p.delay}s`
-                           }}
-                         >
-                           <div 
-                             className={`absolute rounded-xl border flex items-center justify-center shadow-lg transition-all group-hover:scale-125 ${p.type === 'bio' ? 'bg-emerald-500/10 border-emerald-500/20' : p.type === 'ind' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-amber-500/10 border-amber-500/20'}`}
-                             style={{
-                               width: `${p.size * 5}px`,
-                               height: `${p.size * 5}px`,
-                               top: '0',
-                               left: '50%',
-                               transform: 'translateX(-50%)'
-                             }}
-                             title={`${p.type.toUpperCase()} Contribution`}
-                           >
-                             {p.type === 'bio' ? <Sprout size={p.size * 2} className="text-emerald-500" /> : 
-                              p.type === 'ind' ? <Factory size={p.size * 2} className="text-blue-500" /> : 
-                              <Activity size={p.size * 2} className="text-amber-500" />}
-                           </div>
-                         </div>
-                       ))}
-                    </div>
-
-                    <div className="text-center space-y-4">
-                       <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Consolidated <span className={hasPhysicalLand ? 'text-emerald-400' : 'text-indigo-400'}>{hasPhysicalLand ? 'Bio-Shard' : 'Industrial Shard'}</span></h3>
-                       <p className="text-slate-400 text-xl font-medium italic">"Consolidating work from Live Farming, TQM, and Marketplace nodes."</p>
-                    </div>
-
-                    <button 
-                      onClick={handleSyncTelemetry}
-                      disabled={isSyncing}
-                      className={`px-16 py-8 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-6 disabled:opacity-50 ${hasPhysicalLand ? 'agro-gradient' : 'bg-indigo-600 shadow-indigo-900/40'}`}
-                    >
-                       {isSyncing ? <Loader2 size={24} className="animate-spin" /> : <RefreshCw size={24} />}
-                       {isSyncing ? 'SYNCING NETWORK...' : 'INITIALIZE REGISTRY SYNC'}
-                    </button>
-                 </div>
-              </div>
-
-              <div className="lg:col-span-4 space-y-8">
-                 <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-10 shadow-xl">
-                    <h4 className="text-xl font-black text-white uppercase tracking-widest italic flex items-center gap-4">
-                       <Terminal className="w-6 h-6 text-indigo-400" /> Unified <span className="text-indigo-400">HUD</span>
-                    </h4>
-                    <div className="space-y-6">
-                       {MOCK_TELEM.map(t => (
-                          <div key={t.label} className="p-6 bg-black/60 rounded-[32px] border border-white/5 flex justify-between items-center group hover:border-white/20 transition-all shadow-inner">
-                             <div>
-                                <p className="text-[9px] text-slate-500 font-black uppercase mb-1">{t.label}</p>
-                                <p className={`text-2xl font-mono font-black ${t.col}`}>{t.val}</p>
-                             </div>
-                             <span className="text-[8px] font-black text-slate-700 bg-white/5 px-2 py-1 rounded uppercase tracking-widest">{t.status}</span>
-                          </div>
-                       ))}
-                    </div>
-                 </div>
-
-                 <div className="p-10 glass-card rounded-[48px] border border-amber-500/10 bg-amber-500/[0.02] space-y-6 group">
-                    <div className="flex items-center gap-3">
-                       <Info className="w-5 h-5 text-amber-500" />
-                       <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Universal Land Sharding</h4>
-                    </div>
-                    <p className="text-xs text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100">
-                       "All users have access to an Online Garden. It represents your virtual footprint on the EnvirosAgro blockchain. Consolidate your work here to build your Dossier Strength."
-                    </p>
-                 </div>
-                 
-                 <button onClick={() => onNavigate('registry_handshake')} className="w-full py-6 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-slate-500 hover:text-white transition-all flex items-center justify-center gap-3 shadow-xl">
-                    <Fingerprint size={16} /> Strengthen Dossier Integrity
-                 </button>
-              </div>
-           </div>
-        )}
-
+        {/* --- TAB: ROADMAP --- */}
         {activeTab === 'roadmap' && (
            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-500 px-4">
               <div className="lg:col-span-4 space-y-8">
