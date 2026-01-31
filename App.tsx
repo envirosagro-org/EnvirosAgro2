@@ -2,7 +2,7 @@
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, PawPrint as AnimalIcon, Tv, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit } from './types';
 import Dashboard from './components/Dashboard';
@@ -111,7 +111,6 @@ const App: React.FC = () => {
       productType: 'Maize Farming Node', 
       requiredLand: '50-100 Hectares', 
       requiredLabour: '20 Steward Units', 
-      // Removed non-existent 'border' property to fix TypeScript error on line 114
       budget: 50000, 
       status: 'Open', 
       applications: [],
@@ -304,6 +303,16 @@ const App: React.FC = () => {
         { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake },
         { id: 'circular', name: 'Circular Grid', icon: Recycle },
         { id: 'tools', name: 'Industrial Tools', icon: Wrench }
+      ]
+    },
+    {
+      category: 'Natural Resources',
+      items: [
+        { id: 'animal_world', name: 'Animal World', icon: PawPrint },
+        { id: 'plants_world', name: 'Plants World', icon: TreePine },
+        { id: 'aqua_portal', name: 'Aqua Portal', icon: Droplets },
+        { id: 'soil_portal', name: 'Soil Portal', icon: Mountain },
+        { id: 'air_portal', name: 'Air Portal', icon: Wind }
       ]
     },
     {

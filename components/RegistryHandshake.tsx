@@ -33,7 +33,14 @@ import {
   LocateFixed,
   ArrowLeftCircle,
   Cable,
-  History
+  History,
+  Maximize,
+  BoxSelect,
+  FileUp,
+  Landmark,
+  Layers,
+  Map as MapIcon,
+  Satellite
 } from 'lucide-react';
 import { User, AgroResource, ViewState } from '../types';
 
@@ -53,9 +60,15 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
   const [deviceId, setDeviceId] = useState('');
   const [secretToken, setSecretToken] = useState('');
 
-  // Land State
+  // Land State Refinement
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [plotName, setPlotName] = useState('');
+  const [plotAcreage, setPlotAcreage] = useState('1.0');
+  const [plotType, setPlotType] = useState('Regenerative Arable');
   const [uploadedDoc, setUploadedDoc] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
     setActiveWorkflow(null);
@@ -65,26 +78,30 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
     setDeviceId('');
     setSecretToken('');
     setCurrentCoords(null);
+    setPlotName('');
+    setPlotAcreage('1.0');
     setUploadedDoc(null);
   };
 
   const handleGeoLock = () => {
-    setIsProcessing(true);
+    setIsLocating(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
         setCurrentCoords({
           lat: position.coords.latitude,
           lng: position.coords.longitude
         });
-        setIsProcessing(false);
+        setIsLocating(false);
         setStep(1);
       }, (error) => {
-        alert("GEOLOCATION ERROR: Signal acquisition failed.");
-        setIsProcessing(false);
-      });
+        // Fallback for demo environments
+        setCurrentCoords({ lat: -1.2921, lng: 36.8219 });
+        setIsLocating(false);
+        setStep(1);
+      }, { timeout: 10000 });
     } else {
       alert("SIGNAL_ERROR: Browser does not support geolocation.");
-      setIsProcessing(false);
+      setIsLocating(false);
     }
   };
 
@@ -95,6 +112,18 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
       setStep(1);
       setIsProcessing(false);
     }, 2000);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsProcessing(true);
+      setTimeout(() => {
+        setUploadedDoc(file.name);
+        setIsProcessing(false);
+        setStep(3); // Move to final signature
+      }, 1500);
+    }
   };
 
   const finalizeVerification = (category: 'HARDWARE' | 'LAND') => {
@@ -108,10 +137,10 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
       const newResource: AgroResource = {
         id: category === 'HARDWARE' ? deviceId : `PLOT-${Math.floor(Math.random() * 9000 + 1000)}`,
         category,
-        type: category === 'HARDWARE' ? 'Agro Musika Sensor' : 'Regenerative Plot',
-        name: category === 'HARDWARE' ? 'Sonic Node P4' : 'Nairobi Buffer Shard',
+        type: category === 'HARDWARE' ? 'Agro Musika Sensor' : plotType,
+        name: category === 'HARDWARE' ? 'Sonic Node P4' : plotName || 'Nairobi Buffer Shard',
         status: category === 'HARDWARE' ? 'VERIFIED' : 'PROVISIONAL',
-        capabilities: category === 'HARDWARE' ? ['Sound_Dashboard', 'Bio_Sync'] : ['Weather_Sync', 'Impact_Tracking'],
+        capabilities: category === 'HARDWARE' ? ['Sound_Dashboard', 'Bio_Sync'] : ['Carbon_Minting', 'Impact_Tracking', 'Resource_Registry'],
         verificationMeta: {
           method: category === 'HARDWARE' ? 'QR_SCAN' : 'GEO_LOCK',
           verifiedAt: new Date().toISOString(),
@@ -125,7 +154,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
         resources: [...(user.resources || []), newResource]
       });
 
-      setStep(category === 'HARDWARE' ? 2 : 3);
+      setStep(category === 'HARDWARE' ? 2 : 4);
       setIsProcessing(false);
     }, 2500);
   };
@@ -137,7 +166,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
           onClick={() => onNavigate?.('dashboard')}
           className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-indigo-600/10 transition-all group"
         >
-          <ArrowLeftCircle size={20} className="h-5 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeftCircle size={20} className="group-hover:-translate-x-1 transition-transform" />
           Return to Command Center
         </button>
       </div>
@@ -195,6 +224,200 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
                 </button>
              </div>
           </div>
+        ) : activeWorkflow === 'land' ? (
+           <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
+              <div className="flex justify-between items-center px-4">
+                <button onClick={reset} className="flex items-center gap-2 text-slate-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">
+                   <ChevronRight size={16} className="rotate-180" /> Back to Selector
+                </button>
+                <div className="flex gap-2">
+                   {[0,1,2,3].map(i => (
+                      <div key={i} className={`h-1.5 w-16 rounded-full transition-all duration-700 ${i <= step ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-white/10'}`}></div>
+                   ))}
+                </div>
+              </div>
+
+              {step === 0 && (
+                <div className="glass-card p-12 rounded-[64px] border border-emerald-500/20 bg-black/40 space-y-12 shadow-3xl text-center relative overflow-hidden">
+                   <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                      <div className="w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500 via-transparent to-transparent"></div>
+                   </div>
+                   <div className="w-24 h-24 bg-emerald-600/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 animate-float shadow-2xl relative z-10">
+                      <LocateFixed size={48} className="text-emerald-400" />
+                   </div>
+                   <div className="space-y-4 relative z-10">
+                      <h3 className="text-4xl font-black text-white uppercase italic m-0">Phase 1: <span className="text-emerald-400">Geo-Lock</span></h3>
+                      <p className="text-slate-400 text-lg font-medium italic max-w-lg mx-auto leading-relaxed">"Acquiring high-fidelity satellite coordinates to anchor your plot in the global mesh."</p>
+                   </div>
+                   
+                   <div className="p-10 bg-black/80 rounded-[48px] border border-white/5 shadow-inner relative z-10 flex flex-col items-center">
+                      <div className="w-full h-48 border border-emerald-500/10 rounded-3xl bg-[#050706] mb-8 relative overflow-hidden flex items-center justify-center">
+                         {isLocating ? (
+                            <div className="flex flex-col items-center gap-4">
+                               <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                               <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest animate-pulse">Syncing GPS Shards...</span>
+                            </div>
+                         ) : (
+                            <>
+                               <Globe size={120} className="text-slate-900 absolute opacity-40" />
+                               <div className="absolute inset-0 border-t-2 border-emerald-500/20 animate-scan pointer-events-none"></div>
+                               <MapIcon size={48} className="text-slate-700" />
+                            </>
+                         )}
+                      </div>
+                      <button 
+                        onClick={handleGeoLock}
+                        disabled={isLocating}
+                        className="w-full max-w-sm py-8 bg-emerald-600 hover:bg-emerald-500 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
+                      >
+                         {isLocating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Satellite className="w-6 h-6" />}
+                         {isLocating ? 'Acquiring Signal...' : 'Acquire GPS Lock'}
+                      </button>
+                   </div>
+                </div>
+              )}
+
+              {step === 1 && (
+                <div className="glass-card p-12 rounded-[64px] border border-emerald-500/20 bg-black/40 space-y-12 shadow-3xl animate-in slide-in-from-right-4">
+                   <div className="text-center space-y-4">
+                      <div className="w-20 h-20 bg-emerald-500/10 rounded-[28px] flex items-center justify-center mx-auto border border-emerald-500/20"><BoxSelect size={40} className="text-emerald-400" /></div>
+                      <h3 className="text-4xl font-black text-white uppercase italic m-0 leading-none">Phase 2: <span className="text-emerald-400">Registry Specs</span></h3>
+                      <p className="text-slate-500 text-lg">Define the technical parameters of your land shard.</p>
+                   </div>
+
+                   <div className="space-y-8 max-w-xl mx-auto">
+                      <div className="space-y-3 px-4">
+                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Plot Designation (Alias)</label>
+                         <input 
+                           type="text" value={plotName} onChange={e => setPlotName(e.target.value)}
+                           placeholder="e.g. Northern Savannah Hub..." 
+                           className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-800" 
+                         />
+                      </div>
+                      <div className="grid grid-cols-2 gap-6 px-4">
+                         <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Acreage (Hectares)</label>
+                            <input 
+                              type="number" value={plotAcreage} onChange={e => setPlotAcreage(e.target.value)}
+                              className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-xl font-mono text-emerald-400 focus:ring-4 focus:ring-emerald-500/10 outline-none" 
+                            />
+                         </div>
+                         <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Primary Usage</label>
+                            <select 
+                               value={plotType} onChange={e => setPlotType(e.target.value)}
+                               className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-xs font-black uppercase text-white appearance-none outline-none focus:ring-4 focus:ring-emerald-500/10"
+                            >
+                               <option>Regenerative Arable</option>
+                               <option>Agroforestry</option>
+                               <option>Coastal Mangrove</option>
+                               <option>Hydro-Stack Facility</option>
+                            </select>
+                         </div>
+                      </div>
+                      <button onClick={() => setStep(2)} className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl active:scale-95 transition-all">Continue to Documentation</button>
+                   </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="glass-card p-12 rounded-[64px] border border-emerald-500/20 bg-black/40 space-y-12 shadow-3xl animate-in slide-in-from-right-4">
+                   <div className="text-center space-y-4">
+                      <div className="w-20 h-20 bg-emerald-500/10 rounded-[28px] flex items-center justify-center mx-auto border border-emerald-500/20"><FileText size={40} className="text-emerald-400" /></div>
+                      <h3 className="text-4xl font-black text-white uppercase italic m-0 leading-none">Phase 3: <span className="text-emerald-400">Proof Ingest</span></h3>
+                      <p className="text-slate-500 text-lg">Upload Title Shard or Lease Ingest for verification.</p>
+                   </div>
+
+                   <div 
+                     onClick={() => fileInputRef.current?.click()}
+                     className={`max-w-xl mx-auto p-16 border-4 border-dashed rounded-[48px] flex flex-col items-center justify-center text-center space-y-6 group/upload cursor-pointer transition-all ${uploadedDoc ? 'border-emerald-500 bg-emerald-500/5' : 'border-white/10 hover:border-emerald-500/30'}`}
+                   >
+                      <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".pdf,image/*" />
+                      {isProcessing ? (
+                         <div className="flex flex-col items-center gap-4">
+                            <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+                            <span className="text-xs font-black text-emerald-400 uppercase tracking-widest">Sharding Document...</span>
+                         </div>
+                      ) : uploadedDoc ? (
+                         <>
+                            <CheckCircle2 size={56} className="text-emerald-400" />
+                            <p className="text-xl font-black text-white uppercase">{uploadedDoc}</p>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase underline">Replace Document</span>
+                         </>
+                      ) : (
+                         <>
+                            <FileUp size={56} className="text-slate-800 group-hover/upload:text-emerald-400 transition-colors" />
+                            <p className="text-xl font-black text-white uppercase tracking-widest italic leading-none">Choose Document Shard</p>
+                            <p className="text-[10px] text-slate-700 font-bold uppercase">PDF or JPEG Proof required</p>
+                         </>
+                      )}
+                   </div>
+                   
+                   <div className="max-w-xl mx-auto">
+                      <button onClick={() => setStep(3)} className="w-full text-slate-700 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">Skip for Provisional Registration</button>
+                   </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="glass-card p-12 rounded-[64px] border border-indigo-500/30 bg-black/40 space-y-12 shadow-3xl text-center">
+                   <div className="w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto border border-indigo-500/20 shadow-3xl group relative overflow-hidden">
+                      <Fingerprint className="w-12 h-12 text-indigo-400 group-hover:scale-110 transition-transform" />
+                      <div className="absolute inset-0 bg-indigo-500/5 animate-pulse"></div>
+                   </div>
+                   <h3 className="text-4xl font-black text-white uppercase italic">Registry <span className="text-indigo-400">Anchor</span></h3>
+                   <div className="space-y-4 max-w-md mx-auto">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] block text-center">Signature (ESIN)</label>
+                      <input 
+                        type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
+                        placeholder="EA-XXXX-XXXX-XXXX" 
+                        className="w-full bg-black border border-white/10 rounded-[32px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
+                      />
+                   </div>
+                   <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex items-center gap-6 max-xl:mx-auto">
+                      <ShieldAlert className="w-10 h-10 text-indigo-400 shrink-0" />
+                      <p className="text-[10px] text-indigo-200/50 font-black uppercase leading-relaxed tracking-tight text-left italic leading-loose">
+                         "By signing, you immutably anchor these physical coordinates to your node. Misalignment with satellite ground-truth results in multiplier slashing."
+                      </p>
+                   </div>
+                   <button 
+                      onClick={() => finalizeVerification('LAND')}
+                      disabled={isProcessing || !esinSign}
+                      className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all"
+                   >
+                      {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Stamp className="w-8 h-8 fill-current" />}
+                      {isProcessing ? "MINTING SHARD..." : "AUTHORIZE LAND REGISTRY"}
+                   </button>
+                </div>
+              )}
+
+              {step === 4 && (
+                <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 animate-in zoom-in duration-700 text-center">
+                  <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(16,185,129,0.4)] relative group scale-110">
+                     <CheckCircle2 className="w-28 h-28 text-white group-hover:scale-110 transition-transform" />
+                     <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+                  </div>
+                  <div className="space-y-4">
+                     <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic m-0">Plot <span className="text-emerald-400">Anchored</span></h3>
+                     <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.8em] font-mono">REGISTRY_HASH: 0xPLOT_SYNC_OK</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+                     <button 
+                        onClick={() => onNavigate?.('digital_mrv')}
+                        className="py-6 agro-gradient rounded-[32px] text-white font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
+                     >
+                        <Scan size={18} /> Initialize MRV
+                     </button>
+                     <button 
+                        onClick={reset} 
+                        className="py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all shadow-xl active:scale-95"
+                     >
+                        Return to Hub
+                     </button>
+                  </div>
+               </div>
+              )}
+           </div>
         ) : activeWorkflow === 'hardware' ? (
           <div className="max-w-3xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
              <div className="flex justify-between items-center px-4">
@@ -348,6 +571,15 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
                       </div>
                    </div>
                 ))}
+                {(user.resources || []).length === 0 && (
+                   <div className="col-span-full py-40 flex flex-col items-center justify-center text-center opacity-20 group">
+                      <div className="relative">
+                         <Database size={120} className="text-slate-500 group-hover:text-indigo-400 transition-colors" />
+                         <div className="absolute inset-0 border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+                      </div>
+                      <p className="text-2xl font-black uppercase tracking-[0.5em] text-white mt-12">Registry Empty</p>
+                   </div>
+                )}
              </div>
           </div>
         )}
@@ -360,6 +592,13 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
+        @keyframes scan {
+          0% { top: -100%; }
+          100% { top: 100%; }
+        }
+        .animate-scan {
+          animation: scan 2.5s linear infinite;
+        }
       `}</style>
     </div>
   );
