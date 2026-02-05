@@ -49,7 +49,8 @@ import { chatWithAgroExpert } from '../services/geminiService';
 
 interface NexusCRMProps {
   user: User;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   vendorProducts: VendorProduct[];
   onNavigate: (view: ViewState) => void;
   orders: Order[];
@@ -115,7 +116,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
     setIsTyping(true);
 
     try {
-      const response = await chatWithAgroExpert(`Act as a Nexus CRM Support Agent. Handle technical friction: ${msg}`, supportChat.map(c => ({ role: c.role === 'bot' ? 'model' : 'user', parts: [{ text: c.text }] })));
+      const response = await chatWithAgroExpert(msg, supportChat.map(c => ({ role: c.role === 'bot' ? 'model' : 'user', parts: [{ text: c.text }] })));
       setSupportChat(prev => [...prev, { role: 'bot', text: response.text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     } catch (e) {
       setSupportChat(prev => [...prev, { role: 'bot', text: "Protocol sync error. Oracle handshake failed.", time: 'Error' }]);
@@ -187,7 +188,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
                     <p className="text-slate-500 text-base mt-2 font-medium italic">"Provisioning specialized industrial shards from vetted organizational nodes."</p>
                 </div>
                 <div className="relative group w-full md:w-[450px]">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
                     <input 
                       type="text" 
                       value={searchTerm} 

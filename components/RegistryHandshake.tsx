@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   QrCode, 
   MapPin, 
@@ -9,38 +8,22 @@ import {
   Bot, 
   X, 
   Loader2, 
-  ChevronRight, 
   CheckCircle2, 
-  AlertTriangle, 
-  Upload, 
-  FileText, 
-  Database, 
-  Binary, 
-  Fingerprint, 
-  Waves, 
+  SmartphoneNfc,
   Radio, 
-  Activity, 
   Scan,
   RefreshCw,
-  Lock,
   Stamp,
-  Globe,
-  Signal,
   BadgeCheck,
-  Compass,
   ArrowRight,
-  ShieldAlert,
-  LocateFixed,
   ArrowLeftCircle,
-  Cable,
-  History,
-  Maximize,
-  BoxSelect,
-  FileUp,
-  Landmark,
-  Layers,
-  Map as MapIcon,
-  Satellite
+  Satellite,
+  Download,
+  Fingerprint,
+  Bluetooth,
+  Globe,
+  FileCheck,
+  SearchCode
 } from 'lucide-react';
 import { User, AgroResource, ViewState } from '../types';
 
@@ -51,554 +34,274 @@ interface RegistryHandshakeProps {
 }
 
 const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUser, onNavigate }) => {
-  const [activeWorkflow, setActiveWorkflow] = useState<'hardware' | 'land' | 'ledger' | null>(null);
-  const [step, setStep] = useState<number>(0);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [activeWorkflow, setActiveWorkflow] = useState<'hardware' | 'land' | null>(null);
+  const [step, setStep] = useState(0);
+  const [isScanning, setIsScanning] = useState(false);
+  const [deviceId, setDeviceId] = useState('');
   const [esinSign, setEsinSign] = useState('');
 
-  // Hardware State
-  const [deviceId, setDeviceId] = useState('');
-  const [secretToken, setSecretToken] = useState('');
-
-  // Land State Refinement
-  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [plotName, setPlotName] = useState('');
-  const [plotAcreage, setPlotAcreage] = useState('1.0');
-  const [plotType, setPlotType] = useState('Regenerative Arable');
-  const [uploadedDoc, setUploadedDoc] = useState<string | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Land specific states
+  const [coords, setCoords] = useState<{lat: string, lng: string} | null>(null);
+  const [deedId, setDeedId] = useState('');
 
   const reset = () => {
     setActiveWorkflow(null);
     setStep(0);
-    setIsProcessing(false);
-    setEsinSign('');
     setDeviceId('');
-    setSecretToken('');
-    setCurrentCoords(null);
-    setPlotName('');
-    setPlotAcreage('1.0');
-    setUploadedDoc(null);
+    setEsinSign('');
+    setIsScanning(false);
+    setCoords(null);
+    setDeedId('');
   };
 
-  const handleGeoLock = () => {
-    setIsLocating(true);
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setCurrentCoords({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-        setIsLocating(false);
-        setStep(1);
-      }, (error) => {
-        // Fallback for demo environments
-        setCurrentCoords({ lat: -1.2921, lng: 36.8219 });
-        setIsLocating(false);
-        setStep(1);
-      }, { timeout: 10000 });
-    } else {
-      alert("SIGNAL_ERROR: Browser does not support geolocation.");
-      setIsLocating(false);
-    }
-  };
-
-  const handleHardwarePair = () => {
-    if (!deviceId || !secretToken) return;
-    setIsProcessing(true);
+  const handleStartHardwareSync = () => {
+    setIsScanning(true);
     setTimeout(() => {
+      setIsScanning(false);
+      setDeviceId(`NODE-${Math.random().toString(36).substring(7).toUpperCase()}`);
       setStep(1);
-      setIsProcessing(false);
-    }, 2000);
+    }, 3000);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsProcessing(true);
-      setTimeout(() => {
-        setUploadedDoc(file.name);
-        setIsProcessing(false);
-        setStep(3); // Move to final signature
-      }, 1500);
-    }
-  };
-
-  const finalizeVerification = (category: 'HARDWARE' | 'LAND') => {
-    if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
-      return;
-    }
-
-    setIsProcessing(true);
+  const handleStartLandSync = () => {
+    setIsScanning(true);
     setTimeout(() => {
-      const newResource: AgroResource = {
-        id: category === 'HARDWARE' ? deviceId : `PLOT-${Math.floor(Math.random() * 9000 + 1000)}`,
-        category,
-        type: category === 'HARDWARE' ? 'Agro Musika Sensor' : plotType,
-        name: category === 'HARDWARE' ? 'Sonic Node P4' : plotName || 'Nairobi Buffer Shard',
-        status: category === 'HARDWARE' ? 'VERIFIED' : 'PROVISIONAL',
-        capabilities: category === 'HARDWARE' ? ['Sound_Dashboard', 'Bio_Sync'] : ['Carbon_Minting', 'Impact_Tracking', 'Resource_Registry'],
-        verificationMeta: {
-          method: category === 'HARDWARE' ? 'QR_SCAN' : 'GEO_LOCK',
-          verifiedAt: new Date().toISOString(),
-          coordinates: currentCoords || undefined,
-          deviceSecretHash: category === 'HARDWARE' ? btoa(secretToken) : undefined
-        }
-      };
-
-      onUpdateUser({
-        ...user,
-        resources: [...(user.resources || []), newResource]
+      setIsScanning(false);
+      setCoords({
+        lat: (Math.random() * 2 + 1).toFixed(4),
+        lng: (36 + Math.random() * 2).toFixed(4)
       });
+      setDeedId(`DEED-${Math.random().toString(36).substring(7).toUpperCase()}`);
+      setStep(1);
+    }, 4000);
+  };
 
-      setStep(category === 'HARDWARE' ? 2 : 4);
-      setIsProcessing(false);
-    }, 2500);
+  const finalizeHardware = () => {
+    if (esinSign.toUpperCase() !== user.esin.toUpperCase()) return alert("SIGNATURE MISMATCH: Node ESIN mismatch.");
+    
+    const newResource: AgroResource = {
+      id: deviceId,
+      category: 'HARDWARE',
+      type: 'Agro Musika Node',
+      name: 'Spectral Hub P4',
+      status: 'VERIFIED',
+      capabilities: ['Bio_Sync', 'Acoustic_Audit'],
+      verificationMeta: { 
+        method: 'IOT_HANDSHAKE', 
+        verifiedAt: new Date().toISOString(),
+        confidenceScore: 0.98 
+      }
+    };
+    
+    onUpdateUser({ ...user, resources: [...(user.resources || []), newResource] });
+    setStep(2);
+  };
+
+  const finalizeLand = () => {
+    if (esinSign.toUpperCase() !== user.esin.toUpperCase()) return alert("SIGNATURE MISMATCH: Node ESIN mismatch.");
+    
+    const newResource: AgroResource = {
+      id: deedId,
+      category: 'LAND',
+      type: 'Acreage Shard',
+      name: `Plot ${deedId.split('-')[1]}`,
+      status: 'VERIFIED',
+      capabilities: ['Carbon_Minting', 'Bio_Resonance_Mapping'],
+      verificationMeta: { 
+        method: 'GEO_LOCK', 
+        verifiedAt: new Date().toISOString(),
+        confidenceScore: 0.99,
+        coordinates: { lat: parseFloat(coords!.lat), lng: parseFloat(coords!.lng) }
+      }
+    };
+    
+    onUpdateUser({ ...user, resources: [...(user.resources || []), newResource] });
+    setStep(2);
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1200px] mx-auto px-4">
-      <div className="flex justify-between items-center px-4">
-        <button 
-          onClick={() => onNavigate?.('dashboard')}
-          className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-indigo-600/10 transition-all group"
-        >
-          <ArrowLeftCircle size={20} className="group-hover:-translate-x-1 transition-transform" />
-          Return to Command Center
-        </button>
-      </div>
-
+    <div className="space-y-10 animate-in fade-in duration-500 max-w-4xl mx-auto">
       <div className="glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none">
-            <QrCode className="w-96 h-96 text-indigo-400" />
+         <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-6 transition-transform"><SmartphoneNfc size={300} /></div>
+         <div className="w-32 h-32 rounded-[40px] bg-indigo-600 flex items-center justify-center shadow-3xl shrink-0 border-4 border-white/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
+            <Zap size={56} className="text-white relative z-10 animate-pulse" />
          </div>
-         <div className="w-32 h-32 rounded-[40px] bg-indigo-600 flex items-center justify-center shadow-3xl ring-4 ring-white/10 shrink-0 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent animate-pulse"></div>
-            <Zap className="w-16 h-16 text-white relative z-10" />
-         </div>
-         <div className="space-y-4 relative z-10 text-center md:text-left">
-            <div className="space-y-2">
-               <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20 shadow-inner">REGISTRY_HANDSHAKE_v5.0</span>
-               <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Registry <span className="text-indigo-400">Handshake</span></h2>
-            </div>
-            <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-2xl">
-               "Cryptographic sharding for physical assets. Link your hardware nodes and physical land plots to the global EnvirosAgro registry."
-            </p>
+         <div className="space-y-4 flex-1 text-center md:text-left relative z-10">
+            <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">Registry <span className="text-indigo-400">Handshake</span></h2>
+            <p className="text-slate-400 text-xl font-medium italic">"Secure pairing of physical industrial assets via social authority verification."</p>
          </div>
       </div>
 
-      <div className="min-h-[600px]">
-        {!activeWorkflow ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in zoom-in duration-500">
-             {[
-               { id: 'hardware', label: 'HARDWARE PAIRING', desc: 'Sync Agro Musika or Agroboto nodes via QR/Secret Handshake.', icon: Smartphone, col: 'text-blue-400', bg: 'bg-blue-600/10', border: 'border-blue-500/20' },
-               { id: 'land', label: 'LAND VERIFICATION', desc: 'Anchor physical farm acreage via Geo-Lock and document sharding.', icon: MapPin, col: 'text-emerald-400', bg: 'bg-emerald-600/10', border: 'border-emerald-500/20' },
-             ].map(opt => (
+      {!activeWorkflow ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+           {[
+             { id: 'hardware', label: 'HARDWARE SYNC', icon: SmartphoneNfc, desc: 'Pair Agro Musika or Agroboto units via Proximity Scan.' },
+             { id: 'land', label: 'LAND VERIFICATION', icon: MapPin, desc: 'Anchor farm coordinates with Authority proof.' },
+           ].map(opt => (
+             <button key={opt.id} onClick={() => setActiveWorkflow(opt.id as any)} className="glass-card p-12 rounded-[48px] border-2 border-white/5 hover:border-indigo-500/30 transition-all group flex flex-col items-center text-center space-y-6 bg-black/40 shadow-xl active:scale-[0.98]">
+                <div className="p-8 rounded-3xl bg-white/5 border border-white/10 group-hover:scale-110 transition-transform shadow-inner group-hover:bg-indigo-600/10"><opt.icon size={56} className="text-indigo-400 group-hover:text-white transition-colors" /></div>
+                <div className="space-y-2">
+                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">{opt.label}</h3>
+                   <p className="text-slate-500 text-sm font-medium italic">"{opt.desc}"</p>
+                </div>
+             </button>
+           ))}
+        </div>
+      ) : activeWorkflow === 'hardware' ? (
+        <div className="glass-card p-16 rounded-[64px] border-2 border-indigo-500/20 bg-black/60 shadow-3xl text-center space-y-12 animate-in slide-in-from-right-10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none animate-scan"></div>
+          
+          {step === 0 && (
+            <div className="space-y-12 animate-in slide-in-from-bottom-4">
+               <div className="relative mx-auto w-40 h-40">
+                  <Bluetooth className={`w-40 h-40 ${isScanning ? 'text-blue-400 animate-pulse' : 'text-slate-800'}`} />
+                  {isScanning && <div className="absolute inset-0 border-4 border-blue-500 rounded-full animate-ping opacity-40"></div>}
+                  <div className="absolute inset-[-20px] border-2 border-dashed border-white/10 rounded-full animate-spin-slow"></div>
+               </div>
+               <div className="space-y-4">
+                  <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter">Proximity <span className="text-blue-400">Scan</span></h4>
+                  <p className="text-slate-400 text-xl font-medium italic">"Place your EnvirosAgro hardware near the terminal to initialize spectral pairing."</p>
+               </div>
                <button 
-                key={opt.id}
-                onClick={() => setActiveWorkflow(opt.id as any)}
-                className="glass-card p-16 rounded-[64px] border-2 border-white/5 hover:border-indigo-500/30 transition-all group flex flex-col items-center text-center space-y-8 bg-black/40 shadow-3xl active:scale-[0.98]"
+                onClick={handleStartHardwareSync} 
+                disabled={isScanning} 
+                className="px-20 py-8 agro-gradient rounded-3xl text-white font-black uppercase tracking-[0.4em] shadow-xl disabled:opacity-50 transition-all border-4 border-white/10 ring-8 ring-white/5 active:scale-95"
                >
-                  <div className={`w-32 h-32 rounded-[44px] ${opt.bg} flex items-center justify-center border-2 ${opt.border} group-hover:scale-110 transition-transform shadow-2xl`}>
-                     <opt.icon size={56} className={opt.col} />
-                  </div>
-                  <div className="space-y-4">
-                     <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">{opt.label}</h3>
-                     <p className="text-slate-500 text-lg italic leading-relaxed max-sm:text-sm max-w-sm">"{opt.desc}"</p>
-                  </div>
-                  <div className="flex items-center gap-3 text-indigo-400 font-black text-xs uppercase tracking-[0.4em] opacity-0 group-hover:opacity-100 transition-opacity">
-                     INITIALIZE_PROTOCOL <ArrowRight size={18} />
-                  </div>
+                  {isScanning ? 'SCANNING_SPECTRUM...' : 'START HANDSHAKE'}
                </button>
-             ))}
-             
-             <div className="col-span-full pt-10 border-t border-white/5 flex justify-center">
-                <button 
-                  onClick={() => setActiveWorkflow('ledger')}
-                  className="px-12 py-5 bg-white/5 border border-white/10 rounded-3xl text-slate-500 font-black text-[11px] uppercase tracking-widest hover:text-white transition-all flex items-center gap-3"
-                >
-                   <Database size={16} /> View Resource Shards
-                </button>
-             </div>
-          </div>
-        ) : activeWorkflow === 'land' ? (
-           <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
-              <div className="flex justify-between items-center px-4">
-                <button onClick={reset} className="flex items-center gap-2 text-slate-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">
-                   <ChevronRight size={16} className="rotate-180" /> Back to Selector
-                </button>
-                <div className="flex gap-2">
-                   {[0,1,2,3].map(i => (
-                      <div key={i} className={`h-1.5 w-16 rounded-full transition-all duration-700 ${i <= step ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-white/10'}`}></div>
-                   ))}
-                </div>
-              </div>
+            </div>
+          )}
 
-              {step === 0 && (
-                <div className="glass-card p-12 rounded-[64px] border border-emerald-500/20 bg-black/40 space-y-12 shadow-3xl text-center relative overflow-hidden">
-                   <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-                      <div className="w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500 via-transparent to-transparent"></div>
-                   </div>
-                   <div className="w-24 h-24 bg-emerald-600/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 animate-float shadow-2xl relative z-10">
-                      <LocateFixed size={48} className="text-emerald-400" />
-                   </div>
-                   <div className="space-y-4 relative z-10">
-                      <h3 className="text-4xl font-black text-white uppercase italic m-0">Phase 1: <span className="text-emerald-400">Geo-Lock</span></h3>
-                      <p className="text-slate-400 text-lg font-medium italic max-w-lg mx-auto leading-relaxed">"Acquiring high-fidelity satellite coordinates to anchor your plot in the global mesh."</p>
-                   </div>
-                   
-                   <div className="p-10 bg-black/80 rounded-[48px] border border-white/5 shadow-inner relative z-10 flex flex-col items-center">
-                      <div className="w-full h-48 border border-emerald-500/10 rounded-3xl bg-[#050706] mb-8 relative overflow-hidden flex items-center justify-center">
-                         {isLocating ? (
-                            <div className="flex flex-col items-center gap-4">
-                               <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
-                               <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest animate-pulse">Syncing GPS Shards...</span>
-                            </div>
-                         ) : (
-                            <>
-                               <Globe size={120} className="text-slate-900 absolute opacity-40" />
-                               <div className="absolute inset-0 border-t-2 border-emerald-500/20 animate-scan pointer-events-none"></div>
-                               <MapIcon size={48} className="text-slate-700" />
-                            </>
-                         )}
-                      </div>
-                      <button 
-                        onClick={handleGeoLock}
-                        disabled={isLocating}
-                        className="w-full max-w-sm py-8 bg-emerald-600 hover:bg-emerald-500 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
-                      >
-                         {isLocating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Satellite className="w-6 h-6" />}
-                         {isLocating ? 'Acquiring Signal...' : 'Acquire GPS Lock'}
-                      </button>
-                   </div>
-                </div>
-              )}
-
-              {step === 1 && (
-                <div className="glass-card p-12 rounded-[64px] border border-emerald-500/20 bg-black/40 space-y-12 shadow-3xl animate-in slide-in-from-right-4">
-                   <div className="text-center space-y-4">
-                      <div className="w-20 h-20 bg-emerald-500/10 rounded-[28px] flex items-center justify-center mx-auto border border-emerald-500/20"><BoxSelect size={40} className="text-emerald-400" /></div>
-                      <h3 className="text-4xl font-black text-white uppercase italic m-0 leading-none">Phase 2: <span className="text-emerald-400">Registry Specs</span></h3>
-                      <p className="text-slate-500 text-lg">Define the technical parameters of your land shard.</p>
-                   </div>
-
-                   <div className="space-y-8 max-w-xl mx-auto">
-                      <div className="space-y-3 px-4">
-                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Plot Designation (Alias)</label>
-                         <input 
-                           type="text" value={plotName} onChange={e => setPlotName(e.target.value)}
-                           placeholder="e.g. Northern Savannah Hub..." 
-                           className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-xl font-bold text-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-800" 
-                         />
-                      </div>
-                      <div className="grid grid-cols-2 gap-6 px-4">
-                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Acreage (Hectares)</label>
-                            <input 
-                              type="number" value={plotAcreage} onChange={e => setPlotAcreage(e.target.value)}
-                              className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-xl font-mono text-emerald-400 focus:ring-4 focus:ring-emerald-500/10 outline-none" 
-                            />
-                         </div>
-                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-left">Primary Usage</label>
-                            <select 
-                               value={plotType} onChange={e => setPlotType(e.target.value)}
-                               className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-xs font-black uppercase text-white appearance-none outline-none focus:ring-4 focus:ring-emerald-500/10"
-                            >
-                               <option>Regenerative Arable</option>
-                               <option>Agroforestry</option>
-                               <option>Coastal Mangrove</option>
-                               <option>Hydro-Stack Facility</option>
-                            </select>
-                         </div>
-                      </div>
-                      <button onClick={() => setStep(2)} className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl active:scale-95 transition-all">Continue to Documentation</button>
-                   </div>
-                </div>
-              )}
-
-              {step === 2 && (
-                <div className="glass-card p-12 rounded-[64px] border border-emerald-500/20 bg-black/40 space-y-12 shadow-3xl animate-in slide-in-from-right-4">
-                   <div className="text-center space-y-4">
-                      <div className="w-20 h-20 bg-emerald-500/10 rounded-[28px] flex items-center justify-center mx-auto border border-emerald-500/20"><FileText size={40} className="text-emerald-400" /></div>
-                      <h3 className="text-4xl font-black text-white uppercase italic m-0 leading-none">Phase 3: <span className="text-emerald-400">Proof Ingest</span></h3>
-                      <p className="text-slate-500 text-lg">Upload Title Shard or Lease Ingest for verification.</p>
-                   </div>
-
-                   <div 
-                     onClick={() => fileInputRef.current?.click()}
-                     className={`max-w-xl mx-auto p-16 border-4 border-dashed rounded-[48px] flex flex-col items-center justify-center text-center space-y-6 group/upload cursor-pointer transition-all ${uploadedDoc ? 'border-emerald-500 bg-emerald-500/5' : 'border-white/10 hover:border-emerald-500/30'}`}
-                   >
-                      <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".pdf,image/*" />
-                      {isProcessing ? (
-                         <div className="flex flex-col items-center gap-4">
-                            <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
-                            <span className="text-xs font-black text-emerald-400 uppercase tracking-widest">Sharding Document...</span>
-                         </div>
-                      ) : uploadedDoc ? (
-                         <>
-                            <CheckCircle2 size={56} className="text-emerald-400" />
-                            <p className="text-xl font-black text-white uppercase">{uploadedDoc}</p>
-                            <span className="text-[10px] font-black text-emerald-500 uppercase underline">Replace Document</span>
-                         </>
-                      ) : (
-                         <>
-                            <FileUp size={56} className="text-slate-800 group-hover/upload:text-emerald-400 transition-colors" />
-                            <p className="text-xl font-black text-white uppercase tracking-widest italic leading-none">Choose Document Shard</p>
-                            <p className="text-[10px] text-slate-700 font-bold uppercase">PDF or JPEG Proof required</p>
-                         </>
-                      )}
-                   </div>
-                   
-                   <div className="max-w-xl mx-auto">
-                      <button onClick={() => setStep(3)} className="w-full text-slate-700 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">Skip for Provisional Registration</button>
-                   </div>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="glass-card p-12 rounded-[64px] border border-indigo-500/30 bg-black/40 space-y-12 shadow-3xl text-center">
-                   <div className="w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto border border-indigo-500/20 shadow-3xl group relative overflow-hidden">
-                      <Fingerprint className="w-12 h-12 text-indigo-400 group-hover:scale-110 transition-transform" />
-                      <div className="absolute inset-0 bg-indigo-500/5 animate-pulse"></div>
-                   </div>
-                   <h3 className="text-4xl font-black text-white uppercase italic">Registry <span className="text-indigo-400">Anchor</span></h3>
-                   <div className="space-y-4 max-w-md mx-auto">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] block text-center">Signature (ESIN)</label>
-                      <input 
-                        type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
-                        placeholder="EA-XXXX-XXXX-XXXX" 
-                        className="w-full bg-black border border-white/10 rounded-[32px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
-                      />
-                   </div>
-                   <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex items-center gap-6 max-xl:mx-auto">
-                      <ShieldAlert className="w-10 h-10 text-indigo-400 shrink-0" />
-                      <p className="text-[10px] text-indigo-200/50 font-black uppercase leading-relaxed tracking-tight text-left italic leading-loose">
-                         "By signing, you immutably anchor these physical coordinates to your node. Misalignment with satellite ground-truth results in multiplier slashing."
-                      </p>
-                   </div>
-                   <button 
-                      onClick={() => finalizeVerification('LAND')}
-                      disabled={isProcessing || !esinSign}
-                      className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all"
-                   >
-                      {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Stamp className="w-8 h-8 fill-current" />}
-                      {isProcessing ? "MINTING SHARD..." : "AUTHORIZE LAND REGISTRY"}
-                   </button>
-                </div>
-              )}
-
-              {step === 4 && (
-                <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 animate-in zoom-in duration-700 text-center">
-                  <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(16,185,129,0.4)] relative group scale-110">
-                     <CheckCircle2 className="w-28 h-28 text-white group-hover:scale-110 transition-transform" />
-                     <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
-                  </div>
-                  <div className="space-y-4">
-                     <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic m-0">Plot <span className="text-emerald-400">Anchored</span></h3>
-                     <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.8em] font-mono">REGISTRY_HASH: 0xPLOT_SYNC_OK</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-                     <button 
-                        onClick={() => onNavigate?.('digital_mrv')}
-                        className="py-6 agro-gradient rounded-[32px] text-white font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
-                     >
-                        <Scan size={18} /> Initialize MRV
-                     </button>
-                     <button 
-                        onClick={reset} 
-                        className="py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all shadow-xl active:scale-95"
-                     >
-                        Return to Hub
-                     </button>
-                  </div>
+          {step === 1 && (
+            <div className="space-y-10 animate-in slide-in-from-right-4">
+               <div className="w-28 h-28 bg-indigo-600/10 border-2 border-indigo-500/20 rounded-[32px] flex items-center justify-center mx-auto text-indigo-400 shadow-3xl relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-indigo-500/5 animate-pulse"></div>
+                  <Fingerprint size={56} className="relative z-10 group-hover:scale-110 transition-transform" />
                </div>
-              )}
-           </div>
-        ) : activeWorkflow === 'hardware' ? (
-          <div className="max-w-3xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
-             <div className="flex justify-between items-center px-4">
-                <button onClick={reset} className="flex items-center gap-2 text-slate-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">
-                   <ChevronRight size={16} className="rotate-180" /> Back to Selector
-                </button>
-                <div className="flex gap-2">
-                   {[0,1,2].map(i => (
-                      <div key={i} className={`h-1.5 w-12 rounded-full transition-all duration-700 ${i <= step ? 'bg-blue-500 shadow-[0_0_10px_#3b82f6]' : 'bg-white/10'}`}></div>
-                   ))}
-                </div>
-             </div>
-
-             {step === 0 && (
-                <div className="glass-card p-12 rounded-[64px] border border-blue-500/20 bg-black/40 space-y-12 shadow-3xl text-center">
-                   <div className="w-24 h-24 bg-blue-600/10 rounded-3xl flex items-center justify-center mx-auto border border-blue-500/20 animate-float shadow-2xl">
-                      <Scan size={48} className="text-blue-400" />
-                   </div>
-                   <div className="space-y-4">
-                      <h3 className="text-4xl font-black text-white uppercase italic">Pairing <span className="text-blue-400">Node</span></h3>
-                      <p className="text-slate-400 text-lg font-medium italic">"Input the unique device identifiers for high-fidelity sharding."</p>
-                   </div>
-                   
-                   <div className="space-y-6 max-w-md mx-auto">
-                      <div className="space-y-2 text-left">
-                         <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Device Identifier (S/N)</label>
-                         <input 
-                           type="text" value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                           placeholder="AM-XXXX-XXXX" 
-                           className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-xl font-mono text-white focus:ring-4 focus:ring-blue-500/20 outline-none transition-all uppercase"
-                         />
-                      </div>
-                      <div className="space-y-2 text-left">
-                         <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Verification Token</label>
-                         <input 
-                           type="password" value={secretToken} onChange={e => setSecretToken(e.target.value)}
-                           placeholder="••••••••" 
-                           className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-xl font-mono text-white focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
-                         />
-                      </div>
-                      <button 
-                        onClick={handleHardwarePair}
-                        disabled={!deviceId || !secretToken || isProcessing}
-                        className="w-full py-8 bg-blue-600 hover:bg-blue-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all disabled:opacity-30"
-                      >
-                         {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : "Commence Pairing"}
-                      </button>
-                   </div>
-                </div>
-             )}
-
-             {step === 1 && (
-                <div className="glass-card p-12 rounded-[64px] border border-indigo-500/30 bg-black/40 space-y-12 shadow-3xl text-center">
-                   <div className="w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto border border-indigo-500/20 shadow-3xl group">
-                      <Fingerprint className="w-12 h-12 text-indigo-400 group-hover:scale-110 transition-transform" />
-                   </div>
-                   <h3 className="text-4xl font-black text-white uppercase italic">Registry <span className="text-indigo-400">Authorization</span></h3>
-                   <div className="space-y-4 max-w-md mx-auto">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] block text-center">Node Signature (ESIN)</label>
-                      <input 
-                        type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
-                        placeholder="EA-XXXX-XXXX-XXXX" 
-                        className="w-full bg-black border border-white/10 rounded-[32px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
-                      />
-                   </div>
-                   <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex items-center gap-6 max-xl:mx-auto">
-                      <ShieldAlert className="w-10 h-10 text-indigo-400 shrink-0" />
-                      <p className="text-[10px] text-indigo-200/50 font-black uppercase leading-relaxed tracking-tight text-left italic">
-                         "Pairing commits your node to immediate telemetry sharding. Unauthorized pairing attempts will be logged by the Registry Oracle."
-                      </p>
-                   </div>
-                   <button 
-                      onClick={() => finalizeVerification('HARDWARE')}
-                      disabled={isProcessing || !esinSign}
-                      className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all"
-                   >
-                      {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Stamp className="w-8 h-8 fill-current" />}
-                      {isProcessing ? "MINTING SHARD..." : "AUTHORIZE PAIRING"}
-                   </button>
-                </div>
-             )}
-
-             {step === 2 && (
-               <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 animate-in zoom-in duration-700 text-center">
-                  <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(16,185,129,0.4)] relative group scale-110">
-                     <CheckCircle2 className="w-28 h-28 text-white group-hover:scale-110 transition-transform" />
-                     <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
-                  </div>
-                  <div className="space-y-4">
-                     <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic">Pairing <span className="text-emerald-400">Finalized</span></h3>
-                     <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.8em] font-mono">REGISTRY_HASH: 0xNODE_SYNC_OK</p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                     <button 
-                        onClick={() => onNavigate?.('ingest')}
-                        className="flex-1 px-8 py-6 agro-gradient rounded-[32px] text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
-                     >
-                        <Cable size={18} /> Manage Ingest
-                     </button>
-                     <button 
-                        onClick={reset} 
-                        className="flex-1 px-8 py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-white/10 transition-all shadow-xl active:scale-95"
-                     >
-                        Return to Registry Hub
-                     </button>
-                  </div>
+               <div className="space-y-2">
+                  <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none m-0">Node <span className="text-indigo-400">Authorization</span></h4>
+                  <p className="text-[10px] text-slate-500 font-mono uppercase font-black mt-3">TARGET_DEVICE_ID: {deviceId}</p>
                </div>
-             )}
-          </div>
-        ) : (
-           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
-             <div className="flex justify-between items-end border-b border-white/5 pb-10 px-4">
-                <div>
-                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Resource <span className="text-indigo-400">Ledger Shards</span></h3>
-                   <p className="text-slate-500 text-sm mt-1">Manage all physical assets immutably linked to node {user.esin}.</p>
-                </div>
-                <button onClick={reset} className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-all">Pair New Asset</button>
-             </div>
+               <div className="max-w-md mx-auto space-y-8">
+                  <input 
+                    type="text" 
+                    value={esinSign} 
+                    onChange={e => setEsinSign(e.target.value)} 
+                    placeholder="EA-XXXX-XXXX" 
+                    className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 text-center text-5xl font-mono text-white outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all uppercase placeholder:text-slate-900 shadow-inner tracking-widest" 
+                  />
+                  <button onClick={finalizeHardware} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.3)] active:scale-95 transition-all border-4 border-white/10 ring-8 ring-white/5">COMMIT PAIRING SHARD</button>
+               </div>
+            </div>
+          )}
 
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {(user.resources || []).map(res => (
-                   <div key={res.id} className="glass-card p-10 rounded-[56px] border-2 border-white/5 hover:border-indigo-500/20 transition-all group flex flex-col h-full bg-black/40 shadow-xl relative overflow-hidden">
-                      <div className="flex justify-between items-start mb-10">
-                         <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 group-hover:bg-indigo-600/10 transition-all shadow-inner`}>
-                            {res.category === 'HARDWARE' ? <Smartphone size={28} className="text-blue-400" /> : <MapPin size={28} className="text-emerald-400" />}
-                         </div>
-                         <div className="text-right">
-                            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest ${
-                               res.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                               res.status === 'PROVISIONAL' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse' : 
-                               'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                            }`}>{res.status}</span>
-                            <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase tracking-tighter italic">{res.id}</p>
-                         </div>
-                      </div>
-                      <div className="flex-1 space-y-4">
-                         <h4 className="text-2xl font-black text-white uppercase italic leading-tight group-hover:text-indigo-400 transition-colors m-0 tracking-tighter">{res.name}</h4>
-                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{res.type} Shard</p>
-                         <div className="flex flex-wrap gap-2 pt-4">
-                            {res.capabilities.map(cap => (
-                               <span key={cap} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-slate-400 uppercase tracking-widest">{cap}</span>
-                            ))}
-                         </div>
-                      </div>
-                      <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between">
-                         <div className="flex items-center gap-3">
-                            <History size={16} className="text-slate-600" />
-                            <span className="text-[9px] font-black text-slate-600 uppercase">SYNC_OK</span>
-                         </div>
-                         <button className="text-[10px] font-black text-indigo-400 hover:text-white uppercase tracking-widest">Manage Node</button>
-                      </div>
-                   </div>
-                ))}
-                {(user.resources || []).length === 0 && (
-                   <div className="col-span-full py-40 flex flex-col items-center justify-center text-center opacity-20 group">
-                      <div className="relative">
-                         <Database size={120} className="text-slate-500 group-hover:text-indigo-400 transition-colors" />
-                         <div className="absolute inset-0 border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
-                      </div>
-                      <p className="text-2xl font-black uppercase tracking-[0.5em] text-white mt-12">Registry Empty</p>
-                   </div>
-                )}
-             </div>
-          </div>
-        )}
-      </div>
+          {step === 2 && (
+            <div className="space-y-12 py-10 animate-in zoom-in duration-700">
+               <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_150px_rgba(16,185,129,0.4)] relative group scale-110">
+                  <CheckCircle2 size={80} className="group-hover:scale-110 transition-transform" />
+                  <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+               </div>
+               <div className="space-y-4">
+                  <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Pairing <span className="text-emerald-400">Verified.</span></h3>
+                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[1em] font-mono">REGISTRY_HASH_0x{(Math.random()*100).toFixed(0)}_SYNC_OK</p>
+               </div>
+               <button onClick={reset} className="px-24 py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Done</button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="glass-card p-16 rounded-[64px] border-2 border-emerald-500/20 bg-black/60 shadow-3xl text-center space-y-12 animate-in slide-in-from-left-10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none animate-scan"></div>
+          
+          {step === 0 && (
+            <div className="space-y-12 animate-in slide-in-from-bottom-4">
+               <div className="relative mx-auto w-40 h-40">
+                  <Satellite className={`w-40 h-40 ${isScanning ? 'text-emerald-400 animate-pulse' : 'text-slate-800'}`} />
+                  {isScanning && <div className="absolute inset-0 border-4 border-emerald-500 rounded-full animate-ping opacity-40"></div>}
+                  <div className="absolute inset-[-30px] border-2 border-dashed border-white/10 rounded-full animate-spin-slow"></div>
+               </div>
+               <div className="space-y-4">
+                  <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter">Geofence <span className="text-emerald-400">Calibration</span></h4>
+                  <p className="text-slate-400 text-xl font-medium italic">"Initialize satellite link to defining the biological boundaries of your node."</p>
+               </div>
+               <button 
+                onClick={handleStartLandSync} 
+                disabled={isScanning} 
+                className="px-20 py-8 agro-gradient rounded-3xl text-white font-black uppercase tracking-[0.4em] shadow-xl disabled:opacity-50 transition-all border-4 border-white/10 ring-8 ring-white/5 active:scale-95"
+               >
+                  {isScanning ? 'SYNCING_SATELLITE...' : 'INITIATE GEOLINK'}
+               </button>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-10 animate-in slide-in-from-right-4">
+               <div className="w-28 h-28 bg-emerald-600/10 border-2 border-emerald-500/20 rounded-[32px] flex items-center justify-center mx-auto text-emerald-400 shadow-3xl relative overflow-hidden group">
+                  <FileCheck size={56} className="relative z-10 group-hover:scale-110 transition-transform" />
+               </div>
+               <div className="space-y-4">
+                  <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none m-0">Ledger <span className="text-emerald-400">Anchor</span></h4>
+                  <div className="flex justify-center gap-10 py-4 border-y border-white/5 max-w-sm mx-auto">
+                    <div>
+                      <p className="text-[8px] text-slate-500 font-black uppercase">Latitude Shard</p>
+                      <p className="text-xl font-mono text-white">{coords?.lat}</p>
+                    </div>
+                    <div className="w-px h-10 bg-white/10"></div>
+                    <div>
+                      <p className="text-[8px] text-slate-500 font-black uppercase">Longitude Shard</p>
+                      <p className="text-xl font-mono text-white">{coords?.lng}</p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-mono uppercase font-black">DEED_SHARD_ID: {deedId}</p>
+               </div>
+               <div className="max-w-md mx-auto space-y-8">
+                  <input 
+                    type="text" 
+                    value={esinSign} 
+                    onChange={e => setEsinSign(e.target.value)} 
+                    placeholder="SIGN WITH ESIN" 
+                    className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 text-center text-5xl font-mono text-white outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all uppercase placeholder:text-slate-900 shadow-inner tracking-widest" 
+                  />
+                  <button onClick={finalizeLand} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(16,185,129,0.3)] active:scale-95 transition-all border-4 border-white/10 ring-8 ring-white/5">ANCHOR LAND SHARD</button>
+               </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-12 py-10 animate-in zoom-in duration-700">
+               <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_150px_rgba(16,185,129,0.4)] relative group scale-110">
+                  <Globe size={80} className="group-hover:scale-110 transition-transform" />
+                  <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+               </div>
+               <div className="space-y-4">
+                  <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Resource <span className="text-emerald-400">Anchored.</span></h3>
+                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[1em] font-mono">REGISTRY_LAT_{coords?.lat}_LNG_{coords?.lng}_OK</p>
+               </div>
+               <button onClick={reset} className="px-24 py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Complete Synchronization</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!activeWorkflow && (
+        <div className="p-10 glass-card rounded-[48px] border-emerald-500/10 bg-emerald-600/5 flex items-center gap-8 shadow-inner">
+           <SearchCode className="w-12 h-12 text-emerald-400 shrink-0 animate-pulse" />
+           <p className="text-sm text-slate-400 italic leading-relaxed font-medium">
+              "Verifying land mass shards establishing the base-layer for carbon credit minting (MRV). All registry anchors are permanent and peer-audited."
+           </p>
+        </div>
+      )}
+
+      <button onClick={reset} className="w-full py-10 text-[10px] font-black text-slate-700 uppercase tracking-[1em] hover:text-slate-400 transition-colors flex items-center justify-center gap-4">
+         <X size={14} /> Terminate Handshake Protocol
+      </button>
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        @keyframes scan { from { top: -10px; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
-        @keyframes scan {
-          0% { top: -100%; }
-          100% { top: 100%; }
-        }
-        .animate-scan {
-          animation: scan 2.5s linear infinite;
-        }
       `}</style>
     </div>
   );

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Microscope, 
@@ -42,10 +41,12 @@ import {
   Library,
   ScrollText,
   Dna,
-  Binary as BinaryIcon,
   Atom,
   Wind,
-  Info
+  Info,
+  Stamp,
+  // Added missing Terminal import
+  Terminal
 } from 'lucide-react';
 import { User, ResearchPaper } from '../types';
 import { generateAgroResearch, analyzeMedia } from '../services/geminiService';
@@ -53,7 +54,7 @@ import { generateAgroResearch, analyzeMedia } from '../services/geminiService';
 interface ResearchInnovationProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   pendingAction?: string | null;
   clearAction?: () => void;
 }
@@ -102,21 +103,6 @@ const INITIAL_PATENTS: ResearchPaper[] = [
     rating: 4.9, 
     eacRewards: 2000, 
     timestamp: '1w ago',
-    iotDataUsed: true
-  },
-  { 
-    id: 'PAT-1122', 
-    title: 'C(a) Index Exponential Scalar v3', 
-    author: 'Neo Harvest', 
-    authorEsin: 'EA-2025-W12', 
-    abstract: 'A new mathematical derivation for the m-Constant to account for extreme weather-driven resonance friction in alpine farming nodes.', 
-    content: 'Finalized logic shard committed to EOS Core...', 
-    thrust: 'Industry', 
-    status: 'Invention', 
-    impactScore: 96, 
-    rating: 5.0, 
-    eacRewards: 3500, 
-    timestamp: '3h ago',
     iotDataUsed: true
   }
 ];
@@ -186,7 +172,9 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
 
   const runSynthesis = async () => {
     if (!researchTitle) return alert("Title required.");
-    if (!onSpendEAC(50, 'RESEARCH_SYNTHESIS_FEE')) return;
+    
+    const fee = 50;
+    if (!await onSpendEAC(fee, 'RESEARCH_SYNTHESIS_FEE')) return;
 
     setIsSynthesizing(true);
     setResearchOutput(null);
@@ -208,7 +196,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       }
       setResearchOutput(responseText);
     } catch (e) {
-      alert("Oracle synthesis failed.");
+      setResearchOutput("Oracle synthesis failed. Please check network link.");
     } finally {
       setIsSynthesizing(false);
     }
@@ -243,7 +231,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
       
-      {/* Header Section - Refined for Screenshot Sync */}
+      {/* Header Section */}
       <div className="glass-card p-12 rounded-[56px] border-emerald-500/10 bg-black/40 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-2xl">
         <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform">
            <Microscope className="w-96 h-96 text-white" />
@@ -279,23 +267,8 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
         </div>
       </div>
 
-      {/* Global Inventions Counter Card */}
-      <div className="glass-card p-12 rounded-[56px] border-white/5 bg-black/40 flex flex-col justify-center items-center text-center space-y-6 shadow-xl relative overflow-hidden">
-         <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.6em]">Global Inventions</p>
-         <h3 className="text-8xl font-black text-white font-mono tracking-tighter">{archive.length}</h3>
-         <div className="pt-2 flex items-center gap-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Registry Validated</p>
-         </div>
-      </div>
-
       {activeTab === 'archive' && (
         <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
-           <div className="space-y-4 px-4 text-center">
-              <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter">Immutable <span className="text-emerald-400">Patent Vault</span></h3>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.3em]">Authorized scientific shards and industrial inventions.</p>
-           </div>
-
            <div className="relative group w-full max-w-4xl mx-auto">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 group-focus-within:text-emerald-400 transition-colors" />
               <input 
@@ -326,23 +299,9 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
                       <p className="text-sm text-slate-400 leading-relaxed italic mt-6 opacity-80 font-medium">"{paper.abstract}"</p>
                    </div>
                    
-                   <div className="mt-10 space-y-5 border-t border-white/5 pt-8 relative z-10">
-                      <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-widest">
-                         <span className="text-slate-600">Pillar Thrust</span>
-                         <span className="text-blue-400">{paper.thrust.toUpperCase()}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-widest">
-                         <span className="text-slate-600">Impact Score</span>
-                         <div className="flex items-center gap-2">
-                            <TrendingUp size={14} className="text-emerald-500" />
-                            <span className="text-white font-mono">{paper.impactScore}%</span>
-                         </div>
-                      </div>
-                   </div>
-
-                   <div className="mt-8 pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                      <div className="flex items-center gap-2">
-                        <Star size={16} className="text-amber-500 fill-amber-500" />
+                   <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
+                      <div className="flex items-center gap-2 text-amber-500">
+                        <Star size={16} fill="currentColor" />
                         <span className="text-xs font-mono font-black text-white">{paper.rating}</span>
                       </div>
                       <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all shadow-xl active:scale-90">
@@ -392,138 +351,87 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
                     </select>
                   </div>
                   
-                  <div className="space-y-2 px-2">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Reference Ingest (Upload)</label>
-                    <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`p-6 border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer group ${selectedFile ? 'bg-emerald-600/10 border-emerald-500' : 'bg-black/40 border-white/10 hover:border-emerald-500/40'}`}
-                    >
-                      <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,application/pdf" />
-                      {filePreview ? (
-                         <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-2xl border border-white/10">
-                            <img src={filePreview} className="w-full h-full object-cover" alt="Preview" />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                               <RefreshCw size={24} className="text-white animate-spin-slow" />
-                            </div>
-                         </div>
-                      ) : (
-                         <div className="flex flex-col items-center gap-2">
-                           <FileUp size={24} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
-                           <span className="text-[10px] font-black text-slate-600 uppercase group-hover:text-emerald-500 transition-colors">Attach Evidence Shard</span>
-                         </div>
-                      )}
-                    </div>
-                    {selectedFile && (
-                      <button onClick={removeFile} className="w-full mt-2 text-[8px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400 flex items-center justify-center gap-1">
-                        <X size={10} /> Discard Shard
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="pt-4 px-2">
                     <button 
                       onClick={extractIotData}
                       disabled={isExtractingIot}
-                      className="py-4 bg-emerald-600/10 border border-emerald-500/30 rounded-2xl text-emerald-400 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm"
+                      className="w-full py-4 bg-blue-600/10 border border-blue-500/30 rounded-2xl text-blue-400 font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-lg"
                     >
-                        {isExtractingIot ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wifi className="w-3 h-3" />}
-                        Sync IoT
+                       {isExtractingIot ? <Loader2 size={12} className="animate-spin" /> : <Wifi size={12} />}
+                       Link Local IoT Shards
                     </button>
-                    <div className="p-4 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-center">
-                       <span className={`text-[8px] font-black uppercase tracking-widest ${iotTelemetry ? 'text-emerald-400 animate-pulse' : 'text-slate-700'}`}>
-                          {iotTelemetry ? 'TELEM_SYNCED' : 'TELEM_IDLE'}
-                       </span>
-                    </div>
+                    {iotTelemetry && (
+                      <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl animate-in zoom-in">
+                         <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1 flex items-center gap-2"><CheckCircle2 size={10} /> Shards Sync'd</p>
+                         <p className="text-[10px] text-slate-300 font-mono italic">Node: {iotTelemetry.node}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-white/5">
-                   <div className="flex justify-between items-center mb-4 px-2">
-                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Synthesis Fee</span>
-                      <span className="text-xs font-mono font-black text-emerald-400">50 EAC</span>
-                   </div>
+                <div className="pt-6 border-t border-white/5 space-y-4">
                    <button 
                     onClick={runSynthesis}
                     disabled={isSynthesizing || !researchTitle}
-                    className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30"
+                    className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4"
                    >
-                    {isSynthesizing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bot className="w-5 h-5" />}
-                    INITIALIZE SYNTHESIS
-                  </button>
+                      {isSynthesizing ? <Loader2 className="animate-spin" /> : <FlaskConical size={20} />}
+                      FORGE SHARD
+                   </button>
                 </div>
-              </div>
-
-              <div className="p-8 glass-card rounded-[40px] border border-blue-500/20 bg-blue-500/5 space-y-4">
-                 <div className="flex items-center gap-3">
-                    <Info className="w-4 h-4 text-blue-400" />
-                    <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Forge Logic</h4>
-                 </div>
-                 <p className="text-[10px] text-slate-400 leading-relaxed font-bold uppercase italic">
-                    "Synthesizing IoT biometrics with documented research creates an immutable invention shard. Verified patents earn recurring EAC royalties from the global grid."
-                 </p>
               </div>
            </div>
 
-           <div className="lg:col-span-3">
-              <div className="glass-card rounded-[56px] min-h-[600px] flex flex-col border border-white/5 bg-black/20 shadow-3xl overflow-hidden">
-                 <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                       <div className="w-16 h-16 rounded-[28px] bg-emerald-600 flex items-center justify-center shadow-xl">
-                          <BinaryIcon className="w-8 h-8 text-white" />
-                       </div>
-                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Forge <span className="text-emerald-400">Terminal</span></h3>
+           <div className="lg:col-span-3 flex flex-col space-y-8">
+              <div className="glass-card rounded-[56px] border border-white/5 bg-black/20 flex flex-col flex-1 relative overflow-hidden shadow-3xl">
+                 <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-4 text-emerald-400">
+                       {/* Added missing Terminal import from lucide-react */}
+                       <Terminal className="w-6 h-6" />
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Invention Oracle Terminal</span>
                     </div>
-                    <div className="flex gap-4 items-center">
-                       {selectedFile && (
-                          <div className="flex items-center gap-3 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full animate-pulse">
-                             <Paperclip size={12} className="text-emerald-400" />
-                             <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Evidence Sync Active</span>
-                          </div>
-                       )}
-                       <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                          <span className="text-[9px] font-mono font-black text-slate-500">CONSENSUS_READY</span>
-                       </div>
-                    </div>
+                    {researchOutput && (
+                       <button onClick={registerResearch} className="px-8 py-3 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
+                          <Stamp size={14} /> Anchor to Registry
+                       </button>
+                    )}
                  </div>
-                 <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative">
-                    {isSynthesizing ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md z-20">
-                         <Loader2 className="w-16 h-16 text-emerald-500 animate-spin" />
-                         <p className="text-emerald-400 font-bold mt-6 animate-pulse uppercase tracking-[0.3em] text-sm italic">Synthesizing Industrial Consensus Shard...</p>
-                         <div className="mt-10 flex gap-2">
-                           {[...Array(6)].map((_, i) => <div key={i} className="w-1 h-8 bg-emerald-500/20 rounded-full animate-bounce" style={{ animationDelay: `${i*0.1}s` }}></div>)}
-                         </div>
-                      </div>
-                    ) : researchOutput ? (
-                      <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
-                         <div className="p-16 bg-black/80 rounded-[64px] border border-white/10 prose prose-invert max-w-none shadow-inner border-l-8 border-emerald-500/50 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-12 opacity-[0.02]"><Atom className="w-96 h-96 text-white" /></div>
-                            <div className="prose prose-emerald prose-xl text-slate-300 leading-[2.2] italic whitespace-pre-line font-medium border-l-4 border-emerald-500/10 pl-12 relative z-10">
-                               {researchOutput}
-                            </div>
-                         </div>
-                         <div className="flex flex-col items-center gap-6">
-                            <button 
-                              onClick={registerResearch}
-                              className="px-16 py-8 agro-gradient rounded-3xl text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all block ring-8 ring-emerald-500/5"
-                            >
-                               COMMIT INVENTION TO GLOBAL ARCHIVE
-                            </button>
-                            <p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.4em]">Requires one-time ESIN node signature.</p>
-                         </div>
-                      </div>
+
+                 <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative bg-[#050706]">
+                    {!researchOutput && !isSynthesizing ? (
+                       <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-20">
+                          <Bot size={140} className="text-slate-500" />
+                          <div className="space-y-2">
+                             <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic">FORGE_STANDBY</p>
+                             <p className="text-lg font-bold text-slate-600 uppercase tracking-widest italic">Synthesize research from raw telemetry shards</p>
+                          </div>
+                       </div>
+                    ) : isSynthesizing ? (
+                       <div className="h-full flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in duration-500">
+                          <div className="relative">
+                             <Loader2 className="w-24 h-24 text-emerald-500 animate-spin mx-auto" />
+                             <div className="absolute inset-0 flex items-center justify-center">
+                                <Sparkles className="w-10 h-10 text-emerald-400 animate-pulse" />
+                             </div>
+                          </div>
+                          <div className="space-y-4">
+                             <p className="text-emerald-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic">MAPPING ENERGY PATTERNS...</p>
+                             <p className="text-slate-600 font-mono text-[10px]">EOS_CORE_AUDIT // CHECKING_FRAMEWORK_ALIGN</p>
+                          </div>
+                       </div>
                     ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-30 group">
-                         <div className="relative">
-                            <FlaskConical className="w-32 h-32 text-slate-500 group-hover:text-emerald-500 transition-colors" />
-                            <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
-                         </div>
-                         <div className="space-y-2">
-                            <p className="text-xl font-black uppercase tracking-[0.5em] text-white">Terminal Standby</p>
-                            <p className="text-xs italic uppercase font-bold tracking-widest text-slate-600">Awaiting Industrial Metadata & Payment</p>
-                         </div>
-                      </div>
+                       <div className="animate-in slide-in-from-bottom-10 duration-700 pb-10">
+                          <div className="p-12 bg-black/60 rounded-[64px] border border-emerald-500/20 shadow-inner border-l-8 border-l-emerald-600 relative overflow-hidden group">
+                             <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><Database size={400} /></div>
+                             <div className="flex items-center gap-4 mb-10 border-b border-white/5 pb-6">
+                                <FileText className="w-8 h-8 text-emerald-400" />
+                                <h4 className="text-2xl font-black text-white uppercase italic m-0">Generated Research Shard</h4>
+                             </div>
+                             <div className="prose prose-invert prose-emerald max-w-none text-slate-300 text-xl leading-loose italic whitespace-pre-line font-medium relative z-10">
+                                {researchOutput}
+                             </div>
+                          </div>
+                       </div>
                     )}
                  </div>
               </div>
@@ -533,10 +441,8 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .shadow-3xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9); }
       `}</style>
     </div>
   );

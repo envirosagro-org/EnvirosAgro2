@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ShieldCheck, Leaf, Globe, Calendar, Fingerprint, Layers, QrCode, Wifi, Activity } from 'lucide-react';
 import { User } from '../types';
@@ -17,14 +16,6 @@ const IdentityCard: React.FC<IdentityCardProps> = ({ user }) => {
         <div className="absolute inset-0 opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity">
            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500 via-transparent to-blue-500 animate-hologram opacity-30"></div>
            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay"></div>
-        </div>
-
-        {/* Micro-chip visual detail */}
-        <div className="absolute top-1/2 left-4 -translate-y-1/2 w-12 h-16 border border-white/10 rounded-lg bg-white/5 opacity-10 flex flex-col items-center justify-center gap-1 pointer-events-none">
-           <div className="w-8 h-1 bg-white/20 rounded"></div>
-           <div className="w-8 h-1 bg-white/20 rounded"></div>
-           <div className="w-8 h-1 bg-white/20 rounded"></div>
-           <div className="w-8 h-1 bg-white/20 rounded"></div>
         </div>
 
         {/* Card Header Section */}
@@ -64,7 +55,7 @@ const IdentityCard: React.FC<IdentityCardProps> = ({ user }) => {
                </div>
                <div>
                   <p className="text-[6px] text-slate-500 font-black uppercase tracking-widest">Regional Node</p>
-                  <p className="text-[9px] text-slate-200 font-bold uppercase truncate tracking-tight">{user.location}</p>
+                  <p className="text-[9px] text-slate-200 font-bold uppercase truncate tracking-tight">{user.location.split(',')[0]}</p>
                </div>
             </div>
 
@@ -80,14 +71,18 @@ const IdentityCard: React.FC<IdentityCardProps> = ({ user }) => {
             </div>
           </div>
 
-          {/* Biometric & QR Section */}
+          {/* Biometric Avatar Section */}
           <div className="w-24 flex flex-col items-center gap-3 shrink-0">
-             <div className="w-24 h-24 rounded-2xl bg-white/5 border border-white/10 p-1.5 relative overflow-hidden group/id shadow-xl">
+             <div className="w-24 h-24 rounded-2xl bg-white/5 border border-white/10 p-1 relative overflow-hidden group/id shadow-xl">
                 <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover/id:opacity-100 transition-opacity flex items-center justify-center z-10">
                    <Fingerprint className="w-10 h-10 text-emerald-400 animate-pulse" />
                 </div>
-                <div className="w-full h-full bg-slate-900/80 rounded-xl flex items-center justify-center text-4xl font-black text-emerald-600/80 backdrop-blur-sm">
-                  {user.name[0]}
+                <div className="w-full h-full bg-slate-900/80 rounded-xl flex items-center justify-center text-4xl font-black text-emerald-600/80 backdrop-blur-sm overflow-hidden">
+                   {user.avatar ? (
+                     <img src={user.avatar} className="w-full h-full object-cover" alt="Biometric" />
+                   ) : (
+                     user.name[0]
+                   )}
                 </div>
              </div>
              <div className="w-full flex gap-1.5">
@@ -123,7 +118,6 @@ const IdentityCard: React.FC<IdentityCardProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Embedded Styles for Animations */}
       <style>{`
         @keyframes hologram {
           0% { background-position: 0% 50%; }

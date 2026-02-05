@@ -27,15 +27,16 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
   const [step, setStep] = useState<Step>('ingest_type');
   const [thrust, setThrust] = useState<string>('Technological');
   const [evidenceType, setEvidenceType] = useState<string>('Soil Scan');
-  const [file, setFile] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditReport, setAuditReport] = useState<string | null>(null);
   const [isMinting, setIsMinting] = useState(false);
   const [mintedValue, setMintedValue] = useState(45.00);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // If a task is passed, auto-redirect to task summary or specific ingest flow
   useEffect(() => {
     if (isOpen && taskToIngest) {
       setStep('task_summary');
@@ -47,26 +48,31 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
+      setFile(f);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFile(reader.result as string);
+        setPreview(reader.result as string);
         setStep('audit');
-        runAudit();
+        runAudit(f, reader.result as string);
       };
       reader.readAsDataURL(f);
     }
   };
 
-  const runAudit = async () => {
+  const runAudit = async (fileObj: File, base64: string) => {
     setIsAuditing(true);
     try {
+      // Mock upload URL since storage is removed
+      const url = "https://mock-storage.envirosagro.org/shards/" + fileObj.name;
+      setDownloadUrl(url);
+
       const contextDesc = taskToIngest 
         ? `Task: ${taskToIngest.title} (ID: ${taskToIngest.id}) fulfillment evidence.`
         : `New ${evidenceType} evidence ingest.`;
       
-      const res = await diagnoseCropIssue(`${contextDesc} Evaluate this proof for the ${thrust} thrust. Assess industrial alignment and resilience factors.`);
+      const res = await diagnoseCropIssue(`${contextDesc} Evaluate this proof for the ${thrust} thrust. Evidence URL: ${url}`);
       setAuditReport(res.text);
-      setMintedValue(Math.floor(Math.random() * 50) + 40); // Higher reward for task-based work
+      setMintedValue(Math.floor(Math.random() * 50) + 40); 
       setStep('settlement');
     } catch (err) {
       alert("Registry Audit Failed. Check node connection.");
@@ -93,6 +99,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
   const reset = () => {
     setStep('ingest_type');
     setFile(null);
+    setPreview(null);
     setAuditReport(null);
     onClose();
   };
@@ -121,7 +128,6 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
           <div className="flex gap-2">
             {(['ingest_type', 'thrust', 'upload', 'settlement', 'success'] as Step[]).map((s, i) => {
               const stages = ['ingest_type', 'thrust', 'upload', 'settlement', 'success'];
-              // Map task_summary to the beginning if active
               const actualStep = step === 'task_summary' ? 'ingest_type' : (step === 'audit' ? 'upload' : step);
               const currentIndex = stages.indexOf(actualStep as any);
               return (
@@ -150,9 +156,6 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                       Broadcast real-time field data shards. Origin of high-frequency public proof.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 text-blue-400 font-black text-[9px] uppercase tracking-widest">
-                    Direct to Media Hub <ArrowRight size={12} />
-                  </div>
                 </button>
 
                 <button 
@@ -163,13 +166,10 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                     <Archive size={40} />
                   </div>
                   <div>
-                    <h5 className="text-xl font-black text-white uppercase italic">Stored Archive Ingest</h5>
+                    <h5 className="text-xl font-black text-white uppercase italic">Cloud Storage Ingest</h5>
                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 tracking-widest leading-relaxed">
-                      Upload existing multi-spectral shards from your local node storage.
+                      Anchor existing multi-spectral shards to the permanent storage bucket.
                     </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-emerald-400 font-black text-[9px] uppercase tracking-widest">
-                    Initialize Upload <ArrowRight size={12} />
                   </div>
                 </button>
               </div>
@@ -195,17 +195,6 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none">Target Task</p>
                        <h5 className="text-2xl font-black text-white uppercase italic">{taskToIngest.title}</h5>
                     </div>
-                    <span className="px-3 py-1 bg-indigo-600/20 text-indigo-400 text-[8px] font-black uppercase rounded border border-indigo-500/30 tracking-widest">{taskToIngest.priority}</span>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4 relative z-10 pt-4 border-t border-white/5">
-                    <div className="space-y-1">
-                       <p className="text-[9px] text-slate-700 font-black uppercase">Pillar Alignment</p>
-                       <p className="text-sm font-black text-indigo-400 uppercase tracking-widest">{taskToIngest.thrust}</p>
-                    </div>
-                    <div className="space-y-1 text-right">
-                       <p className="text-[9px] text-slate-700 font-black uppercase">Shard ID</p>
-                       <p className="text-sm font-mono text-slate-500">{taskToIngest.id}</p>
-                    </div>
                  </div>
               </div>
 
@@ -220,15 +209,6 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
 
           {step === 'thrust' && (
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
-              <div className="flex items-center gap-4 px-2">
-                <button onClick={() => setStep('ingest_type')} className="p-2 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all">
-                  <ChevronRight size={20} className="rotate-180" />
-                </button>
-                <div className="text-left space-y-1">
-                  <h4 className="text-2xl font-black text-white uppercase tracking-widest">Select Scientific Pillar</h4>
-                  <p className="text-slate-400 text-sm italic">Which thrust does this evidence secure?</p>
-                </div>
-              </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {[
                   { id: 'Societal', icon: Heart, col: 'text-rose-400' },
@@ -253,43 +233,14 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
 
           {step === 'upload' && (
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
-               <div className="text-center space-y-4">
-                 <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Data <span className="text-emerald-400">Sync</span></h4>
-                 <p className="text-slate-400 text-lg">Initialize multi-spectral evidence upload.</p>
-               </div>
-               
-               <div className="space-y-6">
-                 {!taskToIngest && (
-                    <div className="grid grid-cols-2 gap-4">
-                      {['Soil Scan', 'Drone Map', 'Carbon Audit', 'Genetic Shard'].map(type => (
-                        <button 
-                          key={type} 
-                          onClick={() => setEvidenceType(type)}
-                          className={`py-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${evidenceType === type ? 'bg-emerald-600 border-white text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
-                        >
-                          {type}
-                        </button>
-                      ))}
-                    </div>
-                 )}
-
-                 <div 
+               <div 
                   onClick={() => fileInputRef.current?.click()}
                   className="p-20 border-4 border-dashed border-white/5 rounded-[48px] bg-black/40 flex flex-col items-center justify-center text-center space-y-6 group hover:border-emerald-500/40 hover:bg-emerald-500/[0.02] transition-all cursor-pointer shadow-inner"
                  >
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,application/pdf" />
-                    <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                       <Cloud className="w-10 h-10 text-emerald-400" />
-                    </div>
+                    <Cloud className="w-12 h-12 text-emerald-400" />
                     <p className="text-xl font-black text-white uppercase tracking-tighter">Choose Shard File</p>
-                    <p className="text-slate-500 text-xs uppercase font-bold tracking-widest">Spectral Scan or Research Shard</p>
                  </div>
-               </div>
-
-               <div className="flex justify-between items-center px-4">
-                  <button onClick={() => setStep(taskToIngest ? 'task_summary' : 'thrust')} className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Change Ingest Anchor</button>
-                  <button onClick={() => setStep('ingest_type')} className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Change Ingest Method</button>
-               </div>
             </div>
           )}
 
@@ -302,40 +253,20 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                   <div className="absolute inset-0 border-t-8 border-emerald-500 rounded-full animate-spin"></div>
                </div>
                <div className="space-y-4">
-                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Scientific <span className="text-emerald-400">Audit</span></h3>
-                  <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Analyzing C(a) growth constants...</p>
-                  <p className="text-slate-600 text-[10px] font-mono uppercase tracking-widest">NODE_RESONANCE: 1.42x // PACKET_INTEGRITY: 100%</p>
+                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Registry <span className="text-emerald-400">Syncing</span></h3>
+                  <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Analyzing Shard Payload...</p>
                </div>
             </div>
           )}
 
           {step === 'settlement' && (
             <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1">
-               <div className="flex items-center gap-6 border-b border-white/5 pb-8">
-                  <div className="w-16 h-16 rounded-[28px] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-2xl shrink-0">
-                     <Bot className="w-10 h-10 text-indigo-400" />
-                  </div>
-                  <div>
-                     <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic">Oracle <span className="text-indigo-400">Briefing</span></h4>
-                     <p className="text-indigo-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-1">
-                        <ShieldCheck className="w-3 h-3" /> Integrity Verified
-                     </p>
-                  </div>
-               </div>
-
                <div className="flex-1 overflow-y-auto max-h-[300px] custom-scrollbar pr-4">
                   <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 prose prose-invert max-w-none shadow-inner border-l-4 border-l-indigo-500/50">
                      <p className="text-slate-300 text-lg leading-loose italic whitespace-pre-line">
                         {auditReport}
                      </p>
                   </div>
-               </div>
-
-               <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-3xl flex items-center gap-6">
-                  <MapPin className="w-8 h-8 text-blue-500 shrink-0" />
-                  <p className="text-[10px] text-blue-200/50 font-black uppercase leading-relaxed tracking-tight">
-                     PHYSICAL_AUDIT_PROTOCOL: Digital shards verified. Final settlement requires an on-site physical verification by the EnvirosAgro scientific team.
-                  </p>
                </div>
 
                <button 
@@ -357,26 +288,6 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                </div>
                <div className="space-y-4">
                   <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">Minting <span className="text-emerald-400">Success</span></h3>
-                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Evidence provisional. Status: Awaiting On-Site Verification.</p>
-               </div>
-               <div className="w-full glass-card p-12 rounded-[56px] border-white/5 bg-emerald-500/5 space-y-8 text-left relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.05]"><ClipboardCheck className="w-40 h-40 text-emerald-400" /></div>
-                  <div className="space-y-4 relative z-10">
-                     <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-500 font-black uppercase tracking-widest">Evidence Shard</span>
-                        <span className="text-emerald-400 font-mono font-black">0x{(Math.random()*1000).toFixed(0)}_PROV</span>
-                     </div>
-                     <div className="h-px w-full bg-white/10"></div>
-                     <div className="flex items-center gap-4">
-                        <div className="p-4 bg-blue-500/20 rounded-2xl border border-blue-500/20">
-                           <MapPin className="w-6 h-6 text-blue-400" />
-                        </div>
-                        <div>
-                           <p className="text-xs font-black text-white uppercase">Physical Audit Queued</p>
-                           <p className="text-[10px] text-slate-500 font-bold uppercase">Location Sync: {user.location}</p>
-                        </div>
-                     </div>
-                  </div>
                </div>
                <button onClick={reset} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
             </div>

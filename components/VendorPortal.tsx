@@ -56,7 +56,8 @@ import { User, Order, LogisticProvider, VendorProduct } from '../types';
 
 interface VendorPortalProps {
   user: User;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, status: Order['status'], meta?: any) => void;
   vendorProducts: VendorProduct[];
@@ -105,14 +106,15 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
     setShowRegisterModal(true);
   };
 
-  const handleAuthorizeSettlement = () => {
+  // Fix: handleAuthorizeSettlement made async and awaits onSpendEAC to resolve Promise<boolean>
+  const handleAuthorizeSettlement = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
       alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
     const fee = getSettlementFee();
-    if (onSpendEAC(fee, `SUPPLIER_REGISTRY_SETTLEMENT_${supplierType}`)) {
+    if (await onSpendEAC(fee, `SUPPLIER_REGISTRY_SETTLEMENT_${supplierType}`)) {
       setRegStep('audit_protocol');
     }
   };
@@ -504,7 +506,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                           <p className="text-emerald-500/60 font-mono text-[10px] tracking-widest uppercase mt-3">ORDER_ID: {selectedOrderForDispatch.id}</p>
                        </div>
                     </div>
-                    <button onClick={() => setSelectedOrderForDispatch(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X size={24} /></button>
+                    <button onClick={() => setSelectedOrderForDispatch(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all border border-white/5 shadow-xl"><X size={24} /></button>
                  </div>
 
                  <div className="space-y-8 flex-1">

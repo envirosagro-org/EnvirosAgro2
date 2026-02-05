@@ -21,7 +21,6 @@ import {
   SearchCode,
   Lock,
   Wind,
-  // Added missing RefreshCw icon
   RefreshCw
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -31,7 +30,7 @@ import { chatWithAgroExpert } from '../services/geminiService';
 interface CEAProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
 }
 
 const MOCK_RACK_DATA = [
@@ -43,7 +42,7 @@ const MOCK_RACK_DATA = [
 const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
   const [activeRack, setActiveRack] = useState(MOCK_RACK_DATA[0]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lightSpectrum, setLightSpectrum] = useState(70); // 0-100 UV/Blue/Red
+  const [lightSpectrum, setLightSpectrum] = useState(70); 
   const [humidity, setHumidity] = useState(65);
   const [oracleInsight, setOracleInsight] = useState<string | null>(null);
   const [isAskingOracle, setIsAskingOracle] = useState(false);
@@ -58,6 +57,9 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
   };
 
   const askCeaOracle = async () => {
+    const fee = 10;
+    if (!await onSpendEAC(fee, 'CEA_ORACLE_CONSULTATION')) return;
+
     setIsAskingOracle(true);
     try {
       const prompt = `Act as an EOS CEA Specialist. Analyze the current indoor status:
@@ -79,7 +81,6 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
-      {/* Header */}
       <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-10 group shadow-2xl">
         <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform">
            <BoxSelect className="w-80 h-80 text-white" />
@@ -97,7 +98,6 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Rack Selector & Core Stats */}
         <div className="lg:col-span-4 space-y-8">
            <div className="glass-card p-8 rounded-[48px] border-white/5 bg-black/40 space-y-6 shadow-xl">
               <h3 className="text-xl font-black text-white uppercase italic px-4 flex items-center gap-3">
@@ -134,11 +134,6 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
                    onChange={e => setLightSpectrum(Number(e.target.value))}
                    className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-indigo-500"
                  />
-                 <div className="flex justify-between text-[8px] font-black text-slate-700 uppercase px-2">
-                    <span>UV Shard</span>
-                    <span>Deep Blue</span>
-                    <span>Hyper Red</span>
-                 </div>
               </div>
               <button 
                 onClick={handleTuneSpectrum}
@@ -151,7 +146,6 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
            </div>
         </div>
 
-        {/* Live Monitoring Twin */}
         <div className="lg:col-span-8 space-y-8">
            <div className="glass-card p-12 rounded-[64px] border-white/5 bg-black/60 relative overflow-hidden flex flex-col min-h-[600px] shadow-3xl group">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none"></div>
@@ -163,11 +157,7 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
                     </div>
                     <div>
                        <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">{activeRack.name} <span className="text-emerald-400">Dossier</span></h3>
-                       <p className="text-emerald-400/60 text-[10px] font-black uppercase tracking-[0.5em] mt-2">Active_Cycle_Sync_#{(Math.random()*100).toFixed(0)}</p>
                     </div>
-                 </div>
-                 <div className="text-right">
-                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded border border-emerald-500/20">{activeRack.status}</span>
                  </div>
               </div>
 
@@ -192,7 +182,6 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform"><Bot size={300} className="text-indigo-400" /></div>
                  <div className="flex items-center gap-6 relative z-10 mb-8">
                     <div className="p-3 bg-indigo-500 rounded-2xl shadow-xl"><Bot className="w-8 h-8 text-white" /></div>
-                    {/* Fixed missing opening bracket for h4 tag which caused a JSX parsing error */}
                     <h4 className="text-xl font-black text-white uppercase tracking-widest italic m-0">CEA <span className="text-indigo-400">Oracle</span></h4>
                  </div>
                  {!oracleInsight ? (
@@ -218,26 +207,6 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
               </div>
            </div>
         </div>
-      </div>
-
-      {/* Footer Branding */}
-      <div className="p-16 glass-card rounded-[64px] border-emerald-500/20 bg-emerald-500/5 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-sm">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12">
-            <Cpu className="w-96 h-96 text-emerald-400" />
-         </div>
-         <div className="flex items-center gap-10 relative z-10 text-center md:text-left flex-col md:flex-row">
-            <div className="w-32 h-32 agro-gradient rounded-full flex items-center justify-center shadow-3xl animate-pulse ring-[20px] ring-white/5">
-               <Binary className="w-16 h-16 text-white" />
-            </div>
-            <div className="space-y-4">
-               <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Indoor Resilience</h4>
-               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-md:text-sm max-w-md">Controlled Environment Agriculture scales growth stability by decoupling biometrics from weather volatility.</p>
-            </div>
-         </div>
-         <div className="text-center md:text-right relative z-10 shrink-0">
-            <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em] px-2 border-b border-white/10 pb-4">CEA_NODES_SYNC</p>
-            <p className="text-7xl font-mono font-black text-white tracking-tighter">842</p>
-         </div>
       </div>
 
       <style>{`

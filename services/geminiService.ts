@@ -12,6 +12,19 @@ EnvirosAgro™ Sustainability Framework (EOS):
 - Quality Grade: A score derived from multi-thrust audits (Purity, Cleanliness, Feedback).
 `;
 
+const MINING_ORACLE_SYSTEM_INSTRUCTION = `
+You are the **EnvirosAgro Mining Oracle**. Your task is to analyze the relationship between "Social Reactions" (Vouches, Hearts, Zaps) and physical "Harvest Yield".
+You must determine if the community engagement is "Resonant" (aligned with sustainability) or "Dissonant" (SID-influenced).
+
+**Output Schema:**
+{
+  "resonance_index": number, // 0.0 to 2.0
+  "sentiment_shard": string, // Technical description
+  "extraction_efficiency": number, // Percentage
+  "remediation_advice": string
+}
+`;
+
 const VALUE_ENHANCEMENT_SYSTEM_INSTRUCTION = `
 You are the **EnvirosAgro Engine**, an expert agricultural engineer and sustainability economist. Your goal is to design a "Value Enhancement Process" for agricultural materials to mint value.
 
@@ -129,6 +142,23 @@ const requestWithRetry = async (fn: () => Promise<any>, retries = 3, initialDela
   }
 };
 
+export const analyzeMiningYield = async (vouchData: any): Promise<any> => {
+  try {
+    const response = await getAI().models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Analyze this mining session: ${JSON.stringify(vouchData)}. Context: ${FRAMEWORK_CONTEXT}`,
+      config: {
+        systemInstruction: MINING_ORACLE_SYSTEM_INSTRUCTION,
+        responseMimeType: "application/json"
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (err) {
+    console.error("Mining Oracle Failure:", err);
+    throw err;
+  }
+};
+
 export const generateAgroExam = async (topic: string): Promise<any[]> => {
   try {
     const response = await getAI().models.generateContent({
@@ -162,12 +192,12 @@ export const generateAgroExam = async (topic: string): Promise<any[]> => {
 
 export const getGroundedAgroResources = async (query: string, lat?: number, lng?: number): Promise<AIResponse> => {
   try {
-    // Requirements specified gemini-2.5-flash for Maps Grounding tasks
+    // Fix: Updated tools and toolConfig to correctly use googleMaps grounding when lat/lng is available
     const response = await getAI().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: `Provide current information about ${query}. If location is relevant, find resources near ${lat}, ${lng}.`,
       config: {
-        tools: [{ googleSearch: {} }],
+        tools: lat && lng ? [{ googleMaps: {} }, { googleSearch: {} }] : [{ googleSearch: {} }],
         toolConfig: { retrievalConfig: { latLng: lat && lng ? { latitude: lat, longitude: lng } : undefined } }
       }
     });
@@ -456,11 +486,15 @@ export const predictMarketTrends = async (cropType: string): Promise<AIResponse>
 
 export const findAgroResources = async (query: string, lat?: number, lng?: number): Promise<AIResponse> => {
   try {
+    // Fix: Updated tools and toolConfig to correctly use googleMaps grounding when lat/lng is available
     return await requestWithRetry(async () => {
       const response = await getAI().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: query,
-        config: { tools: [{ googleSearch: {} }], toolConfig: { retrievalConfig: { latLng: lat && lng ? { latitude: lat, longitude: lng } : undefined } } }
+        config: { 
+          tools: lat && lng ? [{ googleMaps: {} }, { googleSearch: {} }] : [{ googleSearch: {} }], 
+          toolConfig: { retrievalConfig: { latLng: lat && lng ? { latitude: lat, longitude: lng } : undefined } } 
+        }
       }) as GenerateContentResponse;
       return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
     });

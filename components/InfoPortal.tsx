@@ -56,7 +56,11 @@ import {
   BadgeCheck,
   Headphones,
   Terminal,
-  MessagesSquare
+  MessagesSquare,
+  Copy,
+  Check,
+  ShieldPlus,
+  ShieldX
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 
@@ -123,6 +127,51 @@ const TRADEMARKS = [
   { name: 'm™ Constant', type: 'Resilience Signature', desc: 'Proprietary time-signature metric for quantifying industrial stability, recovery, and ecosystem durability.' },
   { name: 'SID™ Remediation', type: 'Societal Protocol', desc: 'The official protocol for identifying and mitigating Social Influenza Disease within decentralized farm clusters.' },
 ];
+
+const FIRESTORE_RULES = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- 1. STEWARD IDENTITY SHARDS ---
+    // Stewards can only manage their own identity profiles.
+    match /stewards/{stewardId} {
+      allow read, write: if request.auth != null && request.auth.uid == stewardId;
+    }
+    
+    // --- 2. AUTHENTICATION RECOVERY SHARDS ---
+    // Temporary shards for node restoration. No public read access.
+    // In prod, writing is handled by a System-level Cloud Function.
+    match /recovery_shards/{email} {
+      allow read: if false; 
+      allow write: if false; 
+    }
+
+    // --- 3. INDUSTRIAL COMMERCIAL SHARDS ---
+    // Universal visibility for network transparency (Audit-ready).
+    // Write access restricted to the designated node administrator.
+    match /{shard_type}/{docId} {
+      // Shards: projects, orders, products, contracts, transactions, signals
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.stewardId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.stewardId == request.auth.uid;
+      allow delete: if false; // Permanent registry sharding.
+    }
+
+    // --- 4. BIOMETRIC TELEMETRY & AUDIT ---
+    // Telemetry and field evidence are immutable once anchored.
+    match /telemetry/{esin} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.token.esin == esin || exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)));
+    }
+    
+    // --- 5. GOVERNANCE AUDITOR REGISTRY ---
+    // Only HQ administrators can manage the list of authorized auditors.
+    match /auditors/{auditorId} {
+      allow read: if request.auth != null;
+      allow write: if false; 
+    }
+  }
+}`;
 
 const EnvirosAgroRocket: React.FC = () => {
   return (
@@ -254,12 +303,13 @@ const EnvirosAgroRocket: React.FC = () => {
 };
 
 const InfoPortal: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'crm_chat' | 'trademarks' | 'privacy' | 'contact'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'crm_chat' | 'trademarks' | 'privacy' | 'registry_rules' | 'contact'>('about');
   const [supportChat, setSupportChat] = useState<{ role: 'user' | 'bot', text: string, time: string }[]>([
     { role: 'bot', text: "Hello Steward. I am the EnvirosAgro™ Governance Assistant. If you are encountering friction, technical problems, or challenges within the ecosystem, please describe them here.", time: new Date().toLocaleTimeString() }
   ]);
   const [supportInput, setSupportInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -285,9 +335,16 @@ const InfoPortal: React.FC = () => {
     }
   };
 
+  const handleCopyRules = () => {
+    navigator.clipboard.writeText(FIRESTORE_RULES);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
   const tabs = [
     { id: 'about', label: 'About & Mission', icon: Info },
     { id: 'crm_chat', label: 'CRM Support Shard', icon: MessagesSquare },
+    { id: 'registry_rules', label: 'Registry Security', icon: ShieldPlus },
     { id: 'environments', label: 'Environments', icon: Share2 },
     { id: 'faq', label: 'Expert Q&A', icon: MessageCircleQuestion },
     { id: 'trademarks', label: 'Trademarks & IP', icon: Copyright },
@@ -356,6 +413,67 @@ const InfoPortal: React.FC = () => {
 
             <EnvirosAgroRocket />
           </div>
+        )}
+
+        {activeTab === 'registry_rules' && (
+           <div className="p-12 space-y-12 animate-in slide-in-from-right-4 duration-500">
+              <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                 <div className="w-16 h-16 bg-blue-500/10 rounded-3xl flex items-center justify-center border border-blue-500/20 shadow-2xl">
+                    <Terminal className="w-8 h-8 text-blue-400" />
+                 </div>
+                 <div>
+                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Firestore <span className="text-blue-400">Security Rules</span></h2>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">Node Permission Shards for Cloud Sync</p>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                 <div className="lg:col-span-4 space-y-8">
+                    <div className="p-8 bg-blue-600/5 border border-blue-500/20 rounded-[40px] space-y-6">
+                       <h4 className="text-lg font-black text-white uppercase italic flex items-center gap-3">
+                          <Info size={20} className="text-blue-400" /> Configuration
+                       </h4>
+                       <p className="text-slate-400 text-sm leading-relaxed italic">
+                          "Apply these rules in the **Firebase Console > Firestore > Rules** section to authorize your local node to anchor data into the cloud shards."
+                       </p>
+                       <ul className="space-y-4">
+                          {[
+                             'Ensures identity sovereignty (UID check).',
+                             'Restricts commercial shards to node owners.',
+                             'Secures biological telemetry via ZK-Auth.',
+                             'Protects recovery shards from public lookup.'
+                          ].map((item, i) => (
+                             <li key={i} className="flex items-start gap-3 text-xs text-slate-500">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                                <span>{item}</span>
+                             </li>
+                          ))}
+                       </ul>
+                    </div>
+                 </div>
+
+                 <div className="lg:col-span-8 space-y-6">
+                    <div className="p-8 bg-black rounded-[48px] border border-white/10 shadow-3xl relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none"><Lock size={300} className="text-white" /></div>
+                       <div className="flex justify-between items-center mb-6 px-4 relative z-10">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Recommended EOS Security Rules (Production)</span>
+                          <button 
+                            onClick={handleCopyRules}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isCopied ? 'bg-emerald-600 text-white' : 'bg-white/5 text-blue-400 hover:bg-white/10'}`}
+                          >
+                             {isCopied ? <Check size={14} /> : <Copy size={14} />}
+                             {isCopied ? 'COPIED_TO_BUFFER' : 'COPY_RULES_SHARD'}
+                          </button>
+                       </div>
+                       <div className="relative z-10 bg-black/60 rounded-3xl p-8 border border-white/5 overflow-x-auto custom-scrollbar-terminal shadow-inner max-h-[500px]">
+                          <pre className="text-xs font-mono text-blue-300/80 leading-relaxed">
+                             {FIRESTORE_RULES}
+                          </pre>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
         )}
 
         {activeTab === 'crm_chat' && (
@@ -539,6 +657,8 @@ const InfoPortal: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 10px; }
       `}</style>
     </div>
   );

@@ -15,7 +15,8 @@ import { chatWithAgroExpert } from '../services/geminiService';
 interface ChannellingProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
 }
 
 type ContentType = 'YouTube' | 'TikTok' | 'Vimeo' | 'X' | 'Facebook' | 'Instagram' | 'Snapchat' | 'Blog' | 'Research Paper' | 'Podcast' | 'Book' | 'Documentary' | 'Technical Topic';
@@ -95,13 +96,14 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC, onSpendEAC }
     setIsSubmitModalOpen(true);
   };
 
-  const handleAuthorizeSettlement = () => {
+  // Fix: handleAuthorizeSettlement made async and awaits onSpendEAC to resolve Promise<boolean>
+  const handleAuthorizeSettlement = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
       alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     const currentFee = CONTENT_FEES[subType] || 50;
-    if (onSpendEAC(currentFee, `CONTENT_INGEST_${subType}`)) {
+    if (await onSpendEAC(currentFee, `CONTENT_INGEST_${subType}`)) {
       setIngestStep('audit');
       runAudit();
     }
@@ -310,7 +312,7 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC, onSpendEAC }
                           </div>
                           <div className="space-y-4 pt-6 border-t border-white/5">
                              <p className="text-[10px] text-slate-600 font-black uppercase text-center tracking-[0.4em]">Node Signature (ESIN)</p>
-                             <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-transparent border-none text-center text-4xl font-mono text-white outline-none uppercase placeholder:text-slate-900 tracking-widest shadow-inner" />
+                             <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-transparent border-none text-center text-4xl font-mono text-white outline-none uppercase placeholder:text-slate-900 shadow-inner" />
                           </div>
                        </div>
                        <button onClick={handleAuthorizeSettlement} disabled={!esinSign} className="w-full py-10 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-6">AUTHORIZE SHARD MINT</button>

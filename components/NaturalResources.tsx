@@ -7,14 +7,12 @@ import {
   Layers, Lock, Database, Thermometer, Compass,
   CheckCircle2, AlertCircle, Info, ChevronRight, Fingerprint,
   Sprout, Waves, Cpu, Landmark, ShieldAlert, Dna, 
-  // Fix: Aliased History to HistoryIcon to resolve 'Cannot find name' errors on lines 444 and 448
   Workflow, Factory, Network, History as HistoryIcon, FileSearch, 
   BookOpen, Leaf, X, FileText, SearchCode, Download, 
   Terminal, ArrowRight, Link2, Circle, Bird, Flame, 
   ArrowUpRight, HeartPulse, Radar, Bone, Eye, Settings, 
-  LabIcon, Binoculars, MapPin, User as UserIcon, Wheat, 
+  Binoculars, MapPin, User as UserIcon, Wheat, 
   ThermometerSun, Timer, TrendingUp, Scan, ClipboardCheck, 
-  // Fix: Added PlusCircle to fix 'Cannot find name' error on line 232
   Stamp, Radio, Signal, Wifi, Satellite, Ship, Fish, 
   CloudRain, Fan, Shield, PlusCircle
 } from 'lucide-react';
@@ -230,7 +228,7 @@ const NaturalResources: React.FC<NaturalResourcesProps> = ({ user, type, onEarnE
                 onClick={() => setActiveInternalTab('forge')}
                 className="px-10 py-5 bg-indigo-600 hover:bg-indigo-500 rounded-3xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center gap-4 transition-all active:scale-95"
                >
-                  <PlusCircle className="w-5 h-5" /> Initialize {meta.title} Shard
+                  <PlusCircle size={20} /> Initialize {meta.title} Shard
                </button>
                <div className="px-8 py-5 bg-white/5 border border-white/10 rounded-3xl text-slate-500 font-mono text-xl flex items-center gap-4 group cursor-help shadow-inner">
                   <Binary size={20} className={`${meta.color} group-hover:scale-110 transition-transform`} />
@@ -308,7 +306,7 @@ const NaturalResources: React.FC<NaturalResourcesProps> = ({ user, type, onEarnE
               </div>
 
               <div className="lg:col-span-4 space-y-8">
-                 <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-xl relative overflow-hidden group">
+                 <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Bot size={300} className="text-indigo-400" /></div>
                     <div className="flex items-center gap-4 relative z-10">
                        <div className="p-4 bg-indigo-500 rounded-2xl shadow-xl"><Bot size={32} className="text-white" /></div>
@@ -434,105 +432,121 @@ const NaturalResources: React.FC<NaturalResourcesProps> = ({ user, type, onEarnE
               <div className="flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-12 gap-8 px-4">
                 <div className="space-y-2">
                    <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic leading-none">Resource <span className="text-indigo-400">Ledger</span></h3>
-                   <p className="text-slate-500 text-xl font-medium italic">"Immutable record of every physical action committed to the {type.replace('_', ' ')} shard."</p>
+                   <p className="text-slate-500 text-xl font-medium italic">"Immutable record of physical resource sharding events."</p>
                 </div>
-                <button className="px-10 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:bg-white/10 transition-all active:scale-95">Export Ledger Shard</button>
-              </div>
+                <div className="flex gap-4">
+                  <button className="px-10 py-5 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:bg-white/10 transition-all active:scale-95 flex items-center gap-3">
+                    <Download size={18} /> Export Shard CSV
+                  </button>
+                </div>
+             </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                 {[1, 2, 3].map(i => (
-                    <div key={i} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between h-[450px] relative overflow-hidden shadow-xl">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[8s]"><HistoryIcon size={200} className="text-white" /></div>
-                       <div className="space-y-8 relative z-10">
-                          <div className="flex justify-between items-start">
-                             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:bg-indigo-600/10 transition-colors shadow-inner group-hover:rotate-6">
-                                <HistoryIcon size={32} className="text-indigo-400" />
-                             </div>
-                             <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 shadow-lg backdrop-blur-md">VERIFIED</span>
-                          </div>
-                          <div>
-                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-indigo-400 transition-colors">Action Shard #{(Math.random()*1000).toFixed(0)}</h4>
-                             <p className="text-[10px] text-slate-700 font-mono mt-4 uppercase font-black tracking-[0.3em]">COMMIT_HASH: 0x882{(Math.random()*100).toFixed(0)}_OK</p>
-                          </div>
-                          <p className="text-sm text-slate-400 italic leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">"Successful integration of regional m-constant stability factor into the local {type.replace('_', ' ')} registry node."</p>
-                       </div>
-                       <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                          <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest italic">Node Sync: 100%</p>
-                          <button className="text-[10px] font-black text-indigo-400 hover:text-white uppercase tracking-widest transition-colors">View Deep Shard</button>
-                       </div>
+             <div className="glass-card rounded-[48px] overflow-hidden border border-white/5 bg-black/40 shadow-3xl">
+                <div className="grid grid-cols-5 p-10 border-b border-white/10 bg-white/[0.02] text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
+                   <span className="col-span-2">Registry Action Shard</span>
+                   <span>Pillar Anchor</span>
+                   <span>Consensus Node</span>
+                   <span className="text-right">Ledger finality</span>
+                </div>
+                <div className="divide-y divide-white/5 h-[500px] overflow-y-auto custom-scrollbar">
+                   {[1,2,3,4,5,6].map(i => (
+                     <div key={i} className="grid grid-cols-5 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer">
+                        <div className="col-span-2 flex items-center gap-8">
+                           <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:rotate-12 transition-transform shadow-inner">
+                              <Database size={24} className="text-slate-600 group-hover:text-indigo-400" />
+                           </div>
+                           <div>
+                              <p className="text-xl font-black text-white uppercase italic tracking-tight m-0 leading-none">Resource Shard #{(882 + i * 4).toString()}</p>
+                              <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase font-black tracking-widest italic">COMMIT_HASH: 0x882{(Math.random()*100).toFixed(0)}_FINAL</p>
+                           </div>
+                        </div>
+                        <div>
+                           <span className={`px-3 py-1 rounded border text-[8px] font-black uppercase ${meta.color} ${meta.border}`}>{meta.title.split(' ')[0]}</span>
+                        </div>
+                        <div className="text-xs text-slate-500 font-mono italic">
+                           Node_Regional_{i}_P4
+                        </div>
+                        <div className="flex justify-end pr-4">
+                           <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 shadow-xl group-hover:shadow-emerald-500/40 transition-all scale-90 group-hover:scale-100">
+                              <ShieldCheck size={20} />
+                           </div>
+                        </div>
+                     </div>
+                   ))}
+                </div>
+                <div className="p-10 border-t border-white/10 bg-black/80 flex justify-between items-center text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                   <span>Permanent record. No deletion shards permitted for physical biometrics.</span>
+                   <button className="text-indigo-400 hover:text-white transition-colors">Audit Node Integrity</button>
+                </div>
+             </div>
+
+             <div className="p-16 glass-card rounded-[64px] border border-white/5 bg-black/40 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none"><Stamp size={400} /></div>
+                <div className="flex items-center gap-10 relative z-10 text-center md:text-left flex-col md:flex-row">
+                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl animate-pulse border-2 border-white/10 shrink-0">
+                       <CheckCircle2 size={40} className="text-white" />
                     </div>
-                 ))}
+                    <div className="space-y-4">
+                       <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Biometric Finality</h4>
+                       <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-lg:text-sm max-w-lg mx-auto md:mx-0">All {meta.title} resources are immutably sharded. This ensures 100% traceability for all value-added products derived from these biological base layers.</p>
+                    </div>
+                 </div>
+                 <div className="text-center md:text-right relative z-10 shrink-0">
+                    <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em] px-4 border-b border-white/10 pb-4">TOTAL_RESOURCE_SYNC</p>
+                    <p className="text-7xl font-mono font-black text-white tracking-tighter">100%</p>
+                 </div>
               </div>
            </div>
         )}
 
-        {/* TAB 4: ORACLE */}
         {activeInternalTab === 'oracle' && (
-           <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-6 duration-700 text-center">
-              <div className="p-20 glass-card rounded-[80px] border border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden flex flex-col items-center gap-12 shadow-3xl group">
-                 <div className="absolute inset-0 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity"><Bot size={800} className="text-indigo-400" /></div>
+           <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-bottom-10 duration-700 text-center">
+              <div className="p-10 md:p-20 glass-card rounded-[80px] border border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden flex flex-col items-center gap-12 shadow-3xl group">
+                 <div className="absolute inset-0 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-[10s]"><Bot size={800} className="text-indigo-400" /></div>
                  
-                 <div className="relative z-10 space-y-8">
+                 <div className="relative z-10 space-y-8 w-full">
                     <div className="w-32 h-32 bg-indigo-600 rounded-[48px] flex items-center justify-center shadow-[0_0_100px_rgba(79,70,229,0.3)] border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
                        <Bot size={64} className="text-white animate-pulse" />
                     </div>
                     <div>
-                       <h3 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Consulting <span className="text-indigo-400">Oracle</span></h3>
-                       <p className="text-slate-500 text-2xl font-medium mt-6 italic">Inquire with the EnvirosAgro Resource Oracle for high-fidelity technical advice.</p>
+                       <h3 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Resource <span className="text-indigo-400">Oracle</span></h3>
+                       <p className="text-slate-500 text-2xl font-medium mt-6 italic max-w-2xl mx-auto leading-relaxed">AI-powered scientific analysis and predictive sharding for {meta.title} biometrics.</p>
                     </div>
                  </div>
 
-                 <div className="w-full max-w-2xl relative z-10 space-y-8">
-                    <div className="p-8 bg-black/60 rounded-[48px] border border-white/5 shadow-inner">
-                       <p className="text-slate-400 italic text-xl leading-relaxed">
-                          "Currently monitoring Cycle 12 stability shards. Node {user.esin} is aligned with regional C(a) constant targets."
-                       </p>
+                 <div className="w-full max-w-3xl relative z-10 space-y-10">
+                    <div className="py-20 flex flex-col items-center gap-8 opacity-40">
+                       <SearchCode size={120} className="text-slate-600" />
+                       <p className="text-xl font-black uppercase tracking-[0.4em]">Oracle Standby</p>
+                       <p className="text-sm italic">Initialize a resource audit to identify pathobiological friction in your local node.</p>
+                       <button className="px-16 py-8 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all">INITIALIZE ORACLE SWEEP</button>
                     </div>
-                    <button className="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all">
-                       OPEN ENCRYPTED SIGNAL BRIDGE
-                    </button>
-                    <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.6em]">Powered by EOS_CLUSTER_AI_v5.2</p>
                  </div>
               </div>
            </div>
         )}
-      </div>
-
-      {/* 4. Global Sovereignty Shard Footer */}
-      <div className="p-16 glass-card rounded-[80px] border-emerald-500/10 bg-emerald-500/[0.02] flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-3xl mt-20 z-10 backdrop-blur-3xl mx-4">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12 transition-transform duration-[15s] group-hover:rotate-45">
-            <Shield className="w-[1000px] h-[1000px] text-emerald-400" />
-         </div>
-         <div className="flex items-center gap-16 relative z-10 text-center md:text-left flex-col md:flex-row">
-            <div className="w-40 h-40 bg-emerald-600 rounded-[56px] flex items-center justify-center shadow-3xl animate-pulse ring-[24px] ring-white/5 shrink-0">
-               <Fingerprint className="w-20 h-20 text-white" />
-            </div>
-            <div className="space-y-6">
-               <h4 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">REGISTRY <span className="text-emerald-400">INTEGRITY</span></h4>
-               <p className="text-slate-400 text-2xl md:text-3xl font-medium italic leading-relaxed max-w-2xl">
-                 Agriculture is an application of art or science from nature by human beings towards natural resources for sustainability.
-               </p>
-            </div>
-         </div>
-         <div className="text-center md:text-right relative z-10 shrink-0 border-l border-white/10 pl-20 hidden lg:block">
-            <p className="text-[14px] text-slate-600 font-black uppercase mb-6 tracking-[0.8em]">NODE_SYNC_VELOCITY</p>
-            <p className="text-9xl font-mono font-black text-white tracking-tighter leading-none">100<span className="text-6xl text-emerald-400 ml-2">%</span></p>
-         </div>
       </div>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
+        @keyframes scan {
+          0% { top: -100%; }
+          100% { top: 100%; }
+        }
+        .animate-scan {
+          animation: scan 2.5s linear infinite;
+        }
       `}</style>
     </div>
   );
 };
 
+// Added missing default export to resolve import error in App.tsx
 export default NaturalResources;

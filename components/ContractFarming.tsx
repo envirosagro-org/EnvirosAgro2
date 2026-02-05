@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Landmark, 
@@ -54,7 +55,8 @@ import { runSpecialistDiagnostic } from '../services/geminiService';
 
 interface ContractFarmingProps {
   user: User;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onNavigate: (view: ViewState, action?: string | null) => void;
   contracts: FarmingContract[];
   setContracts: React.Dispatch<React.SetStateAction<FarmingContract[]>>;
@@ -175,14 +177,16 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
     setApplyStep('success');
   };
 
-  const handleDeployMission = () => {
+  // Fix: handleDeployMission made async to await onSpendEAC
+  const handleDeployMission = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
       alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
     const totalCost = Number(deployBudget) + CONTRACT_INDEXING_FEE;
-    if (!onSpendEAC(totalCost, `MISSION_CAPITAL_DEPLOYMENT_${deployProduct}`)) {
+    // Fix: await onSpendEAC to resolve Promise<boolean>
+    if (!await onSpendEAC(totalCost, `MISSION_CAPITAL_DEPLOYMENT_${deployProduct}`)) {
       alert("LIQUIDITY ERROR: Insufficient EAC for mission deployment.");
       return;
     }
@@ -336,7 +340,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     placeholder="Search mission shards..." 
-                    className="w-full bg-black/60 border border-white/10 rounded-2xl py-6 px-10 text-sm text-white focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-800 italic" 
+                    className="w-full bg-black/60 border border-white/10 rounded-2xl py-6 px-10 text-sm text-white focus:outline-none focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-800 italic" 
                    />
                 </div>
              </div>
@@ -565,7 +569,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                                   <p className="text-xs text-slate-400 italic leading-relaxed">This mission requires a verified land mass registry anchor to initialize the bidding protocol.</p>
                                </div>
                                <button 
-                                  onClick={() => onNavigate('registry_handshake')}
+                                  onClick={() => onNavigate?.('registry_handshake')}
                                   className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-2"
                                >
                                   <Landmark size={16} /> Registry Handshake
@@ -691,14 +695,63 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
            </div>
         </div>
       )}
-      {/* (Deploy Modal and Review Modal maintained below) */}
+
+      {/* 2. DEPLOY MODAL (Investor View) */}
+      {showDeployModal && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowDeployModal(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-blue-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+              <div className="p-10 md:p-14 border-b border-white/5 bg-blue-500/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-8">
+                    <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-2xl animate-float">
+                       <PlusCircle size={32} />
+                    </div>
+                    <div>
+                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Deploy <span className="text-blue-400">Capital</span></h3>
+                       <p className="text-blue-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">MISSION_MINTING_PROTOCOL</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowDeployModal(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X size={24} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-8">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Mission Product (Objective)</label>
+                    <input type="text" value={deployProduct} onChange={e => setDeployProduct(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold" />
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Registry Budget (EAC)</label>
+                    <input type="number" value={deployBudget} onChange={e => setDeployBudget(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-mono text-2xl font-black text-blue-400" />
+                 </div>
+                 <div className="space-y-4">
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] text-center block">Investor Signature (ESIN)</label>
+                    <input 
+                      type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} 
+                      placeholder="EA-XXXX-XXXX" 
+                      className="w-full bg-black border border-white/10 rounded-[32px] py-8 text-center text-3xl font-mono text-white tracking-[0.2em] outline-none focus:ring-4 focus:ring-blue-500/20 transition-all uppercase shadow-inner" 
+                    />
+                 </div>
+                 <button 
+                  onClick={handleDeployMission}
+                  disabled={isDeploying || !esinSign}
+                  className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4"
+                 >
+                    {isDeploying ? <Loader2 className="animate-spin" /> : <Stamp size={20} />}
+                    AUTHORIZE DEPLOYMENT
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* 3. REVIEW MODAL maintained below... */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
+        .animate-spin-slow { animation: spin 12s linear infinite; }
       `}</style>
     </div>
   );

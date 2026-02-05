@@ -1,8 +1,13 @@
-
 import React, { useState, useRef } from 'react';
 import { Mic, MicOff, Bot, X, Loader2, ShieldCheck, Activity } from 'lucide-react';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob } from '@google/genai';
+import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
 import { encode, decode } from '../services/geminiService';
+
+interface LiveVoiceBridgeProps {
+  isOpen: boolean;
+  isGuest: boolean;
+  onClose: () => void;
+}
 
 async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: number, numChannels: number): Promise<AudioBuffer> {
   const dataInt16 = new Int16Array(data.buffer);
@@ -18,7 +23,7 @@ async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: 
   return buffer;
 }
 
-function createAudioBlob(data: Float32Array): Blob {
+function createAudioBlob(data: Float32Array): GenAIBlob {
   const l = data.length;
   const int16 = new Int16Array(l);
   for (let i = 0; i < l; i++) {
@@ -30,7 +35,7 @@ function createAudioBlob(data: Float32Array): Blob {
   };
 }
 
-const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onClose }) => {
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const sessionRef = useRef<any>(null);
@@ -46,21 +51,40 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
     nextStartTimeRef.current = 0;
   };
 
+  const createSafeAudioContext = (rate: number): AudioContext => {
+    // Accessing constructors directly via window to prevent "Illegal constructor" errors
+    // common in Safari/WebKit when constructors are extracted to variables.
+    try {
+      if ((window as any).AudioContext) {
+        return new ((window as any).AudioContext)({ sampleRate: rate });
+      }
+    } catch (e) {
+      console.warn("Standard AudioContext with sampleRate failed, trying webkit fallback.");
+    }
+
+    try {
+      if ((window as any).webkitAudioContext) {
+        return new ((window as any).webkitAudioContext)({ sampleRate: rate });
+      }
+    } catch (e) {
+      console.warn("webkitAudioContext with sampleRate failed.");
+    }
+    
+    // Final fallback to constructors without options object
+    const Ctor = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctor) {
+      throw new Error("AudioContext not supported in this browser.");
+    }
+    return new Ctor();
+  };
+
   const startSession = async () => {
     setIsConnecting(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // Use the global constructors explicitly from window to avoid "Illegal constructor" errors
-      // which can occur when constructor names are shadowed or referenced incorrectly in some environments.
-      const AudioContextCtor = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextCtor) {
-        throw new Error("AudioContext not supported in this browser environment.");
-      }
-
-      // Safe instantiation with specific sample rates for input/output as required by the Live API
-      outputAudioContextRef.current = new AudioContextCtor({ sampleRate: 24000 });
-      inputAudioContextRef.current = new AudioContextCtor({ sampleRate: 16000 });
+      outputAudioContextRef.current = createSafeAudioContext(24000);
+      inputAudioContextRef.current = createSafeAudioContext(16000);
       
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -76,7 +100,7 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
               const inputData = e.inputBuffer.getChannelData(0);
               const pcmBlob = createAudioBlob(inputData);
               sessionPromise.then((session) => { 
-                if (session) session.sendRealtimeInput({ media: pcmBlob }); 
+                session.sendRealtimeInput({ media: pcmBlob }); 
               });
             };
             source.connect(scriptProcessor);
@@ -95,7 +119,6 @@ const LiveVoiceBridge: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ i
               source.addEventListener('ended', () => { sourcesRef.current.delete(source); });
               source.start(nextStartTimeRef.current);
               nextStartTimeRef.current += audioBuffer.duration;
-              // Added .current to sourcesRef to fix property access error
               sourcesRef.current.add(source);
             }
             if (message.serverContent?.interrupted) stopAllAudio();

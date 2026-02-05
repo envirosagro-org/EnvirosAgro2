@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   ClipboardCheck, 
@@ -65,7 +66,8 @@ import { auditProductQuality } from '../services/geminiService';
 
 interface TQMGridProps {
   user: User;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, status: Order['status'], meta?: any) => void;
   liveProducts?: LiveAgroProduct[];
@@ -93,8 +95,9 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
     [myOrders, searchTerm]
   );
 
-  const handleEscrowPayment = (order: Order) => {
-    if (onSpendEAC(order.cost, `PROCUREMENT_ESCROW_COMMITMENT_${order.id}`)) {
+  // Fix: handleEscrowPayment made async and awaits onSpendEAC to resolve Promise<boolean>
+  const handleEscrowPayment = async (order: Order) => {
+    if (await onSpendEAC(order.cost, `PROCUREMENT_ESCROW_COMMITMENT_${order.id}`)) {
        onUpdateOrderStatus(order.id, 'PAYMENT_HELD');
     }
   };
@@ -187,7 +190,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
               <h4 className="text-[100px] font-mono font-black text-white tracking-tighter leading-none drop-shadow-2xl">99<span className="text-3xl text-emerald-500 font-sans italic">.9%</span></h4>
            </div>
            <div className="flex items-center gap-3 px-6 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full relative z-10 shadow-inner">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
               <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Global Consensus Sync</span>
            </div>
         </div>
@@ -260,6 +263,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                                <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-lg ${
                                  order.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                  order.status === 'PAYMENT_HELD' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' :
+                                 order.status === 'AVAILABILITY_VERIFIED' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
                                  order.status === 'DISPATCHED' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20' :
                                  'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                }`}>{order.status.replace(/_/g, ' ')}</span>
@@ -408,7 +412,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-12 border-t border-white/5">
                    <div className="glass-card p-12 rounded-[56px] border border-indigo-500/20 bg-black/60 shadow-3xl space-y-10 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Wrench size={300} /></div>
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[10s]"><Wrench size={300} /></div>
                       <div className="flex items-center gap-6 relative z-10 border-b border-white/5 pb-8">
                          <div className="p-4 bg-indigo-600 rounded-[28px] shadow-3xl border border-white/10 group-hover:rotate-12 transition-transform">
                             <Activity size={32} className="text-white" />
@@ -442,7 +446,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                                 className="p-3 bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all"
                                >
                                   <ArrowRight size={16} />
-                               </button>
+                                </button>
                             </div>
                          ))}
                       </div>
@@ -523,7 +527,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                        <Database size={32} />
                     </div>
                     <div>
-                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Shard <span className="text-indigo-400">Inspector</span></h3>
+                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Shard <span className="text-indigo-400">Inspector</span></h3>
                        <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-2">RAW_BLOCKCHAIN_DATA // {showShardInspector.id}</p>
                     </div>
                  </div>
@@ -656,7 +660,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
 
-        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
+        .shadow-3xl { box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.7); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>

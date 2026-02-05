@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   History, 
@@ -29,13 +28,14 @@ import {
   FileCheck,
   Binoculars,
   History as TimeIcon,
-  // Added missing icons to resolve "Cannot find name" errors
   Info,
   ShieldAlert,
   Coins,
   Terminal,
   SearchCode,
-  Download
+  Download,
+  ChevronRight,
+  Stamp
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { User } from '../types';
@@ -44,7 +44,7 @@ import { chatWithAgroExpert } from '../services/geminiService';
 interface AgroRegencyProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
 }
 
 const HISTORICAL_SHARDS = [
@@ -58,12 +58,10 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [queryId, setQueryId] = useState('');
   const [restoredShard, setRestoredShard] = useState<any | null>(null);
-  
-  // AI States
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [oracleReport, setOracleReport] = useState<string | null>(null);
+  const [esinSign, setEsinSign] = useState('');
 
-  // Calculus Simulation Data
   const derivativeData = useMemo(() => {
     return [
       { t: 'T1', velocity: 2.1, accel: 0.4 },
@@ -87,6 +85,9 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
   };
 
   const handleOracleCalc = async () => {
+    const fee = 15;
+    if (!await onSpendEAC(fee, 'REGENCY_ORACLE_DERIVATIVE_AUDIT')) return;
+
     setIsAnalyzing(true);
     setOracleReport(null);
     try {
@@ -108,8 +109,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
-      {/* Header */}
-      <div className="glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
+      <div className="glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl text-white">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform pointer-events-none">
             <Infinity className="w-96 h-96 text-white" />
          </div>
@@ -119,7 +119,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
          <div className="space-y-6 relative z-10 text-center md:text-left">
             <div className="space-y-2">
                <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20 shadow-inner">REGISTRY_REGENCY_v5.0</span>
-               <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 m-0 leading-none">Agro <span className="text-indigo-400">Regency</span></h2>
+               <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Agro <span className="text-indigo-400">Regency</span></h2>
             </div>
             <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl italic leading-relaxed">
                "Retrieving the past to calculate the derivative of the future. Executing dy/dx sustainability framework shards for absolute node calibration."
@@ -127,7 +127,6 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
          </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4">
         {[
           { id: 'calculus', label: 'dy/dx Calculus', icon: Infinity },
@@ -137,7 +136,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
           </button>
@@ -145,10 +144,9 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
       </div>
 
       <div className="min-h-[700px]">
-        {/* TAB: CALCULUS FORGE */}
         {activeTab === 'calculus' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-500">
-             <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden flex flex-col shadow-3xl group">
+             <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden flex flex-col shadow-3xl group text-white">
                 <div className="flex justify-between items-center mb-12 relative z-10 px-4">
                    <div className="flex items-center gap-6">
                       <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 shadow-xl group-hover:scale-110 transition-transform">
@@ -164,7 +162,6 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                       <p className="text-4xl font-mono font-black text-white">+1.84<span className="text-sm ml-1 text-emerald-400">Δ</span></p>
                    </div>
                 </div>
-
                 <div className="flex-1 h-[400px] w-full min-h-0 relative z-10">
                    <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={derivativeData}>
@@ -183,25 +180,9 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                       </AreaChart>
                    </ResponsiveContainer>
                 </div>
-
-                <div className="grid grid-cols-3 gap-8 mt-12 pt-10 border-t border-white/5 relative z-10">
-                   {[
-                      { l: 'Framework Load', v: 'Optimized', i: Target, c: 'text-indigo-400' },
-                      { l: 'Stability Scalar', v: '1.42x', i: Scale, c: 'text-emerald-400' },
-                      { l: 'Time Constant (m)', v: user.metrics.timeConstantTau.toFixed(2), i: Clock, c: 'text-blue-400' },
-                   ].map(m => (
-                      <div key={m.l} className="text-center group">
-                         <div className={`p-3 bg-white/5 rounded-2xl w-fit mx-auto mb-4 border border-white/10 ${m.c} group-hover:scale-110 transition-transform`}><m.i size={18} /></div>
-                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">{m.l}</p>
-                         <p className="text-2xl font-mono font-black text-white">{m.v}</p>
-                      </div>
-                   ))}
-                </div>
              </div>
-
-             <div className="lg:col-span-4 space-y-8">
+             <div className="lg:col-span-4 space-y-8 text-white">
                 <div className="glass-card p-10 rounded-[48px] border-emerald-500/20 bg-emerald-950/10 space-y-8 shadow-xl relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><FlaskConical size={120} className="text-emerald-400" /></div>
                    <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3 relative z-10">
                       <Binary className="w-6 h-6 text-emerald-400" /> Shard Formula
                    </h4>
@@ -209,214 +190,76 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                       <p className="text-sm font-mono text-emerald-500 font-black leading-loose text-center">
                          dy/dx = lim[Δx→0] <br/> (f(x+Δx) - f(x)) / Δx
                       </p>
-                      <p className="text-[9px] text-slate-500 font-black uppercase text-center border-t border-white/5 pt-4">
-                         Calculating the instant rate of regenerative acceleration.
-                      </p>
                    </div>
                    <button className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-3 relative z-10">
                       <Zap size={16} fill="currentColor" /> Refresh Calculus Node
                    </button>
                 </div>
-
-                <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 space-y-6 shadow-xl">
-                   <div className="flex items-center gap-3">
-                      <Info className="w-5 h-5 text-indigo-400" />
-                      <h4 className="text-xs font-black text-white uppercase tracking-widest">Calculus Core</h4>
-                   </div>
-                   <p className="text-xs text-slate-500 italic leading-relaxed border-l-2 border-indigo-500/40 pl-6">
-                      "By analyzing the derivative of your sustainability score, we identify hidden friction in the Five Thrusts before they impact the m-Constant."
-                   </p>
-                </div>
              </div>
           </div>
         )}
-
-        {/* TAB: SHARD RETRIEVAL */}
+        
         {activeTab === 'retrieval' && (
-          <div className="space-y-12 animate-in slide-in-from-right-4 duration-500">
-             <div className="max-w-4xl mx-auto glass-card p-16 rounded-[64px] border border-white/10 bg-black/40 shadow-3xl space-y-12 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform"><FileSearch size={500} className="text-indigo-400" /></div>
-                
-                <div className="text-center space-y-6 relative z-10">
-                   <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-2xl animate-float">
-                      <History size={48} />
-                   </div>
-                   <div className="space-y-4">
-                      <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Retrieve <span className="text-indigo-400">Past Shards</span></h3>
-                      <p className="text-slate-400 text-xl font-medium max-w-xl mx-auto italic">Query the industrial registry for historical node registration fragments.</p>
-                   </div>
-                </div>
-
-                <div className="space-y-8 max-w-xl mx-auto relative z-10">
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Registry Shard ID (e.g. REG-G-882)</label>
-                      <div className="relative group/input">
-                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-700 group-focus-within/input:text-indigo-400 transition-colors" />
-                         <input 
-                           type="text" value={queryId} onChange={e => setQueryId(e.target.value)}
-                           placeholder="Enter Shard Identifier..." 
-                           className="w-full bg-black/60 border border-white/10 rounded-[40px] py-10 pl-16 pr-8 text-3xl font-mono text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
-                         />
-                      </div>
-                   </div>
-                   <button 
-                     onClick={handleRetrievePast}
-                     disabled={isRetrieving || !queryId}
-                     className="w-full py-10 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30"
-                   >
-                      {isRetrieving ? <Loader2 className="w-8 h-8 animate-spin" /> : <TimeIcon className="w-8 h-8" />}
-                      {isRetrieving ? 'QUERYING LEDGER...' : 'INITIALIZE RETRIEVAL'}
-                   </button>
-                </div>
-             </div>
-
-             {restoredShard && (
-                <div className="max-w-4xl mx-auto animate-in zoom-in duration-500">
-                   <div className="p-10 glass-card rounded-[56px] border border-emerald-500/20 bg-emerald-500/5 flex flex-col md:flex-row items-center justify-between gap-10 shadow-3xl group relative overflow-hidden">
-                      {restoredShard.status === 'NOT_FOUND' ? (
-                        <div className="flex items-center gap-8 py-4">
-                           <div className="w-20 h-20 bg-rose-500/10 rounded-3xl flex items-center justify-center text-rose-500 border border-rose-500/20 animate-pulse"><ShieldAlert size={40} /></div>
-                           <div>
-                              <h4 className="text-2xl font-black text-white uppercase italic">Shard <span className="text-rose-500">Not Found</span></h4>
-                              <p className="text-slate-500 text-sm mt-2">Identifier {restoredShard.id} is not anchored in your local node branch.</p>
-                           </div>
-                        </div>
-                      ) : (
-                        <>
-                           <div className="flex items-center gap-10">
-                              <div className="w-24 h-24 bg-emerald-500 rounded-[32px] flex items-center justify-center text-white shadow-2xl group-hover:rotate-6 transition-transform">
-                                 <FileCheck size={40} />
-                              </div>
-                              <div className="space-y-2">
-                                 <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">{restoredShard.type}</h4>
-                                 <p className="text-emerald-400 text-[10px] font-mono tracking-[0.3em] font-black uppercase">SHARD_RECONSTRUCTED_OK</p>
-                                 <div className="flex gap-6 mt-4">
-                                    <div className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Clock size={12} /> {restoredShard.date}</div>
-                                    <div className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Activity size={12} /> C(a): {restoredShard.ca}</div>
-                                 </div>
-                              </div>
-                           </div>
-                           <button onClick={() => setRestoredShard(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={20} /></button>
-                        </>
-                      )}
-                   </div>
-                </div>
-             )}
-          </div>
-        )}
-
-        {/* TAB: REGENCY ORACLE */}
-        {activeTab === 'oracle' && (
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-10 duration-700">
-              <div className="lg:col-span-4 space-y-8">
-                 <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-black/40 space-y-10 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Infinity size={200} className="text-indigo-400" /></div>
-                    <div className="flex items-center gap-6 relative z-10">
-                       <div className="p-4 bg-indigo-600 rounded-[28px] shadow-3xl">
-                          <Bot size={32} className="text-white" />
-                       </div>
-                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none m-0">Regency <span className="text-indigo-400">Oracle</span></h3>
+           <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500 text-white">
+              <div className="glass-card p-16 rounded-[64px] border border-white/10 bg-black/40 shadow-3xl text-center space-y-12 relative overflow-hidden group">
+                 <div className="text-center space-y-6 relative z-10">
+                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-2xl animate-float">
+                       <History size={48} />
                     </div>
-                    
-                    <div className="space-y-8 relative z-10">
-                       <p className="text-slate-400 text-lg italic leading-relaxed">
-                          Initialize a deep regency analysis to cross-correlate past registration shards with your current $dy/dx$ trajectory.
-                       </p>
-                       <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[40px] flex justify-between items-center shadow-inner">
-                          <div className="flex items-center gap-4">
-                             <Coins className="text-indigo-400" />
-                             <span className="text-xs font-black text-white uppercase tracking-widest">Consultation Cost</span>
-                          </div>
-                          <span className="text-xl font-mono font-black text-indigo-400">50 EAC</span>
-                       </div>
-                       <button 
-                        onClick={handleOracleCalc}
-                        disabled={isAnalyzing}
-                        className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
-                       >
-                          {isAnalyzing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
-                          {isAnalyzing ? "EXECUTING CALCULUS..." : "EXECUTE dy/dx AUDIT"}
-                       </button>
-                    </div>
+                    <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Retrieve <span className="text-indigo-400">Past Shards</span></h3>
+                 </div>
+                 <div className="space-y-8 max-w-xl mx-auto relative z-10">
+                    <input 
+                      type="text" value={queryId} onChange={e => setQueryId(e.target.value)}
+                      placeholder="Enter Shard Identifier..." 
+                      className="w-full bg-black/60 border border-white/10 rounded-[40px] py-10 text-center text-3xl font-mono text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
+                    />
+                    <button 
+                      onClick={handleRetrievePast}
+                      disabled={isRetrieving || !queryId}
+                      className="w-full py-10 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30"
+                    >
+                       {isRetrieving ? <Loader2 className="w-8 h-8 animate-spin" /> : <TimeIcon className="w-8 h-8" />}
+                       {isRetrieving ? 'QUERYING LEDGER...' : 'INITIALIZE RETRIEVAL'}
+                    </button>
                  </div>
               </div>
+           </div>
+        )}
 
-              <div className="lg:col-span-8">
-                 <div className="glass-card rounded-[64px] min-h-[650px] border border-white/5 bg-black/20 flex flex-col relative overflow-hidden shadow-3xl">
-                    <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                       <div className="flex items-center gap-4 text-indigo-400">
-                          <Terminal className="w-6 h-6" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Regency Output Terminal</span>
-                       </div>
-                       {oracleReport && <button onClick={() => setOracleReport(null)} className="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all"><X size={18} /></button>}
+        {activeTab === 'oracle' && (
+           <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-bottom-10 duration-700 text-center text-white">
+              <div className="p-10 md:p-20 glass-card rounded-[80px] border border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden flex flex-col items-center gap-12 shadow-3xl group">
+                 <div className="relative z-10 space-y-8 w-full">
+                    <div className="w-32 h-32 bg-indigo-600 rounded-[48px] flex items-center justify-center shadow-3xl border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
+                       <Bot size={64} className="text-white animate-pulse" />
                     </div>
-                    <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative">
-                       {isAnalyzing ? (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-12 bg-black/80 backdrop-blur-md z-20">
-                             <div className="relative">
-                                <Loader2 className="w-24 h-24 text-indigo-500 animate-spin" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                   <SearchCode className="w-10 h-10 text-indigo-400 animate-pulse" />
-                                </div>
-                             </div>
-                             <div className="text-center space-y-4">
-                                <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">MAPPING DERIVATIVES...</p>
-                                <p className="text-[10px] text-slate-700 font-mono">EOS_CALC_SYNC // SCANNING_PAST_SHARDS</p>
-                             </div>
-                          </div>
-                       ) : oracleReport ? (
-                          <div className="animate-in slide-in-from-bottom-10 duration-700">
-                             <div className="p-12 md:p-16 bg-black/60 rounded-[64px] border border-indigo-500/20 border-l-8 shadow-inner relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none"><ShieldCheck size={400} className="text-white" /></div>
-                                <div className="prose prose-invert prose-indigo max-w-none text-slate-300 text-xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-8">
-                                   {oracleReport}
-                                </div>
-                             </div>
-                             <div className="flex justify-center mt-12 gap-6">
-                                <button className="px-16 py-8 agro-gradient rounded-3xl text-white font-black text-[11px] uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all">ANCHOR REGENCY SHARD</button>
-                                <button className="p-8 bg-white/5 border border-white/10 rounded-3xl text-slate-500 hover:text-white transition-all"><Download size={24} /></button>
-                             </div>
-                          </div>
-                       ) : (
-                          <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-20 group">
-                             <Sparkles size={120} className="text-slate-500 group-hover:text-indigo-500 transition-colors" />
-                             <div className="space-y-2">
-                                <p className="text-3xl font-black uppercase tracking-[0.5em] text-white">ORACLE STANDBY</p>
-                                <p className="text-lg italic uppercase font-bold tracking-widest text-slate-600">Enter Calculus Context to Generate Report</p>
-                             </div>
-                          </div>
-                       )}
-                    </div>
+                    <h3 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Regency <span className="text-indigo-400">Oracle</span></h3>
                  </div>
+                 <button 
+                  onClick={handleOracleCalc}
+                  disabled={isAnalyzing}
+                  className="w-full max-w-md py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
+                 >
+                    {isAnalyzing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
+                    {isAnalyzing ? "EXECUTING CALCULUS..." : "EXECUTE dy/dx AUDIT"}
+                 </button>
+                 {oracleReport && (
+                    <div className="mt-10 p-10 bg-black/60 rounded-[48px] border border-indigo-500/20 text-left animate-in fade-in">
+                       <p className="text-slate-300 text-xl leading-loose italic">{oracleReport}</p>
+                    </div>
+                 )}
               </div>
            </div>
         )}
       </div>
 
-      {/* Persistence Footer */}
-      <div className="p-16 glass-card rounded-[64px] border-indigo-500/20 bg-indigo-600/5 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-2xl">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none"><Binoculars size={400} /></div>
-         <div className="flex items-center gap-10 relative z-10 text-center md:text-left flex-col md:flex-row">
-            <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-2 border-white/10 shrink-0">
-               <Fingerprint size={40} className="text-white" />
-            </div>
-            <div className="space-y-4">
-               <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Registry Sovereignty</h4>
-               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-lg:text-sm max-w-lg mx-auto md:mx-0">All historical shards are cryptographically linked to your primary node signature (ESIN). The past is always available for re-verification.</p>
-            </div>
-         </div>
-         <div className="text-center md:text-right relative z-10 shrink-0">
-            <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em] px-4 border-b border-white/10 pb-4">TOTAL_REGENCY_SYNC</p>
-            <p className="text-7xl font-mono font-black text-white tracking-tighter">100%</p>
-         </div>
-      </div>
-
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
       `}</style>
     </div>
   );

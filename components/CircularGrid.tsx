@@ -20,7 +20,8 @@ import { User, Order, VendorProduct } from '../types';
 interface CircularGridProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onPlaceOrder: (order: Partial<Order>) => void;
   vendorProducts: VendorProduct[];
 }

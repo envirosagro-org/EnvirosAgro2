@@ -1,7 +1,6 @@
-
 export interface LinkedProvider {
   id: string;
-  type: 'Mobile' | 'Bank' | 'Web3' | 'Card';
+  type: 'Mobile' | 'Bank' | 'Web3' | 'Card' | 'PayPal' | 'Visa' | 'Mastercard';
   name: string;
   accountFragment: string;
   status: 'Active' | 'Pending' | 'Verification_Required';
@@ -57,11 +56,16 @@ export interface User {
 export interface EACWallet {
   balance: number; // EAC - "The Cash" (Utility)
   eatBalance: number; // EAT - "The Gold" (Equity/Asset)
+  stakedEat?: number; // EAT currently locked for yield
   exchangeRate: number; // Personalized EAC -> EAT rate based on 'm'
   bonusBalance: number; // Non-withdrawable registration incentives
   tier: 'Seed' | 'Sprout' | 'Harvest';
   lifetimeEarned: number; // Used for "Reputation Score"
   linkedProviders: LinkedProvider[];
+  lastSyncDate?: string;
+  miningStreak?: number;
+  pendingSocialHarvest?: number;
+  resonanceDrift?: number; // Real-time fluctuation of m-constant stability
 }
 
 export interface SustainabilityMetrics {
@@ -255,7 +259,7 @@ export interface AgroTransaction {
   farmId: string;
   details: string;
   value: number;
-  unit: 'EAC' | 'EAT' | 'CO2e' | 'kg' | 'pH' | 'USD' | 'KES' | 'ETH';
+  unit: 'EAC' | 'EAT' | 'CO2e' | 'kg' | 'pH' | 'USD' | 'KES' | 'ETH' | 'm';
 }
 
 export type ViewState = 
@@ -303,4 +307,5 @@ export type ViewState =
   | 'digital_mrv'
   | 'registry_handshake'
   | 'online_garden'
-  | 'farm_os';
+  | 'farm_os'
+  | 'network';
