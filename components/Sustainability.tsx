@@ -7,25 +7,21 @@ import {
   ResponsiveContainer, 
   AreaChart, 
   Area,
-  BarChart,
-  Bar,
-  Cell,
   ReferenceLine
 } from 'recharts';
-import { User } from '../types';
+import { User, ViewState } from '../types';
 import { 
-  Leaf, Cpu, Activity, Zap, Info, ShieldCheck, Binary, 
-  Sprout, TrendingUp, BarChart4, Loader2, Waves, 
-  TreePine, Radio, Target, Heart, Thermometer, Droplets,
-  Wind, Atom, Sparkles, Scale, RefreshCw, AlertTriangle,
-  // Added Gauge and CheckCircle2 to fix errors on lines 155 and 285
-  Gauge, CheckCircle2
+  Leaf, Activity, Zap, Info, ShieldCheck, Binary, 
+  Sprout, TrendingUp, Loader2, Waves, 
+  TreePine, Radio, Target, Heart, Atom, Sparkles, RefreshCw, AlertTriangle,
+  Gauge, CheckCircle2, Dna, Fingerprint, Microscope, ArrowRight
 } from 'lucide-react';
 
 interface SustainabilityProps {
   user: User;
   onAction?: () => void;
   onMintEAT?: (amount: number, reason: string) => void;
+  onNavigate: (view: ViewState) => void;
 }
 
 const RESONANCE_HISTORY = [
@@ -39,30 +35,70 @@ const RESONANCE_HISTORY = [
 ];
 
 const THRUST_ALIGNMENT = [
-  { name: 'Societal', val: 84, color: '#f43f5e' },
-  { name: 'Environmental', val: 96, color: '#10b981' },
-  { name: 'Human', val: 78, color: '#14b8a6' },
-  { name: 'Technological', val: 92, color: '#3b82f6' },
-  { name: 'Industry', val: 88, color: '#818cf8' },
+  { name: 'Societal', val: 84, color: '#f43f5e', code: 'G' },
+  { name: 'Environmental', val: 96, color: '#10b981', code: 'A' },
+  { name: 'Human', val: 78, color: '#14b8a6', code: 'C' },
+  { name: 'Technological', val: 92, color: '#3b82f6', code: 'T' },
+  { name: 'Industry', val: 88, color: '#818cf8', code: 'I' },
 ];
 
-const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
-  const [isSyncing, setIsSyncing] = useState(false);
+const DNAHelix: React.FC<{ progress: number; color: string; isAggressive: boolean }> = ({ progress, color, isAggressive }) => {
+  return (
+    <div className="relative w-full h-80 flex items-center justify-center overflow-hidden">
+      <svg viewBox="0 0 200 400" className="w-full h-full opacity-80">
+        <defs>
+          <linearGradient id="helixGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+            <stop offset="50%" stopColor={color} stopOpacity="1" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
+        {[...Array(12)].map((_, i) => {
+          const y = i * 35;
+          const delay = i * 0.2;
+          return (
+            <g key={i} className="animate-dna-float">
+              {/* Strand 1 Node */}
+              <circle cx="50" cy={y} r="4" className={`${color} animate-pulse`}>
+                <animate 
+                  attributeName="cx" 
+                  values="50;150;50" 
+                  dur={`${isAggressive ? 2 : 4}s`} 
+                  begin={`${delay}s`} 
+                  repeatCount="indefinite" 
+                />
+              </circle>
+              {/* Strand 2 Node */}
+              <circle cx="150" cy={y} r="4" className="text-indigo-400 animate-pulse">
+                <animate 
+                  attributeName="cx" 
+                  values="150;50;150" 
+                  dur={`${isAggressive ? 2 : 4}s`} 
+                  begin={`${delay}s`} 
+                  repeatCount="indefinite" 
+                />
+              </circle>
+              {/* Connector Bar */}
+              <line y1={y} y2={y} stroke="currentColor" strokeWidth="1" className="text-white/10">
+                <animate attributeName="x1" values="50;150;50" dur={`${isAggressive ? 2 : 4}s`} begin={`${delay}s`} repeatCount="indefinite" />
+                <animate attributeName="x2" values="150;50;150" dur={`${isAggressive ? 2 : 4}s`} begin={`${delay}s`} repeatCount="indefinite" />
+              </line>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavigate }) => {
   const [isRestoring, setIsRestoring] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  
-  // Real-time Bio-Signal Metrics
   const [atmStatic, setAtmStatic] = useState(0.88);
   const [soilResonance, setSoilResonance] = useState(0.45);
+  const [calibrationPhase, setCalibrationPhase] = useState(0);
 
-  // The Equation of Sustainable Frequency (Ω)
-  // Ω = (AtmosphericStatic * 0.75) / (SoilResonance * 1.2)
-  const currentOmega = useMemo(() => {
-    return (atmStatic * 0.75) / (soilResonance * 1.2);
-  }, [atmStatic, soilResonance]);
-
-  const mConstant = user.metrics.timeConstantTau;
-  const caCode = user.metrics.agriculturalCodeU;
+  const currentOmega = useMemo(() => (atmStatic * 0.75) / (soilResonance * 1.2), [atmStatic, soilResonance]);
   const isNatureAggressive = currentOmega < 1.618;
 
   useEffect(() => {
@@ -74,16 +110,21 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
 
   const handleRestoreCycle = () => {
     setIsRestoring(true);
+    setCalibrationPhase(1);
+    
+    // Multi-stage calibration sequence
+    setTimeout(() => setCalibrationPhase(2), 1000);
+    setTimeout(() => setCalibrationPhase(3), 2000);
+
     setTimeout(() => {
       setIsRestoring(false);
+      setCalibrationPhase(0);
       setSoilResonance(0.82);
       setAtmStatic(1.42);
       setShowSuccess(true);
-      if (onMintEAT) {
-        onMintEAT(50, 'RITUAL_RESONANCE_RECALIBRATION');
-      }
+      if (onMintEAT) onMintEAT(50, 'MUGUMO_HELIX_RECALIBRATION');
       setTimeout(() => setShowSuccess(false), 4000);
-    }, 2500);
+    }, 3500);
   };
 
   return (
@@ -104,20 +145,20 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
               </div>
               <div className="absolute -bottom-4 -right-4 p-4 glass-card rounded-2xl border border-white/20 bg-black/80 flex flex-col items-center shadow-2xl">
                  <Radio size={20} className="text-emerald-400 animate-pulse mb-1" />
-                 <span className="text-[8px] font-black text-slate-500 uppercase">Antenna_Sync</span>
+                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Mugumo_Sync</span>
               </div>
            </div>
 
            <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
               <div className="space-y-2">
                  <div className="flex flex-wrap justify-center md:justify-start gap-3 mb-2">
-                    <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20 shadow-inner italic">MUGUMO_NODE_ACTIVE</span>
-                    <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-blue-500/20 shadow-inner italic">Ω_STABILITY_OK</span>
+                    <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20 shadow-inner italic">HELIX_ANCHOR_ACTIVE</span>
+                    <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-blue-500/20 shadow-inner italic">Ω_RESONANCE_MONITOR</span>
                  </div>
                  <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">SUSTAINABILITY <span className="text-emerald-400">SHARD.</span></h2>
               </div>
               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-2xl opacity-80 group-hover:opacity-100 transition-opacity">
-                 "Optimizing the planetary dipole. Analyzing m-constant resonance and atmospheric static to maintain 100% ecological coherence."
+                 "Maintaining the biological m-constant via the Mugumo DNA Helix. Analyzing helical drift to ensure 100% ecological coherence."
               </p>
            </div>
         </div>
@@ -129,13 +170,13 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
               <h4 className={`text-8xl font-mono font-black tracking-tighter leading-none drop-shadow-2xl italic transition-colors ${isNatureAggressive ? 'text-rose-500' : 'text-emerald-400'}`}>
                 {currentOmega.toFixed(3)}
               </h4>
-              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4">Target: 1.618 (Golden Ratio)</p>
+              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4 italic">Target: 1.618 (PHI)</p>
            </div>
            <div className="space-y-6 relative z-10 pt-10 border-t border-white/5 mt-10">
               <div className="flex justify-between items-center text-[11px] font-black uppercase text-slate-600 tracking-widest">
-                 <span>Nature State</span>
+                 <span>Helical State</span>
                  <span className={`${isNatureAggressive ? 'text-rose-500 animate-pulse' : 'text-emerald-400'} font-mono`}>
-                   {isNatureAggressive ? 'AGGRESSIVE' : 'STABLE'}
+                   {isNatureAggressive ? 'DISSONANT' : 'SYNCED'}
                  </span>
               </div>
               <div className="h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
@@ -147,11 +188,57 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* 2. Resonance History & Graph */}
+        {/* 2. Mugumo DNA Helix Visualizer */}
+        <div className="lg:col-span-4 space-y-8">
+           <div className="glass-card p-10 rounded-[64px] border-emerald-500/20 bg-black/60 shadow-3xl relative overflow-hidden group min-h-[600px] flex flex-col items-center">
+              <div className="absolute inset-0 bg-emerald-500/[0.02] pointer-events-none"></div>
+              <div className="text-center relative z-10 space-y-4 mb-10">
+                <div className="flex items-center justify-center gap-3">
+                   <Dna className="w-5 h-5 text-emerald-400 animate-spin-slow" />
+                   <h3 className="text-2xl font-black text-white uppercase italic tracking-widest">Mugumo <span className="text-emerald-400">Helix</span></h3>
+                </div>
+                <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.4em]">Genetic_Resonance_Shard</p>
+              </div>
+
+              <div className="flex-1 w-full relative flex items-center justify-center group-hover:scale-105 transition-transform duration-700">
+                <DNAHelix 
+                  progress={100} 
+                  color={isNatureAggressive ? 'text-rose-500' : 'text-emerald-500'} 
+                  isAggressive={isNatureAggressive} 
+                />
+                
+                {/* Overlay Metric Shards */}
+                <div className="absolute top-1/4 left-0 p-4 glass-card rounded-2xl border border-white/10 backdrop-blur-xl animate-float">
+                   <p className="text-[8px] text-slate-500 font-black uppercase">A: AGRO-BIO</p>
+                   <p className="text-xs font-mono font-bold text-white">0x882A</p>
+                </div>
+                <div className="absolute top-1/3 right-0 p-4 glass-card rounded-2xl border border-white/10 backdrop-blur-xl animate-float" style={{ animationDelay: '-2s' }}>
+                   <p className="text-[8px] text-slate-500 font-black uppercase">T: TECH</p>
+                   <p className="text-xs font-mono font-bold text-white">0x104T</p>
+                </div>
+                <div className="absolute bottom-1/4 left-4 p-4 glass-card rounded-2xl border border-white/10 backdrop-blur-xl animate-float" style={{ animationDelay: '-4s' }}>
+                   <p className="text-[8px] text-slate-500 font-black uppercase">C: CONSUME</p>
+                   <p className="text-xs font-mono font-bold text-white">0x042C</p>
+                </div>
+              </div>
+
+              <div className="pt-8 border-t border-white/5 w-full relative z-10 text-center">
+                 <p className="text-[10px] text-slate-600 font-medium italic mb-6">"Mapping regional biological base-pairs."</p>
+                 <button 
+                  onClick={() => onNavigate('biotech_hub')}
+                  className="w-full py-4 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-emerald-500/20"
+                 >
+                    <Microscope size={16} /> DECODE GENETIC SHARD <ArrowRight size={14} />
+                 </button>
+              </div>
+           </div>
+        </div>
+
+        {/* 3. Resonance History & Calibration */}
         <div className="lg:col-span-8 space-y-10">
-           <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-black/20 h-[500px] shadow-3xl relative overflow-hidden group">
+           <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-black/20 h-[450px] shadow-3xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Waves size={400} /></div>
-              <div className="flex justify-between items-center mb-16 relative z-10 px-4">
+              <div className="flex justify-between items-center mb-12 relative z-10 px-4">
                  <div className="flex items-center gap-6">
                     <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl">
                        <Gauge size={32} className="text-white" />
@@ -167,7 +254,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
                  </div>
               </div>
               
-              <div className="flex-1 h-[280px] w-full relative z-10">
+              <div className="flex-1 h-[250px] w-full relative z-10">
                  <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={RESONANCE_HISTORY}>
                        <defs>
@@ -182,45 +269,12 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
                        <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', padding: '15px' }} />
                        <ReferenceLine y={1.618} stroke="#10b981" strokeDasharray="10 10" strokeWidth={2} label={{ value: 'PHI', fill: '#10b981', fontSize: 10, fontWeight: 'bold' }} />
                        <Area type="monotone" name="Resonance Ω" dataKey="omega" stroke="#10b981" strokeWidth={8} fillOpacity={1} fill="url(#colorOmega)" strokeLinecap="round" />
-                       <Area type="monotone" name="Nature Aggression" dataKey="aggression" stroke="#f43f5e" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
                     </AreaChart>
                  </ResponsiveContainer>
               </div>
            </div>
 
-           {/* Metrics Grid */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 flex flex-col justify-between shadow-xl relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform"><Binary size={150} /></div>
-                 <div className="space-y-4 relative z-10">
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Agricultural Code</p>
-                    <h4 className="text-5xl font-mono font-black text-white tracking-tighter italic">C(a) = {caCode.toFixed(3)}</h4>
-                    <p className="text-xs text-slate-600 font-medium italic">"Cumulative growth index weighted by planetary rest cycles."</p>
-                 </div>
-                 <div className="pt-8 mt-10 border-t border-white/5">
-                    <button onClick={handleRestoreCycle} className="w-full py-5 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all">Audit Agro Code Shard</button>
-                 </div>
-              </div>
-
-              <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 flex flex-col justify-between shadow-xl relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform"><Activity size={150} /></div>
-                 <div className="space-y-4 relative z-10">
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Resilience Constant</p>
-                    <h4 className="text-5xl font-mono font-black text-emerald-400 tracking-tighter italic">m = {mConstant.toFixed(3)}</h4>
-                    <p className="text-xs text-slate-600 font-medium italic">"Node resilience against volatility and environmental shock."</p>
-                 </div>
-                 <div className="pt-8 mt-10 border-t border-white/5">
-                    <button className="w-full py-5 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
-                       <Zap size={14} /> TUNE M-RESONANCE
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        {/* 3. Action Hub & SEHTI Matrix */}
-        <div className="lg:col-span-4 space-y-8">
-           <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-950/10 space-y-10 shadow-3xl relative overflow-hidden group">
+           <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-950/10 space-y-10 shadow-3xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[10s]"><Atom size={300} className="text-emerald-400" /></div>
               
               <div className="space-y-6 relative z-10">
@@ -229,51 +283,36 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
                        <Sparkles className="w-8 h-8 text-white fill-current" />
                     </div>
                     <div>
-                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Restoration <span className="text-emerald-400">Cycle</span></h3>
-                       <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest mt-2">MUGUMO_SACRIFICE_PROTOCOL</p>
+                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Mugumo <span className="text-emerald-400">Calibration</span></h3>
+                       <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest mt-2">GENETIC_RECALIBRATION_PROTOCOL</p>
                     </div>
                  </div>
 
-                 <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-6 shadow-inner text-center">
-                    <p className="text-slate-400 text-sm italic font-medium leading-relaxed px-4">
-                      "Inject biological frequency shards to lower soil resistance and trigger immediate precipitation sync."
-                    </p>
-                    {isNatureAggressive && (
-                      <div className="flex items-center justify-center gap-3 py-3 bg-rose-500/10 rounded-2xl border border-rose-500/20 text-rose-500 text-[10px] font-black uppercase animate-pulse">
-                         <AlertTriangle size={14} /> Critical: High Nature Aggression
-                      </div>
-                    )}
-                 </div>
-              </div>
-
-              <div className="pt-4 relative z-10">
-                 <button 
-                   onClick={handleRestoreCycle}
-                   disabled={isRestoring}
-                   className={`w-full py-8 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-5 ring-8 ring-white/5 ${isNatureAggressive ? 'bg-rose-600 hover:bg-rose-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
-                 >
-                    {isRestoring ? <Loader2 size={24} className="animate-spin" /> : <RefreshCw size={24} />}
-                    {isRestoring ? 'RECALIBRATING...' : isNatureAggressive ? 'INITIATE RITUAL RESTORE' : 'MAINTAIN HARMONY'}
-                 </button>
-              </div>
-           </div>
-
-           <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl">
-              <h4 className="text-xl font-black text-white uppercase italic tracking-widest px-4 flex items-center gap-4">
-                 <Target size={24} className="text-indigo-400" /> SEHTI <span className="text-indigo-400">Resonance</span>
-              </h4>
-              <div className="space-y-6">
-                 {THRUST_ALIGNMENT.map(t => (
-                    <div key={t.name} className="space-y-2 group">
-                       <div className="flex justify-between items-center px-2">
-                          <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest group-hover:text-slate-200 transition-colors">{t.name}</span>
-                          <span className="text-xs font-mono font-black text-white">{t.val}%</span>
-                       </div>
-                       <div className="h-1 bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
-                          <div className="h-full rounded-full transition-all duration-[2s]" style={{ width: `${t.val}%`, backgroundColor: t.color }}></div>
-                       </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-6 shadow-inner text-center">
+                       <p className="text-slate-400 text-sm italic font-medium leading-relaxed px-4">
+                         "Initiating a restoration cycle aligns the local DNA helix with the planetaryPHI frequency to mitigate S-factor drift."
+                       </p>
+                       {isNatureAggressive && (
+                         <div className="flex items-center justify-center gap-3 py-3 bg-rose-500/10 rounded-2xl border border-rose-500/20 text-rose-500 text-[10px] font-black uppercase animate-pulse">
+                            <AlertTriangle size={14} /> Critical: Helical Dissonance
+                         </div>
+                       )}
                     </div>
-                 ))}
+                    <div className="relative">
+                       <button 
+                         onClick={handleRestoreCycle}
+                         disabled={isRestoring}
+                         className={`w-full py-12 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-5 ring-8 ring-white/5 ${isNatureAggressive ? 'bg-rose-600 hover:bg-rose-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+                       >
+                          {isRestoring ? <Loader2 size={24} className="animate-spin" /> : <RefreshCw size={24} />}
+                          {isRestoring ? (
+                            calibrationPhase === 1 ? 'Sequencing Helix...' :
+                            calibrationPhase === 2 ? 'Bonding Shards...' : 'Finalizing Protocol...'
+                          ) : isNatureAggressive ? 'RESTORE HARMONY' : 'CALIBRATE HELIX'}
+                       </button>
+                    </div>
+                 </div>
               </div>
            </div>
         </div>
@@ -288,7 +327,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
               </div>
               <div>
                  <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Consensus <span className="text-emerald-400">Reached.</span></h4>
-                 <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Registry Shard +50 EAC // Resilience Anchor Stable</p>
+                 <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Registry Shard +50 EAC // Helix Sync Stable</p>
               </div>
            </div>
         </div>
@@ -300,6 +339,11 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT }) => {
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 2s linear infinite; }
+        @keyframes dna-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+        .animate-dna-float { animation: dna-float 4s ease-in-out infinite; }
       `}</style>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   User as UserIcon, MapPin, ShieldCheck, Key, Award, Mail, Calendar, Edit3, 
@@ -16,7 +17,7 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
   ResponsiveContainer, Tooltip as RechartsTooltip
 } from 'recharts';
-import { User } from '../types';
+import { User, ViewState } from '../types';
 import IdentityCard from './IdentityCard';
 import { SignalShard } from '../App';
 import { auth, resendVerificationEmail } from '../services/firebaseService';
@@ -27,6 +28,7 @@ interface UserProfileProps {
   isGuest: boolean;
   onUpdate: (user: User) => void;
   onLogin: (user: User) => void;
+  onNavigate: (view: ViewState) => void;
   onLogout?: () => void;
   onDeleteAccount?: () => void;
   signals: SignalShard[];
@@ -49,7 +51,7 @@ const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string
   'December': { flower: 'Narcissus', trait: 'Respect', zodiac: 'Sagittarius/Capricorn', color: 'text-blue-100', hex: '#f0f9ff', desc: 'Symbol of respect and faithfulness.' },
 };
 
-const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onLogout, onDeleteAccount, signals, setSignals }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onNavigate, onLogout, onDeleteAccount, signals, setSignals }) => {
   const [activeTab, setActiveTab] = useState<'hub' | 'signals' | 'dossier' | 'security' | 'sharing'>('hub');
   const [isEditing, setIsEditing] = useState(false);
   const [isMintingCert, setIsMintingCert] = useState(false);
@@ -242,7 +244,7 @@ CERTIFIED BY THE ENVIROSAGRO ORACLE
               </div>
            </div>
 
-           <div className="space-y-6 relative z-10 text-center md:text-left">
+           <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
               <div className="space-y-2">
                  <div className="flex items-center justify-center md:justify-start gap-4">
                     <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">{user.name}</h2>
@@ -398,7 +400,7 @@ CERTIFIED BY THE ENVIROSAGRO ORACLE
               <div className="lg:col-span-8 space-y-10">
                  <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
                     <div>
-                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Network <span className="text-indigo-400">Signals</span></h3>
+                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Network <span className="text-indigo-400">Signals</span></h3>
                        <p className="text-slate-500 text-lg font-medium italic mt-2">Historical and real-time alerts sharded to your node.</p>
                     </div>
                     <button onClick={() => setSignals(prev => prev.map(s => ({...s, read: true})))} className="text-[10px] font-black text-indigo-400 uppercase tracking-widest hover:text-white transition-colors">Clear All Shards</button>
@@ -417,7 +419,7 @@ CERTIFIED BY THE ENVIROSAGRO ORACLE
                           }`}>
                              <div className="flex items-center gap-8 w-full md:w-auto">
                                 <div className={`w-20 h-20 rounded-[28px] flex items-center justify-center border transition-all ${
-                                   signal.read ? 'bg-slate-800 text-slate-500' : 'bg-white/5 border-white/10 text-white shadow-xl group-hover:rotate-6'
+                                   signal.read ? 'bg-slate-800 text-slate-500' : 'bg-white/5 border-white/10 text-white shadow-xl group-hover:rotate-6 shadow-inner'
                                 }`}>
                                    <Database size={32} />
                                 </div>

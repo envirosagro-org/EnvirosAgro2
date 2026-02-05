@@ -179,7 +179,10 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
 
            <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
               <div className="space-y-2">
-                 <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-blue-500/20 shadow-inner">EOS_GENETIC_SYSTEM_v5.2</span>
+                 <div className="flex items-center justify-center md:justify-start gap-4">
+                    <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-blue-500/20 shadow-inner">EOS_GENETIC_SYSTEM_v5.2</span>
+                    <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-emerald-500/20 shadow-inner">MUGUMO_SYNC_READY</span>
+                 </div>
                  <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">Genetic <span className="text-blue-400">Decoder</span></h2>
               </div>
               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-2xl">
@@ -199,7 +202,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                  <span>Sync Velocity</span>
                  <span className="text-blue-400">HIGH</span>
               </div>
-              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner">
+              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
                  <div className="h-full bg-blue-600 shadow-[0_0_10px_#3b82f6]" style={{ width: '92%' }}></div>
               </div>
            </div>
@@ -294,8 +297,8 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
 
                    <div className="p-10 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-10">
                       <div className="flex items-center gap-8">
-                         <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl group overflow-hidden">
-                            <Monitor size={32} className="group-hover:scale-110 transition-transform" />
+                         <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl group overflow-hidden relative">
+                            <Monitor size={32} className="group-hover:scale-110 transition-transform relative z-10" />
                             <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                          </div>
                          <div>
@@ -305,7 +308,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                       </div>
                       <div className="flex items-center gap-6">
                          <div className="hidden sm:flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
                             <span className="text-[9px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_STABLE</span>
                          </div>
                       </div>
@@ -595,7 +598,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
         {/* --- TAB: GENOMIC ARCHIVE --- */}
         {activeTab === 'archive' && (
            <div className="space-y-12 animate-in fade-in duration-500">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-10 px-4">
+              <div className="flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-10 px-4">
                  <div>
                     <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Genomic <span className="text-blue-400">Ledger</span></h3>
                     <p className="text-slate-500 text-xl font-medium mt-4 italic">"Browse verified biological shards sharded across the global mesh."</p>
@@ -681,7 +684,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
+        .custom-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

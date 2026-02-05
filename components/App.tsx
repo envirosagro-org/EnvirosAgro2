@@ -1,3 +1,4 @@
+
 // This root App.tsx is the primary node orchestrator.
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
@@ -803,7 +804,7 @@ const App: React.FC = () => {
           {activeView === 'dashboard' && <Dashboard user={user} isGuest={isGuest} onNavigate={handleNavigate} orders={orders} blockchain={blockchain} isMining={isMining} />}
           {activeView === 'network' && <NetworkView />}
           {activeView === 'wallet' && <AgroWallet user={user} isGuest={isGuest} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} onEarnEAC={earnEAC} projects={projects} onClaimSocialHarvest={handleClaimSocialHarvest} transactions={transactions} blockchain={blockchain} isMining={isMining} />}
-          {activeView === 'sustainability' && <Sustainability user={user} isGuest={isGuest} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
+          {activeView === 'sustainability' && <Sustainability user={user} onNavigate={handleNavigate} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'economy' && <Economy user={user} isGuest={isGuest} onNavigate={handleNavigate} onSpendEAC={spendEAC} onEarnEAC={earnEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} />}
           {activeView === 'industrial' && <Industrial user={user} isGuest={isGuest} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} onInitializeLiveProcess={(p) => setLiveProducts([p as any, ...liveProducts])} />}
           {activeView === 'intelligence' && <Intelligence user={user} isGuest={isGuest} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
@@ -812,7 +813,7 @@ const App: React.FC = () => {
           {activeView === 'agro_calendar' && <AgroCalendar user={user} isGuest={isGuest} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'impact' && <Impact user={user} isGuest={isGuest} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'ecosystem' && <Ecosystem user={user} isGuest={isGuest} onDeposit={earnEAC} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
-          {activeView === 'profile' && <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); }} />}
+          {activeView === 'profile' && <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); }} onNavigate={handleNavigate} />}
           {activeView === 'explorer' && <Explorer blockchain={blockchain} isMining={isMining} onPulse={addPulse} user={user} isGuest={isGuest} />}
           {activeView === 'community' && <Community user={user} isGuest={isGuest} onContribution={() => earnEAC(5, 'CONTRIBUTION')} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'live_farming' && <LiveFarming user={user} isGuest={isGuest} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
