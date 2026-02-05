@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Dna, 
@@ -45,15 +46,18 @@ import {
   FileDigit,
   Radiation,
   CheckCircle2,
-  Microscope as LabIcon
+  Microscope as LabIcon,
+  Handshake,
+  ArrowRight
 } from 'lucide-react';
-import { User } from '../types';
+import { User, ViewState } from '../types';
 import { decodeAgroGenetics, chatWithAgroExpert } from '../services/geminiService';
 
 interface BiotechnologyProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
+  onNavigate: (view: ViewState) => void;
 }
 
 const GENETIC_ARCHIVE = [
@@ -62,7 +66,7 @@ const GENETIC_ARCHIVE = [
   { id: 'GEN-042', name: 'Bantu Rice DNA', trait: 'Pest Shield Alpha', stability: 99.8, status: 'VERIFIED', cost: 3200, col: 'text-emerald-400', sequence: 'GCTA-042-CORE' },
 ];
 
-const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendEAC }) => {
+const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'decoder' | 'forge' | 'archive'>('decoder');
   
   // Decoder States
@@ -71,6 +75,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
   const [marketDemand, setMarketDemand] = useState(0.65);
   const [govIntegrity, setGovIntegrity] = useState(0.91);
   const [isDecoding, setIsDecoding] = useState(false);
+  const [isWarmingUp, setIsWarmingUp] = useState(false);
   const [decodedData, setDecodedData] = useState<any | null>(null);
   const [dnaAnimation, setDnaAnimation] = useState(0);
 
@@ -94,6 +99,13 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
   }, []);
 
   const handleRunDecoder = async () => {
+    if (isWarmingUp || isDecoding) return;
+    
+    // Explicit initialization sequence
+    setIsWarmingUp(true);
+    await new Promise(r => setTimeout(r, 1500));
+    setIsWarmingUp(false);
+
     const DECODE_FEE = 30;
     if (!await onSpendEAC(DECODE_FEE, 'AGRO_GENETIC_DECODING_PROTOCOL')) return;
 
@@ -162,7 +174,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
       {/* 1. Portal Header HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 px-4">
         <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-blue-500/20 bg-blue-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
-           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none">
+           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform duration-[10s] pointer-events-none">
               <Dna className="w-[800px] h-[800px] text-white" />
            </div>
            
@@ -269,18 +281,18 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
 
                    <button 
                     onClick={handleRunDecoder}
-                    disabled={isDecoding}
+                    disabled={isDecoding || isWarmingUp}
                     className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
                    >
-                      {isDecoding ? <Loader2 className="w-8 h-8 animate-spin" /> : <Binary className="w-8 h-8" />}
-                      {isDecoding ? 'SEQUENCING SHARDS...' : 'DECODE ECOSYSTEM DNA'}
+                      {isWarmingUp ? <Handshake className="w-8 h-8 animate-pulse" /> : isDecoding ? <Loader2 className="w-8 h-8 animate-spin" /> : <Binary className="w-8 h-8" />}
+                      {isWarmingUp ? 'INITIALIZING SHARD...' : isDecoding ? 'SEQUENCING DNA...' : 'DECODE ECOSYSTEM DNA'}
                    </button>
                 </div>
 
                 <div className="p-10 glass-card rounded-[48px] border border-emerald-500/10 bg-emerald-500/5 space-y-6 group shadow-xl">
                    <div className="flex items-center gap-4">
                       <div className="p-3 bg-emerald-600/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><Sparkles size={24} className="text-emerald-500" /></div>
-                      <h4 className="text-xl font-black text-white uppercase italic">Decoding <span className="text-emerald-500">Yield</span></h4>
+                      <h4 className="text-xl font-black text-white uppercase italic">Decoding <span className="text-emerald-400">Yield</span></h4>
                    </div>
                    <p className="text-sm text-slate-400 italic leading-relaxed">
                       "High-fidelity decodes earn up to 30 EAC per session. Maintaining genomic consensus increases regional node multipliers."
@@ -315,7 +327,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                    </div>
 
                    <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-10">
-                      {!decodedData && !isDecoding ? (
+                      {!decodedData && !isDecoding && !isWarmingUp ? (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-16 py-20 opacity-20 group">
                            <div className="relative">
                               <LabIcon size={180} className="text-slate-500 group-hover:text-blue-400 transition-colors duration-1000" />
@@ -326,7 +338,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                               <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest">Awaiting industrial telemetry ingest</p>
                            </div>
                         </div>
-                      ) : isDecoding ? (
+                      ) : (isDecoding || isWarmingUp) ? (
                         <div className="h-full flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
                            <div className="relative">
                               <div className="w-64 h-64 rounded-full border-8 border-blue-500/10 flex items-center justify-center shadow-[0_0_100px_rgba(59,130,246,0.2)]">
@@ -335,7 +347,9 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                               <div className="absolute inset-[-15px] border-t-8 border-blue-500 rounded-full animate-spin"></div>
                            </div>
                            <div className="space-y-6">
-                              <p className="text-blue-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">SEQUENCING HELIX SHARDS...</p>
+                              <p className="text-blue-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">
+                                 {isWarmingUp ? 'INITIALIZING SHARD ACCESS...' : 'SEQUENCING HELIX SHARDS...'}
+                              </p>
                               <div className="flex justify-center gap-1.5">
                                  {[...Array(8)].map((_, i) => <div key={i} className="w-1 h-12 bg-blue-500/20 rounded-full animate-bounce" style={{ animationDelay: `${i*0.1}s` }}></div>)}
                               </div>
@@ -398,7 +412,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                            <div className="flex justify-center gap-8 pt-6">
                               <button onClick={() => setDecodedData(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
                               <button className="px-24 py-6 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(59,130,246,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-5 ring-8 ring-white/5">
-                                 <Stamp size={24} /> ANCHOR TO REGISTRY
+                                 <Stamp size={24} /> ANCHOR TO LEDGER
                               </button>
                            </div>
                         </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   XAxis, 
@@ -98,6 +99,10 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
   const [soilResonance, setSoilResonance] = useState(0.45);
   const [calibrationPhase, setCalibrationPhase] = useState(0);
 
+  // Genetic Shard States
+  const [isGeneticIngesting, setIsGeneticIngesting] = useState(false);
+  const [geneticShardId, setGeneticShardId] = useState<string | null>(null);
+
   const currentOmega = useMemo(() => (atmStatic * 0.75) / (soilResonance * 1.2), [atmStatic, soilResonance]);
   const isNatureAggressive = currentOmega < 1.618;
 
@@ -125,6 +130,17 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
       if (onMintEAT) onMintEAT(50, 'MUGUMO_HELIX_RECALIBRATION');
       setTimeout(() => setShowSuccess(false), 4000);
     }, 3500);
+  };
+
+  const handleInitializeGeneticShard = () => {
+    setIsGeneticIngesting(true);
+    setGeneticShardId(null);
+    setTimeout(() => {
+      const id = `GSHD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      setGeneticShardId(id);
+      setIsGeneticIngesting(false);
+      onMintEAT?.(15, 'GENETIC_SHARD_INITIALIZED');
+    }, 2500);
   };
 
   return (
@@ -223,13 +239,28 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
               </div>
 
               <div className="pt-8 border-t border-white/5 w-full relative z-10 text-center">
-                 <p className="text-[10px] text-slate-600 font-medium italic mb-6">"Mapping regional biological base-pairs."</p>
-                 <button 
-                  onClick={() => onNavigate('biotech_hub')}
-                  className="w-full py-4 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-emerald-500/20"
-                 >
-                    <Microscope size={16} /> DECODE GENETIC SHARD <ArrowRight size={14} />
-                 </button>
+                 <p className="text-[10px] text-slate-600 font-medium italic mb-6">
+                   {geneticShardId ? `Anchored Shard: ${geneticShardId}` : "Ready for genetic telemetry ingest."}
+                 </p>
+                 <div className="space-y-4">
+                   {!geneticShardId ? (
+                     <button 
+                       onClick={handleInitializeGeneticShard}
+                       disabled={isGeneticIngesting}
+                       className="w-full py-4 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-emerald-500/20 shadow-xl"
+                     >
+                        {isGeneticIngesting ? <Loader2 size={16} className="animate-spin" /> : <Binary size={16} />}
+                        {isGeneticIngesting ? 'INITIALIZING SHARD...' : 'INITIALIZE GENETIC SHARD'}
+                     </button>
+                   ) : (
+                     <button 
+                       onClick={() => onNavigate('biotech_hub')}
+                       className="w-full py-4 agro-gradient text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                     >
+                        <Microscope size={16} /> VIEW FULL GENOME <ArrowRight size={14} />
+                     </button>
+                   )}
+                 </div>
               </div>
            </div>
         </div>

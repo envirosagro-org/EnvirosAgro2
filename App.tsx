@@ -411,7 +411,7 @@ const App: React.FC = () => {
     addPulse(`New asset registered: ${product.name}`);
   }, [isGuest, addPulse]);
 
-  const handleNavigate = (newView: ViewState) => {
+  const handleNavigate = (newView: ViewState, action?: string | null) => {
     setActiveView(newView);
     setIsMobileMenuOpen(false);
     const group = REGISTRY_NODES.find(g => g.items.some(i => i.id === newView));
@@ -513,7 +513,7 @@ const App: React.FC = () => {
           {activeView === 'dashboard' && <Dashboard user={user} isGuest={isGuest} onNavigate={handleNavigate} orders={orders} blockchain={blockchain} isMining={isMining} />}
           {activeView === 'network' && <NetworkView />}
           {activeView === 'wallet' && <AgroWallet user={user} isGuest={isGuest} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} onEarnEAC={earnEAC} transactions={transactions} />}
-          {activeView === 'sustainability' && <Sustainability user={user} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
+          {activeView === 'sustainability' && <Sustainability user={user} onNavigate={handleNavigate} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />}
           {activeView === 'economy' && <Economy user={user} isGuest={isGuest} onNavigate={handleNavigate} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} />}
           {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} onInitializeLiveProcess={(p) => setLiveProducts([p as any, ...liveProducts])} />}
           {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
@@ -522,9 +522,9 @@ const App: React.FC = () => {
           {activeView === 'agro_calendar' && <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'impact' && <Impact user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={earnEAC} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
-          {activeView === 'profile' && <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); }} />}
+          {activeView === 'profile' && <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); }} onNavigate={handleNavigate} />}
           {activeView === 'explorer' && <Explorer blockchain={blockchain} isMining={isMining} onPulse={addPulse} user={user} />}
-          {activeView === 'community' && <Community user={user} onContribution={() => earnEAC(5, 'CONTRIBUTION')} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
+          {activeView === 'community' && <Community user={user} isGuest={isGuest} onContribution={() => earnEAC(5, 'CONTRIBUTION')} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'live_farming' && <LiveFarming user={user} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} onNavigate={handleNavigate} liveProducts={liveProducts} />}
           {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onNavigate={handleNavigate} orders={orders} />}
@@ -534,7 +534,7 @@ const App: React.FC = () => {
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} onSpendEAC={spendEAC} projects={projects} onNavigate={handleNavigate} />}
           {activeView === 'agrowild' && <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />}
           {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
-          {activeView === 'biotech_hub' && <Biotechnology user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
+          {activeView === 'biotech_hub' && <Biotechnology user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'permaculture_hub' && <Permaculture user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'cea_portal' && <CEA user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
           {activeView === 'emergency_portal' && <EmergencyPortal user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />}
