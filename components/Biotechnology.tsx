@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Dna, 
@@ -101,9 +100,9 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
   const handleRunDecoder = async () => {
     if (isWarmingUp || isDecoding) return;
     
-    // Explicit initialization sequence
+    // Explicit initialization sequence for genetic shard
     setIsWarmingUp(true);
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     setIsWarmingUp(false);
 
     const DECODE_FEE = 30;
@@ -284,7 +283,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                     disabled={isDecoding || isWarmingUp}
                     className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
                    >
-                      {isWarmingUp ? <Handshake className="w-8 h-8 animate-pulse" /> : isDecoding ? <Loader2 className="w-8 h-8 animate-spin" /> : <Binary className="w-8 h-8" />}
+                      {isWarmingUp ? <Loader2 className="w-8 h-8 animate-spin" /> : isDecoding ? <Loader2 className="w-8 h-8 animate-spin" /> : <Binary className="w-8 h-8" />}
                       {isWarmingUp ? 'INITIALIZING SHARD...' : isDecoding ? 'SEQUENCING DNA...' : 'DECODE ECOSYSTEM DNA'}
                    </button>
                 </div>
@@ -457,7 +456,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                                   <button 
                                     key={trait} 
                                     onClick={() => setGenomeTrait(trait)}
-                                    className={`p-4 rounded-2xl border text-[10px] font-black uppercase transition-all flex items-center justify-center text-center ${genomeTrait === trait ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}
+                                    className={`p-4 rounded-2xl border text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${genomeTrait === trait ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}
                                   >
                                      {trait}
                                   </button>

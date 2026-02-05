@@ -434,7 +434,7 @@ const InfoPortal: React.FC = () => {
                           <Info size={20} className="text-blue-400" /> Configuration
                        </h4>
                        <p className="text-slate-400 text-sm leading-relaxed italic">
-                          "Apply these rules in the **Firebase Console > Firestore > Rules** section to authorize your local node to anchor data into the cloud shards."
+                          "Apply these rules in the **Firebase Console &gt; Firestore &gt; Rules** section to authorize your local node to anchor data into the cloud shards."
                        </p>
                        <ul className="space-y-4">
                           {[
