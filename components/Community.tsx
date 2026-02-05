@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   PlayCircle, 
   GraduationCap, 
@@ -98,15 +98,30 @@ import {
   Factory,
   Sprout,
   Network,
-  // Added missing Send import
-  Send
+  Send,
+  // Added Key and Quote to fix Cannot find name errors
+  Key,
+  Quote
 } from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  PieChart,
+  Pie
+} from 'recharts';
 import { User } from '../types';
 import { generateAgroExam, getGroundedAgroResources, AIResponse } from '../services/geminiService';
 
 interface CommunityProps {
   user: User;
-  // Added isGuest prop to match usage in App.tsx
   isGuest: boolean;
   onContribution: (type: 'post' | 'upload' | 'module' | 'quiz', category: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
@@ -114,17 +129,17 @@ interface CommunityProps {
 }
 
 const CHAPTERS = [
-  { id: 1, title: "The SEHTI Philosophy", icon: Heart, content: "Agriculture is not just land management; it is a complex system of human psychology, social structures, and scientific data. SEHTI integrates five core thrusts to achieve 100% sustainability. Our goal is to minimize Stress (S) while maximizing Density (Dn) and Intensity (In) through Cumulative (Ca) efforts." },
-  { id: 2, title: "Industrial Optimization (I)", icon: Factory, content: "The 'I' pillar focuses on industrial optimization. By leveraging decentralized ledgers (ESIN), we create an immutable record of agricultural output, carbon capture, and resource efficiency. Every action on the field is sharded and validated by peer nodes." },
-  { id: 3, title: "Agro Code C(a) Biometrics", icon: Binary, content: "The C(a) is the core biometric of your land. It is calculated based on cumulative sustainable practices. Maintaining high resonance in your local node branch requires regular spectral auditing and bio-signal synchronization via the Registry Handshake." },
-  { id: 4, title: "m-Constant Resilience", icon: Activity, content: "The sustainable time constant (m) represents your node's ability to resist external volatility. Calculated as the square root of productivity over stress, it determines your institutional multiplier for EAC mining." },
+  { id: 1, title: "The SEHTI Philosophy", icon: Heart, content: "Agriculture is not just land management; it is a complex system of human psychology, social structures, and scientific data. SEHTI integrates five core thrusts to achieve 100% sustainability. Our goal is to minimize Stress (S) while maximizing Density (Dn) and Intensity (In) through Cumulative (Ca) efforts.\n\nAt its core, SEHTI is a survival protocol. In environments where external infrastructure is volatile, the community becomes the primary redundant system. By sharding trust into a decentralized ledger, we ensure that no single point of failure can destabilize the regional food supply." },
+  { id: 2, title: "Industrial Optimization (I)", icon: Factory, content: "The 'I' pillar focuses on industrial optimization. By leveraging decentralized ledgers (ESIN), we create an immutable record of agricultural output, carbon capture, and resource efficiency. Every action on the field is sharded and validated by peer nodes.\n\nIndustrializing sustainable agriculture requires a transition from intuition-based farming to data-driven orchestration. This involves real-time telemetry ingest and the use of SCADA systems to monitor biomass growth and nutrient flow with sub-millimeter precision." },
+  { id: 3, title: "Agro Code C(a) Biometrics", icon: Binary, content: "The C(a) is the core biometric of your land. It is calculated based on cumulative sustainable practices. Maintaining high resonance in your local node branch requires regular spectral auditing and bio-signal synchronization via the Registry Handshake.\n\nThe formula for C(a) accounts for soil microbial density, water retention capacity, and biodiversity shards. A higher C(a) constant directly translates to increased EAC mining power, incentivizing stewards to prioritize long-term ecological wealth over short-term extraction." },
+  { id: 4, title: "m-Constant Resilience", icon: Activity, content: "The sustainable time constant (m) represents your node's ability to resist external volatility. Calculated as the square root of productivity over stress, it determines your institutional multiplier for EAC mining.\n\nm-Constant management is the primary task of a Senior Steward. It requires a balanced approach to the Five Thrusts. For example, excessive technological intensity (In) without sufficient human wellness (H) can lead to social influenza (SID), causing a sudden decay in the m-constant and triggering a registry audit event." },
 ];
 
 const LMS_MODULES = [
-  { id: 'mod-1', title: "EOS Framework Fundamentals", category: "Theoretical", eac: 50, col: "text-emerald-400", special: false, progress: 100 },
-  { id: 'mod-2', title: "m-Constant Resilience Logic", category: "Technical", eac: 150, col: "text-blue-400", special: true, progress: 45 },
-  { id: 'mod-3', title: "SID Pathogen Identification", category: "Societal", eac: 100, col: "text-rose-400", special: false, progress: 0 },
-  { id: 'mod-4', title: "Total Quality Management (TQM)", category: "Industrial", eac: 200, col: "text-indigo-400", special: true, progress: 0 },
+  { id: 'mod-1', title: "EOS Framework Fundamentals", category: "Theoretical", eac: 50, col: "text-emerald-400", special: false, progress: 100, desc: "A comprehensive introduction to the SEHTI pillars and the blockchain registry architecture." },
+  { id: 'mod-2', title: "m-Constant Resilience Logic", category: "Technical", eac: 150, col: "text-blue-400", special: true, progress: 45, desc: "Deep dive into the mathematical derivation of industrial stability and yield multipliers." },
+  { id: 'mod-3', title: "SID Pathogen Identification", category: "Societal", eac: 100, col: "text-rose-400", special: false, progress: 0, desc: "Learning to identify and mitigate ideological crowding and trust-decay in social shards." },
+  { id: 'mod-4', title: "Total Quality Management (TQM)", category: "Industrial", eac: 200, col: "text-indigo-400", special: true, progress: 0, desc: "Mastering the tracking and tracing of agricultural assets from inception to market finality." },
 ];
 
 const INITIAL_SOCIAL_SHARDS = [
@@ -137,6 +152,7 @@ const INITIAL_SOCIAL_SHARDS = [
     rules: 'Requires verified Tier 2 Steward status.',
     type: 'Heritage Clan',
     mission: 'Preserving drought-resistant lineage seeds through collective sharding.',
+    trending: '+2.4%'
   },
   { 
     id: 'SHD-104', 
@@ -147,6 +163,7 @@ const INITIAL_SOCIAL_SHARDS = [
     rules: 'Open for all CEA-certified stewards.',
     type: 'Technical Guild',
     mission: 'Optimizing nutrient delivery shards across urban vertical stacks.',
+    trending: '+8.1%'
   },
   { 
     id: 'SHD-042', 
@@ -157,6 +174,7 @@ const INITIAL_SOCIAL_SHARDS = [
     rules: 'Mandatory for institutional carbon mining.',
     type: 'Industrial Union',
     mission: 'Aggregating regional sequestration proofs for global ledger settlement.',
+    trending: '+12.4%'
   }
 ];
 
@@ -169,13 +187,11 @@ const MOCK_FEED = [
 const EXAM_FEE = 50;
 const EXAM_REWARD_BOUNTY = 500;
 
-// Added isGuest to destructured props
 const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpendEAC, onContribution }) => {
   const [activeTab, setActiveTab] = useState<'hub' | 'shards' | 'lms' | 'manual' | 'report'>('hub');
   const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams'>('modules');
   
   const [shards, setShards] = useState(INITIAL_SOCIAL_SHARDS);
-  const [activeShard, setActiveShard] = useState<any | null>(null);
   const [joinedShards, setJoinedShards] = useState<string[]>(['SHD-104']); 
 
   const [isPosting, setIsPosting] = useState(false);
@@ -265,9 +281,15 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
   };
 
   return (
-    <div className="space-y-8 pb-20 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
-      {/* Top Navigation */}
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-2xl w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4">
+    <div className="space-y-8 pb-20 animate-in fade-in duration-500 max-w-[1600px] mx-auto relative overflow-hidden">
+      
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 p-40 opacity-[0.01] pointer-events-none rotate-12">
+        <Users2 size={1000} className="text-emerald-500" />
+      </div>
+
+      {/* Top Navigation Shards */}
+      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-6 relative z-20">
         {[
           { id: 'hub', name: 'HERITAGE HUB', icon: Globe },
           { id: 'shards', name: 'SOCIAL SHARDS', icon: Users2 },
@@ -278,83 +300,539 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
           <button 
             key={t.id} 
             onClick={() => setActiveTab(t.id as any)} 
-            className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-emerald-600 text-white shadow-2xl scale-105 border-b-4 border-emerald-400 ring-8 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <t.icon className="w-4 h-4" /> {t.name}
           </button>
         ))}
       </div>
 
-      <div className="min-h-[600px]">
-        {/* --- HUB TAB --- */}
+      <div className="min-h-[800px] relative z-10">
+        
+        {/* --- TAB: HERITAGE HUB (COMMUNITY FEED) --- */}
         {activeTab === 'hub' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in slide-in-from-bottom-4 duration-500 px-4 md:px-0">
-             <div className="lg:col-span-8 space-y-8">
-                {/* Broadcast Box */}
-                <div className="glass-card p-8 rounded-[40px] border-emerald-500/20 bg-emerald-500/5 shadow-xl relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:rotate-12 transition-transform duration-[10s]"><MessageSquare className="w-48 h-48" /></div>
-                   <h3 className="text-xl font-black text-white mb-6 flex items-center gap-4 italic uppercase relative z-10"><MessageSquare className="w-5 h-5 text-emerald-400" /> Community Broadcast</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-6 duration-700 px-4 md:px-0">
+             <div className="lg:col-span-8 space-y-10">
+                {/* Broadcast / Post Ingest */}
+                <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-500/5 shadow-3xl relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[15s] pointer-events-none">
+                      <Radio className="w-96 h-96 text-white" />
+                   </div>
+                   <div className="flex items-center gap-6 mb-10 relative z-10">
+                      <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl">
+                         <Podcast className="w-8 h-8 text-white" />
+                      </div>
+                      <div>
+                         <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Heritage <span className="text-emerald-400">Broadcast</span></h3>
+                         <p className="text-emerald-400/60 text-[10px] font-mono tracking-widest uppercase mt-2">COMMUNITY_SIGNAL_INGEST</p>
+                      </div>
+                   </div>
                    <textarea 
                     value={postContent} 
                     onChange={(e) => setPostContent(e.target.value)} 
                     placeholder="Share agricultural wisdom or node updates..." 
-                    className="w-full bg-black/60 border border-white/10 rounded-3xl p-8 text-white text-base focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none h-48 resize-none shadow-inner italic relative z-10" 
+                    className="w-full bg-black/60 border border-white/10 rounded-[40px] p-10 text-white text-lg font-medium focus:ring-8 focus:ring-emerald-500/5 transition-all outline-none h-48 resize-none shadow-inner italic relative z-10 placeholder:text-slate-900" 
                    />
-                   <div className="flex justify-between items-center mt-6 relative z-10">
-                      <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all shadow-md active:scale-95"><Upload className="w-5 h-5" /></button>
+                   <div className="flex flex-col sm:flex-row justify-between items-center mt-8 relative z-10 gap-6">
+                      <div className="flex gap-4">
+                         <button className="p-6 bg-white/5 border border-white/10 rounded-3xl text-slate-500 hover:text-white transition-all shadow-md active:scale-95"><FileUp size={24} /></button>
+                         <button className="p-6 bg-white/5 border border-white/10 rounded-3xl text-slate-500 hover:text-white transition-all shadow-md active:scale-95"><Hash size={24} /></button>
+                      </div>
                       <button 
                         onClick={handlePost}
                         disabled={isPosting || !postContent.trim()}
-                        className="px-16 py-4 agro-gradient rounded-2xl text-white font-black text-xs uppercase tracking-[0.3em] shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50"
+                        className="w-full sm:w-auto px-20 py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl flex items-center justify-center gap-5 active:scale-95 transition-all disabled:opacity-50 ring-8 ring-white/5 border-2 border-white/10"
                       >
-                         {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send size={16} />}
-                         <span>Broadcast Signal</span>
+                         {isPosting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send size={20} />}
+                         <span>AUTHORIZE BROADCAST</span>
                       </button>
                    </div>
                 </div>
                 
-                {/* MOCK_FEED rendering */}
-                <div className="space-y-6">
-                   {MOCK_FEED.map(post => (
-                      <div key={post.id} className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/40 space-y-6">
-                         <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-4">
-                               <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-400 font-black">
+                {/* Community Shard Stream */}
+                <div className="space-y-10">
+                   {MOCK_FEED.map((post, idx) => (
+                      <div key={post.id} className="glass-card p-12 rounded-[72px] border-2 border-white/5 bg-black/40 shadow-3xl group animate-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: `${idx * 150}ms` }}>
+                         <div className="flex justify-between items-start mb-10">
+                            <div className="flex items-center gap-8">
+                               <div className="w-20 h-20 rounded-[28px] bg-slate-800 flex items-center justify-center text-4xl font-black text-emerald-400 shadow-2xl border-2 border-white/5 group-hover:rotate-6 transition-all">
                                   {post.author[0]}
                                </div>
                                <div>
-                                  <h4 className="text-white font-black text-sm uppercase tracking-widest">{post.author}</h4>
-                                  <p className="text-[10px] text-slate-500 font-mono uppercase">{post.esin}</p>
+                                  <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-emerald-400 transition-colors">{post.author}</h4>
+                                  <p className="text-[10px] text-slate-500 font-mono font-black mt-3 uppercase tracking-widest">{post.esin}</p>
                                </div>
                             </div>
-                            <span className="text-[10px] text-slate-700 font-mono font-black">{post.time}</span>
+                            <div className="text-right">
+                               <span className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest">{post.time}</span>
+                               <div className="mt-3 flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                  <span className="text-[8px] font-black text-slate-500">LIVE_SHARD</span>
+                               </div>
+                            </div>
                          </div>
-                         <p className="text-slate-300 text-lg italic leading-relaxed">"{post.text}"</p>
-                         <div className="flex gap-6 pt-4 border-t border-white/5">
-                            <button className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase hover:text-emerald-400 transition-colors">
-                               <ThumbsUp size={14} /> {post.likes}
-                            </button>
-                            <button className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase hover:text-blue-400 transition-colors">
-                               <MessageSquareShare size={14} /> {post.shares}
-                            </button>
+                         <div className="p-10 bg-white/[0.01] border-l-8 border-l-emerald-500/40 rounded-r-[48px] shadow-inner mb-10">
+                            <p className="text-slate-200 text-2xl leading-relaxed italic font-medium">"{post.text}"</p>
+                         </div>
+                         <div className="flex justify-between items-center pt-8 border-t border-white/5">
+                            <div className="flex gap-10">
+                               <button className="flex items-center gap-4 text-xs font-black text-slate-600 uppercase tracking-widest hover:text-rose-500 transition-all group/btn">
+                                  <Heart size={20} className="group-hover/btn:fill-current" /> {post.likes}
+                               </button>
+                               <button className="flex items-center gap-4 text-xs font-black text-slate-600 uppercase tracking-widest hover:text-blue-400 transition-all group/btn">
+                                  <MessageSquareShare size={20} /> {post.shares}
+                               </button>
+                            </div>
+                            <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-700 hover:text-white transition-all"><MoreVertical size={20} /></button>
                          </div>
                       </div>
                    ))}
                 </div>
              </div>
              
-             {/* Sidebar widgets */}
-             <div className="lg:col-span-4 space-y-8">
-                <div className="glass-card p-10 rounded-[48px] border border-emerald-500/20 bg-emerald-500/5 space-y-8">
-                   <h4 className="text-xl font-black text-white uppercase italic">Active <span className="text-emerald-400">Stats</span></h4>
+             {/* Industrial Sidebar Context */}
+             <div className="lg:col-span-4 space-y-10">
+                <div className="glass-card p-12 rounded-[56px] border border-indigo-500/20 bg-indigo-500/5 space-y-10 shadow-3xl relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Activity size={300} className="text-indigo-400" /></div>
+                   <div className="flex items-center gap-6 relative z-10 border-b border-white/5 pb-8">
+                      <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl"><Globe size={24} className="text-white" /></div>
+                      <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Global <span className="text-indigo-400">Yield Sync</span></h4>
+                   </div>
+                   <div className="space-y-8 relative z-10">
+                      {[
+                        { l: 'Network Resonance', v: '94.2%', i: Waves, c: 'text-indigo-400' },
+                        { l: 'Community Voids', v: '0.02', i: Eye, c: 'text-rose-500' },
+                        { l: 'EAC Flow Rate', v: '1.4K/h', i: TrendingUp, c: 'text-emerald-400' },
+                      ].map(s => (
+                        <div key={s.l} className="flex justify-between items-center px-4 py-3 bg-black/40 rounded-2xl border border-white/5 group/s hover:border-white/20 transition-all">
+                           <div className="flex items-center gap-4">
+                              <s.i size={16} className={s.c} />
+                              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover/s:text-slate-300">{s.l}</span>
+                           </div>
+                           <span className="text-lg font-mono font-black text-white">{s.v}</span>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="p-12 glass-card rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl">
+                   <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                      <Crown size={24} className="text-amber-500" />
+                      <h4 className="text-lg font-black text-white uppercase italic">Active <span className="text-amber-500">Hall of Fame</span></h4>
+                   </div>
                    <div className="space-y-6">
-                      <div className="flex justify-between items-center">
-                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Stewards</span>
-                         <span className="text-xl font-mono font-black text-white">1,242</span>
+                      {['Master_Bantu', 'Gaia_Stwd_NY', 'Soil_Oracle_82'].map((name, i) => (
+                        <div key={name} className="flex items-center justify-between group cursor-pointer">
+                           <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black text-slate-500 group-hover:text-amber-400 transition-all shadow-inner">{i+1}</div>
+                              <span className="text-sm font-black text-white uppercase italic tracking-tight">{name}</span>
+                           </div>
+                           <div className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase rounded border border-amber-500/20">{(98 - i * 2)}% RESONANCE</div>
+                        </div>
+                      ))}
+                   </div>
+                   <button className="w-full py-4 mt-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[9px] font-black uppercase text-slate-500 hover:text-white transition-all">VIEW ALL STEWARDS</button>
+                </div>
+             </div>
+          </div>
+        )}
+
+        {/* --- TAB: SOCIAL SHARDS (CLANS) --- */}
+        {activeTab === 'shards' && (
+           <div className="space-y-16 animate-in slide-in-from-right-10 duration-700 px-4 md:px-0">
+              <div className="flex flex-col md:flex-row justify-between items-end gap-8 border-b border-white/5 pb-12 px-8">
+                 <div className="space-y-4">
+                    <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Social <span className="text-emerald-400">Sharding Registry</span></h3>
+                    <p className="text-slate-500 text-xl font-medium italic opacity-70">Collective mission nodes for cultural and technical synchronization.</p>
+                 </div>
+                 <button className="px-12 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95 transition-all ring-8 ring-emerald-500/5">
+                    <PlusCircle size={20} /> Register New Shard Node
+                 </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 px-6">
+                 {shards.map(shard => (
+                    <div key={shard.id} className="glass-card p-12 rounded-[80px] border-2 border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col justify-between shadow-3xl bg-black/40 relative overflow-hidden h-[680px]">
+                       <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Users2 size={300} className="text-emerald-400" /></div>
+                       
+                       <div className="flex justify-between items-start mb-12 relative z-10">
+                          <div className="p-6 rounded-[32px] bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 shadow-2xl group-hover:rotate-6 transition-all">
+                             <Users size={40} />
+                          </div>
+                          <div className="text-right flex flex-col items-end gap-3">
+                             <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest">{shard.type}</span>
+                             <p className="text-[10px] text-slate-700 font-mono font-black italic">{shard.id}</p>
+                          </div>
+                       </div>
+
+                       <div className="flex-1 space-y-8 relative z-10">
+                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{shard.name}</h4>
+                          <p className="text-lg text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">"{shard.mission}"</p>
+                          
+                          <div className="grid grid-cols-2 gap-4 pt-4">
+                             <div className="p-8 bg-black/80 rounded-[44px] border border-white/5 space-y-2 shadow-inner group/stat hover:border-emerald-500/20 transition-all">
+                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Resonance</p>
+                                <div className="flex items-end gap-2">
+                                   <p className="text-4xl font-mono font-black text-white">{shard.resonance}%</p>
+                                   <span className="text-[9px] font-black text-emerald-400 mb-1">{shard.trending}</span>
+                                </div>
+                             </div>
+                             <div className="p-8 bg-black/80 rounded-[44px] border border-white/5 space-y-2 shadow-inner group/stat hover:border-blue-500/20 transition-all">
+                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Active Peers</p>
+                                <p className="text-4xl font-mono font-black text-white">{shard.memberCount}</p>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="mt-12 pt-10 border-t border-white/5 flex flex-col gap-6 relative z-10">
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] px-4 text-center">Protocol: {shard.rules}</p>
+                          <button 
+                            onClick={() => handleJoinShard(shard.id)}
+                            className={`w-full py-8 rounded-[40px] font-black text-xs uppercase tracking-[0.4em] shadow-3xl transition-all flex items-center justify-center gap-5 border-2 active:scale-95 ${
+                              joinedShards.includes(shard.id) 
+                                ? 'bg-rose-600/10 border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white' 
+                                : 'bg-emerald-600 border-white/10 text-white hover:bg-emerald-500 ring-8 ring-emerald-500/5'
+                            }`}
+                          >
+                             {joinedShards.includes(shard.id) ? <LogOut size={24} /> : <Handshake size={24} />}
+                             {joinedShards.includes(shard.id) ? 'LEAVE_SHARD_QUORUM' : 'JOIN_SOCIAL_SHARD'}
+                          </button>
+                       </div>
+                    </div>
+                 ))}
+              </div>
+           </div>
+        )}
+
+        {/* --- TAB: LEARNING HUB (LMS) --- */}
+        {activeTab === 'lms' && (
+           <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-1000 px-4 md:px-0">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-10 px-8">
+                 <div className="flex p-2 glass-card rounded-full bg-black/40 border border-white/5 shadow-inner">
+                    <button onClick={() => setLmsSubTab('modules')} className={`px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${lmsSubTab === 'modules' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>COURSE_TRACKS</button>
+                    <button onClick={() => setLmsSubTab('exams')} className={`px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${lmsSubTab === 'exams' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>CERTIFICATIONS</button>
+                 </div>
+                 <div className="flex items-center gap-4 px-8 py-4 bg-indigo-500/10 border border-indigo-500/20 rounded-full shadow-inner">
+                    <History size={16} className="text-indigo-400" />
+                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Aggregate Progress: 38%</span>
+                 </div>
+              </div>
+
+              {lmsSubTab === 'modules' && (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-6">
+                    {LMS_MODULES.map(mod => (
+                       <div key={mod.id} className="p-10 glass-card rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col gap-10 shadow-3xl relative overflow-hidden active:scale-[0.99] duration-300">
+                          <div className="flex justify-between items-start relative z-10">
+                             <div className={`p-6 rounded-3xl bg-white/5 border border-white/10 ${mod.col} group-hover:rotate-6 transition-transform shadow-inner`}>
+                                <FileText size={40} />
+                             </div>
+                             <div className="text-right space-y-2">
+                                <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-lg ${mod.special ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40' : 'bg-white/5 text-slate-500 border-white/10'}`}>
+                                   {mod.category.toUpperCase()}
+                                </span>
+                                <p className="text-[9px] text-slate-700 font-mono font-black italic">{mod.id}</p>
+                             </div>
+                          </div>
+                          <div className="flex-1 space-y-6 relative z-10">
+                             <h4 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter group-hover:text-indigo-400 transition-colors leading-none">{mod.title}</h4>
+                             <p className="text-slate-400 text-xl font-medium italic opacity-80 leading-relaxed line-clamp-3">"{mod.desc}"</p>
+                             <div className="space-y-4 pt-6">
+                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500 px-2">
+                                   <span>Completion Shard</span>
+                                   <span className="text-white font-mono">{mod.progress}%</span>
+                                </div>
+                                <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                                   <div className={`h-full bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.6)] transition-all duration-[2.5s]`} style={{ width: `${mod.progress}%` }}></div>
+                                </div>
+                             </div>
+                          </div>
+                          <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
+                             <div className="flex items-center gap-3">
+                                <Coins size={20} className="text-emerald-500" />
+                                <span className="text-2xl font-mono font-black text-white">+{mod.eac} <span className="text-xs text-slate-700">EAC</span></span>
+                             </div>
+                             <button className="px-12 py-5 bg-indigo-600 hover:bg-indigo-500 rounded-[32px] text-[11px] font-black text-white uppercase tracking-[0.4em] shadow-xl transition-all active:scale-90">INITIALIZE MODULE</button>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              )}
+
+              {lmsSubTab === 'exams' && (
+                 <div className="max-w-4xl mx-auto space-y-12 animate-in zoom-in duration-500 px-6">
+                    <div className="p-16 md:p-24 glass-card rounded-[80px] border-2 border-indigo-500/30 bg-black/60 shadow-[0_40px_150px_rgba(0,0,0,0.9)] text-center space-y-16 relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-125 transition-transform duration-[15s] pointer-events-none"><Stamp size={500} className="text-indigo-400" /></div>
+                       
+                       {examStep === 'intro' && (
+                          <div className="space-y-12 relative z-10 animate-in slide-in-from-bottom-6">
+                             <div className="w-40 h-40 bg-indigo-600 rounded-[56px] flex items-center justify-center text-white mx-auto shadow-3xl animate-float border-4 border-white/10 group-hover:rotate-12 transition-all">
+                                <Stamp size={80} className="relative z-10" />
+                             </div>
+                             <div className="space-y-4">
+                                <h3 className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">STEWARD <span className="text-indigo-400">CERTIFICATION</span></h3>
+                                <p className="text-slate-400 text-3xl font-medium italic opacity-80 leading-relaxed max-w-3xl mx-auto">
+                                   "Anchor your expertise into the global industrial ledger. Pass the Science Oracle exam to unlock high-tier sharding missions."
+                                </p>
+                             </div>
+                             <div className="flex flex-col sm:flex-row justify-center gap-6 pt-10">
+                                <button 
+                                  onClick={() => setExamStep('payment')}
+                                  className="px-24 py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
+                                >
+                                   INITIALIZE EXAM SHARD
+                                </button>
+                             </div>
+                          </div>
+                       )}
+
+                       {examStep === 'payment' && (
+                          <div className="space-y-16 relative z-10 animate-in slide-in-from-right-10 duration-700 w-full max-w-2xl mx-auto">
+                             <div className="space-y-4">
+                                <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Authorization <span className="text-indigo-400">Ledger</span></h4>
+                                <p className="text-slate-500 text-xl italic leading-relaxed">"Authorized sharding fee required for Oracle synthesis."</p>
+                             </div>
+                             
+                             <div className="p-12 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 shadow-inner space-y-12">
+                                <div className="flex justify-between items-center px-6">
+                                   <div className="text-left space-y-1">
+                                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest leading-none">Examination Topic</p>
+                                      <p className="text-2xl font-black text-white uppercase italic tracking-tight">{examTopic}</p>
+                                   </div>
+                                   <div className="h-16 w-px bg-white/5"></div>
+                                   <div className="text-right space-y-1">
+                                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest leading-none">Sharding Fee</p>
+                                      <p className="text-4xl font-mono font-black text-emerald-400 tracking-tighter">{EXAM_FEE} EAC</p>
+                                   </div>
+                                </div>
+                                <div className="space-y-4">
+                                   <p className="text-[11px] text-slate-500 font-black uppercase tracking-[0.6em] mb-4">Node Signature (ESIN)</p>
+                                   <input 
+                                      type="text" 
+                                      value={esinSign}
+                                      onChange={e => setEsinSign(e.target.value)}
+                                      placeholder="EA-XXXX-XXXX-XXXX"
+                                      className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 text-center text-5xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
+                                   />
+                                </div>
+                             </div>
+
+                             <div className="flex gap-6 pt-4">
+                                <button onClick={() => setExamStep('intro')} className="flex-1 py-10 bg-white/5 border border-white/10 rounded-[48px] text-slate-500 font-black text-sm uppercase tracking-widest hover:text-white transition-all shadow-xl active:scale-95">Abort Shard</button>
+                                <button 
+                                  onClick={handleAuthorizeExam}
+                                  disabled={!esinSign}
+                                  className="flex-[2] py-10 bg-indigo-600 hover:bg-indigo-500 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(99,102,241,0.4)] flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
+                                >
+                                   {/* Added missing Key Icon to fix component error */}
+                                   <Key className="w-8 h-8 fill-current" /> AUTHORIZE INGEST
+                                </button>
+                             </div>
+                          </div>
+                       )}
+
+                       {examStep === 'generation' && (
+                          <div className="flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500 min-h-[400px]">
+                             <div className="relative">
+                                <Loader2 size={120} className="text-indigo-500 animate-spin mx-auto" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                   <Bot className="w-16 h-16 text-indigo-400 animate-pulse" />
+                                </div>
+                             </div>
+                             <div className="space-y-6">
+                                <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0 drop-shadow-2xl">SYNTHESIZING EXAM SHARDS...</p>
+                                <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">EOS_ORACLE_V5 // SEQUENCING_CERT_LOGIC</p>
+                             </div>
+                          </div>
+                       )}
+
+                       {examStep === 'active' && examQuestions[currentQuestion] && (
+                          <div className="space-y-12 animate-in slide-in-from-bottom-8 duration-700 flex flex-col justify-center min-h-[500px]">
+                             <div className="flex justify-between items-center mb-10 px-6">
+                                <div className="flex items-center gap-6">
+                                   <span className="text-7xl font-black text-indigo-500/20 italic font-mono leading-none">0{currentQuestion + 1}</span>
+                                   <div className="h-10 w-px bg-white/10"></div>
+                                   <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{examQuestions[currentQuestion].category} SHARD</p>
+                                </div>
+                                <div className="text-right">
+                                   <p className="text-[10px] text-slate-700 font-black uppercase mb-1">Time Remaining</p>
+                                   <div className="px-5 py-2 bg-black rounded-xl border border-rose-500/30 font-mono text-rose-500 text-xl font-black">04:52</div>
+                                </div>
+                             </div>
+
+                             <div className="p-12 md:p-20 bg-white/[0.01] border-l-[16px] border-l-indigo-600 rounded-r-[64px] border border-white/5 shadow-inner text-left relative overflow-hidden group/q">
+                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/q:scale-110 transition-transform duration-[15s]"><Database size={400} /></div>
+                                <h4 className="text-4xl md:text-5xl font-black text-slate-100 uppercase italic tracking-tighter m-0 leading-tight relative z-10">
+                                   "{examQuestions[currentQuestion].q}"
+                                </h4>
+                             </div>
+
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-10">
+                                {examQuestions[currentQuestion].options.map((opt: string, i: number) => (
+                                   <button 
+                                      key={i}
+                                      onClick={() => handleAnswerSelect(i)}
+                                      className="p-10 glass-card bg-black/60 border-2 border-white/5 rounded-[48px] text-xl font-medium text-slate-300 hover:border-indigo-500 hover:text-white hover:bg-indigo-600/5 transition-all text-left group flex items-start gap-8 shadow-2xl active:scale-[0.98]"
+                                   >
+                                      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 font-black text-slate-700 group-hover:text-indigo-400 group-hover:border-indigo-500/40 transition-all shadow-inner">
+                                         {['A', 'B', 'C', 'D'][i]}
+                                      </div>
+                                      <span className="italic leading-relaxed">{opt}</span>
+                                   </button>
+                                ))}
+                             </div>
+                          </div>
+                       )}
+
+                       {examStep === 'grading' && (
+                          <div className="flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in duration-500 min-h-[400px]">
+                             <div className="relative">
+                                <Loader2 className="w-120 h-120 text-emerald-500 animate-spin mx-auto" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                   <ShieldCheck className="w-16 h-16 text-emerald-400 animate-pulse" />
+                                </div>
+                             </div>
+                             <p className="text-emerald-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">GRADING SHARD RESPONSE...</p>
+                          </div>
+                       )}
+
+                       {examStep === 'results' && examResult && (
+                          <div className="space-y-16 py-10 animate-in zoom-in duration-1000 flex flex-col items-center justify-center text-center">
+                             <div className={`w-64 h-64 rounded-full flex items-center justify-center shadow-[0_0_200px_current] relative group scale-110 ${examResult.passed ? 'agro-gradient text-white' : 'bg-rose-950/20 border-4 border-rose-500/30 text-rose-500'}`}>
+                                {examResult.passed ? <CheckCircle2 size={120} /> : <AlertTriangle size={120} />}
+                                <div className={`absolute inset-[-20px] rounded-full border-4 animate-ping opacity-30 ${examResult.passed ? 'border-emerald-500' : 'border-rose-500'}`}></div>
+                             </div>
+
+                             <div className="space-y-6">
+                                <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">
+                                   {examResult.passed ? 'SHARD ANCHORED.' : 'SYNC FAILED.'}
+                                </h3>
+                                <div className="flex items-center justify-center gap-8 pt-4">
+                                   <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 min-w-[200px] shadow-inner">
+                                      <p className="text-[10px] text-slate-500 uppercase font-black mb-3">Final Score</p>
+                                      <p className={`text-6xl font-mono font-black ${examResult.passed ? 'text-emerald-400' : 'text-rose-500'}`}>{examResult.percentage}%</p>
+                                   </div>
+                                   <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 min-w-[200px] shadow-inner">
+                                      <p className="text-[10px] text-slate-500 uppercase font-black mb-3">Steward Status</p>
+                                      <p className="text-3xl font-black text-white uppercase italic">{examResult.passed ? 'CERTIFIED' : 'PROVISIONAL'}</p>
+                                   </div>
+                                </div>
+                             </div>
+
+                             {examResult.passed ? (
+                                <div className="w-full max-w-2xl glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-3xl">
+                                   <p className="text-slate-300 text-xl italic font-medium leading-relaxed">
+                                      "Expertise successfully sharded to the EOS industrial registry. Node multiplier increased by **+0.15x**. Bounty anchored."
+                                   </p>
+                                   <div className="flex gap-4">
+                                      <button className="flex-1 py-6 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3">
+                                         <Download size={18} /> DOWNLOAD CERT SHARD
+                                      </button>
+                                      <button onClick={() => setExamStep('intro')} className="flex-1 py-6 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl">DONE</button>
+                                   </div>
+                                </div>
+                             ) : (
+                                <div className="w-full max-w-2xl space-y-10">
+                                   <div className="p-10 glass-card rounded-[56px] border-rose-500/20 bg-rose-500/5 space-y-6">
+                                      <h4 className="text-xl font-black text-rose-500 uppercase italic">Remediation Protocol</h4>
+                                      <p className="text-slate-400 text-lg italic">"Registry consensus not reached. Minimum mastery threshold is 80%."</p>
+                                   </div>
+                                   {studyResources && (
+                                      <div className="p-10 glass-card rounded-[56px] border border-blue-500/20 bg-blue-500/5 text-left space-y-8 animate-in slide-in-from-bottom-6">
+                                         <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                                            <Sparkles className="w-5 h-5 text-blue-400" />
+                                            <h5 className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Study Shard Recommendation</h5>
+                                         </div>
+                                         <div className="text-slate-300 text-sm leading-relaxed italic whitespace-pre-line font-medium border-l-2 border-blue-500/20 pl-6">
+                                            {studyResources.text}
+                                         </div>
+                                      </div>
+                                   )}
+                                   <button onClick={() => setExamStep('intro')} className="w-full py-8 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
+                                </div>
+                             )}
+                          </div>
+                       )}
+                    </div>
+                 </div>
+              )}
+           </div>
+        )}
+
+        {/* --- TAB: SEHTI MANUAL (CORE DOCS) --- */}
+        {activeTab === 'manual' && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 animate-in slide-in-from-left-4 duration-700 px-4 md:px-0">
+             <div className="lg:col-span-1 space-y-8">
+                <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-10 shadow-3xl">
+                   <div className="flex items-center gap-4 border-b border-white/5 pb-8">
+                      <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl"><BookOpen size={24} className="text-white" /></div>
+                      <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Registry <span className="text-emerald-400">Chapters</span></h3>
+                   </div>
+                   <div className="space-y-4">
+                      {CHAPTERS.map(ch => (
+                        <button 
+                          key={ch.id} 
+                          onClick={() => setSelectedChapter(ch)}
+                          className={`w-full p-6 rounded-[32px] border-2 transition-all flex items-center justify-between group ${selectedChapter.id === ch.id ? 'bg-emerald-600/10 border-emerald-500 text-emerald-400 shadow-xl scale-105' : 'bg-black/60 border-white/5 text-slate-500 hover:border-emerald-500/20'}`}
+                        >
+                           <div className="flex items-center gap-4">
+                              <ch.icon size={20} className={selectedChapter.id === ch.id ? 'text-emerald-400' : 'text-slate-700 group-hover:rotate-12 transition-transform'} />
+                              <span className="text-xs font-black uppercase tracking-widest">{ch.title}</span>
+                           </div>
+                           {selectedChapter.id === ch.id && <ChevronRight size={20} className="animate-pulse" />}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="p-10 glass-card rounded-[48px] border border-blue-500/10 bg-blue-500/5 space-y-6 group">
+                    <div className="flex items-center gap-3">
+                       <ShieldCheck className="w-5 h-5 text-blue-400" />
+                       <h4 className="text-[11px] font-black text-blue-400 uppercase tracking-widest italic">Immutable Doctrine</h4>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">
+                       "The SEHTI Manual is the supreme protocol for all node sharding. Adherence is non-optional for Tier 1 Stewards."
+                    </p>
+                </div>
+             </div>
+
+             <div className="lg:col-span-3">
+                <div className="glass-card p-12 md:p-24 rounded-[80px] border-2 border-white/5 bg-black/20 h-full flex flex-col relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] group/doc">
+                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
+                      <selectedChapter.icon size={600} className="text-emerald-500" />
+                   </div>
+                   
+                   <div className="relative z-10 space-y-12">
+                      <div className="flex justify-between items-start">
+                         <div className="space-y-4">
+                            <span className="px-5 py-2 bg-emerald-500/10 text-emerald-400 text-[11px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-inner">SHARD_CHAPTER_0{selectedChapter.id}</span>
+                            <h2 className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover/doc:text-emerald-400 transition-colors drop-shadow-2xl">{selectedChapter.title}</h2>
+                         </div>
+                         <button className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-700 hover:text-white transition-all shadow-xl active:scale-90"><Share2 size={24} /></button>
                       </div>
-                      <div className="flex justify-between items-center">
-                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Network Yield</span>
-                         <span className="text-xl font-mono font-black text-emerald-400">14.2k EAC</span>
+
+                      <div className="p-12 md:p-20 bg-black/40 rounded-[64px] border border-white/10 relative overflow-hidden shadow-inner group/p">
+                         {/* Added missing Quote Icon to fix component error */}
+                         <div className="absolute top-10 left-10 opacity-20 text-emerald-500 group-hover/p:scale-110 transition-transform">
+                           <Quote size={60} />
+                         </div>
+                         <p className="text-slate-200 text-2xl md:text-5xl italic leading-relaxed font-serif relative z-10 pl-12 md:pl-20 border-l-[12px] border-l-emerald-600/40">
+                            {selectedChapter.content}
+                         </p>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-8 pt-10 border-t border-white/5">
+                         <div className="flex items-center gap-6">
+                            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-slate-700 group-hover/doc:text-indigo-400 transition-colors">
+                               <Stamp size={28} />
+                            </div>
+                            <div>
+                               <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-1">Last Registry Revision</p>
+                               <p className="text-xl font-mono font-black text-white uppercase">2024.12.14 // EOS_v6</p>
+                            </div>
+                         </div>
+                         <button className="px-12 py-6 bg-white/5 hover:bg-emerald-600 rounded-[36px] text-slate-500 hover:text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center gap-4">
+                            <Download size={20} /> Export Markdown Shard
+                         </button>
                       </div>
                    </div>
                 </div>
@@ -362,16 +840,103 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
           </div>
         )}
 
-        {/* Other tabs placeholders to make it valid TSX */}
-        {(activeTab === 'shards' || activeTab === 'lms' || activeTab === 'manual' || activeTab === 'report') && (
-           <div className="py-40 text-center opacity-20 italic uppercase tracking-[0.5em] font-black text-slate-500">
-              {activeTab.replace('_', ' ').toUpperCase()} Node Standby.
+        {/* --- TAB: PERFORMANCE REPORT (COMMUNITY ANALYTICS) --- */}
+        {activeTab === 'report' && (
+           <div className="space-y-16 animate-in zoom-in duration-700 px-4 md:px-0">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                 <div className="lg:col-span-8 glass-card p-12 rounded-[64px] border-2 border-white/5 bg-black/40 relative overflow-hidden flex flex-col shadow-3xl group">
+                    <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden">
+                       <div className="w-full h-[2px] bg-indigo-500/20 absolute top-0 animate-scan"></div>
+                    </div>
+                    
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-16 relative z-10 px-4 gap-8">
+                       <div className="flex items-center gap-8">
+                          <div className="p-6 bg-indigo-600 rounded-3xl shadow-[0_0_50px_rgba(99,102,241,0.3)]">
+                             <BarChart4 className="w-10 h-10 text-white" />
+                          </div>
+                          <div>
+                             <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Network <span className="text-indigo-400">Vitality Map</span></h3>
+                             <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-4">EOS_AGGREGATE_SOCIAL_SYMMETRY</p>
+                          </div>
+                       </div>
+                       <div className="text-right border-l-4 border-indigo-500/20 pl-8">
+                          <p className="text-[11px] text-slate-600 font-black uppercase mb-2 tracking-widest">Global Resonance</p>
+                          <p className="text-8xl font-mono font-black text-emerald-400 tracking-tighter leading-none drop-shadow-2xl italic">94<span className="text-3xl font-sans italic ml-1">.2%</span></p>
+                       </div>
+                    </div>
+
+                    <div className="flex-1 min-h-[450px] w-full relative z-10 p-10 bg-black/80 rounded-[56px] border border-white/5 shadow-inner">
+                       <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={[
+                            { name: 'Societal', val: 82, color: '#f43f5e' },
+                            { name: 'Enviro', val: 94, color: '#10b981' },
+                            { name: 'Human', val: 76, color: '#14b8a6' },
+                            { name: 'Tech', val: 88, color: '#3b82f6' },
+                            { name: 'Industry', val: 91, color: '#818cf8' },
+                          ]}>
+                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={false} />
+                             <XAxis dataKey="name" stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
+                             <YAxis stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
+                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
+                             <Bar dataKey="val" radius={[15, 15, 0, 0]} barSize={80}>
+                                {[1,2,3,4,5].map((_, i) => (
+                                  <Cell key={i} fill={['#f43f5e', '#10b981', '#14b8a6', '#3b82f6', '#818cf8'][i]} />
+                                ))}
+                             </Bar>
+                          </BarChart>
+                       </ResponsiveContainer>
+                    </div>
+                 </div>
+
+                 <div className="lg:col-span-4 space-y-10 flex flex-col justify-between">
+                    <div className="glass-card p-12 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/10 flex flex-col justify-center items-center text-center space-y-10 group shadow-3xl relative overflow-hidden flex-1">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><Bot size={400} className="text-indigo-400" /></div>
+                       <div className="w-28 h-28 bg-indigo-600 rounded-[44px] flex items-center justify-center shadow-[0_0_80px_rgba(99,102,241,0.3)] border-4 border-white/10 relative z-10 group-hover:scale-110 transition-transform duration-700 animate-float">
+                          <Bot size={56} className="text-white" />
+                       </div>
+                       <div className="space-y-6 relative z-10">
+                          <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Oracle <span className="text-indigo-400">Insights</span></h4>
+                          <p className="text-slate-400 text-xl font-medium italic leading-relaxed px-8">"Network resonance is peaking. 12% boost in C(a) constant observed across all regional social clusters."</p>
+                       </div>
+                       <div className="p-10 bg-black/60 rounded-[48px] border border-indigo-500/20 w-[90%] relative z-10 shadow-inner group-hover:border-indigo-400 transition-colors">
+                          <p className="text-[11px] text-slate-500 uppercase font-black tracking-widest mb-3">Sync Confidence</p>
+                          <p className="text-6xl font-mono font-black text-indigo-400 tracking-tighter leading-none">99<span className="text-2xl italic font-sans text-indigo-700 ml-1">.8%</span></p>
+                       </div>
+                    </div>
+
+                    <div className="p-12 glass-card rounded-[56px] border border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-xl relative overflow-hidden group/m">
+                       <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover/m:rotate-12 transition-transform duration-1000"><Zap size={120} className="text-emerald-400" /></div>
+                       <div className="flex items-center gap-6 relative z-10">
+                          <TrendingUp className="w-8 h-8 text-emerald-400" />
+                          <h4 className="text-xl font-black text-white uppercase italic">Reputation Shards</h4>
+                       </div>
+                       <div className="flex items-baseline gap-4 relative z-10">
+                          <p className="text-7xl font-mono font-black text-white tracking-tighter leading-none">4,281</p>
+                          <span className="text-2xl font-black text-emerald-500 italic uppercase">Global High</span>
+                       </div>
+                       <p className="text-slate-500 text-sm italic leading-relaxed relative z-10 border-l-2 border-emerald-500/20 pl-6">
+                          "Collectively anchoring 124M EAC shards across the heritage registry."
+                       </p>
+                    </div>
+                 </div>
+              </div>
            </div>
         )}
       </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 10px; }
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 2s linear infinite; }
+      `}</style>
     </div>
   );
 };
 
-// Added missing default export to resolve "Module has no default export" error
 export default Community;

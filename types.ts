@@ -309,3 +309,13 @@ export type ViewState =
   | 'online_garden'
   | 'farm_os'
   | 'network';
+
+export type NotificationType = 'success' | 'error' | 'info' | 'warning';
+
+export interface NotificationShard {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  duration?: number;
+}

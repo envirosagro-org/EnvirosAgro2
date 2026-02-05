@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Flower, Satellite, Map as MapIcon, TrendingUp, Zap, ShieldCheck, Bot, Sparkles, 
@@ -5,13 +6,15 @@ import {
   PlusCircle, ArrowLeftCircle, Database, SearchCode, Globe, Loader2, Lock, Stamp, 
   Fingerprint, Wind, CircleDot, CheckCircle2, Sprout, RefreshCw, Info, Terminal, 
   Users, Building2, Factory, Cpu, Waves, Heart, Boxes, ShieldAlert, ArrowUpRight, 
-  ClipboardList, Activity, Scan, Wallet, PawPrint, Mountain, FileUp, Camera, 
+  ClipboardCheck, Activity, Scan, Wallet, PawPrint, Mountain, FileUp, Camera, 
   RotateCcw, BadgeCheck, ChevronLeft, ChevronRight as ChevronRightIcon, Timer, 
   LayoutGrid, Trophy, HardHat, Coins, Compass, Scale, Trees, MessageSquare, 
   ThumbsUp, Flame, ArrowRight, X, LifeBuoy, Handshake, Landmark, Signal, 
-  ShieldPlus, Radiation, AlertTriangle, Monitor, Download, Sun, Crown as CrownIcon
+  ShieldPlus, Radiation, AlertTriangle, Monitor, Download, Sun, Crown as CrownIcon,
+  // Fix: Added Workflow icon import to resolve "Cannot find name" error on line 159
+  Workflow
 } from 'lucide-react';
-import { User, ViewState } from '../types';
+import { User, ViewState, NotificationType } from '../types';
 import { chatWithAgroExpert, analyzeMiningYield } from '../services/geminiService';
 
 interface OnlineGardenProps {
@@ -19,9 +22,9 @@ interface OnlineGardenProps {
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => boolean;
   onNavigate: (view: ViewState) => void;
+  notify?: (type: NotificationType, title: string, message: string) => void;
 }
 
-// Fix: Moved Crown component definition above SEEDING_STEPS to avoid usage before declaration error.
 const Crown = ({ size, className }: { size?: number, className?: string }) => <CrownIcon size={size} className={className} />;
 
 const SEEDING_STEPS = [
@@ -31,7 +34,7 @@ const SEEDING_STEPS = [
   { id: 'worker', label: '4. MASTER', icon: Crown, desc: 'Industrial Authority' },
 ];
 
-const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate }) => {
+const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, notify }) => {
   const [activeTab, setActiveTab] = useState<'twin' | 'seeding_program' | 'roadmap' | 'mining'>('twin');
   const [seedingPhase, setSeedingPhase] = useState<'seeding' | 'care' | 'harvest' | 'worker'>('seeding');
   const [esinSign, setEsinSign] = useState('');
@@ -75,12 +78,14 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
   const handleSyncTelemetry = () => {
     setIsSyncing(true);
     setSyncProgress(0);
+    notify?.('info', 'TWIN_SYNC_INIT', 'Establishing high-frequency mirror link...');
     const interval = setInterval(() => {
       setSyncProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
           setIsSyncing(false);
           onEarnEAC(5, 'UNIVERSAL_TWIN_SYNC');
+          notify?.('success', 'TWIN_SYNC_FINAL', 'Universal mirror node aligned with ground telemetry.');
           return 100;
         }
         return prev + 5;
@@ -91,6 +96,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
   const handleRunMiningAudit = async () => {
     setIsMining(true);
     setMiningInference(null);
+    notify?.('info', 'MINING_AUDIT_START', 'Oracle analyzing social reaction shards...');
     try {
       const data = {
         pressure: reactionPressure,
@@ -100,8 +106,9 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
       };
       const res = await analyzeMiningYield(data);
       setMiningInference(res);
+      notify?.('success', 'AUDIT_COMPLETE', 'Yield potential sharded. Signature required for extraction.');
     } catch (e) {
-      console.error("Mining Oracle Failure");
+      notify?.('error', 'ORACLE_OFFLINE', 'Mining audit failed. Check node stability.');
     } finally {
       setIsMining(false);
     }
@@ -109,22 +116,26 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
 
   const handleStartGeofence = () => {
     setIsGeofencing(true);
+    notify?.('info', 'GEOFENCE_INIT', 'Awaiting satellite authority handshake...');
     setTimeout(() => {
       setIsGeofencing(false);
       setGeofenceLocked(true);
       onEarnEAC(10, 'GEOFENCE_SHARD_ANCHOR');
+      notify?.('success', 'GEOFENCE_LOCKED', 'Physical plot anchored to global registry geofence.');
     }, 3000);
   };
 
   const executeExtraction = () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      notify?.('error', 'SIGNATURE_VOID', 'Node signature mismatch.');
       return;
     }
     setIsMining(true);
+    notify?.('info', 'MINTING_SHARD', 'Finalizing value extraction sequence...');
     setTimeout(() => {
       const reward = Math.floor(reactionPressure * sentimentAlpha * user.metrics.timeConstantTau);
       onEarnEAC(reward, 'REACTION_HARVEST_EXTRACTION_SUCCESS');
+      notify?.('success', 'EXTRACT_SYNC', `Successfully extracted ${reward} EAC shards from social resonance.`);
       setIsMining(false);
       setIsMinterAuthOpen(false);
       setReactionPressure(0);
@@ -146,7 +157,11 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1500px] mx-auto">
       
-      {/* 1. Header HUD: Refined Digital Twin Identity */}
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 p-40 opacity-[0.01] pointer-events-none rotate-12">
+        <Workflow size={1000} className="text-indigo-500" />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 px-4">
         <div className="lg:col-span-3 glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-500/[0.02] relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">
@@ -171,14 +186,14 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                  </span>
                  <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">Online <span className="text-emerald-400">Garden</span></h2>
               </div>
-              <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl italic leading-relaxed opacity-80">
+              <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl opacity-80">
                  "Your decentralized landmass registry. Map physical biometrics, automate care cycles, and mine social resonance shards."
               </p>
            </div>
         </div>
 
         <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 flex flex-col justify-between text-center relative overflow-hidden shadow-xl group">
-           <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none"></div>
+           <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none group-hover:bg-emerald-500/[0.03] transition-colors"></div>
            <div className="space-y-2 relative z-10">
               <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-2">Registry Shards</p>
               <h4 className="text-7xl font-mono font-black text-white tracking-tighter italic">842</h4>
@@ -391,9 +406,9 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                              </div>
                           </div>
                           <div className="space-y-6">
-                             <button onClick={() => setResonance(Math.min(100, resonance + 2))} className="w-24 h-24 rounded-[32px] bg-emerald-600 text-white flex items-center justify-center shadow-3xl hover:scale-110 active:scale-95 transition-all"><Droplets size={40} /></button>
-                             <button onClick={() => setResonance(Math.min(100, resonance + 3))} className="w-24 h-24 rounded-[32px] bg-amber-600 text-white flex items-center justify-center shadow-3xl hover:scale-110 active:scale-95 transition-all"><Sun size={40} /></button>
-                             <button onClick={() => setResonance(Math.min(100, resonance + 1))} className="w-24 h-24 rounded-[32px] bg-blue-600 text-white flex items-center justify-center shadow-3xl hover:scale-110 active:scale-95 transition-all"><Wind size={40} /></button>
+                             <button onClick={() => { setResonance(Math.min(100, resonance + 2)); notify?.('info', 'RES_SYNC', 'Moisture shard optimized.'); }} className="w-24 h-24 rounded-[32px] bg-emerald-600 text-white flex items-center justify-center shadow-3xl hover:scale-110 active:scale-95 transition-all"><Droplets size={40} /></button>
+                             <button onClick={() => { setResonance(Math.min(100, resonance + 3)); notify?.('info', 'RES_SYNC', 'Solar ingest maximized.'); }} className="w-24 h-24 rounded-[32px] bg-amber-600 text-white flex items-center justify-center shadow-3xl hover:scale-110 active:scale-95 transition-all"><Sun size={40} /></button>
+                             <button onClick={() => { setResonance(Math.min(100, resonance + 1)); notify?.('info', 'RES_SYNC', 'Atmospheric flow aligned.'); }} className="w-24 h-24 rounded-[32px] bg-blue-600 text-white flex items-center justify-center shadow-3xl hover:scale-110 active:scale-95 transition-all"><Wind size={40} /></button>
                           </div>
                        </div>
                     </div>
@@ -465,7 +480,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                           <Signal size={24} className="text-emerald-400 animate-pulse" />
                           <span className="text-[11px] font-black uppercase tracking-[0.3em] text-white italic">Live Resonance Shards</span>
                        </div>
-                       <span className="px-4 py-1 bg-black/60 rounded-full text-[9px] font-mono text-emerald-500 border border-emerald-500/20">NODE_{user.esin.split('-')[1]}</span>
+                       <span className="px-4 py-1 bg-black/60 rounded-full text-[9px] font-mono text-emerald-500 border border-emerald-500/20">NODE_{user.esin.split('-')[1] || 'STWD'}</span>
                     </div>
 
                     <div className="flex-1 p-12 overflow-y-auto custom-scrollbar-terminal space-y-6 bg-[#050706]">
@@ -499,7 +514,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                              <div className="p-12 bg-black/80 rounded-[64px] border-l-8 border-l-amber-600 border border-white/10 relative overflow-hidden shadow-3xl">
                                 <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform duration-[10s]"><Activity size={600} className="text-white" /></div>
                                 <div className="flex items-center gap-6 mb-10 relative z-10 border-b border-white/5 pb-8">
-                                   <Bot className="w-12 h-12 text-amber-400" />
+                                   <Bot size={120} className="text-amber-400" />
                                    <div>
                                       <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Inference Shard</h4>
                                       <p className="text-amber-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">MINING_ORACLE_REPORT</p>
@@ -601,12 +616,6 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes scan { 0% { top: -100%; } 100% { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
-        @keyframes heat-shimmer {
-          0% { transform: translateY(0) skewX(0); opacity: 0.3; }
-          50% { transform: translateY(-5px) skewX(2deg); opacity: 0.5; }
-          100% { transform: translateY(0) skewX(0); opacity: 0.3; }
-        }
-        .animate-heat { animation: heat-shimmer 2s ease-in-out infinite; }
       `}</style>
     </div>
   );

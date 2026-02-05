@@ -70,7 +70,7 @@ import {
   Line,
   Bar
 } from 'recharts';
-import { User, ViewState, Order, VendorProduct, AgroProject, FarmingContract, RegisteredUnit } from '../types';
+import { User, ViewState, Order, VendorProduct, AgroProject, FarmingContract, RegisteredUnit, NotificationType } from '../types';
 
 interface EconomyProps {
   user: User;
@@ -84,6 +84,7 @@ interface EconomyProps {
   contracts: FarmingContract[];
   industrialUnits: RegisteredUnit[];
   onUpdateUser: (user: User) => void;
+  notify?: (type: NotificationType, title: string, message: string) => void;
 }
 
 const STORE_ASSETS = [
@@ -109,7 +110,7 @@ const EXTERNAL_CHANNELS = [
 ];
 
 const Economy: React.FC<EconomyProps> = ({ 
-  user, isGuest, onSpendEAC, onNavigate, vendorProducts = [], onPlaceOrder, projects = [], contracts = [], industrialUnits = [] 
+  user, isGuest, onSpendEAC, onNavigate, vendorProducts = [], onPlaceOrder, projects = [], contracts = [], industrialUnits = [], notify 
 }) => {
   const [activeTab, setActiveTab] = useState<'catalogue' | 'forecasting' | 'routing'>('catalogue');
   const [cloudFilter, setCloudFilter] = useState('All');
@@ -186,11 +187,12 @@ const Economy: React.FC<EconomyProps> = ({
     }
     setCart([...cart, { ...item, cartId: Math.random() }]);
     setShowCart(true);
+    notify?.('info', 'PROCURE_INGEST', `Buffered ${item.name} into procurement list.`);
   };
 
   const handleFinalizeCheckout = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      notify?.('error', 'SIGNATURE_VOID', 'Node signature mismatch.');
       return;
     }
     setIsFinalizing(true);
@@ -205,6 +207,7 @@ const Economy: React.FC<EconomyProps> = ({
       });
       setCheckoutStep('success');
       setCart([]);
+      notify?.('success', 'LEDGER_ANCHORED', 'Market procurements synchronized with industrial thread.');
     }
     setIsFinalizing(false);
   };
