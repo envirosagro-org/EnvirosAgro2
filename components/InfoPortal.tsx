@@ -1,15 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Info, 
+  Handshake, 
   ShieldCheck, 
   ChevronRight, 
-  Scale as ScaleIcon, 
+  Scale, 
   BookOpen, 
   Globe, 
   Zap, 
   Users, 
   Lock, 
   FileText,
+  AlertTriangle,
+  HeartHandshake,
   X,
   Loader2,
   Send,
@@ -32,10 +35,19 @@ import {
   Cloud,
   Wind,
   Facebook,
+  HelpCircle as QuestionIcon,
   MessageCircleQuestion,
   Eye,
+  Lightbulb,
+  Leaf,
+  RefreshCw,
+  Sun,
+  Landmark,
+  Layers,
   Target,
   Sparkles,
+  Rocket,
+  Flame,
   Activity,
   Copyright,
   Shield,
@@ -47,36 +59,10 @@ import {
   MessagesSquare,
   Copy,
   Check,
-  Binary,
-  Map as MapIcon,
-  Microscope,
-  Quote,
-  Database,
-  History,
-  Stamp,
-  Search,
-  LayoutGrid,
-  Monitor,
-  Cpu,
-  Layers,
-  Dna,
-  Workflow,
-  PlusCircle,
-  FileCode,
-  Waves,
-  Layout,
-  Globe2,
-  Box,
-  Satellite,
-  Gavel
+  ShieldPlus,
+  ShieldX
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
-import { User, ViewState } from '../types';
-
-interface InfoPortalProps {
-  user: User;
-  onNavigate?: (view: ViewState) => void;
-}
 
 const ENVIRONMENTS = [
   { name: 'Threads', url: 'https://www.threads.com/@envirosagro', icon: AtSign, color: 'text-white', bg: 'bg-white/5', desc: 'Real-time sustainability dialogue.' },
@@ -125,6 +111,14 @@ const FAQS = [
   }
 ];
 
+const CORE_PRINCIPLES = [
+  'Integration', 'Vision', 'Innovation', 'Sustainability', 'Kaizen'
+];
+
+const CORE_VALUES = [
+  'Ethical', 'Communal', 'Optimistic', 'Supportive', 'Governed'
+];
+
 const TRADEMARKS = [
   { name: 'EnvirosAgro™', type: 'Primary Organization', desc: 'The overarching ecosystem for sustainable agricultural decentralization and blockchain coordination.' },
   { name: 'WhatIsAG™', type: 'Philosophical Definition', desc: 'Defines agriculture as an application of art or science from nature by human beings towards natural resources (Animals, plants, water, soil and air) for sustainability.' },
@@ -137,22 +131,44 @@ const TRADEMARKS = [
 const FIRESTORE_RULES = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // --- 1. STEWARD IDENTITY SHARDS ---
+    // Stewards can only manage their own identity profiles.
     match /stewards/{stewardId} {
       allow read, write: if request.auth != null && request.auth.uid == stewardId;
     }
+    
+    // --- 2. AUTHENTICATION RECOVERY SHARDS ---
+    // Temporary shards for node restoration. No public read access.
+    // In prod, writing is handled by a System-level Cloud Function.
     match /recovery_shards/{email} {
       allow read: if false; 
       allow write: if false; 
     }
+
+    // --- 3. INDUSTRIAL COMMERCIAL SHARDS ---
+    // Universal visibility for network transparency (Audit-ready).
+    // Write access restricted to the designated node administrator.
     match /{shard_type}/{docId} {
+      // Shards: projects, orders, products, contracts, transactions, signals
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.stewardId == request.auth.uid;
       allow update: if request.auth != null && resource.data.stewardId == request.auth.uid;
-      allow delete: if false; 
+      allow delete: if false; // Permanent registry sharding.
     }
+
+    // --- 4. BIOMETRIC TELEMETRY & AUDIT ---
+    // Telemetry and field evidence are immutable once anchored.
     match /telemetry/{esin} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && (request.auth.token.esin == esin || exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)));
+    }
+    
+    // --- 5. GOVERNANCE AUDITOR REGISTRY ---
+    // Only HQ administrators can manage the list of authorized auditors.
+    match /auditors/{auditorId} {
+      allow read: if request.auth != null;
+      allow write: if false; 
     }
   }
 }`;
@@ -162,16 +178,18 @@ const EnvirosAgroRocket: React.FC = () => {
     <div className="relative py-24 flex flex-col items-center bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent rounded-[80px] overflow-hidden">
       <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')]"></div>
       
+      {/* Main Rocket Assembly */}
       <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
+        
+        {/* Top Nose Cone */}
         <div className="relative w-80 md:w-96 flex flex-col items-center">
-          {/* Rocket Tip */}
           <div className="w-0 h-0 border-l-[160px] border-l-transparent border-r-[160px] border-r-transparent border-b-[180px] border-b-emerald-600 rounded-t-[100px] relative drop-shadow-[0_20px_50px_rgba(5,150,105,0.3)]">
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full text-center">
               <span className="text-[10px] font-black text-emerald-100 uppercase tracking-[0.5em] drop-shadow-md">EnvirosAgro™</span>
             </div>
           </div>
           
-          {/* Rocket Body */}
+          {/* Main Module: Vision & Mission */}
           <div className="w-full bg-emerald-700/90 border-x-4 border-emerald-500 py-14 px-10 flex flex-col items-center text-center space-y-10 -mt-1 shadow-2xl backdrop-blur-xl">
             <div className="space-y-4">
               <div className="flex justify-center gap-2 mb-2">
@@ -191,13 +209,13 @@ const EnvirosAgroRocket: React.FC = () => {
               </div>
               <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Mission</h4>
               <p className="text-emerald-50 font-bold leading-relaxed max-w-xs text-lg">
-                To ensure agriculture and its environ is smooth, reliable and safe
+                To ensure agriculture and it's environ is smooth, reliable and safe
               </p>
             </div>
           </div>
         </div>
 
-        {/* Rocket Thrusters */}
+        {/* The Five Thrusts Propulsion System */}
         <div className="grid grid-cols-5 gap-4 md:gap-8 w-full mt-4 max-w-3xl">
           {[
             { label: 'Social', id: '1', col: 'bg-emerald-600', delay: '0s' },
@@ -207,11 +225,14 @@ const EnvirosAgroRocket: React.FC = () => {
             { label: 'Industrial', id: '5', col: 'bg-emerald-200', delay: '0.4s' },
           ].map((thrust, i) => (
             <div key={i} className="flex flex-col items-center group">
+              {/* Individual Thruster Node */}
               <div className={`w-14 md:w-24 h-36 md:h-56 ${thrust.col} rounded-t-full relative border-x-2 border-white/10 flex items-center justify-center shadow-lg group-hover:-translate-y-2 transition-transform duration-500`}>
                 <div className="absolute top-1/2 -translate-y-1/2 rotate-[-90deg] whitespace-nowrap">
                    <p className="text-[7px] md:text-[10px] font-black text-black uppercase tracking-widest">Thrust {thrust.id}:{thrust.label}</p>
                 </div>
+                <div className="absolute top-4 w-1/2 h-2 bg-black/10 rounded-full"></div>
               </div>
+              {/* Animated Engine Flame */}
               <div className="mt-1 flex flex-col items-center">
                 <div 
                   className="w-4 h-16 md:w-8 md:h-32 bg-gradient-to-b from-orange-500 via-amber-400 to-transparent rounded-full animate-pulse opacity-80 blur-[2px]"
@@ -221,15 +242,70 @@ const EnvirosAgroRocket: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Foundation: Values & Principles Blocks */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-20 w-full px-6">
+          {/* Values Block */}
+          <div className="glass-card p-12 rounded-[56px] border-emerald-500/30 bg-emerald-950/40 relative overflow-hidden group hover:border-emerald-500/60 transition-all">
+            <div className="absolute -top-10 -left-10 p-8 opacity-[0.05] group-hover:scale-110 transition-transform group-hover:opacity-[0.08]">
+               <ShieldCheck className="w-48 h-48 text-emerald-400" />
+            </div>
+            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-10 italic flex items-center gap-4">
+              <Zap className="w-8 h-8 text-emerald-400 fill-emerald-400/20" /> Values of EnvirosAgro™
+            </h4>
+            <ul className="grid grid-cols-1 gap-y-5">
+              {CORE_VALUES.map(val => (
+                <li key={val} className="flex items-center gap-4 group/item">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] group-hover/item:scale-125 transition-transform"></div>
+                  <span className="text-base font-black text-slate-100 uppercase tracking-widest">{val}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Principles Block */}
+          <div className="glass-card p-12 rounded-[56px] border-emerald-500/30 bg-emerald-950/40 relative overflow-hidden group hover:border-emerald-500/60 transition-all">
+             <div className="absolute -top-10 -right-10 p-8 opacity-[0.05] group-hover:scale-110 transition-transform group-hover:opacity-[0.08]">
+               <Landmark className="w-48 h-48 text-emerald-400" />
+            </div>
+            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-10 italic flex items-center gap-4">
+              <Layers className="w-8 h-8 text-emerald-400" /> Principles of EnvirosAgro™
+            </h4>
+            <ul className="grid grid-cols-1 gap-y-5">
+              {CORE_PRINCIPLES.map(pr => (
+                <li key={pr} className="flex items-center gap-4 group/item">
+                  <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_100px_rgba(52,211,153,0.5)] group-hover/item:scale-125 transition-transform"></div>
+                  <span className="text-base font-black text-slate-100 uppercase tracking-widest">{pr}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Global Footer Banner */}
+        <div className="mt-24 text-center space-y-8 w-full max-w-3xl">
+          <div className="px-16 py-6 bg-emerald-900/40 border-y border-emerald-500/30 backdrop-blur-2xl rounded-2xl">
+             <h3 className="text-3xl font-black text-white uppercase tracking-[0.2em] italic drop-shadow-lg">Embracing Sustainable Agriculture</h3>
+          </div>
+          <div className="flex flex-col items-center gap-4">
+             <h2 className="text-4xl font-black text-white tracking-[0.5em] uppercase">EnvirosAgro™ Rocket</h2>
+             <div className="flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-emerald-400 animate-pulse" />
+                <div className="h-px w-48 bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"></div>
+                <Sparkles className="w-6 h-6 text-emerald-400 animate-pulse" />
+             </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
 };
 
-const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate }) => {
+const InfoPortal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'crm_chat' | 'trademarks' | 'privacy' | 'registry_rules' | 'contact'>('about');
   const [supportChat, setSupportChat] = useState<{ role: 'user' | 'bot', text: string, time: string }[]>([
-    { role: 'bot', text: "Hello Steward. I am the EnvirosAgro™ Governance Assistant. Describe any friction shards you are encountering within the industrial mesh.", time: new Date().toLocaleTimeString() }
+    { role: 'bot', text: "Hello Steward. I am the EnvirosAgro™ Governance Assistant. If you are encountering friction, technical problems, or challenges within the ecosystem, please describe them here.", time: new Date().toLocaleTimeString() }
   ]);
   const [supportInput, setSupportInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -246,477 +322,343 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate }) => {
     if (!supportInput.trim() || isTyping) return;
     const msg = supportInput.trim();
     setSupportInput('');
-    setSupportChat(prev => [...prev, { role: 'user', text: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+    setSupportChat(prev => [...prev, { role: 'user', text: msg, time: new Date().toLocaleTimeString() }]);
     setIsTyping(true);
 
     try {
         const response = await chatWithAgroExpert(msg, supportChat.map(c => ({ role: c.role === 'bot' ? 'model' : 'user', parts: [{ text: c.text }] })));
-        setSupportChat(prev => [...prev, { role: 'bot', text: response.text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        setSupportChat(prev => [...prev, { role: 'bot', text: response.text, time: new Date().toLocaleTimeString() }]);
     } catch (e) {
-        setSupportChat(prev => [...prev, { role: 'bot', text: "Handshake Timeout. Oracle link unstable.", time: 'SYNC_ERROR' }]);
+        setSupportChat(prev => [...prev, { role: 'bot', text: "Governance Oracle Sync Timeout. Please retry or contact HQ directly.", time: new Date().toLocaleTimeString() }]);
     } finally {
         setIsTyping(false);
     }
   };
 
+  const handleCopyRules = () => {
+    navigator.clipboard.writeText(FIRESTORE_RULES);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
   const tabs = [
     { id: 'about', label: 'About & Mission', icon: Info },
     { id: 'crm_chat', label: 'CRM Support Shard', icon: MessagesSquare },
-    { id: 'registry_rules', label: 'Registry Security', icon: ShieldCheck },
+    { id: 'registry_rules', label: 'Registry Security', icon: ShieldPlus },
     { id: 'environments', label: 'Environments', icon: Share2 },
     { id: 'faq', label: 'Expert Q&A', icon: MessageCircleQuestion },
     { id: 'trademarks', label: 'Trademarks & IP', icon: Copyright },
-    { id: 'privacy', label: 'Privacy & Data', icon: Lock },
+    { id: 'privacy', label: 'Privacy & Data', icon: ShieldCheck },
     { id: 'contact', label: 'HQ Contact', icon: Globe },
   ];
 
   return (
-    <div className="max-w-[1500px] mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32 px-4 relative overflow-hidden">
-      
-      {/* Dynamic Tab Bar - Industrial Styling */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-4 p-2 glass-card rounded-[32px] w-full lg:w-fit mx-auto border border-white/5 bg-black/40 shadow-2xl px-6 relative z-30">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+      <div className="flex flex-wrap gap-4 p-1 glass-card rounded-2xl w-fit mx-auto overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
               activeTab === tab.id 
-                ? 'bg-emerald-600 text-white shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-105 ring-4 ring-white/5 border-b-4 border-emerald-400' 
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' 
                 : 'text-slate-500 hover:text-white hover:bg-white/5'
             }`}
           >
-            <tab.icon className="w-4 h-4" />
+            <tab.icon className="w-3.5 h-3.5" />
             {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="min-h-[850px] relative z-20">
-        
-        {/* --- VIEW: ABOUT & MISSION --- */}
+      <div className="glass-card rounded-[40px] overflow-hidden min-h-[600px] border border-white/5">
         {activeTab === 'about' && (
-          <div className="space-y-20 animate-in fade-in duration-700">
-            <div className="text-center space-y-8 max-w-5xl mx-auto">
-              <div className="inline-block px-6 py-2 bg-emerald-500/10 text-emerald-400 text-[11px] font-black uppercase rounded-full tracking-[0.6em] border border-emerald-500/20 shadow-inner italic mb-4">PLANETARY_STEWARDSHIP_CORE</div>
-              <h2 className="text-6xl md:text-9xl font-black text-white leading-[0.85] tracking-tighter uppercase italic drop-shadow-2xl">
-                ABOUT <span className="text-emerald-400">ENVIROSAGRO.</span>
-              </h2>
-              <p className="text-slate-400 text-2xl md:text-4xl font-medium italic leading-relaxed">
-                "We are the architectural layer of the next agricultural revolution. A decentralized ecosystem where biological biometrics meet industrial finality."
+          <div className="p-12 space-y-16 animate-in fade-in duration-500">
+            <div className="space-y-6 text-center max-w-4xl mx-auto">
+              <div className="flex justify-center mb-6">
+                <div className="w-20 h-20 agro-gradient rounded-3xl flex items-center justify-center shadow-2xl">
+                  <Leaf className="w-10 h-10 text-white" />
+                </div>
+              </div>
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em]">EnvirosAgro™ Ecosystem</span>
+              <h2 className="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter">About <span className="text-emerald-400 italic">EnvirosAgro™</span></h2>
+              <p className="text-xl text-slate-400 leading-relaxed font-medium">
+                EnvirosAgro™ establishes a comprehensive network that advances agricultural sustainability. By linking farmers, researchers, and diverse stakeholders, we catalyze transformation within the global agricultural community.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-               {[
-                 { l: 'CORE PILLARS', v: 'SEHTI', i: Layers, c: 'text-emerald-400', d: 'Societal, Environmental, Human, Technological, Industrial.' },
-                 { l: 'RECOVERY RATE', v: 'm-Resonance', i: Activity, c: 'text-blue-400', d: 'Calculating industrial durability via mathematical time-signatures.' },
-                 { l: 'TRUST LAYER', i: Fingerprint, v: 'ESIN Node', c: 'text-indigo-400', d: 'Sovereign identity anchoring for land stewards.' },
-                 { l: 'ASSET CLASS', i: Binary, v: 'EAC Credits', c: 'text-amber-500', d: 'Deflationary utility sharding backed by physical yield.' },
-               ].map((card, i) => (
-                 <div key={i} className="glass-card p-12 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/40 transition-all group flex flex-col justify-between h-[480px] shadow-3xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform duration-[10s]"><card.i size={200} /></div>
-                    <div className="space-y-8 relative z-10">
-                       <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:rotate-6 transition-transform shadow-inner">
-                          <card.i size={32} className={card.c} />
-                       </div>
-                       <div className="space-y-2">
-                         <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest leading-none">{card.l}</p>
-                         <h4 className="text-4xl font-black text-white uppercase italic leading-tight m-0">{card.v}</h4>
-                       </div>
-                       <p className="text-lg text-slate-500 italic font-medium leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">"{card.d}"</p>
-                    </div>
-                    <div className="flex justify-end relative z-10">
-                      <div className="p-4 bg-white/5 rounded-2xl text-slate-800 group-hover:text-emerald-400 transition-colors shadow-2xl">
-                         <ArrowRight size={24} />
-                      </div>
-                    </div>
-                 </div>
-               ))}
+            <div className="p-10 glass-card rounded-[48px] border-emerald-500/20 bg-emerald-500/5 grid grid-cols-1 md:grid-cols-3 gap-8 shadow-inner">
+               <div className="flex items-center gap-4">
+                  <BadgeCheck className="w-10 h-10 text-emerald-500" />
+                  <div>
+                    <h4 className="text-lg font-black text-white uppercase italic">Registry Protection</h4>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Registered Mark.</p>
+                  </div>
+               </div>
+               <div className="flex items-center gap-4">
+                  <Award className="w-10 h-10 text-amber-500" />
+                  <div>
+                    <h4 className="text-lg font-black text-white uppercase italic">Protocol Authority</h4>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">C(a)™ & m™ Proprietary.</p>
+                  </div>
+               </div>
+               <div className="flex items-center gap-4">
+                  <ShieldCheck className="w-10 h-10 text-indigo-400" />
+                  <div>
+                    <h4 className="text-lg font-black text-white uppercase italic">Legal Consensus</h4>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">SEHTI™ Certified.</p>
+                  </div>
+               </div>
             </div>
 
             <EnvirosAgroRocket />
           </div>
         )}
 
-        {/* --- VIEW: CRM SUPPORT TERMINAL --- */}
-        {activeTab === 'crm_chat' && (
-           <div className="max-w-6xl mx-auto h-[850px] glass-card rounded-[80px] border-2 border-emerald-500/20 bg-black/60 shadow-3xl overflow-hidden flex flex-col relative">
-              <div className="absolute inset-0 pointer-events-none opacity-10">
-                 <div className="w-full h-[3px] bg-emerald-500 absolute top-0 animate-scan"></div>
-              </div>
-
-              <div className="p-12 md:p-16 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-10">
-                 <div className="flex items-center gap-10">
-                    <div className="w-24 h-24 bg-emerald-600 rounded-[32px] flex items-center justify-center shadow-[0_0_80px_rgba(16,185,129,0.4)] border-4 border-white/10 animate-pulse relative overflow-hidden group">
-                       <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-                       <Bot size={48} className="text-white relative z-10 group-hover:scale-110 transition-transform" />
-                    </div>
-                    <div>
-                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Support <span className="text-emerald-400">Terminal</span></h3>
-                       <p className="text-emerald-400/60 text-[11px] font-mono tracking-[0.5em] uppercase mt-4">ZK_SUPPORT_SESSION_#842 // STABLE_ORACLE</p>
-                    </div>
-                 </div>
-                 <div className="hidden md:flex flex-col items-end gap-3">
-                    <div className="flex items-center gap-3 px-5 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                       <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">INGEST_OK</span>
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-700">NODE: {user.esin}</span>
-                 </div>
-              </div>
-
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-12 md:p-20 space-y-12 custom-scrollbar bg-black/40 relative z-10">
-                 {supportChat.map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
-                       <div className={`flex flex-col gap-4 max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                          <div className={`flex items-center gap-4 mb-1 px-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center border border-white/10 shadow-lg ${msg.role === 'user' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-emerald-600/20 text-emerald-400'}`}>
-                                {msg.role === 'user' ? <UserIcon size={20} /> : <Bot size={20} />}
-                             </div>
-                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{msg.role === 'user' ? user.name : 'NEXUS_ORACLE'}</span>
-                          </div>
-                          <div className={`p-10 rounded-[56px] text-xl leading-relaxed shadow-3xl relative overflow-hidden ${
-                             msg.role === 'user' 
-                               ? 'bg-indigo-600 text-white rounded-tr-none' 
-                               : 'glass-card border border-white/10 rounded-tl-none italic bg-black/90 text-slate-200'
-                          }`}>
-                             {msg.role === 'bot' && <div className="absolute top-0 right-0 p-6 opacity-[0.03]"><Sparkles size={150} /></div>}
-                             <p className="relative z-10 whitespace-pre-line font-medium leading-loose">{msg.text}</p>
-                          </div>
-                          <span className="text-[9px] font-mono text-slate-700 px-10 font-bold uppercase tracking-[0.4em]">{msg.time} // EOS_SYNC</span>
-                       </div>
-                    </div>
-                 ))}
-                 {isTyping && (
-                    <div className="flex justify-start">
-                       <div className="bg-white/5 border border-white/10 p-8 rounded-[48px] rounded-tl-none flex gap-4 shadow-inner">
-                          <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce"></div>
-                          <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
-                          <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse delay-200"></div>
-                       </div>
-                    </div>
-                 )}
-              </div>
-
-              <div className="p-12 md:p-16 border-t border-white/5 bg-black/95 relative z-20">
-                 <div className="relative max-w-5xl mx-auto group">
-                    <textarea 
-                      value={supportInput}
-                      onChange={e => setSupportInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSupportSend())}
-                      placeholder="Input support signal (e.g. 'Node m-constant drift detected')..."
-                      className="w-full bg-white/5 border border-white/10 rounded-[48px] py-10 pl-14 pr-32 text-2xl text-white focus:outline-none focus:ring-8 focus:ring-emerald-500/5 transition-all placeholder:text-slate-800 resize-none h-40 shadow-inner italic" 
-                    />
-                    <button 
-                      onClick={handleSupportSend}
-                      disabled={isTyping || !supportInput.trim()}
-                      className="absolute right-8 bottom-8 p-8 bg-emerald-600 rounded-[32px] text-white shadow-[0_0_50px_rgba(16,185,129,0.3)] hover:bg-emerald-500 transition-all disabled:opacity-30 active:scale-90 group-hover:scale-105 border border-white/10"
-                    >
-                       <Send size={36} />
-                    </button>
-                 </div>
-                 <p className="text-center mt-10 text-[10px] font-black text-slate-700 uppercase tracking-[0.8em]">OFFICIAL_SUPPORT_HANDSHAKE_v6.2 // SECURE_SHARD_CHANNEL</p>
-              </div>
-           </div>
-        )}
-
-        {/* --- VIEW: REGISTRY SECURITY RULES --- */}
         {activeTab === 'registry_rules' && (
-           <div className="space-y-12 animate-in slide-in-from-right-4 duration-700">
+           <div className="p-12 space-y-12 animate-in slide-in-from-right-4 duration-500">
+              <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                 <div className="w-16 h-16 bg-blue-500/10 rounded-3xl flex items-center justify-center border border-blue-500/20 shadow-2xl">
+                    <Terminal className="w-8 h-8 text-blue-400" />
+                 </div>
+                 <div>
+                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Firestore <span className="text-blue-400">Security Rules</span></h2>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">Node Permission Shards for Cloud Sync</p>
+                 </div>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                 <div className="lg:col-span-8 glass-card p-12 md:p-20 rounded-[80px] border-2 border-indigo-500/20 bg-black/60 shadow-[0_40px_100px_rgba(0,0,0,0.9)] space-y-16 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s]"><Lock size={800} className="text-indigo-400" /></div>
-                    
-                    <div className="relative z-10 text-center space-y-10 border-b border-white/5 pb-16">
-                       <div className="w-32 h-32 bg-indigo-600 rounded-[48px] flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 ring-[15px] ring-indigo-500/5 animate-float">
-                          <Terminal size={64} className="text-white" />
-                       </div>
-                       <div>
-                          <h3 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Security <span className="text-indigo-400">Statutes</span></h3>
-                          <p className="text-slate-500 text-2xl font-medium italic mt-6 max-w-2xl mx-auto leading-relaxed opacity-80">"Defining the cryptographic permissions governing data sharding and node synchronization."</p>
-                       </div>
-                    </div>
-
-                    <div className="relative z-10 bg-black/80 rounded-[64px] p-12 border border-white/5 shadow-inner overflow-x-auto custom-scrollbar group/code">
-                       <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
-                          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">FIRESTORE_SECURITY_V6.0</span>
-                          <div className="flex gap-2">
-                             <div className="w-2.5 h-2.5 rounded-full bg-rose-500/20"></div>
-                             <div className="w-2.5 h-2.5 rounded-full bg-amber-500/20"></div>
-                             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/20"></div>
-                          </div>
-                       </div>
-                       <pre className="text-base font-mono text-blue-300/80 leading-[2] select-all scrollbar-hide">
-                          {FIRESTORE_RULES}
-                       </pre>
-                    </div>
-                 </div>
-
-                 <div className="lg:col-span-4 space-y-10">
-                    <div className="p-12 glass-card rounded-[64px] border border-blue-500/20 bg-blue-500/5 space-y-10 shadow-2xl relative overflow-hidden group/proto">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/proto:scale-125 transition-transform"><Shield size={200} /></div>
-                       <h4 className="text-2xl font-black text-white uppercase italic tracking-widest flex items-center gap-6 border-b border-white/5 pb-8 relative z-10">
-                          <Info size={40} className="text-blue-400" /> Protocol
+                 <div className="lg:col-span-4 space-y-8">
+                    <div className="p-8 bg-blue-600/5 border border-blue-500/20 rounded-[40px] space-y-6">
+                       <h4 className="text-lg font-black text-white uppercase italic flex items-center gap-3">
+                          <Info size={20} className="text-blue-400" /> Configuration
                        </h4>
-                       <p className="text-slate-400 text-xl leading-relaxed italic relative z-10 font-medium opacity-80 group-hover/proto:opacity-100">
-                         "Rules ensure identity sovereignty. Data is immutable once anchored. Every write shard requires a valid ESIN biometric token."
+                       <p className="text-slate-400 text-sm leading-relaxed italic">
+                          "Apply these rules in the **Firebase Console &gt; Firestore &gt; Rules** section to authorize your local node to anchor data into the cloud shards."
                        </p>
+                       <ul className="space-y-4">
+                          {[
+                             'Ensures identity sovereignty (UID check).',
+                             'Restricts commercial shards to node owners.',
+                             'Secures biological telemetry via ZK-Auth.',
+                             'Protects recovery shards from public lookup.'
+                          ].map((item, i) => (
+                             <li key={i} className="flex items-start gap-3 text-xs text-slate-500">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                                <span>{item}</span>
+                             </li>
+                          ))}
+                       </ul>
                     </div>
-                    <button 
-                      onClick={() => { navigator.clipboard.writeText(FIRESTORE_RULES); setIsCopied(true); setTimeout(() => setIsCopied(false), 2000); }}
-                      className="w-full py-12 bg-indigo-600 hover:bg-indigo-500 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_80px_rgba(99,102,241,0.3)] active:scale-95 transition-all flex items-center justify-center gap-6 border-2 border-white/10 ring-[16px] ring-white/5"
-                    >
-                       {isCopied ? <CheckCircle2 size={36} /> : <Copy size={36} />}
-                       {isCopied ? 'COPIED_TO_BUFFER' : 'COPY_SECURITY_SHARD'}
-                    </button>
-                    <div className="p-10 glass-card rounded-[56px] border border-emerald-500/10 bg-emerald-500/5 flex items-center justify-between shadow-xl">
-                       <div className="space-y-1">
-                          <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Handshake Status</p>
-                          <p className="text-2xl font-mono font-black text-emerald-400">VERIFIED</p>
+                 </div>
+
+                 <div className="lg:col-span-8 space-y-6">
+                    <div className="p-8 bg-black rounded-[48px] border border-white/10 shadow-3xl relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none"><Lock size={300} className="text-white" /></div>
+                       <div className="flex justify-between items-center mb-6 px-4 relative z-10">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Recommended EOS Security Rules (Production)</span>
+                          <button 
+                            onClick={handleCopyRules}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isCopied ? 'bg-emerald-600 text-white' : 'bg-white/5 text-blue-400 hover:bg-white/10'}`}
+                          >
+                             {isCopied ? <Check size={14} /> : <Copy size={14} />}
+                             {isCopied ? 'COPIED_TO_BUFFER' : 'COPY_RULES_SHARD'}
+                          </button>
                        </div>
-                       <ShieldCheck size={40} className="text-emerald-500" />
+                       <div className="relative z-10 bg-black/60 rounded-3xl p-8 border border-white/5 overflow-x-auto custom-scrollbar-terminal shadow-inner max-h-[500px]">
+                          <pre className="text-xs font-mono text-blue-300/80 leading-relaxed">
+                             {FIRESTORE_RULES}
+                          </pre>
+                       </div>
                     </div>
                  </div>
               </div>
            </div>
         )}
 
-        {/* --- VIEW: EXPERT Q&A (FAQ) --- */}
-        {activeTab === 'faq' && (
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 animate-in slide-in-from-bottom-8 duration-700">
-              <div className="lg:col-span-3 space-y-10">
-                 <div className="glass-card p-12 rounded-[64px] border-indigo-500/20 bg-indigo-500/5 text-center space-y-10 shadow-3xl group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform"><MessageCircleQuestion size={200} /></div>
-                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-[0_0_50px_rgba(99,102,241,0.3)] border-2 border-white/10 relative z-10 animate-float">
-                       <MessageCircleQuestion size={48} />
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                       <h4 className="text-3xl font-black text-white uppercase italic m-0 leading-tight">Inquiry <br/> <span className="text-indigo-400">Oracle</span></h4>
-                       <p className="text-slate-500 text-lg italic font-medium leading-relaxed opacity-80">"Analyzing the most frequent industrial sharding queries."</p>
-                    </div>
-                 </div>
-                 <div className="p-10 glass-card rounded-[56px] border border-white/5 bg-black/40 space-y-6 shadow-xl text-center">
-                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.4em]">Node Sync Status</p>
-                    <div className="flex items-center justify-center gap-4">
-                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                       <span className="text-2xl font-mono font-black text-white">99.8%</span>
-                    </div>
-                 </div>
-              </div>
-              <div className="lg:col-span-9 grid gap-10">
-                 {FAQS.map((faq, i) => (
-                    <div key={i} className="glass-card p-12 md:p-16 rounded-[72px] border-2 border-white/5 bg-black/40 group hover:border-emerald-500/40 transition-all shadow-3xl relative overflow-hidden active:scale-[0.99] duration-300">
-                       <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.08] transition-opacity"><Quote size={250} /></div>
-                       <div className="flex justify-between items-start mb-10 relative z-10">
-                          <span className="px-5 py-2 bg-white/5 border border-white/10 rounded-2xl text-[11px] font-black text-slate-500 uppercase tracking-widest backdrop-blur-md shadow-inner">{faq.category} Shard</span>
-                          <span className="text-[10px] font-mono text-slate-800 font-black">#FAQ_0{i+1}</span>
-                       </div>
-                       <h4 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-emerald-400 transition-colors leading-[1.1] relative z-10">
-                          "{faq.q}"
-                       </h4>
-                       <div className="mt-12 pt-10 border-t border-white/5 relative z-10">
-                          <p className="text-slate-400 text-2xl leading-relaxed italic font-medium pl-12 border-l-8 border-emerald-500/30 font-serif">
-                             {faq.a}
-                          </p>
-                       </div>
-                    </div>
-                 ))}
-              </div>
-           </div>
-        )}
-
-        {/* --- VIEW: ENVIRONMENTS --- */}
-        {activeTab === 'environments' && (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-in slide-in-from-right-4 duration-700">
-              {ENVIRONMENTS.map((env, i) => (
-                <a key={i} href={env.url} target="_blank" rel="noopener noreferrer" className="glass-card p-12 rounded-[64px] border-2 border-white/5 hover:border-blue-500/40 hover:bg-blue-600/5 transition-all flex flex-col items-center text-center gap-10 group shadow-3xl relative overflow-hidden h-[520px] active:scale-95">
-                   <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.01] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                   <div className={`w-24 h-24 rounded-[32px] ${env.bg} flex items-center justify-center shadow-3xl group-hover:scale-110 border-2 border-white/10 transition-transform ${env.color} ring-8 ring-transparent group-hover:ring-white/5`}>
-                      <env.icon size={48} />
+        {activeTab === 'crm_chat' && (
+          <div className="flex flex-col h-[700px] animate-in zoom-in duration-500">
+             <div className="p-8 border-b border-white/5 bg-emerald-600/10 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                   <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-xl">
+                      <Bot className="w-8 h-8" />
                    </div>
-                   <div className="space-y-4 relative z-10 flex-1 flex flex-col justify-center">
-                     <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none group-hover:text-blue-400 transition-colors">{env.name}</h4>
-                     <p className="text-slate-500 italic text-xl opacity-80 group-hover:opacity-100 leading-relaxed px-4">"{env.desc}"</p>
-                   </div>
-                   <div className="flex items-center justify-center gap-4 text-[11px] font-black text-blue-400 uppercase tracking-widest group-hover:translate-x-1 transition-transform mt-auto pt-8 border-t border-white/5 w-full">
-                      SYNC EXTERNAL SHARD <ExternalLink size={18} />
-                   </div>
-                </a>
-              ))}
-           </div>
-        )}
-
-        {/* --- VIEW: TRADEMARKS & IP --- */}
-        {activeTab === 'trademarks' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in zoom-in duration-500">
-             {TRADEMARKS.map((tm, i) => (
-                <div key={i} className="glass-card p-12 md:p-16 rounded-[80px] border-2 border-white/5 bg-black/40 flex flex-col group hover:border-amber-500/40 transition-all shadow-3xl relative overflow-hidden h-[550px] active:scale-[0.98]">
-                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Database size={400} className="text-amber-400" /></div>
-                   <div className="flex justify-between items-start mb-12 relative z-10">
-                      <div className="p-6 rounded-[32px] bg-white/5 border border-white/10 text-amber-500 shadow-3xl group-hover:rotate-6 transition-all ring-8 ring-amber-500/5">
-                         <BadgeCheck size={48} />
-                      </div>
-                      <div className="text-right">
-                        <span className="px-5 py-2 bg-black/80 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-inner text-amber-500/80">REG_MARK_{i+1}</span>
-                        <p className="text-[11px] text-slate-700 font-mono mt-4 uppercase font-black italic">SHARD_ID: IP_0{i+1}_EOS</p>
-                      </div>
-                   </div>
-                   <div className="flex-1 space-y-6 relative z-10">
-                      <div className="space-y-2">
-                        <h4 className="text-5xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-[0.9] group-hover:text-amber-400 transition-colors drop-shadow-2xl">{tm.name}</h4>
-                        <p className="text-[11px] text-amber-500/60 font-black uppercase tracking-[0.6em] italic">{tm.type}</p>
-                      </div>
-                      <p className="text-xl md:text-2xl text-slate-400 leading-relaxed italic mt-8 opacity-80 group-hover:opacity-100 transition-opacity font-medium border-l-4 border-amber-500/20 pl-10 font-serif">"{tm.desc}"</p>
-                   </div>
-                   <div className="mt-14 pt-10 border-t border-white/5 text-[10px] font-black text-slate-700 uppercase tracking-[0.8em] relative z-10 flex justify-between items-center">
-                      <span>Immutable IP Shard</span>
-                      <Stamp size={24} className="opacity-20" />
+                   <div>
+                      <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic m-0">CRM <span className="text-emerald-400">Support Terminal</span></h3>
+                      <p className="text-emerald-400/60 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Official Ecosystem Resolution Shard</p>
                    </div>
                 </div>
-             ))}
+                <div className="flex items-center gap-4">
+                   <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-slate-400 hidden md:block">
+                      <span className="text-[10px] font-mono uppercase font-black">NODE_AUTH: SECURE_BY_ZK</span>
+                   </div>
+                </div>
+             </div>
+
+             <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-black/40">
+                {supportChat.map((chat, i) => (
+                  <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
+                     <div className={`flex flex-col gap-2 max-w-[80%] ${chat.role === 'user' ? 'items-end' : 'items-start'}`}>
+                        <div className={`p-6 rounded-[32px] text-sm md:text-base leading-relaxed shadow-2xl ${
+                          chat.role === 'user' 
+                            ? 'bg-indigo-600 text-white rounded-tr-none' 
+                            : 'glass-card border border-white/10 rounded-tl-none italic bg-[#0B0F0D] text-slate-200'
+                        }`}>
+                           {chat.text}
+                        </div>
+                        <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest px-2">{chat.time}</span>
+                     </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                     <div className="bg-white/5 border border-white/10 p-4 rounded-3xl rounded-tl-none flex gap-2">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce"></div>
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce delay-200"></div>
+                     </div>
+                  </div>
+                )}
+             </div>
+
+             <div className="p-8 border-t border-white/5 bg-black/90">
+                <div className="relative max-w-4xl mx-auto">
+                   <textarea 
+                    value={supportInput}
+                    onChange={e => setSupportInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSupportSend())}
+                    placeholder="Describe your ecosystem friction, problem, or challenge..."
+                    className="w-full bg-white/5 border border-white/10 rounded-[32px] py-6 pl-8 pr-24 text-sm md:text-lg text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all placeholder:text-slate-800 resize-none h-24 shadow-inner italic" 
+                   />
+                   <button 
+                    onClick={handleSupportSend}
+                    disabled={isTyping || !supportInput.trim()}
+                    className="absolute right-4 bottom-4 p-4 bg-emerald-600 rounded-2xl text-white shadow-xl hover:bg-emerald-500 transition-all disabled:opacity-30 active:scale-90"
+                   >
+                      <Send size={24} />
+                   </button>
+                </div>
+                <p className="text-center mt-4 text-[9px] font-black text-slate-700 uppercase tracking-[0.4em]">Governance AI Protocol v5.0 // End-to-End Encrypted Shard</p>
+             </div>
           </div>
         )}
 
-        {/* --- VIEW: PRIVACY & DATA --- */}
-        {activeTab === 'privacy' && (
-          <div className="max-w-6xl mx-auto space-y-16 animate-in slide-in-from-bottom-10 duration-700">
-             <div className="glass-card p-16 md:p-24 rounded-[80px] border-2 border-blue-500/20 bg-blue-950/10 flex flex-col items-center text-center space-y-12 shadow-[0_60px_150px_rgba(0,0,0,0.9)] relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.04] group-hover:rotate-12 transition-transform duration-[20s] pointer-events-none"><ShieldCheck size={800} className="text-blue-400" /></div>
-                
-                <div className="w-48 h-48 bg-blue-600 rounded-[56px] flex items-center justify-center shadow-[0_0_100px_rgba(59,130,246,0.3)] animate-float relative z-10 border-4 border-white/10 ring-[20px] ring-blue-500/5 group-hover:scale-105 transition-transform duration-1000">
-                   <Fingerprint size={100} className="text-white" />
+        {activeTab === 'trademarks' && (
+          <div className="p-12 space-y-12 animate-in fade-in duration-500">
+             <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                <div className="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center border border-emerald-500/20 shadow-2xl">
+                   <Shield className="w-8 h-8 text-emerald-400" />
                 </div>
-                
-                <div className="space-y-8 relative z-10">
-                   <h2 className="text-6xl md:text-9xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">ZK-PROOFS & <span className="text-blue-400">PRIVACY</span></h2>
-                   <p className="text-slate-400 text-2xl md:text-4xl font-medium italic max-w-4xl mx-auto leading-relaxed">
-                      "Utilizing Zero-Knowledge Succinct Non-Interactive Arguments of Knowledge (ZK-SNARKs) to prove node sustainability without revealing steward biometrics."
-                   </p>
+                <div>
+                   <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Intellectual <span className="text-emerald-400">Property</span></h2>
+                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">Registered Trademarks & Registry Protocols</p>
                 </div>
+             </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl relative z-10 pt-16 border-t border-white/10">
-                   <div className="p-12 bg-black/60 rounded-[56px] border-2 border-white/5 text-left space-y-8 shadow-inner group/box hover:border-blue-500/40 transition-all flex flex-col justify-between">
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-6">
-                           <div className="p-4 bg-blue-500/10 rounded-2xl text-blue-400 shadow-2xl"><Lock size={32} /></div>
-                           <h4 className="text-3xl font-black text-white uppercase italic m-0">Data Sovereignty</h4>
-                        </div>
-                        <p className="text-slate-500 text-lg leading-relaxed italic opacity-80 group-hover/box:opacity-100 font-medium">"Stewards retain 100% ownership of raw telemetry. Only the 'Truth-Shard' is anchored to the global industrial registry."</p>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {TRADEMARKS.map((tm, i) => (
+                   <div key={i} className="glass-card p-10 rounded-[44px] border border-white/5 bg-black/40 shadow-xl relative overflow-hidden">
+                      <div className="flex justify-between items-start mb-8">
+                         <div className="p-4 rounded-2xl bg-white/5"><Sparkles className="w-7 h-7 text-emerald-400" /></div>
+                         <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest">{tm.type}</span>
                       </div>
-                      <div className="pt-6 border-t border-white/5 flex items-center gap-3 text-[10px] font-black text-slate-700 uppercase tracking-widest">
-                         <Binary size={14} /> ENCRYPTED_SHARD_ACTIVE
-                      </div>
+                      <h4 className="text-2xl font-black text-white uppercase italic mb-4">{tm.name}</h4>
+                      <p className="text-slate-400 text-base italic leading-relaxed">{tm.desc}</p>
                    </div>
-                   <div className="p-12 bg-black/60 rounded-[56px] border-2 border-white/5 text-left space-y-8 shadow-inner group/box hover:border-emerald-500/40 transition-all flex flex-col justify-between">
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-6">
-                           <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-400 shadow-2xl"><Eye size={32} className="text-emerald-400" /></div>
-                           <h4 className="text-3xl font-black text-white uppercase italic m-0">Audit Anonymity</h4>
-                        </div>
-                        <p className="text-slate-500 text-lg leading-relaxed italic opacity-80 group-hover/box:opacity-100 font-medium">"Satellite verification protocols verify land-mass growth density (C(a)) without mapping private property shards."</p>
-                      </div>
-                      <div className="pt-6 border-t border-white/5 flex items-center gap-3 text-[10px] font-black text-slate-700 uppercase tracking-widest">
-                         <Globe size={14} /> GLOBAL_CONSENSUS_SYNC
-                      </div>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'environments' && (
+          <div className="p-12 space-y-12 animate-in slide-in-from-right-4 duration-500">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {ENVIRONMENTS.map((env, i) => (
+                  <a key={i} href={env.url} target="_blank" rel="noopener noreferrer" className="glass-card p-8 rounded-[40px] border border-white/5 hover:border-blue-500/30 transition-all flex flex-col group relative overflow-hidden">
+                    <div className="flex items-center gap-4 mb-6">
+                       <div className={`w-16 h-16 rounded-[24px] ${env.bg} flex items-center justify-center border border-white/10`}><env.icon className={`w-8 h-8 ${env.color}`} /></div>
+                       <h4 className="text-xl font-black text-white tracking-tight">{env.name}</h4>
+                    </div>
+                    <p className="text-sm text-slate-500 font-medium italic flex-1">"{env.desc}"</p>
+                    <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between text-[9px] font-black text-blue-400 uppercase tracking-widest">
+                       Connect Shard <ExternalLink className="w-4 h-4" />
+                    </div>
+                  </a>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'faq' && (
+          <div className="p-12 space-y-12 animate-in fade-in duration-500">
+             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+                <div className="lg:col-span-1 space-y-8">
+                   <div className="glass-card p-10 rounded-[40px] border-red-500/20 bg-red-500/5 space-y-6">
+                      <HelpCircle className="w-12 h-12 text-red-500" />
+                      <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Expert Quora Shard</h3>
+                      <p className="text-slate-400 text-sm italic font-medium">Access deep scientific discussions directly from the registry source.</p>
+                      <a href="https://www.quora.com/profile/EnvirosAgro" target="_blank" rel="noopener noreferrer" className="w-full py-5 bg-red-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3"><ExternalLink className="w-4 h-4" /> Open Quora</a>
                    </div>
+                </div>
+                <div className="lg:col-span-3 grid gap-6">
+                   {FAQS.map((faq, i) => (
+                     <div key={i} className="glass-card p-8 rounded-[40px] border border-white/5 group">
+                        <span className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 inline-block">{faq.category}</span>
+                        <h4 className="text-xl font-bold text-white mb-4 italic">"{faq.q}"</h4>
+                        <p className="text-slate-400 text-sm leading-relaxed border-l-2 border-emerald-500/20 pl-6 italic">{faq.a}</p>
+                     </div>
+                   ))}
                 </div>
              </div>
           </div>
         )}
 
-        {/* --- VIEW: HQ CONTACT --- */}
-        {activeTab === 'contact' && (
-           <div className="max-w-7xl mx-auto space-y-16 animate-in zoom-in duration-500">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                 {[
-                    { l: 'HEADQUARTERS', v: '9X6C+P6, Kiriaini', i: MapPin, c: 'text-emerald-400', d: 'Primary Regional Cluster', sync: 'STABLE' },
-                    { l: 'ORACLE SUPPORT', v: '0740161447', i: Headphones, c: 'text-blue-400', d: 'Steward Response Shard', sync: 'ACTIVE' },
-                    { l: 'REGISTRY INGEST', v: 'envirosagro.com@gmail.com', i: Mail, c: 'text-indigo-400', d: 'Official Communication', sync: 'SYNCING' },
-                 ].map((box, i) => (
-                    <div key={i} className="glass-card p-12 rounded-[72px] border-2 border-white/5 bg-black/40 flex flex-col items-center text-center space-y-10 group hover:border-white/20 transition-all shadow-3xl h-[520px] relative overflow-hidden active:scale-[0.98]">
-                       <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><box.i size={250} /></div>
-                       <div className={`w-28 h-28 rounded-[40px] bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover:rotate-12 group-hover:scale-110 transition-all duration-700 ring-8 ring-transparent group-hover:ring-white/5`}>
-                          <box.i size={56} className={box.c} />
-                       </div>
-                       <div className="space-y-6 flex-1 flex flex-col justify-center">
-                          <p className="text-[11px] text-slate-600 font-black uppercase tracking-[0.4em]">{box.l}</p>
-                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl leading-tight">{box.v}</h4>
-                          <p className="text-lg text-slate-500 italic mt-6 opacity-80 group-hover:opacity-100 font-medium">"{box.d}"</p>
-                       </div>
-                       <div className="mt-auto w-full pt-8 border-t border-white/5 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                             <div className={`w-2 h-2 rounded-full animate-pulse ${box.c.replace('text', 'bg')}`}></div>
-                             <span className={`text-[9px] font-mono font-black uppercase tracking-widest ${box.c}`}>{box.sync}</span>
-                          </div>
-                          <button className="text-[11px] font-black text-white uppercase tracking-[0.5em] flex items-center gap-4 group/link transition-all hover:text-emerald-400">
-                             Connect <ArrowRight size={20} className="group-hover/link:translate-x-2 transition-transform" />
-                          </button>
-                       </div>
-                    </div>
-                 ))}
-              </div>
-
-              <div className="p-16 md:p-24 glass-card rounded-[80px] border-2 border-white/5 bg-black/60 shadow-[0_40px_150px_rgba(0,0,0,0.8)] relative overflow-hidden group/map flex flex-col lg:flex-row items-center gap-20">
-                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none"></div>
-                 <div className="w-full lg:w-1/2 h-[500px] rounded-[64px] border-4 border-white/5 bg-slate-950 relative overflow-hidden shadow-[inset_0_0_100px_rgba(0,0,0,0.9)] group-hover/map:border-emerald-500/20 transition-all duration-1000">
-                    {/* Stylized Node Map visualizer */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                       <MapIcon size={300} className="text-slate-900 opacity-40 animate-pulse" />
-                       <div className="absolute top-[40%] left-[55%]">
-                          <div className="w-20 h-20 bg-emerald-500 rounded-full animate-ping opacity-30"></div>
-                          <div className={`w-6 h-6 bg-emerald-500 rounded-full shadow-[0_0_50px_#10b981] relative z-10 border-4 border-white animate-pulse`}></div>
-                       </div>
-                       {[...Array(12)].map((_, i) => (
-                          <div key={i} className="absolute w-2 h-2 bg-indigo-500/40 rounded-full" style={{ 
-                            top: `${20 + Math.random() * 60}%`, 
-                            left: `${20 + Math.random() * 60}%` 
-                          }}></div>
-                       ))}
-                    </div>
-                    <div className="absolute bottom-12 left-12 p-8 glass-card rounded-[40px] border border-white/10 bg-black/80 backdrop-blur-2xl shadow-3xl">
-                       <p className="text-[11px] text-slate-500 font-black uppercase mb-2 tracking-[0.4em]">Primary Registry Node</p>
-                       <div className="flex items-center gap-4">
-                          <h4 className="text-3xl font-black text-emerald-400 uppercase italic leading-none m-0">9X6C+P6_ACTIVE</h4>
-                          <BadgeCheck size={28} className="text-emerald-500" />
-                       </div>
-                    </div>
-                 </div>
-                 <div className="flex-1 space-y-10 relative z-10 text-center lg:text-left">
-                    <div className="space-y-4">
-                       <span className="px-5 py-2 bg-emerald-500/10 text-emerald-400 text-[11px] font-black uppercase rounded-full border border-emerald-500/20 tracking-[0.5em] shadow-inner italic">JOIN_THE_QUORUM</span>
-                       <h3 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">Regional <span className="text-emerald-400">Command.</span></h3>
-                    </div>
-                    <p className="text-slate-400 text-2xl md:text-3xl font-medium leading-relaxed italic opacity-80 max-w-3xl">
-                       "HQ Stewards are available for node calibration, physical audit coordination, and multi-thrust strategic guidance across all 12 regional clusters."
-                    </p>
-                    <div className="flex flex-wrap gap-6 justify-center lg:justify-start pt-6">
-                       <button className="p-10 bg-white/5 border-2 border-white/10 rounded-[40px] text-emerald-400 hover:text-white hover:bg-emerald-600 transition-all shadow-2xl active:scale-90"><MessagesSquare size={40} /></button>
-                       <button className="p-10 bg-white/5 border-2 border-white/10 rounded-[40px] text-blue-400 hover:text-white hover:bg-blue-600 transition-all shadow-2xl active:scale-90"><Headphones size={40} /></button>
-                       <button className="p-10 bg-white/5 border-2 border-white/10 rounded-[40px] text-indigo-400 hover:text-white hover:bg-indigo-600 transition-all shadow-2xl active:scale-90"><MapIcon size={40} /></button>
-                    </div>
-                 </div>
-              </div>
-           </div>
+        {activeTab === 'privacy' && (
+          <div className="p-12 space-y-10 animate-in fade-in duration-500">
+             <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Identity & ZK-Privacy</h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-6">
+                   <h3 className="text-xl font-bold text-white flex items-center gap-3"><Fingerprint className="w-6 h-6 text-emerald-400" /> ESIN Anonymity</h3>
+                   <p className="text-slate-400 leading-relaxed font-medium">EnvirosAgro™ uses ZK-SNARKs to prove metrics without revealing location shards.</p>
+                </div>
+                <div className="space-y-6">
+                   <h3 className="text-xl font-bold text-white flex items-center gap-3"><Zap className="w-6 h-6 text-amber-500" /> Data Sovereignty</h3>
+                   <p className="text-slate-400 leading-relaxed font-medium">Farmers retain ownership of raw telemetry. Only consensus proofs are anchored.</p>
+                </div>
+             </div>
+          </div>
         )}
 
+        {activeTab === 'contact' && (
+          <div className="p-12 space-y-12 animate-in fade-in duration-500">
+             <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">HQ <span className="text-emerald-400">Contact</span></h2>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="glass-card p-8 rounded-[40px] space-y-6">
+                   <MapPin className="w-10 h-10 text-emerald-400" />
+                   <h4 className="text-xl font-bold text-white uppercase italic">Headquarters</h4>
+                   <p className="text-slate-400 text-sm font-mono leading-relaxed">9X6C+P6, Kiriaini<br/>Global Zone Node</p>
+                </div>
+                <div className="glass-card p-8 rounded-[40px] space-y-6">
+                   <Phone className="w-10 h-10 text-blue-400" />
+                   <h4 className="text-xl font-bold text-white uppercase italic">Registry Support</h4>
+                   <p className="text-slate-400 text-lg font-mono font-black">0740161447</p>
+                </div>
+                <div className="glass-card p-8 rounded-[40px] space-y-6">
+                   <Mail className="w-10 h-10 text-indigo-400" />
+                   <h4 className="text-xl font-bold text-white uppercase italic">Official Ingest</h4>
+                   <p className="text-slate-400 text-sm font-mono break-all leading-relaxed">envirosagro.com@gmail.com</p>
+                </div>
+             </div>
+          </div>
+        )}
       </div>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        
-        .shadow-3xl { box-shadow: 0 50px 100px -30px rgba(0, 0, 0, 0.9); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
-        
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 10px; }
       `}</style>
     </div>
   );

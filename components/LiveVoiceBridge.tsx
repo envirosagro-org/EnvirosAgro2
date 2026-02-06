@@ -51,40 +51,18 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
     nextStartTimeRef.current = 0;
   };
 
-  const createSafeAudioContext = (rate: number): AudioContext => {
-    // Accessing constructors directly via window to prevent "Illegal constructor" errors
-    // common in Safari/WebKit when constructors are extracted to variables.
-    try {
-      if ((window as any).AudioContext) {
-        return new ((window as any).AudioContext)({ sampleRate: rate });
-      }
-    } catch (e) {
-      console.warn("Standard AudioContext with sampleRate failed, trying webkit fallback.");
-    }
-
-    try {
-      if ((window as any).webkitAudioContext) {
-        return new ((window as any).webkitAudioContext)({ sampleRate: rate });
-      }
-    } catch (e) {
-      console.warn("webkitAudioContext with sampleRate failed.");
-    }
-    
-    // Final fallback to constructors without options object
-    const Ctor = (window as any).AudioContext || (window as any).webkitAudioContext;
-    if (!Ctor) {
-      throw new Error("AudioContext not supported in this browser.");
-    }
-    return new Ctor();
-  };
-
   const startSession = async () => {
     setIsConnecting(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      outputAudioContextRef.current = createSafeAudioContext(24000);
-      inputAudioContextRef.current = createSafeAudioContext(16000);
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) throw new Error("AudioContext not supported");
+      
+      // Creating standard contexts. Some browsers throw 'Illegal constructor' if the class is extracted to a local variable 
+      // without keeping the global context or if specific arguments are unsupported in legacy implementations.
+      outputAudioContextRef.current = new AudioContextClass({ sampleRate: 24000 });
+      inputAudioContextRef.current = new AudioContextClass({ sampleRate: 16000 });
       
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { 
   Palette, 
   Binary, 
@@ -39,64 +39,169 @@ import {
   X,
   Download,
   FileText,
-  // Added missing Coins import to resolve error on line 306
-  Coins
+  Coins,
+  Brush,
+  Eraser,
+  Printer,
+  Undo2,
+  Maximize2,
+  Trash2,
+  Image as ImageIcon,
+  Wand2,
+  Send,
+  Eye,
+  Workflow,
+  Plus,
+  LayoutGrid,
+  Share2,
+  History,
+  Target,
+  Dna,
+  ShieldAlert,
+  Wind,
+  Flower2,
+  Crown,
+  Maximize,
+  ArrowUpRight,
+  ThermometerSun,
+  Layers,
+  Circle,
+  // Added FlaskConical and Atom to fix "Cannot find name" errors on lines 786 and 812
+  FlaskConical,
+  Atom
 } from 'lucide-react';
-import { User } from '../types';
+import { User, ViewState } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
+import { GoogleGenAI } from "@google/genai";
 
 interface ChromaSystemProps {
   user: User;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
+  onNavigate: (view: ViewState) => void;
 }
 
 const SEHTI_CHROMA_MAPPING = [
-  { thrust: 'Societal', variable: 'W_s', spectrum: 'Warm (Red/Orange/Yellow)', context: 'Markets, Education', diagnosis: 'Warning: Nutrient Stress', color: '#F2CC8F', icon: Users },
-  { thrust: 'Environmental', variable: 'B_s', spectrum: 'Bio (Green/Brown/Teal)', context: 'Production, Waste', diagnosis: 'Health: Chlorophyll Density', color: '#4A7C59', icon: Leaf },
-  { thrust: 'Human', variable: 'C_s', spectrum: 'Calm (Blue/Indigo/Violet)', context: 'Labs, Rest Areas', diagnosis: 'Deficiency: Phosphorus/Fungal', color: '#818cf8', icon: Heart },
-  { thrust: 'Technological', variable: 'U_s', spectrum: 'UV/IR (Greyscale Mapping)', context: 'Server Rooms, Robotics', diagnosis: 'Early Detection: Pre-symptomatic', color: '#2F3E46', icon: Bot },
-  { thrust: 'Informational', variable: 'I_s', spectrum: 'Contrast (White/Black/Neon)', context: 'Signage, Alerts', diagnosis: 'Necrosis: Tissue Death', color: '#F2F7F2', icon: Binary },
+  { id: 'societal', thrust: 'Societal', variable: 'W_s', spectrum: 'Warm (Red/Orange/Yellow)', frequency: '432Hz', context: 'Markets, Education', diagnosis: 'Warning: Nutrient Stress', color: '#F2CC8F', icon: Users },
+  { id: 'environmental', thrust: 'Environmental', variable: 'B_s', spectrum: 'Bio (Green/Brown/Teal)', frequency: '528Hz', context: 'Production, Waste', diagnosis: 'Health: Chlorophyll Density', color: '#4A7C59', icon: Leaf },
+  { id: 'human', thrust: 'Human', variable: 'C_s', spectrum: 'Calm (Blue/Indigo/Violet)', frequency: '396Hz', context: 'Labs, Rest Areas', diagnosis: 'Deficiency: Phosphorus/Fungal', color: '#818cf8', icon: Heart },
+  { id: 'lilies', thrust: 'Aesthetic', variable: 'L_s', spectrum: 'Fuchsia (Pink/Gold/Light)', frequency: '440Hz', context: 'Lilies Around, Floriculture', diagnosis: 'Peak: Aesthetic Resonance', color: '#f472b6', icon: Flower2 },
+  { id: 'technological', thrust: 'Technological', variable: 'U_s', spectrum: 'UV/IR (Greyscale Mapping)', frequency: '639Hz', context: 'Server Rooms, Robotics', diagnosis: 'Early Detection: Pre-symptomatic', color: '#2F3E46', icon: Bot },
 ];
 
 const ARCHITECTURAL_PALETTES = [
-  { zone: 'Growth Zone', name: 'Photosynthetic Green', hex: '#4A7C59', function: 'Blends with crops, maximizes psychological connection to nature.' },
-  { zone: 'Control Zone', name: 'Slate Tech Grey', hex: '#2F3E46', accent: '#E07A5F', function: 'High contrast for robot navigation, reduces screen glare.' },
-  { zone: 'Market Zone', name: 'Harvest Gold', hex: '#F2CC8F', function: 'Stimulates appetite, signifies warmth and community welcome.' },
+  { zone: 'Growth Zone', name: 'Photosynthetic Green', hex: '#4A7C59', albedo: 0.12, resilience: 'High', function: 'Blends with crops, maximizes psychological connection to nature.' },
+  { zone: 'Control Zone', name: 'Slate Tech Grey', hex: '#2F3E46', albedo: 0.08, resilience: 'Standard', function: 'High contrast for robot navigation, reduces screen glare.' },
+  { zone: 'Lilies Node', name: 'Celestial Fuchsia', hex: '#f472b6', albedo: 0.35, resilience: 'Ultra', function: 'High spectral albedo for pollinator sharding and aesthetic impact.' },
 ];
 
-const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC }) => {
-  const [activeTab, setActiveTab] = useState<'mapping' | 'macro' | 'micro' | 'design'>('mapping');
+const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate }) => {
+  const [activeTab, setActiveTab] = useState<'mapping' | 'design' | 'paint' | 'macro' | 'micro'>('mapping');
   
+  // Paint with Nature States
+  const [imagePrompt, setImagePrompt] = useState('');
+  const [selectedThrust, setSelectedThrust] = useState(SEHTI_CHROMA_MAPPING[3]); 
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [isMintingGraphic, setIsMintingGraphic] = useState(false);
+  const [graphicAnchored, setGraphicAnchored] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('1:1');
+
   // Macro States
   const [albedo, setAlbedo] = useState(0.92);
   const [psychScore, setPsychScore] = useState(8);
   const [thermalCoeff, setThermalCoeff] = useState(0.45);
   const [footprint, setFootprint] = useState(0.12);
   const [isCalculatingSc, setIsCalculatingSc] = useState(false);
-  const [scResult, setScResult] = useState<string | null>(null);
+  const [scResult, setScResult] = useState<{name: string, hex: string} | null>(null);
 
   // Micro States
   const [isScanning, setIsScanning] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [chromaDiagnosis, setChromaDiagnosis] = useState<any | null>(null);
+  const [chromaDiagnosis, setChromaDiagnosis] = useState<{hi: number, report: string} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Design Ingest States
   const [designDescription, setDesignDescription] = useState('');
-  const [designCategory, setDesignCategory] = useState('Landscaping');
+  const [designCategory, setDesignCategory] = useState('Lilies_Around_Blueprint');
   const [isForgingDesign, setIsForgingDesign] = useState(false);
   const [designShard, setDesignShard] = useState<string | null>(null);
+
+  const handleGenerateImage = async () => {
+    if (!imagePrompt.trim()) return;
+    
+    const COST = 25;
+    if (!await onSpendEAC(COST, `GRAPHIC_SYNTHESIS_${selectedThrust.thrust.toUpperCase()}`)) return;
+
+    setIsGenerating(true);
+    setGeneratedImageUrl(null);
+    setGraphicAnchored(false);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const technicalPrompt = `Professional architectural and agricultural render of ${imagePrompt}. 
+      Brand Influence: Lilies Around Aesthetic Revolution.
+      Framework Context: ${selectedThrust.thrust} sustainability. 
+      Spectral Focus: ${selectedThrust.spectrum}. 
+      Style: High-fidelity cinematic 8k architectural visualization, botanical precision, fuchsia highlights, industrial EOS aesthetic.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [{ text: technicalPrompt }] },
+        config: {
+          imageConfig: {
+            aspectRatio: aspectRatio
+          }
+        }
+      });
+
+      let foundImage = false;
+      if (response.candidates && response.candidates[0].content.parts) {
+        for (const part of response.candidates[0].content.parts) {
+          if (part.inlineData) {
+            setGeneratedImageUrl(`data:image/png;base64,${part.inlineData.data}`);
+            foundImage = true;
+            break;
+          }
+        }
+      }
+
+      if (foundImage) {
+        onEarnEAC(5, 'AESTHETIC_VITALITY_INGEST');
+      } else {
+        alert("Consensus Failure: No image shard returned.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Oracle synthesis interrupted. Check node connectivity.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleMintGraphic = async () => {
+    if (!generatedImageUrl) return;
+    const fee = 15;
+    if (!await onSpendEAC(fee, 'AGRICULTURAL_GRAPHIC_MINT')) return;
+
+    setIsMintingGraphic(true);
+    setTimeout(() => {
+      setIsMintingGraphic(false);
+      setGraphicAnchored(true);
+      onEarnEAC(10, 'AESTHETIC_ASSET_ANCHORED');
+    }, 2500);
+  };
 
   const calculateSc = () => {
     setIsCalculatingSc(true);
     setTimeout(() => {
       const scValue = (albedo * psychScore) / (thermalCoeff + footprint);
-      let colorName = "EnvirosAgro White (#F2F7F2)";
-      if (scValue < 5) colorName = "Photosynthetic Green (#4A7C59)";
-      else if (scValue < 8) colorName = "Harvest Gold (#F2CC8F)";
+      let res = { name: "EnvirosAgro White", hex: "#F2F7F2" };
+      if (scValue < 5) res = { name: "Photosynthetic Green", hex: "#4A7C59" };
+      else if (scValue < 8) res = { name: "Lilies Around Fuchsia", hex: "#f472b6" };
+      else if (scValue < 12) res = { name: "Harvest Gold", hex: "#F2CC8F" };
       
-      setScResult(colorName);
+      setScResult(res);
       setIsCalculatingSc(false);
       onEarnEAC(10, 'ARCHITECTURAL_CHROMA_CALIBRATION');
     }, 1500);
@@ -118,14 +223,9 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
     setIsScanning(true);
     setChromaDiagnosis(null);
     try {
-      const mockG = 0.8;
-      const mockR = 0.2;
-      const mockY = 0.1;
-      const hi = mockG / (mockR + mockY);
-      
-      const prompt = `Perform a Digital Chromatography Audit on a crop shard with Health Index ${hi.toFixed(2)}. 
-      G_val: ${mockG}, R_val: ${mockR}, Y_val: ${mockY}. 
-      Explain the pathobiological implications and recommend a SEHTI remediation shard.`;
+      const hi = 0.82;
+      const prompt = `Perform a Digital Chromatography Audit on this crop shard. 
+      Predicted Health Index (Hi): ${hi}. Analyze spectral pigments and suggest SEHTI remediation. Include Lilies Around aesthetic impact analysis.`;
       
       const response = await chatWithAgroExpert(prompt, []);
       setChromaDiagnosis({ hi, report: response.text });
@@ -141,28 +241,25 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
     if (!designDescription.trim()) return;
     const DESIGN_FEE = 40;
     
-    if (!onSpendEAC(DESIGN_FEE, `DESIGN_INGEST_SHARD_${designCategory.toUpperCase()}`)) return;
+    if (!await onSpendEAC(DESIGN_FEE, `DESIGN_INGEST_SHARD_${designCategory.toUpperCase()}`)) return;
 
     setIsForgingDesign(true);
     setDesignShard(null);
 
     try {
-      const prompt = `Act as an EnvirosAgro Architectural Consultant. Ingest and synthesize this ${designCategory} design:
+      const prompt = `Act as a Lilies Around Architectural Consultant. Synthesize this ${designCategory} design:
       "${designDescription}"
       
-      Tasks:
-      1. Map the design to the Chroma-SEHTI spectrum (Societal, Environmental, Human, Technological, Informational).
-      2. Calculate the predicted Albedo (Solar Reflectance) and Psychological Resonance.
-      3. Recommend specific hex codes and materials based on the EACSS protocol.
-      4. Predict m-constant stability impact.
-      
-      Return a technical, inspiring industrial shard report.`;
+      Requirements:
+      1. Map to Chroma-SEHTI aesthetic spectrum.
+      2. Calculate Albedo and Psychological Resonance for floriculture.
+      3. Recommend material index and Lilies Around resilience score.`;
       
       const response = await chatWithAgroExpert(prompt, []);
       setDesignShard(response.text);
-      onEarnEAC(15, 'DESIGN_INGEST_SYNERGY_BONUS');
+      onEarnEAC(15, 'LILIES_DESIGN_INGEST_SYNERGY');
     } catch (e) {
-      setDesignShard("Registry link timeout. Oracle could not finalize the design shard.");
+      setDesignShard("Registry link timeout.");
     } finally {
       setIsForgingDesign(false);
     }
@@ -171,122 +268,245 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
       {/* Header HUD */}
-      <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-2xl">
+      <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none">
-            <Palette className="w-96 h-96 text-white" />
+            <Palette className="w-[800px] h-[800px] text-white" />
          </div>
-         <div className="w-40 h-40 rounded-[48px] bg-emerald-600 flex items-center justify-center shadow-[0_0_80px_rgba(16,185,129,0.3)] ring-4 ring-white/10 shrink-0">
+         <div className="w-40 h-40 rounded-[48px] bg-emerald-600 flex items-center justify-center shadow-3xl ring-4 ring-white/10 shrink-0 relative overflow-hidden">
+            <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
             <Palette className="w-20 h-20 text-white animate-pulse" />
          </div>
-         <div className="space-y-6 relative z-10 text-center md:text-left">
+         <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
             <div className="space-y-2">
-               <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20 shadow-inner">CHROMA_SEHTI_SYSTEM_v1</span>
-               <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 m-0 leading-none">Chroma <span className="text-emerald-400">SEHTI</span></h2>
+               <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20 shadow-inner">CHROMA_SEHTI_v2</span>
+               <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Chroma <span className="text-emerald-400">SEHTI</span></h2>
             </div>
-            <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl leading-relaxed italic">
-               "Transforming color from an aesthetic choice into a functional agricultural instrument. The EACSS protocol maps architecture and plant pathology to the SEHTI framework."
+            <p className="text-slate-400 text-lg md:text-2xl font-medium max-w-3xl leading-relaxed italic opacity-80">
+               "Architectural color as a functional agricultural instrument. Powered by Lilies Around aesthetic sharding logic."
             </p>
          </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4">
+      {/* Main Navigation Tabs */}
+      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-6 mx-auto lg:mx-0 relative z-20">
         {[
-          { id: 'mapping', label: 'Spectral Mapping', icon: Binary },
-          { id: 'design', label: 'Design Sharding', icon: PencilRuler },
-          { id: 'macro', label: 'Macro: Architectural Sc', icon: Box },
-          { id: 'micro', label: 'Micro: Chromatography', icon: Microscope },
+          { id: 'mapping', label: 'Spectral Registry', icon: Binary },
+          { id: 'paint', label: 'Paint with Nature', icon: Wand2 },
+          { id: 'design', label: 'Lilies Forge', icon: Flower2 },
+          { id: 'macro', label: 'Architectural Sc', icon: Box },
+          { id: 'micro', label: 'Chromatography', icon: Microscope },
         ].map(tab => (
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl scale-105 border-b-4 border-emerald-400 ring-8 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
-            <tab.icon className="w-4 h-4" /> {tab.label}
+            <tab.icon size={18} /> {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="min-h-[700px]">
-        {/* TAB 1: SEHTI CHROMA MAPPING */}
+      <div className="min-h-[800px] relative z-10">
+        
+        {/* --- VIEW: SPECTRAL REGISTRY --- */}
         {activeTab === 'mapping' && (
           <div className="space-y-12 animate-in slide-in-from-left-4 duration-500">
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {SEHTI_CHROMA_MAPPING.map((m, i) => (
-                   <div key={i} className="glass-card p-10 rounded-[48px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all group flex flex-col justify-between h-[450px] relative overflow-hidden">
-                      <div className="absolute -bottom-10 -right-10 p-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-[5s]">
-                         <m.icon size={250} />
+                   <div key={i} className={`glass-card p-10 rounded-[56px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all group flex flex-col justify-between h-[520px] relative overflow-hidden shadow-3xl ${m.id === 'lilies' ? 'ring-2 ring-fuchsia-500/20' : ''}`}>
+                      <div className="absolute -bottom-10 -right-10 p-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-[10s]">
+                         <m.icon size={300} />
                       </div>
-                      <div className="space-y-6 relative z-10">
+                      <div className="space-y-8 relative z-10">
                          <div className="flex justify-between items-start">
-                            <div className="p-4 bg-white/5 rounded-2xl border border-white/10 shadow-inner group-hover:scale-110 transition-transform">
-                               <m.icon className="w-8 h-8 text-emerald-400" />
+                            <div className="p-5 bg-white/5 rounded-3xl border border-white/10 shadow-inner group-hover:rotate-6 transition-transform">
+                               <m.icon className={`w-10 h-10 ${m.id === 'lilies' ? 'text-fuchsia-400' : 'text-emerald-400'}`} />
                             </div>
-                            <span className="text-[10px] font-mono font-black text-slate-700 uppercase tracking-widest">{m.variable}</span>
+                            <span className="text-[12px] font-mono font-black text-slate-700 uppercase tracking-widest">{m.variable}</span>
                          </div>
-                         <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">{m.thrust}</h4>
-                         <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
-                            <div className="h-full" style={{ backgroundColor: m.color, width: '100%' }}></div>
+                         <div>
+                            <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{m.thrust}</h4>
+                            <p className={`text-[10px] font-mono mt-3 uppercase tracking-widest ${m.id === 'lilies' ? 'text-fuchsia-400' : 'text-emerald-400'}`}>{m.frequency} // SYNC_OK</p>
                          </div>
-                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{m.spectrum}</p>
+                         <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden shadow-inner">
+                            <div className="h-full animate-pulse" style={{ backgroundColor: m.color, width: '100%' }}></div>
+                         </div>
+                         <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{m.spectrum}</p>
                       </div>
-                      <div className="space-y-4 pt-6 border-t border-white/5 relative z-10">
+                      <div className="space-y-6 pt-10 border-t border-white/5 relative z-10">
                          <div className="space-y-1">
-                            <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Ag-Context</p>
-                            <p className="text-xs text-slate-400 italic">"{m.context}"</p>
+                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Agricultural Context</p>
+                            <p className="text-sm text-slate-400 italic">"{m.context}"</p>
                          </div>
                          <div className="space-y-1">
-                            <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Diagnostic Shard</p>
-                            <p className="text-xs text-emerald-500/80 font-bold uppercase italic">{m.diagnosis}</p>
+                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Diagnostic Verdict</p>
+                            <p className={`text-sm font-bold uppercase italic ${m.id === 'lilies' ? 'text-fuchsia-500' : 'text-emerald-500/80'}`}>{m.diagnosis}</p>
                          </div>
                       </div>
                    </div>
                 ))}
              </div>
-             
-             <div className="p-16 glass-card rounded-[64px] border-indigo-500/20 bg-indigo-950/5 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12 transition-transform duration-[10s]"><Binary size={400} /></div>
-                <div className="flex items-center gap-10 relative z-10 text-center md:text-left flex-col md:flex-row">
-                   <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl animate-pulse border-2 border-white/10 shrink-0">
-                      <Binary size={40} className="text-white" />
-                   </div>
-                   <div className="space-y-4">
-                      <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Chroma Registry Consensus</h4>
-                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-lg:text-sm max-w-lg mx-auto md:mx-0">
-                        The EACSS protocol ensures every visual signal is a verified data point in the global agricultural ledger.
-                      </p>
-                   </div>
-                </div>
-                <div className="text-center md:text-right relative z-10 shrink-0">
-                   <p className="text-[11px] text-slate-600 font-black uppercase mb-3 tracking-[0.5em] px-4 border-b border-white/10 pb-4">SPECTRAL_STABILITY</p>
-                   <p className="text-8xl font-mono font-black text-white tracking-tighter">100<span className="text-4xl text-indigo-400 ml-1">%</span></p>
-                </div>
-             </div>
           </div>
         )}
 
-        {/* TAB 4: DESIGN SHARDING (New) */}
+        {/* --- VIEW: PAINT WITH NATURE --- */}
+        {activeTab === 'paint' && (
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl">
+                    <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                       <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl">
+                          <Wand2 className="w-8 h-8 text-white" />
+                       </div>
+                       <div>
+                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Nature <span className="text-emerald-400">Canvas</span></h3>
+                          <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">AI_AESTHETIC_INGEST</p>
+                       </div>
+                    </div>
+                    <div className="space-y-6">
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Aesthetic Intent Shard</label>
+                          <textarea 
+                            value={imagePrompt}
+                            onChange={e => setImagePrompt(e.target.value)}
+                            placeholder="Describe your botanical vision (e.g. Circular bantu garden at sunrise)..."
+                            className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-lg font-medium italic focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all h-40 resize-none placeholder:text-stone-900"
+                          />
+                       </div>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Pillar focus</label>
+                             <select 
+                                value={selectedThrust.id}
+                                onChange={e => setSelectedThrust(SEHTI_CHROMA_MAPPING.find(m => m.id === e.target.value)!)}
+                                className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
+                             >
+                                {SEHTI_CHROMA_MAPPING.map(m => <option key={m.id} value={m.id}>{m.thrust}</option>)}
+                             </select>
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Aspect Ratio</label>
+                             <select 
+                                value={aspectRatio}
+                                onChange={e => setAspectRatio(e.target.value as any)}
+                                className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
+                             >
+                                <option value="1:1">1:1 Square</option>
+                                <option value="16:9">16:9 Wide</option>
+                                <option value="9:16">9:16 Port</option>
+                             </select>
+                          </div>
+                       </div>
+                    </div>
+                    <button 
+                       onClick={handleGenerateImage}
+                       disabled={isGenerating || !imagePrompt.trim()}
+                       className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
+                    >
+                       {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 fill-current" />}
+                       {isGenerating ? 'Synthesizing...' : 'GENERATE AESTHETIC SHARD'}
+                    </button>
+                 </div>
+
+                 <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 space-y-6 group">
+                    <div className="flex items-center gap-4">
+                       <Info size={16} className="text-emerald-500" />
+                       <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Protocol Tip</h4>
+                    </div>
+                    <p className="text-xs text-slate-400 italic leading-relaxed">
+                       "Aesthetic shards increase regional social immunity (x) by 12.4% when anchored to the heritage hub."
+                    </p>
+                 </div>
+              </div>
+
+              <div className="lg:col-span-8">
+                 <div className="glass-card rounded-[64px] min-h-[650px] border-2 border-white/5 bg-black overflow-hidden relative group shadow-3xl flex flex-col">
+                    {!generatedImageUrl && !isGenerating ? (
+                       <div className="flex-1 flex flex-col items-center justify-center text-center space-y-12 opacity-10">
+                          <ImageIcon size={140} className="text-slate-500" />
+                          <p className="text-4xl font-black uppercase tracking-[0.6em] text-white italic">CANVAS_EMPTY</p>
+                       </div>
+                    ) : isGenerating ? (
+                       <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
+                          <div className="relative">
+                             <Loader2 size={120} className="text-emerald-500 animate-spin mx-auto" />
+                             <div className="absolute inset-0 flex items-center justify-center">
+                                <Palette size={48} className="text-emerald-400 animate-pulse" />
+                             </div>
+                          </div>
+                          <p className="text-emerald-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic">MAPPING SPECTRAL DATA...</p>
+                       </div>
+                    ) : (
+                       <div className="flex-1 flex flex-col animate-in fade-in zoom-in duration-1000">
+                          <div className="relative group/img overflow-hidden flex-1 flex items-center justify-center bg-stone-950">
+                             <img src={generatedImageUrl!} className="w-full h-full object-contain max-h-[700px] shadow-2xl" alt="Generated" />
+                             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 group-hover/img:opacity-0 transition-opacity"></div>
+                             <div className="absolute top-10 right-10 flex gap-4">
+                                <button className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-2xl hover:scale-110 active:scale-95 transition-all"><Maximize size={24}/></button>
+                                <button onClick={() => setGeneratedImageUrl(null)} className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-2xl hover:scale-110 active:scale-95 transition-all"><X size={24}/></button>
+                             </div>
+                          </div>
+                          <div className="p-12 border-t border-white/5 bg-black/90 flex flex-col md:flex-row justify-between items-center gap-8">
+                             <div className="flex items-center gap-6">
+                                <div className="w-16 h-16 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400"><Fingerprint size={32} /></div>
+                                <div className="text-left">
+                                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Aesthetic Shard Protocol</p>
+                                   <p className="text-lg font-mono font-black text-white">0x882_GEN_OK_SYNC</p>
+                                </div>
+                             </div>
+                             {!graphicAnchored ? (
+                               <button 
+                                 onClick={handleMintGraphic}
+                                 disabled={isMintingGraphic}
+                                 className="px-16 py-7 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center gap-5 ring-8 ring-white/5 border-2 border-white/10"
+                               >
+                                  {isMintingGraphic ? <Loader2 size={24} className="animate-spin" /> : <Stamp size={24} />}
+                                  {isMintingGraphic ? 'MINTING SHARD...' : 'ANCHOR ASSET TO REGISTRY'}
+                               </button>
+                             ) : (
+                               <div className="flex items-center gap-6 animate-in slide-in-from-right-4">
+                                  <div className="text-right">
+                                     <p className="text-emerald-500 font-black text-sm uppercase tracking-widest leading-none">Shard Anchored</p>
+                                     <p className="text-[10px] text-slate-600 font-mono mt-1">Registry Ref: #G882A</p>
+                                  </div>
+                                  <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-2xl"><CheckCircle2 size={32} /></div>
+                               </div>
+                             )}
+                          </div>
+                       </div>
+                    )}
+                 </div>
+              </div>
+           </div>
+        )}
+
+        {/* --- VIEW: LILIES FORGE (DESIGN FORGE) --- */}
         {activeTab === 'design' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-500">
-             <div className="lg:col-span-4 space-y-8">
-                <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-black/40 space-y-10 shadow-2xl relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><PencilRuler size={300} className="text-emerald-400" /></div>
-                   <div className="flex items-center gap-4 relative z-10">
-                      <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl"><PencilRuler className="w-8 h-8 text-white" /></div>
-                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none m-0">Design <span className="text-emerald-400">Ingest</span></h3>
+             <div className="lg:col-span-4 space-y-10">
+                <div className="glass-card p-10 md:p-14 rounded-[64px] border-2 border-fuchsia-500/20 bg-black/40 space-y-12 shadow-3xl relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-[10s]"><Flower2 size={400} className="text-fuchsia-400" /></div>
+                   <div className="flex items-center gap-6 relative z-10 border-b border-white/5 pb-8">
+                      <div className="p-5 bg-fuchsia-600 rounded-3xl shadow-3xl border-2 border-white/10 group-hover:rotate-12 transition-transform">
+                         <Crown className="w-10 h-10 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Aesthetic <span className="text-fuchsia-400">Forge</span></h3>
+                        <p className="text-[10px] text-slate-500 font-mono uppercase mt-2 tracking-widest">Lilies_Around_Architecture_v1</p>
+                      </div>
                    </div>
                    
-                   <div className="space-y-8 relative z-10">
+                   <div className="space-y-10 relative z-10">
                       <div className="space-y-4">
-                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Design Category</label>
-                         <div className="grid grid-cols-2 gap-3">
-                            {['Landscaping', 'Structures', 'Waterways', 'Furniture'].map(cat => (
+                         <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Mission Category</label>
+                         <div className="grid grid-cols-2 gap-4">
+                            {['Floriculture', 'Landscape', 'Atrium_Design', 'Celestial_Arcs'].map(cat => (
                                <button 
                                  key={cat} 
                                  onClick={() => setDesignCategory(cat)}
-                                 className={`p-4 rounded-2xl border text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${designCategory === cat ? 'bg-emerald-600 text-white border-emerald-400 shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}
+                                 className={`p-6 rounded-[32px] border-2 text-[10px] font-black uppercase transition-all flex items-center justify-center gap-3 ${designCategory === cat ? 'bg-fuchsia-600 border-white text-white shadow-2xl scale-105' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}
                                >
-                                  {cat === 'Landscaping' ? <Trees size={14} /> : cat === 'Structures' ? <Building size={14} /> : cat === 'Waterways' ? <Droplets size={14} /> : <Box size={14} />}
+                                  {cat === 'Floriculture' ? <Flower2 size={16} /> : cat === 'Landscape' ? <Trees size={16} /> : cat === 'Atrium_Design' ? <Building size={16} /> : <Sun size={16} />}
                                   {cat}
                                </button>
                             ))}
@@ -294,442 +514,358 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
                       </div>
 
                       <div className="space-y-4">
-                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Visual Description</label>
+                         <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-6">Botanical Intent Shard</label>
                          <textarea 
                            value={designDescription}
                            onChange={e => setDesignDescription(e.target.value)}
-                           placeholder="Describe your design intent: Materials, specific color codes, spatial layout, etc..."
-                           className="w-full bg-black/60 border border-white/10 rounded-3xl p-8 text-white text-sm font-medium italic focus:ring-4 focus:ring-emerald-500/10 outline-none h-40 resize-none placeholder:text-slate-800 shadow-inner"
+                           placeholder="Describe the aesthetic botanical architecture: Symmetry, celestial alignment, fuchsia sharding..."
+                           className="w-full bg-black/80 border border-white/10 rounded-[40px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-fuchsia-500/5 transition-all outline-none h-48 resize-none placeholder:text-stone-900 shadow-inner"
                          />
                       </div>
 
-                      <div className="p-6 bg-emerald-500/5 border border-emerald-500/10 rounded-3xl flex justify-between items-center shadow-inner">
-                         <div className="flex items-center gap-3">
-                            <Coins size={16} className="text-emerald-400" />
-                            <span className="text-[10px] font-black text-slate-500 uppercase">Ingest Fee</span>
+                      <div className="p-8 bg-fuchsia-500/5 border border-fuchsia-500/10 rounded-[44px] flex justify-between items-center shadow-inner group/fee hover:border-fuchsia-500/30 transition-all">
+                         <div className="flex items-center gap-4">
+                            <Coins size={24} className="text-fuchsia-500 group-hover:scale-110 transition-transform" />
+                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest">Aesthetic Fee</span>
                          </div>
-                         <span className="text-xl font-mono font-black text-emerald-400">40 EAC</span>
+                         <span className="text-2xl font-mono font-black text-white">40 <span className="text-sm text-fuchsia-700">EAC</span></span>
                       </div>
 
                       <button 
                         onClick={handleForgeDesign}
                         disabled={isForgingDesign || !designDescription.trim()}
-                        className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
+                        className="w-full py-10 bg-fuchsia-800 hover:bg-fuchsia-700 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(217,70,239,0.3)] flex items-center justify-center gap-8 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-[16px] ring-white/5"
                       >
-                         {isForgingDesign ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 fill-current" />}
-                         {isForgingDesign ? "SYNTHESIZING SHARD..." : "FORGE DESIGN SHARD"}
+                         {isForgingDesign ? <Loader2 className="w-10 h-10 animate-spin" /> : <Sparkles className="w-10 h-10 fill-current" />}
+                         {isForgingDesign ? "SYNTHESIZING AESTHETIC..." : "FORGE LILIES SHARD"}
                       </button>
                    </div>
-                </div>
-
-                <div className="p-10 glass-card rounded-[48px] border border-blue-500/10 bg-blue-500/5 space-y-6 group">
-                    <div className="flex items-center gap-3">
-                       <Info className="w-5 h-5 text-blue-400" />
-                       <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest italic">Design Integrity</h4>
-                    </div>
-                    <p className="text-xs text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100">
-                       "Architectural shards are evaluated for solar albedo (Av), social stress (S) reduction, and biological alignment (Ca)."
-                    </p>
                 </div>
              </div>
 
              <div className="lg:col-span-8">
-                <div className="glass-card rounded-[64px] min-h-[750px] border border-white/5 bg-black/20 flex flex-col relative overflow-hidden shadow-3xl">
-                   <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-4 text-emerald-400">
-                         <Terminal className="w-6 h-6" />
-                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Design Synthesis Terminal</span>
+                <div className="glass-card rounded-[80px] min-h-[850px] border-2 border-fuchsia-500/20 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
+                   <div className="p-12 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-20">
+                      <div className="flex items-center gap-8 text-fuchsia-400">
+                         <Terminal className="w-8 h-8" />
+                         <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500">Aesthetic Blueprint Terminal</span>
                       </div>
-                      {designShard && (
-                        <div className="flex gap-4">
-                           <button onClick={() => setDesignShard(null)} className="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all"><X size={18} /></button>
-                        </div>
-                      )}
                    </div>
 
-                   <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative">
+                   <div className="flex-1 p-16 overflow-y-auto custom-scrollbar relative z-20">
                       {!designShard && !isForgingDesign ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-20 group">
+                        <div className="h-full flex flex-col items-center justify-center text-center space-y-16 py-20 opacity-10 group">
                            <div className="relative">
-                              <Building size={140} className="text-slate-500 group-hover:text-emerald-500 transition-colors" />
-                              <div className="absolute inset-0 border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+                              <Flower2 size={180} className="text-slate-500 group-hover:text-fuchsia-500 transition-colors duration-1000" />
+                              <div className="absolute inset-[-60px] border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
                            </div>
-                           <div className="space-y-2">
-                              <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic">ORACLE STANDBY</p>
-                              <p className="text-lg italic uppercase font-bold tracking-widest text-slate-600">Enter Design Context to Sync Shard</p>
+                           <div className="space-y-4">
+                              <p className="text-6xl font-black uppercase tracking-[0.6em] text-white italic leading-none">ORACLE_STANDBY</p>
+                              <p className="text-2xl font-bold italic text-slate-700 uppercase tracking-[0.4em]">Input Aesthetic Context to Sync Shard</p>
                            </div>
                         </div>
                       ) : isForgingDesign ? (
-                        <div className="h-full flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in duration-500">
+                        <div className="h-full flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
                            <div className="relative">
-                              <Loader2 className="w-24 h-24 text-emerald-500 animate-spin mx-auto" />
+                              <Loader2 className="w-32 h-32 text-fuchsia-500 animate-spin mx-auto" />
                               <div className="absolute inset-0 flex items-center justify-center">
-                                 <PencilRuler className="w-10 h-10 text-emerald-400 animate-pulse" />
+                                 <Crown className="w-14 h-14 text-fuchsia-400 animate-pulse" />
                               </div>
                            </div>
-                           <div className="space-y-4">
-                              <p className="text-emerald-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">MAPPING ARCHITECTURAL CHROMA...</p>
-                              <div className="flex justify-center gap-1.5 pt-6">
-                                 {[...Array(8)].map((_, i) => <div key={i} className="w-1.5 h-12 bg-emerald-500/20 rounded-full animate-bounce" style={{ animationDelay: `${i*0.1}s` }}></div>)}
+                           <div className="space-y-8">
+                              <p className="text-fuchsia-400 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic m-0">MODELING CELESTIAL ALIGNMENT...</p>
+                              <div className="flex justify-center gap-3 pt-10">
+                                 {[...Array(10)].map((_, i) => <div key={i} className="w-1.5 h-16 bg-fuchsia-500/20 rounded-full animate-bounce shadow-xl" style={{ animationDelay: `${i*0.1}s` }}></div>)}
                               </div>
                            </div>
                         </div>
                       ) : (
-                        <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-12 pb-10">
-                           <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-emerald-500/20 prose prose-invert prose-emerald max-w-none shadow-3xl border-l-8 border-l-emerald-500 relative overflow-hidden">
-                              <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform"><Sparkles size={300} /></div>
-                              <div className="flex items-center gap-6 mb-10 relative z-10 border-b border-white/5 pb-6">
-                                 <Bot className="w-10 h-10 text-emerald-400" />
-                                 <div>
-                                    <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tighter">Architectural Oracle</h4>
-                                    <p className="text-emerald-400/60 text-[9px] font-black uppercase tracking-widest mt-1">EACSS_BLUEPRINT_SYNC</p>
+                        <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-16 pb-16">
+                           <div className="p-16 md:p-20 bg-black/80 rounded-[80px] border-2 border-fuchsia-500/20 prose prose-invert prose-indigo max-w-none shadow-[0_40px_150px_rgba(0,0,0,0.9)] border-l-[16px] border-l-fuchsia-600 relative overflow-hidden group/final">
+                              <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/final:scale-110 transition-transform duration-[15s]"><Crown size={600} className="text-fuchsia-400" /></div>
+                              <div className="flex justify-between items-center mb-16 relative z-10 border-b border-white/5 pb-10 gap-8">
+                                 <div className="flex items-center gap-10">
+                                    <Bot className="w-14 h-14 text-fuchsia-400 animate-pulse" />
+                                    <div>
+                                       <h4 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Lilies Oracle</h4>
+                                       <p className="text-fuchsia-400/60 text-[10px] font-black uppercase tracking-[0.4em] mt-3">AESTHETIC_VITALITY_SYNC // VERIFIED_SHARD</p>
+                                    </div>
                                  </div>
                               </div>
-                              <div className="text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10">
+                              <div className="text-slate-300 text-3xl leading-[2] italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">
                                  {designShard}
                               </div>
-                              <div className="mt-12 flex justify-end relative z-10">
-                                 <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center px-8 flex items-center gap-3">
-                                    <ShieldCheck className="w-6 h-6 text-emerald-400" />
-                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">VERIFIED_DESIGN_QUORUM</span>
-                                 </div>
-                              </div>
                            </div>
-
-                           <div className="flex justify-center gap-8">
-                              <button onClick={() => setDesignShard(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-3xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Discard Shard</button>
-                              <button className="px-20 py-6 agro-gradient rounded-3xl text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] active:scale-95 transition-all flex items-center justify-center gap-5 ring-8 ring-white/5">
-                                 <Stamp className="w-6 h-6" /> ANCHOR DESIGN SHARD
+                           <div className="flex justify-center gap-10">
+                              <button onClick={() => setDesignShard(null)} className="px-16 py-8 bg-white/5 border border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
+                              <button className="px-24 py-8 bg-fuchsia-800 rounded-full text-white font-black text-[13px] uppercase tracking-[0.6em] shadow-[0_0_120px_rgba(162,28,175,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-2 border-white/10 ring-[16px] ring-white/5">
+                                 <Stamp size={32} /> ANCHOR AESTHETIC SHARD
                               </button>
                            </div>
                         </div>
                       )}
                    </div>
-
-                   <div className="p-10 border-t border-white/5 bg-white/[0.01] flex justify-between items-center opacity-30 mt-auto">
-                      <div className="flex items-center gap-4">
-                         <Fingerprint size={28} className="text-slate-400" />
-                         <div className="space-y-1">
-                            <p className="text-[9px] font-mono uppercase font-black text-slate-500 tracking-widest leading-none">REGISTRY_LINK: ACTIVE_HANDSHAKE</p>
-                            <p className="text-lg font-mono font-black text-slate-600 tracking-tighter leading-none">0x882_CHROMA_DESIGN_SYNC</p>
-                         </div>
-                      </div>
-                      <Box size={40} className="text-emerald-400" />
-                   </div>
                 </div>
              </div>
           </div>
         )}
 
-        {/* TAB 2: MACRO-APPLICATION (Architecture Sc) */}
+        {/* --- VIEW: ARCHITECTURAL Sc (MACRO) --- */}
         {activeTab === 'macro' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-500 px-4">
-             <div className="lg:col-span-4 space-y-8">
-                <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-10 shadow-2xl">
-                   <div className="flex items-center gap-4">
-                      <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl"><Scale className="w-8 h-8 text-white" /></div>
-                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Sc <span className="text-indigo-400">Calculator</span></h3>
-                   </div>
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl">
+                    <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                       <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl">
+                          <Box className="w-8 h-8 text-white" />
+                       </div>
+                       <div>
+                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Resilience <span className="text-emerald-400">Sc</span></h3>
+                          <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">CHROMA_MACRO_CALC</p>
+                       </div>
+                    </div>
+                    <div className="space-y-10">
+                       <div className="group">
+                          <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-emerald-400 transition-colors">Albedo (Reflectance)</label><span className="text-xs font-mono text-emerald-400 font-black">{albedo}</span></div>
+                          <input type="range" min="0.05" max="0.95" step="0.01" value={albedo} onChange={e => setAlbedo(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner" />
+                       </div>
+                       <div className="group">
+                          <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">Psychological Score</label><span className="text-xs font-mono text-blue-400 font-black">{psychScore}/10</span></div>
+                          <input type="range" min="1" max="10" step="1" value={psychScore} onChange={e => setPsychScore(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500 shadow-inner" />
+                       </div>
+                       <div className="group">
+                          <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-amber-400 transition-colors">Thermal Coeff (k)</label><span className="text-xs font-mono text-amber-400 font-black">{thermalCoeff}</span></div>
+                          <input type="range" min="0.1" max="1.0" step="0.05" value={thermalCoeff} onChange={e => setThermalCoeff(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-amber-500 shadow-inner" />
+                       </div>
+                       <div className="group">
+                          <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-rose-400 transition-colors">Acreage Footprint</label><span className="text-xs font-mono text-rose-400 font-black">{footprint}ha</span></div>
+                          <input type="range" min="0.01" max="0.5" step="0.01" value={footprint} onChange={e => setFootprint(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-500 shadow-inner" />
+                       </div>
+                    </div>
+                    <button 
+                       onClick={calculateSc}
+                       disabled={isCalculatingSc}
+                       className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
+                    >
+                       {isCalculatingSc ? <Loader2 className="w-6 h-6 animate-spin" /> : <RefreshCw className="w-6 h-6" />}
+                       {isCalculatingSc ? 'CALIBRATING...' : 'COMPUTE COEFFICIENT'}
+                    </button>
+                 </div>
+              </div>
 
-                   <div className="space-y-8">
-                      <div className="space-y-4">
-                         <div className="flex justify-between items-center px-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Sun size={12} /> Albedo (Av)</label>
-                            <span className="text-xl font-mono font-black text-white">{albedo.toFixed(2)}</span>
-                         </div>
-                         <input type="range" min="0" max="1" step="0.01" value={albedo} onChange={e => setAlbedo(parseFloat(e.target.value))} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-indigo-500" />
-                      </div>
-                      <div className="space-y-4">
-                         <div className="flex justify-between items-center px-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Heart size={12} /> Psych Score (Ps)</label>
-                            <span className="text-xl font-mono font-black text-white">{psychScore}</span>
-                         </div>
-                         <input type="range" min="1" max="10" step="1" value={psychScore} onChange={e => setPsychScore(parseInt(e.target.value))} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-500" />
-                      </div>
-                      <div className="space-y-4">
-                         <div className="flex justify-between items-center px-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Thermometer size={12} /> Thermal (Ta)</label>
-                            <span className="text-xl font-mono font-black text-white">{thermalCoeff.toFixed(2)}</span>
-                         </div>
-                         <input type="range" min="0" max="1" step="0.01" value={thermalCoeff} onChange={e => setThermalCoeff(parseFloat(e.target.value))} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500" />
-                      </div>
-                      <div className="space-y-4">
-                         <div className="flex justify-between items-center px-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Leaf size={12} /> Footprint (Ef)</label>
-                            <span className="text-xl font-mono font-black text-white">{footprint.toFixed(2)}</span>
-                         </div>
-                         <input type="range" min="0" max="1" step="0.01" value={footprint} onChange={e => setFootprint(parseFloat(e.target.value))} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500" />
-                      </div>
-                   </div>
+              <div className="lg:col-span-8 flex flex-col gap-10">
+                 <div className="glass-card p-16 rounded-[80px] border-2 border-white/5 bg-black/40 shadow-3xl relative overflow-hidden flex flex-col items-center justify-center min-h-[500px]">
+                    <div className="absolute inset-0 opacity-10 animate-pulse bg-gradient-to-br from-indigo-500/10 to-emerald-500/10 pointer-events-none"></div>
+                    {!scResult ? (
+                       <div className="space-y-8 flex flex-col items-center opacity-30 text-center">
+                          <Scale size={120} className="text-slate-600" />
+                          <p className="text-3xl font-black uppercase tracking-[0.6em] text-white italic">CALC_STANDBY</p>
+                       </div>
+                    ) : (
+                       <div className="animate-in zoom-in duration-700 space-y-12 text-center w-full max-w-2xl">
+                          <div className="space-y-4">
+                             <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.8em]">RESULTANT_CHROMA</p>
+                             <h4 className="text-7xl md:text-9xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">
+                                {scResult.name.split(' ').map((s, idx) => <span key={idx} className={idx === 1 ? 'text-emerald-400 block' : ''}>{s} </span>)}
+                             </h4>
+                          </div>
+                          
+                          <div className="flex justify-center items-center gap-12">
+                             <div className="w-48 h-48 rounded-[64px] shadow-3xl border-4 border-white/10 ring-[24px] ring-white/5 transition-transform duration-700 hover:rotate-12" style={{ backgroundColor: scResult.hex }}></div>
+                             <div className="text-left space-y-6">
+                                <div>
+                                   <p className="text-[9px] text-slate-600 font-black uppercase mb-1">HEX Signature</p>
+                                   <p className="text-4xl font-mono font-black text-white tracking-widest uppercase">{scResult.hex}</p>
+                                </div>
+                                <div className="flex items-center gap-4 py-3 px-6 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                                   <ShieldCheck size={18} className="text-emerald-400" />
+                                   <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">RESILIENCE_CERTIFIED</span>
+                                </div>
+                             </div>
+                          </div>
 
-                   <div className="pt-6 border-t border-white/5 space-y-6">
-                      <div className="p-8 bg-black/60 rounded-[40px] border border-white/10 text-center space-y-4 shadow-inner">
-                         <p className="text-[10px] text-slate-500 uppercase tracking-widest">The Sc Equation</p>
-                         <p className="text-lg font-mono text-emerald-400 font-black leading-none">Sc = (Av * Ps) / (Ta + Ef)</p>
-                      </div>
-                      <button 
-                        onClick={calculateSc}
-                        disabled={isCalculatingSc}
-                        className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-[11px] uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4"
-                      >
-                         {isCalculatingSc ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 fill-current" />}
-                         {isCalculatingSc ? 'SYNTHESIZING Sc...' : 'CALIBRATE SUSTAINABLE COLOR'}
-                      </button>
-                   </div>
-                </div>
-             </div>
+                          <div className="pt-10 border-t border-white/5 grid grid-cols-2 gap-8">
+                             <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group hover:border-emerald-500/20 transition-all">
+                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Efficiency Multiplier</p>
+                                <p className="text-4xl font-mono font-black text-white">x1.24</p>
+                             </div>
+                             <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group hover:border-blue-500/20 transition-all">
+                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Thermal Buffer</p>
+                                <p className="text-4xl font-mono font-black text-white">45%</p>
+                             </div>
+                          </div>
+                       </div>
+                    )}
+                 </div>
 
-             <div className="lg:col-span-8 space-y-8">
-                <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/20 min-h-[600px] flex flex-col relative overflow-hidden shadow-3xl">
-                   <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                         <Monitor className="w-6 h-6 text-indigo-400" />
-                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Architectural Palette Forge</span>
-                      </div>
-                      <div className="flex gap-2">
-                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                         <span className="text-[9px] font-mono text-emerald-500 uppercase font-black">EOS_CORE_LINKED</span>
-                      </div>
-                   </div>
-
-                   <div className="flex-1 p-12 flex flex-col items-center justify-center">
-                      {!scResult && !isCalculatingSc ? (
-                         <div className="text-center space-y-8 opacity-20 group">
-                            <Palette size={120} className="mx-auto text-slate-500 group-hover:text-indigo-400 transition-colors" />
-                            <p className="text-3xl font-black uppercase tracking-[0.5em] text-white italic">Awaiting Variables</p>
-                         </div>
-                      ) : isCalculatingSc ? (
-                         <div className="flex flex-col items-center gap-12 text-center">
-                            <div className="relative">
-                               <Loader2 className="w-32 h-32 text-indigo-500 animate-spin" />
-                               <div className="absolute inset-0 flex items-center justify-center">
-                                  <Activity className="w-12 h-12 text-emerald-400 animate-pulse" />
-                               </div>
-                            </div>
-                            <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">Modeling Solar Reflection...</p>
-                         </div>
-                      ) : (
-                         <div className="w-full animate-in zoom-in duration-500 space-y-12">
-                            <div className="text-center space-y-4">
-                               <p className="text-[11px] text-slate-500 font-black uppercase tracking-[0.5em]">Optimal Sustainable Color Sc</p>
-                               <h3 className="text-6xl md:text-8xl font-black text-white italic tracking-tighter uppercase leading-none drop-shadow-2xl">{scResult}</h3>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                               {ARCHITECTURAL_PALETTES.map((p, i) => (
-                                  <div key={i} className="p-8 glass-card rounded-[44px] border border-white/5 bg-black/40 space-y-6 group hover:border-white/20 transition-all shadow-xl">
-                                     <div className="h-40 rounded-3xl relative overflow-hidden border border-white/5 shadow-inner" style={{ backgroundColor: p.hex }}>
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/10"></div>
-                                        <div className="absolute bottom-4 right-6 text-white font-mono font-black text-xs opacity-40">{p.hex}</div>
-                                     </div>
-                                     <div className="space-y-2">
-                                        <h5 className="text-xl font-black text-white uppercase italic tracking-tighter m-0">{p.zone}</h5>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase">{p.name}</p>
-                                        <p className="text-xs text-slate-400 italic leading-relaxed opacity-80 mt-4">"{p.function}"</p>
-                                     </div>
-                                  </div>
-                               ))}
-                            </div>
-                         </div>
-                      )}
-                   </div>
-                </div>
-             </div>
-          </div>
+                 <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-600/5 flex flex-col md:flex-row items-center justify-between gap-12 shadow-xl">
+                    <div className="flex items-center gap-8">
+                       <div className="w-20 h-20 bg-emerald-600 rounded-[32px] flex items-center justify-center text-white shadow-2xl shrink-0"><Stamp size={32} /></div>
+                       <div className="space-y-2">
+                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Architectural Finality</h4>
+                          <p className="text-slate-400 text-sm font-medium italic">"Anchor your architectural chroma profile to the regional node for solar-efficiency boosts."</p>
+                       </div>
+                    </div>
+                    <button className="px-12 py-5 bg-emerald-700 hover:bg-emerald-600 rounded-3xl text-white font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 transition-all">ANCHOR PROFILE</button>
+                 </div>
+              </div>
+           </div>
         )}
 
-        {/* TAB 3: MICRO-APPLICATION (Chromatography) */}
+        {/* --- VIEW: CHROMATOGRAPHY (MICRO) --- */}
         {activeTab === 'micro' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-500 px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-500">
              <div className="lg:col-span-4 space-y-8">
-                <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-black/40 space-y-10 shadow-2xl relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[10s]"><Microscope size={250} className="text-blue-500" /></div>
-                   <div className="text-center space-y-6 relative z-10">
-                      <div className="w-24 h-24 bg-blue-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-blue-500/20 shadow-2xl animate-float">
-                         <Scan size={48} className="text-blue-400" />
+                <div className="glass-card p-10 rounded-[56px] border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl">
+                   <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                      <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl">
+                         <Microscope size={8} className="w-8 h-8 text-white" />
+                       </div>
+                       <div>
+                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Pigment <span className="text-emerald-400">Lab</span></h3>
+                          <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">DIGITAL_CHROMATOGRAPHY</p>
+                       </div>
+                    </div>
+                    
+                    {!filePreview ? (
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-16 border-4 border-dashed border-white/10 rounded-[48px] bg-black/40 flex flex-col items-center justify-center text-center space-y-6 group hover:border-emerald-500/40 hover:bg-emerald-500/[0.01] transition-all cursor-pointer shadow-inner"
+                      >
+                         <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+                         <Upload size={48} className="text-slate-700 group-hover:text-emerald-400 group-hover:scale-110 transition-all duration-500" />
+                         <div>
+                            <p className="text-xl font-black text-white uppercase tracking-tighter">Choose Shard</p>
+                            <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest leading-relaxed mt-2 px-10">Upload visual crop/soil data for spectral pigment sharding.</p>
+                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Diagnostic <span className="text-blue-400">Lab</span></h3>
-                        <p className="text-slate-400 text-lg italic leading-relaxed">Decompose crop shards into spectral data for pathology auditing.</p>
-                      </div>
-                   </div>
-
-                   <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`p-16 border-4 border-dashed rounded-[48px] transition-all flex flex-col items-center justify-center text-center space-y-6 group/scan cursor-pointer bg-black/40 ${filePreview ? 'border-emerald-500 bg-emerald-500/5' : 'border-white/10 hover:border-blue-500/40'}`}
-                   >
-                      <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
-                      {filePreview ? (
-                        <div className="relative w-full aspect-square rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-500/40 group-hover/scan:scale-105 transition-transform duration-500">
-                           <img src={filePreview} className="w-full h-full object-cover grayscale-[0.2]" alt="Scan Preview" />
-                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/scan:opacity-100 transition-opacity">
-                              <RefreshCw size={48} className="text-white animate-spin-slow" />
-                           </div>
-                        </div>
-                      ) : (
-                        <>
-                           <Upload size={56} className="text-slate-800 group-hover/scan:text-blue-400 transition-all duration-500" />
-                           <div className="space-y-1">
-                              <p className="text-xl font-black text-white uppercase tracking-widest italic leading-none">Select Crop Shard</p>
-                              <p className="text-slate-600 text-[10px] uppercase font-black tracking-widest">Image Upload Required</p>
-                           </div>
-                        </>
-                      )}
-                   </div>
-
-                   <div className="p-8 bg-blue-500/5 border border-blue-500/10 rounded-[44px] flex items-center gap-6 shadow-inner">
-                      <ShieldPlus className="w-10 h-10 text-blue-500 shrink-0" />
-                      <p className="text-[10px] text-blue-200/50 font-black uppercase tracking-tight leading-relaxed text-left italic">
-                         DIAGNOSTIC_PROTOCOL: Digital spectral decomposition identifies pre-symptomatic stress shards before physical markers appear.
-                      </p>
-                   </div>
+                    ) : (
+                       <div className="space-y-10 animate-in zoom-in duration-500">
+                          <div className="relative w-full aspect-square rounded-[40px] overflow-hidden shadow-2xl border border-white/10 group">
+                             <img src={filePreview} className="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt="Preview" />
+                             <div className="absolute inset-0 bg-emerald-500/10 animate-pulse pointer-events-none"></div>
+                             <button onClick={() => { setFilePreview(null); setChromaDiagnosis(null); }} className="absolute top-4 right-4 p-3 bg-black/60 rounded-full text-white hover:bg-rose-600 transition-colors"><X size={20}/></button>
+                          </div>
+                          <button 
+                             onClick={runDigitalChromatography}
+                             disabled={isScanning}
+                             className="w-full py-8 agro-gradient rounded-[36px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-2 border-white/10 ring-8 ring-white/5"
+                          >
+                             {isScanning ? <Loader2 className="w-6 h-6 animate-spin" /> : <Scan className="w-6 h-6" />}
+                             {isScanning ? 'SCANNING PIGMENTS...' : 'INITIALIZE CHROMA AUDIT'}
+                          </button>
+                       </div>
+                    )}
                 </div>
              </div>
 
              <div className="lg:col-span-8">
-                <div className="glass-card rounded-[64px] min-h-[750px] border border-white/5 bg-black/20 flex flex-col relative overflow-hidden shadow-3xl">
-                   <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                         <Terminal className="w-6 h-6 text-blue-400" />
-                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Phyto-Pathology Oracle Terminal</span>
-                      </div>
-                      <div className="flex gap-4">
-                         <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
-                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                            <span className="text-[9px] font-mono font-black text-slate-500 uppercase tracking-widest">SYNCING_ORACLE</span>
+                <div className="glass-card rounded-[64px] min-h-[750px] border-2 border-white/10 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
+                   {/* SCADA Scanline overlay */}
+                   <div className="absolute inset-0 pointer-events-none z-10 opacity-20">
+                      <div className="w-full h-1/2 bg-gradient-to-b from-emerald-500/20 to-transparent absolute top-0 animate-scan"></div>
+                   </div>
+
+                   <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20">
+                      <div className="flex items-center gap-8">
+                         <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-xl group overflow-hidden relative">
+                            <Bot size={32} className="group-hover:scale-110 transition-transform relative z-10" />
+                            <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                          </div>
+                         <div>
+                            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Diagnostic <span className="text-emerald-400">Oracle Shard</span></h3>
+                            <p className="text-emerald-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_CHROMA_AUDIT // PIXEL_ANALYSIS_v4.2</p>
+                         </div>
+                      </div>
+                      <div className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full">
+                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
+                         <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_STABLE</span>
                       </div>
                    </div>
 
-                   <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative">
+                   <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-20">
                       {!chromaDiagnosis && !isScanning ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-20 group">
+                        <div className="h-full flex flex-col items-center justify-center text-center space-y-16 py-20 opacity-10 group">
                            <div className="relative">
-                              <Microscope size={140} className="text-slate-500 group-hover:text-blue-500 transition-colors" />
-                              <div className="absolute inset-0 border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+                              {/* Fix: Line 786 error handled by adding FlaskConical to lucide-react imports */}
+                              <FlaskConical size={180} className="text-slate-500 group-hover:text-emerald-500 transition-colors duration-1000" />
+                              <div className="absolute inset-[-60px] border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
                            </div>
-                           <div className="space-y-2">
-                              <p className="text-4xl font-black uppercase tracking-[0.5em] text-white">LAB STANDBY</p>
-                              <p className="text-lg italic uppercase font-bold tracking-widest text-slate-600">Awaiting Ingest for Spectral Decomposition</p>
+                           <div className="space-y-4">
+                              <p className="text-6xl font-black uppercase tracking-[0.6em] text-white italic leading-none">LAB_STANDBY</p>
+                              <p className="text-2xl font-bold italic text-slate-700 uppercase tracking-[0.4em]">Awaiting Spectral Ingest</p>
                            </div>
                         </div>
                       ) : isScanning ? (
-                        <div className="h-full flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in duration-500">
+                        <div className="h-full flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
                            <div className="relative">
-                              <Loader2 className="w-24 h-24 text-blue-500 animate-spin mx-auto" />
+                              <Loader2 size={120} className="text-emerald-500 animate-spin mx-auto" />
                               <div className="absolute inset-0 flex items-center justify-center">
-                                 <Scan className="w-10 h-10 text-blue-400 animate-pulse" />
+                                 <Microscope size={48} className="text-emerald-400 animate-pulse" />
                               </div>
                            </div>
-                           <div className="space-y-4">
-                              <p className="text-blue-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">DECOMPOSING SPECTRUM...</p>
-                              <div className="flex justify-center gap-1.5 pt-4">
-                                 {[...Array(6)].map((_, i) => <div key={i} className="w-1.5 h-12 bg-blue-500/20 rounded-full animate-bounce" style={{ animationDelay: `${i*0.1}s` }}></div>)}
+                           <div className="space-y-8">
+                              <p className="text-emerald-400 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic m-0">ANALYZING PIGMENT RESONANCE...</p>
+                              <div className="flex justify-center gap-3 pt-10">
+                                 {[...Array(10)].map((_, i) => <div key={i} className="w-1.5 h-16 bg-emerald-500/20 rounded-full animate-bounce shadow-xl" style={{ animationDelay: `${i*0.1}s` }}></div>)}
                               </div>
                            </div>
                         </div>
                       ) : (
-                        <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-12 pb-10">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                              <div className="space-y-10">
-                                 <div className="p-10 glass-card rounded-[48px] bg-black/60 border border-white/10 flex flex-col items-center text-center space-y-6 shadow-inner group">
-                                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.5em] mb-2">Pigment Health Index (Hi)</p>
-                                    <h5 className={`text-9xl font-mono font-black tracking-tighter leading-none ${chromaDiagnosis.hi > 0.8 ? 'text-emerald-400' : 'text-rose-500 animate-pulse'}`}>
-                                       {chromaDiagnosis.hi.toFixed(2)}
-                                    </h5>
-                                    <p className={`text-[11px] font-black uppercase tracking-widest px-4 py-1 rounded-lg border ${chromaDiagnosis.hi > 0.8 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>
-                                       {chromaDiagnosis.hi > 0.8 ? 'OPTIMAL_RESONANCE' : 'CHLOROSIS_DETECTED'}
-                                    </p>
+                        <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10 flex-1">
+                           <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-emerald-500/20 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-[12px] border-l-emerald-600 relative overflow-hidden group/shard">
+                              {/* Fix: Line 812 error handled by adding Atom to lucide-react imports */}
+                              <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group/shard:scale-110 transition-transform duration-[10s]"><Atom size={600} className="text-emerald-400" /></div>
+                              
+                              <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
+                                 <div className="flex items-center gap-6">
+                                    <ShieldCheck className="w-10 h-10 text-emerald-400" />
+                                    <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Diagnostic Result</h4>
                                  </div>
-                                 <div className="grid grid-cols-3 gap-4">
-                                    {['R-Channel', 'G-Channel', 'B-Channel'].map((chan, idx) => (
-                                       <div key={chan} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-center space-y-2">
-                                          <p className="text-8xl text-slate-600 font-black uppercase tracking-widest leading-none opacity-5 absolute inset-0 flex items-center justify-center select-none pointer-events-none">{idx === 0 ? 'R' : idx === 1 ? 'G' : 'B'}</p>
-                                          <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest relative z-10">{chan}</p>
-                                          <div className="h-12 w-full bg-black/40 rounded-lg flex items-end justify-center gap-1 p-1 shadow-inner relative z-10">
-                                             {[...Array(4)].map((_, j) => <div key={j} className={`flex-1 rounded-sm ${idx === 0 ? 'bg-rose-500/40' : idx === 1 ? 'bg-emerald-500/40' : 'bg-blue-500/40'}`} style={{ height: `${Math.random() * 80 + 20}%` }}></div>)}
-                                          </div>
-                                       </div>
-                                    ))}
+                                 <div className="text-right">
+                                    <p className="text-[10px] text-slate-500 font-black uppercase">Health Index (Hi)</p>
+                                    <p className="text-4xl font-mono font-black text-emerald-400">{chromaDiagnosis!.hi.toFixed(2)}</p>
                                  </div>
                               </div>
 
-                              <div className="p-10 md:p-14 bg-black/80 rounded-[48px] border border-blue-500/20 prose prose-invert max-w-none shadow-3xl border-l-8 border-l-blue-500 relative overflow-hidden">
-                                 <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform"><Bot size={300} /></div>
-                                 <div className="flex items-center gap-6 mb-10 relative z-10 border-b border-white/5 pb-6">
-                                    <Bot className="w-10 h-10 text-blue-400" />
-                                    <div>
-                                       <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tighter">Oracle Verdict</h4>
-                                       <p className="text-blue-400/60 text-[9px] font-black uppercase tracking-widest mt-1">SEHTI_DIAGNOSTIC_v5</p>
-                                    </div>
-                                 </div>
-                                 <div className="text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10">
-                                    {chromaDiagnosis.report}
-                                 </div>
-                                 <div className="mt-12 flex justify-end relative z-10">
-                                    <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center px-8 flex items-center gap-3">
-                                       <ShieldCheck className="w-6 h-6 text-emerald-400" />
-                                       <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">VERIFIED_HI_CONSENSUS</span>
-                                    </div>
-                                 </div>
+                              <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">
+                                 {chromaDiagnosis!.report}
                               </div>
-                           </div>
 
-                           <div className="flex justify-center gap-8 pt-10">
-                              <button onClick={() => { setChromaDiagnosis(null); setFilePreview(null); }} className="px-12 py-6 bg-white/5 border border-white/10 rounded-3xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Discard Analysis</button>
-                              <button className="px-20 py-6 agro-gradient rounded-3xl text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] active:scale-95 transition-all flex items-center justify-center gap-5 ring-8 ring-white/5">
-                                 <Stamp className="w-6 h-6" /> ANCHOR REMEDIATION SHARD
-                              </button>
+                              <div className="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+                                 <div className="flex items-center gap-6">
+                                    <Fingerprint size={40} className="text-indigo-400" />
+                                    <div className="text-left">
+                                       <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">CHROMATOGRAPHY_HASH</p>
+                                       <p className="text-lg font-mono text-white">0x882...PIGMENT_SYNC</p>
+                                    </div>
+                                 </div>
+                                 <button className="px-10 py-5 bg-emerald-800 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-white/5">
+                                    <Stamp size={24} /> ANCHOR SHARD TO LEDGER
+                                 </button>
+                              </div>
                            </div>
                         </div>
                       )}
-                   </div>
-
-                   <div className="p-10 border-t border-white/5 bg-white/[0.01] flex justify-between items-center opacity-30 mt-auto grayscale">
-                      <div className="flex items-center gap-4">
-                         <Fingerprint size={28} className="text-slate-400" />
-                         <div className="space-y-1">
-                            <p className="text-[9px] font-mono uppercase font-black text-slate-500 tracking-widest leading-none">ZK-PROOF: AUTH_SYNC_OK</p>
-                            <p className="text-lg font-mono font-black text-slate-600 tracking-tighter leading-none">0x882_CHROMA_MICRO_SYNC</p>
-                         </div>
-                      </div>
-                      <Sparkles size={40} className="text-blue-400" />
                    </div>
                 </div>
              </div>
           </div>
         )}
-      </div>
 
-      {/* Global Persistence Shard Footer */}
-      <div className="p-16 md:p-24 glass-card rounded-[80px] border-emerald-500/20 bg-emerald-600/[0.03] flex flex-col md:flex-row items-center justify-between gap-16 relative overflow-hidden shadow-3xl mt-32 mx-4 z-10 backdrop-blur-3xl">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12 transition-transform duration-[15s] group-hover:rotate-45">
-            <ShieldCheck className="w-[1000px] h-[1000px] text-emerald-400" />
-         </div>
-         <div className="flex items-center gap-16 relative z-10 text-center md:text-left flex-col md:flex-row">
-            <div className="w-40 h-40 bg-emerald-600 rounded-[56px] flex items-center justify-center shadow-3xl animate-pulse ring-[24px] ring-white/5 shrink-0">
-               <Fingerprint className="w-20 h-20 text-white" />
-            </div>
-            <div className="space-y-6">
-               <h4 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Spectral <span className="text-emerald-400">Sovereignty</span></h4>
-               <p className="text-slate-400 text-2xl md:text-3xl font-medium italic leading-relaxed max-w-2xl">
-                 The EACSS protocol ensures every visual signal across your node—from building colors to plant pigments—is mathematically aligned with global sustainability.
-               </p>
-            </div>
-         </div>
-         <div className="text-center md:text-right relative z-10 shrink-0 border-l border-white/10 pl-20">
-            <p className="text-[14px] text-slate-600 font-black uppercase mb-6 tracking-[0.8em]">CHROMA_QUORUM</p>
-            <p className="text-9xl md:text-[180px] font-mono font-black text-white tracking-tighter leading-none">100<span className="text-6xl text-emerald-400 ml-2">%</span></p>
-         </div>
       </div>
 
       <style>{`
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
-  Tv, Fingerprint, BadgeCheck, AlertTriangle
+  Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType } from './types';
 import Dashboard from './components/Dashboard';
@@ -50,6 +50,8 @@ import RegistryHandshake from './components/RegistryHandshake';
 import OnlineGarden from './components/OnlineGarden';
 import FarmOS from './components/FarmOS';
 import NetworkView from './components/NetworkView';
+import MediaLedger from './components/MediaLedger';
+import AgroLang from './components/AgroLang';
 import { 
   syncUserToCloud, 
   auth, 
@@ -58,7 +60,6 @@ import {
   broadcastPulse, 
   listenForGlobalEchoes, 
   saveCollectionItem, 
-  fetchCollection,
   onAuthStateChanged,
   listenToCollection
 } from './services/firebaseService';
@@ -120,6 +121,7 @@ const REGISTRY_NODES = [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
       { id: 'network', name: 'Network Topology', icon: NetworkIcon },
       { id: 'farm_os', name: 'Farm OS', icon: Binary },
+      { id: 'agrolang', name: 'AgroLang IDE', icon: Code2 },
       { id: 'impact', name: 'Network Impact', icon: TrendingUp },
       { id: 'sustainability', name: 'Sustainability Shard', icon: Leaf },
       { id: 'code_of_laws', name: 'Code of Laws', icon: Scale },
@@ -149,6 +151,14 @@ const REGISTRY_NODES = [
       { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake },
       { id: 'circular', name: 'Circular Grid', icon: Recycle },
       { id: 'tools', name: 'Industrial Tools', icon: Wrench }
+    ]
+  },
+  {
+    category: 'Information & Shards',
+    items: [
+      { id: 'media_ledger', name: 'Media Ledger', icon: FileStack },
+      { id: 'media', name: 'Media Hub', icon: Tv },
+      { id: 'channelling', name: 'Channelling Hub', icon: Share2 }
     ]
   },
   {
@@ -195,8 +205,6 @@ const REGISTRY_NODES = [
     items: [
       { id: 'profile', name: 'Identity Dossier', icon: UserIcon },
       { id: 'community', name: 'Heritage Hub', icon: Users },
-      { id: 'media', name: 'Media Hub', icon: Tv },
-      { id: 'channelling', name: 'Channelling Hub', icon: Share2 },
       { id: 'info', name: 'Portal Info', icon: Info }
     ]
   }
@@ -216,6 +224,7 @@ const App: React.FC = () => {
     'Command & Strategy': true
   });
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
+  const [pendingShellCode, setPendingShellCode] = useState<string | null>(null);
 
   // BLOCKCHAIN & NETWORK
   const [blockchain, setBlockchain] = useState<AgroBlock[]>([]);
@@ -241,9 +250,26 @@ const App: React.FC = () => {
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
 
-  const notify = useCallback((type: NotificationType, title: string, message: string, duration = 5000) => {
-    const id = Math.random().toString(36).substring(7);
-    setNotifications(prev => [{ id, type, title, message, duration }, ...prev]);
+  const notify = useCallback((type: NotificationType, title: string, message: string, duration = 5000, actionLabel?: string, actionIcon?: any, meta?: any) => {
+    const id = `SHARD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const newNotif: NotificationShard = { id, type, title, message, duration, actionLabel, actionIcon, meta };
+    
+    setNotifications(prev => [newNotif, ...prev]);
+
+    const signal: SignalShard = {
+      id: `SIG-${id}`,
+      type: type === 'success' ? 'commerce' : 'system',
+      title: title,
+      message: message,
+      timestamp: new Date().toISOString(),
+      read: false,
+      priority: type === 'error' ? 'high' : 'medium',
+      actionLabel,
+      actionIcon,
+      meta
+    };
+    setNetworkSignals(prev => [signal, ...prev]);
+
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, duration);
@@ -442,41 +468,46 @@ const App: React.FC = () => {
     if (group) setExpandedGroups(prev => ({ ...prev, [group.category]: true }));
   };
 
+  const handleExecuteToShell = (code: string) => {
+    setPendingShellCode(code);
+    setActiveView('farm_os');
+  };
+
   const toggleGroup = (category: string) => {
     setExpandedGroups(prev => ({ ...prev, [category]: !prev[category] }));
   };
 
   const SidebarContent = ({ forceLabel = false }: { forceLabel?: boolean }) => (
     <>
-      <div className="p-8 flex items-center justify-between border-b border-white/5 bg-black/40">
+      <div className="p-4 md:p-8 flex items-center justify-between border-b border-white/5 bg-black/40">
         <div className="flex items-center gap-3 overflow-hidden">
           <Layers className="text-emerald-500 w-8 h-8 shrink-0" />
           {(isSidebarOpen || forceLabel) && (
              <div className="animate-in fade-in slide-in-from-left-2 duration-500">
-                <span className="text-2xl font-black uppercase tracking-tighter italic">Enviros<span className="text-emerald-400">Agro</span></span>
+                <span className="text-xl md:text-2xl font-black uppercase tracking-tighter italic">Enviros<span className="text-emerald-400">Agro</span></span>
                 <span className="text-[7px] font-black tracking-[0.6em] text-slate-500 uppercase ml-0.5 block">Industrial OS</span>
              </div>
           )}
         </div>
         {isMobile && <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400"><X size={24} /></button>}
       </div>
-      <div className="flex-1 mt-6 space-y-4 px-4 overflow-y-auto custom-scrollbar pb-10">
+      <div className="flex-1 mt-6 space-y-4 px-2 md:px-4 overflow-y-auto custom-scrollbar pb-10">
         {REGISTRY_NODES.map((group, idx) => {
           const isExpanded = expandedGroups[group.category];
           const hasActiveInGroup = group.items.some(item => item.id === activeView);
           return (
             <div key={idx} className="space-y-1">
                {(isSidebarOpen || forceLabel) ? (
-                 <button onClick={() => toggleGroup(group.category)} className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-all group/header">
-                    <h5 className={`text-[9px] font-black uppercase tracking-[0.3em] ${isExpanded || hasActiveInGroup ? 'text-emerald-400' : 'text-slate-300'}`}>{group.category}</h5>
-                    <ChevronDown size={12} className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                 <button onClick={() => toggleGroup(group.category)} className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/[0.04] transition-all group/header">
+                    <h5 className={`text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] ${isExpanded || hasActiveInGroup ? 'text-emerald-400' : 'text-slate-300'}`}>{group.category}</h5>
+                    <ChevronDown size={10} className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                  </button>
                ) : <div className="h-px bg-white/5 mx-4 my-4" />}
                <div className={`space-y-1 overflow-hidden transition-all duration-500 ${isExpanded || !isSidebarOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                  {group.items.map((item) => (
-                   <button key={item.id} onClick={() => handleNavigate(item.id as ViewState)} className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all ${activeView === item.id ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}>
-                     <item.icon className={`w-4 h-4 ${activeView === item.id ? 'text-white' : 'text-slate-400'}`} />
-                     {(isSidebarOpen || forceLabel) && <span className="font-black text-[9px] uppercase tracking-[0.2em] truncate">{item.name}</span>}
+                   <button key={item.id} onClick={() => handleNavigate(item.id as ViewState)} className={`w-full flex items-center gap-3 md:gap-4 p-2.5 md:p-3 rounded-xl md:rounded-2xl transition-all ${activeView === item.id ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}>
+                     <item.icon className={`w-4 h-4 shrink-0 ${activeView === item.id ? 'text-white' : 'text-slate-400'}`} />
+                     {(isSidebarOpen || forceLabel) && <span className="font-black text-[8px] md:text-[9px] uppercase tracking-[0.2em] truncate">{item.name}</span>}
                    </button>
                  ))}
                </div>
@@ -484,9 +515,9 @@ const App: React.FC = () => {
           );
         })}
       </div>
-      <div className="p-6 border-t border-white/5 space-y-4 bg-black/20">
-        <button onClick={() => { setIsVoiceBridgeOpen(true); if(isMobile) setIsMobileMenuOpen(false); }} className="w-full flex items-center justify-center gap-3 p-5 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-          <Mic size={18} /> {(isSidebarOpen || forceLabel) && <span>ORACLE VOICE</span>}
+      <div className="p-4 md:p-6 border-t border-white/5 space-y-4 bg-black/20">
+        <button onClick={() => { setIsVoiceBridgeOpen(true); if(isMobile) setIsMobileMenuOpen(false); }} className="w-full flex items-center justify-center gap-3 p-4 md:p-5 agro-gradient rounded-xl md:rounded-2xl text-white font-black text-[9px] md:text-[10px] uppercase tracking-[0.3em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+          <Mic size={16} /> {(isSidebarOpen || forceLabel) && <span>ORACLE VOICE</span>}
         </button>
       </div>
     </>
@@ -509,54 +540,68 @@ const App: React.FC = () => {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[100] lg:hidden">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-80 bg-[#050706] border-r border-white/10 flex flex-col animate-in slide-in-from-left duration-300">
+          <aside className="absolute inset-y-0 left-0 w-72 bg-[#050706] border-r border-white/10 flex flex-col animate-in slide-in-from-left duration-300">
             <SidebarContent forceLabel />
           </aside>
         </div>
       )}
 
-      {/* GLOBAL NOTIFICATION ENGINE */}
-      <div className="fixed top-24 right-8 z-[1000] flex flex-col gap-4 w-full max-w-sm pointer-events-none">
+      {/* REFINED GLOBAL NOTIFICATION SHARD BLOCK */}
+      <div className="fixed top-20 right-4 md:right-8 z-[1000] flex flex-col gap-3 w-full max-w-[calc(100%-2rem)] md:max-w-sm pointer-events-none">
         {notifications.map(n => (
           <div key={n.id} className="pointer-events-auto animate-in slide-in-from-right-10 duration-500">
-             <div className={`glass-card p-6 rounded-[32px] border-2 shadow-3xl flex items-start gap-5 relative overflow-hidden bg-black/90 ${
+             <div className={`glass-card p-4 md:p-6 rounded-[24px] md:rounded-[32px] border-2 shadow-3xl flex items-start gap-4 md:gap-5 relative overflow-hidden bg-black/95 ${
                n.type === 'success' ? 'border-emerald-500/40' : 
                n.type === 'error' ? 'border-rose-500/40' : 
                n.type === 'warning' ? 'border-amber-500/40' : 
                'border-indigo-500/40'
              }`}>
-                {/* Visual Accent */}
                 <div className="absolute inset-0 opacity-[0.02] pointer-events-none overflow-hidden">
                    <div className="w-full h-1 bg-white absolute top-0 animate-scan"></div>
                 </div>
 
-                <div className={`p-4 rounded-2xl shrink-0 ${
+                <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl shrink-0 ${
                    n.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 
                    n.type === 'error' ? 'bg-rose-500/10 text-rose-500' : 
                    n.type === 'warning' ? 'bg-amber-500/10 text-amber-500' : 
                    'bg-indigo-500/10 text-indigo-400'
                 }`}>
-                   {n.type === 'success' ? <BadgeCheck size={24} /> : 
-                    n.type === 'error' ? <ShieldAlert size={24} /> : 
-                    n.type === 'warning' ? <AlertTriangle size={24} /> : 
-                    <Activity size={24} />}
+                   {n.type === 'success' ? <BadgeCheck size={20} /> : 
+                    n.type === 'error' ? <ShieldAlert size={20} /> : 
+                    n.type === 'warning' ? <AlertTriangle size={20} /> : 
+                    <Activity size={20} />}
                 </div>
 
-                <div className="flex-1 space-y-1 pr-6">
-                   <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">{n.title}</h5>
-                   <p className="text-sm font-medium text-white italic leading-relaxed">"{n.message}"</p>
-                   <p className="text-[8px] font-mono text-slate-700 font-bold uppercase mt-2">HASH: 0x{n.id.toUpperCase()}_COMMIT</p>
+                <div className="flex-1 space-y-1 pr-4">
+                   <h5 className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">{n.title}</h5>
+                   <p className="text-xs md:text-sm font-medium text-white italic leading-relaxed">"{n.message}"</p>
+                   
+                   {n.actionLabel && (
+                     <div className="pt-2 animate-in fade-in duration-700">
+                        <button 
+                          onClick={() => {
+                            if (n.meta?.target) handleNavigate(n.meta.target);
+                            setNotifications(prev => prev.filter(item => item.id !== n.id));
+                          }}
+                          className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[8px] md:text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 shadow-xl pointer-events-auto"
+                        >
+                           {n.actionIcon ? <n.actionIcon size={10} /> : <FileText size={10} />}
+                           {n.actionLabel}
+                        </button>
+                     </div>
+                   )}
+
+                   <p className="text-[7px] md:text-[8px] font-mono text-slate-700 font-bold uppercase mt-2">REF: 0x{n.id.split('-')[1] || n.id.substring(0,6)}</p>
                 </div>
 
                 <button 
                   onClick={() => setNotifications(prev => prev.filter(item => item.id !== n.id))}
-                  className="absolute top-4 right-4 p-2 text-slate-700 hover:text-white transition-all"
+                  className="absolute top-3 right-3 p-1.5 text-slate-700 hover:text-white transition-all pointer-events-auto"
                 >
-                   <X size={14} />
+                   <X size={12} />
                 </button>
 
-                {/* Progress Bar */}
-                <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-full">
+                <div className="absolute bottom-0 left-0 h-0.5 md:h-1 bg-white/5 w-full">
                    <div 
                     className={`h-full transition-all duration-[5000ms] ease-linear ${
                       n.type === 'success' ? 'bg-emerald-500' : 
@@ -573,24 +618,24 @@ const App: React.FC = () => {
       </div>
 
       <main className="flex-1 overflow-y-auto relative flex flex-col">
-        <header className="flex justify-between items-center bg-black/60 backdrop-blur-xl z-40 py-4 px-8 border-b border-white/5 h-20">
-          <button onClick={() => isMobile ? setIsMobileMenuOpen(true) : setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-emerald-500 border border-white/10 rounded-xl"><Menu size={20} /></button>
-          <h1 className="text-xl font-black tracking-tighter uppercase italic">{activeView.replace(/_/g, ' ').toUpperCase()} SHARD</h1>
-          <div className="flex items-center gap-4">
-             {isCloudSynced ? <ShieldCheck className="text-emerald-400" size={20} /> : <Loader2 className="text-blue-400 animate-spin" size={20} />}
-             <button onClick={() => handleNavigate('profile')} className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 font-black overflow-hidden">
-                {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name[0]}
+        <header className="flex justify-between items-center bg-black/60 backdrop-blur-xl z-40 py-2 px-4 md:px-8 border-b border-white/5 h-16 md:h-20 shrink-0">
+          <button onClick={() => isMobile ? setIsMobileMenuOpen(true) : setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-emerald-500 border border-white/10 rounded-lg md:rounded-xl"><Menu size={18} /></button>
+          <h1 className="text-lg md:text-xl font-black tracking-tighter uppercase italic">{activeView.replace(/_/g, ' ').toUpperCase()} SHARD</h1>
+          <div className="flex items-center gap-3 md:gap-4">
+             {isCloudSynced ? <ShieldCheck className="text-emerald-400" size={18} /> : <Loader2 className="text-blue-400 animate-spin" size={18} />}
+             <button onClick={() => handleNavigate('profile')} className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 font-black overflow-hidden shadow-inner">
+                {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="Biometric" /> : user.name[0]}
              </button>
           </div>
         </header>
 
-        <div className="bg-emerald-500/5 border-y border-white/5 p-2 px-8 overflow-hidden shrink-0">
-           <div className="whitespace-nowrap animate-marquee text-[9px] font-mono text-emerald-400/80 uppercase tracking-widest">
+        <div className="bg-emerald-500/5 border-y border-white/5 p-1.5 px-4 md:px-8 overflow-hidden shrink-0">
+           <div className="whitespace-nowrap animate-marquee text-[8px] md:text-[9px] font-mono text-emerald-400/80 uppercase tracking-widest">
              {globalEchoes.map(e => `[${e.esin?.split('-')[1] || 'NODE'}] ${e.message}`).join(' • ')}
            </div>
         </div>
 
-        <div className="p-8 flex-1 max-w-[1920px] mx-auto w-full">
+        <div className="p-4 md:p-8 flex-1 max-w-[1920px] mx-auto w-full">
           {activeView === 'dashboard' && <Dashboard user={user} isGuest={isGuest} onNavigate={handleNavigate} orders={orders} blockchain={blockchain} isMining={isMining} notify={notify} />}
           {activeView === 'network' && <NetworkView />}
           {activeView === 'wallet' && <AgroWallet user={user} isGuest={isGuest} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} onEarnEAC={earnEAC} transactions={transactions} notify={notify} />}
@@ -605,7 +650,7 @@ const App: React.FC = () => {
           {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={earnEAC} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
           {activeView === 'profile' && <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); }} onNavigate={handleNavigate} />}
           {activeView === 'explorer' && <Explorer blockchain={blockchain} isMining={isMining} onPulse={addPulse} user={user} />}
-          {activeView === 'community' && <Community user={user} isGuest={isGuest} onContribution={() => earnEAC(5, 'CONTRIBUTION')} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
+          {activeView === 'community' && <Community user={user} isGuest={isGuest} onContribution={(type, cat) => earnEAC(5, `CONTRIBUTION_${type.toUpperCase()}_${cat.toUpperCase()}`)} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
           {activeView === 'live_farming' && <LiveFarming user={user} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={earnEAC} onNavigate={handleNavigate} notify={notify} />}
           {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} onNavigate={handleNavigate} liveProducts={liveProducts} notify={notify} />}
           {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onNavigate={handleNavigate} orders={orders} />}
@@ -624,29 +669,28 @@ const App: React.FC = () => {
           {activeView === 'envirosagro_store' && <EnvirosAgroStore user={user} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} onNavigate={handleNavigate} />}
           {activeView === 'media' && <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'info' && <InfoPortal user={user} onNavigate={handleNavigate} />}
+          {activeView === 'info' && <InfoPortal onNavigate={handleNavigate} />}
           {activeView === 'ingest' && <NetworkIngest user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} onNavigate={handleNavigate} />}
-          {activeView === 'agro_value_enhancement' && <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
+          {activeView === 'agro_value_enhancement' && <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} liveProducts={liveProducts} orders={orders} />}
           {activeView === 'digital_mrv' && <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
           {activeView === 'registry_handshake' && <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
           {activeView === 'online_garden' && <OnlineGarden user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} notify={notify} />}
-          {activeView === 'farm_os' && <FarmOS user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
+          {activeView === 'farm_os' && <FarmOS user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} initialCode={pendingShellCode} clearInitialCode={() => setPendingShellCode(null)} />}
+          {activeView === 'media_ledger' && <MediaLedger user={user} />}
+          {activeView === 'agrolang' && <AgroLang user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onExecuteToShell={handleExecuteToShell} />}
           {['animal_world', 'plants_world', 'aqua_portal', 'soil_portal', 'air_portal'].includes(activeView) && (
             <NaturalResources user={user} type={activeView as ViewState} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />
           )}
         </div>
       </main>
 
-      <EvidenceModal isOpen={isEvidenceModalOpen} onClose={() => setIsEvidenceModalOpen(false)} user={user} onMinted={(v) => earnEAC(v, 'EVIDENCE_VERIFIED')} onNavigate={handleNavigate} />
+      <EvidenceModal isOpen={isEvidenceModalOpen} onClose={() => setIsEvidenceModalOpen(false)} user={user} onNavigate={handleNavigate} onMinted={(v) => earnEAC(v, 'EVIDENCE_VERIFIED')} />
       <FloatingConsultant user={user} />
       <LiveVoiceBridge isOpen={isVoiceBridgeOpen} isGuest={isGuest} onClose={() => setIsVoiceBridgeOpen(false)} />
       
       <style>{`
-        @keyframes shrink {
-          from { width: 100%; }
-          to { width: 0%; }
-        }
+        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
       `}</style>
     </div>

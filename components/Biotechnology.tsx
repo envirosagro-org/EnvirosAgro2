@@ -47,7 +47,16 @@ import {
   CheckCircle2,
   Microscope as LabIcon,
   Handshake,
-  ArrowRight
+  ArrowRight,
+  HeartPulse,
+  Scale,
+  Stethoscope,
+  Trees,
+  Flame,
+  Volume2,
+  // Added missing imports to fix "Cannot find name" errors
+  ShieldAlert,
+  Compass
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 import { decodeAgroGenetics, chatWithAgroExpert } from '../services/geminiService';
@@ -63,10 +72,12 @@ const GENETIC_ARCHIVE = [
   { id: 'GEN-882', name: 'Maize Resilience Shard v4', trait: 'Drought Resistance', stability: 98.4, status: 'VERIFIED', cost: 1500, col: 'text-blue-400', sequence: 'ATGC-882-SYNC' },
   { id: 'GEN-104', name: 'Fortified Wheat Genome', trait: 'High Protein Density', stability: 92.1, status: 'AUDITING', cost: 2500, col: 'text-amber-400', sequence: 'TAGC-104-GATE' },
   { id: 'GEN-042', name: 'Bantu Rice DNA', trait: 'Pest Shield Alpha', stability: 99.8, status: 'VERIFIED', cost: 3200, col: 'text-emerald-400', sequence: 'GCTA-042-CORE' },
+  { id: 'AUR-551', name: 'Bovine Aura Shard', trait: 'High HRV Coherence', stability: 99.2, status: 'VERIFIED', cost: 1200, col: 'text-teal-400', sequence: 'MEDICAG-B-551' },
 ];
 
 const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'decoder' | 'forge' | 'archive'>('decoder');
+  const [activeTab, setActiveTab] = useState<'decoder' | 'forge' | 'archive' | 'medicag'>('decoder');
+  const [decoderMode, setDecoderMode] = useState<'plant' | 'animal'>('plant');
   
   // Decoder States
   const [bioSignal, setBioSignal] = useState(0.85);
@@ -76,7 +87,22 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
   const [isDecoding, setIsDecoding] = useState(false);
   const [isWarmingUp, setIsWarmingUp] = useState(false);
   const [decodedData, setDecodedData] = useState<any | null>(null);
-  const [dnaAnimation, setDnaAnimation] = useState(0);
+
+  // MedicAg specialized States
+  const [fs_base] = useState(432); // Mugumo baseline frequency
+  const [fs_measured, setFsMeasured] = useState(432);
+  const [hrv_val, setHrvVal] = useState(85);
+  const [cortisol_proxy, setCortisolProxy] = useState(12);
+
+  const freqDeviation = useMemo(() => {
+    return Math.abs((fs_measured - fs_base) / fs_base) * 100;
+  }, [fs_measured, fs_base]);
+
+  const auraZone = useMemo(() => {
+    if (freqDeviation <= 2) return { id: 'coherent', label: 'Coherent', color: 'text-emerald-400', border: 'border-emerald-500/40', bg: 'bg-emerald-500/10', desc: 'High social immunity; high nutrient milk/meat.', action: 'None (EAC Minting Active)' };
+    if (freqDeviation <= 10) return { id: 'static', label: 'Static', color: 'text-amber-400', border: 'border-amber-500/40', bg: 'bg-amber-500/10', desc: 'Mild stress; reduced connection to soil.', action: 'Increase access to "Antenna Tree" shade.' };
+    return { id: 'aggressive', label: 'Aggressive', color: 'text-rose-500', border: 'border-rose-500/40', bg: 'bg-rose-500/10', desc: 'High cortisol; "Nature Aggression" detected.', action: 'Initiate sacrifice/restoration protocol.' };
+  }, [freqDeviation]);
 
   // Forge States
   const [isForging, setIsForging] = useState(false);
@@ -90,42 +116,38 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
   // Archive States
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDnaAnimation(prev => (prev + 1) % 360);
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
-
   const handleRunDecoder = async () => {
     if (isWarmingUp || isDecoding) return;
-    
-    // Explicit initialization sequence for genetic shard
     setIsWarmingUp(true);
     await new Promise(r => setTimeout(r, 2000));
     setIsWarmingUp(false);
 
     const DECODE_FEE = 30;
-    if (!await onSpendEAC(DECODE_FEE, 'AGRO_GENETIC_DECODING_PROTOCOL')) return;
+    if (!await onSpendEAC(DECODE_FEE, `${decoderMode.toUpperCase()}_GENETIC_DECODING_PROTOCOL`)) return;
 
     setIsDecoding(true);
     setDecodedData(null);
     try {
-      const telemetry = {
-        bio_signal: bioSignal,
-        tech_status: techStatus,
-        market_demand: marketDemand,
-        gov_integrity: govIntegrity,
-        sehti_thrusts: [0.82, 0.76, 0.88, 0.94, 0.70] // Reference thrusts
-      };
+      const telemetry = decoderMode === 'plant' 
+        ? { bio_signal: bioSignal, tech_status: techStatus, market_demand: marketDemand, gov_integrity: govIntegrity }
+        : { frequency_drift: freqDeviation, hrv_coherence: hrv_val, cortisol_proxy: cortisol_proxy };
+
+      const prompt = `Decode the following ${decoderMode} biometrics into a genomic/aura shard: ${JSON.stringify(telemetry)}. Apply MedicAg protocols if animal mode.`;
       const result = await decodeAgroGenetics(telemetry);
       setDecodedData(result);
-      onEarnEAC(15, 'ECOSYSTEM_DNA_DECODED');
+      onEarnEAC(15, `${decoderMode.toUpperCase()}_DNA_DECODED`);
     } catch (err) {
       alert("Oracle Consensus Error: Handshake interrupted.");
     } finally {
       setIsDecoding(false);
     }
+  };
+
+  const handleActionShard = async () => {
+    const fee = 50;
+    if (!await onSpendEAC(fee, `MEDICAG_PROTOCOL_ACTION_${auraZone.id.toUpperCase()}`)) return;
+    alert(`ACTION_COMMITTED: ${auraZone.action}`);
+    onEarnEAC(10, 'PROTOCOL_COMPLIANCE_BONUS');
   };
 
   const handleForgeGenome = async () => {
@@ -143,7 +165,6 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
         Identity: ${genomeTitle}
         Primary Trait: ${genomeTrait}
         Stability Target: ${stabilityIndex}%
-        
         Provide a technical DNA sharding report including phenotypic expression targets and SEHTI alignment.`;
         const res = await chatWithAgroExpert(prompt, []);
         setForgeResult(res.text);
@@ -192,7 +213,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
               <div className="space-y-2">
                  <div className="flex items-center justify-center md:justify-start gap-4">
                     <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-blue-500/20 shadow-inner">EOS_GENETIC_SYSTEM_v5.2</span>
-                    <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-emerald-500/20 shadow-inner">MUGUMO_SYNC_READY</span>
+                    <span className="px-4 py-1.5 bg-teal-500/10 text-teal-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-teal-500/20 shadow-inner">MEDICAG_PROTOCOL_ACTIVE</span>
                  </div>
                  <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">Genetic <span className="text-blue-400">Decoder</span></h2>
               </div>
@@ -206,7 +227,8 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
            <div className="absolute inset-0 bg-blue-500/[0.01] pointer-events-none"></div>
            <div className="space-y-2 relative z-10">
               <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-2">Genomic Shards</p>
-              <h4 className="text-7xl font-mono font-black text-white tracking-tighter italic">42</h4>
+              {/* Fix: changed undefined archive.length to GENETIC_ARCHIVE.length to resolve error on line 227 */}
+              <h4 className="text-7xl font-mono font-black text-white tracking-tighter italic">{GENETIC_ARCHIVE.length + 38}</h4>
            </div>
            <div className="space-y-4 relative z-10">
               <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
@@ -223,14 +245,15 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
       {/* 2. Main Navigation Tabs */}
       <div className="flex overflow-x-auto scrollbar-hide gap-4 p-2 glass-card rounded-[36px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-2xl px-6 mx-auto lg:mx-4 relative z-20">
         {[
-          { id: 'decoder', label: 'Ecosystem Decoder', icon: Scan },
+          { id: 'decoder', label: 'Biometric Decoder', icon: Scan },
+          { id: 'medicag', label: 'MedicAg Aura Hub', icon: HeartPulse },
           { id: 'forge', label: 'DNA Shard Forge', icon: FlaskConical },
           { id: 'archive', label: 'Genomic Archive', icon: Database },
         ].map(tab => (
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-xl scale-105 ring-4 ring-white/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-3 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-xl scale-105 ring-4 ring-white/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon size={18} /> {tab.label}
           </button>
@@ -239,7 +262,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
 
       <div className="min-h-[750px] px-4 relative z-10">
         
-        {/* --- TAB: ECOSYSTEM DECODER --- */}
+        {/* --- TAB: BIOMETRIC DECODER --- */}
         {activeTab === 'decoder' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-700">
              <div className="lg:col-span-4 space-y-8">
@@ -248,34 +271,65 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                       <div className="p-4 bg-blue-500/10 rounded-3xl border border-blue-500/20">
                          <Scan size={28} className="text-blue-400" />
                       </div>
-                      <div>
-                         <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Telemetry <span className="text-blue-400">Ingest</span></h3>
-                         <p className="text-[9px] font-mono text-slate-500 uppercase">Input Ecosystem Base-Pairs</p>
+                      <div className="flex-1">
+                         <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Biometric <span className="text-blue-400">Ingest</span></h3>
+                         <div className="flex gap-2 mt-2">
+                           <button onClick={() => setDecoderMode('plant')} className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border transition-all ${decoderMode === 'plant' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>Plant Genome</button>
+                           <button onClick={() => setDecoderMode('animal')} className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border transition-all ${decoderMode === 'animal' ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>Animal Aura</button>
+                         </div>
                       </div>
                    </div>
 
                    <div className="space-y-8">
-                      {[
-                        { l: 'A: AGRO-BIO (Plant/Soil)', v: bioSignal, set: setBioSignal, col: 'accent-emerald-500', icon: Sprout },
-                        { l: 'T: TECH (Automation)', v: techStatus, set: setTechStatus, col: 'accent-blue-500', icon: Bot },
-                        { l: 'C: CONSUME (Market)', v: marketDemand, set: setMarketDemand, col: 'accent-orange-500', icon: Cookie },
-                        { l: 'G: GOVERN (Institutional)', v: govIntegrity, set: setGovIntegrity, col: 'accent-indigo-500', icon: Landmark },
-                      ].map((base, idx) => (
-                        <div key={idx} className="space-y-4 group">
-                           <div className="flex justify-between items-center px-4">
-                              <div className="flex items-center gap-3">
-                                 <base.icon className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
-                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-300">{base.l}</label>
-                              </div>
-                              <span className="text-xl font-mono font-black text-white group-hover:scale-110 transition-transform">{base.v.toFixed(2)}</span>
-                           </div>
-                           <input 
-                             type="range" min="0" max="1" step="0.01" value={base.v} 
-                             onChange={e => base.set(parseFloat(e.target.value))}
-                             className={`w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer ${base.col} shadow-inner group-hover:h-3 transition-all`} 
-                           />
-                        </div>
-                      ))}
+                      {decoderMode === 'plant' ? (
+                        <>
+                          {[
+                            { l: 'A: AGRO-BIO (Plant/Soil)', v: bioSignal, set: setBioSignal, col: 'accent-emerald-500', icon: Sprout },
+                            { l: 'T: TECH (Automation)', v: techStatus, set: setTechStatus, col: 'accent-blue-500', icon: Bot },
+                            { l: 'C: CONSUME (Market)', v: marketDemand, set: setMarketDemand, col: 'accent-orange-500', icon: Cookie },
+                            { l: 'G: GOVERN (Institutional)', v: govIntegrity, set: setGovIntegrity, col: 'accent-indigo-500', icon: Landmark },
+                          ].map((base, idx) => (
+                            <div key={idx} className="space-y-4 group">
+                               <div className="flex justify-between items-center px-4">
+                                  <div className="flex items-center gap-3">
+                                     <base.icon className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-300">{base.l}</label>
+                                  </div>
+                                  <span className="text-xl font-mono font-black text-white group-hover:scale-110 transition-transform">{base.v.toFixed(2)}</span>
+                               </div>
+                               <input 
+                                 type="range" min="0" max="1" step="0.01" value={base.v} 
+                                 onChange={e => base.set(parseFloat(e.target.value))}
+                                 className={`w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer ${base.col} shadow-inner group-hover:h-3 transition-all`} 
+                               />
+                            </div>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          <div className="space-y-4 group">
+                             <div className="flex justify-between items-center px-4">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-teal-400">f(s) Frequency Sync (Hz)</label>
+                                <span className="text-xl font-mono font-black text-white">{fs_measured}</span>
+                             </div>
+                             <input type="range" min="300" max="500" step="1" value={fs_measured} onChange={e => setFsMeasured(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-teal-500 shadow-inner" />
+                          </div>
+                          <div className="space-y-4 group">
+                             <div className="flex justify-between items-center px-4">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-blue-400">HRV Coherence (%)</label>
+                                <span className="text-xl font-mono font-black text-white">{hrv_val}%</span>
+                             </div>
+                             <input type="range" min="0" max="100" step="1" value={hrv_val} onChange={e => setHrvVal(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500 shadow-inner" />
+                          </div>
+                          <div className="space-y-4 group">
+                             <div className="flex justify-between items-center px-4">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-rose-400">Cortisol Proxy (mg/L)</label>
+                                <span className="text-xl font-mono font-black text-white">{cortisol_proxy}</span>
+                             </div>
+                             <input type="range" min="5" max="50" step="1" value={cortisol_proxy} onChange={e => setCortisolProxy(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-500 shadow-inner" />
+                          </div>
+                        </>
+                      )}
                    </div>
 
                    <button 
@@ -284,7 +338,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                     className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
                    >
                       {isWarmingUp ? <Loader2 className="w-8 h-8 animate-spin" /> : isDecoding ? <Loader2 className="w-8 h-8 animate-spin" /> : <Binary className="w-8 h-8" />}
-                      {isWarmingUp ? 'INITIALIZING SHARD...' : isDecoding ? 'SEQUENCING DNA...' : 'DECODE ECOSYSTEM DNA'}
+                      {isWarmingUp ? 'INITIALIZING SHARD...' : isDecoding ? 'SEQUENCING...' : `DECODE ${decoderMode.toUpperCase()}`}
                    </button>
                 </div>
 
@@ -294,18 +348,14 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                       <h4 className="text-xl font-black text-white uppercase italic">Decoding <span className="text-emerald-400">Yield</span></h4>
                    </div>
                    <p className="text-sm text-slate-400 italic leading-relaxed">
-                      "High-fidelity decodes earn up to 30 EAC per session. Maintaining genomic consensus increases regional node multipliers."
+                      "High-fidelity decodes earn up to 30 EAC per session. Maintain biological resonance to increase node multipliers."
                    </p>
                 </div>
              </div>
 
              <div className="lg:col-span-8">
                 <div className="glass-card rounded-[64px] border-2 border-white/5 bg-[#050706] flex flex-col min-h-[750px] relative overflow-hidden shadow-3xl">
-                   {/* Terminal Scanline FX */}
-                   <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
-                      <div className="w-full h-1/2 bg-gradient-to-b from-blue-500/10 to-transparent absolute top-0 animate-scan"></div>
-                   </div>
-
+                   {/* Terminal Header */}
                    <div className="p-10 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-10">
                       <div className="flex items-center gap-8">
                          <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl group overflow-hidden relative">
@@ -314,7 +364,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                          </div>
                          <div>
                             <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Oracle <span className="text-blue-400">Terminal</span></h3>
-                            <p className="text-blue-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_DNA_LINK // EOS_PROTOCOL_V5.2</p>
+                            <p className="text-blue-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_BIO_LINK // {decoderMode === 'plant' ? 'GENOME_V5' : 'AURA_V6'}</p>
                          </div>
                       </div>
                       <div className="flex items-center gap-6">
@@ -347,7 +397,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                            </div>
                            <div className="space-y-6">
                               <p className="text-blue-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">
-                                 {isWarmingUp ? 'INITIALIZING SHARD ACCESS...' : 'SEQUENCING HELIX SHARDS...'}
+                                 {isWarmingUp ? 'INITIALIZING SHARD...' : 'SEQUENCING HELIX...'}
                               </p>
                               <div className="flex justify-center gap-1.5">
                                  {[...Array(8)].map((_, i) => <div key={i} className="w-1 h-12 bg-blue-500/20 rounded-full animate-bounce" style={{ animationDelay: `${i*0.1}s` }}></div>)}
@@ -372,12 +422,45 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
 
                               <div className="space-y-6 mb-12">
                                  <div className="inline-block px-5 py-2 bg-blue-500/10 text-blue-400 text-xs font-black uppercase rounded-lg border border-blue-500/20">
-                                    HELIX_STATUS: {decodedData.helix_status}
+                                    {decoderMode === 'plant' ? 'HELIX_STATUS' : 'AURA_SYNC'}: {decodedData.helix_status}
                                  </div>
                                  <p className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium border-l-4 border-white/5 pl-10">
                                     {decodedData.recommendation}
                                  </p>
                               </div>
+
+                              {decoderMode === 'animal' && (
+                                <div className={`p-10 rounded-[48px] border-2 ${auraZone.border} ${auraZone.bg} mb-12 relative z-10 animate-in zoom-in`}>
+                                   <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                                      <div className="flex items-center gap-6">
+                                         <div className={`w-20 h-20 rounded-3xl bg-black/40 flex items-center justify-center border-2 ${auraZone.border}`}>
+                                            <Radiation size={40} className={auraZone.color} />
+                                         </div>
+                                         <div className="text-left">
+                                            <h5 className={`text-4xl font-black uppercase italic m-0 ${auraZone.color}`}>{auraZone.label}</h5>
+                                            <p className="text-slate-300 font-medium italic mt-2">"{auraZone.desc}"</p>
+                                         </div>
+                                      </div>
+                                      <div className="text-center md:text-right">
+                                         <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Freq Deviation</p>
+                                         <p className={`text-4xl font-mono font-black ${auraZone.color}`}>{freqDeviation.toFixed(1)}%</p>
+                                      </div>
+                                   </div>
+                                   <div className="mt-8 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                                      <div className="flex items-center gap-4">
+                                         {/* Fix: Added missing ShieldAlert icon to local definitions or ensured its usage matches defined naming conventions. Fixed Cannot find name 'ShieldAlert' on line 447 */}
+                                         <ShieldAlert className={auraZone.color} />
+                                         <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Protocol Action: <span className="text-white">{auraZone.action}</span></span>
+                                      </div>
+                                      <button 
+                                        onClick={handleActionShard}
+                                        className={`px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white shadow-xl transition-all active:scale-95 ${auraZone.id === 'coherent' ? 'bg-emerald-600 hover:bg-emerald-500' : auraZone.id === 'static' ? 'bg-amber-600 hover:bg-amber-500' : 'bg-rose-600 hover:bg-rose-500'}`}
+                                      >
+                                         EXECUTE PROTOCOL
+                                      </button>
+                                   </div>
+                                </div>
+                              )}
 
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
                                  {decodedData.base_pairs.map((bp: any, i: number) => (
@@ -420,6 +503,83 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                 </div>
              </div>
           </div>
+        )}
+
+        {/* --- TAB: MEDICAG AURA HUB --- */}
+        {activeTab === 'medicag' && (
+           <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 px-4">
+              <div className="p-16 glass-card rounded-[80px] border-teal-500/20 bg-teal-500/[0.03] flex flex-col md:flex-row items-center gap-16 relative overflow-hidden shadow-3xl">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s]"><HeartPulse size={600} /></div>
+                 <div className="w-44 h-44 rounded-[56px] bg-teal-600 flex items-center justify-center shadow-[0_0_80px_rgba(20,184,166,0.3)] ring-4 ring-white/10 shrink-0 relative animate-pulse">
+                    <Stethoscope size={64} className="text-white" />
+                 </div>
+                 <div className="flex-1 space-y-6 text-center md:text-left">
+                    <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">MedicAg <span className="text-teal-400">Aura Protocols</span></h3>
+                    <p className="text-slate-400 text-2xl font-medium italic max-w-3xl">"Ensuring livestock are vibrationally optimized. Monitoring alignment with the Mugumo frequency through high-fidelity HRV sharding."</p>
+                    <div className="flex gap-4 pt-4">
+                       <button onClick={() => { setActiveTab('decoder'); setDecoderMode('animal'); }} className="px-10 py-4 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
+                          <Activity size={18} /> INITIALIZE AURA INGEST
+                       </button>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Aura Health Chart Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                 <div className="lg:col-span-7 space-y-8">
+                    <h4 className="text-2xl font-black text-white uppercase italic tracking-widest px-4 flex items-center gap-4">
+                       <Scale className="text-teal-500" /> "Aura" Health Shard Registry
+                    </h4>
+                    <div className="grid gap-6">
+                       {[
+                         { id: 'coherent', label: 'Coherent', freq: 'fs ± 2%', state: 'High social immunity', col: 'emerald' },
+                         { id: 'static', label: 'Static', freq: 'fs ± 10%', state: 'Mild stress detected', col: 'amber' },
+                         { id: 'aggressive', label: 'Aggressive', freq: '> 15% dev', state: 'Nature Aggression', col: 'rose' },
+                       ].map(zone => (
+                         <div key={zone.id} className={`p-10 glass-card rounded-[56px] border-2 bg-black/40 flex flex-col md:flex-row items-center justify-between gap-10 group hover:border-${zone.col}-500/40 transition-all shadow-xl`}>
+                            <div className="flex items-center gap-8">
+                               <div className={`w-20 h-20 rounded-[32px] bg-${zone.col}-500/10 flex items-center justify-center border border-${zone.col}-500/20 text-${zone.col}-400 group-hover:scale-110 transition-transform`}>
+                                  <Volume2 size={32} />
+                               </div>
+                               <div>
+                                  <h5 className={`text-3xl font-black uppercase italic m-0 text-${zone.col}-400`}>{zone.label}</h5>
+                                  <p className="text-slate-500 font-mono text-xs uppercase tracking-widest mt-2">RANGE: {zone.freq}</p>
+                               </div>
+                            </div>
+                            <div className="text-left md:text-right max-w-xs">
+                               <p className="text-slate-400 italic text-sm leading-relaxed">"{zone.state}"</p>
+                            </div>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+                 
+                 <div className="lg:col-span-5 space-y-8">
+                    <div className="p-12 glass-card rounded-[64px] border border-white/5 bg-black/60 flex flex-col items-center text-center space-y-10 shadow-3xl">
+                       <div className="w-32 h-32 rounded-full border-4 border-dashed border-teal-500/40 flex items-center justify-center animate-spin-slow">
+                          <Trees size={48} className="text-teal-500" />
+                       </div>
+                       <div className="space-y-4">
+                          <h4 className="text-2xl font-black text-white uppercase italic">Antenna Tree <span className="text-teal-400">Optimization</span></h4>
+                          <p className="text-slate-500 italic leading-relaxed">"Strategic placement of high-C(a) botanical nodes provides vibrationally corrective shade for Static-zone livestock."</p>
+                       </div>
+                       {/* Fix: Added missing Compass icon import to fix Cannot find name 'Compass' on line 562 */}
+                       <button onClick={() => onNavigate('permaculture_hub')} className="w-full py-5 bg-teal-800 hover:bg-teal-700 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-3 transition-all active:scale-95">
+                          <Compass size={16} /> Open Design Forge
+                       </button>
+                    </div>
+
+                    <div className="p-10 glass-card rounded-[56px] border border-rose-500/20 bg-rose-500/5 space-y-6">
+                       <div className="flex items-center gap-4">
+                          <Flame className="text-rose-500" />
+                          <h4 className="text-xl font-black text-white uppercase italic">Restoration Shard</h4>
+                       </div>
+                       <p className="text-slate-400 text-sm italic leading-relaxed">"Nature Aggression requires institutional sacrifice protocols to reset regional resonance and anchor biological truth."</p>
+                       <button className="w-full py-4 bg-rose-600 hover:bg-rose-500 rounded-2xl text-[9px] font-black uppercase text-white shadow-xl">MANAGE RESTORATION</button>
+                    </div>
+                 </div>
+              </div>
+           </div>
         )}
 
         {/* --- TAB: DNA SHARD FORGE --- */}
@@ -510,10 +670,6 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                                <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_FORGE_LINK // EOS_SYNC_OK</p>
                             </div>
                          </div>
-                         <div className="hidden sm:flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full">
-                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
-                            <span className="text-[9px] font-mono font-black text-blue-400 uppercase tracking-widest">FORGE_SYNC_ACTIVE</span>
-                         </div>
                       </div>
 
                       <div className="flex-1 p-12 md:p-20 overflow-y-auto custom-scrollbar relative z-20">
@@ -548,7 +704,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                                ) : (
                                   <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10 w-full">
                                      <div className="p-12 md:p-20 bg-black/80 rounded-[80px] border-2 border-indigo-500/20 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-[12px] border-l-indigo-600/50 relative overflow-hidden group/shard text-left">
-                                        <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group/shard:scale-110 transition-transform duration-[12s]"><Atom size={800} className="text-blue-400" /></div>
+                                        <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/shard:scale-110 transition-transform duration-[12s] pointer-events-none"><Atom size={800} className="text-blue-400" /></div>
                                         
                                         <div className="flex justify-between items-center mb-12 relative z-10 border-b border-white/5 pb-10">
                                            <div className="flex items-center gap-6">
@@ -610,7 +766,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
 
         {/* --- TAB: GENOMIC ARCHIVE --- */}
         {activeTab === 'archive' && (
-           <div className="space-y-12 animate-in fade-in duration-500">
+           <div className="space-y-12 animate-in fade-in duration-700">
               <div className="flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-10 px-4">
                  <div>
                     <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Genomic <span className="text-blue-400">Ledger</span></h3>
@@ -621,7 +777,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                     <input 
                       type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                       placeholder="Filter by genome ID or trait..." 
-                      className="w-full bg-black/60 border border-white/10 rounded-[40px] py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all font-mono italic shadow-inner" 
+                      className="w-full bg-black/60 border border-white/10 rounded-[40px] py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-4 focus:ring-blue-500/20 outline-none transition-all font-mono italic shadow-inner" 
                     />
                  </div>
               </div>
@@ -673,41 +829,14 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
         )}
       </div>
 
-      {/* Global Persistence Shard Footer */}
-      <div className="p-16 md:p-24 glass-card rounded-[80px] border-blue-500/20 bg-blue-600/[0.03] flex flex-col md:flex-row items-center justify-between gap-16 relative overflow-hidden shadow-3xl mt-32 mx-4 z-10 backdrop-blur-3xl">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12 transition-transform duration-[15s] group-hover:rotate-45">
-            <ShieldCheck className="w-[1000px] h-[1000px] text-emerald-400" />
-         </div>
-         <div className="flex items-center gap-16 relative z-10 text-center md:text-left flex-col md:flex-row">
-            <div className="w-40 h-40 bg-blue-600 rounded-[56px] flex items-center justify-center shadow-3xl animate-pulse ring-[24px] ring-white/5 shrink-0">
-               <Fingerprint className="w-20 h-20 text-white" />
-            </div>
-            <div className="space-y-6">
-               <h4 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Biological <span className="text-blue-400">Sovereignty</span></h4>
-               <p className="text-slate-400 text-2xl md:text-3xl font-medium italic leading-relaxed max-w-2xl">
-                 Securing the agricultural genome through decentralized consensus. Every genetic shard represents a verified step towards high-m-constant resilience.
-               </p>
-            </div>
-         </div>
-         <div className="text-center md:text-right relative z-10 shrink-0 border-l border-white/10 pl-20 hidden lg:block">
-            <p className="text-[14px] text-slate-600 font-black uppercase mb-6 tracking-[0.8em]">GENOMIC_QUORUM</p>
-            <p className="text-9xl md:text-[180px] font-mono font-black text-white tracking-tighter leading-none">100<span className="text-6xl text-blue-400 ml-2">%</span></p>
-         </div>
-      </div>
-
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes scan {
-          0% { top: -100%; }
-          100% { top: 100%; }
-        }
-        .animate-scan {
-          animation: scan 4s linear infinite;
-        }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 4s linear infinite; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>

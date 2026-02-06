@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Wallet, 
@@ -55,7 +54,7 @@ import {
   Factory,
   Trophy
 } from 'lucide-react';
-import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, AgroBlock, NotificationType } from '../types';
+import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, AgroBlock } from '../types';
 
 interface AgroWalletProps {
   user: User;
@@ -69,7 +68,6 @@ interface AgroWalletProps {
   transactions?: AgroTransaction[];
   blockchain?: AgroBlock[];
   isMining?: boolean;
-  notify?: (type: NotificationType, title: string, message: string) => void;
 }
 
 const FOREX_RATES = {
@@ -96,10 +94,9 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   projects = [], 
   transactions = [],
   blockchain = [],
-  isMining = false,
-  notify
+  isMining = false
 }) => {
-  const [activeSubTab, setActiveTab] = useState<'treasury' | 'staking' | 'swap' | 'gateway' | 'ledger'>('treasury');
+  const [activeSubTab, setActiveSubTab] = useState<'treasury' | 'staking' | 'swap' | 'gateway' | 'ledger'>('treasury');
   
   // Wallet States
   const [showGatewayModal, setShowGatewayModal] = useState<'deposit' | 'withdrawal' | null>(null);
@@ -149,12 +146,12 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   const handleExecuteSwap = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      notify?.('error', 'SIGNATURE_VOID', 'Node signature mismatch.');
+      alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     const amountEAC = Number(swapAmountEAC);
     if (user.wallet.balance < amountEAC) {
-      notify?.('error', 'LIQUIDITY_VOID', 'Insufficient utility credits for equity conversion.');
+      alert("LIQUIDITY ERROR: Insufficient EAC for anchoring.");
       return;
     }
 
@@ -164,7 +161,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
         if (await onSwap(eatYield)) {
           setIsSwapping(false);
           setEsinSign('');
-          notify?.('success', 'ASSET_ANCHORED', `Converted ${amountEAC} EAC into ${eatYield.toFixed(4)} EAT shards.`);
+          alert("ASSET ANCHORED: Utility credits converted to Equity gold shards.");
         } else {
           setIsSwapping(false);
         }
@@ -175,12 +172,12 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   const handleExecuteStake = () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      notify?.('error', 'SIGNATURE_VOID', 'Node signature mismatch.');
+      alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     const amt = Number(stakeAmount);
     if (user.wallet.eatBalance < amt) {
-       notify?.('error', 'EQUITY_VOID', 'Insufficient equity shards for staking.');
+       alert("EQUITY ERROR: Insufficient EAT for staking.");
        return;
     }
 
@@ -198,9 +195,8 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
        }
        setIsStaking(false);
        setEsinSign('');
-       // Fix: use setActiveTab instead of setActiveSubTab to resolve error on line 200
-       setActiveTab('treasury');
-       notify?.('success', 'STAKE_COMMITTED', `Locked ${amt} EAT in validator quorum. Passive yield cycle active.`);
+       setActiveSubTab('treasury');
+       alert("STAKE COMMITTED: Equity locked in validator quorum. passive EAC yield initialized.");
     }, 2500);
   };
 
@@ -210,7 +206,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
     setTimeout(() => {
       onClaimSocialHarvest?.();
       setIsHarvesting(false);
-      notify?.('success', 'HARVEST_SYNC', `Released ${pendingHarvest.toFixed(2)} EAC from buffer to liquid treasury.`);
     }, 2500);
   };
 
@@ -266,7 +261,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
           ].map(tab => (
             <button 
               key={tab.id} 
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveSubTab(tab.id as any)}
               className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
             >
               <tab.icon className="w-4 h-4" /> {tab.label}
@@ -373,6 +368,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                                <p className="text-sm font-mono font-black text-emerald-400">+{((user.wallet.stakedEat || 0) * 0.12).toFixed(1)} EAC</p>
                             </div>
                             <div className="p-4 bg-black/60 rounded-2xl border border-white/5 text-center">
+                               <p className="text-[8px] text-slate-600 font-black uppercase mb-1">DAO Voting Quorum</p>
                                <p className="text-sm font-mono font-black text-blue-400">{user.wallet.stakedEat ? 'ACTIVE' : 'LOCKED'}</p>
                             </div>
                          </div>
@@ -403,7 +399,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                       </div>
                    </div>
                    <button 
-                     onClick={() => setActiveTab('swap')}
+                     onClick={() => setActiveSubTab('swap')}
                      className="w-full py-8 bg-white/5 border-2 border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-yellow-500/10 transition-all relative z-10 shadow-3xl active:scale-95 flex items-center justify-center gap-4 group"
                    >
                       MINT EQUITY SHARD
@@ -459,17 +455,17 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                           <h4 className={`text-2xl font-black text-white uppercase tracking-widest leading-none ${selectedTier.id === tier.id ? 'text-indigo-400' : ''}`}>{tier.label}</h4>
                           <div className="space-y-8 pt-6">
                              <div>
-                                <p className="text-slate-500 font-black uppercase tracking-widest mb-1">Expected APY</p>
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Expected APY</p>
                                 <p className="text-5xl font-mono font-black text-emerald-400">+{tier.yield}%</p>
                              </div>
                              <div>
-                                <p className="text-slate-500 font-black uppercase tracking-widest mb-1">Lockup Period</p>
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Lockup Period</p>
                                 <p className="text-2xl font-bold text-white uppercase italic">{tier.period}</p>
                              </div>
                           </div>
                        </div>
                        <div className="pt-8 border-t border-white/5 relative z-10">
-                          <p className="text-slate-700 font-black uppercase tracking-widest">MIN_COMMIT: {tier.min} EAT</p>
+                          <p className="text-[9px] text-slate-700 font-black uppercase tracking-widest">MIN_COMMIT: {tier.min} EAT</p>
                        </div>
                     </div>
                  ))}
@@ -637,7 +633,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                 </div>
 
                 <div className="lg:col-span-5 space-y-10">
-                   <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-950/5 flex flex-col items-center justify-center text-center space-y-12 group shadow-3xl relative overflow-hidden h-full">
+                   <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-950/5 flex flex-col justify-center items-center text-center space-y-12 group shadow-3xl relative overflow-hidden h-full">
                       <div className="w-32 h-32 rounded-[44px] bg-emerald-600 flex items-center justify-center shadow-[0_0_120px_rgba(16,185,129,0.4)] ring-[16px] ring-white/5 relative z-10 group-hover:scale-110 transition-transform duration-700">
                          <ShieldCheck className="w-16 h-16 text-white" />
                       </div>
@@ -654,7 +650,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                          </div>
                          <div className="p-8 bg-black/60 border border-white/10 rounded-[40px] text-center shadow-inner group/met hover:border-blue-500/30 transition-all">
                             <p className="text-[11px] text-slate-500 uppercase font-black mb-3 tracking-widest">Packet Trust</p>
-                            <p className="text-5xl font-mono font-black text-blue-400 tracking-tighter">99<span className="text-sm font-sans italic ml-1">%</span></p>
+                            <p className="text-5xl font-mono font-black text-blue-400 Hester tracking-tighter">99<span className="text-sm font-sans italic ml-1">%</span></p>
                          </div>
                       </div>
                    </div>
@@ -671,7 +667,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                    <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Node <span className="text-emerald-400">Ledger Shards</span></h3>
                    <p className="text-slate-500 text-2xl font-medium italic opacity-80">"Real-time industrial accounting anchored to the permanent registry."</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-6">
                   <button className="px-12 py-6 bg-white/5 border border-white/10 rounded-[32px] text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl hover:bg-white/10 transition-all active:scale-95 flex items-center gap-4">
                     <Download size={24} /> Export Node CSV
                   </button>
@@ -683,10 +679,10 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
              <div className="glass-card rounded-[72px] overflow-hidden border-2 border-white/5 bg-black/40 shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
                 <div className="grid grid-cols-5 p-10 border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
-                   <span className="col-span-2 px-4">Registry Action Shard</span>
+                   <span className="col-span-2">Registry Action Shard</span>
                    <span>Value Impact</span>
                    <span>Origin Node</span>
-                   <span className="text-right px-4">Ledger Finality</span>
+                   <span className="text-right">Ledger Finality</span>
                 </div>
                 <div className="divide-y divide-white/5 max-h-[800px] overflow-y-auto custom-scrollbar bg-[#050706]">
                    {transactions.map((tx, i) => (
