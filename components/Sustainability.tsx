@@ -296,7 +296,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
                           <div className={`p-4 rounded-2xl bg-white/5 ${item.col} shadow-xl group-hover/item:rotate-6 transition-transform`}>
                              <item.icon size={24} />
                           </div>
-                          <span className="text-[8px] font-mono text-slate-700 font-black uppercase tracking-[0.4em]">SHARD_MANIFEST_0{i+1}</span>
+                           <span className="text-[8px] font-mono text-slate-700 font-black uppercase tracking-[0.4em]">SHARD_MANIFEST_0{i+1}</span>
                        </div>
                        <div className="space-y-4">
                           <div>
@@ -368,7 +368,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 duration-500">
            <div className="glass-card p-10 rounded-[48px] border-emerald-500/40 bg-[#050706] shadow-[0_0_150px_rgba(16,185,129,0.3)] flex items-center gap-10 border-2">
               <div className="w-20 h-20 rounded-full agro-gradient flex items-center justify-center text-white shadow-2xl relative overflow-hidden">
-                 <CheckCircle2 size(40) />
+                 <CheckCircle2 size={40} />
                  <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
               </div>
               <div>
@@ -384,7 +384,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes dna-float {
-          0%, 100 { transform: translateY(0); }
+          0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-8px); }
         }
         .animate-dna-float { animation: dna-float 4s ease-in-out infinite; }

@@ -233,10 +233,10 @@ SEQUENCE Optimize_Cycle_882 {
     }, 3500);
   };
 
-  const handleRunInShell = () => {
+  const handleExecuteToShell = () => {
     setHasNewForge(false);
     onExecuteToShell(currentCode);
-    addLog("Redirecting to FarmOS Shell for OS optimization execution...");
+    addLog("Redirecting to FarmOS Shell for operating system optimization...");
   };
 
   return (
@@ -357,13 +357,13 @@ SEQUENCE Optimize_Cycle_882 {
                       <Bot size={18} /> FORGE_LOGIC
                     </button>
                     
-                    {/* RUN IN AGRO SHELL BUTTON - Prominent After Synthesis or Audit */}
+                    {/* EXECUTE TO SHELL BUTTON - Manual Handoff to FarmOS */}
                     <button 
-                      onClick={handleRunInShell}
+                      onClick={handleExecuteToShell}
                       className={`px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center gap-3 active:scale-95 transition-all shadow-xl relative group ${hasNewForge ? 'bg-indigo-600 text-white shadow-indigo-500/50 ring-4 ring-indigo-400/20 animate-pulse' : 'bg-white/5 text-slate-600 border border-white/10 hover:bg-white/10 hover:text-white'}`}
                     >
                       <Terminal size={18} /> 
-                      RUN_IN_SHELL
+                      EXECUTE_TO_SHELL
                       {hasNewForge && (
                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-indigo-600 animate-ping"></span>
                       )}
@@ -386,7 +386,6 @@ SEQUENCE Optimize_Cycle_882 {
                     <div className="flex-1 flex gap-12 p-12 bg-black relative overflow-hidden">
                        <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(99,102,241,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.1)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
                        <div className="w-14 text-right font-mono text-base text-slate-800 pt-2 border-r border-white/5 pr-8 select-none leading-[2.5]">
-                          {/* Fix: Corrected JSX syntax for rendering line numbers to avoid parser error on assignment expression */}
                           {[...Array(24)].map((_, i) => <div key={i}>{(i + 1).toString().padStart(2, '0')}</div>)}
                        </div>
                        <textarea 
