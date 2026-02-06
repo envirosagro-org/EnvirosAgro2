@@ -498,7 +498,7 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                     <div className="space-y-3">
                        {logs.map((log, i) => (
                           <div key={i} className="flex gap-4 animate-in slide-in-from-left-2 duration-300">
-                             <span className="text-emerald-500/40 shrink-0 font-black">>>></span>
+                             <span className="text-emerald-500/40 shrink-0 font-black">{" >>>"}</span>
                              <span className={
                                log.includes('error') ? 'text-rose-500 font-black' : 
                                log.includes('success') ? 'text-blue-400 font-bold' : 

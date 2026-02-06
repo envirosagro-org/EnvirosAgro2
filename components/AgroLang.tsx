@@ -494,7 +494,7 @@ SEQUENCE Optimize_Cycle_882 {
                     {output.length === 0 && <div className="opacity-20 uppercase tracking-widest">Awaiting industrial logic deployment...</div>}
                     {output.map((log, i) => (
                       <div key={i} className="flex gap-6 animate-in slide-in-from-left-2 duration-300">
-                        <span className="text-emerald-500/30 shrink-0 font-black">>>></span>
+                        <span className="text-emerald-500/30 shrink-0 font-black">{" >>>"}</span>
                         <span className={
                           log.includes('SUCCESS') ? 'text-emerald-400 font-bold shadow-emerald-500/10' : 
                           log.includes('VIOLATION') || log.includes('ERROR') ? 'text-rose-500 font-black animate-pulse' : 
