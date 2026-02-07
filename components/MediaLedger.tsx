@@ -21,89 +21,21 @@ import {
   Stamp, 
   Fingerprint, 
   Terminal, 
-  BadgeCheck,
-  Zap,
-  Globe,
-  PlusCircle,
-  X,
-  Eye,
-  Maximize2,
-  // Added MessageSquare to fix the error on line 110
+  BadgeCheck, 
+  Zap, 
+  Globe, 
+  PlusCircle, 
+  X, 
+  Eye, 
+  Maximize2, 
   MessageSquare
 } from 'lucide-react';
 import { User, MediaShard } from '../types';
 
 interface MediaLedgerProps {
   user: User;
+  shards: MediaShard[];
 }
-
-const MOCK_MEDIA_SHARDS: MediaShard[] = [
-  { 
-    id: 'MSH-882-01', 
-    title: 'Zone 4 Ingest: Nitrogen Levels Phase 1', 
-    type: 'INGEST', 
-    source: 'Registry Ingest', 
-    author: 'Node_Paris_04', 
-    authorEsin: 'EA-04-P882', 
-    timestamp: '2h ago', 
-    hash: '0x882_ING_OK', 
-    mImpact: '+0.12x', 
-    size: '14.2 MB', 
-    downloadUrl: '#' 
-  },
-  { 
-    id: 'MSH-104-42', 
-    title: 'The 432Hz Soil Resilience Protocol', 
-    type: 'PAPER', 
-    source: 'Research', 
-    author: 'Dr. Sarah Chen', 
-    authorEsin: 'EA-24-S821', 
-    timestamp: '5h ago', 
-    hash: '0x104_RES_OK', 
-    mImpact: '+0.24x', 
-    size: '2.8 MB', 
-    downloadUrl: '#' 
-  },
-  { 
-    id: 'MSH-042-99', 
-    title: 'Live Stream: Bantu Seed Vetting Session', 
-    type: 'VIDEO', 
-    source: 'Media Hub', 
-    author: 'Heritage Steward Alpha', 
-    authorEsin: 'EA-01-A842', 
-    timestamp: '1d ago', 
-    hash: '0x042_STR_OK', 
-    mImpact: '+0.05x', 
-    size: '1.4 GB', 
-    downloadUrl: '#' 
-  },
-  { 
-    id: 'MSH-991-12', 
-    title: 'Oracle Verdict: Sector 4 Pest Remediation', 
-    type: 'ORACLE', 
-    source: 'Value Forge', 
-    author: 'EOS_ORACLE_V5', 
-    authorEsin: 'EA-CORE-ORC', 
-    timestamp: '3h ago', 
-    hash: '0x991_VER_OK', 
-    mImpact: 'REMEDIATED', 
-    size: '420 KB', 
-    downloadUrl: '#' 
-  },
-  { 
-    id: 'MSH-552-84', 
-    title: 'Bantu Rhythmic Ingest #142', 
-    type: 'AUDIO', 
-    source: 'Media Hub', 
-    author: 'AgroMusika Node', 
-    authorEsin: 'EA-MUS-882', 
-    timestamp: '6h ago', 
-    hash: '0x552_AUD_OK', 
-    mImpact: '+0.10x', 
-    size: '45.2 MB', 
-    downloadUrl: '#' 
-  },
-];
 
 const TYPE_ICONS: Record<string, any> = {
   VIDEO: Clapperboard,
@@ -123,15 +55,15 @@ const TYPE_COLORS: Record<string, string> = {
   INGEST: 'text-slate-400'
 };
 
-const MediaLedger: React.FC<MediaLedgerProps> = ({ user }) => {
+const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [] }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'video' | 'audio' | 'papers' | 'oracle'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShard, setSelectedShard] = useState<MediaShard | null>(null);
 
   const filteredShards = useMemo(() => {
-    return MOCK_MEDIA_SHARDS.filter(shard => {
-      const matchesSearch = shard.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           shard.id.toLowerCase().includes(searchTerm.toLowerCase());
+    return shards.filter(shard => {
+      const matchesSearch = (shard.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           (shard.id || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesTab = activeTab === 'all' || 
                         (activeTab === 'video' && shard.type === 'VIDEO') ||
                         (activeTab === 'audio' && shard.type === 'AUDIO') ||
@@ -139,17 +71,15 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user }) => {
                         (activeTab === 'oracle' && shard.type === 'ORACLE');
       return matchesSearch && matchesTab;
     });
-  }, [searchTerm, activeTab]);
+  }, [searchTerm, activeTab, shards]);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
       
-      {/* Background Decor */}
       <div className="absolute top-0 right-0 p-40 opacity-[0.01] pointer-events-none rotate-12">
         <FileStack size={1000} className="text-indigo-500" />
       </div>
 
-      {/* 1. Industrial Header HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3 glass-card p-12 md:p-16 rounded-[64px] border-indigo-500/20 bg-indigo-500/[0.03] relative overflow-hidden flex flex-col md:flex-row items-center gap-16 group shadow-3xl">
            <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden">
@@ -296,33 +226,11 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user }) => {
          </div>
       </div>
 
-      {/* 4. Global Finality Footer */}
-      <div className="p-16 md:p-24 glass-card rounded-[80px] border-indigo-500/20 bg-indigo-500/[0.03] flex flex-col md:flex-row items-center justify-between gap-16 relative overflow-hidden shadow-3xl mx-4 mt-20 backdrop-blur-3xl group/footer">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12 transition-transform duration-[15s] group-hover/footer:rotate-45">
-            <ShieldCheck className="w-[1000px] h-[1000px] text-indigo-400" />
-         </div>
-         <div className="flex items-center gap-16 relative z-10 text-center md:text-left flex-col md:flex-row">
-            <div className="w-40 h-40 bg-indigo-600 rounded-[56px] flex items-center justify-center shadow-3xl animate-pulse ring-[24px] ring-white/5 shrink-0">
-               <Fingerprint className="w-20 h-20 text-white" />
-            </div>
-            <div className="space-y-6">
-               <h4 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">ARCHIVE <span className="text-indigo-400">FINALITY</span></h4>
-               <p className="text-slate-400 text-2xl md:text-3xl font-medium italic leading-relaxed max-w-2xl opacity-80 group-hover:opacity-100 transition-opacity">
-                 "The Media Ledger ensures all generated intelligence and agricultural heritage remains a permanent, sovereign asset of the network. Transparent, traceable, and permanent."
-               </p>
-            </div>
-         </div>
-         <div className="text-center md:text-right relative z-10 shrink-0 border-l border-white/10 pl-20 hidden lg:block">
-            <p className="text-[14px] text-slate-600 font-black uppercase mb-6 tracking-[0.8em]">SHARD_DENSITY</p>
-            <p className="text-9xl md:text-[180px] font-mono font-black text-white tracking-tighter leading-none">100<span className="text-6xl text-indigo-400 ml-2">%</span></p>
-         </div>
-      </div>
-
       {/* SHARD INSPECTOR MODAL */}
       {selectedShard && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 md:p-10 overflow-hidden">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setSelectedShard(null)}></div>
-           <div className="relative z-10 w-full max-w-5xl glass-card rounded-[80px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-[0_0_200px_rgba(99,102,241,0.2)] animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+           <div className="relative z-10 w-full max-w-5xl glass-card rounded-[80px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-[0_0_200px_rgba(99,102,241,0.2)] animate-in zoom-in duration-300 border-2 flex flex-col max-h-[95vh]">
               
               <div className="p-12 md:p-16 border-b border-white/5 bg-indigo-500/[0.01] flex justify-between items-center shrink-0 relative z-10">
                  <div className="flex items-center gap-10">
@@ -370,7 +278,7 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user }) => {
                           </div>
                           <div className="flex items-center gap-6">
                              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-indigo-400 font-mono font-black text-2xl">
-                                {selectedShard.author[0]}
+                                {selectedShard.author ? selectedShard.author[0] : 'U'}
                              </div>
                              <div>
                                 <p className="text-2xl font-black text-white uppercase italic leading-none">{selectedShard.author}</p>

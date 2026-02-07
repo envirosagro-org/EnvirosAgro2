@@ -30,10 +30,12 @@ export interface AgroResource {
 export interface User {
   name: string;
   email: string;
+  gender?: 'Male' | 'Female' | 'Non-Binary' | 'Not Specified';
   esin: string; // EnvirosAgro Social Identification Number
   mnemonic: string; // 12-word recovery phrase
   regDate: string;
   avatar?: string;
+  bio?: string;
   role: string;
   location: string;
   countryCode?: string;
@@ -49,8 +51,11 @@ export interface User {
     color: string;
     hex?: string;
     pointsAdded: boolean;
+    certId?: string;
+    mintedAt?: string;
   };
   resources?: AgroResource[];
+  mutualStewards?: number;
 }
 
 export interface EACWallet {
@@ -206,11 +211,16 @@ export interface ResearchPaper {
 export interface WorkerProfile {
   id: string;
   name: string;
+  esin: string;
   skills: string[];
   sustainabilityRating: number;
   verifiedHours: number;
   isOpenToWork: boolean;
   lifetimeEAC: number;
+  efficiency: number;
+  avatar?: string;
+  location: string;
+  gender?: 'Male' | 'Female' | 'Non-Binary' | 'Not Specified';
 }
 
 export interface ProjectTask {

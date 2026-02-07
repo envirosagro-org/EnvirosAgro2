@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { 
@@ -18,7 +17,8 @@ import {
   Lock,
   RefreshCw,
   Signal,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from 'lucide-react';
 import { 
   syncUserToCloud,
@@ -105,7 +105,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
             lifetimeEarned: 100,
             linkedProviders: [],
             miningStreak: 1,
-            lastSyncDate: new Date().toISOString().split('T')[0]
+            lastSyncDate: new Date().toISOString().split('T')[0],
+            pendingSocialHarvest: 0,
+            stakedEat: 0
           },
           metrics: { 
             agriculturalCodeU: 1.2, 
@@ -133,13 +135,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
           setMessage({ type: 'error', text: "REGISTRY_MISSING: Profile not found. Check Firestore Rules." });
         }
       } else if (mode === 'forgot') {
-        // Step 1 of Recovery: Transmit Code
         await transmitRecoveryCode(email);
         setMessage({ type: 'info', text: "SIGNAL_TRANSMITTED: 6-digit recovery shard sent to your Gmail inbox." });
         setMode('verify_shard');
         setCountdown(60);
       } else if (mode === 'verify_shard') {
-        // Step 2 of Recovery: Verify Code
         const fullCode = shardCode.join('');
         const isValid = await verifyRecoveryShard(email, fullCode);
         if (isValid) {
@@ -165,8 +165,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     }
   };
 
-  const formContent = (
-    <div className={`${isEmbed ? '' : 'glass-card p-10 md:p-14 rounded-[56px] border-emerald-500/20 bg-black/40 shadow-3xl'} w-full text-center space-y-10`}>
+  return (
+    <div className={isEmbed ? 'w-full' : 'min-h-screen bg-[#050706] flex items-center justify-center p-4 relative overflow-hidden'}>
+      {!isEmbed && (
+         <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>
+         </div>
+      )}
+
+      <div className={`glass-card p-10 md:p-14 rounded-[56px] border-emerald-500/20 bg-black/40 shadow-3xl w-full text-center space-y-10 relative z-10 ${isEmbed ? '' : 'max-w-xl'}`}>
          {!isEmbed && (
            <div className="flex flex-col items-center gap-4">
               <div className="w-20 h-20 agro-gradient rounded-3xl flex items-center justify-center shadow-xl">
@@ -209,8 +216,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
             )}
 
             {mode !== 'verify_shard' && (
-              <div className="space-y-4">
-                 <div className="space-y-1 text-left px-1">
+              <div className="space-y-4 text-left px-1">
+                 <div className="space-y-1">
                     <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Registry Email</label>
                     <div className="relative group">
                       <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700 group-focus-within:text-emerald-500" />
@@ -218,8 +225,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
                     </div>
                  </div>
                  
-                 {mode === 'login' && (
-                   <div className="space-y-1 text-left px-1">
+                 {(mode === 'login' || mode === 'register') && (
+                   <div className="space-y-1">
                       <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Node Password</label>
                       <div className="relative group">
                         <Key className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700 group-focus-within:text-emerald-500" />
@@ -297,22 +304,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
               </div>
            </div>
          )}
-    </div>
-  );
-
-  if (isEmbed) return formContent;
-
-  return (
-    <div className="min-h-screen bg-[#050706] flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-10">
-         <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:30px_30px]"></div>
       </div>
-      <div className="relative z-10 w-full max-w-xl">
-        {formContent}
-      </div>
-      <style>{`
-        .shadow-3xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9); }
-      `}</style>
     </div>
   );
 };

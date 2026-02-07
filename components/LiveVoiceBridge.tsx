@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Mic, MicOff, Bot, X, Loader2, ShieldCheck, Activity } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
@@ -56,13 +57,13 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) throw new Error("AudioContext not supported");
+      // Fixed: Access constructor directly on window expression to avoid "Illegal constructor"
+      const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AC) throw new Error("AudioContext not supported");
       
-      // Creating standard contexts. Some browsers throw 'Illegal constructor' if the class is extracted to a local variable 
-      // without keeping the global context or if specific arguments are unsupported in legacy implementations.
-      outputAudioContextRef.current = new AudioContextClass({ sampleRate: 24000 });
-      inputAudioContextRef.current = new AudioContextClass({ sampleRate: 16000 });
+      // Instantiate directly to ensure constructor binding is preserved
+      outputAudioContextRef.current = new AC({ sampleRate: 24000 });
+      inputAudioContextRef.current = new AC({ sampleRate: 16000 });
       
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;

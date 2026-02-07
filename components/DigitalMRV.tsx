@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { 
   Scan, 
@@ -37,7 +38,8 @@ import {
   Landmark,
   ArrowLeftCircle,
   Info,
-  Network
+  Network,
+  Trash2
 } from 'lucide-react';
 import { User, AgroResource, ViewState } from '../types';
 import { analyzeMRVEvidence } from '../services/geminiService';
@@ -45,11 +47,12 @@ import { analyzeMRVEvidence } from '../services/geminiService';
 interface DigitalMRVProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
+  onUpdateUser: (user: User) => void;
   onNavigate?: (view: ViewState) => void;
 }
 
-const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate }) => {
+const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, onUpdateUser, onNavigate }) => {
   const [isAccessVerifying, setIsAccessVerifying] = useState(true);
   
   const landResources = useMemo(() => 
@@ -90,6 +93,14 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
         setEvidenceBase64(base64.split(',')[1]);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteLand = (e: React.MouseEvent, landId: string) => {
+    e.stopPropagation();
+    if (confirm("ARCHIVE_COMMAND: Confirm permanent deletion of this geofence shard from the registry?")) {
+      const updatedResources = (user.resources || []).filter(r => r.id !== landId);
+      onUpdateUser({ ...user, resources: updatedResources });
     }
   };
 
@@ -137,7 +148,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
           <div className="w-24 h-24 rounded-3xl bg-blue-600/10 border-2 border-blue-500/20 flex items-center justify-center text-blue-500 shadow-2xl">
             <Lock size={32} className="animate-pulse" />
           </div>
-          <div className="absolute inset-0 border-2 border-blue-500/30 rounded-3xl animate-ping opacity-20"></div>
+          <div className="absolute inset-0 border-2 border-indigo-500/30 rounded-3xl animate-ping opacity-20"></div>
         </div>
         <div className="text-center space-y-2">
           <h3 className="text-xl font-black text-white uppercase tracking-[0.4em] italic">Handshaking Node...</h3>
@@ -188,11 +199,18 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
              {hasLandRegistered ? (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                   {landResources.map(land => (
-                    <button 
+                    <div 
                       key={land.id}
                       onClick={() => { setSelectedLand(land); setPipelineStep('ingest'); }}
-                      className="glass-card p-10 rounded-[48px] border-2 border-white/5 hover:border-emerald-500/40 bg-black/40 flex flex-col items-center text-center space-y-6 transition-all group active:scale-[0.98] shadow-2xl"
+                      className="glass-card p-10 rounded-[48px] border-2 border-white/5 hover:border-emerald-500/40 bg-black/40 flex flex-col items-center text-center space-y-6 transition-all group cursor-pointer active:scale-[0.98] shadow-2xl relative"
                     >
+                        <button 
+                          onClick={(e) => handleDeleteLand(e, land.id)}
+                          className="absolute top-6 right-6 p-3 bg-rose-600/10 border border-rose-500/20 text-rose-500 hover:bg-rose-600 hover:text-white rounded-2xl transition-all opacity-0 group-hover:opacity-100 z-30 shadow-xl"
+                          title="Delete Land Shard"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                         <div className="w-20 h-20 bg-emerald-500/10 rounded-[32px] flex items-center justify-center text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform">
                           <TreePine size={32} />
                         </div>
@@ -205,7 +223,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                         }`}>
                           {land.status}
                         </span>
-                    </button>
+                    </div>
                   ))}
                </div>
              ) : (
@@ -317,7 +335,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
         {pipelineStep === 'verify' && (
            <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-right-4 duration-500">
               <div className="glass-card rounded-[64px] min-h-[500px] border border-white/5 bg-black/40 flex flex-col relative overflow-hidden shadow-3xl">
-                 <div className="p-10 border-b border-white/5 flex items-center justify-between shrink-0">
+                 <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-4 text-indigo-400">
                        <Terminal className="w-6 h-6" />
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Oracle Validation Stream</span>
@@ -471,7 +489,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
               </div>
               <div className="space-y-4 text-center">
                  <h3 className="text-8xl font-black text-white uppercase tracking-tighter italic m-0">SHARD <span className="text-emerald-400">MINTED.</span></h3>
-                 <p className="text-emerald-500 text-sm font-black uppercase tracking-[0.8em] font-mono">HASH_COMMIT_0x{(Math.random()*1000).toFixed(0)}_FINAL</p>
+                 <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.8em] font-mono">HASH_COMMIT_0x{(Math.random()*1000).toFixed(0)}_FINAL</p>
               </div>
               <div className="p-10 glass-card rounded-[56px] border border-white/5 bg-emerald-500/5 space-y-8 max-w-lg w-full shadow-2xl">
                  <div className="flex justify-between items-center text-xs">
@@ -501,7 +519,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }

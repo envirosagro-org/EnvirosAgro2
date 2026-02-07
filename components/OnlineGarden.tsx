@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-/* Added missing Lucide icons and alias to resolve compilation errors */
 import { 
   Flower, Satellite, TrendingUp, Zap, ShieldCheck, Bot, Sparkles, 
   Layers, Droplets, Binary, Target, Globe, Loader2, Lock, Stamp, 
@@ -9,8 +8,13 @@ import {
   SmartphoneNfc, ClipboardList, Target as TargetIcon, Search, Plus, 
   ArrowRight, Download, Monitor, Signal, Radio, Box, Binary as BinaryIcon,
   Crown, Compass, BadgeCheck, History, Eye, Lightbulb, Map as MapIcon,
-  Pickaxe, Database, Wifi, Leaf, Boxes as BoxesIcon
+  Pickaxe, Database, Wifi, Leaf, Boxes as BoxesIcon, Share2, MoreVertical,
+  CircleDot, LayoutGrid, FileSearch, Trash2, Cpu as CpuIcon,
+  TreePine
 } from 'lucide-react';
+import { 
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip 
+} from 'recharts';
 import { User, ViewState, AgroResource } from '../types';
 import { analyzeMiningYield, chatWithAgroExpert } from '../services/geminiService';
 
@@ -22,13 +26,12 @@ interface OnlineGardenProps {
   notify: any;
 }
 
-/* Updated progression tiers with Pickaxe icon */
 const PROGRESSION_TIERS = [
-  { level: 1, title: 'Seeder', req: 'Registry Handshake', access: '1 Virtual Shard', icon: Sprout, col: 'text-emerald-400' },
-  { level: 2, title: 'Cultivator', req: 'Connect Physical Plot', access: 'Physical Shard + Bridge', icon: MapPin, col: 'text-emerald-500' },
-  { level: 3, title: 'Miner', req: 'Pass Carbon Baseline', access: 'Carbon Mining Shard', icon: Pickaxe, col: 'text-amber-500' },
-  { level: 4, title: 'Steward', req: '3 Sustainability Protocols', access: 'Multi-Shard Mgmt', icon: ShieldCheck, col: 'text-blue-400' },
-  { level: 5, title: 'Super-Agro', req: 'Net-Negative Footprint', access: 'System Governance', icon: Crown, col: 'text-indigo-400' },
+  { level: 1, title: 'Seeder', req: 'Registry Handshake', access: '1 Virtual Shard', icon: Sprout, col: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { level: 2, title: 'Cultivator', req: 'Connect Physical Plot', access: 'Physical Shard + Bridge', icon: MapPin, col: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  { level: 3, title: 'Miner', req: 'Pass Carbon Baseline', access: 'Carbon Mining Shard', icon: Pickaxe, col: 'text-amber-500', bg: 'bg-amber-500/10' },
+  { level: 4, title: 'Steward', req: '3 Sustainability Protocols', access: 'Multi-Shard Mgmt', icon: ShieldCheck, col: 'text-blue-400', bg: 'bg-blue-500/10' },
+  { level: 5, title: 'Super-Agro', req: 'Net-Negative Footprint', access: 'System Governance', icon: Crown, col: 'text-indigo-400', bg: 'bg-indigo-500/10' },
 ];
 
 const SHARD_TYPES = [
@@ -36,19 +39,28 @@ const SHARD_TYPES = [
   { id: 'virtual', label: 'Sim Shard', desc: 'Strategy testing & Reaction Mining', badge: 'VIRTUAL', col: 'text-indigo-400', bg: 'bg-indigo-500/10' },
 ];
 
+const MOCK_HISTORICAL_YIELD = [
+  { cycle: 'C1', yield: 42, resonance: 0.84 },
+  { cycle: 'C2', yield: 56, resonance: 0.92 },
+  { cycle: 'C3', yield: 48, resonance: 0.88 },
+  { cycle: 'C4', yield: 72, resonance: 1.15 },
+  { cycle: 'C5', yield: 64, resonance: 1.05 },
+  { cycle: 'C6', yield: 92, resonance: 1.42 },
+];
+
 const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, notify }) => {
   const [activeTab, setActiveTab] = useState<'bridge' | 'shards' | 'roadmap' | 'mining'>('bridge');
   const [activeShardType, setActiveShardType] = useState<'physical' | 'virtual'>(user.resources?.some(r => r.category === 'LAND') ? 'physical' : 'virtual');
   
-  // Telemetry Bridge States
   const [telemetrySource, setTelemetrySource] = useState<'ingest' | 'satellite'>('ingest');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState(100);
   
-  // Mining States
   const [isMining, setIsMining] = useState(false);
   const [miningType, setMiningType] = useState<'carbon' | 'reaction'>('reaction');
   const [miningInference, setMiningInference] = useState<any | null>(null);
+
+  const [selectedShardId, setSelectedShardId] = useState<string | null>(null);
 
   const landResources = useMemo(() => 
     (user.resources || []).filter(r => r.category === 'LAND'),
@@ -95,7 +107,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
 
     try {
       const data = {
-        pressure: type === 'reaction' ? 85 : 12.4, // Mock dynamic values
+        pressure: type === 'reaction' ? 85 : 12.4,
         type,
         node_id: user.esin,
         m_constant: user.metrics.timeConstantTau
@@ -110,27 +122,17 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
     }
   };
 
-  const orbitalParticles = useMemo(() => {
-    return [...Array(12)].map((_, i) => ({
-      id: i,
-      size: 4 + Math.random() * 6,
-      duration: 10 + Math.random() * 15,
-      delay: -(Math.random() * 10),
-      radius: 70 + Math.random() * 100,
-      type: i % 3 === 0 ? 'data' : i % 3 === 1 ? 'bio' : 'energy'
-    }));
-  }, []);
-
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-24 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
       
-      {/* 1. Dashboard HUD: Super-Agro Progression Roadmap */}
+      {/* Visual Scanline Effect */}
+      <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden">
+        <div className="w-full h-[2px] bg-indigo-500/10 absolute top-0 animate-scan"></div>
+      </div>
+
+      {/* 1. Header Hero HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 glass-card p-10 rounded-[64px] border-emerald-500/20 bg-emerald-500/[0.03] relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
-           <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden">
-              <div className="w-full h-[2px] bg-indigo-500/10 absolute top-0 animate-scan"></div>
-           </div>
-           
+        <div className="lg:col-span-3 glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-500/[0.03] relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
            <div className="relative shrink-0">
               <div className={`w-44 h-44 rounded-[56px] flex items-center justify-center ring-8 ring-white/5 relative overflow-hidden group-hover:scale-105 transition-all duration-1000 ${
                 activeShardType === 'physical' ? 'bg-emerald-600 shadow-[0_0_100px_rgba(16,185,129,0.4)]' : 'bg-indigo-700 shadow-[0_0_100px_rgba(79,70,229,0.4)]'
@@ -158,7 +160,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                     </span>
                     <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-blue-500/20 shadow-inner italic">OS_SYNC_v6.5</span>
                  </div>
-                 <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter italic m-0 drop-shadow-2xl">Online <span className="text-emerald-400">Garden.</span></h2>
+                 <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Online <span className="text-emerald-400">Garden.</span></h2>
               </div>
               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-3xl opacity-80 group-hover:opacity-100 transition-opacity">
                  "Orchestrating agricultural shards. Every garden is a digital twin or virtual space anchored to the global industrial ledger."
@@ -187,7 +189,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
         </div>
       </div>
 
-      {/* 2. Management Shard Navigation */}
+      {/* 2. Management Shards Navigation */}
       <div className="flex flex-col lg:flex-row justify-between items-center gap-10 relative z-20">
         <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 overflow-x-auto scrollbar-hide">
           {[
@@ -223,410 +225,428 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                   : 'bg-black/60 border-white/10 text-slate-500 hover:text-white'
                }`}
              >
-                {/* Fixed missing icon reference for Database */}
-                {type.id === 'physical' ? <Scan size={14} /> : <Database size={14} />}
-                {type.badge}
+                <div className={`w-2 h-2 rounded-full ${activeShardType === type.id ? 'bg-emerald-500 animate-pulse' : 'bg-slate-700'}`}></div>
+                {type.label}
              </button>
            ))}
         </div>
       </div>
 
-      <div className="min-h-[850px] relative z-10 px-2">
+      <div className="min-h-[800px] relative z-10">
         
-        {/* --- VIEW: TELEMETRY BRIDGE --- */}
+        {/* TAB: TELEMETRY BRIDGE */}
         {activeTab === 'bridge' && (
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-10 duration-1000">
-              <div className="lg:col-span-8 space-y-10">
-                 <div className="glass-card p-16 rounded-[80px] border-2 border-white/5 bg-black/60 relative overflow-hidden flex flex-col items-center justify-center min-h-[700px] shadow-3xl group">
-                    <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none overflow-hidden">
-                       <div className="w-[500px] h-[500px] border border-dashed border-emerald-500/40 rounded-full animate-spin-slow"></div>
-                       <div className="absolute w-[700px] h-[700px] border border-dotted border-blue-500/20 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse' }}></div>
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="lg:col-span-8 space-y-8">
+                 <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[10s]"><Satellite size={400} className="text-blue-400" /></div>
+                    <div className="flex items-center gap-6 relative z-10 border-b border-white/5 pb-8">
+                       <div className="p-4 bg-blue-600 rounded-[24px] shadow-xl"><Satellite size={28} className="text-white" /></div>
+                       <div>
+                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Inflow <span className="text-blue-400">Bridge</span></h3>
+                          <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-3">TARGET_NODE: GLOBAL_SCADA_MESH</p>
+                       </div>
                     </div>
 
-                    <div className="relative z-10 flex flex-col items-center gap-20 w-full">
-                       <div className="relative w-[450px] h-[450px] flex items-center justify-center">
-                          <div className={`w-72 h-72 rounded-[80px] border-4 transition-all duration-[2s] shadow-[0_0_200px_current] flex flex-col items-center justify-center relative z-20 ${
-                            activeShardType === 'physical' ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-indigo-600/20 border-indigo-500 text-indigo-400'
-                          }`}>
-                             {activeShardType === 'physical' ? <Satellite size={140} className="animate-pulse" /> : <Binary size={140} className="animate-float" />}
-                             <div className="absolute -bottom-10 px-8 py-3 bg-black/80 backdrop-blur-3xl rounded-[28px] text-[11px] font-black uppercase tracking-[0.5em] border border-white/10 shadow-3xl">
-                                {syncProgress}% SHARD_SYNC
-                             </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                       <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-6 shadow-inner">
+                          <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Bridging Source</p>
+                          <div className="grid grid-cols-2 gap-3">
+                             <button onClick={() => setTelemetrySource('ingest')} className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-3 ${telemetrySource === 'ingest' ? 'bg-blue-600 border-white text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}>
+                                <Database size={24} />
+                                <span className="text-[9px] font-black uppercase">Edge Shard</span>
+                             </button>
+                             <button onClick={() => setTelemetrySource('satellite')} className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-3 ${telemetrySource === 'satellite' ? 'bg-blue-600 border-white text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}>
+                                <Globe size={24} />
+                                <span className="text-[9px] font-black uppercase">Sat Shard</span>
+                             </button>
                           </div>
-                          
-                          {orbitalParticles.map((p) => (
-                            <div 
-                              key={p.id}
-                              className="absolute"
-                              style={{
-                                width: `${p.radius * 2}px`,
-                                height: `${p.radius * 2}px`,
-                                animation: `spin ${p.duration}s linear infinite`,
-                                animationDelay: `${p.delay}s`
-                              }}
-                            >
-                              <div 
-                                className={`absolute rounded-[20px] border-2 flex items-center justify-center shadow-3xl transition-all group-hover:scale-125 ${
-                                  p.type === 'bio' ? 'bg-emerald-500/10 border-emerald-500/20' : 
-                                  p.type === 'data' ? 'bg-blue-500/10 border-blue-500/20' : 
-                                  'bg-indigo-500/10 border-indigo-500/20'
-                                }`}
-                                style={{
-                                  width: `${p.size * 6}px`,
-                                  height: `${p.size * 6}px`,
-                                  top: '0',
-                                  left: '50%',
-                                  transform: 'translateX(-50%)'
-                                }}
-                              >
-                                {p.type === 'bio' ? <Sprout size={p.size * 2} className="text-emerald-500" /> : 
-                                 p.type === 'data' ? <Satellite size={p.size * 2} className="text-blue-500" /> : 
-                                 <Binary size={p.size * 2} className="text-indigo-500" />}
-                              </div>
-                            </div>
-                          ))}
                        </div>
-
-                       <div className="flex flex-col md:flex-row gap-10 w-full max-w-4xl justify-center items-center">
-                          <div className="p-8 glass-card rounded-[48px] bg-black/80 border border-white/5 flex flex-col items-center gap-6 flex-1 shadow-inner group/bridge">
-                             <div className="flex items-center gap-4 border-b border-white/5 pb-4 w-full justify-center">
-                                <Radio className="w-5 h-5 text-emerald-400" />
-                                <span className="text-[11px] font-black uppercase text-slate-500 tracking-widest italic">Ingest Source</span>
-                             </div>
-                             <div className="flex gap-4 w-full">
-                                {[
-                                  // Fixed missing icon reference for Wifi
-                                  { id: 'ingest', label: 'Local IoT', icon: Wifi, col: 'blue' },
-                                  { id: 'satellite', label: 'Sat Telemetry', icon: Satellite, col: 'indigo' },
-                                ].map(s => (
-                                  <button 
-                                    key={s.id}
-                                    onClick={() => setTelemetrySource(s.id as any)}
-                                    className={`flex-1 p-6 rounded-[32px] border-2 transition-all flex flex-col items-center gap-3 ${
-                                      telemetrySource === s.id ? `bg-${s.col}-600/10 border-${s.col}-500 text-${s.col}-400 shadow-xl` : 'bg-white/5 border-white/5 text-slate-700 hover:text-white'
-                                    }`}
-                                  >
-                                    <s.icon size={28} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest">{s.label}</span>
-                                  </button>
-                                ))}
-                             </div>
-                          </div>
-
+                       <div className="p-10 bg-blue-600/5 rounded-[44px] border border-blue-500/20 flex flex-col justify-center items-center text-center space-y-6 shadow-inner group-hover:border-blue-400 transition-all">
+                          <div className="w-20 h-20 bg-blue-600 rounded-[28px] flex items-center justify-center text-white shadow-2xl animate-pulse"><Monitor size={40} /></div>
+                          <p className="text-slate-400 text-sm italic font-medium">"Sync your physical node data to its digital twin in real-time."</p>
                           <button 
                             onClick={handleSyncTelemetry}
                             disabled={isSyncing}
-                            className={`px-16 py-10 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(0,0,0,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 disabled:opacity-50 border-4 border-white/10 ring-[16px] ring-white/5 ${
-                              activeShardType === 'physical' ? 'agro-gradient' : 'bg-indigo-700'
-                            }`}
+                            className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl flex items-center justify-center gap-4 transition-all active:scale-95 disabled:opacity-50"
                           >
-                             {isSyncing ? <Loader2 size={32} className="animate-spin" /> : <RefreshCw size={32} />}
-                             {isSyncing ? 'BUFFERING...' : 'SYNC TELEMETRY BRIDGE'}
+                             {isSyncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                             {isSyncing ? 'SYNCING_TELEMETRY...' : 'START SYNC SEQUENCE'}
                           </button>
                        </div>
                     </div>
+                    
+                    {isSyncing && (
+                      <div className="p-8 bg-black/90 rounded-[40px] border border-white/10 relative z-10 animate-in fade-in slide-in-from-top-2">
+                         <div className="flex justify-between items-center mb-4">
+                            <span className="text-[10px] font-mono text-blue-400 font-bold">L2_TUNNEL_ACTIVE // {syncProgress}%</span>
+                            <span className="text-[10px] text-slate-600 font-mono">0xSYNC_{Math.random().toString(16).slice(2,8).toUpperCase()}</span>
+                         </div>
+                         <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5">
+                            <div className="h-full bg-blue-500 rounded-full transition-all duration-300 shadow-[0_0_15px_#3b82f6]" style={{ width: `${syncProgress}%` }}></div>
+                         </div>
+                      </div>
+                    )}
                  </div>
-              </div>
 
-              <div className="lg:col-span-4 space-y-10">
-                 <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Monitor size={300} /></div>
-                    <div className="flex items-center gap-6 relative z-10">
-                       <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl"><Terminal size={32} className="text-white" /></div>
-                       <h4 className="text-2xl font-black text-white uppercase italic tracking-widest leading-none">Bridge <span className="text-indigo-400">Metrology</span></h4>
-                    </div>
-                    <div className="space-y-10 relative z-10">
+                 <div className="p-10 glass-card rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl">
+                    <h4 className="text-xl font-black text-white uppercase italic tracking-widest px-4 flex items-center gap-4">
+                       <History size={24} className="text-blue-400" /> Sync History
+                    </h4>
+                    <div className="space-y-4">
                        {[
-                         // Fixed missing icon reference for Leaf
-                         { l: 'NDVI Vegetation Index', v: '0.82', i: Leaf, c: 'text-emerald-400', p: 82 },
-                         { l: 'Biomass Density (Dn)', v: '14.2 t/ha', i: Binary, c: 'text-blue-400', p: 65 },
-                         { l: 'Evapotranspiration', v: '4.2 mm/d', i: Droplets, c: 'text-indigo-400', p: 48 },
-                       ].map(t => (
-                          <div key={t.l} className="p-8 bg-black/80 rounded-[40px] border border-white/5 group/met hover:border-white/20 transition-all shadow-inner">
-                             <div className="flex justify-between items-center mb-6">
-                                <div className="flex items-center gap-4">
-                                   <div className={`p-3 rounded-xl bg-white/5 ${t.c} shadow-inner group-hover/met:scale-110 transition-transform`}><t.i size={20} /></div>
-                                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover/met:text-slate-300 transition-colors">{t.l}</span>
-                                </div>
-                                <p className="text-3xl font-mono font-black text-white">{t.v}</p>
-                             </div>
-                             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div className={`h-full ${t.c.replace('text', 'bg')} shadow-[0_0_10px_currentColor] transition-all duration-[2s]`} style={{ width: `${t.p}%` }}></div>
-                             </div>
-                          </div>
+                         { id: 'S-882', time: '2h ago', source: 'SATELLITE', status: 'SUCCESS', vol: '14.2 MB' },
+                         { id: 'S-881', time: '5h ago', source: 'INGEST_P4', status: 'SUCCESS', vol: '2.8 MB' },
+                         { id: 'S-880', time: '1d ago', source: 'SATELLITE', status: 'SUCCESS', vol: '45.1 MB' },
+                       ].map(log => (
+                         <div key={log.id} className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-[32px] hover:bg-white/[0.05] transition-all group">
+                            <div className="flex items-center gap-6">
+                               <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 group-hover:text-blue-400 transition-colors shadow-inner"><Monitor size={20} /></div>
+                               <div>
+                                  <p className="text-sm font-black text-white uppercase italic leading-none">{log.source} Shard Sync</p>
+                                  <p className="text-[9px] text-slate-700 font-mono font-bold mt-2">{log.id} // {log.time}</p>
+                               </div>
+                            </div>
+                            <div className="text-right">
+                               <p className="text-sm font-mono font-black text-emerald-400">{log.vol}</p>
+                               <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Volume Synced</span>
+                            </div>
+                         </div>
                        ))}
                     </div>
                  </div>
+              </div>
 
-                 <div className="p-10 glass-card rounded-[56px] border border-amber-500/20 bg-amber-500/5 space-y-6 group shadow-xl">
-                    <div className="flex items-center gap-4">
-                       <Bot size={20} className="text-amber-500 animate-pulse" />
-                       <h4 className="text-[11px] font-black text-amber-500 uppercase tracking-widest italic">Satellite Overlay Info</h4>
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-950/10 flex flex-col items-center text-center space-y-10 shadow-3xl relative overflow-hidden group/oracle">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform duration-[12s]"><Bot size={300} className="text-indigo-400" /></div>
+                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 group-hover/oracle:rotate-12 transition-transform duration-700 relative z-10 animate-float">
+                       <Bot size={48} className="text-white" />
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed italic border-l-2 border-amber-500/30 pl-6 font-medium">
-                       "If physical local sensors are missing, EnvirosAgro OS auto-fills telemetry gaps via Sentinel/Landsat spectral shards to maintain Roadmap accuracy."
-                    </p>
+                    <div className="space-y-6 relative z-10">
+                       <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Bridge <span className="text-indigo-400">Oracle</span></h4>
+                       <p className="text-slate-400 text-lg leading-relaxed italic px-6 font-medium">
+                          "Network bridge resonance is peaking. Suggest immediate sync of Sector 4 telemetry to anchor regional C(a) gains."
+                       </p>
+                    </div>
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-indigo-500/20 w-full relative z-10 shadow-inner group-hover/oracle:border-indigo-400 transition-colors">
+                       <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-3">Sync Probability</p>
+                       <p className="text-5xl font-mono font-black text-indigo-400 tracking-tighter leading-none">99<span className="text-2xl italic font-sans text-indigo-700 ml-1">.8%</span></p>
+                    </div>
+                 </div>
+
+                 <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 space-y-6 shadow-xl group">
+                    <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                       <ShieldCheck className="w-6 h-6 text-emerald-400 group-hover:scale-110 transition-transform" />
+                       <h4 className="text-lg font-black text-white uppercase italic tracking-widest">Auth Shard</h4>
+                    </div>
+                    <div className="space-y-4">
+                       <p className="text-slate-500 text-xs italic leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
+                          "Telemetry sharding uses 256-bit ZK-Rollups to bridge physical field data with the OS kernel."
+                       </p>
+                       <div className="p-4 bg-white/5 border border-white/5 rounded-2xl font-mono text-[9px] text-slate-700 break-all select-all">
+                          SHA256: 0x882A_SYNC_4412_FINALITY_OK
+                       </div>
+                    </div>
                  </div>
               </div>
            </div>
         )}
 
-        {/* --- VIEW: MASTER PATH (ROADMAP) --- */}
+        {/* TAB: SHARD MANAGER */}
+        {activeTab === 'shards' && (
+          <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 px-4 md:px-0">
+             <div className="flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-10 px-6 gap-8">
+                <div className="space-y-3">
+                   <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">SHARD <span className="text-indigo-400">MANAGER</span></h3>
+                   <p className="text-slate-500 text-xl font-medium italic opacity-80">"Administering virtual twins and regional node shards."</p>
+                </div>
+                <button 
+                  onClick={() => onNavigate('registry_handshake')}
+                  className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center gap-4 hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border border-white/10"
+                >
+                   <Plus size={20} /> MINT NEW VIRTUAL SHARD
+                </button>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+                {landResources.map(land => (
+                   <div key={land.id} className={`glass-card p-12 rounded-[72px] border-2 transition-all flex flex-col justify-between shadow-3xl bg-black/40 relative overflow-hidden h-[620px] group ${selectedShardId === land.id ? 'border-emerald-500 ring-8 ring-emerald-500/5' : 'border-white/5 hover:border-white/20'}`} onClick={() => setSelectedShardId(land.id)}>
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Box size={300} className="text-emerald-400" /></div>
+                      
+                      <div className="flex justify-between items-start mb-12 relative z-10">
+                         <div className={`p-6 rounded-3xl bg-white/5 border border-white/10 text-emerald-400 shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all`}>
+                            <TreePine size={40} />
+                         </div>
+                         <div className="text-right flex flex-col items-end gap-3">
+                            <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-lg">PHYSICAL_SHARD</span>
+                            <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">{land.id}</p>
+                         </div>
+                      </div>
+
+                      <div className="flex-1 space-y-8 relative z-10">
+                         <div className="space-y-4">
+                            <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{land.name}</h4>
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest italic flex items-center gap-3">
+                               <MapIcon size={14} className="text-emerald-500" /> {land.verificationMeta.coordinates?.lat}, {land.verificationMeta.coordinates?.lng}
+                            </p>
+                         </div>
+                         
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="p-6 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group/val hover:border-emerald-500/20 transition-all">
+                               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center gap-2"><TargetIcon size={10} className="text-blue-400" /> C(a) Growth</p>
+                               <p className="text-3xl font-mono font-black text-white">1.84<span className="text-sm ml-1 text-emerald-400 italic">Δ</span></p>
+                            </div>
+                            <div className="p-6 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group/val hover:border-indigo-500/20 transition-all text-right">
+                               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center justify-end gap-2">m-Resonance <Activity size={10} className="text-indigo-400" /></p>
+                               <p className="text-3xl font-mono font-black text-white">1.42<span className="text-sm ml-1 text-indigo-500 italic">x</span></p>
+                            </div>
+                         </div>
+
+                         <div className="space-y-4 pt-4">
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500 px-2">
+                               <span>Shard Maturity</span>
+                               <span className="text-emerald-400 font-mono">92%</span>
+                            </div>
+                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                               <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_15px_#10b981]" style={{ width: '92%' }}></div>
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="mt-12 pt-10 border-t border-white/5 flex gap-4 relative z-10">
+                         <button className="flex-1 py-5 bg-white/5 border border-white/10 rounded-[32px] text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all shadow-md active:scale-95">Inspect Twin</button>
+                         <button className="flex-1 py-5 bg-indigo-600 hover:bg-indigo-500 rounded-[32px] text-[10px] font-black uppercase tracking-widest text-white shadow-3xl active:scale-95 transition-all">Manage Lifecycle</button>
+                      </div>
+                   </div>
+                ))}
+                
+                {/* Placeholder Shards */}
+                <div className="glass-card p-12 rounded-[72px] border-2 border-dashed border-white/10 bg-white/[0.01] flex flex-col items-center justify-center text-center space-y-8 opacity-40 group hover:opacity-100 hover:border-emerald-500/20 hover:bg-emerald-500/[0.01] transition-all cursor-pointer">
+                   <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform"><Plus size={40} className="text-white" /></div>
+                   <div className="space-y-3">
+                      <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">Mint Registry Shard</h4>
+                      <p className="text-slate-600 text-xs font-bold uppercase tracking-widest max-w-[200px] mx-auto leading-relaxed">
+                         Anchor a new physical or virtual node to the global industrial mesh.
+                      </p>
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
+
+        {/* TAB: SUPER-AGRO PATH (ROADMAP) */}
         {activeTab === 'roadmap' && (
-           <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-1000 px-6">
-              <div className="text-center space-y-6">
-                 <h3 className="text-6xl md:text-[100px] font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-3xl">MASTER <span className="text-emerald-400">PATH</span></h3>
-                 <p className="text-slate-500 text-3xl font-medium italic max-w-4xl mx-auto leading-relaxed">"The comprehensive trajectory towards Super-Agro sovereignty. Scale your agricultural capability."</p>
+           <div className="space-y-16 animate-in zoom-in duration-700 px-4 md:px-0 max-w-6xl mx-auto">
+              <div className="text-center space-y-6 mb-20">
+                 <h3 className="text-6xl md:text-[100px] font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)]">ROADMAP <span className="text-emerald-400">TO SUPER-AGRO</span></h3>
+                 <p className="text-slate-500 text-2xl font-medium italic max-w-3xl mx-auto leading-relaxed opacity-80">"Scaling your node from a seed to a sovereign planetary steward. Every milestone anchored in industrial logic."</p>
               </div>
 
-              <div className="relative pt-20 pb-40">
-                 <div className="absolute top-[280px] left-10 right-10 h-3 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-emerald-600 via-indigo-600 to-indigo-800 shadow-[0_0_50px_rgba(99,102,241,0.4)]" style={{ width: `${(currentTier.level/5)*100}%` }}></div>
-                 </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-5 gap-12 relative z-10">
-                    {PROGRESSION_TIERS.map((tier) => {
-                       const isReached = currentTier.level >= tier.level;
-                       const isCurrent = currentTier.level === tier.level;
-                       return (
-                          <div key={tier.level} className={`flex flex-col items-center gap-12 group transition-all duration-700 ${isReached ? 'opacity-100' : 'opacity-20 grayscale'}`}>
-                             <div className={`w-40 h-40 rounded-[56px] border-4 flex items-center justify-center shadow-3xl relative transition-all duration-700 ${
-                                isCurrent ? 'bg-indigo-600 border-white scale-125 z-20 ring-[24px] ring-white/5 rotate-6' : 
-                                isReached ? 'bg-black/80 border-emerald-500/40' : 'bg-black/20 border-white/5'
-                             }`}>
-                                <tier.icon className={`w-16 h-16 transition-all duration-700 ${isCurrent ? 'text-white scale-110' : isReached ? tier.col : 'text-slate-800'}`} />
-                                {isCurrent && <div className="absolute inset-0 border-2 border-dashed border-white/40 rounded-[56px] animate-spin-slow"></div>}
-                             </div>
-
-                             <div className={`text-center space-y-4 transition-all duration-700 ${isCurrent ? 'scale-110 -translate-y-4' : ''}`}>
-                                <p className={`text-[10px] font-black uppercase tracking-[0.6em] ${tier.col}`}>LVL_{tier.level}</p>
-                                <h5 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">{tier.title}</h5>
-                                <div className="space-y-2 pt-4">
-                                   <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col gap-1 items-center">
-                                      <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest leading-none">Goal Shard</p>
-                                      <p className="text-[11px] text-slate-300 font-bold uppercase italic tracking-tight">{tier.req}</p>
-                                   </div>
-                                   <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col gap-1 items-center">
-                                      <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest leading-none">Access Level</p>
-                                      <p className="text-[11px] text-slate-300 font-bold uppercase italic tracking-tight">{tier.access}</p>
-                                   </div>
-                                </div>
-                             </div>
-                          </div>
-                       );
-                    })}
-                 </div>
+              <div className="relative space-y-12">
+                 {/* Progress Line */}
+                 <div className="absolute left-[50px] top-10 bottom-10 w-[3px] bg-gradient-to-b from-emerald-500 via-blue-500 to-indigo-600 opacity-20 hidden md:block"></div>
+                 
+                 {PROGRESSION_TIERS.map((tier, i) => {
+                    const isCompleted = currentTier.level >= tier.level;
+                    const isNext = currentTier.level + 1 === tier.level;
+                    return (
+                      <div key={tier.level} className={`flex gap-12 group relative z-10 transition-all duration-700 ${isCompleted ? 'opacity-100' : isNext ? 'opacity-90' : 'opacity-30 grayscale'}`}>
+                         <div className={`w-24 h-24 rounded-[36px] flex items-center justify-center shrink-0 border-4 transition-all duration-700 shadow-3xl relative overflow-hidden group-hover:scale-110 group-hover:rotate-6 ${isCompleted ? `${tier.bg} border-emerald-500/40 text-emerald-400` : isNext ? 'bg-black border-white/20 text-slate-700 animate-pulse' : 'bg-black border-white/5 text-slate-800'}`}>
+                            {isCompleted && <div className="absolute inset-0 bg-white/5 animate-pulse"></div>}
+                            <tier.icon size={48} className="relative z-10" />
+                            {isCompleted && <CheckCircle2 size={24} className="absolute -top-1 -right-1 text-emerald-400 shadow-lg bg-black rounded-full" />}
+                         </div>
+                         
+                         <div className={`flex-1 glass-card p-10 rounded-[56px] border-2 transition-all duration-700 group-hover:border-white/20 shadow-3xl flex flex-col md:flex-row justify-between items-center gap-10 bg-black/40 ${isNext ? 'border-blue-500/40' : 'border-white/5'}`}>
+                            <div className="space-y-4 flex-1 text-center md:text-left">
+                               <div className="flex flex-wrap justify-center md:justify-start gap-4 items-center">
+                                  <span className={`text-[11px] font-black uppercase tracking-[0.4em] ${isCompleted ? 'text-emerald-400' : 'text-slate-600'}`}>MILESTONE_0{tier.level}</span>
+                                  <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">{tier.title}</h4>
+                               </div>
+                               <p className="text-slate-400 text-lg italic leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">"{tier.req}. Access to: <span className="text-white font-bold">{tier.access}</span>"</p>
+                            </div>
+                            <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
+                               {isCompleted ? (
+                                  <span className="px-5 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-xl">TIER_ANCHORED</span>
+                               ) : isNext ? (
+                                  <button onClick={() => onNavigate('registry_handshake')} className="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-[32px] text-white font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all active:scale-95 ring-4 ring-white/5">COMPLETE REQUIREMENT</button>
+                               ) : (
+                                  <span className="px-5 py-2 bg-white/5 text-slate-800 text-[10px] font-black uppercase rounded-full border border-white/5 tracking-widest">LOCKED_BY_CONSENSUS</span>
+                               )}
+                               <p className="text-[10px] text-slate-800 font-mono font-black italic mt-2 uppercase tracking-tighter">REQ_IDX_0x{(tier.level * 882).toString(16).toUpperCase()}</p>
+                            </div>
+                         </div>
+                      </div>
+                    );
+                 })}
               </div>
 
-              <div className="p-16 glass-card rounded-[80px] border-emerald-500/20 bg-emerald-600/5 flex flex-col md:flex-row items-center justify-between gap-12 shadow-3xl mx-6 relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[15s] pointer-events-none"><Crown size={500} className="text-emerald-400" /></div>
+              <div className="p-16 glass-card rounded-[80px] border-emerald-500/20 bg-emerald-600/5 flex flex-col md:flex-row items-center justify-between gap-16 relative overflow-hidden shadow-3xl group/final">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover/final:rotate-12 transition-transform duration-[12s]"><Crown size={600} className="text-emerald-400" /></div>
                  <div className="flex items-center gap-12 relative z-10 text-center md:text-left flex-col md:flex-row">
-                    <div className="w-32 h-32 bg-emerald-600 rounded-[44px] flex items-center justify-center shadow-3xl animate-pulse ring-[16px] ring-white/5 shrink-0 border-4 border-white/20">
-                       <Lightbulb className="w-16 h-16 text-white" />
+                    <div className="w-32 h-32 bg-emerald-600 rounded-[40px] flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] animate-pulse border-4 border-white/10 shrink-0">
+                       <ShieldCheck size={56} className="text-white" />
                     </div>
                     <div className="space-y-4">
-                       <h4 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Path to Harvest</h4>
-                       <p className="text-slate-300 text-2xl font-medium italic leading-relaxed max-w-2xl opacity-80">
-                         "High wind detected via Satellite Telemetry; suggest strengthening windbreak shards in Physical Shard #882 to protect Carbon Mining yields."
+                       <h4 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Registry Sovereignty</h4>
+                       <p className="text-slate-400 text-xl font-medium italic max-w-xl mx-auto md:mx-0 opacity-80 leading-relaxed">
+                          "Achieving Super-Agro status authorizes your node as a network validator and primary DAO governor. Secure the grid, secure the future."
                        </p>
                     </div>
                  </div>
-                 <div className="text-center md:text-right relative z-10 shrink-0 border-l border-white/10 pl-16">
-                    <p className="text-[11px] text-slate-600 font-black uppercase mb-4 tracking-[0.5em] italic">Yield Multiplier</p>
-                    <p className="text-8xl font-mono font-black text-emerald-400 tracking-tighter">1.42<span className="text-3xl italic">x</span></p>
+                 <div className="text-center md:text-right relative z-10 shrink-0">
+                    <p className="text-[11px] text-slate-600 font-black uppercase mb-4 tracking-[0.5em] italic border-b border-white/10 pb-4">Global_Finality_Index</p>
+                    <p className="text-7xl font-mono font-black text-white tracking-tighter leading-none">100<span className="text-3xl text-emerald-500 ml-1">%</span></p>
                  </div>
               </div>
            </div>
         )}
 
-        {/* --- VIEW: EXTRACTION NODE (MINING) --- */}
+        {/* TAB: EXTRACTION NODE (MINING) */}
         {activeTab === 'mining' && (
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-10 duration-700 px-6">
-              <div className="lg:col-span-4 space-y-8">
-                 <div className="glass-card p-12 rounded-[72px] border border-amber-500/20 bg-amber-500/[0.02] space-y-12 shadow-3xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[15s]"><Zap size={300} className="text-amber-400" /></div>
-                    
-                    <div className="flex items-center gap-8 relative z-10 border-b border-white/5 pb-10">
-                       <div className="w-20 h-20 bg-amber-600 rounded-[32px] flex items-center justify-center text-white shadow-3xl group-hover:scale-110 transition-transform duration-700">
-                          <History size={40} className="fill-current" />
-                       </div>
-                       <div>
-                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Extraction <span className="text-amber-500">Node</span></h3>
-                          <p className="text-[11px] text-amber-500/60 font-mono tracking-widest uppercase mt-3">SHARD_YIELD_MINTING_v4</p>
-                       </div>
+           <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-bottom-6 duration-1000 px-4 md:px-0">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                 <div className="glass-card p-12 rounded-[64px] border-2 border-emerald-500/20 bg-emerald-950/5 flex flex-col justify-center items-center text-center space-y-12 relative overflow-hidden shadow-3xl group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><Zap size={400} className="text-emerald-400" /></div>
+                    <div className="w-32 h-32 bg-emerald-600 rounded-[44px] flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] border-4 border-white/10 relative z-10 animate-float">
+                       <Zap size={64} className="text-white" fill="currentColor" />
+                    </div>
+                    <div className="space-y-6 relative z-10">
+                       <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Extraction <span className="text-emerald-400">Node</span></h3>
+                       <p className="text-slate-400 text-xl font-medium italic max-md:text-sm max-w-md mx-auto leading-relaxed">"Mining network credits through verified carbon sequestration and community interaction resonance."</p>
                     </div>
 
-                    <div className="space-y-10 relative z-10">
-                       <div className="space-y-6">
-                          <div className="flex justify-between items-center px-4">
-                             <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Mining Protocol</label>
-                             <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border tracking-widest ${miningType === 'carbon' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
-                                {miningType === 'carbon' ? 'CARBON_PROOF' : 'KNOWLEDGE_PROOF'}
-                             </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                             {[
-                               { id: 'reaction', label: 'Reaction Mining', icon: Users, col: 'blue' },
-                               { id: 'carbon', label: 'Carbon Mining', icon: Wind, col: 'emerald' },
-                             ].map(m => (
-                               <button 
-                                 key={m.id}
-                                 onClick={() => {
-                                   if (m.id === 'carbon' && !hasPhysicalLand) {
-                                     notify('error', 'RESTRICTED', "Carbon Mining requires a Verified Physical Shard.");
-                                     return;
-                                   }
-                                   setMiningType(m.id as any);
-                                 }}
-                                 className={`p-6 rounded-[32px] border-2 transition-all flex flex-col items-center gap-3 text-center group ${miningType === m.id ? `bg-${m.col}-600/10 border-${m.col}-500 text-${m.col}-400 shadow-xl` : 'bg-black/60 border-white/10 text-slate-500 hover:text-white'}`}
-                               >
-                                  <m.icon size={28} />
-                                  <span className="text-[9px] font-black uppercase tracking-widest leading-none">{m.label}</span>
-                               </button>
-                             ))}
-                          </div>
-                       </div>
-
-                       <div className="p-10 bg-black/80 rounded-[48px] border border-white/5 space-y-3 text-center shadow-inner relative overflow-hidden">
-                          <p className="text-[11px] text-slate-500 font-black uppercase tracking-[0.4em] italic">EXTRACTABLE_CREDIT</p>
-                          <p className={`text-8xl font-mono font-black tracking-tighter drop-shadow-2xl italic leading-none ${miningType === 'carbon' ? 'text-emerald-400' : 'text-blue-400'}`}>
-                             {Math.floor((miningType === 'reaction' ? 85 : 12.4 * 10) * user.metrics.timeConstantTau)}
-                             <span className="text-2xl ml-2 font-sans opacity-20">EAC</span>
-                          </p>
-                       </div>
-
+                    <div className="grid grid-cols-2 gap-6 w-full max-w-md relative z-10">
                        <button 
-                        onClick={() => handleStartMining(miningType)}
-                        disabled={isMining}
-                        className={`w-full py-10 rounded-[44px] text-white font-black text-base uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(0,0,0,0.4)] transition-all flex items-center justify-center gap-8 active:scale-95 disabled:opacity-30 border-4 border-white/10 ring-[16px] ring-white/5 ${
-                          miningType === 'carbon' ? 'agro-gradient shadow-emerald-900/30' : 'bg-indigo-700 shadow-indigo-900/30'
-                        }`}
+                         onClick={() => handleStartMining('reaction')}
+                         disabled={isMining}
+                         className="p-8 rounded-[44px] border-2 border-indigo-500/30 bg-indigo-950/20 flex flex-col items-center gap-6 group/btn hover:border-indigo-400 transition-all shadow-xl active:scale-95 disabled:opacity-30"
                        >
-                          {isMining ? <Loader2 size={32} className="animate-spin" /> : <Stamp size={32} className="fill-current" />}
-                          {isMining ? 'EXTRACTING SHARDS...' : 'INITIALIZE MINING'}
+                          <History size={32} className="text-indigo-400 group-hover/btn:rotate-180 transition-transform duration-700" />
+                          <div className="space-y-1">
+                             <p className="text-[11px] font-black text-white uppercase italic tracking-widest leading-none">Reaction Mining</p>
+                             <p className="text-[8px] text-slate-500 font-bold uppercase tracking-tight">Yield from Vouches</p>
+                          </div>
+                       </button>
+                       <button 
+                         onClick={() => handleStartMining('carbon')}
+                         disabled={isMining || !hasPhysicalLand}
+                         className={`p-8 rounded-[44px] border-2 flex flex-col items-center gap-6 group/btn transition-all shadow-xl active:scale-95 disabled:opacity-30 ${hasPhysicalLand ? 'border-emerald-500/30 bg-emerald-950/20 hover:border-emerald-400' : 'border-white/5 bg-black grayscale opacity-20'}`}
+                       >
+                          <Wind size={32} className="text-emerald-400 group-hover/btn:scale-110 transition-transform" />
+                          <div className="space-y-1">
+                             <p className="text-[11px] font-black text-white uppercase italic tracking-widest leading-none">Carbon Mining</p>
+                             <p className="text-[8px] text-slate-500 font-bold uppercase tracking-tight">Yield from Biomass</p>
+                          </div>
                        </button>
                     </div>
                  </div>
-              </div>
 
-              <div className="lg:col-span-8 flex flex-col space-y-10">
-                 {/* Live Vouch / Evidence Feed */}
-                 <div className="glass-card rounded-[80px] flex-1 border border-white/5 bg-black/40 flex flex-col relative overflow-hidden shadow-3xl group/ledger">
-                    <div className="absolute inset-0 pointer-events-none opacity-5 group-hover/ledger:opacity-10 transition-opacity">
-                      <div className="w-full h-[1px] bg-amber-500 absolute top-0 animate-scan"></div>
-                    </div>
-                    
-                    <div className="p-12 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20">
-                       <div className="flex items-center gap-8">
-                          <div className="w-16 h-16 bg-amber-600 rounded-3xl flex items-center justify-center text-white shadow-3xl">
-                             <Signal size={32} className="animate-pulse" />
-                          </div>
-                          <div>
-                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Extraction <span className="text-amber-500">Ledger</span></h4>
-                             <p className="text-amber-500/60 text-[10px] font-mono tracking-widest uppercase mt-3">REAL_TIME_SIGNAL_SYNC_#882A</p>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="flex-1 p-12 overflow-y-auto custom-scrollbar-terminal space-y-8 bg-[#050706]">
+                 <div className="flex flex-col gap-8">
+                    <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 flex-1 flex flex-col justify-center relative overflow-hidden shadow-2xl group/inf">
+                       <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none group-hover/inf:bg-indigo-500/[0.02] transition-colors"></div>
+                       
                        {isMining ? (
-                          <div className="h-full flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
+                          <div className="flex flex-col items-center justify-center space-y-10 py-20 text-center animate-in zoom-in duration-500">
                              <div className="relative">
-                                <Loader2 size={120} className="text-amber-500 animate-spin mx-auto" />
+                                <Loader2 className="w-24 h-24 text-emerald-500 animate-spin mx-auto" />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                   {/* Fixed missing icon reference for Database */}
-                                   <Database size={40} className="text-amber-400 animate-pulse" />
+                                   <BinaryIcon size={32} className="text-emerald-400 animate-pulse" />
                                 </div>
                              </div>
-                             <p className="text-amber-400 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic m-0 drop-shadow-2xl">MINTING REGISTRY SHARDS...</p>
+                             <div className="space-y-4">
+                                <p className="text-emerald-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic m-0">MINING_VALUE_SHARD...</p>
+                                <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">ORACLE_CONSENSUS_INGEST // {miningType.toUpperCase()}_LAYER</p>
+                             </div>
                           </div>
                        ) : miningInference ? (
-                          <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10">
-                             <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-amber-500/20 prose prose-invert prose-amber max-w-none shadow-3xl border-l-[16px] border-l-amber-600 relative overflow-hidden group/shard text-left">
-                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/shard:scale-110 transition-transform duration-[12s] pointer-events-none"><Sparkles size={600} className="text-amber-400" /></div>
-                                
-                                <div className="flex justify-between items-center mb-16 relative z-10 border-b border-white/5 pb-10">
-                                   <div className="flex items-center gap-8">
-                                      <Bot className="w-14 h-14 text-amber-400 animate-pulse" />
-                                      <div>
-                                         <h4 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Inference Shard</h4>
-                                         <p className="text-amber-400/60 text-[10px] font-black uppercase tracking-[0.4em] mt-4">MINING_ORACLE_REPORT_v4</p>
+                          <div className="animate-in slide-in-from-right-6 duration-700 space-y-10">
+                             <div className="p-10 bg-black/60 rounded-[48px] border border-emerald-500/20 shadow-inner border-l-8 border-l-emerald-500 relative overflow-hidden group/bubble">
+                                <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/bubble:scale-125 transition-transform duration-[12s]"><Sparkles size={250} className="text-emerald-400" /></div>
+                                <div className="flex items-center gap-5 mb-8 border-b border-white/5 pb-6">
+                                   <Bot size={32} className="text-emerald-400" />
+                                   <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Extraction Report</h4>
+                                </div>
+                                <div className="space-y-8 relative z-10">
+                                   <div>
+                                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-3 italic">Oracle Inference Shard</p>
+                                      <p className="text-slate-300 text-xl leading-loose italic font-medium">"{miningInference.sentiment_shard || miningInference.remediation_advice}"</p>
+                                   </div>
+                                   <div className="grid grid-cols-2 gap-6">
+                                      <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
+                                         <p className="text-[9px] text-slate-600 font-black uppercase mb-1">Resonance Index</p>
+                                         <p className="text-3xl font-mono font-black text-white">{miningInference.resonance_index || '1.42'}Ω</p>
                                       </div>
-                                   </div>
-                                   <div className="text-right">
-                                      <p className="text-[11px] text-slate-500 font-black uppercase tracking-widest">Resonance Accuracy</p>
-                                      <p className="text-4xl font-mono font-black text-emerald-400">99.8%</p>
-                                   </div>
-                                </div>
-
-                                <div className="text-slate-300 text-3xl leading-[2.1] italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">
-                                   {miningInference.sentiment_shard}
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16 relative z-10">
-                                   <div className="p-10 bg-black/60 rounded-[48px] border border-white/5 space-y-3 shadow-inner group/met hover:border-amber-500/20 transition-all">
-                                      <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest flex items-center gap-3">
-                                         <Target size={14} className="text-amber-500" /> Resonance Index
-                                      </p>
-                                      <p className="text-5xl font-mono font-black text-white tracking-tighter">{miningInference.resonance_index.toFixed(2)}<span className="text-xl italic text-amber-500 ml-1">x</span></p>
-                                   </div>
-                                   <div className="p-10 bg-black/60 rounded-[48px] border border-white/5 space-y-3 shadow-inner text-right group/met hover:border-emerald-500/20 transition-all">
-                                      <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest flex items-center justify-end gap-3">
-                                         Extraction Efficiency <Binary size={14} className="text-emerald-400" />
-                                      </p>
-                                      <p className="text-5xl font-mono font-black text-white tracking-tighter">{(miningInference.extraction_efficiency * 100).toFixed(0)}<span className="text-xl italic text-emerald-400 ml-1">%</span></p>
+                                      <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
+                                         <p className="text-[9px] text-slate-600 font-black uppercase mb-1">Efficiency Delta</p>
+                                         <p className="text-3xl font-mono font-black text-emerald-400">+{miningInference.extraction_efficiency || '24'}%</p>
+                                      </div>
                                    </div>
                                 </div>
                              </div>
-
-                             <div className="flex justify-center gap-10">
-                                <button onClick={() => setMiningInference(null)} className="px-16 py-8 bg-white/5 border border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
-                                <button className="px-24 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-2 border-white/10 ring-[16px] ring-white/5">
-                                   <Stamp size={32} /> ANCHOR MINT TO REGISTRY
-                                </button>
+                             <div className="flex justify-center">
+                                <button onClick={() => setMiningInference(null)} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border-2 border-white/10">ANCHOR MINED YIELD</button>
                              </div>
                           </div>
                        ) : (
-                         <div className="py-20 flex flex-col items-center justify-center text-center space-y-12 opacity-30 group animate-in zoom-in">
-                            <BinaryIcon size={120} className="text-slate-600 group-hover:text-emerald-500 transition-colors duration-1000" />
-                            <div className="space-y-4">
-                               <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic">NODE_STANDBY</p>
-                               <p className="text-lg font-bold text-slate-700 uppercase tracking-[0.4em]">Awaiting Inflow Sequence Confirmation</p>
-                            </div>
-                         </div>
+                          <div className="h-full flex flex-col items-center justify-center text-center space-y-12 py-20 opacity-20 group">
+                             <div className="relative">
+                                <Pickaxe size={140} className="text-slate-600 group-hover:text-emerald-400 transition-colors duration-1000" />
+                                <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
+                             </div>
+                             <div className="space-y-4">
+                                <p className="text-4xl font-black uppercase tracking-[0.6em] text-white italic">EXTRACTOR_STANDBY</p>
+                                <p className="text-lg font-bold italic text-slate-700 uppercase tracking-widest">Select an extraction layer to begin sharding</p>
+                             </div>
+                          </div>
                        )}
                     </div>
                  </div>
               </div>
+
+              {/* Yield History Chart - Enhanced Section */}
+              <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 shadow-3xl space-y-8">
+                 <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                    <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl"><TrendingUp size={28} className="text-white" /></div>
+                    <div>
+                       <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Historical <span className="text-emerald-400">Yield Analytics</span></h4>
+                       <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-3">REGISTRY_EXTRACTION_LOGS_V5</p>
+                    </div>
+                 </div>
+                 <div className="h-[400px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <AreaChart data={MOCK_HISTORICAL_YIELD}>
+                          <defs>
+                             <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                             </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="cycle" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                          <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
+                          <Area type="monotone" name="Extraction Yield" dataKey="yield" stroke="#10b981" strokeWidth={6} fillOpacity={1} fill="url(#colorYield)" strokeLinecap="round" />
+                          <Area type="monotone" name="Resonance" dataKey="resonance" stroke="#3b82f6" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
+                       </AreaChart>
+                    </ResponsiveContainer>
+                 </div>
+              </div>
            </div>
         )}
 
-        {/* --- VIEW: SHARD TERMINAL --- */}
-        {activeTab === 'shards' && (
-           <div className="py-40 text-center opacity-20 flex flex-col items-center gap-12 group animate-in zoom-in duration-500">
-              <div className="relative">
-                 <BoxesIcon size={140} className="text-slate-600 group-hover:text-emerald-500 transition-colors duration-1000" />
-                 <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
-              </div>
-              <div className="space-y-4">
-                 <p className="text-5xl font-black uppercase tracking-[0.8em] text-white italic leading-none">SHARD_TERMINAL</p>
-                 <p className="text-2xl font-bold italic text-slate-700 uppercase tracking-[0.4em]">Managing {activeShardType === 'physical' ? landResources.length : 1} active agricultural shards</p>
-              </div>
-              <button onClick={() => onNavigate('registry_handshake')} className="px-16 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 transition-all">Initialize New Physical Handshake</button>
-           </div>
-        )}
       </div>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.4); border-radius: 10px; }
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
+        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        @keyframes scan { 0% { top: -100%; } 100% { top: 100%; } }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   BarChart4, 
@@ -61,8 +62,14 @@ import {
   Radar,
   ArrowUpRight,
   ShieldPlus,
-  // Fix: Added Factory to imports to resolve Cannot find name 'Factory' error
-  Factory
+  Factory,
+  Terminal,
+  BrainCircuit,
+  BarChart3,
+  Waves,
+  FlaskConical,
+  Atom,
+  ChevronDown
 } from 'lucide-react';
 import { 
   LineChart as RechartsLineChart, 
@@ -74,17 +81,23 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Area,
-  AreaChart
+  AreaChart,
+  BarChart,
+  Bar,
+  Cell,
+  PieChart,
+  Pie
 } from 'recharts';
 import { chatWithAgroExpert } from '../services/geminiService';
 
 interface ToolsSectionProps {
-  user?: any; 
+  user: any; 
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC?: (amount: number, reason: string) => void;
   onOpenEvidence: (task: any) => void;
-  pendingAction?: string | null;
-  clearAction?: () => void;
+  tasks: any[];
+  onSaveTask: (task: any) => void;
+  notify: any;
 }
 
 const TASK_INGEST_FEE = 10;
@@ -96,7 +109,13 @@ const CONTROL_CHART_DATA = [
   { batch: 'B10', val: 61, error: 1 }, { batch: 'B11', val: 62, error: 1 }, { batch: 'B12', val: 63, error: 1 },
 ];
 
-// Fix: Explicitly typing KANBAN_STAGES to ensure 'stage' properties are correctly inferred as strings in line 370
+const KPI_DISTRIBUTION = [
+  { name: 'Sequestration', value: 45, color: '#10b981' },
+  { name: 'Yield Efficiency', value: 30, color: '#3b82f6' },
+  { name: 'Social Resonance', value: 15, color: '#818cf8' },
+  { name: 'Tech Uptime', value: 10, color: '#f59e0b' },
+];
+
 interface KanbanStage {
   id: string;
   label: string;
@@ -111,13 +130,6 @@ const KANBAN_STAGES: KanbanStage[] = [
   { id: 'Quality_Audit', label: 'TQM VERIFICATION', color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
 ];
 
-const INITIAL_KANBAN = [
-  { id: 'T-842', title: 'Substrate DNA Sequence', status: 'Inception', thrust: 'Environmental', owner: 'Node_P4', priority: 'High', seq: 1, weight: '1.2 TB', confidence: 98.4 },
-  { id: 'T-104', title: 'Spectral Drone Calibration', status: 'Processing', thrust: 'Technological', owner: 'Stwd_Nairobi', priority: 'Medium', seq: 2, weight: '0.8 TB', confidence: 94.1 },
-  { id: 'T-042', title: 'Yield Shard Finality', status: 'Quality_Audit', thrust: 'Industry', owner: 'Global_Alpha', priority: 'Low', seq: 3, weight: '4.5 TB', confidence: 100 },
-  { id: 'T-991', title: 'Carbon Minting Vouch', status: 'Inception', thrust: 'Industry', owner: 'Node_NY_01', priority: 'High', seq: 1, weight: '2.1 TB', confidence: 99.2 },
-];
-
 const INDUSTRIAL_ASSETS = [
   { id: 'AST-Drone-01', name: 'SkyScout Spectral Drone', type: 'Aerial Machinery', health: 94, stability: 1.42, lastAudit: '2d ago', status: 'ACTIVE', col: 'text-blue-400' },
   { id: 'AST-Rover-42', name: 'TerraForge Soil Rover', type: 'Ground Unit', health: 62, stability: 0.85, lastAudit: '5h ago', status: 'MAINTENANCE', col: 'text-amber-500' },
@@ -125,9 +137,8 @@ const INDUSTRIAL_ASSETS = [
   { id: 'AST-Pump-12', name: 'HydraFlow Ingester', type: 'Liquid Logistics', health: 88, stability: 1.15, lastAudit: '1w ago', status: 'STANDBY', col: 'text-indigo-400' },
 ];
 
-const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC, onOpenEvidence, pendingAction, clearAction }) => {
+const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC, onOpenEvidence, tasks = [], onSaveTask, notify }) => {
   const [activeTool, setActiveTool] = useState<'kanban' | 'resources' | 'sigma' | 'kpis'>('kanban');
-  const [kanbanData, setKanbanData] = useState(INITIAL_KANBAN);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [sigmaInput, setSigmaInput] = useState('');
   const [sigmaAdvice, setSigmaAdvice] = useState<string | null>(null);
@@ -143,13 +154,6 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
   const [defects, setDefects] = useState(3);
   const [opportunities, setOpportunities] = useState(1000);
 
-  useEffect(() => {
-    if (pendingAction === 'OPEN_TASKS') {
-      setActiveTool('kanban');
-      clearAction?.();
-    }
-  }, [pendingAction, clearAction]);
-  
   const sigmaLevel = useMemo(() => {
     const dpmo = (defects / opportunities) * 1000000;
     if (dpmo <= 3.4) return 6.0;
@@ -202,7 +206,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
         confidence: 0
       };
       
-      setKanbanData([newShard, ...kanbanData]);
+      onSaveTask(newShard);
       setIsMinting(false);
       setInitStep('success');
       onEarnEAC?.(5, 'NEW_TASK_SHARD_COMMITTED');
@@ -210,7 +214,10 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
   };
 
   const moveTask = (taskId: string, newStatus: string) => {
-    setKanbanData(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus, confidence: Math.min(100, (t.confidence || 0) + 15) } : t));
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    const updated = { ...task, status: newStatus, confidence: Math.min(100, (task.confidence || 0) + 15) };
+    onSaveTask(updated);
     onEarnEAC?.(2, `TASK_SEQUENCE_PROMOTION_${taskId}`);
   };
 
@@ -223,13 +230,10 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
-      
-      {/* Background Decor */}
       <div className="absolute top-0 right-0 p-40 opacity-[0.01] pointer-events-none rotate-12">
         <Workflow size={1000} className="text-indigo-500" />
       </div>
 
-      {/* 1. Industrial Hub Navigation */}
       <div className="flex flex-col lg:flex-row justify-between items-center gap-10 relative z-10">
         <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-2xl px-6">
           {[
@@ -249,7 +253,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
         </div>
         
         <div className="flex items-center gap-6">
-           <div className="px-6 py-3 glass-card rounded-full border border-emerald-500/20 flex items-center gap-3">
+           <div className="px-6 py-3 glass-card rounded-full border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
               <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">INDUSTRIAL_MESH_ACTIVE</span>
            </div>
@@ -263,11 +267,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
         </div>
       </div>
 
-      {/* 2. Main Viewport */}
       <div className="min-h-[850px] relative z-10">
-        
-        {/* --- VIEW: LEDGER KANBAN --- */}
-        {/* Fix: Replaced undefined activeTab with activeTool to resolve Cannot find name 'activeTab' error */}
         {activeTool === 'kanban' && (
           <div className="space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -280,14 +280,13 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                               <h4 className={`text-[13px] font-black uppercase tracking-[0.5em] italic ${stage.color}`}>{stage.label}</h4>
                            </div>
                            <span className="px-4 py-1.5 bg-black/60 border border-white/5 rounded-full text-[10px] font-mono text-slate-500 font-black shadow-inner">
-                              {kanbanData.filter(t => t.status === stage.id).length} SHARDS
+                              {tasks.filter(t => t.status === stage.id).length} SHARDS
                            </span>
                         </div>
 
                         <div className="space-y-8 flex-1">
-                           {kanbanData.filter(t => t.status === stage.id).map(task => (
+                           {tasks.filter(t => t.status === stage.id).map(task => (
                               <div key={task.id} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/80 hover:border-indigo-500/40 transition-all group/task cursor-pointer active:scale-[0.98] shadow-3xl relative overflow-hidden border-l-[12px] border-l-indigo-600">
-                                 {/* Scanline FX on card */}
                                  <div className="absolute inset-0 opacity-[0.02] pointer-events-none"><div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/20 to-transparent absolute top-0 animate-scan"></div></div>
 
                                  <div className="flex justify-between items-start mb-8 relative z-10">
@@ -295,7 +294,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                                     <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-lg ${
                                        task.priority === 'High' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20 animate-pulse' : 
                                        task.priority === 'Medium' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
-                                       'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                       'bg-blue-500/10 text-blue-400 border-blue-500/20'
                                     }`}>
                                        {task.priority} Priority
                                     </div>
@@ -317,7 +316,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                                  <div className="flex justify-between items-center pt-8 border-t border-white/5 relative z-10">
                                     <div className="flex items-center gap-3">
                                        <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-[11px] font-black text-emerald-400 border border-white/10">
-                                          {task.owner[0]}
+                                          {task.owner ? task.owner[0] : 'U'}
                                        </div>
                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{task.owner}</span>
                                     </div>
@@ -354,11 +353,9 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
           </div>
         )}
 
-        {/* --- VIEW: RESOURCE SHARDING --- */}
-        {/* Fix: Replaced undefined activeTab with activeTool to resolve Cannot find name 'activeTab' error */}
         {activeTool === 'resources' && (
           <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
-             <div className="flex flex-col md:flex-row justify-between items-end gap-8 border-b border-white/5 pb-12 px-6">
+             <div className="flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-12 px-6 gap-8">
                 <div className="space-y-3">
                    <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">HARDWARE <span className="text-blue-400">REGISTRY</span></h3>
                    <p className="text-slate-500 text-xl font-medium italic">"Managing physical industrial assets as sharded ledger entries."</p>
@@ -366,9 +363,6 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                 <div className="flex gap-4">
                   <button className="px-12 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-3 transition-all shadow-xl">
                     <History size={18} /> Maintenance Logs
-                  </button>
-                  <button className="px-14 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-widest shadow-[0_0_50px_rgba(16,185,129,0.3)] flex items-center gap-4 active:scale-95 transition-all ring-8 ring-white/5">
-                    <RefreshCw size={20} /> SYNC ALL NODES
                   </button>
                 </div>
              </div>
@@ -406,21 +400,6 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                                <p className="text-2xl font-mono font-black text-indigo-400">{asset.stability}x</p>
                             </div>
                          </div>
-
-                         <div className="pt-6 space-y-3">
-                            <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500 tracking-widest px-2">
-                               <span>Last Diagnostic</span>
-                               <span className="text-white">{asset.lastAudit}</span>
-                            </div>
-                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
-                               <div className={`h-full rounded-full transition-all duration-[2s] ${asset.health > 80 ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-rose-500 shadow-[0_0_10px_#f43f5e]'}`} style={{ width: `${asset.health}%` }}></div>
-                            </div>
-                         </div>
-                      </div>
-
-                      <div className="mt-10 pt-8 border-t border-white/5 flex gap-4 relative z-10">
-                         <button className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase text-slate-400 hover:text-white transition-all shadow-md">Audit Shard</button>
-                         <button className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl text-[9px] font-black uppercase text-white shadow-xl active:scale-95 transition-all">Provision</button>
                       </div>
                    </div>
                 ))}
@@ -428,8 +407,6 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
           </div>
         )}
 
-        {/* --- VIEW: PRECISION AUDIT (SIGMA) --- */}
-        {/* Fix: Replaced undefined activeTab with activeTool to resolve Cannot find name 'activeTab' error */}
         {activeTool === 'sigma' && (
           <div className="space-y-12 animate-in zoom-in duration-500">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 px-4">
@@ -447,10 +424,6 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                             <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-4 italic">EOS_SIX_SIGMA_MONITOR_v4.2</p>
                          </div>
                       </div>
-                      <div className="text-right">
-                         <p className="text-[11px] text-slate-600 font-black uppercase mb-2">Aggregate Defect Density</p>
-                         <p className="text-8xl font-mono font-black text-rose-500 tracking-tighter leading-none drop-shadow-2xl">0.03<span className="text-3xl italic font-sans">%</span></p>
-                      </div>
                    </div>
 
                    <div className="flex-1 min-h-[500px] w-full relative z-10 p-6 bg-black/40 rounded-[56px] border border-white/5 shadow-inner">
@@ -466,9 +439,6 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                             <XAxis dataKey="batch" stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
                             <YAxis stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} domain={[40, 100]} />
                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', padding: '20px' }} />
-                            <ReferenceLine y={85} stroke="#f43f5e" strokeDasharray="5 5" label={{ value: 'UCL', fill: '#f43f5e', fontSize: 10, fontWeight: 'bold' }} />
-                            <ReferenceLine y={65} stroke="#10b981" strokeWidth={2} label={{ value: 'TARGET', fill: '#10b981', fontSize: 10, fontWeight: 'bold' }} />
-                            <ReferenceLine y={45} stroke="#f43f5e" strokeDasharray="5 5" label={{ value: 'LCL', fill: '#f43f5e', fontSize: 10, fontWeight: 'bold' }} />
                             <Area type="monotone" name="Process Resonance" dataKey="val" stroke="#6366f1" strokeWidth={8} fillOpacity={1} fill="url(#colorSigma)" strokeLinecap="round" />
                          </AreaChart>
                       </ResponsiveContainer>
@@ -476,56 +446,27 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                 </div>
 
                 <div className="lg:col-span-4 space-y-8 flex flex-col">
-                   <div className="glass-card p-12 rounded-[64px] border-2 border-indigo-500/20 bg-black/40 shadow-3xl flex flex-col justify-center items-center text-center space-y-12 relative overflow-hidden group/oracle flex-1">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform duration-[10s]"><Bot size={300} className="text-indigo-400" /></div>
-                      
-                      <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-[0_0_80px_rgba(99,102,241,0.3)] border-4 border-white/10 relative z-10 animate-float">
-                         <Bot size={48} className="text-white" />
-                      </div>
-                      
-                      <div className="space-y-6 relative z-10">
-                         <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Sigma <span className="text-indigo-400">Oracle</span></h4>
-                         <p className="text-slate-400 text-lg italic leading-relaxed px-6">Input industrial friction shards to synthesize high-fidelity remediation logic.</p>
-                      </div>
-
-                      <div className="space-y-6 w-full relative z-10 px-4">
-                         <textarea 
-                           value={sigmaInput}
-                           onChange={e => setSigmaInput(e.target.value)}
-                           placeholder="Describe the process bottleneck..." 
-                           className="w-full bg-black/80 border border-white/10 rounded-[32px] p-8 text-white text-sm focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none h-48 resize-none shadow-inner italic placeholder:text-slate-900" 
-                         />
-                         <button 
-                           onClick={handleSigmaAudit}
-                           disabled={isOptimizing || !sigmaInput.trim()}
-                           className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
-                         >
-                            {isOptimizing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
-                            {isOptimizing ? 'SYNTHESIZING...' : 'INITIALIZE SIGMA SWEEP'}
-                         </button>
-                      </div>
-                   </div>
-
-                   {sigmaAdvice && (
-                      <div className="p-10 glass-card rounded-[56px] border-l-8 border-l-emerald-500 bg-emerald-500/5 shadow-3xl animate-in slide-in-from-right-10 duration-700 relative overflow-hidden group">
-                         <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:scale-110 transition-transform"><Sparkles size={120} className="text-emerald-400" /></div>
-                         <div className="flex items-center gap-4 mb-6 relative z-10 border-b border-white/5 pb-4">
-                            <BadgeCheck className="w-8 h-8 text-emerald-400" />
-                            <h4 className="text-xl font-black text-white uppercase italic">Remediation Shard</h4>
-                         </div>
-                         <div className="prose prose-invert max-w-none text-slate-300 text-lg italic leading-relaxed whitespace-pre-line border-l border-white/5 pl-8 font-medium relative z-10">
-                            {sigmaAdvice}
-                         </div>
-                      </div>
-                   )}
+                  <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-950/5 flex flex-col justify-center items-center text-center space-y-12 shadow-3xl relative overflow-hidden flex-1 group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Bot size={300} className="text-emerald-400" /></div>
+                    <div className="w-24 h-24 bg-emerald-600 rounded-[32px] flex items-center justify-center border-4 border-white/10 shadow-[0_0_80px_rgba(16,185,129,0.3)] relative z-10 animate-float">
+                      <Zap size={48} className="text-white fill-current" />
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                      <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Statistical <span className="text-emerald-400">Sigma</span></h4>
+                      <p className="text-slate-400 text-lg leading-relaxed italic px-8">"Maintaining high-precision agricultural sharding by minimizing DPMO constants across local nodes."</p>
+                    </div>
+                    <div className="p-8 bg-black/60 rounded-[40px] border border-emerald-500/20 w-full relative z-10 shadow-inner group-hover:border-emerald-400 transition-colors">
+                      <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-3">Yield Sigma Level</p>
+                      <p className="text-6xl font-mono font-black text-emerald-400 tracking-tighter leading-none">{sigmaLevel.toFixed(1)}<span className="text-2xl italic font-sans text-emerald-700 ml-1">σ</span></p>
+                    </div>
+                  </div>
                 </div>
              </div>
           </div>
         )}
 
-        {/* Fix: Replaced undefined activeTab with activeTool to resolve Cannot find name 'activeTab' error */}
         {activeTool === 'kpis' && (
-           <div className="space-y-12 animate-in fade-in duration-500 px-4">
+           <div className="space-y-12 animate-in fade-in duration-700 px-4">
               <div className="flex flex-col md:flex-row justify-between items-end gap-8 border-b border-white/5 pb-12 px-6">
                 <div className="space-y-3">
                    <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">PERFORMANCE <span className="text-emerald-400">MATRIX</span></h3>
@@ -533,44 +474,88 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                 </div>
              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                 {[
-                   { l: 'Aggregate Process Yield', v: '99.98%', d: 'Stable Ingest', i: Activity, c: 'text-emerald-400', p: 99 },
-                   { l: 'Mean Resilience (m)', v: '1.42x', d: 'Stability Constant', i: Gauge, c: 'text-blue-400', p: 84 },
-                   { l: 'Registry C(a) Delta', v: '+0.12', d: 'Improvement Index', i: TrendingUp, c: 'text-indigo-400', p: 72 },
-                   { l: 'Validation Velocity', v: '12ms', d: 'Consensus Latency', i: Zap, c: 'text-amber-500', p: 95 },
-                   { l: 'Shard Integrity Rate', v: '100%', d: 'Auth Confidence', i: ShieldCheck, c: 'text-emerald-500', p: 100 },
-                   { l: 'Industrial Load', v: '64.2%', i: Factory, c: 'text-slate-400', p: 64 },
-                 ].map((kpi, i) => (
-                    <div key={i} className="glass-card p-12 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/20 transition-all shadow-3xl relative overflow-hidden group flex flex-col justify-between h-[450px]">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><Binary size={250} /></div>
-                       <div className="space-y-8 relative z-10">
-                          <div className="flex justify-between items-start">
-                             <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 group-hover:rotate-12 group-hover:scale-110 transition-all shadow-inner ${kpi.c}`}><kpi.i size={32} /></div>
-                             <span className="px-4 py-1.5 bg-black/60 border border-white/5 rounded-full text-[9px] font-black text-slate-600 uppercase tracking-widest italic shadow-inner">EOS_KPI_0{i+1}</span>
-                          </div>
-                          <div>
-                             <p className="text-[11px] text-slate-500 font-black uppercase tracking-widest mb-4 italic opacity-80 group-hover:opacity-100">{kpi.l}</p>
-                             <p className="text-6xl font-mono font-black text-white tracking-tighter drop-shadow-2xl group-hover:text-emerald-400 transition-colors">{kpi.v}</p>
-                          </div>
-                       </div>
-                       <div className="space-y-4 pt-10 border-t border-white/5 relative z-10">
-                          <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-600 tracking-widest px-2">
-                             <span>Consensus Weight</span>
-                             <span>{kpi.p}%</span>
-                          </div>
-                          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
-                             <div className={`h-full rounded-full transition-all duration-[2.5s] ${kpi.c.replace('text', 'bg')} shadow-[0_0_15px_currentColor]`} style={{ width: `${kpi.p}%` }}></div>
-                          </div>
-                       </div>
-                    </div>
-                 ))}
-              </div>
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div className="lg:col-span-7 glass-card p-14 rounded-[72px] border-2 border-white/5 bg-black/60 shadow-3xl relative overflow-hidden flex flex-col group">
+                   <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none overflow-hidden">
+                      <div className="w-full h-[2px] bg-emerald-500/20 absolute top-0 animate-scan"></div>
+                   </div>
+                   
+                   <div className="flex justify-between items-center mb-16 relative z-10 px-4">
+                      <div className="flex items-center gap-8">
+                         <div className="p-6 bg-emerald-600 rounded-3xl shadow-[0_0_50px_rgba(16,185,129,0.3)]">
+                            <Activity className="w-10 h-10 text-white" />
+                         </div>
+                         <div>
+                            <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Industrial <span className="text-emerald-400">Throughput</span></h3>
+                            <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-4">EOS_METROLOGY_v6.5</p>
+                         </div>
+                      </div>
+                      <div className="text-right border-l-4 border-emerald-500/20 pl-8">
+                         <p className="text-[11px] text-slate-600 font-black uppercase mb-2 tracking-widest">Global Resonance</p>
+                         <p className="text-8xl font-mono font-black text-emerald-400 tracking-tighter leading-none drop-shadow-2xl italic">94<span className="text-3xl font-sans italic ml-1">.2%</span></p>
+                      </div>
+                   </div>
+
+                   <div className="flex-1 min-h-[450px] w-full relative z-10 p-10 bg-black/80 rounded-[56px] border border-white/5 shadow-inner">
+                      <ResponsiveContainer width="100%" height="100%">
+                         <BarChart data={[
+                            { name: 'S-Pillar', val: 82, color: '#f43f5e' },
+                            { name: 'E-Pillar', val: 94, color: '#10b981' },
+                            { name: 'H-Pillar', val: 76, color: '#14b8a6' },
+                            { name: 'T-Pillar', val: 88, color: '#3b82f6' },
+                            { name: 'I-Pillar', val: 91, color: '#818cf8' },
+                         ]}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={false} />
+                            <XAxis dataKey="name" stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
+                            <YAxis stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
+                            <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
+                            <Bar dataKey="val" radius={[15, 15, 0, 0]} barSize={80}>
+                               {[1,2,3,4,5].map((_, i) => (
+                                 <Cell key={i} fill={['#f43f5e', '#10b981', '#14b8a6', '#3b82f6', '#818cf8'][i]} />
+                               ))}
+                            </Bar>
+                         </BarChart>
+                      </ResponsiveContainer>
+                   </div>
+                </div>
+
+                <div className="lg:col-span-5 flex flex-col gap-8">
+                   <div className="glass-card p-12 rounded-[64px] border border-indigo-500/20 bg-black/40 flex flex-col items-center justify-center text-center space-y-10 shadow-3xl relative overflow-hidden group/chart flex-1">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><PieChartIcon className="w-80 h-80 text-indigo-400" /></div>
+                      <h4 className="text-2xl font-black text-white uppercase italic tracking-[0.2em] flex items-center gap-4 relative z-10">
+                         <Target className="w-8 h-8 text-indigo-400" /> Yield <span className="text-indigo-400">Allocation</span>
+                      </h4>
+                      <div className="h-80 w-full relative z-10">
+                         <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                               <Pie data={KPI_DISTRIBUTION} innerRadius={85} outerRadius={125} paddingAngle={8} dataKey="value" stroke="none">
+                                  {KPI_DISTRIBUTION.map((entry, index) => (
+                                     <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))}
+                               </Pie>
+                               <Tooltip contentStyle={{ backgroundColor: '#050706', border: 'none', borderRadius: '16px' }} />
+                            </PieChart>
+                         </ResponsiveContainer>
+                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Status</p>
+                            <p className="text-4xl font-mono font-black text-white uppercase italic">Optimal</p>
+                         </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 w-full relative z-10">
+                         {KPI_DISTRIBUTION.map(t => (
+                            <div key={t.name} className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/20 transition-all">
+                               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: t.color }}></div>
+                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.name}</span>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                </div>
+             </div>
            </div>
         )}
       </div>
 
-      {/* --- MODAL: MINT TASK SHARD --- */}
       {showInitTask && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 md:p-10 overflow-hidden">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={closeTaskModal}></div>
@@ -639,7 +624,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                  {initStep === 'sign' && (
                     <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex flex-col justify-center flex-1">
                        <div className="text-center space-y-8">
-                          <div className="w-32 h-32 bg-indigo-500/10 rounded-[44px] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-3xl relative group overflow-hidden">
+                          <div className="w-32 h-32 bg-indigo-500/10 rounded-[44px] flex items-center justify-center mx-auto border border-indigo-500/20 shadow-3xl group relative overflow-hidden">
                              <FingerprintIcon size={64} className="text-indigo-400 group-hover:scale-110 transition-transform relative z-10" />
                              <div className="absolute inset-0 bg-indigo-500/5 animate-pulse"></div>
                           </div>
@@ -656,21 +641,14 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                           />
                        </div>
 
-                       <div className="p-10 bg-indigo-500/5 border border-indigo-500/10 rounded-[44px] flex items-center gap-10 shadow-inner max-w-2xl mx-auto">
-                          <ShieldAlert className="w-16 h-16 text-indigo-400 shrink-0 animate-pulse" />
-                          <p className="text-xs text-indigo-200/50 font-black uppercase tracking-tight leading-relaxed text-left italic">
-                             "Initializing a new shard commits 10 EAC from your utility balance for registry indexing. Non-refundable upon signature."
-                          </p>
-                       </div>
-
                        <div className="flex gap-6 pt-4 max-w-2xl mx-auto w-full">
                           <button onClick={() => setInitStep('form')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl active:scale-95">Back</button>
                           <button 
                             onClick={executeInitShard}
                             disabled={!esinSign || isMinting}
-                            className="flex-[2] py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(16,185,129,0.3)] flex items-center justify-center gap-8 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-8 ring-white/5"
+                            className="flex-[2] py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.3)] flex items-center justify-center gap-8 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
                           >
-                             {isMinting ? <Loader2 className="w-10 h-10 animate-spin" /> : <Stamp className="w-10 h-10 fill-current" />}
+                             {isMinting ? <Loader2 className="w-10 h-10 animate-spin" /> : <Stamp size={10} className="fill-current" />}
                              {isMinting ? "MINTING SHARD..." : "AUTHORIZE MINT"}
                           </button>
                        </div>
@@ -697,25 +675,36 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .shadow-3xl { box-shadow: 0 40px 150px -30px rgba(0, 0, 0, 0.95); }
+        .animate-spin-slow { animation: spin 20s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
-        @keyframes animate-heat {
-          0% { filter: hue-rotate(0deg) brightness(1); }
-          50% { filter: hue-rotate(15deg) brightness(1.2); }
-          100% { filter: hue-rotate(0deg) brightness(1); }
-        }
-        .animate-heat { animation: animate-heat 2s infinite; }
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
 };
+
+/* Helper component for the chart section icons */
+const PieChartIcon = ({ size = 24, className = "" }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>
+  </svg>
+);
 
 export default ToolsSection;
