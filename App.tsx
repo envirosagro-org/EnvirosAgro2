@@ -182,6 +182,7 @@ const REGISTRY_NODES = [
   {
     category: 'Innovation Hub',
     items: [
+      { id: 'agrolang', name: 'AgroLang IDE', icon: Code2 },
       { id: 'research', name: 'Invention Ledger', icon: Zap },
       { id: 'biotech_hub', name: 'Genetic Decoder', icon: Dna },
       { id: 'permaculture_hub', name: 'Design Resilience', icon: Compass },
@@ -222,7 +223,8 @@ const App: React.FC = () => {
   const [isCloudSynced, setIsCloudSynced] = useState(false);
   const [showLoginOverlay, setShowLoginOverlay] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'Command & Strategy': true
+    'Command & Strategy': true,
+    'Innovation Hub': true
   });
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
   const [pendingShellCode, setPendingShellCode] = useState<string | null>(null);
@@ -642,7 +644,7 @@ const App: React.FC = () => {
              {isCloudSynced ? (
                 <div className="flex items-center gap-4">
                    <div className="flex flex-col items-end hidden sm:flex">
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">{user.name}</span>
+                      <span className="text-10px font-black text-white uppercase tracking-widest">{user.name}</span>
                       <span className="text-[8px] font-mono text-emerald-400 font-bold uppercase">{user.esin}</span>
                    </div>
                    <button onClick={() => handleNavigate('profile')} className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 font-black overflow-hidden shadow-2xl border border-white/10 ring-4 ring-white/5 hover:scale-105 transition-all">

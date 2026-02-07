@@ -69,7 +69,8 @@ import {
   Waves,
   FlaskConical,
   Atom,
-  ChevronDown
+  ChevronDown,
+  PieChart as PieChartIcon
 } from 'lucide-react';
 import { 
   LineChart as RechartsLineChart, 
@@ -181,7 +182,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
   const executeInitShard = async () => {
     if (user && esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: ESIN node mismatch.");
+      alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
@@ -245,7 +246,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
             <button 
               key={t.id} 
               onClick={() => setActiveTool(t.id as any)} 
-              className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTool === t.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+              className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTool === t.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
             >
               <t.icon size={18} /> {t.label}
             </button>
@@ -254,7 +255,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
         
         <div className="flex items-center gap-6">
            <div className="px-6 py-3 glass-card rounded-full border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
               <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">INDUSTRIAL_MESH_ACTIVE</span>
            </div>
            <button 
@@ -268,6 +269,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
       </div>
 
       <div className="min-h-[850px] relative z-10">
+        {/* Changed activeTab to activeTool to match state variable name */}
         {activeTool === 'kanban' && (
           <div className="space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -318,7 +320,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                                        <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-[11px] font-black text-emerald-400 border border-white/10">
                                           {task.owner ? task.owner[0] : 'U'}
                                        </div>
-                                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{task.owner}</span>
+                                       <span className="text-10px font-black text-slate-500 uppercase tracking-widest">{task.owner}</span>
                                     </div>
                                     <div className="flex gap-3">
                                        <button 
@@ -353,6 +355,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
           </div>
         )}
 
+        {/* Changed activeTab to activeTool to match state variable name */}
         {activeTool === 'resources' && (
           <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
              <div className="flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-12 px-6 gap-8">
@@ -373,7 +376,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Construction size={300} className="text-blue-400" /></div>
                       
                       <div className="flex justify-between items-start mb-10 relative z-10">
-                         <div className="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20 text-blue-400 shadow-2xl group-hover:rotate-6 transition-all">
+                         <div className="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20 text-blue-400 shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all">
                             {asset.id.includes('Drone') ? <Radar size={40} /> : asset.id.includes('Rover') ? <Monitor size={40} /> : asset.id.includes('Pump') ? <Activity size={40} /> : <Database size={40} />}
                          </div>
                          <div className="text-right">
@@ -407,10 +410,11 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
           </div>
         )}
 
+        {/* Changed activeTab to activeTool to match state variable name */}
         {activeTool === 'sigma' && (
           <div className="space-y-12 animate-in zoom-in duration-500">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 px-4">
-                <div className="lg:col-span-8 glass-card p-14 rounded-[64px] border-2 border-white/5 bg-black/60 shadow-3xl relative overflow-hidden flex flex-col group">
+                <div className="lg:col-span-8 glass-card p-14 rounded-[72px] border-2 border-white/5 bg-black/60 shadow-3xl relative overflow-hidden flex flex-col group">
                    <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden">
                       <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent absolute top-0 animate-scan"></div>
                    </div>
@@ -465,6 +469,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
           </div>
         )}
 
+        {/* Changed activeTab to activeTool to match state variable name */}
         {activeTool === 'kpis' && (
            <div className="space-y-12 animate-in fade-in duration-700 px-4">
               <div className="flex flex-col md:flex-row justify-between items-end gap-8 border-b border-white/5 pb-12 px-6">
@@ -563,7 +568,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
               
               <div className="p-12 md:p-16 border-b border-white/5 bg-indigo-500/[0.02] flex items-center justify-between shrink-0 relative z-10">
                  <div className="flex items-center gap-10">
-                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl group relative overflow-hidden">
+                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center text-white shadow-3xl group relative overflow-hidden">
                        <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                        <Workflow size={48} className="text-white relative z-10 group-hover:scale-110 transition-transform" />
                     </div>
@@ -584,7 +589,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                              <input 
                                type="text" required value={taskTitle} onChange={e => setTaskTitle(e.target.value)}
                                placeholder="e.g. Spectral Soil Analysis Shard..." 
-                               className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 px-12 text-2xl font-bold text-white focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-900 shadow-inner italic" 
+                               className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 px-12 text-2xl font-bold text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-900 shadow-inner italic" 
                              />
                           </div>
                        </div>
@@ -646,7 +651,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                           <button 
                             onClick={executeInitShard}
                             disabled={!esinSign || isMinting}
-                            className="flex-[2] py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.3)] flex items-center justify-center gap-8 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
+                            className="flex-[2] py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.3)] flex items-center justify-center gap-8 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-8 ring-white/5"
                           >
                              {isMinting ? <Loader2 className="w-10 h-10 animate-spin" /> : <Stamp size={10} className="fill-current" />}
                              {isMinting ? "MINTING SHARD..." : "AUTHORIZE MINT"}
@@ -658,7 +663,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                  {initStep === 'success' && (
                     <div className="space-y-16 py-10 animate-in zoom-in duration-1000 flex-1 flex flex-col justify-center items-center text-center">
                        <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_200px_rgba(99,102,241,0.3)] relative group scale-110">
-                          <CheckCircle2 className="w-32 h-32 text-white group-hover:scale-110 transition-transform" />
+                          <CheckCircle2 size={32} text-white group-hover:scale-110 transition-transform />
                           <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
                        </div>
                        <div className="space-y-6 text-center">
@@ -678,8 +683,8 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        .shadow-3xl { box-shadow: 0 40px 150px -30px rgba(0, 0, 0, 0.95); }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .animate-spin-slow { animation: spin 20s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
@@ -688,23 +693,5 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
     </div>
   );
 };
-
-/* Helper component for the chart section icons */
-const PieChartIcon = ({ size = 24, className = "" }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>
-  </svg>
-);
 
 export default ToolsSection;
