@@ -50,32 +50,35 @@ import {
   TrendingUp,
   ArrowUpRight,
   Wallet,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Trash2,
+  Edit2,
+  MoreVertical,
+  Plus,
+  BadgeCheck
 } from 'lucide-react';
 import { User, Order, LogisticProvider, VendorProduct } from '../types';
 
+// Fixed: Defined missing RegStep and SupplierType types
+type RegStep = 'identification' | 'item_ingest' | 'settlement' | 'audit_protocol' | 'success';
+type SupplierType = 'REVERSE_RETURN' | 'RAW_MATERIALS' | 'FINISHED_PRODUCTS' | 'SERVICE_PROVIDER';
+
 interface VendorPortalProps {
   user: User;
-  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, status: Order['status'], meta?: any) => void;
   vendorProducts: VendorProduct[];
   onRegisterProduct: (product: VendorProduct) => void;
+  onDeleteProduct?: (productId: string) => void;
+  onUpdateProduct?: (product: VendorProduct) => void;
+  onCommitToLive?: (product: VendorProduct) => void;
 }
 
-const LOGISTIC_PROVIDERS: LogisticProvider[] = [
-  { id: 'LP-GRN-01', name: 'Electric Eco-Rail Shard', mResonance: 1.5, sustainabilityScore: 98, costEAC: 120, speed: '48h', status: 'ACTIVE' },
-  { id: 'LP-SKY-02', name: 'Solar Drone Relay', mResonance: 1.2, sustainabilityScore: 85, costEAC: 450, speed: '6h', status: 'ACTIVE' },
-  { id: 'LP-IND-03', name: 'Traditional Diesel Hub', mResonance: 0.8, sustainabilityScore: 42, costEAC: 85, speed: '24h', status: 'ACTIVE' },
-];
-
-type SupplierType = 'REVERSE_RETURN' | 'RAW_MATERIALS' | 'FINISHED_PRODUCTS' | 'SERVICE_PROVIDER';
-type RegStep = 'identification' | 'item_ingest' | 'settlement' | 'audit_protocol' | 'success';
-
-const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct }) => {
-  const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'ledger'>('shipments');
-  const [selectedOrderForDispatch, setSelectedOrderForDispatch] = useState<Order | null>(null);
+const VendorPortal: React.FC<VendorPortalProps> = ({ 
+  user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct, onDeleteProduct, onUpdateProduct, onCommitToLive 
+}) => {
+  const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'ledger'>('inventory');
   const [isVerifying, setIsVerifying] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -90,6 +93,9 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
   const [itemPrice, setItemPrice] = useState('100');
   const [itemDesc, setItemDesc] = useState('');
   const [esinSign, setEsinSign] = useState('');
+
+  // Modify State
+  const [modifyingProduct, setModifyingProduct] = useState<VendorProduct | null>(null);
 
   const getSettlementFee = () => {
     switch(supplierType) {
@@ -106,7 +112,6 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
     setShowRegisterModal(true);
   };
 
-  // Fix: handleAuthorizeSettlement made async and awaits onSpendEAC to resolve Promise<boolean>
   const handleAuthorizeSettlement = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
       alert("SIGNATURE ERROR: Node ESIN mismatch.");
@@ -143,6 +148,13 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
     }, 2500);
   };
 
+  const handleSaveModification = () => {
+    if (modifyingProduct && onUpdateProduct) {
+      onUpdateProduct(modifyingProduct);
+      setModifyingProduct(null);
+    }
+  };
+
   const myIncomingOrders = orders.filter(o => o.supplierEsin === user.esin || o.supplierEsin === 'EA-ORG-CORE' || o.supplierEsin === 'EA-TOUR-HUB');
   const completedOrders = myIncomingOrders.filter(o => o.status === 'COMPLETED');
   const totalEarned = completedOrders.reduce((acc, curr) => acc + curr.cost, 0);
@@ -159,401 +171,319 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
     }, 1500);
   };
 
-  const handleExecuteDispatch = (lp: LogisticProvider) => {
-    if (!selectedOrderForDispatch) return;
-    setIsProcessing(true);
-    setTimeout(() => {
-      onUpdateOrderStatus(selectedOrderForDispatch.id, 'DISPATCHED', {
-        logisticProviderId: lp.id,
-        logisticsNode: lp.name,
-        logisticCost: lp.costEAC,
-        status: 'DISPATCHED'
-      });
-      setIsProcessing(false);
-      setSelectedOrderForDispatch(null);
-    }, 2000);
-  };
-
-  const handleServiceArrangement = (order: Order) => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      onUpdateOrderStatus(order.id, 'DISPATCHED', {
-        status: 'DISPATCHED',
-        logisticsNode: 'On-Site Provision'
-      });
-      setIsProcessing(false);
-      alert("ARRANGEMENTS COMMITTED: Service node initialized for delivery. Customer notified via TQM Hub.");
-    }, 1500);
+  const handleTriggerLiveProcessing = (product: VendorProduct) => {
+    if (confirm(`INITIALIZE LIVE PROCESSING: Committing ${product.name} to the industrial SCADA flow for TQM verification. Audit fee: 50 EAC. Continue?`)) {
+      onCommitToLive?.(product);
+    }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1400px] mx-auto px-4">
+    <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
       
-      {/* Header Segment */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-amber-500/20 bg-amber-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-2xl">
-           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform">
-              <Warehouse className="w-96 h-96 text-amber-500" />
-           </div>
-           <div className="w-40 h-40 rounded-[48px] bg-amber-600 flex items-center justify-center shadow-[0_0_50px_rgba(217,119,6,0.3)] ring-4 ring-white/10 shrink-0">
-              <Building2 className="w-20 h-20 text-white" />
-           </div>
-           <div className="space-y-6 relative z-10 text-center md:text-left">
-              <div className="space-y-2">
-                 <span className="px-4 py-1.5 bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-amber-500/20">VENDOR_REGISTRY_NODE_v5</span>
-                 <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 leading-none">Supplier <span className="text-amber-500">Command</span></h2>
-              </div>
-              <p className="text-slate-400 text-lg md:text-xl leading-relaxed max-w-2xl font-medium">
-                 Provision your agricultural assets to the global grid. Multi-stage industrial vetting ensures 100% authenticity for all network shards.
-              </p>
-              <button 
+      {/* 1. Header Segment - Matches Screenshot */}
+      <div className="glass-card p-10 md:p-16 rounded-[64px] border border-amber-500/20 bg-black/40 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-3xl">
+         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+         <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:rotate-6 transition-transform">
+            <Building2 className="w-[800px] h-[800px] text-white" />
+         </div>
+         
+         <div className="w-40 h-40 rounded-[48px] bg-white flex items-center justify-center shadow-[0_0_100px_rgba(255,255,255,0.1)] relative z-10 border-4 border-white/5 overflow-hidden group/logo">
+            <div className="absolute inset-0 bg-gradient-to-tr from-stone-100 to-white animate-pulse"></div>
+            <div className="flex flex-col gap-1 items-center relative z-20">
+               <div className="w-14 h-2 bg-amber-600 rounded-full"></div>
+               <div className="w-14 h-2 bg-amber-600 rounded-full"></div>
+               <div className="w-14 h-2 bg-amber-600 rounded-full"></div>
+            </div>
+         </div>
+
+         <div className="space-y-4 relative z-10 max-w-4xl">
+            <div className="space-y-2">
+               <span className="px-5 py-2 bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase rounded-full tracking-[0.6em] border border-amber-500/20">VENDOR_REGISTRY_NODE_v5</span>
+               <h2 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter italic m-0 drop-shadow-2xl">SUPPLIER <span className="text-amber-500">COMMAND</span></h2>
+            </div>
+            <p className="text-slate-400 text-2xl font-medium italic leading-relaxed max-w-3xl mx-auto opacity-80 group-hover:opacity-100 transition-opacity">
+               Provision your agricultural assets to the global grid. Multi-stage industrial vetting ensures 100% authenticity for all network shards.
+            </p>
+            <div className="flex justify-center gap-6 pt-6">
+               <button 
                 onClick={handleStartRegistration}
-                className="px-12 py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 mx-auto md:ml-0"
-              >
-                <PlusCircle className="w-6 h-6" /> REGISTER AS SUPPLIER
-              </button>
-           </div>
-        </div>
+                className="px-16 py-8 bg-emerald-600 hover:bg-emerald-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl flex items-center gap-6 active:scale-95 transition-all border-2 border-white/10 ring-[12px] ring-emerald-500/5"
+               >
+                  <PlusCircle size={28} /> REGISTER AS SUPPLIER
+               </button>
+            </div>
+         </div>
+      </div>
 
-        <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 flex flex-col justify-between text-center group relative overflow-hidden shadow-xl">
-           <div className="absolute inset-0 bg-amber-500/[0.01] pointer-events-none"></div>
-           <div className="space-y-2 relative z-10">
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-2">Registry Revenue</p>
-              <h4 className="text-5xl font-mono font-black text-emerald-400 tracking-tighter">{totalEarned.toFixed(0)} <span className="text-sm font-sans">EAC</span></h4>
-           </div>
-           <div className="space-y-4 relative z-10">
-              <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
-                 <span>Settlement Rate</span>
-                 <span className="text-emerald-400">Stable</span>
-              </div>
-              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                 <div className="h-full bg-emerald-500 w-[92%] shadow-[0_0_10px_#10b981]"></div>
-              </div>
-           </div>
+      {/* 2. Registry Revenue Dashboard Item */}
+      <div className="glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 flex flex-col md:flex-row justify-between items-center text-center md:text-left shadow-2xl relative overflow-hidden group">
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(16,185,129,0.02)_0%,_transparent_70%)] pointer-events-none"></div>
+         <div className="space-y-2 relative z-10 flex flex-col items-center md:items-start flex-1">
+            <p className="text-[11px] text-slate-500 font-black uppercase tracking-[0.5em] mb-4">REGISTRY REVENUE</p>
+            <div className="flex items-baseline gap-6">
+               <h4 className="text-[100px] font-mono font-black text-white leading-none tracking-tighter italic">{totalEarned.toFixed(0)}</h4>
+               <span className="text-4xl font-bold text-emerald-500 italic uppercase">EAC</span>
+            </div>
+         </div>
+         <div className="w-full md:w-auto mt-10 md:mt-0 flex flex-col items-center md:items-end gap-6 relative z-10 flex-1">
+            <div className="flex justify-between items-center w-full max-w-[300px] text-[11px] font-black uppercase text-slate-600 px-4">
+               <span>SETTLEMENT RATE</span>
+               <span className="text-emerald-500">STABLE</span>
+            </div>
+            <div className="h-2 w-full max-w-[400px] bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
+               <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_20px_#10b981]" style={{ width: '92%' }}></div>
+            </div>
+         </div>
+      </div>
+
+      {/* 3. Navigation Tabs */}
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-10">
+        <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 overflow-x-auto scrollbar-hide">
+          {[
+            { id: 'shipments', label: 'INBOUND ORDERS', icon: ShoppingCart },
+            { id: 'inventory', label: 'ASSET MANAGEMENT', icon: Package },
+            { id: 'ledger', label: 'REVENUE LEDGER', icon: BadgeDollarSign },
+          ].map(tab => (
+            <button 
+              key={tab.id} 
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-amber-600 text-white shadow-2xl scale-105 border-b-4 border-amber-400 ring-8 ring-amber-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            >
+              <tab.icon className="w-4 h-4" /> {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl">
-        {[
-          { id: 'shipments', label: 'Inbound Orders', icon: ShoppingCart },
-          { id: 'inventory', label: 'Asset Management', icon: Package },
-          { id: 'ledger', label: 'Revenue Ledger', icon: BadgeDollarSign },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-amber-600 text-white shadow-xl shadow-amber-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon className="w-4 h-4" /> {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="min-h-[600px]">
+      {/* 4. Tab Content */}
+      <div className="min-h-[800px] relative z-10">
         {activeTab === 'shipments' && (
-           <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-              <div className="glass-card rounded-[40px] overflow-hidden border-white/5 bg-black/40 shadow-xl">
-                 <div className="grid grid-cols-5 p-8 border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    <span className="col-span-2">Procurement Asset</span>
-                    <span>Lifecycle Status</span>
-                    <span>Customer Node</span>
-                    <span className="text-right">Industrial Action</span>
-                 </div>
-                 <div className="divide-y divide-white/5">
-                    {myIncomingOrders.map(order => (
-                      <div key={order.id} className="grid grid-cols-5 p-10 hover:bg-white/[0.02] transition-all items-center group">
-                         <div className="col-span-2 flex items-center gap-6">
-                            <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-white/5 group-hover:scale-105 transition-transform shadow-inner">
-                               <img src={order.itemImage || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=200'} className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0" alt="" />
-                            </div>
-                            <div>
-                               <p className="text-lg font-bold text-white uppercase tracking-tight group-hover:text-amber-500 transition-colors italic">{order.itemName}</p>
-                               <p className="text-[10px] text-slate-500 font-mono mt-1 uppercase font-bold tracking-tighter">{order.id} // SRC: {order.sourceTab?.toUpperCase() || 'MARKET'}</p>
-                            </div>
-                         </div>
-                         <div>
-                            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-tighter ${
-                              order.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                              order.status === 'PAYMENT_HELD' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' :
-                              order.status === 'AVAILABILITY_VERIFIED' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
-                              order.status === 'DISPATCHED' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20' :
-                              'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                            }`}>{order.status.replace(/_/g, ' ')}</span>
-                         </div>
-                         <div className="text-xs text-slate-400 font-mono italic">
-                            {order.customerEsin}
-                         </div>
-                         <div className="text-right">
-                            {order.status === 'ORD_PLACED' && (
-                              <button 
-                                onClick={() => handleVerifyOrder(order)}
-                                disabled={isVerifying === order.id}
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 ml-auto transition-all active:scale-95"
-                              >
-                                {isVerifying === order.id ? <Loader2 size={14} className="animate-spin" /> : order.itemType.includes('Service') ? <CalendarCheck size={14} /> : <ShieldCheck size={14} />}
-                                {order.itemType.includes('Service') ? 'Confirm Availability' : 'Confirm Stock'}
+           <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
+              <div className="grid grid-cols-1 gap-6">
+                {myIncomingOrders.map(order => (
+                  <div key={order.id} className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 hover:bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-10 shadow-xl">
+                     <div className="flex items-center gap-8 flex-1">
+                        <div className="w-20 h-20 rounded-[28px] overflow-hidden border-2 border-white/10 shrink-0 group-hover:rotate-3 transition-transform shadow-2xl bg-slate-900">
+                           <img src={order.itemImage || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=200'} className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0" alt="" />
+                        </div>
+                        <div className="space-y-2">
+                           <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-amber-500 transition-colors">{order.itemName}</h4>
+                           <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-3">ORDER_ID: {order.id} // ORIGIN: {order.customerEsin}</p>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-12 border-t md:border-t-0 md:border-l border-white/5 pt-8 md:pt-0 md:pl-12 w-full md:w-auto">
+                        <div className="text-center md:text-right flex flex-col items-center md:items-end gap-3 min-w-[150px]">
+                           <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-lg ${
+                             order.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                             order.status === 'PAYMENT_HELD' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse' :
+                             order.status === 'DISPATCHED' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20' :
+                             'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                           }`}>{order.status.replace(/_/g, ' ')}</span>
+                           <p className="text-[9px] text-slate-700 font-black uppercase">LIFECYCLE_STAGE</p>
+                        </div>
+                        <div className="flex gap-4">
+                           {order.status === 'ORD_PLACED' && (
+                              <button onClick={() => handleVerifyOrder(order)} className="p-6 bg-blue-600 hover:bg-blue-500 rounded-3xl text-white shadow-2xl active:scale-90 transition-all flex items-center gap-4 border border-white/10">
+                                 {isVerifying === order.id ? <Loader2 className="animate-spin" /> : <ShieldCheck size={24}/>}
+                                 <span className="text-[10px] font-black uppercase">Verify</span>
                               </button>
-                            )}
-                            {(order.status === 'ORD_VERIFIED' || order.status === 'AVAILABILITY_VERIFIED') && (
-                               <div className="flex items-center gap-2 text-amber-500/60 font-black text-[8px] uppercase justify-end px-4">
-                                  <Clock size={12} className="animate-pulse" /> Handshake: Awaiting Escrow
-                               </div>
-                            )}
-                            {order.status === 'PAYMENT_HELD' && (
-                               order.itemType.includes('Service') ? (
-                                  <button 
-                                    onClick={() => handleServiceArrangement(order)}
-                                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 ml-auto"
-                                  >
-                                    <Binoculars size={14} /> Make Arrangements
-                                  </button>
-                               ) : (
-                                  <button 
-                                    onClick={() => setSelectedOrderForDispatch(order)}
-                                    className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 ml-auto"
-                                  >
-                                    <Truck size={14} /> Commit Dispatch
-                                  </button>
-                               )
-                            )}
-                            {order.status === 'DISPATCHED' && (
-                               <div className="flex items-center gap-2 text-indigo-400/60 font-black text-[8px] uppercase justify-end px-4">
-                                  <History size={12} className="animate-pulse" /> Transit: Awaiting GRN Shard
-                               </div>
-                            )}
-                            {order.status === 'COMPLETED' && (
-                               <div className="flex items-center gap-3 justify-end text-emerald-400">
-                                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Cycle Finalized</span>
-                                  <CheckCircle size={14} />
-                               </div>
-                            )}
-                         </div>
-                      </div>
-                    ))}
-                    {myIncomingOrders.length === 0 && (
-                      <div className="p-32 text-center opacity-20 flex flex-col items-center gap-6">
-                        <Monitor size={64} className="text-slate-600" />
-                        <p className="text-xl font-black uppercase tracking-[0.4em]">No Inbound Procurement Signals</p>
-                      </div>
-                    )}
-                 </div>
+                           )}
+                           <button className="p-6 bg-white/5 rounded-3xl text-slate-500 hover:text-white transition-all"><MoreVertical size={24}/></button>
+                        </div>
+                     </div>
+                  </div>
+                ))}
               </div>
            </div>
         )}
 
         {activeTab === 'inventory' && (
-           <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 px-4">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-white/5 pb-8">
-                <div>
-                   <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Local <span className="text-amber-500">Asset Management</span></h3>
-                   <p className="text-slate-500 text-sm mt-2 font-medium">Control the provisioning of your sharded industrial assets.</p>
-                </div>
-                <button onClick={handleStartRegistration} className="px-8 py-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2 active:scale-95 transition-all">
-                  <PlusCircle size={20} /> Register New Shard
-                </button>
+           <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
+              <div className="flex justify-between items-center px-4">
+                 <div className="space-y-2">
+                    <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0">LOCAL <span className="text-amber-500">ASSET MANAGEMENT</span></h3>
+                    <p className="text-slate-500 text-xl font-medium italic opacity-70">Control the provisioning of your sharded industrial assets.</p>
+                 </div>
+                 <button 
+                  onClick={handleStartRegistration}
+                  className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-4 hover:scale-105 active:scale-95 transition-all ring-8 ring-emerald-500/5 border border-white/10"
+                 >
+                    <Plus size={20} /> REGISTER NEW SHARD
+                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                  {vendorProducts.filter(p => p.supplierEsin === user.esin).map(product => (
-                    <div key={product.id} className="glass-card p-8 rounded-[48px] border border-white/5 hover:border-amber-500/30 transition-all flex flex-col justify-between shadow-xl bg-black/20 group relative overflow-hidden">
-                       <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover:scale-110 transition-transform"><Database size={160} /></div>
-                       <div className="space-y-6 relative z-10">
-                          <div className="flex justify-between items-start">
-                             <div className="p-4 bg-white/5 rounded-2xl text-amber-500 border border-white/5 shadow-inner group-hover:rotate-6 transition-all">
-                                <Package size={24} />
+                    <div key={product.id} className="p-10 glass-card rounded-[64px] border-2 border-white/10 bg-black/40 hover:border-amber-500/40 transition-all flex flex-col group active:scale-[0.99] duration-300 shadow-3xl relative overflow-hidden">
+                       <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Package size={400} className="text-white" /></div>
+                       
+                       <div className="flex justify-between items-start mb-10 relative z-10">
+                          <div className="flex items-center gap-8">
+                             <div className="w-24 h-24 rounded-[32px] bg-white/5 border border-white/10 flex items-center justify-center text-amber-500 shadow-3xl group-hover:rotate-6 transition-transform relative overflow-hidden">
+                                <div className="absolute inset-0 bg-amber-500/5 animate-pulse"></div>
+                                <Package size={48} className="relative z-10" />
                              </div>
-                             <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest ${
-                                product.status === 'AUTHORIZED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
-                             }`}>{product.status}</span>
-                          </div>
-                          <div>
-                             <h4 className="text-2xl font-black text-white uppercase italic leading-tight m-0 tracking-tighter">{product.name}</h4>
-                             <p className="text-[9px] text-slate-500 font-mono mt-3 font-bold uppercase tracking-tighter">REGISTRY_ID: {product.id}</p>
-                          </div>
-                          <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 space-y-3 shadow-inner">
-                             <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-600">
-                                <span>Registry Cost</span>
-                                <span className="text-white font-mono">{product.price} EAC</span>
+                             <div className="space-y-1">
+                                <h4 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-amber-500 transition-colors drop-shadow-2xl">{product.name}</h4>
+                                <p className="text-[11px] text-slate-700 font-mono font-black uppercase mt-3 tracking-widest">REGISTRY_ID: {product.id}</p>
                              </div>
-                             <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-600">
-                                <span>Unit Stock</span>
-                                <span className="text-emerald-400 font-mono">{product.stock} Units</span>
+                          </div>
+                          <div className="text-right">
+                             <div className="px-5 py-2 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.3)] font-black text-[10px] uppercase tracking-widest">AUTHORIZED</div>
+                          </div>
+                       </div>
+
+                       <div className="p-10 bg-black/60 rounded-[56px] border border-white/10 shadow-inner relative z-10 space-y-10 group/metrics">
+                          <div className="flex justify-between items-center px-4">
+                             <div className="space-y-1">
+                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">REGISTRY COST</p>
+                                <p className="text-4xl font-mono font-black text-white tracking-tighter">{product.price.toLocaleString()} <span className="text-sm font-sans italic text-slate-500 ml-1">EAC</span></p>
+                             </div>
+                             <div className="h-16 w-px bg-white/10"></div>
+                             <div className="text-right space-y-1">
+                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">UNIT STOCK</p>
+                                <p className="text-4xl font-mono font-black text-emerald-400 tracking-tighter">{product.stock} <span className="text-sm font-sans italic text-emerald-700 ml-1">UNITS</span></p>
                              </div>
                           </div>
                        </div>
-                       <div className="pt-8 mt-6 border-t border-white/5 flex gap-3 relative z-10">
-                          <button className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase text-slate-500 hover:text-white transition-all">Audit</button>
-                          <button className="flex-1 py-3 bg-amber-600 rounded-xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl active:scale-95">Modify</button>
+
+                       <div className="mt-14 pt-10 border-t border-white/5 flex flex-wrap gap-4 relative z-10">
+                          <button 
+                            onClick={() => handleTriggerLiveProcessing(product)}
+                            className="flex-1 py-6 bg-white/5 border-2 border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-3xl active:scale-95"
+                          >
+                             AUDIT
+                          </button>
+                          <button 
+                            onClick={() => setModifyingProduct(product)}
+                            className="flex-1 py-6 bg-amber-600 hover:bg-amber-500 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-[0_0_80px_rgba(217,119,6,0.3)] active:scale-95 transition-all border-2 border-white/10 ring-8 ring-white/5"
+                          >
+                             MODIFY
+                          </button>
+                          <button 
+                            onClick={() => onDeleteProduct?.(product.id)}
+                            className="p-6 bg-rose-600/10 border-2 border-rose-500/30 rounded-full text-rose-500 hover:bg-rose-600 hover:text-white transition-all shadow-xl active:scale-90"
+                            title="Purge Shard"
+                          >
+                             <Trash2 size={24} />
+                          </button>
                        </div>
                     </div>
                  ))}
-                 {vendorProducts.filter(p => p.supplierEsin === user.esin).length === 0 && (
-                   <div className="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4 opacity-20 border-2 border-dashed border-white/5 rounded-[48px] bg-black/20">
-                     <PackageSearch size={48} className="text-slate-600" />
-                     <p className="text-lg font-black uppercase tracking-widest">No Locally Registered Shards</p>
-                   </div>
-                 )}
+                 
+                 <div 
+                   onClick={handleStartRegistration}
+                   className="p-12 glass-card rounded-[80px] border-4 border-dashed border-white/5 bg-white/[0.01] hover:bg-emerald-500/[0.02] hover:border-emerald-500/20 transition-all flex flex-col items-center justify-center text-center space-y-10 group cursor-pointer shadow-inner h-[620px] opacity-40 hover:opacity-100"
+                 >
+                    <div className="w-32 h-32 rounded-full bg-slate-900 border-2 border-white/5 flex items-center justify-center text-white shadow-3xl group-hover:scale-110 group-hover:rotate-12 transition-all">
+                       <Plus size={64} className="group-hover:animate-pulse" />
+                    </div>
+                    <div className="space-y-4">
+                       <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">REGISTER NEW SHARD</h4>
+                       <p className="text-slate-600 text-base font-bold uppercase tracking-widest max-w-[250px] mx-auto leading-relaxed italic">
+                          "Provision a new industrial asset into the global agricultural mesh."
+                       </p>
+                    </div>
+                 </div>
               </div>
            </div>
         )}
 
         {activeTab === 'ledger' && (
-          <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500 px-4">
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 glass-card p-10 rounded-[48px] border border-emerald-500/20 bg-emerald-600/5 relative overflow-hidden flex flex-col justify-between shadow-2xl">
-                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform"><Activity size={300} className="text-white" /></div>
-                   <div className="relative z-10">
-                      <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Revenue <span className="text-emerald-400">Diffusion</span></h3>
-                      <p className="text-slate-500 text-sm mt-2 italic">Institutional disbursements finalized upon ZK-Audit fulfillment.</p>
-                      <div className="mt-12 flex items-baseline gap-4">
-                         <p className="text-7xl font-mono font-black text-white tracking-tighter">{totalEarned.toFixed(0)}</p>
-                         <p className="text-2xl font-black text-emerald-400 italic uppercase">Total EAC Yielded</p>
-                      </div>
-                   </div>
-                   <div className="relative z-10 flex gap-4 pt-10 border-t border-white/5 mt-10">
-                      <button className="px-10 py-5 bg-emerald-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95 transition-all">
-                        <Download size={16} /> Export Revenue Shard
-                      </button>
-                      <button className="px-10 py-5 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-3">
-                        <History size={16} /> Full History
-                      </button>
-                   </div>
-                </div>
-
-                <div className="glass-card p-10 rounded-[48px] border-white/5 bg-black/40 space-y-8 flex flex-col shadow-xl">
-                   <h4 className="text-lg font-black text-white uppercase tracking-widest italic border-b border-white/5 pb-4">Performance Shards</h4>
-                   <div className="flex-1 space-y-6">
-                      {[
-                        { l: 'Fulfillment Velocity', v: '98%', i: Zap, c: 'text-amber-500' },
-                        { l: 'Trust Index', v: '4.9/5', i: ShieldCheck, c: 'text-blue-400' },
-                        { l: 'Ledger Accuracy', v: '100%', i: Binary, c: 'text-emerald-400' },
-                        { l: 'Audit Clearance', v: 'STABLE', i: ClipboardCheck, c: 'text-indigo-400' },
-                      ].map((s, i) => (
-                        <div key={i} className="flex items-center justify-between group">
-                           <div className="flex items-center gap-4">
-                              <div className={`p-2 rounded-lg bg-white/5 ${s.c} group-hover:scale-110 transition-transform shadow-inner border border-white/5`}><s.i size={16} /></div>
-                              <span className="text-[10px] font-black text-slate-500 uppercase tracking-tight">{s.l}</span>
-                           </div>
-                           <span className="text-sm font-mono font-black text-white">{s.v}</span>
-                        </div>
-                      ))}
-                   </div>
-                   <div className="p-6 bg-white/5 rounded-3xl border border-white/10 text-center shadow-inner">
-                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Reputation Delta</p>
-                      <p className="text-xl font-mono font-black text-emerald-400">+142 PTS</p>
-                   </div>
-                </div>
-             </div>
-
-             <div className="space-y-6">
-                <h4 className="text-xl font-black text-white uppercase italic tracking-widest px-4">Disbursement Shards</h4>
-                <div className="glass-card rounded-[40px] overflow-hidden border border-white/5 bg-black/40 shadow-xl">
-                   <div className="grid grid-cols-5 p-8 border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      <span className="col-span-2">Completed Shard</span>
-                      <span>Value EAC</span>
-                      <span>Settlement Date</span>
-                      <span className="text-right">Registry Auth</span>
-                   </div>
-                   <div className="divide-y divide-white/5">
-                      {completedOrders.map(tx => (
-                        <div key={tx.id} className="grid grid-cols-5 p-8 hover:bg-white/[0.02] transition-all items-center group">
-                           <div className="col-span-2 flex items-center gap-6">
-                              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                                 <Receipt size={20} className="text-emerald-400" />
-                              </div>
-                              <div>
-                                 <p className="text-lg font-bold text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors italic">{tx.itemName}</p>
-                                 <p className="text-[10px] text-slate-500 font-mono mt-1 font-bold">{tx.id}</p>
-                              </div>
-                           </div>
-                           <div className="text-lg font-mono font-black text-white">
-                              +{tx.cost.toFixed(0)}
-                           </div>
-                           <div className="text-xs text-slate-500 font-mono">
-                              {new Date(tx.timestamp).toLocaleDateString()}
-                           </div>
-                           <div className="flex justify-end pr-4">
-                              <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 shadow-xl">
-                                 <ShieldCheck size={16} />
-                              </div>
-                           </div>
-                        </div>
-                      ))}
-                      {completedOrders.length === 0 && (
-                        <div className="p-20 text-center opacity-30 italic">Awaiting completed procurement handshakes. Disbursement follows digital GRN signature.</div>
-                      )}
-                   </div>
-                </div>
-             </div>
-          </div>
+           <div className="space-y-12 animate-in fade-in duration-1000">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                 <div className="p-12 glass-card rounded-[64px] bg-emerald-600/5 border-2 border-emerald-500/20 shadow-3xl relative overflow-hidden flex flex-col justify-between h-[450px] group">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[10s]"><Stamp size={400} /></div>
+                    <div className="space-y-6 relative z-10">
+                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Global <span className="text-emerald-400">Revenue Sharding</span></h3>
+                       <p className="text-slate-500 text-xl font-medium italic leading-relaxed max-lg:text-sm max-w-lg">"Registry settlements finalized via ZK-Audits and physical handshakes."</p>
+                    </div>
+                    <div className="flex items-baseline gap-6 relative z-10">
+                       <p className="text-[100px] font-mono font-black text-white leading-none tracking-tighter italic">{totalEarned.toFixed(0)}</p>
+                       <p className="text-3xl font-black text-emerald-500 italic uppercase">EAC YIELDED</p>
+                    </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-6">
+                    {[
+                       { l: 'Ledger Accuracy', v: '100%', i: Binary, c: 'text-blue-400' },
+                       { l: 'Audit Score', v: 'A+', i: BadgeCheck, c: 'text-emerald-400' },
+                       { l: 'Escrow Flow', v: 'High', i: Wallet, c: 'text-amber-500' },
+                       { l: 'Node Trust', v: '99.8%', i: ShieldCheck, c: 'text-indigo-400' },
+                    ].map((stat, i) => (
+                       <div key={i} className="p-10 glass-card rounded-[56px] border border-white/5 bg-black/40 flex flex-col justify-between group hover:border-indigo-500/30 transition-all shadow-xl">
+                          <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 w-fit ${stat.c} group-hover:scale-110 transition-transform shadow-inner`}><stat.i size={24} /></div>
+                          <div>
+                             <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">{stat.l}</p>
+                             <p className="text-4xl font-mono font-black text-white tracking-tighter leading-none">{stat.v}</p>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
         )}
       </div>
 
-      {/* Industrial Dispatch Modal */}
-      {selectedOrderForDispatch && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setSelectedOrderForDispatch(null)}></div>
-           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
-              <div className="p-10 md:p-16 space-y-12">
-                 <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-8">
-                       <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white shadow-2xl animate-float">
-                          <Truck size={32} />
-                       </div>
-                       <div>
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Logistics <span className="text-emerald-400">Ingest</span></h3>
-                          <p className="text-emerald-500/60 font-mono text-[10px] tracking-widest uppercase mt-3">ORDER_ID: {selectedOrderForDispatch.id}</p>
-                       </div>
+      {/* --- MODAL: MODIFY ASSET --- */}
+      {modifyingProduct && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setModifyingProduct(null)}></div>
+           <div className="relative z-10 w-full max-xl glass-card rounded-[64px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in border-2 flex flex-col max-h-[90vh]">
+              <div className="p-12 md:p-16 border-b border-white/5 flex justify-between items-center bg-indigo-500/[0.02]">
+                 <div className="flex items-center gap-8">
+                    <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-3xl animate-float">
+                       <Edit2 size={32} />
                     </div>
-                    <button onClick={() => setSelectedOrderForDispatch(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all border border-white/5 shadow-xl"><X size={24} /></button>
+                    <div>
+                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Modify <span className="text-indigo-400">Shard</span></h3>
+                       <p className="text-indigo-400/60 font-mono text-[10px] uppercase mt-3">TARGET_ID: {modifyingProduct.id}</p>
+                    </div>
                  </div>
-
-                 <div className="space-y-8 flex-1">
+                 <button onClick={() => setModifyingProduct(null)} className="p-5 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-12 custom-scrollbar bg-black/40 space-y-10">
+                 <div className="space-y-4">
+                    <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4 block text-left">Asset Designation (Name)</label>
+                    <input 
+                      type="text" value={modifyingProduct.name} 
+                      onChange={e => setModifyingProduct({...modifyingProduct, name: e.target.value})}
+                      className="w-full bg-black border border-white/10 rounded-3xl py-6 px-10 text-xl font-bold text-white outline-none focus:ring-4 focus:ring-indigo-500/10 italic shadow-inner" 
+                    />
+                 </div>
+                 <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-4">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-6">Select Industrial Relay</label>
-                       <div className="grid grid-cols-1 gap-4">
-                          {LOGISTIC_PROVIDERS.map(lp => (
-                             <button 
-                                key={lp.id}
-                                onClick={() => handleExecuteDispatch(lp)}
-                                className="p-8 glass-card border border-white/5 hover:border-emerald-500/30 bg-black/40 rounded-[44px] transition-all flex items-center justify-between group active:scale-95 shadow-xl"
-                             >
-                                <div className="flex items-center gap-8">
-                                   <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-slate-600 group-hover:bg-emerald-600/10 group-hover:text-emerald-400 transition-all shadow-inner border border-white/10">
-                                      {lp.name.includes('Drone') ? <Bot size={28} /> : lp.name.includes('Rail') ? <Building2 size={28} /> : <HardHat size={28} />}
-                                   </div>
-                                   <div className="text-left">
-                                      <p className="text-xl font-bold text-white uppercase italic leading-none">{lp.name}</p>
-                                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-3">Resonance: {lp.mResonance}x // ETA: {lp.speed}</p>
-                                   </div>
-                                </div>
-                                <div className="text-right">
-                                   <p className="text-xl font-mono font-black text-emerald-400">{lp.costEAC} <span className="text-[10px]">EAC</span></p>
-                                   <p className="text-[9px] text-slate-700 font-bold uppercase tracking-tighter">Relay Fee</p>
-                                </div>
-                             </button>
-                          ))}
-                       </div>
+                       <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4 block text-left">Registry Cost</label>
+                       <input 
+                         type="number" value={modifyingProduct.price} 
+                         onChange={e => setModifyingProduct({...modifyingProduct, price: Number(e.target.value)})}
+                         className="w-full bg-black border border-white/10 rounded-3xl py-6 px-10 text-xl font-mono font-black text-indigo-400 outline-none" 
+                       />
+                    </div>
+                    <div className="space-y-4">
+                       <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4 block text-left">Unit Stock</label>
+                       <input 
+                         type="number" value={modifyingProduct.stock} 
+                         onChange={e => setModifyingProduct({...modifyingProduct, stock: Number(e.target.value)})}
+                         className="w-full bg-black border border-white/10 rounded-3xl py-6 px-10 text-xl font-mono font-black text-emerald-400 outline-none" 
+                       />
                     </div>
                  </div>
-
-                 <div className="p-8 bg-blue-500/5 border border-blue-500/10 rounded-[44px] flex items-center gap-8 shadow-inner">
-                    <ShieldAlert className="w-12 h-12 text-blue-500 shrink-0" />
-                    <p className="text-[10px] text-blue-200/50 font-black uppercase tracking-tight leading-relaxed text-left italic">
-                       LOGISTICS_POLICY: "Selecting a relay node initiates a ZK-Handshake for the tracking shard. Delivery finality requires digital GRN signature from the customer."
-                    </p>
-                 </div>
+                 <button 
+                  onClick={handleSaveModification}
+                  className="w-full py-10 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.3)] active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
+                 >
+                    ANCHOR MODIFIED SHARD
+                 </button>
               </div>
            </div>
         </div>
       )}
 
-      {/* Registration Modal */}
+      {/* Supplier Registration Workflow maintained... */}
       {showRegisterModal && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowRegisterModal(false)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+           <div className="relative z-10 w-full max-xl glass-card rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
               <div className="p-10 md:p-16 space-y-12 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
                  <button onClick={() => setShowRegisterModal(false)} className="absolute top-10 right-10 p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20"><X size={32} /></button>
                  
@@ -563,7 +493,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                        const currentIdx = stages.indexOf(regStep);
                        return (
                          <div key={s} className="flex-1 flex flex-col gap-2">
-                           <div className={`h-2 rounded-full transition-all duration-700 ${i < currentIdx ? 'bg-emerald-500 shadow-[0_0_15px_#10b981]' : i === currentIdx ? 'bg-amber-400 animate-pulse' : 'bg-white/10'}`}></div>
+                           <div className={`h-1.5 rounded-full transition-all duration-700 ${i < currentIdx ? 'bg-emerald-500 shadow-[0_0_15px_#10b981]' : i === currentIdx ? 'bg-amber-400 animate-pulse' : 'bg-white/10'}`}></div>
                            <span className={`text-[7px] font-black uppercase text-center tracking-widest ${i === currentIdx ? 'text-amber-400' : 'text-slate-700'}`}>{s}</span>
                          </div>
                        );
@@ -576,7 +506,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                           <div className="w-24 h-24 bg-amber-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-amber-500/20 shadow-2xl">
                              <Building2 className="w-12 h-12 text-amber-500" />
                           </div>
-                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Supplier <span className="text-amber-500">Identity</span></h3>
+                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Supplier <span className="text-amber-500">Identity</span></h3>
                           <p className="text-slate-400 text-lg font-medium leading-relaxed max-md:text-sm max-w-md mx-auto italic">Select your industrial designation for global registry ingest.</p>
                        </div>
                        
@@ -601,7 +531,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                           ))}
                        </div>
 
-                       <button onClick={() => setRegStep('item_ingest')} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:bg-amber-500 transition-all flex items-center justify-center gap-4 active:scale-95">
+                       <button onClick={() => setRegStep('item_ingest')} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:bg-amber-50 transition-all flex items-center justify-center gap-4 active:scale-95">
                           Continue to Item Ingest <ChevronRight className="w-6 h-6" />
                        </button>
                     </div>
@@ -616,12 +546,12 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                        
                        <div className="space-y-8">
                           <div className="space-y-2">
-                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Registry Alias (Name)</label>
+                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4 block text-left">Registry Alias (Name)</label>
                              <input type="text" required value={itemName} onChange={e => setItemName(e.target.value)} placeholder="e.g. Spectral Maize Shards v4" className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-amber-500/10 shadow-inner" />
                           </div>
                           
                           <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
+                             <div className="space-y-2 text-left">
                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Pillar Category</label>
                                 <select value={itemCategory} onChange={e => setItemCategory(e.target.value as any)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-amber-500/20">
                                    <option>Seed</option>
@@ -632,13 +562,13 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                                    <option>Service</option>
                                 </select>
                              </div>
-                             <div className="space-y-2">
+                             <div className="space-y-2 text-left">
                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Registry Cost (EAC)</label>
                                 <input type="number" required value={itemPrice} onChange={e => setItemPrice(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white font-mono text-xl focus:ring-2 focus:ring-amber-500/20 outline-none" />
                              </div>
                           </div>
 
-                          <div className="space-y-2">
+                          <div className="space-y-2 text-left">
                              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Technical Narrative (Description)</label>
                              <textarea required value={itemDesc} onChange={e => setItemDesc(e.target.value)} placeholder="Describe the sustainability impact and origin..." className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm h-32 resize-none outline-none focus:ring-2 focus:ring-amber-500/20 italic" />
                           </div>
@@ -654,12 +584,12 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                  {regStep === 'settlement' && (
                     <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
                        <div className="text-center space-y-4">
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Registry <span className="text-amber-500">Handshake</span></h3>
-                          <p className="text-slate-400 text-sm">Authorize EAC for institutional vetting and node sharding.</p>
+                          <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl"><Coins className="w-10 h-10 text-emerald-400" /></div>
+                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Registry <span className="text-indigo-400">Handshake</span></h3>
                        </div>
                        <div className="p-10 bg-black/60 rounded-[48px] border border-white/10 text-center space-y-10 shadow-inner">
                           <div className="flex justify-between items-center px-4">
-                             <span className="text-[10px] font-black text-slate-500 uppercase">Shard Designation</span>
+                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Shard Designation</span>
                              <span className="text-xs font-black text-amber-500 uppercase italic">{supplierType.replace('_', ' ')}</span>
                           </div>
                           <div className="flex justify-between items-center px-4 border-t border-white/5 pt-6">
@@ -667,7 +597,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                              <span className="text-4xl font-mono font-black text-emerald-400">{getSettlementFee()} EAC</span>
                           </div>
                           <div className="space-y-4 pt-6">
-                             <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.4em] text-center mb-4">Confirm Node Signature (ESIN)</p>
+                             <p className="text-[10px] text-slate-600 font-black uppercase text-center tracking-[0.4em] mb-4">Confirm Node Signature (ESIN)</p>
                              <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-transparent border-none text-center text-4xl font-mono text-white outline-none uppercase placeholder:text-slate-900 tracking-widest shadow-inner" />
                           </div>
                        </div>
@@ -728,9 +658,10 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .shadow-3xl { box-shadow: 0 40px 150px -30px rgba(0, 0, 0, 0.95); }
       `}</style>
     </div>
   );

@@ -5,54 +5,54 @@ import {
   Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, UserCircle
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard } from '../types';
-import Dashboard from './components/Dashboard';
-import Sustainability from './components/Sustainability';
-import Economy from './components/Economy';
-import Industrial from './components/Industrial';
-import Intelligence from './components/Intelligence';
-import Community from './components/Community';
-import Explorer from './components/Explorer';
-import Ecosystem from './components/Ecosystem';
-import MediaHub from './components/MediaHub';
-import InfoPortal from './components/InfoPortal';
-import Login from './components/Login';
-import AgroWallet from './components/AgroWallet';
-import UserProfile from './components/UserProfile';
-import InvestorPortal from './components/InvestorPortal';
-import VendorPortal from './components/VendorPortal';
-import NetworkIngest from './components/NetworkIngest';
-import ToolsSection from './components/ToolsSection';
-import LiveVoiceBridge from './components/LiveVoiceBridge';
-import Channelling from './components/Channelling';
-import EvidenceModal from './components/EvidenceModal';
-import CircularGrid from './components/CircularGrid';
-import NexusCRM from './components/NexusCRM';
-import TQMGrid from './components/TQMGrid';
-import ResearchInnovation from './components/ResearchInnovation';
-import LiveFarming from './components/LiveFarming';
-import ContractFarming from './components/ContractFarming';
-import Agrowild from './components/Agrowild';
-import FloatingConsultant from './components/FloatingConsultant';
-import Impact from './components/Impact';
-import NaturalResources from './components/NaturalResources';
-import IntranetPortal from './components/IntranetPortal';
-import EnvirosAgroStore from './components/EnvirosAgroStore';
-import CEA from './components/CEA';
-import Biotechnology from './components/Biotechnology';
-import Permaculture from './components/Permaculture';
-import EmergencyPortal from './components/EmergencyPortal';
-import AgroRegency from './components/AgroRegency';
-import CodeOfLaws from './components/CodeOfLaws';
-import AgroCalendar from './components/AgroCalendar';
-import ChromaSystem from './components/ChromaSystem';
-import AgroValueEnhancement from './components/AgroValueEnhancement';
-import DigitalMRV from './components/DigitalMRV';
-import RegistryHandshake from './components/RegistryHandshake';
-import OnlineGarden from './components/OnlineGarden';
-import FarmOS from './components/FarmOS';
-import NetworkView from './components/NetworkView';
-import MediaLedger from './components/MediaLedger';
-import AgroLang from './components/AgroLang';
+import Dashboard from './Dashboard';
+import Sustainability from './Sustainability';
+import Economy from './Economy';
+import Industrial from './Industrial';
+import Intelligence from './Intelligence';
+import Community from './Community';
+import Explorer from './Explorer';
+import Ecosystem from './Ecosystem';
+import MediaHub from './MediaHub';
+import InfoPortal from './InfoPortal';
+import Login from './Login';
+import AgroWallet from './AgroWallet';
+import UserProfile from './UserProfile';
+import InvestorPortal from './InvestorPortal';
+import VendorPortal from './VendorPortal';
+import NetworkIngest from './NetworkIngest';
+import ToolsSection from './ToolsSection';
+import LiveVoiceBridge from './LiveVoiceBridge';
+import Channelling from './Channelling';
+import EvidenceModal from './EvidenceModal';
+import CircularGrid from './CircularGrid';
+import NexusCRM from './NexusCRM';
+import TQMGrid from './TQMGrid';
+import ResearchInnovation from './ResearchInnovation';
+import LiveFarming from './LiveFarming';
+import ContractFarming from './ContractFarming';
+import Agrowild from './Agrowild';
+import FloatingConsultant from './FloatingConsultant';
+import Impact from './Impact';
+import NaturalResources from './NaturalResources';
+import IntranetPortal from './IntranetPortal';
+import EnvirosAgroStore from './EnvirosAgroStore';
+import CEA from './CEA';
+import Biotechnology from './Biotechnology';
+import Permaculture from './Permaculture';
+import EmergencyPortal from './EmergencyPortal';
+import AgroRegency from './AgroRegency';
+import CodeOfLaws from './CodeOfLaws';
+import AgroCalendar from './AgroCalendar';
+import ChromaSystem from './ChromaSystem';
+import AgroValueEnhancement from './AgroValueEnhancement';
+import DigitalMRV from './DigitalMRV';
+import RegistryHandshake from './RegistryHandshake';
+import OnlineGarden from './OnlineGarden';
+import FarmOS from './FarmOS';
+import NetworkView from './NetworkView';
+import MediaLedger from './MediaLedger';
+import AgroLang from './AgroLang';
 import { 
   syncUserToCloud, 
   auth, 
@@ -62,8 +62,10 @@ import {
   listenForGlobalEchoes, 
   saveCollectionItem, 
   onAuthStateChanged,
-  listenToCollection
+  listenToCollection,
+  db
 } from '../services/firebaseService';
+import { deleteDoc, doc } from 'firebase/firestore';
 import { createGenesisBlock, mineBlock, VALIDATORS } from '../services/blockchainService';
 
 export interface SignalShard {
@@ -182,6 +184,7 @@ const REGISTRY_NODES = [
   {
     category: 'Innovation Hub',
     items: [
+      { id: 'agrolang', name: 'AgroLang IDE', icon: Code2 },
       { id: 'research', name: 'Invention Ledger', icon: Zap },
       { id: 'biotech_hub', name: 'Genetic Decoder', icon: Dna },
       { id: 'permaculture_hub', name: 'Design Resilience', icon: Compass },
@@ -345,6 +348,7 @@ const App: React.FC = () => {
 
   const handleUpdateUser = useCallback(async (updatedUser: User) => {
     const m = updatedUser.metrics.timeConstantTau;
+    // Fixed: Corrected typo PENALALTY_FACTOR to PENALTY_FACTOR
     updatedUser.wallet.exchangeRate = BASE_EXCHANGE_RATE * (1 + (PENALTY_FACTOR / m));
     setUser(updatedUser);
     localStorage.setItem('agro_steward', JSON.stringify(updatedUser));
@@ -482,6 +486,49 @@ const App: React.FC = () => {
     addPulse(`New asset registered: ${product.name}`);
     notify('success', 'ASSET_ANCHORED', `Provisioned ${product.name} to the global cloud catalogue.`);
   }, [isGuest, addPulse, notify]);
+
+  const handleDeleteVendorProduct = useCallback(async (productId: string) => {
+    if (!isGuest) {
+      await deleteDoc(doc(db, 'products', productId));
+      notify('info', 'ASSET_PURGED', 'Shard removed from global registry.');
+    }
+  }, [isGuest, notify]);
+
+  const handleUpdateVendorProduct = useCallback(async (product: VendorProduct) => {
+    if (!isGuest) {
+      await saveCollectionItem('products', product);
+      notify('success', 'ASSET_UPDATED', `Registry entry for ${product.name} re-sharded.`);
+    }
+  }, [isGuest, notify]);
+
+  const handleCommitVendorProductToLive = useCallback(async (product: VendorProduct) => {
+    if (!isGuest) {
+      const liveId = `LPRD-${Math.random().toString(36).substring(7).toUpperCase()}`;
+      const newLive: LiveAgroProduct = {
+        id: liveId,
+        stewardEsin: user.esin,
+        stewardName: user.name,
+        productType: product.name,
+        category: product.category === 'Produce' ? 'Produce' : 'Manufactured',
+        stage: 'Processing',
+        progress: 10,
+        votes: 0,
+        location: user.location,
+        timestamp: new Date().toISOString(),
+        lastUpdate: 'Just now',
+        isAuthentic: true,
+        auditStatus: 'In-Progress',
+        tasks: [],
+        telemetryNodes: []
+      };
+      
+      if (await spendEAC(50, `LIVE_PROCESSING_AUDIT_${product.id}`)) {
+        await saveCollectionItem('live_products', newLive);
+        notify('success', 'PROCESSING_INIT', `Commencing SCADA sequence for ${product.name}.`);
+        setActiveView('live_farming');
+      }
+    }
+  }, [isGuest, user, spendEAC, notify]);
 
   const handleNavigate = (newView: ViewState) => {
     setActiveView(newView);
@@ -642,7 +689,7 @@ const App: React.FC = () => {
              {isCloudSynced ? (
                 <div className="flex items-center gap-4">
                    <div className="flex flex-col items-end hidden sm:flex">
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">{user.name}</span>
+                      <span className="text-10px font-black text-white uppercase tracking-widest">{user.name}</span>
                       <span className="text-[8px] font-mono text-emerald-400 font-bold uppercase">{user.esin}</span>
                    </div>
                    <button onClick={() => handleNavigate('profile')} className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 font-black overflow-hidden shadow-2xl border border-white/10 ring-4 ring-white/5 hover:scale-105 transition-all">
@@ -685,12 +732,12 @@ const App: React.FC = () => {
           {activeView === 'profile' && <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); setIsCloudSynced(true); }} onNavigate={handleNavigate} />}
           {activeView === 'explorer' && <Explorer blockchain={blockchain} isMining={isMining} onPulse={addPulse} user={user} />}
           {activeView === 'community' && <Community user={user} isGuest={isGuest} onContribution={(type, cat) => earnEAC(5, `CONTRIBUTION_${type.toUpperCase()}_${cat.toUpperCase()}`)} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
-          {activeView === 'live_farming' && <LiveFarming user={user} products={liveProducts} setProducts={() => {}} onEarnEAC={earnEAC} onSaveProduct={handleSaveLiveProduct} onNavigate={handleNavigate} notify={notify} />}
+          {activeView === 'live_farming' && <LiveFarming user={user} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={earnEAC} onSaveProduct={handleSaveLiveProduct} onNavigate={handleNavigate} notify={notify} />}
           {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} onNavigate={handleNavigate} liveProducts={liveProducts} notify={notify} />}
           {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onNavigate={handleNavigate} orders={orders} />}
           {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} onNavigate={handleNavigate} />}
           {activeView === 'tools' && <ToolsSection user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} tasks={tasks} onSaveTask={handleSaveTask} onOpenEvidence={(task) => { setIsEvidenceModalOpen(true); }} notify={notify} />}
-          {activeView === 'contract_farming' && <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} contracts={contracts} setContracts={() => {}} onSaveContract={handleSaveContract} notify={notify} />}
+          {activeView === 'contract_farming' && <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} contracts={contracts} setContracts={setContracts} onSaveContract={handleSaveContract} notify={notify} />}
           {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} onSpendEAC={spendEAC} projects={projects} onNavigate={handleNavigate} notify={notify} />}
           {activeView === 'agrowild' && <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />}
           {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
@@ -705,7 +752,7 @@ const App: React.FC = () => {
           {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
           {activeView === 'info' && <InfoPortal onNavigate={handleNavigate} />}
           {activeView === 'ingest' && <NetworkIngest user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} onNavigate={handleNavigate} />}
+          {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} onDeleteProduct={handleDeleteVendorProduct} onUpdateProduct={handleUpdateVendorProduct} onCommitToLive={handleCommitVendorProductToLive} onNavigate={handleNavigate} />}
           {activeView === 'agro_value_enhancement' && <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} liveProducts={liveProducts} orders={orders} />}
           {activeView === 'digital_mrv' && <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} />}
           {activeView === 'registry_handshake' && <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}

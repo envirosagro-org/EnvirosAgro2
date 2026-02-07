@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   User as UserIcon, MapPin, ShieldCheck, Key, Award, Mail, Calendar, Edit3, 
@@ -18,7 +19,7 @@ import {
   Radar as RechartsRadar
 } from 'recharts';
 import { User, ViewState } from '../types';
-import { auth } from '../services/firebaseService';
+import { auth, uploadStewardAvatar } from '../services/firebaseService';
 import { SignalShard } from '../App';
 
 interface UserProfileProps {
@@ -62,6 +63,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
   const [isMintingCert, setIsMintingCert] = useState(false);
   const [certMinted, setCertMinted] = useState(!!user.zodiacFlower?.certId);
   const [editedUser, setEditedUser] = useState<User>({ ...user });
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const isEmailVerified = (auth.currentUser as any)?.emailVerified;
@@ -139,44 +141,122 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
 
   const downloadCertificate = () => {
     if (!user.zodiacFlower?.certId) return;
-    const certContent = `
-    ENVIROSAGRO CELESTIAL VAULT
-    ===========================
-    CERTIFICATE OF BIO-RESONANCE
-    ---------------------------
-    HOLDER: ${user.name}
-    ESIN: ${user.esin}
-    GENDER: ${user.gender || 'Not Specified'}
-    REGISTRATION: ${user.regDate}
-    
-    CELESTIAL ALIGNMENT:
-    MONTH: ${user.zodiacFlower.month}
-    FLOWER: ${user.zodiacFlower.flower}
-    TRAIT: ${MONTH_FLOWERS[user.zodiacFlower.month].trait}
-    ---------------------------
-    CERTIFICATE_ID: ${user.zodiacFlower.certId}
-    MINT_TIMESTAMP: ${user.zodiacFlower.mintedAt}
-    REGISTRY_FINALITY: ZK_PROVEN
-    ===========================
+    const flowerData = MONTH_FLOWERS[user.zodiacFlower.month];
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnvirosAgro™ Bio-Resonance Certificate</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+        body { background: #020403; color: #e2e8f0; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .cert { background: #050706; border: 4px double #10b98144; border-radius: 40px; padding: 60px; max-width: 800px; width: 100%; position: relative; box-shadow: 0 40px 100px rgba(0,0,0,0.8); overflow: hidden; }
+        .cert::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 100% 0%, #10b98111 0%, transparent 50%), radial-gradient(circle at 0% 100%, #6366f111 0%, transparent 50%); pointer-events: none; }
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.03; font-size: 400px; pointer-events: none; color: #10b981; }
+        .header { border-bottom: 2px solid #ffffff11; padding-bottom: 30px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 10; }
+        .brand { color: #10b981; font-weight: 900; font-size: 24px; text-transform: uppercase; letter-spacing: -1px; font-style: italic; }
+        .brand span { color: #3b82f6; }
+        .serial { font-family: 'JetBrains Mono', monospace; color: #64748b; font-size: 10px; letter-spacing: 2px; margin-top: 5px; text-transform: uppercase; }
+        h1 { font-size: 44px; font-weight: 900; text-transform: uppercase; font-style: italic; letter-spacing: -2px; margin: 0; color: #fff; line-height: 1; position: relative; z-index: 10; }
+        h1 span { color: #10b981; }
+        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 50px; position: relative; z-index: 10; }
+        .label { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px; }
+        .value { font-size: 22px; font-weight: 700; color: #fff; border-bottom: 1px solid #ffffff11; padding-bottom: 12px; font-style: italic; }
+        .desc { font-style: italic; font-size: 15px; color: #94a3b8; line-height: 1.8; margin-top: 50px; border-left: 6px solid #10b98133; padding-left: 24px; position: relative; z-index: 10; background: rgba(255,255,255,0.01); padding-top: 20px; padding-bottom: 20px; border-radius: 0 20px 20px 0; }
+        .footer { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 10; }
+        .sign-block { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+        .sign-line { width: 220px; border-top: 1px solid #ffffff22; padding-top: 10px; margin-bottom: 5px; }
+        .seal { width: 140px; height: 140px; border: 3px double #f59e0b33; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #f59e0b; background: rgba(245, 158, 11, 0.03); backdrop-filter: blur(5px); }
+        .seal-inner { text-align: center; font-size: 9px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
+        .trait-tag { display: inline-block; padding: 4px 12px; background: #10b98111; border: 1px solid #10b98133; color: #10b981; border-radius: 8px; font-size: 10px; font-weight: 900; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="cert">
+        <div class="watermark">✻</div>
+        <div class="header">
+            <div>
+                <div class="brand">Enviros<span>Agro</span>™</div>
+                <div class="serial">SYSTEM_CALL: CELESTIAL_VAULT_DECODER // v6.5</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="serial">TIMESTAMP: ${new Date(user.zodiacFlower.mintedAt!).toLocaleDateString().replace(/\//g, '.')}</div>
+                <div class="serial">STATUS: ANCHORED_TO_L3</div>
+            </div>
+        </div>
+        
+        <h1>CERTIFICATE OF <br><span>BIO-RESONANCE</span></h1>
+        
+        <div class="details">
+            <div>
+                <div class="label">Steward Identity Anchor</div>
+                <div class="value">${user.name.toUpperCase()}</div>
+            </div>
+            <div>
+                <div class="label">Registry ESIN</div>
+                <div class="value" style="color: #6366f1; font-family: 'JetBrains Mono', monospace;">${user.esin}</div>
+            </div>
+            <div>
+                <div class="label">Celestial Month Shard</div>
+                <div class="value" style="color: #f472b6;">${user.zodiacFlower.month} // ${user.zodiacFlower.flower}</div>
+                <div class="trait-tag">${flowerData.trait.toUpperCase()} ALIGNMENT</div>
+            </div>
+            <div>
+                <div class="label">Finality Hash</div>
+                <div class="value" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #10b981;">${user.zodiacFlower.certId}</div>
+            </div>
+        </div>
+
+        <div class="desc">
+            "By authority of the EnvirosAgro OS, this document validates the synchronization of the listed Steward Node with their biological birth cycle. 
+            This sharded identity is immutably anchored to the industrial blockchain, granting verified access to the Celestial Vault protocols and 
+            establishing the baseline for future m-constant resilience audits."
+        </div>
+
+        <div class="footer">
+            <div class="sign-block">
+                <div class="sign-line"></div>
+                HQ Network Registrar
+            </div>
+            <div class="seal">
+                <div class="seal-inner">
+                    OFFICIAL<br>REGISTRY<br>SEAL
+                    <div style="margin-top: 10px; font-size: 14px;">✻</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
     `;
-    const blob = new Blob([certContent], { type: 'text/plain' });
+    const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `CELESTIAL_CERT_${user.zodiacFlower.certId}.txt`;
+    a.download = `CELESTIAL_CERT_${user.zodiacFlower.certId}.html`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setEditedUser(prev => ({ ...prev, avatar: base64 }));
-      };
-      reader.readAsDataURL(file);
+    const uid = auth.currentUser?.uid;
+    if (file && uid) {
+      setIsUploadingAvatar(true);
+      try {
+        const downloadUrl = await uploadStewardAvatar(uid, file);
+        setEditedUser(prev => ({ ...prev, avatar: downloadUrl }));
+        // Auto-save avatar change to cloud
+        onUpdate({ ...user, avatar: downloadUrl });
+        alert("BIOMETRIC_UPDATE: Avatar shard anchored to Cloud Storage.");
+      } catch (err) {
+        console.error("Avatar upload error:", err);
+        alert("INGEST_ERROR: Could not anchor avatar shard.");
+      } finally {
+        setIsUploadingAvatar(false);
+      }
     }
   };
 
@@ -192,8 +272,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
               </div>
               
               <div className="relative shrink-0 flex flex-col items-center gap-4">
-                 <div className="w-44 h-44 rounded-[56px] bg-slate-800 border-4 border-white/10 flex items-center justify-center text-8xl font-black text-emerald-400 shadow-2xl group-hover:scale-105 transition-transform duration-700 overflow-hidden relative">
-                   {user.avatar ? (
+                 <div className="w-44 h-44 rounded-[56px] bg-slate-800 border-4 border-white/10 flex items-center justify-center text-8xl font-black text-emerald-400 shadow-2xl group-hover:scale-105 transition-all duration-700 overflow-hidden relative">
+                   {isUploadingAvatar ? (
+                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-20">
+                        <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+                        <span className="text-[10px] font-black text-emerald-400 uppercase mt-4 animate-pulse">Anchoring...</span>
+                     </div>
+                   ) : user.avatar ? (
                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                    ) : (
                      user.name[0]
@@ -257,7 +342,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
         </div>
       </div>
 
-      {/* 2. Main Tab Navigation */}
+      {/* 2. Main Tab Navigation Tabs */}
       <div className="flex overflow-x-auto scrollbar-hide gap-4 p-2 glass-card rounded-[32px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-6 mx-auto lg:mx-4 relative z-20">
         {[
           { id: 'hub', label: 'STEWARD HUB', icon: Layout },

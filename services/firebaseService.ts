@@ -7,7 +7,12 @@ import {
   createUserWithEmailAndPassword as fbCreateUser, 
   signOut as fbSignOut, 
   sendEmailVerification, 
-  sendPasswordResetEmail 
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  ConfirmationResult
 } from "firebase/auth";
 import { 
   getFirestore, 
@@ -35,6 +40,12 @@ import {
   query as rtdbQuery,
   serverTimestamp as rtdbTimestamp
 } from "firebase/database";
+import { 
+  getStorage, 
+  ref as sRef, 
+  uploadBytes, 
+  getDownloadURL 
+} from "firebase/storage";
 import { User as AgroUser } from "../types";
 
 const firebaseConfig = {
@@ -51,6 +62,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
+export const storage = getStorage(app);
 
 // --- AUTHENTICATION ---
 export const onAuthStateChanged = (_: any, callback: (user: any) => void) => {
@@ -65,38 +77,52 @@ export const createUserWithEmailAndPassword = async (_: any, email: string, pass
   return fbCreateUser(auth, email, pass);
 };
 
+// Google Auth
+export const signInWithGoogle = async () => {
+  const provider = new GoogleAuthProvider();
+  return signInWithPopup(auth, provider);
+};
+
+// Phone Auth (SMS)
+export const setupRecaptcha = (containerId: string) => {
+  if (!(window as any).recaptchaVerifier) {
+    (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+      'size': 'invisible',
+      'callback': (response: any) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
+      }
+    });
+  }
+};
+
+export const signInWithPhone = async (phoneNumber: string): Promise<ConfirmationResult> => {
+  const appVerifier = (window as any).recaptchaVerifier;
+  return signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+};
+
 export const signOutSteward = () => fbSignOut(auth);
 
 export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
 /**
  * Transmits a 6-digit recovery shard code to the user email.
- * In a full production env, this would trigger a Firebase Cloud Function 
- * that uses SendGrid or Nodemailer to send the actual email.
  */
 export const transmitRecoveryCode = async (email: string) => {
   try {
-    // 1. Verify email exists in registry
     const q = query(collection(db, "stewards"), where("email", "==", email.toLowerCase()));
     const snap = await getDocs(q);
     if (snap.empty) throw new Error("EMAIL_NOT_FOUND");
 
-    // 2. Generate 6-digit shard
     const shardCode = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // 3. Anchor code to temporary registry with TTL
     const recoveryRef = doc(db, "recovery_shards", email.toLowerCase());
     await setDoc(recoveryRef, {
       code: shardCode,
       createdAt: Date.now(),
-      expiresAt: Date.now() + (1000 * 60 * 15) // 15 min expiry
+      expiresAt: Date.now() + (1000 * 60 * 15)
     });
 
-    // 4. Trigger "Email Signal" (Simulated for this frontend-only env)
-    // NOTE: In production, the Cloud Function would handle the Gmail API call here.
     console.log(`[NETWORK_SIGNAL] Recovery Shard ${shardCode} transmitted to ${email}`);
-    
-    // We also trigger standard Firebase reset as a fallback link
     await sendPasswordResetEmail(auth, email);
     
     return true;
@@ -105,17 +131,12 @@ export const transmitRecoveryCode = async (email: string) => {
   }
 };
 
-/**
- * Verifies the 6-digit recovery shard against the registry.
- */
 export const verifyRecoveryShard = async (email: string, code: string) => {
   try {
     const recoveryRef = doc(db, "recovery_shards", email.toLowerCase());
     const snap = await getDoc(recoveryRef);
-    
     if (!snap.exists()) return false;
     const data = snap.data();
-    
     if (Date.now() > data.expiresAt) return false;
     return data.code === code;
   } catch (e) {
@@ -127,6 +148,27 @@ export const resendVerificationEmail = async () => {
   if (auth.currentUser) {
     await sendEmailVerification(auth.currentUser);
   }
+};
+
+// --- CLOUD STORAGE HANDLERS ---
+
+/**
+ * Anchors MRV evidence to storage. Organize by ESIN for security rules.
+ */
+export const uploadEvidenceShard = async (esin: string, file: File) => {
+  const fileId = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+  const storageRef = sRef(storage, `evidence/${esin}/${fileId}`);
+  const snapshot = await uploadBytes(storageRef, file);
+  return getDownloadURL(snapshot.ref);
+};
+
+/**
+ * Anchors Steward avatar. Organized by UID.
+ */
+export const uploadStewardAvatar = async (uid: string, file: File) => {
+  const storageRef = sRef(storage, `avatars/${uid}/profile_pic`);
+  const snapshot = await uploadBytes(storageRef, file);
+  return getDownloadURL(snapshot.ref);
 };
 
 // --- REGISTRY SYNC (FIRESTORE) ---
@@ -247,4 +289,4 @@ export const verifyAuditorAccess = async (email: string) => {
     const snap = await getDocs(q);
     return !snap.empty;
   } catch (e) { return false; }
-};
+}
