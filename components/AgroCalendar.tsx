@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Calendar, Clock, Sun, Moon, CloudRain, Snowflake, Wheat, 
@@ -36,7 +35,6 @@ import {
   CalendarCheck,
   Link2,
   BellRing,
-  /* Added Factory to fix line 151 error */
   Factory
 } from 'lucide-react';
 import { User, SignalShard, ViewState } from '../types';
@@ -47,7 +45,6 @@ interface AgroCalendarProps {
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
-  /* Added onNavigate to fix line 558 error */
   onNavigate: (view: ViewState) => void;
 }
 
@@ -156,7 +153,6 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
     { id: 'ext-2', title: 'Zone 4 Moisture Check', time: '16:00', pillar: 'Environmental', icon: Droplets }
   ]);
 
-  /* Added pulseSchedule to fix line 528 error */
   const pulseSchedule = useMemo(() => [
     { id: 'P1', label: 'EAC MINT QUORUM', time: 'T+4m', status: 'WAITING', type: 'CORE' },
     { id: 'P2', label: 'SABBATH RECALIBRATION', time: 'T+12m', status: 'PLANNED', type: 'LAW' },
@@ -210,7 +206,6 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
       const res = await chatWithAgroExpert(prompt, []);
       setLiturgicalShard(res.text);
       
-      // JIT SIGNAL TRIGGER
       await onEmitSignal({
         type: 'liturgical',
         origin: 'CALENDAR',
@@ -249,7 +244,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
     <div className="space-y-8 animate-in fade-in duration-1000 pb-32 max-w-[1400px] mx-auto relative px-4">
       
       {/* 1. Portal Header HUD */}
-      <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/[0.03] flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden shadow-3xl z-10 backdrop-blur-3xl">
+      <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-12 shadow-3xl z-10 backdrop-blur-3xl">
          <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12">
             <Clock className="w-96 h-96 text-emerald-400" />
          </div>
@@ -299,7 +294,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
              {/* Main Dashboard Grid */}
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 
-                {/* Left: Active Office Control */}
+                {/* Left: Active Office Control & Weather HUD */}
                 <div className="lg:col-span-4 space-y-8">
                    <div className={`glass-card p-10 rounded-[56px] border-2 transition-all duration-1000 bg-black/40 shadow-3xl relative overflow-hidden flex flex-col items-center text-center ${currentOffice.border}`}>
                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] animate-spin-slow"><currentOffice.icon size={300} /></div>
@@ -331,18 +326,62 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                       </div>
                    </div>
 
-                   <div className="p-10 glass-card rounded-[48px] border border-blue-500/20 bg-blue-950/5 space-y-6 shadow-xl relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><AudioWaveform size={200} className="text-blue-400" /></div>
-                      <div className="flex items-center gap-4 relative z-10">
-                         <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-500/20"><Volume2 size={24} className="text-blue-400" /></div>
-                         <h4 className="text-xl font-black text-white uppercase italic">Agro Musika <span className="text-blue-400">Pulse</span></h4>
+                   {/* NEW WEATHER HUD SHARD */}
+                   <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Cloud size={200} className="text-emerald-400" /></div>
+                      <div className="flex items-center justify-between relative z-10">
+                         <div className="flex items-center gap-4">
+                            <div className="p-3 bg-emerald-600/10 rounded-2xl border border-emerald-500/20"><Wind size={24} className="text-emerald-400" /></div>
+                            <h4 className="text-xl font-black text-white uppercase italic">Weather <span className="text-emerald-400">Shard</span></h4>
+                         </div>
+                         <button onClick={fetchWeather} disabled={isLoadingWeather} className="p-2 bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all">
+                            {isLoadingWeather ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                         </button>
                       </div>
-                      <div className="flex items-end gap-1.5 h-12 relative z-10">
-                         {[...Array(12)].map((_, i) => (
-                           <div key={i} className="flex-1 bg-blue-500/30 rounded-full animate-pulse" style={{ height: `${20+Math.random()*80}%`, animationDelay: `${i*0.1}s` }}></div>
-                         ))}
+                      
+                      <div className="space-y-6 relative z-10">
+                         {weatherData ? (
+                            <div className="animate-in fade-in zoom-in duration-700">
+                               <div className="flex items-baseline gap-4 mb-6">
+                                  <p className="text-6xl font-mono font-black text-white tracking-tighter">24<span className="text-2xl text-emerald-600 italic ml-1">°C</span></p>
+                                  <div className="flex flex-col">
+                                     <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Optimal Ingest</span>
+                                     <span className="text-[8px] text-slate-500 font-mono mt-1">LAT: {user.location.split(',')[0]}</span>
+                                  </div>
+                               </div>
+                               <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 space-y-4 shadow-inner">
+                                  <div className="flex justify-between items-center px-2">
+                                     <div className="flex items-center gap-3">
+                                        <Droplets size={14} className="text-blue-400" />
+                                        <span className="text-[9px] font-black text-slate-500 uppercase">Humidity Shard</span>
+                                     </div>
+                                     <span className="text-xs font-mono font-black text-white">62%</span>
+                                  </div>
+                                  <div className="flex justify-between items-center px-2">
+                                     <div className="flex items-center gap-3">
+                                        <Wind size={14} className="text-indigo-400" />
+                                        <span className="text-[9px] font-black text-slate-500 uppercase">Wind Velocity</span>
+                                     </div>
+                                     <span className="text-xs font-mono font-black text-white">12 km/h</span>
+                                  </div>
+                               </div>
+                               {weatherData.sources && (
+                                  <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap gap-2">
+                                     {weatherData.sources.slice(0, 2).map((s: any, idx: number) => (
+                                        <a key={idx} href={s.web?.uri || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-lg border border-white/10 text-[7px] text-slate-500 hover:text-white transition-all">
+                                           <ExternalLink size={8} /> {s.web?.title?.substring(0, 15)}...
+                                        </a>
+                                     ))}
+                                  </div>
+                               )}
+                            </div>
+                         ) : (
+                            <div className="py-10 text-center opacity-30 flex flex-col items-center gap-4">
+                               <ThermometerSun size={48} className="text-slate-600 animate-pulse" />
+                               <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Weather Shard...</p>
+                            </div>
+                         )}
                       </div>
-                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest relative z-10 text-center">Spectral Drift: 0.02Hz // Nominal</p>
                    </div>
                 </div>
 
@@ -403,7 +442,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                          ) : liturgicalShard ? (
                            <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12">
                               <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-emerald-500/20 prose prose-invert prose-emerald max-w-none shadow-3xl border-l-[16px] border-l-emerald-600 relative overflow-hidden group/shard">
-                                 <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/shard:scale-110 transition-transform duration-[12s]"><Atom size={600} className="text-emerald-400" /></div>
+                                 <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/shard:scale-110 transition-transform duration-[12s]"><Atom size={600} className="text-emerald-400" /></div>
                                  <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-4">
                                     {liturgicalShard}
                                  </div>
@@ -418,7 +457,6 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                          ) : (
                            <div className="h-full flex flex-col items-center justify-center text-center space-y-12 py-20 opacity-20 group">
                               <div className="relative">
-                                 {/* Changed HistoryIcon to History to fix line 549 error */}
                                  <History size={140} className="text-slate-600 group-hover:text-emerald-400 transition-colors duration-1000" />
                                  <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
                               </div>
@@ -559,7 +597,6 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                           <div className="space-y-6">
                              <h4 className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] px-4 italic">Active_Liturgical_Memos</h4>
                              <div className="p-10 bg-indigo-950/20 border-2 border-indigo-500/20 rounded-[56px] space-y-6 relative overflow-hidden group">
-                                {/* Changed HistoryIcon to History to fix line 549 error */}
                                 <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><History size={200} className="text-indigo-400" /></div>
                                 <div className="flex items-center gap-4 relative z-10">
                                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl border border-white/10"><Bot size={24} className="text-white" /></div>
@@ -569,7 +606,6 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                                    "The current Matins cycle suggests high Soil Purity Ingest. Ensure all moisture sensor shards are synchronized before the Sext shift at 12:00."
                                 </p>
                                 <div className="pt-6 border-t border-white/5 flex justify-between items-center relative z-10">
-                                   {/* Changed to use onNavigate prop to fix line 558 error */}
                                    <button onClick={() => onNavigate('network_signals')} className="text-[9px] font-black text-indigo-400 hover:text-white uppercase tracking-widest flex items-center gap-2">View Full Terminal <ArrowRight size={12}/></button>
                                    <span className="text-[8px] font-mono text-slate-700 font-bold">SHA256: 0x882...MEMO</span>
                                 </div>
@@ -583,7 +619,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
         )}
       </div>
 
-      {/* Seasonal Detail Modal preserved... */}
+      {/* Seasonal Detail Modal */}
       {activeSeason && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setActiveSeason(null)}></div>
@@ -598,7 +634,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                        <p className={`text-[10px] font-mono tracking-[0.5em] uppercase mt-4 italic leading-none ${activeSeason.color}`}>{activeSeason.kikuyu}</p>
                     </div>
                  </div>
-                 <button onClick={() => setActiveSeason(null)} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
+                 <button onClick={() => setActiveSeason(null)} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X size={32} /></button>
               </div>
               <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar space-y-12 bg-black/40">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
