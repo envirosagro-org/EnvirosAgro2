@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   ShieldCheck, Zap, Globe, Activity, Cpu, Sparkles, Binary, 
@@ -80,14 +81,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
                 </button>
              </div>
 
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 relative z-10">
+             {/* ScrollAcross Stats - Enhanced for Mobile */}
+             <div className="relative overflow-x-auto scrollbar-hide snap-x scroll-across flex md:grid md:grid-cols-4 gap-4 md:gap-8 relative z-10 -mx-2 px-2 md:mx-0 md:px-0">
                 {[
                   { label: 'EAC Treasury', val: totalBalance.toFixed(0), unit: 'SHRD', icon: Coins, col: 'text-emerald-400', progress: 85 },
                   { label: 'Growth Index', val: user.metrics.agriculturalCodeU, unit: 'C(a)', icon: Binary, col: 'text-blue-400', progress: 62 },
                   { label: 'Network Height', val: blockchain.length + 428812, unit: 'BLCK', icon: Activity, col: 'text-amber-500', progress: 100 },
                   { label: 'Sustainability', val: user.metrics.sustainabilityScore, unit: '%', icon: Sprout, col: 'text-emerald-500', progress: user.metrics.sustainabilityScore },
                 ].map((stat, i) => (
-                  <div key={i} className="p-6 md:p-8 bg-black/60 rounded-[32px] md:rounded-[44px] border border-white/5 space-y-3 md:space-y-4 group/stat hover:border-white/20 hover:bg-white/[0.04] transition-all shadow-inner">
+                  <div key={i} className="min-w-[240px] md:min-w-0 snap-center p-6 md:p-8 bg-black/60 rounded-[32px] md:rounded-[44px] border border-white/5 space-y-3 md:space-y-4 group/stat hover:border-white/20 hover:bg-white/[0.04] transition-all shadow-inner">
                     <div className="flex items-center gap-3">
                        <stat.icon className={`w-4 h-4 md:w-5 md:h-5 ${stat.col} opacity-40`} />
                        <p className="text-[9px] md:text-[10px] text-slate-500 font-black uppercase tracking-widest">{stat.label}</p>
@@ -140,9 +142,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
           </h3>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 px-6 md:px-10">
+        {/* ScrollAcross Recommendations - Enhanced for Mobile */}
+        <div className="relative overflow-x-auto scrollbar-hide snap-x scroll-across flex md:grid md:grid-cols-3 gap-6 md:gap-8 px-6 md:px-10">
            {RECOMMENDATIONS.map((rec) => (
-             <div key={rec.id} className="glass-card p-6 md:p-8 rounded-[32px] md:rounded-[48px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/20 transition-all flex flex-col justify-between min-h-[320px]">
+             <div key={rec.id} className="min-w-[280px] md:min-w-0 snap-center glass-card p-6 md:p-8 rounded-[32px] md:rounded-[48px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/20 transition-all flex flex-col justify-between min-h-[320px]">
                 <div className="space-y-4 md:space-y-6">
                    <div className="flex justify-between items-start">
                       <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 ${rec.col} shadow-inner`}>
