@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Microscope, 
@@ -45,10 +46,10 @@ import {
   Wind,
   Info,
   Stamp,
-  // Added missing Terminal import
   Terminal
 } from 'lucide-react';
 import { User, ResearchPaper } from '../types';
+// Corrected import of generateAgroResearch from geminiService
 import { generateAgroResearch, analyzeMedia } from '../services/geminiService';
 
 interface ResearchInnovationProps {
@@ -386,7 +387,6 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
               <div className="glass-card rounded-[56px] border border-white/5 bg-black/20 flex flex-col flex-1 relative overflow-hidden shadow-3xl">
                  <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-4 text-emerald-400">
-                       {/* Added missing Terminal import from lucide-react */}
                        <Terminal className="w-6 h-6" />
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Invention Oracle Terminal</span>
                     </div>

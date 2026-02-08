@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Upload, ShieldCheck, Zap, Loader2, Cpu, Camera, 
@@ -12,7 +11,6 @@ import {
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 import { diagnoseCropIssue } from '../services/geminiService';
-import { uploadEvidenceShard } from '../services/firebaseService';
 
 interface EvidenceModalProps {
   isOpen: boolean;
@@ -20,7 +18,7 @@ interface EvidenceModalProps {
   user: User;
   onMinted: (value: number) => void;
   onNavigate: (view: ViewState) => void;
-  taskToIngest?: any | null; 
+  taskToIngest?: any | null; // Optional task context passed from the system
 }
 
 type Step = 'ingest_type' | 'task_summary' | 'thrust' | 'upload' | 'audit' | 'settlement' | 'success';
@@ -47,37 +45,36 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
     }
   }, [isOpen, taskToIngest]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
       setFile(f);
       const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result as string);
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+        setStep('audit');
+        runAudit(f, reader.result as string);
+      };
       reader.readAsDataURL(f);
-      
-      setStep('audit');
-      await runAudit(f);
     }
   };
 
-  const runAudit = async (fileObj: File) => {
+  const runAudit = async (fileObj: File, base64: string) => {
     setIsAuditing(true);
     try {
-      // Production Ingest: Upload to Firebase Storage
-      const url = await uploadEvidenceShard(user.esin, fileObj);
+      // Mock upload URL since storage is removed
+      const url = "https://mock-storage.envirosagro.org/shards/" + fileObj.name;
       setDownloadUrl(url);
 
       const contextDesc = taskToIngest 
         ? `Task: ${taskToIngest.title} (ID: ${taskToIngest.id}) fulfillment evidence.`
         : `New ${evidenceType} evidence ingest.`;
       
-      // AI Audit: Use base64 preview for Gemini analysis
-      const res = await diagnoseCropIssue(`${contextDesc} Evaluate this proof for the ${thrust} thrust. Final evidence location anchored at: ${url}`, preview || undefined);
+      const res = await diagnoseCropIssue(`${contextDesc} Evaluate this proof for the ${thrust} thrust. Evidence URL: ${url}`);
       setAuditReport(res.text);
       setMintedValue(Math.floor(Math.random() * 50) + 40); 
       setStep('settlement');
     } catch (err) {
-      console.error("Audit Protocol Failure:", err);
       alert("Registry Audit Failed. Check node connection.");
       setStep('upload');
     } finally {
@@ -256,8 +253,8 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                   <div className="absolute inset-0 border-t-8 border-emerald-500 rounded-full animate-spin"></div>
                </div>
                <div className="space-y-4">
-                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Cloud <span className="text-emerald-400">Anchoring</span></h3>
-                  <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Uploading Evidence Shard to Bucket...</p>
+                  <h3 className="text-4xl font-black text-white uppercase tracking-tighter">Registry <span className="text-emerald-400">Syncing</span></h3>
+                  <p className="text-emerald-500/60 font-mono text-sm animate-pulse uppercase tracking-[0.4em]">Analyzing Shard Payload...</p>
                </div>
             </div>
           )}
@@ -290,8 +287,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
                   <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping"></div>
                </div>
                <div className="space-y-4">
-                  <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">Shard <span className="text-emerald-400">Anchored</span></h3>
-                  <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">EVIDENCE_PATH: evidence/{user.esin}/...</p>
+                  <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">Minting <span className="text-emerald-400">Success</span></h3>
                </div>
                <button onClick={reset} className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl">Return to Hub</button>
             </div>
@@ -300,7 +296,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
       </div>
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
       `}</style>
     </div>

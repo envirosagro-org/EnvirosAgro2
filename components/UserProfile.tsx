@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   User as UserIcon, MapPin, ShieldCheck, Key, Award, Mail, Calendar, Edit3, 
@@ -11,16 +10,17 @@ import {
   History, Terminal, Unlock, KeyRound, Eye, Settings, Database, 
   HeartPulse, Info, Palette, Cloud, Wind, Music, Copy, ExternalLink,
   Target, BarChart3, Binary, Layout, SmartphoneNfc, TreePine, Trophy, Clock, ShieldPlus,
-  Camera, Landmark, Pickaxe, Compass, Droplets, Gem, Boxes, Sprout, Crown, Wallet, ArrowRight
+  Camera, Landmark, Pickaxe, Compass, Droplets, Gem, Boxes, Sprout, Crown, Wallet, ArrowRight,
+  ShieldX, MessageSquareCode, Printer, FileDown
 } from 'lucide-react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
   ResponsiveContainer, Tooltip as RechartsTooltip,
   Radar as RechartsRadar
 } from 'recharts';
-import { User, ViewState } from '../types';
-import { auth, uploadStewardAvatar } from '../services/firebaseService';
-import { SignalShard } from '../App';
+import { User, ViewState, SignalShard } from '../types';
+import { auth, resendVerificationEmail, setupRecaptcha, requestPhoneCode } from '../services/firebaseService';
+import IdentityCard from './IdentityCard';
 
 interface UserProfileProps {
   user: User;
@@ -32,6 +32,7 @@ interface UserProfileProps {
   onDeleteAccount?: () => void;
   signals: SignalShard[];
   setSignals: React.Dispatch<React.SetStateAction<SignalShard[]>>;
+  notify: any;
 }
 
 const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string; desc: string; zodiac: string; trait: string }> = {
@@ -57,14 +58,21 @@ const PROGRESSION_TIERS = [
   { level: 5, title: 'Super-Agro', icon: Crown, col: 'text-indigo-400' },
 ];
 
-const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onNavigate, onLogout, signals, setSignals }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onNavigate, signals, setSignals, notify }) => {
   const [activeTab, setActiveTab] = useState<'hub' | 'signals' | 'dossier' | 'security' | 'sharing'>('hub');
   const [isEditing, setIsEditing] = useState(false);
   const [isMintingCert, setIsMintingCert] = useState(false);
   const [certMinted, setCertMinted] = useState(!!user.zodiacFlower?.certId);
   const [editedUser, setEditedUser] = useState<User>({ ...user });
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Verification States
+  const [phoneInput, setPhoneInput] = useState(user.lineNumber || '');
+  const [otpStep, setOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
 
   const isEmailVerified = (auth.currentUser as any)?.emailVerified;
   const unreadCount = signals.filter(n => !n.read).length;
@@ -139,129 +147,218 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
     }, 3500);
   };
 
-  const downloadCertificate = () => {
-    if (!user.zodiacFlower?.certId) return;
-    const flowerData = MONTH_FLOWERS[user.zodiacFlower.month];
+  const downloadProfessionalShard = () => {
+    // Generate a standalone HTML shard that looks like a professional card
+    const qrData = JSON.stringify({
+      esin: user.esin,
+      name: user.name,
+      role: user.role,
+      loc: user.location,
+      ver: "EOS-6.5",
+      reg: user.regDate
+    });
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}&bgcolor=050706&color=10b981`;
+
     const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EnvirosAgro™ Bio-Resonance Certificate</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
-        body { background: #020403; color: #e2e8f0; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .cert { background: #050706; border: 4px double #10b98144; border-radius: 40px; padding: 60px; max-width: 800px; width: 100%; position: relative; box-shadow: 0 40px 100px rgba(0,0,0,0.8); overflow: hidden; }
-        .cert::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 100% 0%, #10b98111 0%, transparent 50%), radial-gradient(circle at 0% 100%, #6366f111 0%, transparent 50%); pointer-events: none; }
-        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.03; font-size: 400px; pointer-events: none; color: #10b981; }
-        .header { border-bottom: 2px solid #ffffff11; padding-bottom: 30px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 10; }
-        .brand { color: #10b981; font-weight: 900; font-size: 24px; text-transform: uppercase; letter-spacing: -1px; font-style: italic; }
-        .brand span { color: #3b82f6; }
-        .serial { font-family: 'JetBrains Mono', monospace; color: #64748b; font-size: 10px; letter-spacing: 2px; margin-top: 5px; text-transform: uppercase; }
-        h1 { font-size: 44px; font-weight: 900; text-transform: uppercase; font-style: italic; letter-spacing: -2px; margin: 0; color: #fff; line-height: 1; position: relative; z-index: 10; }
-        h1 span { color: #10b981; }
-        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 50px; position: relative; z-index: 10; }
-        .label { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px; }
-        .value { font-size: 22px; font-weight: 700; color: #fff; border-bottom: 1px solid #ffffff11; padding-bottom: 12px; font-style: italic; }
-        .desc { font-style: italic; font-size: 15px; color: #94a3b8; line-height: 1.8; margin-top: 50px; border-left: 6px solid #10b98133; padding-left: 24px; position: relative; z-index: 10; background: rgba(255,255,255,0.01); padding-top: 20px; padding-bottom: 20px; border-radius: 0 20px 20px 0; }
-        .footer { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 10; }
-        .sign-block { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-        .sign-line { width: 220px; border-top: 1px solid #ffffff22; padding-top: 10px; margin-bottom: 5px; }
-        .seal { width: 140px; height: 140px; border: 3px double #f59e0b33; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #f59e0b; background: rgba(245, 158, 11, 0.03); backdrop-filter: blur(5px); }
-        .seal-inner { text-align: center; font-size: 9px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
-        .trait-tag { display: inline-block; padding: 4px 12px; background: #10b98111; border: 1px solid #10b98133; color: #10b981; border-radius: 8px; font-size: 10px; font-weight: 900; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div class="cert">
-        <div class="watermark">✻</div>
-        <div class="header">
-            <div>
-                <div class="brand">Enviros<span>Agro</span>™</div>
-                <div class="serial">SYSTEM_CALL: CELESTIAL_VAULT_DECODER // v6.5</div>
-            </div>
-            <div style="text-align: right;">
-                <div class="serial">TIMESTAMP: ${new Date(user.zodiacFlower.mintedAt!).toLocaleDateString().replace(/\//g, '.')}</div>
-                <div class="serial">STATUS: ANCHORED_TO_L3</div>
-            </div>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>EnvirosAgro ID Shard - ${user.esin}</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+      <style>
+        body { font-family: 'Inter', sans-serif; background: #000; color: #fff; }
+        .card { width: 85.6mm; height: 53.98mm; background: #050706; border-radius: 12px; border: 1px solid rgba(16,185,129,0.3); position: relative; overflow: hidden; }
+        .agro-gradient { background: linear-gradient(135deg, #065f46 0%, #10b981 100%); }
+      </style>
+    </head>
+    <body class="flex items-center justify-center min-h-screen">
+      <div class="card p-4 flex flex-col justify-between shadow-2xl">
+        <div class="flex justify-between items-start">
+           <div className="flex items-center gap-2">
+             <div class="w-8 h-8 agro-gradient rounded-lg flex items-center justify-center text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.47 10-10 10z"/><path d="M11 20v-5"/></svg>
+             </div>
+             <div>
+               <h3 class="text-[10px] font-black uppercase tracking-tighter italic leading-none">Enviros<span class="text-emerald-400">Agro™</span></h3>
+               <p class="text-[5px] text-slate-500 uppercase tracking-[0.2em] font-bold">Industrial Identity</p>
+             </div>
+           </div>
+           <div class="text-right">
+             <p class="text-[5px] text-emerald-500 font-black uppercase tracking-widest px-2 py-0.5 border border-emerald-500/30 rounded bg-emerald-500/5">Authenticated</p>
+           </div>
         </div>
-        
-        <h1>CERTIFICATE OF <br><span>BIO-RESONANCE</span></h1>
-        
-        <div class="details">
-            <div>
-                <div class="label">Steward Identity Anchor</div>
-                <div class="value">${user.name.toUpperCase()}</div>
-            </div>
-            <div>
-                <div class="label">Registry ESIN</div>
-                <div class="value" style="color: #6366f1; font-family: 'JetBrains Mono', monospace;">${user.esin}</div>
-            </div>
-            <div>
-                <div class="label">Celestial Month Shard</div>
-                <div class="value" style="color: #f472b6;">${user.zodiacFlower.month} // ${user.zodiacFlower.flower}</div>
-                <div class="trait-tag">${flowerData.trait.toUpperCase()} ALIGNMENT</div>
-            </div>
-            <div>
-                <div class="label">Finality Hash</div>
-                <div class="value" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #10b981;">${user.zodiacFlower.certId}</div>
-            </div>
+        <div class="flex gap-4 items-center">
+           <div class="flex-1 space-y-2">
+             <div class="space-y-0.5">
+               <p class="text-[5px] text-slate-600 font-bold uppercase tracking-widest">Steward Designation</p>
+               <h4 class="text-sm font-black italic tracking-tighter truncate uppercase">${user.name}</h4>
+             </div>
+             <div class="grid grid-cols-2 gap-2">
+               <div>
+                 <p class="text-[5px] text-slate-700 font-bold uppercase tracking-widest">Pillar Role</p>
+                 <p class="text-[7px] font-bold uppercase truncate">${user.role}</p>
+               </div>
+               <div>
+                 <p class="text-[5px] text-slate-700 font-bold uppercase tracking-widest">Registry ID</p>
+                 <p class="text-[7px] font-mono font-bold">${user.esin}</p>
+               </div>
+             </div>
+           </div>
+           <div class="w-16 h-16 bg-black p-1 rounded-lg border border-white/10">
+              <img src="${qrUrl}" class="w-full h-full">
+           </div>
         </div>
-
-        <div class="desc">
-            "By authority of the EnvirosAgro OS, this document validates the synchronization of the listed Steward Node with their biological birth cycle. 
-            This sharded identity is immutably anchored to the industrial blockchain, granting verified access to the Celestial Vault protocols and 
-            establishing the baseline for future m-constant resilience audits."
+        <div class="flex justify-between items-end border-t border-white/10 pt-2">
+           <p class="text-[5px] text-slate-700 font-mono">HASH: 0x${Math.random().toString(16).substring(2, 8).toUpperCase()}</p>
+           <p class="text-[5px] text-slate-700 font-mono">REG: ${user.regDate}</p>
         </div>
-
-        <div class="footer">
-            <div class="sign-block">
-                <div class="sign-line"></div>
-                HQ Network Registrar
-            </div>
-            <div class="seal">
-                <div class="seal-inner">
-                    OFFICIAL<br>REGISTRY<br>SEAL
-                    <div style="margin-top: 10px; font-size: 14px;">✻</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+      </div>
+    </body>
+    </html>
     `;
     const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `STEWARD_CARD_${user.esin}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+    notify('success', 'SHARD_DOWNLOADED', 'Professional Identity Shard (HTML) saved to local node.');
+  };
+
+  const downloadCertificate = () => {
+    if (!user.zodiacFlower?.certId) return;
+    const certHtml = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Celestial Certificate - ${user.zodiacFlower.certId}</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+      <style>
+        body { font-family: 'Inter', sans-serif; background: #020403; color: #fff; padding: 40px; display: flex; items-center; justify-center; min-height: 100vh; }
+        .cert { max-width: 800px; width: 100%; border: 8px double rgba(16,185,129,0.3); padding: 60px; background: rgba(5,7,6,0.8); border-radius: 40px; position: relative; }
+        .agro-gradient { background: linear-gradient(135deg, #065f46 0%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      </style>
+    </head>
+    <body>
+      <div class="cert text-center space-y-12">
+        <div class="space-y-4">
+           <h1 class="text-5xl font-black uppercase italic tracking-tighter agro-gradient">Certificate of Bio-Resonance</h1>
+           <p class="text-xs text-slate-500 font-bold uppercase tracking-[0.5em]">EnvirosAgro™ Celestial Vault</p>
+        </div>
+        <div class="space-y-2">
+           <p class="text-xs text-slate-600 font-black uppercase tracking-widest">Presented to Steward</p>
+           <h2 class="text-4xl font-black uppercase italic">${user.name}</h2>
+           <p class="text-sm font-mono text-emerald-400">${user.esin}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-8 py-10 border-y border-white/5">
+           <div>
+              <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Celestial Cycle</p>
+              <p class="text-2xl font-bold uppercase">${user.zodiacFlower.month}</p>
+           </div>
+           <div>
+              <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Resonant Flower</p>
+              <p class="text-2xl font-bold uppercase">${user.zodiacFlower.flower}</p>
+           </div>
+        </div>
+        <div class="space-y-2 pt-8">
+           <p class="text-[10px] text-slate-700 font-mono">CERTIFICATE_ID: ${user.zodiacFlower.certId}</p>
+           <p class="text-[10px] text-slate-700 font-mono">MINT_TIMESTAMP: ${user.zodiacFlower.mintedAt}</p>
+           <p class="text-[10px] text-emerald-600 font-black uppercase tracking-[0.3em] mt-4">Registry Finality: ZK_PROVEN</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+    const blob = new Blob([certHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `CELESTIAL_CERT_${user.zodiacFlower.certId}.html`;
     a.click();
     URL.revokeObjectURL(url);
+    notify('success', 'CERT_DOWNLOADED', 'Verifiable Celestial Shard (HTML) saved.');
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePrintId = () => {
+    window.print();
+  };
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const uid = auth.currentUser?.uid;
-    if (file && uid) {
-      setIsUploadingAvatar(true);
-      try {
-        const downloadUrl = await uploadStewardAvatar(uid, file);
-        setEditedUser(prev => ({ ...prev, avatar: downloadUrl }));
-        // Auto-save avatar change to cloud
-        onUpdate({ ...user, avatar: downloadUrl });
-        alert("BIOMETRIC_UPDATE: Avatar shard anchored to Cloud Storage.");
-      } catch (err) {
-        console.error("Avatar upload error:", err);
-        alert("INGEST_ERROR: Could not anchor avatar shard.");
-      } finally {
-        setIsUploadingAvatar(false);
-      }
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setEditedUser(prev => ({ ...prev, avatar: base64 }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // --- Verification Logic ---
+  const handleEmailResend = async () => {
+    setIsVerifying(true);
+    try {
+      await resendVerificationEmail();
+      alert("SIGNAL_TRANSMITTED: Verification shard sent to Gmail. Check your inbox.");
+    } catch (e) {
+      alert("SYNC_ERROR: Failed to transmit verification shard.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handlePhoneVerifyStart = async () => {
+    if (!phoneInput) return;
+    setIsVerifying(true);
+    setVerificationError(null);
+    try {
+      const verifier = setupRecaptcha('recaptcha-container-profile');
+      const result = await requestPhoneCode(phoneInput, verifier);
+      setConfirmationResult(result);
+      setOtpStep(true);
+    } catch (err: any) {
+      setVerificationError(err.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleOtpVerify = async () => {
+    const code = otpCode.join('');
+    if (code.length < 6) return;
+    setIsVerifying(true);
+    try {
+      await confirmationResult.confirm(code);
+      const updatedUser: User = { ...user, isPhoneVerified: true, lineNumber: phoneInput };
+      onUpdate(updatedUser);
+      setOtpStep(false);
+      alert("HANDSHAKE_VERIFIED: Phone node anchored to registry.");
+    } catch (err: any) {
+      setVerificationError("INVALID_OTP: Code mismatch.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleOtpChange = (val: string, index: number) => {
+    if (!/^\d*$/.test(val)) return;
+    const newCode = [...otpCode];
+    newCode[index] = val.slice(-1);
+    setOtpCode(newCode);
+    if (val && index < 5) {
+      document.getElementById(`otp-profile-${index + 1}`)?.focus();
     }
   };
 
   return (
     <div className="max-w-[1500px] mx-auto space-y-10 animate-in fade-in duration-700 pb-32">
+      <div id="recaptcha-container-profile"></div>
       
       {/* 1. Profile Header / ID Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-4">
@@ -272,13 +369,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
               </div>
               
               <div className="relative shrink-0 flex flex-col items-center gap-4">
-                 <div className="w-44 h-44 rounded-[56px] bg-slate-800 border-4 border-white/10 flex items-center justify-center text-8xl font-black text-emerald-400 shadow-2xl group-hover:scale-105 transition-all duration-700 overflow-hidden relative">
-                   {isUploadingAvatar ? (
-                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-20">
-                        <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
-                        <span className="text-[10px] font-black text-emerald-400 uppercase mt-4 animate-pulse">Anchoring...</span>
-                     </div>
-                   ) : user.avatar ? (
+                 <div className="w-44 h-44 rounded-full bg-slate-800 border-4 border-white/10 flex items-center justify-center text-8xl font-black text-emerald-400 shadow-2xl group-hover:scale-105 transition-transform duration-700 overflow-hidden relative">
+                   {user.avatar ? (
                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                    ) : (
                      user.name[0]
@@ -299,7 +391,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
 
               <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
                  <div className="space-y-2">
-                    <div className="flex items-center justify-center md:justify-start gap-4">
+                    <div className="flex items-center gap-4 justify-center md:justify-start">
                        <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">{user.name}</h2>
                        {!isGuest && <BadgeCheck className="w-8 h-8 text-blue-400 shadow-blue-500/20" />}
                     </div>
@@ -342,7 +434,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
         </div>
       </div>
 
-      {/* 2. Main Tab Navigation Tabs */}
+      {/* 2. Main Tab Navigation */}
       <div className="flex overflow-x-auto scrollbar-hide gap-4 p-2 glass-card rounded-[32px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-6 mx-auto lg:mx-4 relative z-20">
         {[
           { id: 'hub', label: 'STEWARD HUB', icon: Layout },
@@ -354,7 +446,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap relative ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap relative ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl scale-105 ring-4 ring-white/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
             {tab.badge && tab.badge > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-[#050706]">{tab.badge}</span>}
@@ -364,7 +456,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
 
       <div className="min-h-[800px] px-4">
         {isEditing ? (
-          /* --- EDIT PROFILE VIEW --- */
           <div className="max-w-4xl mx-auto glass-card p-12 rounded-[64px] border-indigo-500/20 bg-indigo-500/[0.02] shadow-3xl animate-in slide-in-from-bottom-6">
              <div className="flex items-center gap-6 mb-12 border-b border-white/5 pb-10">
                 <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl text-white"><Edit3 size={32} /></div>
@@ -407,48 +498,46 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
              </div>
           </div>
         ) : (
-          /* --- MAIN TAB CONTENT --- */
           <>
             {activeTab === 'hub' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
-                 {/* Online Garden Tier & Hardware pairing */}
                  <div className="lg:col-span-8 space-y-10">
                     <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 shadow-3xl relative overflow-hidden group">
                        <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s]"><Compass size={400} /></div>
-                       <div className="flex justify-between items-center mb-16 relative z-10">
+                       <div className="flex flex-col md:flex-row justify-between items-center mb-16 relative z-10 gap-10">
                           <div className="flex items-center gap-8">
                              <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl"><Compass className="w-10 h-10 text-white" /></div>
                              <div>
-                                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Online <span className="text-emerald-400">Garden Status</span></h3>
-                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-3">EOS_ROADMAP_SYNCHRONIZED</p>
+                                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Identity <span className="text-emerald-400">Shard Hub</span></h3>
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-3">EOS_IDENTITY_HANDSHAKE_v6.5</p>
                              </div>
                           </div>
-                          <div className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center min-w-[180px]">
-                             <p className="text-[9px] text-slate-600 font-black uppercase mb-1">M-RESONANCE</p>
-                             <p className="text-4xl font-mono font-black text-white tracking-tighter">x{user.wallet.exchangeRate.toFixed(2)}</p>
+                          
+                          <div className="flex gap-4">
+                             <button 
+                               onClick={handlePrintId}
+                               className="px-8 py-4 bg-white rounded-2xl text-black font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 hover:bg-emerald-50 transition-all active:scale-95"
+                             >
+                                <Printer size={16} /> Print Card
+                             </button>
+                             <button 
+                               onClick={downloadProfessionalShard}
+                               className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 transition-all active:scale-95"
+                             >
+                                <FileDown size={16} /> Download Shard
+                             </button>
                           </div>
                        </div>
 
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-                          {PROGRESSION_TIERS.map(tier => {
-                             const isReached = currentTier.level >= tier.level;
-                             return (
-                               <div key={tier.level} className={`p-8 rounded-[44px] border-2 transition-all flex flex-col items-center text-center gap-4 ${isReached ? 'bg-emerald-600/5 border-emerald-500/20' : 'bg-black opacity-30 border-white/5 grayscale'}`}>
-                                  <tier.icon size={40} className={isReached ? tier.col : 'text-slate-700'} />
-                                  <div>
-                                     <p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.4em]">Level {tier.level}</p>
-                                     <p className="text-xl font-black text-white uppercase italic">{tier.title}</p>
-                                  </div>
-                               </div>
-                             );
-                          })}
+                       <div className="flex justify-center py-10 relative z-10">
+                          <IdentityCard user={user} />
                        </div>
 
                        <div className="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
                           <div className="flex items-center gap-6">
                              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-indigo-400 group-hover:scale-110 transition-all shadow-inner"><Target size={32} /></div>
                              <div className="text-left">
-                                <p className="text-[9px] text-slate-600 font-black uppercase mb-1 tracking-widest">Sustainability Baseline</p>
+                                <p className="text-[9px] text-slate-600 font-black uppercase mb-1">Sustainability Baseline</p>
                                 <p className="text-3xl font-mono font-black text-white">{user.metrics.sustainabilityScore}%</p>
                              </div>
                           </div>
@@ -542,8 +631,112 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
               </div>
             )}
 
+            {activeTab === 'security' && (
+              <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-10 duration-500">
+                 <div className="p-16 glass-card rounded-[80px] border-2 border-indigo-500/20 bg-black/60 shadow-3xl space-y-16 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[12s]"><Lock size={500} className="text-indigo-400" /></div>
+                    <div className="relative z-10 text-center space-y-8 border-b border-white/5 pb-16">
+                       <div className="w-28 h-28 bg-indigo-600 rounded-[44px] flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 group-hover:rotate-12 transition-transform">
+                          <ShieldPlus size={56} className="text-white" />
+                       </div>
+                       <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Vault <span className="text-indigo-400">Security</span></h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
+                       <div className="space-y-10">
+                          <div className="p-10 bg-emerald-500/5 rounded-[56px] border border-emerald-500/20 space-y-8 shadow-inner">
+                             <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                                <ShieldCheck size={24} className="text-emerald-400" />
+                                <h4 className="text-xl font-black text-white uppercase italic m-0">Registry Trust</h4>
+                             </div>
+                             
+                             {/* Gmail Node Verification */}
+                             <div className="space-y-4">
+                               <div className="flex justify-between items-center px-4 py-3 bg-black/40 rounded-2xl border border-white/5">
+                                  <div className="flex items-center gap-3">
+                                     <Mail size={14} className="text-slate-500" />
+                                     <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Gmail Node</span>
+                                  </div>
+                                  <div className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${isEmailVerified ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                                     {isEmailVerified ? 'VERIFIED' : 'PENDING'}
+                                  </div>
+                               </div>
+                               {!isEmailVerified && (
+                                 <button onClick={handleEmailResend} disabled={isVerifying} className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-emerald-400 uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                                   {isVerifying ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                                   Resend Verification Shard
+                                 </button>
+                               )}
+                             </div>
+
+                             {/* Phone Node Verification */}
+                             <div className="space-y-4 pt-4 border-t border-white/5">
+                               <div className="flex justify-between items-center px-4 py-3 bg-black/40 rounded-2xl border border-white/5">
+                                  <div className="flex items-center gap-3">
+                                     <Smartphone size={14} className="text-slate-500" />
+                                     <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Phone Node</span>
+                                  </div>
+                                  <div className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${user.isPhoneVerified ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                                     {user.isPhoneVerified ? 'VERIFIED' : 'PENDING'}
+                                  </div>
+                               </div>
+                               {!user.isPhoneVerified && (
+                                 <div className="space-y-4 animate-in slide-in-from-top-2">
+                                    {!otpStep ? (
+                                      <div className="flex gap-2">
+                                         <input 
+                                           type="tel" value={phoneInput} onChange={e => setPhoneInput(e.target.value)} 
+                                           placeholder="+254 700 000 000"
+                                           className="flex-1 bg-black border border-white/10 rounded-xl py-3 px-4 text-xs text-white focus:ring-2 focus:ring-blue-500/20 outline-none" 
+                                         />
+                                         <button onClick={handlePhoneVerifyStart} disabled={isVerifying || !phoneInput} className="px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[9px] font-black uppercase transition-all">
+                                            {isVerifying ? <Loader2 size={12} className="animate-spin" /> : 'Send OTP'}
+                                         </button>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-4 p-6 bg-black rounded-[32px] border border-white/10 shadow-inner">
+                                         <p className="text-[9px] text-slate-500 font-black uppercase text-center mb-4">Enter 6-Digit SMS Shard</p>
+                                         <div className="flex justify-center gap-2">
+                                            {otpCode.map((digit, i) => (
+                                              <input
+                                                key={i} id={`otp-profile-${i}`} type="text" maxLength={1} value={digit}
+                                                onChange={e => handleOtpChange(e.target.value, i)}
+                                                className="w-8 h-10 bg-black/60 border border-white/10 rounded-lg text-center text-xl font-mono font-black text-blue-400 outline-none focus:border-blue-500"
+                                              />
+                                            ))}
+                                         </div>
+                                         <button onClick={handleOtpVerify} disabled={isVerifying} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[9px] font-black uppercase transition-all shadow-xl">
+                                            {isVerifying ? <Loader2 size={12} className="animate-spin" /> : 'Verify & Anchor'}
+                                         </button>
+                                         <button onClick={() => setOtpStep(false)} className="w-full text-[8px] text-slate-600 font-black uppercase hover:text-white">Back</button>
+                                      </div>
+                                    )}
+                                 </div>
+                               )}
+                               {verificationError && <p className="text-[8px] text-rose-500 uppercase font-black px-4">{verificationError}</p>}
+                             </div>
+                          </div>
+                          
+                          <div className="p-10 bg-black/80 rounded-[56px] border border-white/5 space-y-6 shadow-inner group/phrase hover:border-indigo-500/30 transition-all">
+                             <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                                <KeyRound size={24} className="text-indigo-400" />
+                                <h4 className="text-xl font-black text-white uppercase italic m-0">Recovery Shards</h4>
+                             </div>
+                             <div className="grid grid-cols-3 gap-3">
+                                {user.mnemonic.split(' ').map((word, i) => (
+                                   <div key={i} className="p-3 bg-white/5 border border-white/5 rounded-2xl text-center relative group/word">
+                                      <span className="text-[9px] font-black text-white uppercase tracking-widest blur-md group-hover/word:blur-none transition-all cursor-help">{word}</span>
+                                   </div>
+                                ))}
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            )}
+            
             {activeTab === 'dossier' && (
-              /* --- CELESTIAL VAULT --- */
               <div className="max-w-5xl mx-auto space-y-16 animate-in zoom-in duration-500 text-center">
                  <div className="space-y-6">
                     <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">CELESTIAL <span className="text-fuchsia-400">VAULT</span></h3>
@@ -617,7 +810,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
             )}
 
             {activeTab === 'signals' && (
-              /* --- NODE SIGNALS --- */
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-500">
                 <div className="lg:col-span-8 space-y-10">
                    <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
@@ -635,7 +827,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                       ) : (
                         (signals || []).map(signal => (
                             <div key={signal.id} className={`glass-card p-10 rounded-[48px] border-2 transition-all flex flex-col md:flex-row items-center justify-between gap-10 group relative overflow-hidden bg-black/40 shadow-2xl ${
-                               signal.read ? 'opacity-50 grayscale border-white/5' : signal.priority === 'high' ? 'border-rose-500/20' : 'border-indigo-500/20'
+                               signal.read ? 'opacity-50 grayscale border-white/5' : signal.priority === 'high' ? 'border-rose-500/20' : 'border-white/5'
                             }`}>
                                <div className="flex items-center gap-8 w-full md:w-auto">
                                   <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 text-white flex items-center justify-center"><Database size={24}/></div>
@@ -649,50 +841,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                       )}
                    </div>
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'security' && (
-              /* --- VAULT SECURITY --- */
-              <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-10 duration-500">
-                 <div className="p-16 glass-card rounded-[80px] border-2 border-indigo-500/20 bg-black/60 shadow-3xl space-y-16 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[12s]"><Lock size={500} className="text-indigo-400" /></div>
-                    <div className="relative z-10 text-center space-y-8 border-b border-white/5 pb-16">
-                       <div className="w-28 h-28 bg-indigo-600 rounded-[44px] flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 group-hover:rotate-12 transition-transform">
-                          <ShieldPlus size={56} className="text-white" />
-                       </div>
-                       <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Vault <span className="text-indigo-400">Security</span></h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
-                       <div className="space-y-10">
-                          <div className="p-10 bg-emerald-500/5 rounded-[56px] border border-emerald-500/20 space-y-8 shadow-inner">
-                             <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                                <ShieldCheck size={24} className="text-emerald-400" />
-                                <h4 className="text-xl font-black text-white uppercase italic m-0">Registry Trust</h4>
-                             </div>
-                             <div className="flex justify-between items-center px-4 py-3 bg-black/40 rounded-2xl border border-white/5">
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Email Node</span>
-                                <div className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${isEmailVerified ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                                   {isEmailVerified ? 'VERIFIED' : 'PENDING'}
-                                </div>
-                             </div>
-                          </div>
-                          <div className="p-10 bg-black/80 rounded-[56px] border border-white/5 space-y-6 shadow-inner group/phrase hover:border-indigo-500/30 transition-all">
-                             <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                                <KeyRound size={24} className="text-indigo-400" />
-                                <h4 className="text-xl font-black text-white uppercase italic m-0">Recovery Shards</h4>
-                             </div>
-                             <div className="grid grid-cols-3 gap-3">
-                                {user.mnemonic.split(' ').map((word, i) => (
-                                   <div key={i} className="p-3 bg-white/5 border border-white/5 rounded-2xl text-center relative group/word">
-                                      <span className="text-[9px] font-black text-white uppercase tracking-widest blur-md group-hover/word:blur-none transition-all cursor-help">{word}</span>
-                                   </div>
-                                ))}
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
               </div>
             )}
             
@@ -737,6 +885,21 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print-card, .print-card * {
+            visibility: visible;
+          }
+          .print-card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            margin: 0;
+            padding: 0;
+          }
+        }
       `}</style>
     </div>
   );

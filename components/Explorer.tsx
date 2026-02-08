@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, 
   Hash, 
@@ -47,9 +47,13 @@ import {
   Link2,
   BoxSelect,
   Monitor,
-  Workflow
+  Workflow,
+  ChevronRight,
+  Bot,
+  Gavel
 } from 'lucide-react';
 import { AgroBlock, User, AgroTransaction } from '../types';
+import { validateBlockSustainability, settleRegistryBatch, AIResponse } from '../services/geminiService';
 
 interface ExplorerProps {
   blockchain?: AgroBlock[];
@@ -60,22 +64,27 @@ interface ExplorerProps {
 }
 
 const VALIDATORS = [
-  { node: 'Environmental_Validator_04', reputation: 98.4, stake: '1.2M EAC', thrust: 'Technological', status: 'ACTIVE' },
-  { node: 'Societal_Consensus_Node_82', reputation: 99.2, stake: '840K EAC', thrust: 'Societal', status: 'ACTIVE' },
-  { node: 'Technological_Auth_Shard_12', reputation: 94.8, stake: '2.5M EAC', thrust: 'Environmental', status: 'ACTIVE' },
-  { node: 'Industrial_Core_Finalizer', reputation: 99.9, stake: '4.8M EAC', thrust: 'Industry', status: 'SYNCING' },
+  { node: 'Environmental_Validator_04', reputation: 98.4, stake: '1.2M EAC', thrust: 'Technological', status: 'ACTIVE', resonance: 92 },
+  { node: 'Societal_Consensus_Node_82', reputation: 99.2, stake: '840K EAC', thrust: 'Societal', status: 'ACTIVE', resonance: 98 },
+  { node: 'Technological_Auth_Shard_12', reputation: 94.8, stake: '2.5M EAC', thrust: 'Environmental', status: 'ACTIVE', resonance: 88 },
+  { node: 'Industrial_Core_Finalizer', reputation: 99.9, stake: '4.8M EAC', thrust: 'Industry', status: 'SYNCING', resonance: 100 },
 ];
 
 const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, globalEchoes = [], onPulse, user }) => {
-  const [activeTab, setActiveTab] = useState<'blocks' | 'ledger' | 'pulse' | 'consensus'>('blocks');
+  const [activeTab, setActiveTab] = useState<'blocks' | 'ledger' | 'pulse' | 'consensus' | 'settlement'>('blocks');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBlock, setSelectedBlock] = useState<AgroBlock | null>(null);
-  const [selectedTx, setSelectedTx] = useState<any | null>(null);
+  const [isAuditingBlock, setIsAuditingBlock] = useState(false);
+  const [blockAuditResult, setBlockAuditResult] = useState<AIResponse | null>(null);
+  
+  const [isSettling, setIsSettling] = useState(false);
+  const [settlementResult, setSettlementResult] = useState<AIResponse | null>(null);
+  
   const [pulseMessage, setPulseMessage] = useState('');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   
-  // Simulated Live Metrics
   const [hashRate, setHashRate] = useState(12.4);
+  const pulseContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -84,14 +93,18 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
     return () => clearInterval(interval);
   }, []);
 
-  const handleSendPulse = () => {
-    if (!pulseMessage.trim() || !onPulse) return;
-    setIsBroadcasting(true);
-    onPulse(pulseMessage);
-    setTimeout(() => {
-        setPulseMessage('');
-        setIsBroadcasting(false);
-    }, 1200);
+  const handleRunSettlementAudit = async () => {
+    setIsSettling(true);
+    setSettlementResult(null);
+    try {
+      const recentTxs = blockchain.slice(0, 5).flatMap(b => b.transactions);
+      const res = await settleRegistryBatch(recentTxs);
+      setSettlementResult(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSettling(false);
+    }
   };
 
   const filteredBlocks = blockchain.filter(b => 
@@ -145,7 +158,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
          <div className="glass-card p-8 rounded-[40px] border border-amber-500/20 bg-amber-500/[0.02] space-y-4 group">
             <div className="flex justify-between items-center">
                <p className="text-[10px] text-amber-400 font-black uppercase tracking-[0.4em]">Total Shards</p>
-               <Database className="w-4 h-4 text-amber-500" />
+               <Activity className="w-4 h-4 text-amber-500" />
             </div>
             <h4 className="text-4xl font-mono font-black text-white tracking-tighter leading-none">{allTransactions.length + 1242}<span className="text-xs text-slate-700 font-sans">SHDS</span></h4>
             <div className="flex items-center gap-2 text-[9px] font-black text-amber-400/60 uppercase">
@@ -159,8 +172,8 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
         {[
           { id: 'blocks', label: 'Block Shards', icon: Box },
           { id: 'ledger', label: 'Transaction Ledger', icon: Terminal },
+          { id: 'settlement', label: 'Institutional Finality', icon: Gavel },
           { id: 'consensus', label: 'Validator Registry', icon: Network },
-          { id: 'pulse', label: 'Network Pulse', icon: Radio },
         ].map(tab => (
           <button 
             key={tab.id} 
@@ -175,7 +188,88 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
       {/* 3. Main Viewport */}
       <div className="min-h-[750px] px-4 md:px-0">
         
-        {/* --- VIEW: BLOCK SHARDS --- */}
+        {/* --- VIEW: INSTITUTIONAL FINALITY (SETTLEMENT) --- */}
+        {activeTab === 'settlement' && (
+          <div className="space-y-12 animate-in zoom-in duration-500">
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="glass-card p-12 rounded-[80px] border-emerald-500/20 bg-emerald-950/5 flex flex-col items-center justify-center text-center space-y-10 shadow-3xl relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
+                      <Stamp size={800} className="text-emerald-400" />
+                   </div>
+                   <div className="w-32 h-32 rounded-[44px] bg-emerald-600 flex items-center justify-center shadow-[0_0_120px_rgba(16,185,129,0.3)] border-4 border-white/10 shrink-0 relative z-10 animate-float">
+                      <Stamp className="w-16 h-16 text-white" />
+                   </div>
+                   <div className="space-y-6 relative z-10">
+                      <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">REGISTRY <span className="text-emerald-400">SETTLEMENT</span></h3>
+                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-lg:text-sm max-w-lg mx-auto">"Anchoring industrial batches into the global m-constant equilibrium."</p>
+                   </div>
+                   <button 
+                     onClick={handleRunSettlementAudit}
+                     disabled={isSettling}
+                     className="w-full max-w-sm py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-emerald-500/5 relative z-10"
+                   >
+                      {isSettling ? <Loader2 className="animate-spin" /> : <Zap className="fill-current" />}
+                      <span className="ml-4">{isSettling ? 'SEQUENCING...' : 'RUN SETTLEMENT AUDIT'}</span>
+                   </button>
+                </div>
+
+                <div className="flex flex-col gap-8">
+                   <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 flex-1 flex flex-col justify-center relative overflow-hidden shadow-2xl group/inf">
+                      <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none group-hover/inf:bg-indigo-500/[0.02] transition-colors"></div>
+                      
+                      {isSettling ? (
+                         <div className="flex flex-col items-center justify-center space-y-10 py-20 text-center animate-in zoom-in duration-500">
+                            <div className="relative">
+                               <Loader2 className="w-24 h-24 text-emerald-500 animate-spin mx-auto" />
+                               <div className="absolute inset-0 flex items-center justify-center">
+                                  <Binary size={32} className="text-emerald-400 animate-pulse" />
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                               <p className="text-emerald-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic m-0">BATCH_SETTLEMENT_INIT...</p>
+                               <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">ORACLE_CONSENSUS_SYNC // FINALITY_SEQUENCE</p>
+                            </div>
+                         </div>
+                      ) : settlementResult ? (
+                         <div className="animate-in slide-in-from-right-6 duration-700 space-y-10">
+                            <div className="p-10 bg-black/60 rounded-[48px] border border-emerald-500/20 shadow-inner border-l-8 border-l-emerald-500 relative overflow-hidden group/bubble">
+                               <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/bubble:scale-125 transition-transform duration-[12s]"><Sparkles size={250} className="text-emerald-400" /></div>
+                               <div className="flex items-center gap-5 mb-8 border-b border-white/5 pb-6">
+                                  <Bot size={32} className="text-emerald-400" />
+                                  <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Settlement Abstract</h4>
+                               </div>
+                               <div className="space-y-8 relative z-10">
+                                  <div>
+                                     <p className="text-slate-300 text-xl leading-loose italic font-medium">"{settlementResult.text}"</p>
+                                  </div>
+                                  <div className="p-6 bg-white/5 rounded-3xl border border-white/10 flex justify-between items-center">
+                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Finality Hash</span>
+                                     <span className="text-sm font-mono font-black text-emerald-400">{settlementResult.finality_hash}</span>
+                                  </div>
+                               </div>
+                            </div>
+                            <div className="flex justify-center">
+                               <button onClick={() => setSettlementResult(null)} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border-2 border-white/10">ANCHOR BATCH FINALITY</button>
+                            </div>
+                         </div>
+                      ) : (
+                         <div className="h-full flex flex-col items-center justify-center text-center space-y-12 py-20 opacity-20 group">
+                            <div className="relative">
+                               <ShieldCheck size={140} className="text-slate-600 group-hover:text-emerald-400 transition-colors duration-1000" />
+                               <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
+                            </div>
+                            <div className="space-y-4">
+                               <p className="text-4xl font-black uppercase tracking-[0.6em] text-white italic">FINALITY_STANDBY</p>
+                               <p className="text-lg font-bold italic text-slate-700 uppercase tracking-widest">Execute settlement audit to finalize recent shards</p>
+                            </div>
+                         </div>
+                      )}
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
+
         {activeTab === 'blocks' && (
            <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
               <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-8 px-4">
@@ -250,7 +344,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
            </div>
         )}
 
-        {/* --- VIEW: TRANSACTION LEDGER --- */}
+        {/* TAB: TRANSACTION LEDGER maintained... */}
         {activeTab === 'ledger' && (
            <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
@@ -271,7 +365,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                  </div>
                  <div className="divide-y divide-white/5 h-[600px] overflow-y-auto custom-scrollbar bg-[#050706]">
                     {allTransactions.map((tx, i) => (
-                       <div key={i} onClick={() => setSelectedTx(tx)} className="grid grid-cols-6 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer animate-in fade-in slide-in-from-bottom-2">
+                       <div key={i} className="grid grid-cols-6 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer animate-in fade-in slide-in-from-bottom-2">
                           <div className="col-span-2 flex items-center gap-8">
                              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 group-hover:rotate-6 transition-all shadow-inner">
                                 <Database size={24} />
@@ -302,12 +396,51 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
            </div>
         )}
 
-        {/* CONSENSUS & PULSE TABS REMAIN SAME (OMITTED FOR CONCISENESS BUT PRESERVED) */}
+        {/* TAB: VALIDATOR QUORUM maintained... */}
         {activeTab === 'consensus' && (
-            <div className="py-20 text-center opacity-20 italic">Validator Quorum Node standby. Finalizing thrust node synchronization.</div>
-        )}
-        {activeTab === 'pulse' && (
-            <div className="py-20 text-center opacity-20 italic">Pulse Buffer standy. Monitoring global heritage signals.</div>
+            <div className="space-y-12 animate-in zoom-in duration-500">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="glass-card p-12 rounded-[80px] border-indigo-500/20 bg-indigo-950/5 flex flex-col items-center justify-center text-center space-y-12 shadow-3xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
+                    <Network size={1000} className="text-indigo-400" />
+                  </div>
+                  <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-[0_0_120px_rgba(99,102,241,0.4)] border-4 border-white/10 shrink-0 relative z-10 animate-pulse">
+                    <ShieldPlus className="w-16 h-16 text-white" />
+                  </div>
+                  <div className="space-y-6 relative z-10">
+                    <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">CONSENSUS <span className="text-indigo-400">QUORUM</span></h3>
+                    <p className="text-slate-400 text-2xl font-medium italic leading-relaxed max-lg:text-sm max-w-lg mx-auto">Proof of Sustainability (PoS) protocol weighting node m-constant and C(a) growth.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {VALIDATORS.map((v, i) => (
+                    <div key={i} className="glass-card p-8 rounded-[48px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between shadow-2xl relative overflow-hidden">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 shadow-inner group-hover:rotate-6">
+                           <Monitor size={24} />
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest ${v.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'}`}>{v.status}</span>
+                      </div>
+                      <div>
+                        <h5 className="text-xl font-black text-white uppercase tracking-tight m-0">{v.node.replace(/_/g, ' ')}</h5>
+                        <p className="text-[9px] text-slate-600 font-mono font-bold mt-2 uppercase tracking-widest">{v.thrust} Pillar Anchor</p>
+                      </div>
+                      <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+                        <div className="flex justify-between items-center text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                          <span>Node Resonance</span>
+                          <span className="text-emerald-400 font-mono">{v.resonance}%</span>
+                        </div>
+                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500" style={{ width: `${v.resonance}%` }}></div>
+                        </div>
+                        <p className="text-[9px] text-slate-700 font-black uppercase">Stake Weight: {v.stake}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
         )}
       </div>
 
@@ -318,6 +451,8 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );

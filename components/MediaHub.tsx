@@ -37,13 +37,12 @@ import {
   ExternalLink,
   CheckCircle2,
   Sprout,
-  Activity as WaveIcon,
   CirclePlay,
   PlayCircle,
   Monitor,
-  Video as VideoIcon,
   Users,
   ArrowRight,
+  ArrowUpRight,
   Maximize2,
   Lock,
   Signal,
@@ -108,6 +107,7 @@ interface MediaHubProps {
   userBalance: number;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
+  onNavigate: (view: ViewState) => void;
 }
 
 const VIDEO_NODES = [
@@ -124,7 +124,7 @@ const INITIAL_AUDIO_TRACKS = [
   { title: "BANTU RHYTHMIC INGEST", type: "ANCESTRAL HERITAGE", duration: "60:00", cost: "FREE", icon: Globe, free: true },
 ];
 
-const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEarnEAC }) => {
+const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEarnEAC, onNavigate }) => {
   const [tab, setTab] = useState<'all' | 'video' | 'news' | 'audio' | 'waves' | 'blog' | 'streaming'>('all');
   const [isPlaying, setIsPlaying] = useState(false);
   const [loadingNews, setLoadingNews] = useState(false);
@@ -143,15 +143,11 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
   const [reactionStats, setReactionStats] = useState({ hearts: 0, zaps: 0, check: 0 });
   const [totalEacEarnedFromStream, setTotalEacEarnedFromStream] = useState(0);
   
-  const [showSignatureModal, setShowSignatureModal] = useState<'video' | 'voice' | null>(null);
-  const [isSigning, setIsSigning] = useState(false);
-  const [signatureHash, setSignatureHash] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   // Device References
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   // Blog States
@@ -164,10 +160,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
   ]);
 
   // Audio/Waves States
-  const [audioTracks, setAudioTracks] = useState(INITIAL_AUDIO_TRACKS);
-  const [activeAudioTrack, setActiveAudioTrack] = useState<any | null>(null);
-  const [activeFreq, setActiveFreq] = useState(432);
-  const [isGeneratingFreq, setIsGeneratingFreq] = useState(false);
+  const [audioTracks] = useState(INITIAL_AUDIO_TRACKS);
 
   useEffect(() => {
     fetchLatestNews();
@@ -206,13 +199,11 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
       if (interval) clearInterval(interval); 
       if (reactionInterval) clearInterval(reactionInterval);
     };
-  }, [isBroadcasting]);
+  }, [isBroadcasting, onEarnEAC, streamTitle]);
 
   const stopStream = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        track.stop();
-      });
+      streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -222,7 +213,8 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
 
   const fetchLatestNews = async () => {
     setLoadingNews(true);
-    const result = await searchAgroTrends("Industrial agricultural innovations and Five Thrusts updates including bio-electric plant waves");
+    const query = "latest agricultural trends impacting regenerative farming practices and blockchain integration for carbon credit tracking 2025";
+    const result = await searchAgroTrends(query);
     setNewsResult(result);
     setLoadingNews(false);
   };
@@ -284,24 +276,6 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
     }
   };
 
-  const executeSignature = () => {
-    setIsSigning(true);
-    setSignatureHash(null);
-    setTimeout(() => {
-      if (showSignatureModal === 'video' && videoRef.current && canvasRef.current) {
-        const context = canvasRef.current.getContext('2d');
-        if (context) {
-          canvasRef.current.width = videoRef.current.videoWidth;
-          canvasRef.current.height = videoRef.current.videoHeight;
-          context.drawImage(videoRef.current, 0, 0);
-        }
-      }
-      setIsSigning(false);
-      const hash = `0x${Math.random().toString(16).substring(2, 10).toUpperCase()}_${showSignatureModal?.toUpperCase()}_SIG`;
-      setSignatureHash(hash);
-    }, 2500);
-  };
-
   const handleForgeBlog = async () => {
     if (!blogTopic.trim()) return;
     const COST = 20;
@@ -310,7 +284,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
     setGeneratedBlog(null);
     try {
       const prompt = `Write a technical blog post shard for EnvirosAgro network about: "${blogTopic}". 
-      Include sections for Registry Abstract, SEHTI alignment, and C(a) impact. Use markdown.`;
+      Include sections for Registry Abstract, SEHTI alignment, and C(a) impact. Use markdown. Focus on regenerative farming and blockchain trends.`;
       const response = await chatWithAgroExpert(prompt, [], true);
       setGeneratedBlog(response.text);
       setBlogHistory([{ id: `BLG-${Math.floor(Math.random() * 100)}`, title: blogTopic, date: 'Just now', type: 'AI_SYNTH' }, ...blogHistory]);
@@ -431,11 +405,11 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                    <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-black/40 space-y-8 shadow-2xl relative overflow-hidden group">
                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform duration-700"><Activity size={200} className="text-emerald-400" /></div>
                       <div className="flex items-center gap-6 relative z-10">
-                         <div className="w-16 h-16 bg-emerald-600 rounded-3xl shadow-xl flex items-center justify-center border border-white/10">
+                         <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white shadow-xl flex items-center justify-center border border-white/10">
                             <Cast className="w-8 h-8 text-white" />
                          </div>
                          <div>
-                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Broadcaster <span className="text-emerald-400">Node</span></h3>
+                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Broadcaster <span className="text-emerald-400">Node</span></h3>
                             <p className="text-[10px] font-mono text-emerald-500/60 font-bold uppercase tracking-widest mt-2">STREAM: {streamTitle}</p>
                          </div>
                       </div>
@@ -586,8 +560,8 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                    {VIDEO_NODES.filter(n => n.status === 'LIVE').map(node => (
                       <div key={node.id} className="glass-card rounded-[56px] overflow-hidden border-2 border-rose-500/20 hover:border-rose-500 transition-all flex flex-col group active:scale-[0.98] duration-300 bg-black/60 shadow-3xl">
-                         <div className="h-64 relative overflow-hidden">
-                            <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
+                         <div className="h-72 relative overflow-hidden">
+                            <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[8s]" alt="" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
                             <div className="absolute top-6 left-6 flex gap-3">
                                <div className="px-4 py-1.5 bg-rose-600 rounded-full text-white text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl animate-pulse">
@@ -617,20 +591,35 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                    <div className="glass-card p-12 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl">
                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Institutional <span className="text-emerald-400">Bulletin</span></h3>
                       <div className="space-y-8">
-                         {[
-                           { t: 'Zone 4 Moisture Surge', d: 'Spectral data indicates high soil density in northern Nebraska clusters.', date: '30m ago', cat: 'TELEM' },
-                           { t: 'Registry Upgrade Finalized', d: 'Handshake v5.0 now active across global nodes.', date: '2h ago', cat: 'SYSTEM' },
-                           { t: 'New Carbon Shards Released', d: 'Registry authorizing 12M new credits in East Africa Hub.', date: '4h ago', cat: 'ECONOMY' },
-                         ].map((item, i) => (
-                           <div key={i} className="p-8 bg-white/5 border border-white/10 rounded-[40px] hover:bg-emerald-600/5 hover:border-emerald-500/30 transition-all cursor-pointer group">
-                              <div className="flex justify-between items-start mb-4">
-                                 <span className="px-3 py-1 bg-white/10 rounded-lg text-[8px] font-black text-slate-500">{item.cat}</span>
-                                 <span className="text-[10px] text-slate-700 font-mono">{item.date}</span>
-                              </div>
-                              <h4 className="text-2xl font-black text-white uppercase italic group-hover:text-emerald-400 transition-colors">{item.t}</h4>
-                              <p className="text-slate-400 italic text-sm mt-3 opacity-80">"{item.d}"</p>
+                        {loadingNews ? (
+                           <div className="py-20 flex flex-col items-center gap-6">
+                              <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
+                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Ingesting Strategic Trends...</p>
                            </div>
-                         ))}
+                        ) : newsResult ? (
+                           <div className="space-y-8">
+                              <div className="p-10 bg-white/5 rounded-[40px] border-l-8 border-emerald-500 border border-white/10">
+                                 <p className="text-slate-300 text-lg leading-relaxed italic whitespace-pre-line font-medium">
+                                    {newsResult.text}
+                                 </p>
+                                 {newsResult.sources && newsResult.sources.length > 0 && (
+                                    <div className="mt-10 pt-6 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                       {newsResult.sources.map((s, i) => (
+                                          <a key={i} href={s.web?.uri || '#'} target="_blank" rel="noopener noreferrer" className="p-4 bg-black/40 border border-white/5 rounded-2xl flex items-center justify-between group/slink hover:border-emerald-500/40 transition-all">
+                                             <span className="text-[10px] font-black text-slate-400 uppercase italic truncate max-w-[150px]">{s.web?.title || 'External Shard'}</span>
+                                             <ArrowUpRight size={14} className="text-slate-700 group-hover/slink:text-emerald-400" />
+                                          </a>
+                                       ))}
+                                    </div>
+                                 )}
+                              </div>
+                              <button onClick={fetchLatestNews} className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">
+                                 <RefreshCw size={14} /> REFRESH_INGEST
+                              </button>
+                           </div>
+                        ) : (
+                           <div className="p-20 text-center opacity-30 italic">No bulletin data sharded.</div>
+                        )}
                       </div>
                    </div>
                 </div>
@@ -638,9 +627,9 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                    <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 space-y-8 shadow-xl">
                       <h4 className="text-xl font-black text-white uppercase italic">Premium <span className="text-indigo-400">Subscriptions</span></h4>
                       {[{ id: 'NL-882', name: 'PLANT WAVE INSIDER', price: 150, icon: Sprout }].map(nl => (
-                         <div key={nl.id} className="p-6 bg-black/60 rounded-[32px] border border-white/5 space-y-4 shadow-inner">
+                         <div key={nl.id} className="p-6 bg-black/60 rounded-3xl border border-white/5 space-y-4 shadow-inner">
                             <div className="flex items-center gap-4">
-                               <div className="p-3 bg-indigo-500/20 rounded-xl text-indigo-400"><nl.icon size={20} /></div>
+                               <div className={`p-3 bg-indigo-500/20 rounded-xl text-indigo-400`}><nl.icon size={20} /></div>
                                <h5 className="text-sm font-black text-white uppercase tracking-widest">{nl.name}</h5>
                             </div>
                             <button className="w-full py-3 bg-indigo-800 hover:bg-indigo-700 rounded-xl text-[9px] font-black text-white uppercase shadow-lg">SUBSCRIBE ({nl.price} EAC)</button>
@@ -663,7 +652,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                     </div>
                     <div className="space-y-6 relative z-10">
                        <textarea value={blogTopic} onChange={e => setBlogTopic(e.target.value)} placeholder="Enter technical topic for industrial synthesis..." className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-sm font-medium italic focus:ring-4 focus:ring-indigo-500/10 outline-none h-48 resize-none placeholder:text-slate-900 shadow-inner" />
-                       <button onClick={handleForgeBlog} disabled={isForgingBlog || !blogTopic.trim()} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30">
+                       <button onClick={handleForgeBlog} disabled={isForgingBlog || !blogTopic.trim()} className="w-full py-8 agro-gradient rounded-40px text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30">
                           {isForgingBlog ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 fill-current" />} {isForgingBlog ? 'SYNTHESIZING...' : 'FORGE SHARD'}
                        </button>
                     </div>
@@ -749,6 +738,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         .animate-marquee { animation: marquee 45s linear infinite; }
         .shadow-3xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9); }
+        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(16, 185, 129, 0.2) transparent; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
       `}</style>

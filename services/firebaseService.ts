@@ -11,11 +11,10 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   RecaptchaVerifier,
-  signInWithPhoneNumber,
-  ConfirmationResult
+  signInWithPhoneNumber
 } from "firebase/auth";
 import { 
-  getFirestore, 
+  initializeFirestore,
   doc, 
   setDoc, 
   getDoc, 
@@ -40,12 +39,6 @@ import {
   query as rtdbQuery,
   serverTimestamp as rtdbTimestamp
 } from "firebase/database";
-import { 
-  getStorage, 
-  ref as sRef, 
-  uploadBytes, 
-  getDownloadURL 
-} from "firebase/storage";
 import { User as AgroUser } from "../types";
 
 const firebaseConfig = {
@@ -60,9 +53,13 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// Use initializeFirestore with experimentalForceLongPolling to fix "Could not reach Cloud Firestore backend"
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+});
+
 export const rtdb = getDatabase(app);
-export const storage = getStorage(app);
 
 // --- AUTHENTICATION ---
 export const onAuthStateChanged = (_: any, callback: (user: any) => void) => {
@@ -77,27 +74,22 @@ export const createUserWithEmailAndPassword = async (_: any, email: string, pass
   return fbCreateUser(auth, email, pass);
 };
 
-// Google Auth
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
   return signInWithPopup(auth, provider);
 };
 
-// Phone Auth (SMS)
 export const setupRecaptcha = (containerId: string) => {
   if (!(window as any).recaptchaVerifier) {
     (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      'size': 'invisible',
-      'callback': (response: any) => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
-      }
+      size: 'invisible'
     });
   }
+  return (window as any).recaptchaVerifier;
 };
 
-export const signInWithPhone = async (phoneNumber: string): Promise<ConfirmationResult> => {
-  const appVerifier = (window as any).recaptchaVerifier;
-  return signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+export const requestPhoneCode = async (phone: string, verifier: RecaptchaVerifier) => {
+  return signInWithPhoneNumber(auth, phone, verifier);
 };
 
 export const signOutSteward = () => fbSignOut(auth);
@@ -124,7 +116,6 @@ export const transmitRecoveryCode = async (email: string) => {
 
     console.log(`[NETWORK_SIGNAL] Recovery Shard ${shardCode} transmitted to ${email}`);
     await sendPasswordResetEmail(auth, email);
-    
     return true;
   } catch (e: any) {
     throw e;
@@ -148,27 +139,6 @@ export const resendVerificationEmail = async () => {
   if (auth.currentUser) {
     await sendEmailVerification(auth.currentUser);
   }
-};
-
-// --- CLOUD STORAGE HANDLERS ---
-
-/**
- * Anchors MRV evidence to storage. Organize by ESIN for security rules.
- */
-export const uploadEvidenceShard = async (esin: string, file: File) => {
-  const fileId = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-  const storageRef = sRef(storage, `evidence/${esin}/${fileId}`);
-  const snapshot = await uploadBytes(storageRef, file);
-  return getDownloadURL(snapshot.ref);
-};
-
-/**
- * Anchors Steward avatar. Organized by UID.
- */
-export const uploadStewardAvatar = async (uid: string, file: File) => {
-  const storageRef = sRef(storage, `avatars/${uid}/profile_pic`);
-  const snapshot = await uploadBytes(storageRef, file);
-  return getDownloadURL(snapshot.ref);
 };
 
 // --- REGISTRY SYNC (FIRESTORE) ---
@@ -289,4 +259,4 @@ export const verifyAuditorAccess = async (email: string) => {
     const snap = await getDocs(q);
     return !snap.empty;
   } catch (e) { return false; }
-}
+};

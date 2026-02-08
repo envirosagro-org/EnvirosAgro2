@@ -1,30 +1,155 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Flower, Satellite, TrendingUp, Zap, ShieldCheck, Bot, Sparkles, 
-  Layers, Droplets, Binary, Target, Globe, Loader2, Lock, Stamp, 
-  Fingerprint, Wind, CheckCircle2, Sprout, RefreshCw, Info, Terminal, 
-  Users, Factory, Cpu, Waves, Heart, Boxes, ShieldAlert, ArrowUpRight, 
-  Activity, Scan, MapPin, Smartphone, Star, ArrowLeftCircle, Wrench, 
-  SmartphoneNfc, ClipboardList, Target as TargetIcon, Search, Plus, 
-  ArrowRight, Download, Monitor, Signal, Radio, Box, Binary as BinaryIcon,
-  Crown, Compass, BadgeCheck, History, Eye, Lightbulb, Map as MapIcon,
-  Pickaxe, Database, Wifi, Leaf, Boxes as BoxesIcon, Share2, MoreVertical,
-  CircleDot, LayoutGrid, FileSearch, Trash2, Cpu as CpuIcon,
-  TreePine
+  Satellite, Zap, ShieldCheck, Bot, Sparkles, 
+  Layers, Binary, Target, Globe, Loader2, Stamp, 
+  Fingerprint, Wind, CheckCircle2, Sprout, RefreshCw, Terminal, 
+  Activity, MapPin, Smartphone, Star, ArrowLeftCircle, Wrench, 
+  SmartphoneNfc, Plus, ArrowRight, Download, Monitor, History,
+  Compass, BadgeCheck, Pickaxe, Database, Leaf, Boxes as BoxesIcon,
+  LayoutGrid, Trash2, Cpu as CpuIcon, TreePine, Crown, TrendingUp
 } from 'lucide-react';
 import { 
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip 
 } from 'recharts';
 import { User, ViewState, AgroResource } from '../types';
-import { analyzeMiningYield, chatWithAgroExpert } from '../services/geminiService';
+import { analyzeMiningYield } from '../services/geminiService';
 
 interface OnlineGardenProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onNavigate: (view: ViewState) => void;
+  onExecuteToShell?: (code: string) => void;
   notify: any;
 }
+
+// Define common styles for shard cards
+const shardCardBaseStyle = "glass-card p-12 rounded-[72px] border-2 transition-all flex flex-col justify-between shadow-3xl bg-black/40 relative overflow-hidden h-[680px] group cursor-pointer active:scale-[0.98] duration-300";
+
+// Define common styles for icons
+const iconContainerStyle = (color: string) => `p-6 rounded-3xl bg-white/5 border border-white/10 ${color} shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all`;
+
+// Define component for a resource shard
+const ResourceShard: React.FC<{
+  resource: AgroResource;
+  isSelected: boolean;
+  onSelect: () => void;
+  onExecute: (code: string) => void;
+}> = ({ resource, isSelected, onSelect, onExecute }) => {
+  
+  const getOptimizationCode = () => {
+    const isLand = resource.category === 'LAND';
+    const id = resource.id;
+    
+    if (isLand) {
+      return `// OPTIMIZE_LAND_SHARD: ${id}
+IMPORT AgroLaw.Stewardship AS Law;
+IMPORT EOS.BioResonance AS Bio;
+
+SEQUENCE Recalibrate_Plot {
+    // 1. Audit m-constant baseline
+    ASSERT node.stability > Law.MIN_RESONANCE;
+    
+    // 2. Adjust Soil Inflow
+    Bio.calibrate_substrate(depth: "L2", mineral_sync: true);
+    
+    // 3. Anchor impact
+    COMMIT_SHARD(registry: "LAND_LEDGER", finality: ZK_PROVEN);
+}`;
+    } else {
+      return `// OPTIMIZE_HARDWARE_NODE: ${id}
+IMPORT EOS.Automation AS Bot;
+IMPORT EOS.Network AS Net;
+
+SEQUENCE Tune_Telemetry {
+    // 1. Sync Buffer
+    Net.sync_node(id: "${id}", priority: "HIGH");
+    
+    // 2. Hardware Pulse
+    Bot.execute_diagnostic(target: "${id}", depth: "FULL");
+    
+    // 3. Finalize Packet
+    COMMIT_SHARD(registry: "TECH_MESH", finality: ZK_PROVEN);
+}`;
+    }
+  };
+
+  return (
+    <div 
+      className={`${shardCardBaseStyle} ${isSelected ? 'border-emerald-500 ring-8 ring-emerald-500/5' : 'border-white/5 hover:border-white/20'}`}
+      onClick={onSelect}
+    >
+      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]">
+        {resource.category === 'LAND' ? <LayoutGrid size={300} /> : <CpuIcon size={300} />}
+      </div>
+      
+      <div className="flex justify-between items-start mb-12 relative z-10">
+         <div className={iconContainerStyle(resource.category === 'LAND' ? 'text-emerald-400' : 'text-blue-400')}>
+            {resource.category === 'LAND' ? <TreePine size={40} /> : <Smartphone size={40} />}
+         </div>
+         <div className="text-right flex flex-col items-end gap-3">
+            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-lg ${
+              resource.category === 'LAND' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+            }`}>
+              {resource.category}
+            </span>
+            <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">{resource.id}</p>
+         </div>
+      </div>
+
+      <div className="flex-1 space-y-8 relative z-10">
+         <div className="space-y-4">
+            <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors drop-shadow-2xl">
+              {resource.name}
+            </h4>
+            <div className="flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
+              {resource.category === 'LAND' ? (
+                <>
+                  <MapPin size={14} className="text-emerald-500" />
+                  {resource.verificationMeta.coordinates?.lat}, {resource.verificationMeta.coordinates?.lng}
+                </>
+              ) : (
+                <>
+                  <CpuIcon size={14} className="text-blue-400" />
+                  {resource.type}
+                </>
+              )}
+            </div>
+         </div>
+         
+         <div className="grid grid-cols-2 gap-4">
+            <div className="p-6 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner hover:border-white/20 transition-all">
+               <p className="text-[9px] text-slate-600 font-black uppercase flex items-center gap-2">
+                 <ShieldCheck size={10} className="text-blue-400" /> Integrity
+               </p>
+               <p className="text-3xl font-mono font-black text-white">
+                 {(resource.verificationMeta.confidenceScore || 0.95) * 100}%
+               </p>
+            </div>
+            <div className="p-6 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner hover:border-white/20 transition-all text-right">
+               <p className="text-[9px] text-slate-600 font-black uppercase flex items-center justify-end gap-2">
+                 Status <Activity size={10} className="text-emerald-400" />
+               </p>
+               <p className="text-3xl font-mono font-black text-emerald-400">{resource.status}</p>
+            </div>
+         </div>
+      </div>
+
+      <div className="mt-12 pt-10 border-t border-white/5 flex gap-4 relative z-10">
+         <button className="flex-1 py-6 bg-white/5 border border-white/10 rounded-[32px] text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all shadow-md active:scale-95">Inspect Twin</button>
+         <button 
+           onClick={(e) => {
+             e.stopPropagation();
+             onExecute(getOptimizationCode());
+           }}
+           className="flex-1 py-6 agro-gradient rounded-[32px] text-[10px] font-black uppercase tracking-widest text-white shadow-3xl active:scale-95 transition-all border border-white/10"
+         >
+            Optimize in OS
+         </button>
+      </div>
+    </div>
+  );
+};
 
 const PROGRESSION_TIERS = [
   { level: 1, title: 'Seeder', req: 'Registry Handshake', access: '1 Virtual Shard', icon: Sprout, col: 'text-emerald-400', bg: 'bg-emerald-500/10' },
@@ -48,7 +173,7 @@ const MOCK_HISTORICAL_YIELD = [
   { cycle: 'C6', yield: 92, resonance: 1.42 },
 ];
 
-const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, notify }) => {
+const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, onExecuteToShell, notify }) => {
   const [activeTab, setActiveTab] = useState<'bridge' | 'shards' | 'roadmap' | 'mining'>('bridge');
   const [activeShardType, setActiveShardType] = useState<'physical' | 'virtual'>(user.resources?.some(r => r.category === 'LAND') ? 'physical' : 'virtual');
   
@@ -64,6 +189,11 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
 
   const landResources = useMemo(() => 
     (user.resources || []).filter(r => r.category === 'LAND'),
+    [user.resources]
+  );
+  
+  const hardwareResources = useMemo(() => 
+    (user.resources || []).filter(r => r.category === 'HARDWARE'),
     [user.resources]
   );
   
@@ -119,6 +249,14 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
       console.error("Mining Oracle Failure");
     } finally {
       setIsMining(false);
+    }
+  };
+
+  const handleExecuteOS = (code: string) => {
+    if (onExecuteToShell) {
+      onExecuteToShell(code);
+    } else {
+      onNavigate('farm_os');
     }
   };
 
@@ -183,7 +321,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                  <span className="text-emerald-400 font-mono">100%</span>
               </div>
               <div className="h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
-                 <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_20px_#10b981]" style={{ width: '94%' }}></div>
+                 <div className={`h-full bg-emerald-500 rounded-full shadow-[0_0_20px_#10b981]`} style={{ width: '94%' }}></div>
               </div>
            </div>
         </div>
@@ -191,19 +329,19 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
 
       {/* 2. Management Shards Navigation */}
       <div className="flex flex-col lg:flex-row justify-between items-center gap-10 relative z-20">
-        <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 overflow-x-auto scrollbar-hide">
+        <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 overflow-x-auto scrollbar-hide snap-x">
           {[
             { id: 'bridge', label: 'Telemetry Bridge', icon: Monitor },
             { id: 'shards', label: 'Shard Manager', icon: BoxesIcon },
             { id: 'roadmap', label: 'Super-Agro Path', icon: Compass },
             { id: 'mining', label: 'Extraction Node', icon: Zap },
-          ].map(tab => (
+          ].map(t => (
             <button 
-              key={tab.id} 
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+              key={t.id} 
+              onClick={() => setActiveTab(t.id as any)}
+              className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
             >
-              <tab.icon className="w-4 h-4" /> {tab.label}
+              <t.icon className="w-4 h-4" /> {t.label}
             </button>
           ))}
         </div>
@@ -320,7 +458,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
               <div className="lg:col-span-4 space-y-8">
                  <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-950/10 flex flex-col items-center text-center space-y-10 shadow-3xl relative overflow-hidden group/oracle">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform duration-[12s]"><Bot size={300} className="text-indigo-400" /></div>
-                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 group-hover/oracle:rotate-12 transition-transform duration-700 relative z-10 animate-float">
+                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 group-hover:rotate-12 transition-transform duration-700 relative z-10 animate-float">
                        <Bot size={48} className="text-white" />
                     </div>
                     <div className="space-y-6 relative z-10">
@@ -370,58 +508,26 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-                {landResources.map(land => (
-                   <div key={land.id} className={`glass-card p-12 rounded-[72px] border-2 transition-all flex flex-col justify-between shadow-3xl bg-black/40 relative overflow-hidden h-[620px] group ${selectedShardId === land.id ? 'border-emerald-500 ring-8 ring-emerald-500/5' : 'border-white/5 hover:border-white/20'}`} onClick={() => setSelectedShardId(land.id)}>
-                      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Box size={300} className="text-emerald-400" /></div>
-                      
-                      <div className="flex justify-between items-start mb-12 relative z-10">
-                         <div className={`p-6 rounded-3xl bg-white/5 border border-white/10 text-emerald-400 shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all`}>
-                            <TreePine size={40} />
-                         </div>
-                         <div className="text-right flex flex-col items-end gap-3">
-                            <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-lg">PHYSICAL_SHARD</span>
-                            <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">{land.id}</p>
-                         </div>
-                      </div>
-
-                      <div className="flex-1 space-y-8 relative z-10">
-                         <div className="space-y-4">
-                            <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{land.name}</h4>
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest italic flex items-center gap-3">
-                               <MapIcon size={14} className="text-emerald-500" /> {land.verificationMeta.coordinates?.lat}, {land.verificationMeta.coordinates?.lng}
-                            </p>
-                         </div>
-                         
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="p-6 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group/val hover:border-emerald-500/20 transition-all">
-                               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center gap-2"><TargetIcon size={10} className="text-blue-400" /> C(a) Growth</p>
-                               <p className="text-3xl font-mono font-black text-white">1.84<span className="text-sm ml-1 text-emerald-400 italic">Δ</span></p>
-                            </div>
-                            <div className="p-6 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group/val hover:border-indigo-500/20 transition-all text-right">
-                               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center justify-end gap-2">m-Resonance <Activity size={10} className="text-indigo-400" /></p>
-                               <p className="text-3xl font-mono font-black text-white">1.42<span className="text-sm ml-1 text-indigo-500 italic">x</span></p>
-                            </div>
-                         </div>
-
-                         <div className="space-y-4 pt-4">
-                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500 px-2">
-                               <span>Shard Maturity</span>
-                               <span className="text-emerald-400 font-mono">92%</span>
-                            </div>
-                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
-                               <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_15px_#10b981]" style={{ width: '92%' }}></div>
-                            </div>
-                         </div>
-                      </div>
-
-                      <div className="mt-12 pt-10 border-t border-white/5 flex gap-4 relative z-10">
-                         <button className="flex-1 py-5 bg-white/5 border border-white/10 rounded-[32px] text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all shadow-md active:scale-95">Inspect Twin</button>
-                         <button className="flex-1 py-5 bg-indigo-600 hover:bg-indigo-500 rounded-[32px] text-[10px] font-black uppercase tracking-widest text-white shadow-3xl active:scale-95 transition-all">Manage Lifecycle</button>
-                      </div>
-                   </div>
-                ))}
+                {activeShardType === 'physical' ? (
+                  landResources.concat(hardwareResources).map(resource => (
+                    <ResourceShard 
+                      key={resource.id} 
+                      resource={resource} 
+                      isSelected={selectedShardId === resource.id}
+                      onSelect={() => setSelectedShardId(resource.id)}
+                      onExecute={handleExecuteOS}
+                    />
+                  ))
+                ) : (
+                  /* Virtual Shards Placeholder */
+                  <div className="col-span-full py-40 flex flex-col items-center justify-center text-center space-y-8 opacity-20 border-2 border-dashed border-white/5 rounded-[48px] bg-black/20">
+                    <LayoutGrid size={80} className="text-slate-600" />
+                    <p className="text-2xl font-black uppercase tracking-[0.5em]">Virtual Shard Buffer Empty</p>
+                    <button className="px-10 py-5 bg-indigo-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl">Initialize Sim Node</button>
+                  </div>
+                )}
                 
-                {/* Placeholder Shards */}
+                {/* Global Provisioning Shard */}
                 <div className="glass-card p-12 rounded-[72px] border-2 border-dashed border-white/10 bg-white/[0.01] flex flex-col items-center justify-center text-center space-y-8 opacity-40 group hover:opacity-100 hover:border-emerald-500/20 hover:bg-emerald-500/[0.01] transition-all cursor-pointer">
                    <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform"><Plus size={40} className="text-white" /></div>
                    <div className="space-y-3">
@@ -490,7 +596,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                     </div>
                     <div className="space-y-4">
                        <h4 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Registry Sovereignty</h4>
-                       <p className="text-slate-400 text-xl font-medium italic max-w-xl mx-auto md:mx-0 opacity-80 leading-relaxed">
+                       <p className="text-slate-400 text-xl font-medium italic max-xl:text-sm max-w-xl mx-auto md:mx-0 opacity-80 leading-relaxed">
                           "Achieving Super-Agro status authorizes your node as a network validator and primary DAO governor. Secure the grid, secure the future."
                        </p>
                     </div>
@@ -509,7 +615,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                  <div className="glass-card p-12 rounded-[64px] border-2 border-emerald-500/20 bg-emerald-950/5 flex flex-col justify-center items-center text-center space-y-12 relative overflow-hidden shadow-3xl group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><Zap size={400} className="text-emerald-400" /></div>
-                    <div className="w-32 h-32 bg-emerald-600 rounded-[44px] flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] border-4 border-white/10 relative z-10 animate-float">
+                    <div className="w-32 h-32 bg-emerald-600 rounded-[44px] flex items-center justify-center shadow-[0_0_120px_rgba(16,185,129,0.4)] border-4 border-white/10 relative z-10 animate-float">
                        <Zap size={64} className="text-white" fill="currentColor" />
                     </div>
                     <div className="space-y-6 relative z-10">
@@ -552,7 +658,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                              <div className="relative">
                                 <Loader2 className="w-24 h-24 text-emerald-500 animate-spin mx-auto" />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                   <BinaryIcon size={32} className="text-emerald-400 animate-pulse" />
+                                   <Binary size={32} className="text-emerald-400 animate-pulse" />
                                 </div>
                              </div>
                              <div className="space-y-4">
@@ -591,10 +697,8 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                           </div>
                        ) : (
                           <div className="h-full flex flex-col items-center justify-center text-center space-y-12 py-20 opacity-20 group">
-                             <div className="relative">
-                                <Pickaxe size={140} className="text-slate-600 group-hover:text-emerald-400 transition-colors duration-1000" />
-                                <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
-                             </div>
+                             <Pickaxe size={140} className="text-slate-600 group-hover:text-emerald-400 transition-colors duration-1000" />
+                             <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
                              <div className="space-y-4">
                                 <p className="text-4xl font-black uppercase tracking-[0.6em] text-white italic">EXTRACTOR_STANDBY</p>
                                 <p className="text-lg font-bold italic text-slate-700 uppercase tracking-widest">Select an extraction layer to begin sharding</p>
@@ -605,7 +709,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                  </div>
               </div>
 
-              {/* Yield History Chart - Enhanced Section */}
+              {/* Yield History Chart */}
               <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 shadow-3xl space-y-8">
                  <div className="flex items-center gap-6 border-b border-white/5 pb-8">
                     <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl"><TrendingUp size={28} className="text-white" /></div>

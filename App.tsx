@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
-  Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, UserCircle
+  Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, Signal as SignalIcon, Target,
+  Truck
 } from 'lucide-react';
-import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard } from './types';
+import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard } from './types';
 import Dashboard from './components/Dashboard';
 import Sustainability from './components/Sustainability';
 import Economy from './components/Economy';
@@ -53,6 +53,7 @@ import FarmOS from './components/FarmOS';
 import NetworkView from './components/NetworkView';
 import MediaLedger from './components/MediaLedger';
 import AgroLang from './components/AgroLang';
+import SignalCenter from './components/SignalCenter';
 import { 
   syncUserToCloud, 
   auth, 
@@ -65,19 +66,6 @@ import {
   listenToCollection
 } from './services/firebaseService';
 import { createGenesisBlock, mineBlock, VALIDATORS } from './services/blockchainService';
-
-export interface SignalShard {
-  id: string;
-  type: 'system' | 'engagement' | 'network' | 'commerce' | 'pulse';
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  priority: 'low' | 'medium' | 'high';
-  actionLabel?: string;
-  actionIcon?: any;
-  meta?: any;
-}
 
 const BASE_EXCHANGE_RATE = 100.0;
 const PENALTY_FACTOR = 10.0;
@@ -120,6 +108,7 @@ const REGISTRY_NODES = [
     category: 'Command & Strategy', 
     items: [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
+      { id: 'network_signals', name: 'Signal Terminal', icon: SignalIcon },
       { id: 'network', name: 'Network Topology', icon: NetworkIcon },
       { id: 'farm_os', name: 'Farm OS', icon: Binary },
       { id: 'impact', name: 'Network Impact', icon: TrendingUp },
@@ -223,8 +212,7 @@ const App: React.FC = () => {
   const [isCloudSynced, setIsCloudSynced] = useState(false);
   const [showLoginOverlay, setShowLoginOverlay] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'Command & Strategy': true,
-    'Innovation Hub': true
+    'Command & Strategy': true
   });
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
   const [pendingShellCode, setPendingShellCode] = useState<string | null>(null);
@@ -235,7 +223,7 @@ const App: React.FC = () => {
   const [isMining, setIsMining] = useState(false);
   const [globalEchoes, setGlobalEchoes] = useState<any[]>([]);
 
-  // REGISTRY ENTITIES (Live state synced from Firestore)
+  // REGISTRY ENTITIES
   const [transactions, setTransactions] = useState<AgroTransaction[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
@@ -255,27 +243,11 @@ const App: React.FC = () => {
     
     setNotifications(prev => [newNotif, ...prev]);
 
-    const signal: SignalShard = {
-      id: `SIG-${id}`,
-      type: type === 'success' ? 'commerce' : 'system',
-      title: title,
-      message: message,
-      timestamp: new Date().toISOString(),
-      read: false,
-      priority: type === 'error' ? 'high' : 'medium',
-      actionLabel,
-      actionIcon,
-      meta
-    };
-    
-    if (!isGuest) saveCollectionItem('signals', signal);
-
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, duration);
-  }, [isGuest]);
+  }, []);
 
-  // HYDRATION & RECOVERY
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, async (firebaseUser: any) => {
       if (firebaseUser) {
@@ -299,7 +271,6 @@ const App: React.FC = () => {
     return () => unsubAuth();
   }, [notify]);
 
-  // CLOUD REGISTRY LISTENERS
   useEffect(() => {
     if (isGuest || !auth.currentUser) return;
     const unsubs = [
@@ -366,29 +337,6 @@ const App: React.FC = () => {
     pushToMempool(newTx);
     return newTx;
   }, [isGuest, pushToMempool]);
-
-  // --- PERSISTENCE HANDLERS FOR COMPONENTS ---
-  
-  const handleSaveContract = async (contract: FarmingContract) => {
-    if (!isGuest) await saveCollectionItem('contracts', contract);
-    notify('info', 'CONTRACT_SHARDED', `Farming mission ${contract.id} updated in cloud registry.`);
-  };
-
-  const handleSaveLiveProduct = async (product: LiveAgroProduct) => {
-    if (!isGuest) await saveCollectionItem('live_products', product);
-  };
-
-  const handleSaveProject = async (project: AgroProject) => {
-    if (!isGuest) await saveCollectionItem('projects', project);
-  };
-
-  const handleSaveTask = async (task: any) => {
-    if (!isGuest) await saveCollectionItem('tasks', task);
-  };
-
-  const handleSaveMediaShard = async (shard: MediaShard) => {
-    if (!isGuest) await saveCollectionItem('media_shards', shard);
-  };
 
   const earnEAC = useCallback(async (baseAmount: number, reason: string) => {
     if (!user) return;
@@ -485,6 +433,58 @@ const App: React.FC = () => {
     notify('success', 'ASSET_ANCHORED', `Provisioned ${product.name} to the global cloud catalogue.`);
   }, [isGuest, addPulse, notify]);
 
+  const handleSaveProject = useCallback(async (project: AgroProject) => {
+    if (!isGuest) await saveCollectionItem('projects', project);
+    setProjects(prev => {
+      const idx = prev.findIndex(p => p.id === project.id);
+      if (idx > -1) {
+        const next = [...prev];
+        next[idx] = project;
+        return next;
+      }
+      return [project, ...prev];
+    });
+  }, [isGuest]);
+
+  const handleSaveLiveProduct = useCallback(async (product: LiveAgroProduct) => {
+    if (!isGuest) await saveCollectionItem('live_products', product);
+    setLiveProducts(prev => {
+      const idx = prev.findIndex(p => p.id === product.id);
+      if (idx > -1) {
+        const next = [...prev];
+        next[idx] = product;
+        return next;
+      }
+      return [product, ...prev];
+    });
+  }, [isGuest]);
+
+  const handleSaveTask = useCallback(async (task: any) => {
+    if (!isGuest) await saveCollectionItem('tasks', task);
+    setTasks(prev => {
+      const idx = prev.findIndex(t => t.id === task.id);
+      if (idx > -1) {
+        const next = [...prev];
+        next[idx] = task;
+        return next;
+      }
+      return [task, ...prev];
+    });
+  }, [isGuest]);
+
+  const handleSaveContract = useCallback(async (contract: FarmingContract) => {
+    if (!isGuest) await saveCollectionItem('contracts', contract);
+    setContracts(prev => {
+      const idx = prev.findIndex(c => c.id === contract.id);
+      if (idx > -1) {
+        const next = [...prev];
+        next[idx] = contract;
+        return next;
+      }
+      return [contract, ...prev];
+    });
+  }, [isGuest]);
+
   const handleNavigate = (newView: ViewState) => {
     setActiveView(newView);
     setIsMobileMenuOpen(false);
@@ -504,7 +504,7 @@ const App: React.FC = () => {
   const SidebarContent = ({ forceLabel = false }: { forceLabel?: boolean }) => (
     <>
       <div className="p-4 md:p-8 flex items-center justify-between border-b border-white/5 bg-black/40">
-        <div className="flex items-center gap-3 overflow-hidden">
+        <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => handleNavigate('dashboard')}>
           <Layers className="text-emerald-500 w-8 h-8 shrink-0" />
           {(isSidebarOpen || forceLabel) && (
              <div className="animate-in fade-in slide-in-from-left-2 duration-500">
@@ -515,6 +515,25 @@ const App: React.FC = () => {
         </div>
         {isMobile && <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400"><X size={24} /></button>}
       </div>
+
+      {/* Profile Shortcut in Sidebar */}
+      <div className="px-4 mt-6">
+        <button 
+          onClick={() => handleNavigate('profile')}
+          className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all ${activeView === 'profile' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/5'}`}
+        >
+          <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-black border border-white/10 shrink-0 shadow-lg overflow-hidden">
+             {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name[0]}
+          </div>
+          {(isSidebarOpen || forceLabel) && (
+            <div className="text-left overflow-hidden">
+              <p className="text-[10px] font-black uppercase truncate">{user.name}</p>
+              <p className="text-[8px] text-slate-500 uppercase tracking-widest">{user.esin.substring(0, 12)}...</p>
+            </div>
+          )}
+        </button>
+      </div>
+
       <div className="flex-1 mt-6 space-y-4 px-2 md:px-4 overflow-y-auto custom-scrollbar pb-10">
         {REGISTRY_NODES.map((group, idx) => {
           const isExpanded = expandedGroups[group.category];
@@ -547,6 +566,8 @@ const App: React.FC = () => {
     </>
   );
 
+  const unreadCount = useMemo(() => networkSignals.filter(s => !s.read).length, [networkSignals]);
+
   if (isBooting) return (
     <div className="fixed inset-0 z-[500] bg-[#050706] flex flex-col items-center justify-center">
       <Layers className="w-20 h-20 text-emerald-500 animate-float mb-8" />
@@ -554,6 +575,62 @@ const App: React.FC = () => {
       <div className="w-48 h-1 bg-white/5 rounded-full mt-6 overflow-hidden"><div className="h-full bg-emerald-500 animate-boot-progress"></div></div>
     </div>
   );
+
+  const renderView = () => {
+    switch (activeView) {
+      case 'dashboard': return <Dashboard user={user} isGuest={isGuest} onNavigate={handleNavigate} orders={orders} blockchain={blockchain} isMining={isMining} />;
+      case 'network_signals': return <SignalCenter user={user} signals={networkSignals} setSignals={setNetworkSignals} onNavigate={handleNavigate} />;
+      case 'network': return <NetworkView />;
+      case 'wallet': return <AgroWallet user={user} isGuest={isGuest} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} onEarnEAC={earnEAC} transactions={transactions} notify={notify} />;
+      case 'sustainability': return <Sustainability user={user} onNavigate={handleNavigate} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />;
+      case 'economy': return <Economy user={user} isGuest={isGuest} onNavigate={handleNavigate} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} notify={notify} />;
+      case 'industrial': return <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} onSaveProject={handleSaveProject} notify={notify} />;
+      case 'intelligence': return <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />;
+      case 'code_of_laws': return <CodeOfLaws user={user} />;
+      case 'chroma_system': return <ChromaSystem user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />;
+      case 'agro_calendar': return <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
+      case 'impact': return <Impact user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />;
+      case 'ecosystem': return <Ecosystem user={user} onDeposit={earnEAC} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />;
+      case 'profile': return <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); setIsCloudSynced(true); }} onNavigate={handleNavigate} notify={notify} />;
+      case 'explorer': return <Explorer blockchain={blockchain} isMining={isMining} onPulse={addPulse} user={user} />;
+      case 'community': return <Community user={user} isGuest={isGuest} onContribution={(type, cat) => earnEAC(5, `CONTRIBUTION_${type.toUpperCase()}_${cat.toUpperCase()}`)} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />;
+      case 'live_farming': return <LiveFarming user={user} products={liveProducts} setProducts={() => {}} onEarnEAC={earnEAC} onSaveProduct={handleSaveLiveProduct} onNavigate={handleNavigate} notify={notify} />;
+      case 'tqm': return <TQMGrid user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} onNavigate={handleNavigate} liveProducts={liveProducts} notify={notify} />;
+      case 'crm': return <NexusCRM user={user} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onNavigate={handleNavigate} orders={orders} />;
+      case 'circular': return <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} onNavigate={handleNavigate} />;
+      case 'tools': return <ToolsSection user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} tasks={tasks} onSaveTask={handleSaveTask} onOpenEvidence={(task) => { setIsEvidenceModalOpen(true); }} notify={notify} />;
+      case 'contract_farming': return <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} contracts={contracts} setContracts={() => {}} onSaveContract={handleSaveContract} />;
+      case 'investor': return <InvestorPortal user={user} onUpdate={handleUpdateUser} onSpendEAC={spendEAC} projects={projects} onNavigate={handleNavigate} />;
+      case 'agrowild': return <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />;
+      case 'research': return <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
+      case 'biotech_hub': return <Biotechnology user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      case 'permaculture_hub': return <Permaculture user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      case 'cea_portal': return <CEA user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
+      case 'emergency_portal': return <EmergencyPortal user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
+      case 'agro_regency': return <AgroRegency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
+      case 'intranet': return <IntranetPortal user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      case 'envirosagro_store': return <EnvirosAgroStore user={user} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} />;
+      case 'media': return <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />;
+      case 'channelling': return <Channelling user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
+      case 'info': return <InfoPortal />;
+      case 'ingest': return <NetworkIngest user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      case 'vendor': return <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} />;
+      case 'agro_value_enhancement': return <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} liveProducts={liveProducts} orders={orders} />;
+      case 'digital_mrv': return <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} />;
+      case 'registry_handshake': return <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />;
+      case 'online_garden': return <OnlineGarden user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onExecuteToShell={handleExecuteToShell} notify={notify} />;
+      case 'farm_os': return <FarmOS user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} initialCode={pendingShellCode} clearInitialCode={() => setPendingShellCode(null)} />;
+      case 'media_ledger': return <MediaLedger user={user} shards={mediaShards} />;
+      case 'split': return <div />;
+      case 'agrolang': return <AgroLang user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onExecuteToShell={handleExecuteToShell} />;
+      case 'animal_world': return <NaturalResources user={user} type="animal_world" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      case 'plants_world': return <NaturalResources user={user} type="plants_world" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      case 'aqua_portal': return <NaturalResources user={user} type="aqua_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      case 'soil_portal': return <NaturalResources user={user} type="soil_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      case 'air_portal': return <NaturalResources user={user} type="air_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
+      default: return <Dashboard user={user} isGuest={isGuest} onNavigate={handleNavigate} blockchain={blockchain} orders={orders} />;
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#050706] text-slate-200">
@@ -570,6 +647,7 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* ROBUST NOTIFICATION HUD */}
       <div className="fixed top-20 right-4 md:right-8 z-[1000] flex flex-col gap-3 w-full max-w-[calc(100%-2rem)] md:max-w-sm pointer-events-none">
         {notifications.map(n => (
           <div key={n.id} className="pointer-events-auto animate-in slide-in-from-right-10 duration-500">
@@ -641,13 +719,28 @@ const App: React.FC = () => {
             <h1 className="text-lg md:text-xl font-black tracking-tighter uppercase italic hidden sm:block">{activeView.replace(/_/g, ' ').toUpperCase()} SHARD</h1>
           </div>
           <div className="flex items-center gap-3 md:gap-4">
+             {unreadCount > 0 && (
+                <button 
+                  onClick={() => handleNavigate('network_signals')}
+                  className="p-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all relative"
+                  title="Signal Terminal"
+                >
+                   <SignalIcon size={18} />
+                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 rounded-full text-[8px] font-bold flex items-center justify-center border-2 border-[#050706] animate-pulse">
+                      {unreadCount}
+                   </span>
+                </button>
+             )}
              {isCloudSynced ? (
                 <div className="flex items-center gap-4">
                    <div className="flex flex-col items-end hidden sm:flex">
                       <span className="text-10px font-black text-white uppercase tracking-widest">{user.name}</span>
                       <span className="text-[8px] font-mono text-emerald-400 font-bold uppercase">{user.esin}</span>
                    </div>
-                   <button onClick={() => handleNavigate('profile')} className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 font-black overflow-hidden shadow-2xl border border-white/10 ring-4 ring-white/5 hover:scale-105 transition-all">
+                   <button 
+                    onClick={() => handleNavigate('profile')} 
+                    className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-black shadow-2xl transition-all border border-white/10 ring-4 ring-white/5 hover:scale-105 ${activeView === 'profile' ? 'bg-emerald-500 ring-emerald-500/40' : 'bg-slate-800 text-emerald-400'}`}
+                   >
                       {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="Biometric" /> : user.name[0]}
                    </button>
                    <button onClick={handleLogout} className="p-3 bg-rose-600/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-600 hover:text-white transition-all shadow-xl" title="Disconnect Node">
@@ -672,57 +765,10 @@ const App: React.FC = () => {
         </div>
 
         <div className="p-4 md:p-8 flex-1 max-w-[1920px] mx-auto w-full">
-          {activeView === 'dashboard' && <Dashboard user={user} isGuest={isGuest} onNavigate={handleNavigate} orders={orders} blockchain={blockchain} isMining={isMining} notify={notify} />}
-          {activeView === 'network' && <NetworkView />}
-          {activeView === 'wallet' && <AgroWallet user={user} isGuest={isGuest} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} onEarnEAC={earnEAC} transactions={transactions} notify={notify} />}
-          {activeView === 'sustainability' && <Sustainability user={user} onNavigate={handleNavigate} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} notify={notify} />}
-          {activeView === 'economy' && <Economy user={user} isGuest={isGuest} onNavigate={handleNavigate} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} notify={notify} />}
-          {activeView === 'industrial' && <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} onSaveProject={handleSaveProject} notify={notify} />}
-          {activeView === 'intelligence' && <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />}
-          {activeView === 'code_of_laws' && <CodeOfLaws user={user} />}
-          {activeView === 'chroma_system' && <ChromaSystem user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
-          {activeView === 'agro_calendar' && <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'impact' && <Impact user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
-          {activeView === 'ecosystem' && <Ecosystem user={user} onDeposit={earnEAC} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
-          {activeView === 'profile' && <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); setIsCloudSynced(true); }} onNavigate={handleNavigate} />}
-          {activeView === 'explorer' && <Explorer blockchain={blockchain} isMining={isMining} onPulse={addPulse} user={user} />}
-          {activeView === 'community' && <Community user={user} isGuest={isGuest} onContribution={(type, cat) => earnEAC(5, `CONTRIBUTION_${type.toUpperCase()}_${cat.toUpperCase()}`)} onSpendEAC={spendEAC} onEarnEAC={earnEAC} />}
-          {activeView === 'live_farming' && <LiveFarming user={user} products={liveProducts} setProducts={() => {}} onEarnEAC={earnEAC} onSaveProduct={handleSaveLiveProduct} onNavigate={handleNavigate} notify={notify} />}
-          {activeView === 'tqm' && <TQMGrid user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} onNavigate={handleNavigate} liveProducts={liveProducts} notify={notify} />}
-          {activeView === 'crm' && <NexusCRM user={user} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onNavigate={handleNavigate} orders={orders} />}
-          {activeView === 'circular' && <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} onNavigate={handleNavigate} />}
-          {activeView === 'tools' && <ToolsSection user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} tasks={tasks} onSaveTask={handleSaveTask} onOpenEvidence={(task) => { setIsEvidenceModalOpen(true); }} notify={notify} />}
-          {activeView === 'contract_farming' && <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} contracts={contracts} setContracts={() => {}} onSaveContract={handleSaveContract} notify={notify} />}
-          {activeView === 'investor' && <InvestorPortal user={user} onUpdate={handleUpdateUser} onSpendEAC={spendEAC} projects={projects} onNavigate={handleNavigate} notify={notify} />}
-          {activeView === 'agrowild' && <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />}
-          {activeView === 'research' && <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'biotech_hub' && <Biotechnology user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'permaculture_hub' && <Permaculture user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'cea_portal' && <CEA user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'emergency_portal' && <EmergencyPortal user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {/* Fix: Line 746 error fixed by changing Agro Regency to AgroRegency component name */}
-          {activeView === 'agro_regency' && <AgroRegency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'intranet' && <IntranetPortal user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'envirosagro_store' && <EnvirosAgroStore user={user} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} onNavigate={handleNavigate} />}
-          {activeView === 'media' && <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />}
-          {activeView === 'channelling' && <Channelling user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'info' && <InfoPortal onNavigate={handleNavigate} />}
-          {activeView === 'ingest' && <NetworkIngest user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />}
-          {activeView === 'vendor' && <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} onNavigate={handleNavigate} />}
-          {activeView === 'agro_value_enhancement' && <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} liveProducts={liveProducts} orders={orders} />}
-          {activeView === 'digital_mrv' && <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} />}
-          {activeView === 'registry_handshake' && <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />}
-          {activeView === 'online_garden' && <OnlineGarden user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} notify={notify} />}
-          {activeView === 'farm_os' && <FarmOS user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} initialCode={pendingShellCode} clearInitialCode={() => setPendingShellCode(null)} />}
-          {activeView === 'media_ledger' && <MediaLedger user={user} shards={mediaShards} />}
-          {activeView === 'agrolang' && <AgroLang user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onExecuteToShell={handleExecuteToShell} />}
-          {['animal_world', 'plants_world', 'aqua_portal', 'soil_portal', 'air_portal'].includes(activeView) && (
-            <NaturalResources user={user} type={activeView as ViewState} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />
-          )}
+          {renderView()}
         </div>
       </main>
 
-      {/* LOGIN OVERLAY MODAL */}
       {showLoginOverlay && (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-in fade-in" onClick={() => setShowLoginOverlay(false)}></div>

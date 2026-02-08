@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Flower2, Music, Heart, Bot, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, Sparkles, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCcw, Handshake,
   // MedicAg Icons
@@ -34,10 +35,18 @@ import {
   Crown,
   Coffee,
   FlameKindling,
-  Timer
+  Timer,
+  AudioWaveform,
+  Podcast,
+  MessageSquare,
+  ArrowUpRight,
+  Stamp,
+  Fingerprint,
+  Building,
+  Key
 } from 'lucide-react';
 import { User, ViewState } from '../types';
-import { runSpecialistDiagnostic } from '../services/geminiService';
+import { runSpecialistDiagnostic, analyzeInstitutionalRisk, calibrateSonicResonance, AIResponse } from '../services/geminiService';
 
 interface EcosystemProps {
   user: User;
@@ -135,17 +144,15 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
   const [triageResult, setTriageResult] = useState<string | null>(null);
   const [isTriaging, setIsTriaging] = useState(false);
 
-  // AgroJunior Sub-States
-  const [twinSyncing, setTwinSyncing] = useState(false);
-  const [twinHealth, setTwinHealth] = useState(94);
-
-  // Love4Agro Sub-States
-  const [willingnessScore, setWillingnessScore] = useState(72);
-  const [isCommittingWillingness, setIsCommittingWillingness] = useState(false);
+  // Tokenz Sub-States
+  const [isAnalyzingRisk, setIsAnalyzingRisk] = useState(false);
+  const [tokenzRiskReport, setTokenzRiskReport] = useState<AIResponse | null>(null);
 
   // Agromusika Sub-States
   const [activeFreq, setActiveFreq] = useState(432);
   const [isGeneratingFreq, setIsGeneratingFreq] = useState(false);
+  const [isScanningAcoustics, setIsScanningAcoustics] = useState(false);
+  const [sonicCalibration, setSonicCalibration] = useState<string | null>(null);
 
   const filteredBrands = filter === 'all' ? BRANDS : BRANDS.filter(b => b.thrust === filter);
 
@@ -180,27 +187,49 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
     }
   };
 
-  const handleTwinSync = () => {
-    setTwinSyncing(true);
-    setTimeout(() => {
-      setTwinHealth(98);
-      setTwinSyncing(false);
-    }, 2500);
+  const handleRunTokenzAudit = async (asset: any) => {
+    setIsAnalyzingRisk(true);
+    setTokenzRiskReport(null);
+    try {
+      const res = await analyzeInstitutionalRisk({
+        shard_id: asset.id,
+        asset_name: asset.asset,
+        valuation: asset.value,
+        market_apr: asset.apr,
+        node_esin: user.esin
+      });
+      setTokenzRiskReport(res);
+    } catch (e) {
+      alert("Oracle connection failure.");
+    } finally {
+      setIsAnalyzingRisk(false);
+    }
   };
 
-  const handleCommitWillingness = () => {
-    setIsCommittingWillingness(true);
-    setTimeout(() => {
-      setWillingnessScore(85);
-      setIsCommittingWillingness(false);
-      onDeposit(10, 'Willingness Shard Committed');
-    }, 2000);
+  const handleSonicIngest = async () => {
+    setIsScanningAcoustics(true);
+    setSonicCalibration(null);
+    try {
+      const res = await calibrateSonicResonance({
+        node: user.esin,
+        soil_type: 'Clay-Loam',
+        m_constant: user.metrics.timeConstantTau,
+        acoustic_noise_floor: '-42dB'
+      });
+      setSonicCalibration(res.text);
+      onDeposit(10, 'Acoustic Ingest Synchronized');
+    } catch (e) {
+      alert("Sonic Oracle Sync Void.");
+    } finally {
+      setIsScanningAcoustics(false);
+    }
   };
 
   const handleFreqGen = () => {
     setIsGeneratingFreq(true);
     setTimeout(() => {
       setIsGeneratingFreq(false);
+      onDeposit(5, 'Bio-Electric Frequency Pulse');
     }, 4000);
   };
 
@@ -310,604 +339,6 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
             {/* Portal Content Area */}
             <div className={`flex-1 overflow-y-auto p-8 md:p-16 custom-scrollbar ${activeBrand.isLight ? 'bg-white' : 'bg-black/40'}`}>
                
-               {/* 1. AGROBOTO CONTENT (DARK) */}
-               {activeBrand.id === 'agroboto' && (
-                  <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-700">
-                    
-                    {portalTab === 'home' && (
-                      <>
-                        <div className="relative rounded-[64px] overflow-hidden min-h-[500px] flex items-center border border-white/5 bg-slate-900/40 shadow-3xl group">
-                          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1600')] bg-cover opacity-10 grayscale group-hover:grayscale-0 transition-all duration-[12s]"></div>
-                          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
-                          <div className="relative z-10 p-16 md:p-24 space-y-10 max-w-4xl">
-                            <span className="px-5 py-2 bg-slate-500/10 text-slate-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-white/10 shadow-2xl">ROBOTICS_CORE_v4.2</span>
-                            <h2 className="text-6xl md:text-8xl font-black text-white leading-[0.85] tracking-tighter uppercase italic drop-shadow-2xl">AUTONOMOUS <br/> <span className="text-slate-500">INTELLIGENCE.</span></h2>
-                            <p className="text-slate-400 text-2xl font-medium italic leading-relaxed">Scaling sustainable agriculture through 24/7 robotic swarms and predictive EOS analytics.</p>
-                            <button onClick={() => setPortalTab('fleet_command')} className="px-12 py-6 bg-slate-700 hover:bg-slate-600 rounded-3xl text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl active:scale-95 transition-all">DEPLOY FLEET</button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                          {[
-                            { t: 'Drone Swarms', d: 'Aerial spectral mapping and precision seed sharding.', i: Radar, c: 'text-slate-400' },
-                            { t: 'Terra Rovers', d: 'Autonomous ground units for weeding and soil DNA sampling.', i: Smartphone, c: 'text-teal-500' },
-                            { t: 'Fleet Logic', d: 'Cloud-synced coordinate system for multi-node deployments.', i: BrainCircuit, c: 'text-indigo-600' },
-                          ].map((f, i) => (
-                            <div key={i} className="p-10 glass-card rounded-[48px] border border-white/5 space-y-8 group hover:border-slate-500/40 transition-all bg-black/40">
-                                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-all border border-white/5 shadow-xl"><f.i size={32} className={f.c} /></div>
-                                <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none">{f.t}</h4>
-                                <p className="text-slate-500 text-base leading-relaxed italic opacity-80 group-hover:opacity-100 group-hover:text-slate-300">"{f.d}"</p>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-
-                    {portalTab === 'fleet_command' && (
-                      <div className="space-y-12 animate-in fade-in duration-500">
-                        <div className="flex justify-between items-center px-4">
-                           <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic">Active <span className="text-slate-400">Fleet Units</span></h3>
-                           <button className="px-8 py-3 bg-slate-700 hover:bg-slate-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-xl">Provision New Node</button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                           {MOCK_BOTS.map(bot => (
-                             <div key={bot.id} className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/60 space-y-8 group hover:border-slate-500/40 transition-all">
-                                <div className="flex justify-between items-start">
-                                   <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:rotate-12 transition-transform border border-white/5 shadow-inner">
-                                      {bot.type.includes('Drone') ? <Satellite className="text-slate-400" /> : <Radar className="text-teal-400" />}
-                                   </div>
-                                   <div className="text-right">
-                                      <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${
-                                        bot.status === 'Patrolling' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 
-                                        bot.status === 'Charging' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 animate-pulse' : 
-                                        'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                      }`}>{bot.status}</span>
-                                      <p className="text-[10px] text-slate-500 font-mono mt-2 font-black">{bot.id}</p>
-                                   </div>
-                                </div>
-                                <div className="space-y-4">
-                                   <div className="space-y-1">
-                                      <h5 className="text-xl font-black text-white uppercase italic leading-none">{bot.type}</h5>
-                                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">{bot.zone}</p>
-                                   </div>
-                                   <div className="space-y-3">
-                                      <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500">
-                                         <span className="flex items-center gap-1"><Battery size={10} /> Energy Shard</span>
-                                         <span className={bot.battery < 20 ? 'text-rose-500' : 'text-emerald-500'}>{bot.battery}%</span>
-                                      </div>
-                                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                         <div className={`h-full ${bot.battery < 20 ? 'bg-rose-600' : 'bg-emerald-600'}`} style={{ width: `${bot.battery}%` }}></div>
-                                      </div>
-                                   </div>
-                                   <div className="flex items-center gap-2 text-[9px] font-black text-slate-600 uppercase">
-                                      <Signal size={12} className="text-blue-500" /> Signal Integrity: {bot.signal}%
-                                   </div>
-                                </div>
-                                <div className="pt-6 border-t border-white/5 flex gap-3">
-                                   <button className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase text-slate-400 transition-all border border-white/10">Manual Link</button>
-                                   <button className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl text-[9px] font-black uppercase text-white transition-all shadow-lg">Calibrate</button>
-                                </div>
-                             </div>
-                           ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {portalTab === 'swarm_ai' && (
-                      <div className="max-w-5xl mx-auto space-y-12 animate-in zoom-in duration-500">
-                        <div className="glass-card p-16 rounded-[64px] border border-indigo-500/20 bg-indigo-950/10 flex flex-col items-center text-center space-y-10 shadow-3xl relative overflow-hidden group">
-                           <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform"><BrainCircuit size={400} className="text-indigo-400" /></div>
-                           <div className="w-32 h-32 rounded-[48px] bg-indigo-600 flex items-center justify-center shadow-[0_0_80px_rgba(79,70,229,0.3)] border-4 border-white/10 relative z-10">
-                              <Network size={64} className="text-white animate-pulse" />
-                           </div>
-                           <div className="space-y-4 relative z-10">
-                              <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Swarm <span className="text-indigo-400">Consensus</span></h3>
-                              <p className="text-slate-400 text-xl font-medium leading-relaxed max-w-2xl italic">Collective machine intelligence optimizing regional C(a) growth signatures across all industrial nodes.</p>
-                           </div>
-                           <div className="grid grid-cols-3 gap-8 w-full max-w-3xl relative z-10 py-10 border-y border-white/5">
-                              <div>
-                                 <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Synapse Load</p>
-                                 <p className="text-4xl font-mono font-black text-white">12.4 <span className="text-sm">PF</span></p>
-                              </div>
-                              <div>
-                                 <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Consensus Depth</p>
-                                 <p className="text-4xl font-mono font-black text-indigo-400">{swarmResonance.toFixed(1)}%</p>
-                              </div>
-                              <div>
-                                 <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Latency Shard</p>
-                                 <p className="text-4xl font-mono font-black text-emerald-400">2ms</p>
-                              </div>
-                           </div>
-                           <button 
-                             onClick={handleSwarmOptimize}
-                             disabled={isOptimizingSwarm}
-                             className="px-16 py-8 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 hover:scale-105 active:scale-95 transition-all relative z-10 disabled:opacity-50"
-                           >
-                              {isOptimizingSwarm ? <Loader2 className="w-8 h-8 animate-spin" /> : <Sparkles className="w-8 h-8 fill-current" />}
-                              {isOptimizingSwarm ? 'Optimizing Neural Mesh...' : 'TUNE SWARM RESONANCE'}
-                           </button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 flex items-center gap-8">
-                              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-slate-600"><Bot size={32} /></div>
-                              <div>
-                                 <h4 className="text-xl font-black text-white uppercase italic">Active Clusters</h4>
-                                 <p className="text-sm text-slate-500 mt-2 italic">"Swarm nodes currently synchronized in real-time."</p>
-                              </div>
-                              <span className="text-2xl font-mono font-black text-indigo-400 ml-auto">142</span>
-                           </div>
-                           <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 flex items-center gap-8">
-                              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-slate-600"><AlertCircle size={32} /></div>
-                              <div>
-                                 <h4 className="text-xl font-black text-white uppercase italic">Anomaly Buffer</h4>
-                                 <p className="text-sm text-slate-500 mt-2 italic">"Prevention protocols for robotic SID load."</p>
-                              </div>
-                              <span className="text-2xl font-mono font-black text-emerald-400 ml-auto">SAFE</span>
-                           </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {portalTab === 'missions' && (
-                      <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
-                        <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-10 px-4">
-                           <div className="space-y-2">
-                              <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic">Mission <span className="text-emerald-400">Control Ledger</span></h3>
-                              <p className="text-slate-500 text-lg font-medium italic">Assign industrial bounties and track autonomous task fulfillment shards.</p>
-                           </div>
-                           <button className="px-10 py-5 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
-                              <PlusCircle size={20} /> Deploy New Mission Shard
-                           </button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                           {MOCK_MISSIONS.map(msn => (
-                             <div key={msn.id} className="glass-card p-10 rounded-[56px] border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col h-full active:scale-[0.98] duration-300 bg-black/40 shadow-2xl relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform"><Target size={120} className="text-white" /></div>
-                                <div className="flex justify-between items-start mb-10 relative z-10">
-                                   <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:rotate-12 transition-transform">
-                                      <Zap size={28} className="text-emerald-400" />
-                                   </div>
-                                   <div className="text-right">
-                                      <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${
-                                        msn.status === 'Active' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 
-                                        msn.status === 'Initializing' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 animate-pulse' : 
-                                        'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                      }`}>{msn.status}</span>
-                                      <p className="text-[10px] text-slate-500 font-mono mt-3 uppercase tracking-tighter italic">{msn.id}</p>
-                                   </div>
-                                </div>
-                                <div className="flex-1 space-y-6 relative z-10">
-                                   <h4 className="text-3xl font-black text-white uppercase italic leading-tight group-hover:text-emerald-400 transition-colors m-0">{msn.title}</h4>
-                                   <div className="flex gap-6 items-center">
-                                      <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                         <Bot size={14} className="text-slate-400" /> {msn.units} Units
-                                      </div>
-                                      <div className="w-1 h-1 rounded-full bg-slate-800"></div>
-                                      <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                         <Coins size={14} className="text-emerald-500" /> {msn.bounty}
-                                      </div>
-                                   </div>
-                                   <div className="space-y-3 pt-4">
-                                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                         <span>Fulfillment Progress</span>
-                                         <span className="text-white font-mono">{msn.progress}%</span>
-                                      </div>
-                                      <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5 shadow-inner">
-                                         <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_15px_#10b981] transition-all duration-[2s]" style={{ width: `${msn.progress}%` }}></div>
-                                      </div>
-                                   </div>
-                                </div>
-                                <div className="mt-12 pt-8 border-t border-white/5 flex gap-4 relative z-10">
-                                   <button className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-[9px] font-black uppercase text-slate-400 transition-all border border-white/10">Abort</button>
-                                   <button className="flex-[2] py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest transition-all shadow-xl active:scale-90">View Live Feed</button>
-                                </div>
-                             </div>
-                           ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-               )}
-
-               {/* 2. MEDICAG CONTENT (LIGHT) */}
-               {activeBrand.id === 'medicag' && (
-                  <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-700">
-                    
-                    {portalTab === 'home' && (
-                      <>
-                        <div className="relative rounded-[64px] overflow-hidden min-h-[500px] flex items-center border border-teal-500/10 bg-teal-50 shadow-2xl group">
-                          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=1600')] bg-cover opacity-5"></div>
-                          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-transparent"></div>
-                          <div className="relative z-10 p-16 md:p-24 space-y-10 max-w-4xl">
-                             <span className="px-5 py-2 bg-teal-500/10 text-teal-700 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-teal-200">CLINICAL_NODE_v4.2</span>
-                             <h2 className="text-6xl md:text-8xl font-black text-stone-900 leading-[0.85] tracking-tighter uppercase italic">TOTAL <span className="text-teal-700">WELLNESS</span> FOR EARTH.</h2>
-                             <p className="text-stone-600 text-2xl font-medium italic leading-relaxed">Ecological healthcare, hospital coordination, and steward wellness audits anchored to the industrial ledger.</p>
-                             <button onClick={() => setPortalTab('ai_triage')} className="px-12 py-6 bg-teal-800 hover:bg-teal-700 rounded-3xl text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl active:scale-95 transition-all flex items-center gap-4">
-                                <Stethoscope size={20} /> INITIALIZE AI TRIAGE
-                             </button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                          {[
-                            { t: 'Soil MRI', d: 'Microbial Resonance Imaging to diagnose soil fatigue.', i: LabIcon, c: 'text-teal-700' },
-                            { t: 'Steward Care', d: 'Healthcare shards for farmers and industrial units.', i: PulseIcon, c: 'text-rose-800' },
-                            { t: 'Animal Triage', d: 'Livestock diagnostics and zoonotic monitoring.', i: Activity, c: 'text-stone-600' },
-                          ].map((f, i) => (
-                             <div key={i} className="p-10 bg-stone-100/50 rounded-[48px] border border-stone-200 space-y-8 group hover:border-teal-700/40 transition-all shadow-lg">
-                                <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center group-hover:scale-110 transition-all shadow-md border border-stone-100"><f.i size={32} className={f.c} /></div>
-                                <h4 className="text-2xl font-black text-stone-900 uppercase tracking-tighter italic leading-none">{f.t}</h4>
-                                <p className="text-stone-500 text-base leading-relaxed italic opacity-80 group-hover:opacity-100">"{f.d}"</p>
-                             </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-
-                    {portalTab === 'clinical_hub' && (
-                       <div className="space-y-12 animate-in fade-in duration-500">
-                          <div className="flex justify-between items-center px-4">
-                             <h3 className="text-3xl font-black text-stone-900 uppercase tracking-tighter italic">Clinical <span className="text-teal-700">Hub Registry</span></h3>
-                             <div className="flex items-center gap-4">
-                                <div className="p-4 bg-stone-100 border border-stone-200 rounded-2xl text-center">
-                                   <p className="text-[8px] text-stone-500 font-black uppercase mb-1">Network Capacity</p>
-                                   <p className="text-xl font-mono font-black text-teal-700">14.2 GB/y</p>
-                                </div>
-                             </div>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                             {MOCK_CLINICS.map(clinic => (
-                               <div key={clinic.id} className="p-10 bg-white border border-stone-200 rounded-[56px] shadow-xl group hover:border-teal-600/40 transition-all relative overflow-hidden flex flex-col">
-                                  <div className="flex justify-between items-start mb-8">
-                                     <div className="p-4 bg-stone-100 rounded-2xl group-hover:bg-teal-50 transition-colors">
-                                        <ShieldPlus className="w-8 h-8 text-teal-700" />
-                                     </div>
-                                     <div className="text-right">
-                                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border ${
-                                           clinic.status === 'OPERATIONAL' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
-                                        }`}>{clinic.status}</span>
-                                        <p className="text-[10px] text-stone-400 font-mono mt-2 font-black">{clinic.id}</p>
-                                     </div>
-                                  </div>
-                                  <div className="flex-1 space-y-4">
-                                     <h4 className="text-2xl font-black text-stone-900 uppercase italic tracking-tight m-0">{clinic.name}</h4>
-                                     <p className="text-[10px] text-stone-500 font-black uppercase tracking-widest">{clinic.type} Clinical Node // {clinic.zone}</p>
-                                     <div className="grid grid-cols-2 gap-4 mt-8">
-                                        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100">
-                                           <p className="text-[8px] text-stone-400 font-black uppercase mb-1">Active Shards</p>
-                                           <p className="text-xl font-mono font-black text-teal-700">{clinic.patients}</p>
-                                        </div>
-                                        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100">
-                                           <p className="text-[8px] text-stone-400 font-black uppercase mb-1">Health Metric</p>
-                                           <p className="text-xl font-mono font-black text-emerald-600">{clinic.health}%</p>
-                                        </div>
-                                     </div>
-                                  </div>
-                                  <div className="mt-8 pt-8 border-t border-stone-100 flex gap-4">
-                                     <button className="flex-1 py-4 bg-stone-100 hover:bg-stone-200 rounded-2xl text-[9px] font-black uppercase text-stone-600 transition-all">Audit Logs</button>
-                                     <button className="flex-1 py-4 bg-teal-700 hover:bg-teal-600 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg transition-all">Sync Hub</button>
-                                  </div>
-                               </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'ai_triage' && (
-                       <div className="max-w-4xl mx-auto space-y-12 animate-in zoom-in duration-500">
-                          <div className="p-16 bg-white border border-teal-500/20 rounded-[64px] shadow-3xl text-center space-y-12 relative overflow-hidden group">
-                             <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform"><Crosshair size={400} className="text-teal-700" /></div>
-                             <div className="space-y-6 relative z-10">
-                                <div className="w-24 h-24 bg-teal-700 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-2xl animate-float">
-                                   <Stethoscope size={48} />
-                                </div>
-                                <div>
-                                   <h3 className="text-5xl font-black text-stone-900 uppercase tracking-tighter italic m-0">AI <span className="text-teal-700">Triage Shard</span></h3>
-                                   <p className="text-stone-500 text-xl font-medium mt-4 italic max-w-xl mx-auto">Input biological or environmental symptoms to synthesize a diagnostic remediation shard.</p>
-                                </div>
-                             </div>
-
-                             {!triageResult && !isTriaging ? (
-                               <div className="space-y-10 relative z-10 animate-in fade-in duration-700">
-                                  <div className="space-y-4">
-                                     <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-4 block text-left">Describe the Pathology</label>
-                                     <textarea 
-                                       value={triageInput}
-                                       onChange={e => setTriageInput(e.target.value)}
-                                       placeholder="e.g. Yellowing leaves in Sector 4 with high moisture latency..."
-                                       className="w-full bg-stone-50 border border-stone-200 rounded-[32px] p-8 text-stone-900 text-lg font-medium italic focus:ring-4 focus:ring-teal-500/10 outline-none transition-all h-48 resize-none placeholder:text-stone-300 shadow-inner"
-                                     />
-                                  </div>
-                                  <div className="flex flex-col items-center gap-6">
-                                     <button 
-                                       onClick={handleTriage}
-                                       disabled={!triageInput.trim()}
-                                       className="px-16 py-8 bg-teal-800 hover:bg-teal-700 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all flex items-center gap-4 disabled:opacity-30"
-                                     >
-                                        <Zap className="w-6 h-6 fill-current" /> INITIALIZE TRIAGE
-                                     </button>
-                                     <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest flex items-center gap-2">
-                                        <Coins size={12} /> Registry Bounty: 25 EAC
-                                     </p>
-                                  </div>
-                               </div>
-                             ) : isTriaging ? (
-                                <div className="flex flex-col items-center space-y-12 py-10">
-                                   <div className="relative">
-                                      <Loader2 className="w-24 h-24 text-teal-700 animate-spin" />
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                         <PulseIcon className="w-10 h-10 text-teal-500 animate-pulse" />
-                                      </div>
-                                   </div>
-                                   <div className="space-y-4">
-                                      <p className="text-teal-700 font-black text-xl uppercase tracking-[0.5em] animate-pulse italic">Synthesizing Diagnostic...</p>
-                                   </div>
-                                </div>
-                             ) : (
-                                <div className="text-left space-y-12 animate-in fade-in duration-700 pb-10">
-                                   <div className="p-12 bg-stone-50 rounded-[48px] border border-stone-200 shadow-inner relative overflow-hidden">
-                                      <div className="absolute top-0 right-0 p-8 opacity-[0.02]"><Thermometer size={200} /></div>
-                                      <div className="flex items-center gap-4 mb-8 pb-4 border-b border-stone-200">
-                                         <Sparkles className="w-6 h-6 text-teal-700" />
-                                         <h4 className="text-xl font-black text-stone-900 uppercase italic">Oracle Verdict</h4>
-                                      </div>
-                                      <div className="prose prose-stone max-w-none text-stone-700 text-lg leading-loose italic whitespace-pre-line border-l-4 border-teal-700/20 pl-8 font-medium">
-                                         {triageResult}
-                                      </div>
-                                   </div>
-                                   <div className="flex justify-center gap-6">
-                                      <button onClick={() => setTriageResult(null)} className="px-12 py-6 bg-stone-100 hover:bg-stone-200 rounded-3xl text-[11px] font-black uppercase tracking-widest text-stone-600 transition-all">Discard</button>
-                                      <button className="px-16 py-6 bg-teal-800 hover:bg-teal-700 rounded-3xl text-white font-black text-[11px] uppercase tracking-[0.3em] shadow-xl transition-all active:scale-95">Anchor Diagnostic</button>
-                                   </div>
-                                </div>
-                             )}
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'hospitality' && (
-                       <div className="space-y-16 animate-in slide-in-from-right-10 duration-700">
-                          <div className="flex flex-col md:flex-row justify-between items-end gap-8 border-b border-stone-200 pb-12 px-4">
-                             <div className="space-y-2">
-                                <h3 className="text-4xl font-black text-stone-900 uppercase tracking-tighter italic leading-none">Steward <span className="text-teal-700">Hospitality</span></h3>
-                                <p className="text-stone-500 text-lg font-medium italic">Wellness nodes and recovery shards for the network’s agrarian workforce.</p>
-                             </div>
-                             <button className="px-10 py-5 bg-teal-800 hover:bg-teal-700 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95">Book Wellness Shard</button>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                             {[
-                               { t: 'Bio-Sync Recovery', d: 'Neuro-feedback sessions for high-load stewards.', i: BrainCircuit, c: 'text-teal-700' },
-                               { t: 'Nutrient Kitchen', d: 'Industrial-grade meals sharded for microbiome health.', i: Soup, c: 'text-amber-700' },
-                               { t: 'Restorative Pods', d: 'Sleep-cycle optimization and SID trauma clearing.', i: Bed, c: 'text-blue-700' },
-                             ].map((s, i) => (
-                               <div key={i} className="p-12 bg-white border border-stone-200 rounded-[56px] shadow-xl group hover:border-teal-600/40 transition-all flex flex-col items-center text-center">
-                                  <div className="w-20 h-20 bg-stone-50 rounded-[32px] flex items-center justify-center mb-8 group-hover:rotate-6 group-hover:scale-110 transition-all border border-stone-100 shadow-md">
-                                     <s.i size={32} className={s.c} />
-                                  </div>
-                                  <h4 className="text-2xl font-black text-stone-900 uppercase italic tracking-tighter m-0">{s.t}</h4>
-                                  <p className="text-stone-500 text-base italic leading-relaxed mt-4">"{s.d}"</p>
-                                  <button className="w-full py-4 mt-8 bg-stone-100 hover:bg-teal-700 hover:text-white rounded-2xl text-[9px] font-black uppercase text-stone-500 transition-all shadow-sm">Initialize Session</button>
-                               </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-                  </div>
-               )}
-
-               {/* 3. AGROJUNIOR CONTENT (LIGHT) */}
-               {activeBrand.id === 'junior' && (
-                 <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-700">
-                    
-                    {portalTab === 'home' && (
-                      <>
-                        <div className="p-16 md:p-24 rounded-[64px] bg-stone-100 border border-amber-200 flex flex-col md:flex-row items-center gap-16 relative overflow-hidden shadow-2xl">
-                          <div className="absolute top-0 right-0 p-12 opacity-5"><GraduationCap size={400} className="text-amber-900" /></div>
-                          <div className="w-56 h-56 md:w-72 md:h-72 bg-amber-700 rounded-[48px] md:rounded-[64px] flex items-center justify-center text-white shadow-3xl relative z-10 animate-float">
-                              <Baby size={120} />
-                          </div>
-                          <div className="flex-1 space-y-8 relative z-10 text-center md:text-left">
-                              <h2 className="text-5xl md:text-7xl font-black text-stone-900 uppercase tracking-tighter italic leading-none">THE FUTURE IS <span className="text-amber-700 underline">GROWING.</span></h2>
-                              <p className="text-2xl text-stone-600 font-medium italic">Empowering the next generation of agrarians through STEM-based play and virtual garden twins.</p>
-                              <button onClick={() => setPortalTab('stem_garden')} className="px-16 py-8 bg-amber-800 hover:bg-amber-700 rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all">START ADVENTURE</button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                          {['Seed Stage', 'Watering Cycle', 'Sun Power', 'Harvest Hero'].map((s, i) => (
-                              <div key={s} className="p-10 bg-stone-50 border border-stone-200 rounded-[40px] text-center space-y-6 shadow-md group hover:border-amber-700 transition-all">
-                                <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto text-amber-800 group-hover:scale-110 transition-transform"><Star size={28} /></div>
-                                <h4 className="text-xl font-black uppercase text-stone-800 tracking-tight">{s}</h4>
-                                <div className="h-2 bg-stone-200 rounded-full overflow-hidden"><div className="h-full bg-amber-700" style={{ width: `${(i+1)*25}%` }}></div></div>
-                              </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-
-                    {portalTab === 'stem_garden' && (
-                      <div className="space-y-12 animate-in fade-in duration-500">
-                        <div className="flex justify-between items-center px-4">
-                           <h3 className="text-3xl font-black text-stone-900 uppercase tracking-tighter italic leading-none">STEM <span className="text-amber-700">Garden Labs</span></h3>
-                           <div className="flex items-center gap-4">
-                              <span className="px-3 py-1 bg-amber-500/10 text-amber-700 text-[10px] font-black uppercase rounded-full border border-amber-200 tracking-widest">3 Labs Active</span>
-                           </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                           {MOCK_EXPERIMENTS.map(exp => (
-                              <div key={exp.id} className="p-10 bg-white border border-stone-200 rounded-[56px] shadow-xl group hover:border-amber-600 transition-all flex flex-col relative overflow-hidden">
-                                 <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:scale-110 transition-transform"><Shapes size={120} className="text-amber-700" /></div>
-                                 <div className="flex justify-between items-start mb-8 relative z-10">
-                                    <div className="p-4 bg-stone-100 rounded-2xl group-hover:bg-amber-50 transition-colors">
-                                       <School className="w-8 h-8 text-amber-700" />
-                                    </div>
-                                    <span className="px-3 py-1 bg-stone-100 text-stone-500 text-[8px] font-black uppercase rounded border border-stone-200">{exp.difficulty}</span>
-                                 </div>
-                                 <div className="flex-1 space-y-4 relative z-10">
-                                    <h4 className="text-2xl font-black text-stone-900 uppercase italic tracking-tight m-0">{exp.title}</h4>
-                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest">{exp.category} Shard // REWARD: {exp.reward}</p>
-                                    <div className="pt-6 space-y-3">
-                                       <div className="flex justify-between items-center text-[9px] font-black uppercase text-stone-500">
-                                          <span>Experiment Progress</span>
-                                          <span className="text-amber-700">{exp.progress}%</span>
-                                       </div>
-                                       <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-                                          <div className="h-full bg-amber-600" style={{ width: `${exp.progress}%` }}></div>
-                                       </div>
-                                    </div>
-                                 </div>
-                                 <button className="mt-10 py-4 bg-amber-700 hover:bg-amber-600 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg transition-all relative z-10">Initialize Lab Session</button>
-                              </div>
-                           ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {portalTab === 'badges' && (
-                      <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
-                        <div className="flex justify-between items-center px-4">
-                           <h3 className="text-3xl font-black text-stone-900 uppercase tracking-tighter italic">Achievement <span className="text-amber-700">Vault</span></h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                           {MOCK_BADGES.map(badge => (
-                              <div key={badge.id} className={`p-10 rounded-[56px] border flex flex-col items-center text-center space-y-6 transition-all group ${
-                                 badge.earned ? 'bg-white border-amber-200 shadow-xl' : 'bg-stone-50 border-stone-200 grayscale opacity-60'
-                              }`}>
-                                 <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-inner relative transition-transform duration-500 group-hover:scale-110 ${
-                                    badge.earned ? 'bg-amber-100' : 'bg-stone-200'
-                                 }`}>
-                                    <badge.icon size={48} className={badge.earned ? 'text-amber-700' : 'text-stone-400'} />
-                                    {badge.earned && <div className="absolute inset-0 border-2 border-dashed border-amber-400/40 rounded-full animate-spin-slow"></div>}
-                                 </div>
-                                 <div>
-                                    <h4 className="text-xl font-black text-stone-900 uppercase italic leading-none">{badge.name}</h4>
-                                    <p className="text-[10px] text-stone-400 font-bold uppercase mt-2 tracking-widest">{badge.level} Class Shard</p>
-                                 </div>
-                              </div>
-                           ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {portalTab === 'virtual_twin' && (
-                      <div className="max-w-5xl mx-auto space-y-12 animate-in zoom-in duration-500">
-                        <div className="p-16 bg-white border border-amber-500/20 rounded-[64px] shadow-3xl flex flex-col md:flex-row items-center gap-16 relative overflow-hidden group">
-                           <div className="absolute inset-0 bg-amber-50/[0.02] pointer-events-none"></div>
-                           <div className="w-64 h-64 bg-amber-700 rounded-[48px] flex items-center justify-center text-white shadow-3xl shrink-0 animate-float relative overflow-hidden">
-                              <Monitor size={100} />
-                              <div className="absolute inset-0 border-4 border-white/10 rounded-[48px] animate-pulse"></div>
-                           </div>
-                           <div className="flex-1 space-y-8 text-center md:text-left">
-                              <div>
-                                 <h3 className="text-5xl font-black text-stone-900 uppercase tracking-tighter italic m-0 leading-none">Garden <span className="text-amber-700">Digital Twin</span></h3>
-                                 <p className="text-stone-500 text-xl font-medium mt-4 italic">"Simulating regional C(a) growth signatures for safe STEM play."</p>
-                              </div>
-                              <div className="grid grid-cols-2 gap-6">
-                                 <div className="p-5 bg-stone-50 border border-stone-100 rounded-3xl">
-                                    <p className="text-[8px] text-stone-400 font-black uppercase mb-1 flex items-center gap-2"><ThermometerSun size={10} /> Sunlight Index</p>
-                                    <p className="text-2xl font-mono font-black text-stone-900">8.2 / 10</p>
-                                 </div>
-                                 <div className="p-5 bg-stone-50 border border-stone-100 rounded-3xl">
-                                    <p className="text-[8px] text-stone-400 font-black uppercase mb-1 flex items-center gap-2"><Droplets size={10} /> Moisture Sink</p>
-                                    <p className="text-2xl font-mono font-black text-teal-600">{twinHealth}%</p>
-                                 </div>
-                              </div>
-                              <button 
-                                onClick={handleTwinSync}
-                                disabled={twinSyncing}
-                                className="w-full py-6 bg-amber-800 hover:bg-amber-700 rounded-3xl text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
-                              >
-                                 {twinSyncing ? <Loader2 className="w-24 h-24 animate-spin" /> : <RefreshCcw size={24} />}
-                                 {twinSyncing ? 'Syncing Simulation...' : 'SYNC WITH REGISTRY NODE'}
-                              </button>
-                           </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-               )}
-
-               {/* 4. LOVE4AGRO CONTENT (LIGHT) */}
-               {activeBrand.id === 'love4agro' && (
-                 <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-700">
-                    {portalTab === 'home' && (
-                      <div className="max-w-[1400px] mx-auto space-y-24 text-center">
-                        <div className="p-16 md:p-24 rounded-[64px] bg-stone-50 border border-rose-200 space-y-12 relative overflow-hidden shadow-xl">
-                          <div className="w-40 h-40 md:w-56 md:h-56 bg-rose-800 rounded-full flex items-center justify-center text-white mx-auto shadow-[0_0_80px_rgba(159,18,57,0.2)] animate-pulse">
-                              <Heart size={80} fill="currentColor" />
-                          </div>
-                          <h2 className="text-6xl md:text-8xl font-black text-stone-900 uppercase tracking-tighter italic m-0">IGNITING <span className="text-rose-800">WILLINGNESS.</span></h2>
-                          <p className="text-3xl text-stone-500 max-w-3xl mx-auto italic font-medium">Building agricultural empathy through digital care protocols and community vouching.</p>
-                          <div className="flex justify-center gap-6 pt-6">
-                              <button onClick={() => setPortalTab('willingness')} className="px-12 py-6 bg-rose-900 hover:bg-rose-800 rounded-3xl text-white font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">START WILLINGNESS AUDIT</button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {portalTab === 'willingness' && (
-                       <div className="max-w-4xl mx-auto space-y-12 text-center animate-in zoom-in duration-500">
-                          <div className="p-16 bg-white border border-rose-200 rounded-[64px] shadow-3xl space-y-10">
-                             <div className="w-24 h-24 bg-rose-100 text-rose-800 rounded-[32px] flex items-center justify-center mx-auto shadow-xl"><Scale size={48} /></div>
-                             <h3 className="text-4xl font-black text-stone-900 uppercase tracking-tighter italic m-0">Bio-Social <span className="text-rose-800">Alignment</span></h3>
-                             <p className="text-stone-500 text-xl font-medium leading-relaxed">Adjust your societal energy output to match community consensus needs.</p>
-                             
-                             <div className="space-y-6 pt-10">
-                                <div className="flex justify-between px-4">
-                                   <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Willingness Multiplier</span>
-                                   <span className="text-2xl font-mono font-black text-rose-800">{willingnessScore}%</span>
-                                </div>
-                                <input 
-                                  type="range" min="0" max="100" value={willingnessScore}
-                                  onChange={e => setWillingnessScore(Number(e.target.value))}
-                                  className="w-full h-4 bg-stone-100 rounded-full appearance-none cursor-pointer accent-rose-800"
-                                />
-                             </div>
-
-                             <button 
-                               onClick={handleCommitWillingness}
-                               disabled={isCommittingWillingness}
-                               className="w-full py-8 bg-rose-800 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50"
-                             >
-                                {isCommittingWillingness ? <Loader2 className="w-6 h-6 animate-spin" /> : <ShieldCheckIcon className="w-6 h-6" />}
-                                COMMIT ENERGY SHARD
-                             </button>
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'vouches' && (
-                      <div className="space-y-10 animate-in slide-in-from-right-10 duration-500">
-                         <h3 className="text-4xl font-black text-stone-900 uppercase tracking-tighter italic border-b border-stone-200 pb-6">Trust <span className="text-rose-800">Ledger</span></h3>
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {['Steward Alpha', 'Green Root Node', 'Maize Master 04'].map((s, i) => (
-                               <div key={i} className="p-10 bg-white border border-rose-200 rounded-[48px] shadow-xl space-y-6 group hover:border-rose-800/30 transition-all">
-                                  <div className="flex justify-between items-start">
-                                     <div className="w-16 h-16 bg-stone-100 rounded-2xl flex items-center justify-center text-rose-800 group-hover:rotate-12 transition-transform">{s[0]}</div>
-                                     <span className="text-[10px] font-mono text-stone-400">#EA-{(882 + i * 4).toString()}</span>
-                                  </div>
-                                  <h4 className="text-2xl font-black text-stone-900 uppercase tracking-tight">{s}</h4>
-                                  <button className="w-full py-4 bg-rose-800 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg">VOUCH STEWARD</button>
-                               </div>
-                            ))}
-                         </div>
-                      </div>
-                    )}
-
-                    {portalTab === 'heartbeat' && (
-                      <div className="p-12 md:p-20 bg-stone-100 border border-stone-200 rounded-[64px] space-y-10 shadow-lg animate-in zoom-in duration-700">
-                        <h4 className="text-2xl font-black uppercase text-stone-800 tracking-[0.4em] flex items-center justify-center gap-4"><Activity className="text-rose-800" /> Bio-Electric Community Pulse</h4>
-                        <div className="flex items-end gap-3 h-48 justify-center max-w-4xl mx-auto">
-                           {[...Array(30)].map((_, i) => (
-                              <div key={i} className="flex-1 bg-rose-800/80 rounded-full animate-bounce" style={{ height: `${20 + Math.sin(i * 0.4) * 60}%`, animationDelay: `${i * 0.05}s` }}></div>
-                           ))}
-                        </div>
-                        <div className="text-center pt-10">
-                           <p className="text-stone-500 italic text-xl">"Current network resonance: Optimal. Community willingness at 92.4%."</p>
-                        </div>
-                      </div>
-                    )}
-                 </div>
-               )}
-
                {/* 5. TOKENZ CONTENT (DARK) */}
                {activeBrand.id === 'tokenz' && (
                  <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-700">
@@ -959,17 +390,38 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                                          <span className="text-emerald-400 font-mono">+{shard.apr}%</span>
                                       </div>
                                    </div>
-                                   <button className="w-full py-4 bg-indigo-800 hover:bg-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all">FRACTIONALIZE</button>
+                                   <button 
+                                     onClick={() => handleRunTokenzAudit(shard)}
+                                     disabled={isAnalyzingRisk}
+                                     className="w-full py-4 bg-indigo-800 hover:bg-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-3"
+                                   >
+                                     {isAnalyzingRisk ? <Loader2 className="animate-spin" size={14} /> : <ShieldCheckIcon size={14} />}
+                                     {isAnalyzingRisk ? 'AUDITING...' : 'FRACTIONALIZE'}
+                                   </button>
                                 </div>
                              ))}
                           </div>
+                          {tokenzRiskReport && (
+                            <div className="mt-10 p-10 glass-card rounded-[48px] border-l-[12px] border-l-indigo-600 bg-indigo-950/5 animate-in slide-in-from-bottom-4">
+                               <div className="flex items-center gap-6 mb-6">
+                                  <div className="p-3 bg-indigo-600 rounded-xl"><Bot size={24} className="text-white" /></div>
+                                  <h4 className="text-xl font-black text-white uppercase italic">Institutional Audit Report</h4>
+                               </div>
+                               <div className="prose prose-invert max-w-none text-slate-300 text-lg leading-relaxed italic whitespace-pre-line border-l border-white/5 pl-8">
+                                  {tokenzRiskReport.text}
+                               </div>
+                               <div className="mt-8 flex justify-end gap-4">
+                                  <button onClick={() => setTokenzRiskReport(null)} className="px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-500 font-black text-[10px] uppercase">Discard</button>
+                                  <button className="px-10 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl">Anchor to Ledger</button>
+                               </div>
+                            </div>
+                          )}
                        </div>
                     )}
 
                     {portalTab === 'defi_bridge' && (
                        <div className="max-w-4xl mx-auto space-y-12 text-center animate-in zoom-in duration-700">
                           <div className="p-16 glass-card rounded-[64px] border border-indigo-500/20 bg-black/40 space-y-12">
-                             {/* Fix: Added ArrowRightLeft to imports to resolve Cannot find name error */}
                              <div className="w-24 h-24 bg-indigo-500/10 text-indigo-400 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl animate-float"><ArrowRightLeft size={48} /></div>
                              <div>
                                 <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Liquidity <span className="text-indigo-400">Bridge Hub</span></h3>
@@ -979,125 +431,11 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                                 <div><p className="text-[10px] text-slate-500 font-black uppercase mb-1">Bridge Pool</p><p className="text-4xl font-mono font-black text-white">1.2M <span className="text-sm">EAT</span></p></div>
                                 <div><p className="text-[10px] text-slate-500 font-black uppercase mb-1">Fee Rate</p><p className="text-4xl font-mono font-black text-emerald-400">0.2%</p></div>
                              </div>
-                             <button className="px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-xs uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all">INITIALIZE BRIDGE SWAP</button>
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'dao_hub' && (
-                       <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic border-b border-white/10 pb-6">Governance <span className="text-indigo-400">DAO Console</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                             {[
-                                { t: 'Protocol Upgrade v4.3', desc: 'Implement automated SID slashing thresholds.', vote: '64%', status: 'Active' },
-                                { t: 'Treasury Re-allocation', desc: 'Move 5M EAC to Kenyan regional soil shards.', vote: '92%', status: 'Active' },
-                             ].map((v, i) => (
-                                <div key={i} className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 space-y-6">
-                                   <div className="flex justify-between items-start">
-                                      <h4 className="text-2xl font-black text-white uppercase italic">{v.t}</h4>
-                                      <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-[8px] font-black uppercase rounded border border-indigo-500/20">{v.status}</span>
-                                   </div>
-                                   <p className="text-slate-400 text-sm italic">"{v.desc}"</p>
-                                   <div className="space-y-3 pt-6">
-                                      <div className="flex justify-between text-[10px] font-black uppercase text-slate-500">
-                                         <span>Consensus Progress</span>
-                                         <span>{v.vote}</span>
-                                      </div>
-                                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                         <div className="h-full bg-indigo-500" style={{ width: v.vote }}></div>
-                                      </div>
-                                   </div>
-                                   <div className="flex gap-4 pt-4">
-                                      <button className="flex-1 py-4 bg-emerald-600 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg">Cast FOR</button>
-                                      <button className="flex-1 py-4 bg-rose-600 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg">Cast AGAINST</button>
-                                   </div>
-                                </div>
-                             ))}
+                             <button className="px-16 py-8 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all">INITIALIZE BRIDGE SWAP</button>
                           </div>
                        </div>
                     )}
                  </div>
-               )}
-
-               {/* 6. LILIES AROUND CONTENT (LIGHT) */}
-               {activeBrand.id === 'lilies' && (
-                  <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-700">
-                    {portalTab === 'home' && (
-                       <div className="p-16 md:p-24 rounded-[64px] bg-white border border-fuchsia-200 flex flex-col md:flex-row items-center gap-16 relative overflow-hidden shadow-2xl">
-                          <div className="absolute top-0 right-0 p-12 opacity-5"><Crown size={400} className="text-fuchsia-900" /></div>
-                          <div className="w-56 h-56 md:w-72 md:h-72 bg-fuchsia-800 rounded-[48px] md:rounded-[64px] flex items-center justify-center text-white shadow-3xl relative z-10 animate-float">
-                              <Flower2 size={120} />
-                          </div>
-                          <div className="flex-1 space-y-8 relative z-10 text-center md:text-left">
-                              <h2 className="text-5xl md:text-7xl font-black text-stone-900 uppercase tracking-tighter italic leading-none">AESTHETIC <span className="text-fuchsia-700 underline">REVOLUTION.</span></h2>
-                              <p className="text-2xl text-stone-600 font-medium italic">Architectural floriculture merging botanical design with celestial planting logic.</p>
-                              <button onClick={() => setPortalTab('architecture')} className="px-16 py-8 bg-fuchsia-900 hover:bg-fuchsia-800 rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all">EXPLORE DESIGN STUDIO</button>
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'architecture' && (
-                       <div className="space-y-12 animate-in slide-in-from-right-4 duration-500">
-                          <h3 className="text-3xl font-black text-stone-900 uppercase tracking-tighter italic border-b border-stone-200 pb-6">Botanical <span className="text-fuchsia-800">Architecture</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                             {[
-                                { t: 'Lily Grid v1', d: 'Symmetrical arrangement optimized for pollinator ingest.', i: Layout },
-                                { t: 'Celestial Arc', d: 'Planting curve following lunar shadow telemetry.', i: Compass },
-                             ].map((a, i) => (
-                                <div key={i} className="p-12 bg-stone-50 border border-stone-200 rounded-[56px] shadow-xl space-y-8 group hover:border-fuchsia-800/30 transition-all flex items-center gap-10">
-                                   <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center text-fuchsia-800 shadow-md border border-stone-100"><a.i size={40} /></div>
-                                   <div className="space-y-2">
-                                      <h4 className="text-2xl font-black text-stone-900 uppercase italic">{a.t}</h4>
-                                      <p className="text-stone-500 italic text-lg">"{a.d}"</p>
-                                      <button className="text-[10px] font-black text-fuchsia-700 uppercase tracking-widest mt-4">Draft Blueprint Shard</button>
-                                   </div>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'astrology' && (
-                       <div className="max-w-4xl mx-auto space-y-12 text-center animate-in zoom-in duration-500">
-                          <div className="p-16 bg-stone-50 border border-fuchsia-200 rounded-[64px] shadow-3xl space-y-10 relative overflow-hidden">
-                             <div className="absolute inset-0 opacity-[0.03]"><Moon size={400} className="text-fuchsia-900" /></div>
-                             <div className="w-24 h-24 bg-fuchsia-100 text-fuchsia-800 rounded-[32px] flex items-center justify-center mx-auto shadow-xl relative z-10"><Moon size={48} /></div>
-                             <div className="relative z-10">
-                                <h3 className="text-4xl font-black text-stone-900 uppercase tracking-tighter italic m-0">Celestial <span className="text-fuchsia-800">Planting Sync</span></h3>
-                                <p className="text-stone-500 text-xl font-medium mt-4">Synchronize your node with planetary alignment shards for 1.2x C(a) growth.</p>
-                             </div>
-                             <div className="p-10 bg-white rounded-[40px] border border-stone-100 shadow-inner space-y-6 relative z-10">
-                                <div className="flex justify-between items-center px-4">
-                                   <span className="text-xs font-black text-stone-400 uppercase">Current Lunar Phase</span>
-                                   <span className="text-xl font-black text-fuchsia-800 italic">Waxing Gibbous</span>
-                                </div>
-                                <div className="h-px bg-stone-100 w-full"></div>
-                                <div className="flex justify-between items-center px-4">
-                                   <span className="text-xs font-black text-stone-400 uppercase">Optimal Planting</span>
-                                   <span className="text-xl font-black text-emerald-600 italic">NOW ACTIVE</span>
-                                </div>
-                             </div>
-                             <button className="w-full py-8 bg-fuchsia-900 text-white rounded-[40px] text-xs font-black uppercase tracking-[0.5em] shadow-2xl relative z-10 active:scale-95">ANCHOR CELESTIAL PROTOCOL</button>
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'boutique' && (
-                       <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
-                          <h3 className="text-3xl font-black text-stone-900 uppercase tracking-tighter italic border-b border-stone-200 pb-6">Floral <span className="text-fuchsia-800">Boutique</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                             {['Midnight Lily Shard', 'Solar Orchid Node', 'Bantu Petal v4', 'Aura Fern'].map((b, i) => (
-                                <div key={i} className="p-8 bg-white border border-stone-100 rounded-[44px] shadow-lg group hover:border-fuchsia-300 transition-all flex flex-col items-center text-center space-y-6">
-                                   <div className="w-32 h-32 bg-stone-50 rounded-full flex items-center justify-center text-fuchsia-800 group-hover:scale-110 transition-transform shadow-inner"><Flower2 size={64} /></div>
-                                   <h4 className="text-xl font-black text-stone-900 uppercase tracking-tight">{b}</h4>
-                                   <p className="text-[10px] text-stone-400 font-mono font-black uppercase">PRICE: {(250 + i * 50)} EAC</p>
-                                   <button className="w-full py-3 bg-fuchsia-900 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-md">ACQUIRE ASSET</button>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-                  </div>
                )}
 
                {/* 7. AGROMUSIKA CONTENT (DARK) */}
@@ -1122,257 +460,52 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                              <div className="w-24 h-24 bg-emerald-500/10 text-emerald-400 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl animate-float"><WavesIcon size={48} /></div>
                              <div>
                                 <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Frequency <span className="text-emerald-400">Generator</span></h3>
-                                <p className="text-slate-400 text-xl font-medium mt-4 italic">Dial in the 432Hz repair signature for local node soil shards.</p>
+                                <p className="text-slate-400 text-xl font-medium mt-4 italic">Dial in the repair signature for local node soil shards.</p>
                              </div>
-                             <div className="space-y-10 py-10 border-y border-white/5">
-                                <div className="flex justify-between px-6">
-                                   <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Active Frequency</span>
-                                   <span className="text-4xl font-mono font-black text-emerald-400">{activeFreq} Hz</span>
+                             
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 py-10 border-y border-white/5">
+                                <div className="space-y-10">
+                                   <div className="flex justify-between px-6">
+                                      <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Active Frequency</span>
+                                      <span className="text-4xl font-mono font-black text-emerald-400">{activeFreq} Hz</span>
+                                   </div>
+                                   <input 
+                                     type="range" min="300" max="600" value={activeFreq}
+                                     onChange={e => setActiveFreq(Number(e.target.value))}
+                                     className="w-full h-4 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner"
+                                   />
+                                   <div className="flex justify-between items-center px-4">
+                                      <button onClick={handleFreqGen} className="px-10 py-4 bg-emerald-600 rounded-2xl text-white font-black text-[10px] uppercase">Test Signal</button>
+                                      {isGeneratingFreq && <AudioWaveform className="text-emerald-500 animate-pulse" />}
+                                   </div>
                                 </div>
-                                <input 
-                                  type="range" min="300" max="600" value={activeFreq}
-                                  onChange={e => setActiveFreq(Number(e.target.value))}
-                                  className="w-full h-4 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner"
-                                />
+                                <div className="p-8 bg-black/60 rounded-[44px] border border-emerald-500/10 flex flex-col justify-center gap-6">
+                                   <button 
+                                     onClick={handleSonicIngest}
+                                     disabled={isScanningAcoustics}
+                                     className="w-full py-5 bg-white/5 border border-white/10 hover:bg-emerald-600 hover:text-white text-slate-400 rounded-2xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-3"
+                                   >
+                                      {isScanningAcoustics ? <Loader2 className="animate-spin" size={16} /> : <Scan size={16} />}
+                                      {isScanningAcoustics ? 'SCANNING ACOUSTICS...' : 'SCAN ACOUSTIC INGEST'}
+                                   </button>
+                                   {sonicCalibration && (
+                                      <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl text-left animate-in fade-in">
+                                         <p className="text-xs text-slate-300 italic leading-relaxed">{sonicCalibration}</p>
+                                      </div>
+                                   )}
+                                </div>
                              </div>
+
                              <button 
-                               onClick={handleFreqGen}
-                               disabled={isGeneratingFreq}
-                               className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-50"
+                               onClick={() => alert("FREQUENCY_ANCHORED: Node m-Constant boosted by +0.05x")}
+                               className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
                              >
-                                {isGeneratingFreq ? <Loader2 className="w-8 h-8 animate-spin" /> : <PlayCircle className="w-8 h-8" />}
-                                {isGeneratingFreq ? 'GENERATING REPAIR FIELD...' : 'INITIALIZE FREQUENCY SHARD'}
+                                <Stamp size={28} /> ANCHOR SONIC SHARD
                              </button>
                           </div>
                        </div>
                     )}
-
-                    {portalTab === 'sonic_repair' && (
-                       <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic border-b border-white/10 pb-6">Repair <span className="text-emerald-400">Diagnostic Logs</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                             {[
-                                { t: 'Soil De-compaction', d: 'Using low-frequency resonance to break up clay shards.', status: 'SUCCESS', node: 'Node_Paris_04' },
-                                { t: 'Micro-biome Stimulation', d: 'Stimulating microbial activity via 432Hz pulses.', status: 'SYNCING', node: 'Stwd_Nairobi' },
-                             ].map((r, i) => (
-                                <div key={i} className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 space-y-6 group hover:border-emerald-500/40 transition-all">
-                                   <div className="flex justify-between items-start">
-                                      <h4 className="text-2xl font-black text-white uppercase italic">{r.t}</h4>
-                                      <span className={`px-3 py-1 rounded border text-[8px] font-black uppercase ${r.status === 'SUCCESS' ? 'text-emerald-400 border-emerald-500/20' : 'text-blue-400 border-blue-500/20'}`}>{r.status}</span>
-                                   </div>
-                                   <p className="text-slate-400 text-lg font-medium italic leading-relaxed">"{r.d}"</p>
-                                   <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                                      <p className="text-[9px] text-slate-600 font-mono font-black uppercase">{r.node}</p>
-                                      <button className="p-3 bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all"><History size={16} /></button>
-                                   </div>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'frequencies' && (
-                       <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic border-b border-white/10 pb-6">Bio-Electric <span className="text-emerald-400">Archive</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                             {['Growth_v1', 'Root_Sync', 'Carbon_Lock', 'Flow_Signature'].map((f, i) => (
-                                <div key={i} className="p-8 glass-card border border-white/5 rounded-[44px] hover:bg-white/5 transition-all text-center space-y-6 group cursor-pointer">
-                                   <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center text-emerald-400 mx-auto group-hover:scale-110 transition-transform"><Music2 size={32} /></div>
-                                   <h4 className="text-xl font-bold text-white uppercase tracking-tight">{f}</h4>
-                                   <div className="h-1 bg-white/5 rounded-full overflow-hidden w-full"><div className="h-full bg-emerald-500 w-1/3"></div></div>
-                                   <button className="w-full py-3 bg-white/5 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest group-hover:bg-emerald-600 transition-colors">LOAD SHARD</button>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-                  </div>
-               )}
-
-               {/* 8. AGROINPDF CONTENT (DARK) */}
-               {activeBrand.id === 'agroinpdf' && (
-                  <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-700">
-                    {portalTab === 'home' && (
-                       <div className="p-16 md:p-24 rounded-[64px] bg-cyan-950/20 border border-cyan-500/20 flex flex-col md:flex-row items-center gap-16 relative overflow-hidden shadow-3xl">
-                          <div className="absolute top-0 right-0 p-12 opacity-[0.02]"><BookOpen size={400} className="text-cyan-400" /></div>
-                          <div className="w-56 h-56 md:w-72 md:h-72 bg-cyan-800 rounded-[48px] md:rounded-[64px] flex items-center justify-center text-white shadow-3xl relative z-10 animate-float">
-                              <BookOpen size={120} />
-                          </div>
-                          <div className="flex-1 space-y-8 relative z-10 text-center md:text-left">
-                              <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic leading-none">IMMUTABLE <span className="text-cyan-400 underline">KNOWLEDGE.</span></h2>
-                              <p className="text-2xl text-slate-400 font-medium italic leading-relaxed">Securing the world's agricultural wisdom into decentralized industrial shards.</p>
-                              <button onClick={() => setPortalTab('docu_vault')} className="px-16 py-8 bg-cyan-900 hover:bg-cyan-800 rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all">ACCESS DOCU-VAULT</button>
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'docu_vault' && (
-                       <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic border-b border-white/10 pb-6">Immutable <span className="text-cyan-400">Scientific Archive</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                             {[
-                                { t: 'The C(a) Manual', author: 'EOS Governance', status: 'Registered' },
-                                { t: 'Regen-Nitrogen Whitepaper', author: 'MedicAg Labs', status: 'Verified' },
-                                { t: 'Bantu Lineage Seeds Census', author: 'Heritage Steward Alpha', status: 'Draft' },
-                             ].map((d, i) => (
-                                <div key={i} className="p-10 glass-card border border-white/5 rounded-[48px] shadow-xl group hover:border-cyan-500/40 transition-all flex flex-col justify-between h-[350px]">
-                                   <div className="space-y-6">
-                                      <div className="flex justify-between items-start">
-                                         <div className="p-4 bg-white/5 rounded-2xl text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white transition-all shadow-xl"><FileText size={28} /></div>
-                                         <span className="px-3 py-1 bg-white/5 text-[8px] font-black uppercase text-slate-500 rounded border border-white/10">{d.status}</span>
-                                      </div>
-                                      <h4 className="text-2xl font-black text-white uppercase italic leading-tight group-hover:text-cyan-400 transition-colors">{d.t}</h4>
-                                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">AUTHOR: {d.author}</p>
-                                   </div>
-                                   <button className="w-full py-4 bg-white/5 border border-white/10 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest group-hover:bg-cyan-900 transition-all flex items-center justify-center gap-2">
-                                      <Download size={14} /> Download Shard
-                                   </button>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'knowledge_shards' && (
-                       <div className="space-y-12 animate-in zoom-in duration-500">
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic border-b border-white/10 pb-6">Knowledge <span className="text-cyan-400">Micro-Shards</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                             {['Soil DNA', 'Spectral Math', 'IoT Auth', 'Bio-Waves', 'Thrust SE', 'Thrust HT', 'Thrust I', 'DAO 101'].map((s, i) => (
-                                <div key={i} className="p-8 glass-card border border-white/5 rounded-[40px] text-center space-y-6 group hover:border-cyan-500/40 transition-all cursor-pointer">
-                                   <div className="w-16 h-16 bg-cyan-500/10 text-cyan-400 rounded-2xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform shadow-xl"><Zap size={28} /></div>
-                                   <h4 className="text-lg font-black text-white uppercase tracking-tight">{s}</h4>
-                                   <p className="text-[9px] text-slate-600 font-black uppercase">5 min shard</p>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'cinema' && (
-                       <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic border-b border-white/10 pb-6">Industrial <span className="text-cyan-400">Documentary Cinema</span></h3>
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                             {[
-                                { t: 'Legacy of the Seed', thumb: 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=800', views: '14.2K' },
-                                { t: 'Silicon Soil: Zone 4', thumb: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800', views: '8.4K' },
-                             ].map((c, i) => (
-                                <div key={i} className="glass-card rounded-[56px] overflow-hidden group border border-white/5 hover:border-cyan-500/30 transition-all relative">
-                                   <div className="h-80 relative overflow-hidden">
-                                      <img src={c.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[8s]" alt={c.t} />
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                         <button className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-black shadow-3xl hover:scale-110 active:scale-95 transition-all"><Play size={40} className="fill-current translate-x-1" /></button>
-                                      </div>
-                                      <div className="absolute bottom-10 left-10 space-y-2">
-                                         <h4 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">{c.t}</h4>
-                                         <div className="flex items-center gap-4 text-slate-500 font-black text-[10px]">
-                                            <Eye size={16} /> {c.views} VIEWS
-                                         </div>
-                                      </div>
-                                   </div>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-                  </div>
-               )}
-
-               {/* 9. JUIEZY COOKIEZ CONTENT (LIGHT) */}
-               {activeBrand.id === 'juizzycookiez' && (
-                  <div className="max-w-[1400px] mx-auto space-y-20 animate-in slide-in-from-bottom-10 duration-700">
-                    {portalTab === 'home' && (
-                       <div className="p-16 md:p-24 rounded-[64px] bg-white border border-orange-200 flex flex-col md:flex-row items-center gap-16 relative overflow-hidden shadow-2xl">
-                          <div className="absolute top-0 right-0 p-12 opacity-5"><Coffee size={400} className="text-orange-900" /></div>
-                          <div className="w-56 h-56 md:w-72 md:h-72 bg-orange-700 rounded-[48px] md:rounded-[64px] flex items-center justify-center text-white shadow-3xl relative z-10 animate-float">
-                              <Cookie size={120} />
-                          </div>
-                          <div className="flex-1 space-y-8 relative z-10 text-center md:text-left">
-                              <h2 className="text-5xl md:text-7xl font-black text-stone-900 uppercase tracking-tighter italic leading-none">THE REGEN <span className="text-orange-700 underline">COOKIE.</span></h2>
-                              <p className="text-2xl text-stone-600 font-medium italic">Traceable artisanal baking shards sourced from 100% physically audited regenerative cycles.</p>
-                              <button onClick={() => setPortalTab('recipe_ledger')} className="px-16 py-8 bg-orange-800 hover:bg-orange-700 rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all">VIEW RECIPE LEDGER</button>
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'recipe_ledger' && (
-                       <div className="space-y-12 animate-in slide-in-from-right-4 duration-500">
-                          <h3 className="text-3xl font-black text-stone-900 uppercase tracking-tighter italic border-b border-stone-200 pb-6">Immutable <span className="text-orange-800">Recipe Shards</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                             {[
-                                { t: 'Omaha Oats v3', d: 'High m-constant grain formula with regenerative honey.', status: 'Audited' },
-                                { t: 'Lineage Cocoa Shard', d: 'Single-node cocoa sharded for 100% purity.', status: 'Verified' },
-                             ].map((r, i) => (
-                                <div key={i} className="p-12 bg-stone-50 border border-stone-200 rounded-[56px] shadow-xl space-y-8 group hover:border-orange-800/30 transition-all">
-                                   <div className="flex justify-between items-start">
-                                      <div className="p-4 bg-white rounded-2xl text-orange-800 shadow-md border border-stone-100"><FileDigit size={32} /></div>
-                                      <span className="px-3 py-1 bg-white border border-stone-200 text-[8px] font-black uppercase text-stone-500 rounded-full">{r.status}</span>
-                                   </div>
-                                   <h4 className="text-2xl font-black text-stone-900 uppercase italic leading-none">{r.t}</h4>
-                                   <p className="text-stone-500 italic text-lg">"{r.d}"</p>
-                                   <div className="pt-6 border-t border-stone-100 flex justify-between items-center">
-                                      <span className="text-[10px] font-mono text-stone-400">HASH: 0x882_RECIPE_{i}</span>
-                                      <button className="text-orange-800 font-black text-[10px] uppercase tracking-widest">Open Formula</button>
-                                   </div>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'batch_audit' && (
-                       <div className="max-w-4xl mx-auto space-y-12 text-center animate-in zoom-in duration-500">
-                          <div className="p-16 bg-white border border-orange-200 rounded-[64px] shadow-3xl space-y-10 relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-12 opacity-[0.02]"><Activity size={400} className="text-orange-900" /></div>
-                             <div className="w-24 h-24 bg-orange-100 text-orange-800 rounded-[32px] flex items-center justify-center mx-auto shadow-xl relative z-10"><ClipboardCheck size={48} /></div>
-                             <div className="relative z-10">
-                                <h3 className="text-4xl font-black text-stone-900 uppercase tracking-tighter italic m-0">Batch <span className="text-orange-800">Traceability Audit</span></h3>
-                                <p className="text-stone-500 text-xl font-medium mt-4">Trace your cookie batch ID directly to the farm node biometrics.</p>
-                             </div>
-                             <div className="relative z-10 max-w-lg mx-auto">
-                                <input type="text" placeholder="Enter Batch Shard ID (e.g. COOK-882)..." className="w-full bg-stone-50 border border-stone-200 rounded-full py-6 px-10 text-xl font-mono text-orange-800 outline-none focus:ring-4 focus:ring-orange-500/10 transition-all text-center" />
-                             </div>
-                             <button className="px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-xs uppercase tracking-[0.5em] shadow-2xl relative z-10 active:scale-95">INITIALIZE AUDIT TRACE</button>
-                          </div>
-                       </div>
-                    )}
-
-                    {portalTab === 'bakery_node' && (
-                       <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
-                          <h3 className="text-3xl font-black text-stone-900 uppercase tracking-tighter italic border-b border-stone-200 pb-6">Live <span className="text-orange-800">Bakery Pod Monitor</span></h3>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                             {[
-                                { id: 'POD-01', t: 'Omaha Solar Pod', temp: '220°C', load: 'HIGH', health: 98 },
-                                { id: 'POD-02', t: 'Nairobi Ingest Pod', temp: '215°C', load: 'NOMINAL', health: 94 },
-                                { id: 'POD-03', t: 'California Shard Pod', temp: '180°C', load: 'IDLE', health: 100 },
-                             ].map((p, i) => (
-                                <div key={i} className="p-10 bg-white border border-stone-100 rounded-[56px] shadow-lg space-y-8 relative overflow-hidden group hover:border-orange-400 transition-all">
-                                   <div className="flex justify-between items-center">
-                                      <h4 className="text-2xl font-black text-stone-900 uppercase italic leading-none">{p.id}</h4>
-                                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                   </div>
-                                   <div className="flex items-center gap-6">
-                                      <div className="p-4 bg-orange-50 text-orange-800 rounded-2xl shadow-sm"><FlameKindling size={28} /></div>
-                                      <div>
-                                         <p className="text-[10px] text-stone-400 font-black uppercase mb-1">Thermal Sync</p>
-                                         <p className="text-3xl font-mono font-black text-stone-900">{p.temp}</p>
-                                      </div>
-                                   </div>
-                                   <div className="space-y-4 pt-6 border-t border-stone-50">
-                                      <div className="flex justify-between text-[9px] font-black uppercase text-stone-500">
-                                         <span>Node Load: {p.load}</span>
-                                         <span>Health: {p.health}%</span>
-                                      </div>
-                                      <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden shadow-inner">
-                                         <div className="h-full bg-orange-700" style={{ width: `${p.health}%` }}></div>
-                                      </div>
-                                   </div>
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-                    )}
-                  </div>
+                 </div>
                )}
 
                {/* Default Node Placeholder */}

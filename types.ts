@@ -334,6 +334,7 @@ export type ViewState =
   | 'registry_handshake'
   | 'online_garden'
   | 'farm_os'
+  | 'network_signals'
   | 'media_ledger'
   | 'agrolang'
   | 'network';
@@ -352,4 +353,34 @@ export interface NotificationShard {
   actionLabel?: string;
   actionIcon?: any;
   meta?: any;
+}
+
+export interface RoadmapStep {
+  label: string;
+  description: string;
+  status: 'PENDING' | 'ACTIVE' | 'COMPLETED';
+}
+
+export interface SignalShard {
+  id: string;
+  type: 'system' | 'engagement' | 'network' | 'commerce' | 'pulse' | 'task';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  priority: 'low' | 'medium' | 'high';
+  actionLabel?: string;
+  actionIcon?: any;
+  roadmap?: RoadmapStep[];
+  aiRemark?: string;
+  helpLink?: string;
+  meta?: {
+    target?: ViewState;
+    orderId?: string;
+    productId?: string;
+    stewardEsin?: string;
+    payload?: any;
+    resolutionRequired?: boolean;
+    isResolved?: boolean;
+  };
 }

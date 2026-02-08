@@ -1,12 +1,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Loader2, BarChart2, ShieldCheck, Info, TrendingUp, Globe, ExternalLink } from 'lucide-react';
-import { chatWithAgroExpert, analyzeSustainability, AIResponse, GroundingChunk } from '../services/geminiService';
+// Fix: Removed missing GroundingChunk import as it is not exported from geminiService
+import { chatWithAgroExpert, analyzeSustainability, AIResponse } from '../services/geminiService';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
-  sources?: GroundingChunk[];
+  // Fix: Changed type of sources to any[] since GroundingChunk is not exported
+  sources?: any[];
 }
 
 const AIAnalyst: React.FC = () => {

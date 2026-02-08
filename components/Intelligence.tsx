@@ -13,23 +13,23 @@ import {
   Wifi, Radio, Unlink, SmartphoneNfc, BoxSelect, Boxes, Maximize2, Smartphone, Send,
   Brain, Network, FileDigit,
   Settings, Download, Globe, Camera,
-  Box, Database as Disk, ShieldCheck as VerifiedIcon
+  Box, Database as Disk, ShieldCheck as VerifiedIcon,
+  Globe2, ExternalLink
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, Radar as RechartsRadar } from 'recharts';
-import { chatWithAgroExpert, AIResponse } from '../services/geminiService';
+import { chatWithAgroExpert, AIResponse, searchAgroTrends } from '../services/geminiService';
 import { User, AgroResource, ViewState } from '../types';
 import { backupTelemetryShard, fetchTelemetryBackup } from '../services/firebaseService';
 
 interface IntelligenceProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
-  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onOpenEvidence?: () => void;
   onNavigate: (view: ViewState) => void;
 }
 
-type TabState = 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry';
+type TabState = 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry' | 'trends';
 type OracleMode = 'REGISTRY_AUDIT' | 'BIO_RESONANCE' | 'SEHTI_STRATEGY' | 'MARKET_PREDICT';
 
 const ORACLE_QUERY_COST = 25;
@@ -117,7 +117,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     return data;
   }, [x_immunity, r_resonance, n_cycles, dn_density, in_intensity, s_stress]);
 
-  // Fix: handleRunFullSimulation made async and awaits onSpendEAC
   const handleRunFullSimulation = async () => {
     if (!await onSpendEAC(50, 'FULL_SUSTAINABILITY_SIMULATION_INGEST')) return;
     setIsRunningSimulation(true);
@@ -143,7 +142,25 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   const [oracleMode, setOracleMode] = useState<OracleMode>('BIO_RESONANCE');
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // Fix: handleDeepAIQuery awaits onSpendEAC
+  // --- TREND INGEST STATES ---
+  const [isIngestingTrends, setIsIngestingTrends] = useState(false);
+  const [trendsResult, setTrendsResult] = useState<AIResponse | null>(null);
+
+  const handleIngestTrends = async () => {
+    setIsIngestingTrends(true);
+    setTrendsResult(null);
+    try {
+      const query = "latest innovations in regenerative farming practices and blockchain integration for carbon credit tracking 2025";
+      const res = await searchAgroTrends(query);
+      setTrendsResult(res);
+      onEarnEAC(10, "GLOBAL_TREND_INGEST_OK");
+    } catch (e) {
+      setTrendsResult({ text: "Global trend link timed out. Mesh synchronization required." });
+    } finally {
+      setIsIngestingTrends(false);
+    }
+  };
+
   const handleDeepAIQuery = async () => {
     if (!aiQuery.trim() || aiThinking) return;
     if (!await onSpendEAC(ORACLE_QUERY_COST, "ORACLE_INQUIRY")) return;
@@ -215,6 +232,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
         {[
           { id: 'twin', name: 'Digital Twin', icon: Box },
           { id: 'simulator', name: 'EOS Simulator', icon: Cpu },
+          { id: 'trends', name: 'Trend Ingest', icon: TrendingUp },
           { id: 'telemetry', name: 'IoT Telemetry', icon: Wifi },
           { id: 'eos_ai', name: 'Science Oracle', icon: Bot },
           { id: 'sid', name: 'SID Scanner', icon: Radiation },
@@ -228,6 +246,86 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
       <div className="min-h-[750px]">
         
+        {/* --- TAB: TREND INGEST --- */}
+        {activeTab === 'trends' && (
+          <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
+             <div className="glass-card p-12 rounded-[64px] border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden flex flex-col items-center justify-center min-h-[600px] shadow-3xl">
+                <div className="absolute inset-0 bg-indigo-500/[0.02] pointer-events-none"></div>
+                
+                {!trendsResult && !isIngestingTrends ? (
+                  <div className="text-center space-y-10 relative z-10 py-20">
+                     <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-3xl border-4 border-white/10 mx-auto group-hover:scale-110 transition-transform">
+                        <TrendingUp size={64} className="text-white" />
+                     </div>
+                     <div className="space-y-4">
+                        <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Trend <span className="text-indigo-400">Ingest</span></h3>
+                        <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto">
+                           "Synchronizing latest innovations in regenerative farming and blockchain carbon tracking via global mesh search grounding."
+                        </p>
+                     </div>
+                     <button 
+                       onClick={handleIngestTrends}
+                       className="px-16 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10"
+                     >
+                        <Globe2 size={24} /> INITIALIZE TREND SYNC
+                     </button>
+                  </div>
+                ) : isIngestingTrends ? (
+                  <div className="flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in fade-in">
+                     <div className="relative">
+                        <Loader2 size={120} className="text-indigo-500 animate-spin" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                           <Activity size={40} className="text-indigo-400 animate-pulse" />
+                        </div>
+                     </div>
+                     <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic">CRAWLING GLOBAL SHARDS...</p>
+                  </div>
+                ) : (
+                  <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-10 w-full px-6 py-10">
+                     <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 prose prose-invert max-w-none shadow-3xl border-l-[12px] border-l-indigo-600 relative overflow-hidden group/shard">
+                        <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
+                           <div className="flex items-center gap-6">
+                              <Bot size={40} className="text-indigo-400" />
+                              <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Strategic Trend Shard</h4>
+                           </div>
+                           <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
+                              <span className="text-[10px] font-mono font-black text-indigo-400 uppercase tracking-widest">GROUNDED_SYNC_STABLE</span>
+                           </div>
+                        </div>
+
+                        <div className="text-slate-300 text-xl md:text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/5">
+                           {trendsResult?.text}
+                        </div>
+
+                        {trendsResult?.sources && trendsResult.sources.length > 0 && (
+                          <div className="mt-16 pt-10 border-t border-white/10 relative z-10 space-y-6">
+                             <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] italic">Grounding Sources / Verification Nodes:</p>
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {trendsResult.sources.map((s, i) => (
+                                   <a key={i} href={s.web?.uri || '#'} target="_blank" rel="noopener noreferrer" className="p-6 bg-white/[0.02] border border-white/5 rounded-[32px] flex items-center justify-between group/link hover:border-indigo-500/40 transition-all">
+                                      <div className="flex items-center gap-4">
+                                         <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400 group-hover/link:scale-110 transition-transform"><Globe size={18} /></div>
+                                         <div className="max-w-[150px]">
+                                            <p className="text-xs font-black text-slate-300 uppercase italic truncate leading-none">{s.web?.title || 'Registry Shard'}</p>
+                                            <p className="text-[8px] text-slate-600 font-mono mt-1 truncate">{s.web?.uri}</p>
+                                         </div>
+                                      </div>
+                                      <ExternalLink size={14} className="text-slate-700 group-hover/link:text-indigo-400 transition-all" />
+                                   </a>
+                                ))}
+                             </div>
+                          </div>
+                        )}
+                     </div>
+                     <div className="flex justify-center">
+                        <button onClick={() => setTrendsResult(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl">DISCARD ANALYSIS</button>
+                     </div>
+                  </div>
+                )}
+             </div>
+          </div>
+        )}
+
         {/* --- TAB: DIGITAL TWIN --- */}
         {activeTab === 'twin' && (
           <div className="max-w-5xl mx-auto space-y-12 animate-in zoom-in duration-500 text-center">
@@ -261,9 +359,9 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                 <button 
                   onClick={handleTwinRefresh}
                   disabled={isTwinSyncing}
-                  className="mt-12 px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
+                  className="mt-12 px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
                 >
-                   {isTwinSyncing ? <Loader2 size={24} className="animate-spin" /> : <RefreshCw size={24} />}
+                   {isTwinSyncing ? <Loader2 size={24} className="animate-spin" /> : <RefreshCw size={16} />}
                    {isTwinSyncing ? 'Recalibrating Mirror...' : 'RE-CALIBRATE TWIN'}
                 </button>
              </div>
@@ -283,16 +381,16 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                 </div>
                 <div className="space-y-8">
                   <div className="group">
-                    <div className="flex justify-between px-2 mb-3"><label className="text-[11px] font-black text-slate-500 uppercase tracking-widest group-hover:text-emerald-400 transition-colors">Resonance (r)</label><span className="text-xs font-mono text-emerald-400 font-black">{r_resonance}</span></div>
-                    <input type="range" min="1" max="1.5" step="0.01" value={r_resonance} onChange={e => setRResonance(parseFloat(e.target.value))} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner" />
+                    <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-emerald-400 transition-colors">Resonance (r)</label><span className="text-xs font-mono text-emerald-400 font-black">{r_resonance}</span></div>
+                    <input type="range" min="1" max="1.5" step="0.01" value={r_resonance} onChange={e => setRResonance(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner" />
                   </div>
                   <div className="group">
-                    <div className="flex justify-between px-2 mb-3"><label className="text-[11px] font-black text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">Intensity (In)</label><span className="text-xs font-mono text-blue-400 font-black">{in_intensity}</span></div>
-                    <input type="range" min="0" max="1" step="0.01" value={in_intensity} onChange={e => setInIntensity(parseFloat(e.target.value))} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500 shadow-inner" />
+                    <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">Intensity (In)</label><span className="text-xs font-mono text-blue-400 font-black">{in_intensity}</span></div>
+                    <input type="range" min="0" max="1" step="0.01" value={in_intensity} onChange={e => setInIntensity(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500 shadow-inner" />
                   </div>
                   <div className="group">
-                    <div className="flex justify-between px-2 mb-3"><label className="text-[11px] font-black text-slate-500 uppercase tracking-widest group-hover:text-rose-400 transition-colors">Stress (S)</label><span className="text-xs font-mono text-rose-500 font-black">{s_stress}</span></div>
-                    <input type="range" min="0.01" max="0.5" step="0.01" value={s_stress} onChange={e => setSStress(parseFloat(e.target.value))} className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-500 shadow-inner" />
+                    <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-rose-400 transition-colors">Stress (S)</label><span className="text-xs font-mono text-rose-500 font-black">{s_stress}</span></div>
+                    <input type="range" min="0.01" max="0.5" step="0.01" value={s_stress} onChange={e => setSStress(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-500 shadow-inner" />
                   </div>
                 </div>
                 <button 
@@ -318,7 +416,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="cycle" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
                     <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', padding: '15px' }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '15px' }} />
                     <Area type="monotone" name="Sustainability Index" dataKey="score" stroke="#10b981" strokeWidth={5} fillOpacity={1} fill="url(#colorScore)" strokeLinecap="round" />
                     <Area type="monotone" name="Resilience Factor (m)" dataKey="m" stroke="#3b82f6" strokeWidth={3} fill="#3b82f605" strokeDasharray="5 5" />
                   </AreaChart>
@@ -473,7 +571,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
                    <div className="p-10 glass-card rounded-[56px] border border-emerald-500/10 bg-emerald-500/5 space-y-6 shadow-xl group">
                       <div className="flex items-center gap-4">
-                         <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><Sparkles size={24} /></div>
+                         <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><Sparkles size={24} className="text-emerald-500" /></div>
                          <h4 className="text-xl font-black text-white uppercase italic m-0">Neural <span className="text-emerald-400">Integrity</span></h4>
                       </div>
                       <p className="text-sm text-slate-400 italic leading-relaxed font-medium">
@@ -508,7 +606,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                             )}
                             <div className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full">
                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
-                               <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_STABLE</span>
+                               <span className="text-[9px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_STABLE</span>
                             </div>
                          </div>
                       </div>
@@ -602,7 +700,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                             <button 
                                onClick={handleDeepAIQuery}
                                disabled={aiThinking || !aiQuery.trim()}
-                               className={`absolute right-6 bottom-6 p-7 rounded-[32px] text-white shadow-3xl transition-all disabled:opacity-30 active:scale-90 ring-4 ring-indigo-500/5 flex items-center justify-center group-hover:scale-105 ${aiThinking ? 'bg-indigo-900/50' : 'bg-indigo-600 hover:bg-indigo-500'}`}
+                               className={`absolute right-6 bottom-6 p-7 rounded-[32px] text-white shadow-3xl transition-all disabled:opacity-30 active:scale-90 ring-4 ring-indigo-500/5 group-hover:scale-105 ${aiThinking ? 'bg-indigo-900/50' : 'bg-indigo-600 hover:bg-indigo-500'}`}
                             >
                                {aiThinking ? <Loader2 className="w-10 h-10 animate-spin" /> : <Send size={36} />}
                             </button>
@@ -672,7 +770,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                  </div>
                  <div className="h-12 w-px bg-white/10"></div>
                  <div className="text-right">
-                    <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Registry Uptime</p>
+                    <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Registry Output</p>
                     <p className="text-4xl font-mono font-black text-emerald-400">100%</p>
                  </div>
               </div>
@@ -688,7 +786,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
         .animate-spin-slow { animation: spin 10s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes scan {
-          0% { top: -10px; }
+          0% { top: -100%; }
           100% { top: 100%; }
         }
         .animate-scan {
