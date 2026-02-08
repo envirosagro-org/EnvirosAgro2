@@ -60,9 +60,14 @@ import {
   Copy,
   Check,
   ShieldPlus,
-  ShieldX
+  ArrowLeftCircle
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
+import { ViewState } from '../types';
+
+interface InfoPortalProps {
+  onNavigate: (view: ViewState) => void;
+}
 
 const ENVIRONMENTS = [
   { name: 'Threads', url: 'https://www.threads.com/@envirosagro', icon: AtSign, color: 'text-white', bg: 'bg-white/5', desc: 'Real-time sustainability dialogue.' },
@@ -302,7 +307,7 @@ const EnvirosAgroRocket: React.FC = () => {
   );
 };
 
-const InfoPortal: React.FC = () => {
+const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'crm_chat' | 'trademarks' | 'privacy' | 'registry_rules' | 'contact'>('about');
   const [supportChat, setSupportChat] = useState<{ role: 'user' | 'bot', text: string, time: string }[]>([
     { role: 'bot', text: "Hello Steward. I am the EnvirosAgro™ Governance Assistant. If you are encountering friction, technical problems, or challenges within the ecosystem, please describe them here.", time: new Date().toLocaleTimeString() }
@@ -316,7 +321,7 @@ const InfoPortal: React.FC = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [supportChat]);
+  }, [supportChat, activeTab]);
 
   const handleSupportSend = async () => {
     if (!supportInput.trim() || isTyping) return;
@@ -598,7 +603,7 @@ const InfoPortal: React.FC = () => {
                       <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Expert Quora Shard</h3>
                       <p className="text-slate-400 text-sm italic font-medium">Access deep scientific discussions directly from the registry source.</p>
                       <a href="https://www.quora.com/profile/EnvirosAgro" target="_blank" rel="noopener noreferrer" className="w-full py-5 bg-red-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3"><ExternalLink className="w-4 h-4" /> Open Quora</a>
-                   </div>
+                </div>
                 </div>
                 <div className="lg:col-span-3 grid gap-6">
                    {FAQS.map((faq, i) => (
