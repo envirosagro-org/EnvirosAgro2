@@ -12,7 +12,13 @@ import {
   Mail, Phone, ExternalLink, Globe2, Trash2, Save,
   X, CheckCircle2, CreditCard, Key, AlertCircle,
   Pencil, MessageSquare, Twitter, Linkedin, Facebook,
-  ArrowUpRight, Copy, SmartphoneNfc
+  ArrowUpRight, Copy, SmartphoneNfc,
+  BellRing,
+  Eye,
+  ToggleLeft,
+  ToggleRight,
+  /* Added RefreshCw to fix the 'Cannot find name' error on line 410 */
+  RefreshCw
 } from 'lucide-react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
@@ -124,9 +130,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
     { id: 'card', label: 'Identity Card', icon: Fingerprint },
     { id: 'celestial', label: 'Celestial Vault', icon: Flower2 },
     { id: 'edit', label: 'Edit Node', icon: Pencil },
-    { id: 'signals', label: 'Network Signals', icon: Bell },
-    { id: 'sharing', label: 'External Shards', icon: Share2 },
-    { id: 'settings', label: 'System Settings', icon: Settings },
+    { id: 'signals', label: 'Signals', icon: Bell },
+    { id: 'sharing', label: 'Sharing', icon: Share2 },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   const activeFlower = MONTH_FLOWERS[selectedMonth] || MONTH_FLOWERS['MAR'];
@@ -208,7 +214,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
          </div>
       </div>
 
-      <div className="min-h-[600px]">
+      <div className="min-h-[600px] relative">
          {activeTab === 'dossier' && (
            <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-12">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -334,13 +340,196 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
               </div>
            </div>
          )}
-         
-         {/* Other tabs maintained... */}
+
+         {activeTab === 'edit' && (
+            <div className="max-w-3xl mx-auto animate-in slide-in-from-bottom-6 duration-700">
+               <div className="glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl">
+                  <div className="flex items-center gap-4 border-b border-white/5 pb-8">
+                     <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl">
+                        <Pencil size={24} className="text-white" />
+                     </div>
+                     <h3 className="text-2xl font-black text-white uppercase italic">Modify <span className="text-emerald-400">Node Dossier</span></h3>
+                  </div>
+
+                  <div className="space-y-8">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Alias</label>
+                           <input 
+                              type="text" value={editName} onChange={e => setEditName(e.target.value)}
+                              className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
+                           />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Thrust Role</label>
+                           <input 
+                              type="text" value={editRole} onChange={e => setEditRole(e.target.value)}
+                              className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
+                           />
+                        </div>
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Node Location</label>
+                        <input 
+                           type="text" value={editLocation} onChange={e => setEditLocation(e.target.value)}
+                           className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
+                        />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Bio / Narrative Shard</label>
+                        <textarea 
+                           value={editBio} onChange={e => setEditBio(e.target.value)}
+                           className="w-full bg-black border border-white/10 rounded-3xl p-6 text-white font-medium italic focus:ring-4 focus:ring-emerald-500/10 outline-none h-32 resize-none"
+                        />
+                     </div>
+                  </div>
+
+                  <button 
+                     onClick={handleSaveProfile}
+                     disabled={isSaving}
+                     className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 transition-all active:scale-95 border-4 border-white/10"
+                  >
+                     {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
+                     {isSaving ? 'Syncing Dossier...' : 'Commit Changes to Registry'}
+                  </button>
+               </div>
+            </div>
+         )}
+
+         {activeTab === 'settings' && (
+            <div className="max-w-3xl mx-auto animate-in slide-in-from-right-4 duration-700">
+               <div className="glass-card p-10 md:p-14 rounded-[64px] border-indigo-500/20 bg-black/40 space-y-12 shadow-3xl">
+                  <div className="flex items-center gap-4 border-b border-white/5 pb-8">
+                     <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl">
+                        <Settings size={24} className="text-white" />
+                     </div>
+                     <h3 className="text-2xl font-black text-white uppercase italic">System <span className="text-indigo-400">Configurations</span></h3>
+                  </div>
+
+                  <div className="space-y-6">
+                     {[
+                        { id: 'notif', label: 'Signal Dispatch', desc: 'Enable real-time push sharding for network alerts.', val: user.settings?.notificationsEnabled, icon: BellRing },
+                        { id: 'sync', label: 'Autonomous Ingest', desc: 'Allow kernel to automatically resync with regional relay nodes.', val: user.settings?.autoSync, icon: RefreshCw },
+                        { id: 'bio', label: 'Biometric Handshake', icon: Fingerprint, desc: 'Use local biometric shard for rapid ESIN authorization.', val: user.settings?.biometricLogin },
+                     ].map(setting => (
+                        <div key={setting.id} className="p-8 bg-white/5 rounded-[40px] border border-white/10 flex items-center justify-between group hover:border-indigo-500/40 transition-all">
+                           <div className="flex items-center gap-6">
+                              <div className="p-4 bg-black/40 rounded-2xl text-indigo-400 shadow-inner group-hover:scale-110 transition-transform"><setting.icon size={24} /></div>
+                              <div className="text-left">
+                                 <h4 className="text-lg font-black text-white uppercase italic leading-none">{setting.label}</h4>
+                                 <p className="text-[10px] text-slate-500 mt-2 font-medium opacity-80 group-hover:opacity-100 italic">"{setting.desc}"</p>
+                              </div>
+                           </div>
+                           <button 
+                              className={`p-2 transition-all ${setting.val ? 'text-emerald-500' : 'text-slate-800'}`}
+                           >
+                              {setting.val ? <ToggleRight size={48} /> : <ToggleLeft size={48} />}
+                           </button>
+                        </div>
+                     ))}
+                  </div>
+
+                  <div className="pt-10 border-t border-white/5 flex gap-4">
+                     <button 
+                        onClick={onLogout}
+                        className="flex-1 py-6 bg-rose-600/10 border border-rose-500/20 text-rose-500 rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3"
+                     >
+                        <LogOut size={18} /> DE-INITIALIZE NODE
+                     </button>
+                     <button className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-700 hover:text-white transition-all shadow-xl active:scale-95"><Trash2 size={24}/></button>
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {activeTab === 'sharing' && (
+            <div className="max-w-3xl mx-auto animate-in zoom-in duration-700">
+               <div className="glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-950/5 text-center space-y-12 shadow-3xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform"><Share2 size={500} className="text-emerald-400" /></div>
+                  
+                  <div className="space-y-6 relative z-10">
+                     <div className="w-24 h-24 bg-emerald-600 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-3xl group-hover:rotate-12 transition-transform">
+                        <Share2 size={48} />
+                     </div>
+                     <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">External <span className="text-emerald-400">Shards</span></h3>
+                     <p className="text-slate-400 text-xl font-medium italic max-w-lg mx-auto">"Broadcast your steward credentials to external environments via secure identity shards."</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+                     {[
+                        { l: 'Twitter', i: Twitter, c: 'bg-blue-400' },
+                        { l: 'LinkedIn', i: Linkedin, c: 'bg-blue-700' },
+                        { l: 'Facebook', i: Facebook, c: 'bg-blue-800' },
+                        { l: 'Direct_Link', i: Copy, c: 'bg-emerald-600' },
+                     ].map(social => (
+                        <button key={social.l} className="p-8 bg-black/60 rounded-[32px] border border-white/5 hover:border-emerald-500/40 transition-all flex flex-col items-center gap-4 group/btn shadow-xl active:scale-95">
+                           <div className={`p-4 rounded-2xl ${social.c} text-white shadow-2xl group-hover/btn:scale-110 transition-transform`}>
+                              <social.i size={24} />
+                           </div>
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{social.l}</span>
+                        </button>
+                     ))}
+                  </div>
+
+                  <button className="w-full py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-3xl flex items-center justify-center gap-4">
+                     <FileCode size={20} className="text-emerald-400" /> EXPORT DOSSIER_SHA256
+                  </button>
+               </div>
+            </div>
+         )}
+
+         {activeTab === 'signals' && (
+            <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-10 duration-1000">
+               <div className="glass-card rounded-[64px] overflow-hidden border-2 border-white/5 bg-black/40 shadow-3xl">
+                  <div className="p-10 border-b border-white/10 bg-white/5 flex items-center justify-between">
+                     <div className="flex items-center gap-4">
+                        <Bell size={24} className="text-indigo-400" />
+                        <h3 className="text-2xl font-black text-white uppercase italic m-0">Private <span className="text-indigo-400">Signals</span></h3>
+                     </div>
+                     <span className="px-5 py-2 bg-black/60 rounded-full border border-white/10 text-[10px] font-black text-slate-500 uppercase tracking-widest">{signals.length} ARCHIVED</span>
+                  </div>
+                  <div className="divide-y divide-white/5 h-[600px] overflow-y-auto custom-scrollbar bg-[#050706]">
+                     {signals.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center py-20 opacity-10 space-y-6">
+                           <ShieldAlert size={100} />
+                           <p className="text-4xl font-black uppercase tracking-[0.5em]">No signals sharded</p>
+                        </div>
+                     ) : (
+                        signals.map((sig, i) => (
+                           <div key={sig.id} className={`p-10 hover:bg-white/[0.02] transition-all flex items-center justify-between group ${sig.read ? 'opacity-40' : ''}`}>
+                              <div className="flex items-center gap-8">
+                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all group-hover:scale-110 shadow-xl ${sig.priority === 'critical' ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-white/5 border-white/10 text-emerald-400'}`}>
+                                    <Activity size={24} />
+                                 </div>
+                                 <div className="text-left">
+                                    <h4 className="text-xl font-black text-white uppercase italic tracking-tight m-0 leading-none group-hover:text-indigo-400 transition-colors">{sig.title}</h4>
+                                    <p className="text-[10px] text-slate-500 mt-3 font-medium opacity-80 group-hover:opacity-100">"{sig.message}"</p>
+                                 </div>
+                              </div>
+                              <div className="text-right">
+                                 <p className="text-xs font-mono font-black text-slate-700 group-hover:text-white transition-colors">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                 <div className="mt-3 flex gap-2 justify-end">
+                                    <button className="p-2.5 bg-white/5 rounded-xl text-slate-700 hover:text-white transition-all"><Eye size={14}/></button>
+                                    <button className="p-2.5 bg-white/5 rounded-xl text-slate-700 hover:text-rose-500 transition-all"><Trash2 size={14}/></button>
+                                 </div>
+                              </div>
+                           </div>
+                        ))
+                     )}
+                  </div>
+                  <div className="p-8 border-t border-white/5 bg-black text-center">
+                     <button onClick={() => onNavigate('network_signals')} className="text-[10px] font-black text-indigo-400 hover:text-white uppercase tracking-widest flex items-center justify-center gap-3 transition-all">VIEW FULL TERMINAL <ChevronRight size={14}/></button>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
 
       <style>{`
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
       `}</style>
     </div>
   );
