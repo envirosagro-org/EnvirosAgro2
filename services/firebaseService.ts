@@ -1,29 +1,29 @@
-
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
-  onAuthStateChanged as fbOnAuthStateChanged, 
-  signInWithEmailAndPassword as fbSignIn, 
-  createUserWithEmailAndPassword as fbCreateUser, 
-  signOut as fbSignOut, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut,
   sendPasswordResetEmail,
-  GoogleAuthProvider,
-  signInWithPopup
+  sendEmailVerification,
+  User as FirebaseUser 
 } from "firebase/auth";
 import { 
-  initializeFirestore,
+  getFirestore, 
   doc, 
-  setDoc, 
   getDoc, 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  getDocs, 
+  setDoc, 
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  limit,
   orderBy,
   onSnapshot,
-  updateDoc,
-  arrayUnion
+  deleteDoc
 } from "firebase/firestore";
 import { 
   getDatabase, 
@@ -33,10 +33,9 @@ import {
   set, 
   limitToLast, 
   query as rtdbQuery,
-  serverTimestamp as rtdbTimestamp,
-  off
+  serverTimestamp as rtdbTimestamp
 } from "firebase/database";
-import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
+import { User } from "../types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2OCiMVOxaXWOBD3p4_mJp7TDJVwPpiNM",
@@ -50,183 +49,150 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-  useFetchStreams: false
-});
+export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 
-// --- UTILITIES ---
-const cleanObject = (obj: any): any => {
-  if (obj === null || obj === undefined) return null;
-  if (Array.isArray(obj)) return obj.map(cleanObject);
-  if (typeof obj !== 'object') return obj;
-  
-  const newObj: any = {};
-  Object.keys(obj).forEach((key) => {
-    const val = obj[key];
-    if (val !== undefined && val !== null) {
-      if (typeof val === 'object' && !Array.isArray(val)) {
-        newObj[key] = cleanObject(val);
-      } else {
-        newObj[key] = val;
-      }
-    }
-  });
-  return newObj;
+export const onAuthenticationChanged = (callback: (user: FirebaseUser | null) => void) => {
+  return onAuthStateChanged(auth, callback);
 };
 
-// --- AUTHENTICATION ---
-export const onAuthStateChanged = (_: any, callback: (user: any) => void) => fbOnAuthStateChanged(auth, callback);
-export const signInWithEmailAndPassword = async (_: any, email: string, pass: string) => fbSignIn(auth, email, pass);
-export const createUserWithEmailAndPassword = async (_: any, email: string, pass: string) => fbCreateUser(auth, email, pass);
-export const signInWithGoogle = async () => signInWithPopup(auth, new GoogleAuthProvider());
-export const signOutSteward = () => fbSignOut(auth);
-export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
-
-export const transmitRecoveryCode = async (email: string) => {
-  console.log(`Transmitting recovery code to ${email}`);
-  return true;
-};
-
-export const verifyRecoveryShard = async (email: string, code: string) => {
-  console.log(`Verifying shard ${code} for ${email}`);
-  return code.length === 6;
-};
-
-export const setupRecaptcha = (containerId: string) => {
-  console.log(`Setting up reCAPTCHA on ${containerId}`);
-};
-
-export const requestPhoneCode = async (phone: string) => {
-  console.log(`Requesting phone code for ${phone}`);
-  return "mock-verification-id";
-};
-
-// --- SIGNAL TERMINAL CORE ---
-export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): Promise<SignalShard | null> => {
-  const userId = auth.currentUser?.uid;
-  if (!userId) return null;
-
-  const id = `SIG-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-  const timestamp = new Date().toISOString();
-  
-  const layers: DispatchChannel[] = [];
-  layers.push({ channel: 'INBOX', status: 'SENT', timestamp });
-  
-  if (signalData.priority === 'critical' || signalData.priority === 'high') {
-    layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
-    layers.push({ channel: 'EMAIL', status: 'SENT', timestamp });
-  } else if (signalData.type !== 'network') {
-    layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
-  }
-
-  let iconName = 'MessageSquare';
-  if (typeof signalData.actionIcon === 'string') {
-    iconName = signalData.actionIcon;
-  }
-
-  const rawSignal: any = {
-    id,
-    type: signalData.type || 'system',
-    origin: signalData.origin || 'MANUAL',
-    title: signalData.title || 'NETWORK_SIGNAL',
-    message: signalData.message || 'No message provided.',
-    timestamp,
-    read: false,
-    priority: signalData.priority || 'low',
-    dispatchLayers: layers,
-    stewardId: userId,
-    actionIcon: iconName,
-    aiRemark: signalData.aiRemark || "Analyzing signal impact on node m-constant...",
-    meta: signalData.meta || {},
-    actionLabel: signalData.actionLabel || ''
-  };
-
-  const cleanSignal = cleanObject(rawSignal);
-
+export const getUserProfile = async (uid: string): Promise<User | null> => {
   try {
-    await setDoc(doc(db, "signals", id), cleanSignal);
-    
-    // Low-latency pulse broadcast
-    const pulseRef = ref(rtdb, 'network_pulse');
-    await push(pulseRef, {
-      message: `${rawSignal.title}: ${rawSignal.message}`,
-      timestamp: rtdbTimestamp()
-    });
-
-    return cleanSignal as SignalShard;
-  } catch (e) {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    if (userDoc.exists()) {
+      return userDoc.data() as User;
+    }
+    const legacyDoc = await getDoc(doc(db, "stewards", uid));
+    if (legacyDoc.exists()) {
+       return legacyDoc.data() as User;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting user profile:", error);
     return null;
   }
 };
 
-export const listenToPulse = (callback: (pulse: string) => void) => {
-  const pulseRef = rtdbQuery(ref(rtdb, 'network_pulse'), limitToLast(1));
-  onValue(pulseRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-      const latestKey = Object.keys(data)[0];
-      callback(data[latestKey].message);
-    }
-  });
-  return () => off(pulseRef);
-};
+export const getStewardProfile = getUserProfile;
 
-// --- REGISTRY SYNC (FIRESTORE) ---
-export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
-  const userId = uid || auth.currentUser?.uid;
-  if (!userId) return false;
+export const syncUserToCloud = async (user: User) => {
+  if (!user.uid) return false;
   try {
-    const cleanUserData = cleanObject(userData);
-    await setDoc(doc(db, "stewards", userId), { ...cleanUserData, lastSync: Date.now(), stewardId: userId }, { merge: true });
+    await setDoc(doc(db, "users", user.uid), user, { merge: true });
+    await setDoc(doc(db, "stewards", user.uid), user, { merge: true });
     return true;
-  } catch (e) { return false; }
+  } catch (error) {
+    console.error("Error syncing user to cloud:", error);
+    return false;
+  }
 };
 
-export const getStewardProfile = async (uid: string): Promise<AgroUser | null> => {
-  const snap = await getDoc(doc(db, "stewards", uid));
-  return snap.exists() ? snap.data() as AgroUser : null;
-};
-
-export const markPermanentAction = async (actionKey: string) => {
-  const userId = auth.currentUser?.uid;
-  if (!userId) return false;
+export const signUp = async (userData: Omit<User, 'uid' | 'createdAt'>): Promise<User | null> => {
   try {
-    await updateDoc(doc(db, "stewards", userId), {
-      completedActions: arrayUnion(actionKey)
-    });
-    return true;
-  } catch (e) { return false; }
+    const { email, mnemonic } = userData;
+    const userCredential = await createUserWithEmailAndPassword(auth, email, mnemonic);
+    const firebaseUser = userCredential.user;
+    
+    const newUser: User = {
+      ...userData,
+      uid: firebaseUser.uid,
+      createdAt: new Date().toISOString(),
+    };
+
+    await setDoc(doc(db, "users", firebaseUser.uid), newUser);
+    await setDoc(doc(db, "stewards", firebaseUser.uid), newUser);
+    return newUser;
+  } catch (error: any) {
+    console.error("Error signing up:", error);
+    throw error;
+  }
 };
+
+export const signIn = async (email: string, mnemonic: string): Promise<FirebaseUser | null> => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, mnemonic);
+    return userCredential.user;
+  } catch (error: any) {
+    console.error("Error signing in:", error);
+    throw error;
+  }
+};
+
+export const logOut = async () => {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("Error logging out:", error);
+    throw error;
+  }
+};
+
+export const signOutSteward = logOut;
 
 export const saveCollectionItem = async (collectionName: string, item: any) => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
-  const cleanItem = cleanObject(item);
-  const data = { ...cleanItem, stewardId: userId, lastModified: Date.now() };
-  const docRef = item.id ? doc(db, collectionName, item.id) : doc(collection(db, collectionName));
-  await setDoc(docRef, data, { merge: true });
-  return docRef.id;
+  try {
+    const data = { 
+      ...item, 
+      stewardId: userId, 
+      lastModified: Date.now() 
+    };
+    if (item.id) {
+      await setDoc(doc(db, collectionName, item.id), data, { merge: true });
+      return item.id;
+    } else {
+      const docRef = await addDoc(collection(db, collectionName), data);
+      return docRef.id;
+    }
+  } catch (e) { return null; }
+};
+
+export const fetchCollection = async (collectionName: string) => {
+  const userId = auth.currentUser?.uid;
+  if (!userId) return [];
+  try {
+    const q = query(collection(db, collectionName), where("stewardId", "==", userId), orderBy("lastModified", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ ...d.data(), id: d.id }));
+  } catch (e) { return []; }
 };
 
 export const listenToCollection = (collectionName: string, callback: (items: any[]) => void) => {
   const userId = auth.currentUser?.uid;
   if (!userId) return () => {};
+  
   const q = query(collection(db, collectionName), where("stewardId", "==", userId));
-  return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.id }))), (err) => {
-    console.warn(`Registry Sync Warning (${collectionName}):`, err.message);
+  return onSnapshot(q, (snap) => {
+    const items = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+    callback(items);
+  }, (err) => console.error(`Listener error [${collectionName}]:`, err));
+};
+
+export const broadcastPulse = async (esin: string, message: string) => {
+  try {
+    const pulsesRef = ref(rtdb, 'pulses');
+    const newPulseRef = push(pulsesRef);
+    await set(newPulseRef, {
+      esin,
+      message,
+      timestamp: rtdbTimestamp()
+    });
+    return true;
+  } catch (e) { return false; }
+};
+
+export const listenForGlobalEchoes = (callback: (echoes: any[]) => void) => {
+  const pulsesRef = rtdbQuery(ref(rtdb, 'pulses'), limitToLast(30));
+  return onValue(pulsesRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      const list = Object.entries(data).map(([id, val]: [string, any]) => ({
+        id, ...val
+      })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      callback(list);
+    } else {
+      callback([]);
+    }
   });
 };
-
-export const verifyAuditorAccess = async (email: string) => {
-  const q = query(collection(db, "auditors"), where("email", "==", email));
-  const snap = await getDocs(q);
-  return !snap.empty;
-};
-
-export const backupTelemetryShard = async (esin: string, telemetry: any) => {
-  const cleanTelem = cleanObject(telemetry);
-  return setDoc(doc(db, "telemetry", esin), { ...cleanTelem, updatedAt: Date.now() }, { merge: true });
-};
-export const fetchTelemetryBackup = async (esin: string) => (await getDoc(doc(db, "telemetry", esin))).data();
