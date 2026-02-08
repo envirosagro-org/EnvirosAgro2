@@ -8,7 +8,10 @@ import {
   signOut as fbSignOut, 
   sendPasswordResetEmail,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  ConfirmationResult
 } from "firebase/auth";
 import { 
   initializeFirestore,
@@ -94,13 +97,21 @@ export const verifyRecoveryShard = async (email: string, code: string) => {
   return code.length === 6;
 };
 
+// --- PHONE AUTH ---
 export const setupRecaptcha = (containerId: string) => {
-  console.log(`Setting up reCAPTCHA on ${containerId}`);
+  if (!(window as any).recaptchaVerifier) {
+    (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+      'size': 'invisible',
+      'callback': (response: any) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
+      }
+    });
+  }
+  return (window as any).recaptchaVerifier;
 };
 
-export const requestPhoneCode = async (phone: string) => {
-  console.log(`Requesting phone code for ${phone}`);
-  return "mock-verification-id";
+export const requestPhoneCode = async (phone: string, appVerifier: any): Promise<ConfirmationResult> => {
+  return await signInWithPhoneNumber(auth, phone, appVerifier);
 };
 
 // --- SIGNAL TERMINAL CORE ---

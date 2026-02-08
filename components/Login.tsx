@@ -15,7 +15,6 @@ import {
   HelpCircle,
   Hash,
   Send, 
-  // Add missing Zap icon
   Zap,
   Lock,
   RefreshCw,
@@ -26,7 +25,8 @@ import {
   MessageSquareCode,
   Globe,
   Fingerprint,
-  ArrowLeft
+  ArrowLeft,
+  Phone
 } from 'lucide-react';
 import { 
   syncUserToCloud,
@@ -49,13 +49,13 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'register' | 'login' | 'forgot' | 'verify_shard' | 'phone'>('login');
+  const [mode, setMode] = useState<'register' | 'login' | 'forgot' | 'verify_shard' | 'phone' | 'verify_phone'>('login');
   
   const [name, setEditName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [verificationId, setVerificationId] = useState<any>(null);
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
 
   const [esin] = useState(`EA-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
@@ -76,7 +76,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const handleShardInput = (val: string, index: number, target: 'shard' | 'otp') => {
+  const handleCodeInput = (val: string, index: number, target: 'shard' | 'otp') => {
     if (!/^\d*$/.test(val)) return;
     const currentCode = target === 'shard' ? shardCode : otpCode;
     const setter = target === 'shard' ? setShardCode : setOtpCode;
@@ -92,13 +92,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     }
   };
 
-  const createStewardProfile = async (uid: string, userEmail: string, userName: string) => {
+  const createStewardProfile = async (uid: string, userEmail: string, userName: string, phone?: string) => {
     const generatedMnemonic = "seed plant grow harvest sun rain soil root leaf flower fruit seed";
     const gpsCoords = "1.29, 36.82";
 
     const newUser: User = {
       name: userName || 'Anonymous Steward',
-      email: userEmail.toLowerCase(),
+      email: userEmail.toLowerCase() || `${phone}@phone.auth`,
       esin: esin,
       mnemonic: generatedMnemonic,
       regDate: new Date().toLocaleDateString(),
@@ -161,6 +161,45 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     }
   };
 
+  const handlePhoneRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneNumber) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      const appVerifier = setupRecaptcha('recaptcha-container');
+      const result = await requestPhoneCode(phoneNumber, appVerifier);
+      setConfirmationResult(result);
+      setMode('verify_phone');
+      setMessage({ type: 'info', text: "SMS_TRANSMITTED: 6-digit access shard sent to your device." });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: `PHONE_AUTH_ERROR: ${error.message}` });
+      if ((window as any).recaptchaVerifier) (window as any).recaptchaVerifier.clear();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhoneVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = otpCode.join('');
+    if (code.length < 6 || !confirmationResult) return;
+    setLoading(true);
+    try {
+      const result = await confirmationResult.confirm(code);
+      const profile = await getStewardProfile(result.user.uid);
+      if (profile) {
+        onLogin(profile);
+      } else {
+        await createStewardProfile(result.user.uid, '', 'Phone Steward', phoneNumber);
+      }
+    } catch (error: any) {
+      setMessage({ type: 'error', text: "INVALID_SHARD: Access code verification failed." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -216,7 +255,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
             </div>
             <div className="space-y-2">
                <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0">
-                  {mode === 'register' ? 'Node Ingest' : mode === 'forgot' || mode === 'verify_shard' ? 'Recovery Shard' : 'Steward Connect'}
+                  {mode === 'register' ? 'Node Ingest' : mode === 'phone' || mode === 'verify_phone' ? 'Mobile Link' : mode === 'forgot' || mode === 'verify_shard' ? 'Recovery Shard' : 'Steward Connect'}
                </h1>
                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.6em]">Registry Synchronization Protocol</p>
             </div>
@@ -237,13 +276,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
          )}
 
          {/* MODE TABS */}
-         <div className="flex p-2 glass-card rounded-[32px] bg-white/5 border border-white/10 w-fit mx-auto overflow-hidden">
-            <button onClick={() => { setMode('login'); setMessage(null); }} className={`px-8 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'login' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>Connect</button>
-            <button onClick={() => { setMode('register'); setMessage(null); }} className={`px-8 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>Sync</button>
-            <button onClick={() => { setMode('forgot'); setMessage(null); }} className={`px-8 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'forgot' || mode === 'verify_shard' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>Recover</button>
+         <div className="flex flex-wrap justify-center p-2 glass-card rounded-[32px] bg-white/5 border border-white/10 w-fit mx-auto overflow-hidden gap-1">
+            <button onClick={() => { setMode('login'); setMessage(null); }} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'login' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>Email</button>
+            <button onClick={() => { setMode('phone'); setMessage(null); }} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'phone' || mode === 'verify_phone' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>Phone</button>
+            <button onClick={() => { setMode('register'); setMessage(null); }} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>New Node</button>
+            <button onClick={() => { setMode('forgot'); setMessage(null); }} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'forgot' || mode === 'verify_shard' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}>Recover</button>
          </div>
 
-         {mode !== 'verify_shard' && (
+         {/* GOOGLE SIGN IN */}
+         {(mode === 'login' || mode === 'register' || mode === 'phone') && (
            <div className="space-y-6">
               <button 
                 onClick={handleGoogleLogin}
@@ -251,27 +292,28 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
                 className="w-full py-5 bg-white rounded-[24px] flex items-center justify-center gap-6 text-sm font-black uppercase tracking-widest text-black hover:bg-slate-100 transition-all shadow-2xl active:scale-95"
               >
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
-                Handshake with Google
+                Handshake with Google (Gmail)
               </button>
               <div className="flex items-center gap-6 px-10 opacity-20">
                 <div className="h-px bg-white flex-1"></div>
-                <span className="text-[10px] font-black uppercase text-white">OR REGISTRY EMAIL</span>
+                <span className="text-[10px] font-black uppercase text-white">OR DIRECT PROTOCOL</span>
                 <div className="h-px bg-white flex-1"></div>
               </div>
            </div>
          )}
 
-         <form onSubmit={handleAuth} className="space-y-8">
-            {mode === 'register' && (
-              <div className="space-y-6 animate-in slide-in-from-right-10 duration-700">
-                <div className="space-y-3 text-left">
-                   <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-6 italic">Steward Name / Alias</label>
-                   <input type="text" required value={name} onChange={e => setEditName(e.target.value)} placeholder="e.g. Bantu Steward Alpha" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all shadow-inner" />
+         {/* EMAIL FLOW */}
+         {(mode === 'login' || mode === 'register' || mode === 'forgot') && (
+           <form onSubmit={handleAuth} className="space-y-8">
+              {mode === 'register' && (
+                <div className="space-y-6 animate-in slide-in-from-right-10 duration-700">
+                  <div className="space-y-3 text-left">
+                     <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-6 italic">Steward Name / Alias</label>
+                     <input type="text" required value={name} onChange={e => setEditName(e.target.value)} placeholder="e.g. Bantu Steward Alpha" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all shadow-inner" />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {mode !== 'verify_shard' && (
               <div className="space-y-6 text-left animate-in fade-in duration-700">
                  <div className="space-y-3">
                     <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-6 italic">Registry Identifier (Email)</label>
@@ -291,60 +333,130 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
                    </div>
                  )}
               </div>
-            )}
 
-            {mode === 'verify_shard' && (
-              <div className="space-y-10 animate-in zoom-in duration-700 py-6">
-                 <div className="flex flex-col items-center gap-6">
-                    <div className="w-24 h-24 bg-indigo-600/10 border-4 border-indigo-500/20 rounded-full animate-pulse flex items-center justify-center text-indigo-400">
-                      <Lock size={40} />
-                    </div>
-                    <div className="space-y-2">
-                       <h3 className="text-2xl font-black text-white uppercase italic tracking-widest">Verify Shard</h3>
-                       <p className="text-slate-500 text-[10px] uppercase font-bold tracking-[0.4em] px-10">Enter 6-digit recovery shard sent to <span className="text-indigo-400 block mt-2 text-xs">{email}</span></p>
-                    </div>
-                 </div>
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(16,185,129,0.3)] active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[20px] ring-white/5 disabled:opacity-50"
+              >
+                 {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
+                 {mode === 'register' ? 'INITIALIZE NODE SYNC' : mode === 'login' ? 'ESTABLISH HANDSHAKE' : 'TRANSMIT RECOVERY SIGNAL'}
+              </button>
+           </form>
+         )}
 
-                 <div className="flex justify-center gap-4">
-                   {shardCode.map((digit, i) => (
-                     <input
-                       key={i}
-                       id={`shard-${i}`}
-                       type="text"
-                       maxLength={1}
-                       value={digit}
-                       onChange={e => handleShardInput(e.target.value, i, 'shard')}
-                       className="w-14 h-20 bg-black/80 border-2 border-white/10 rounded-2xl text-center text-4xl font-mono font-black text-indigo-400 focus:border-indigo-500 outline-none transition-all shadow-3xl focus:ring-8 focus:ring-indigo-500/10"
-                     />
-                   ))}
-                 </div>
-
-                 <div className="flex justify-between items-center px-10">
-                    <button 
-                      type="button" 
-                      onClick={() => setMode('forgot')}
-                      className="text-[10px] font-black text-slate-700 uppercase tracking-widest hover:text-white transition-colors"
-                    >
-                      CHANGE_REGISTRY_EMAIL
-                    </button>
-                    {countdown > 0 ? (
-                      <span className="text-[10px] font-mono text-indigo-400 font-bold">RETRY: {countdown}s</span>
-                    ) : (
-                      <button type="button" onClick={handleAuth} className="text-[10px] font-black text-emerald-400 uppercase flex items-center gap-2 hover:text-white"><RefreshCw size={14}/> RESEND_SHARD</button>
-                    )}
+         {/* PHONE FLOW */}
+         {mode === 'phone' && (
+           <form onSubmit={handlePhoneRequest} className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="space-y-3 text-left">
+                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-6 italic">Steward Mobile Node (International Format)</label>
+                 <div className="relative group">
+                   <Phone className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700 group-focus-within:text-blue-500 transition-colors" />
+                   <input type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+254 740 161 447" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 pl-16 pr-8 text-lg text-white outline-none focus:ring-8 focus:ring-blue-500/10 transition-all shadow-inner font-mono" />
                  </div>
               </div>
-            )}
+              <button 
+                type="submit"
+                disabled={loading || !phoneNumber}
+                className="w-full py-8 bg-blue-600 hover:bg-blue-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[20px] ring-white/5 disabled:opacity-50"
+              >
+                 {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Smartphone className="w-8 h-8" />}
+                 REQUEST ACCESS CODE
+              </button>
+           </form>
+         )}
 
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(16,185,129,0.3)] active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[20px] ring-white/5 disabled:opacity-50"
-            >
-               {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
-               {mode === 'register' ? 'INITIALIZE NODE SYNC' : mode === 'login' ? 'ESTABLISH HANDSHAKE' : mode === 'verify_shard' ? 'VERIFY SHARD INTEGRITY' : 'TRANSMIT RECOVERY SIGNAL'}
-            </button>
-         </form>
+         {/* OTP/VERIFY PHONE FLOW */}
+         {mode === 'verify_phone' && (
+           <form onSubmit={handlePhoneVerify} className="space-y-10 animate-in zoom-in duration-500 py-6">
+              <div className="flex flex-col items-center gap-6">
+                 <div className="w-24 h-24 bg-blue-600/10 border-4 border-blue-500/20 rounded-full animate-pulse flex items-center justify-center text-blue-400">
+                   <MessageSquareCode size={40} />
+                 </div>
+                 <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-widest">Verify Mobile Node</h3>
+                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-[0.4em] px-10">Access code sharded to <span className="text-blue-400 block mt-2 text-xs font-mono">{phoneNumber}</span></p>
+                 </div>
+              </div>
+
+              <div className="flex justify-center gap-3">
+                {otpCode.map((digit, i) => (
+                  <input
+                    key={i}
+                    id={`otp-${i}`}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={e => handleCodeInput(e.target.value, i, 'otp')}
+                    className="w-12 h-16 md:w-14 md:h-20 bg-black/80 border-2 border-white/10 rounded-2xl text-center text-3xl md:text-4xl font-mono font-black text-blue-400 focus:border-blue-500 outline-none transition-all shadow-3xl focus:ring-8 focus:ring-blue-500/10"
+                  />
+                ))}
+              </div>
+
+              <button 
+                type="submit"
+                disabled={loading || otpCode.join('').length < 6}
+                className="w-full py-8 bg-blue-600 hover:bg-blue-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[20px] ring-white/5 disabled:opacity-50"
+              >
+                 {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <ShieldCheck className="w-8 h-8" />}
+                 AUTHORIZE ACCESS
+              </button>
+              <button type="button" onClick={() => setMode('phone')} className="text-[10px] font-black text-slate-700 uppercase tracking-widest hover:text-white transition-colors">BACK_TO_PHONE</button>
+           </form>
+         )}
+
+         {/* RECOVERY SHARD FLOW */}
+         {mode === 'verify_shard' && (
+           <form onSubmit={handleAuth} className="space-y-10 animate-in zoom-in duration-700 py-6">
+              <div className="flex flex-col items-center gap-6">
+                 <div className="w-24 h-24 bg-indigo-600/10 border-4 border-indigo-500/20 rounded-full animate-pulse flex items-center justify-center text-indigo-400">
+                   <Lock size={40} />
+                 </div>
+                 <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-widest">Verify Recovery Shard</h3>
+                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-[0.4em] px-10">Recovery shard sharded to <span className="text-indigo-400 block mt-2 text-xs">{email}</span></p>
+                 </div>
+              </div>
+
+              <div className="flex justify-center gap-4">
+                {shardCode.map((digit, i) => (
+                  <input
+                    key={i}
+                    id={`shard-${i}`}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={e => handleCodeInput(e.target.value, i, 'shard')}
+                    className="w-14 h-20 bg-black/80 border-2 border-white/10 rounded-2xl text-center text-4xl font-mono font-black text-indigo-400 focus:border-indigo-500 outline-none transition-all shadow-3xl focus:ring-8 focus:ring-indigo-500/10"
+                  />
+                ))}
+              </div>
+
+              <div className="flex justify-between items-center px-10">
+                 <button 
+                   type="button" 
+                   onClick={() => setMode('forgot')}
+                   className="text-[10px] font-black text-slate-700 uppercase tracking-widest hover:text-white transition-colors"
+                 >
+                   CHANGE_IDENTIFIER
+                 </button>
+                 {countdown > 0 ? (
+                   <span className="text-[10px] font-mono text-indigo-400 font-bold">RETRY: {countdown}s</span>
+                 ) : (
+                   <button type="button" onClick={handleAuth} className="text-[10px] font-black text-emerald-400 uppercase flex items-center gap-2 hover:text-white"><RefreshCw size={14}/> RESEND_SHARD</button>
+                 )}
+              </div>
+
+              <button 
+                type="submit"
+                disabled={loading || shardCode.join('').length < 6}
+                className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-8 active:scale-95 transition-all border-4 border-white/10 ring-[20px] ring-white/5 disabled:opacity-50"
+              >
+                 {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <CheckCircle2 className="w-8 h-8" />}
+                 VERIFY SHARD INTEGRITY
+              </button>
+           </form>
+         )}
 
          <div className="pt-6 border-t border-white/5 flex flex-col items-center gap-4">
             <p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.6em] italic">Official EnvirosAgro™ Network Authority</p>
