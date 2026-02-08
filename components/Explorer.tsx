@@ -54,8 +54,7 @@ import {
   Gavel
 } from 'lucide-react';
 import { AgroBlock, User, AgroTransaction } from '../types';
-// Fix: Removed missing validateBlockSustainability import
-import { settleRegistryBatch, AIResponse } from '../services/geminiService';
+import { settleRegistryBatch, AIResponse, auditMeshStability } from '../services/geminiService';
 
 interface ExplorerProps {
   blockchain?: AgroBlock[];
@@ -75,18 +74,15 @@ const VALIDATORS = [
 const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, globalEchoes = [], onPulse, user }) => {
   const [activeTab, setActiveTab] = useState<'blocks' | 'ledger' | 'pulse' | 'consensus' | 'settlement'>('blocks');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBlock, setSelectedBlock] = useState<AgroBlock | null>(null);
-  const [isAuditingBlock, setIsAuditingBlock] = useState(false);
-  const [blockAuditResult, setBlockAuditResult] = useState<AIResponse | null>(null);
   
   const [isSettling, setIsSettling] = useState(false);
   const [settlementResult, setSettlementResult] = useState<AIResponse | null>(null);
-  
-  const [pulseMessage, setPulseMessage] = useState('');
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
+
+  // Pulse Logic States
+  const [isAnalyzingPulse, setIsAnalyzingPulse] = useState(false);
+  const [pulseVerdict, setPulseVerdict] = useState<AIResponse | null>(null);
   
   const [hashRate, setHashRate] = useState(12.4);
-  const pulseContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -109,6 +105,25 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
     }
   };
 
+  const handleRunPulseAnalysis = async () => {
+    setIsAnalyzingPulse(true);
+    setPulseVerdict(null);
+    try {
+      const data = {
+        chain_depth: blockchain.length + 428000,
+        hashrate: hashRate,
+        validators: VALIDATORS.length,
+        is_mining: isMining
+      };
+      const res = await auditMeshStability(data);
+      setPulseVerdict(res);
+    } catch (e) {
+      setPulseVerdict({ text: "Consensus link unstable. Try again after block propagation." });
+    } finally {
+      setIsAnalyzingPulse(false);
+    }
+  };
+
   const filteredBlocks = blockchain.filter(b => 
     b.hash.toLowerCase().includes(searchTerm.toLowerCase()) || 
     b.validator.toLowerCase().includes(searchTerm.toLowerCase())
@@ -119,58 +134,62 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
   }, [blockchain]);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1500px] mx-auto">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1600px] mx-auto">
       
       {/* 1. Industrial Metrology HUD */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4 md:px-0">
-         <div className="glass-card p-8 rounded-[40px] border border-blue-500/20 bg-blue-500/[0.02] space-y-4 group">
-            <div className="flex justify-between items-center">
-               <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.4em]">Hash Velocity</p>
-               <Activity className="w-4 h-4 text-blue-500 animate-pulse" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 px-4 md:px-0">
+         <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-blue-500/[0.03] space-y-6 shadow-3xl group relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[10s]"><Activity size={120} /></div>
+            <div className="flex justify-between items-center relative z-10">
+               <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.5em]">Hash Velocity</p>
+               <Activity className="w-5 h-5 text-blue-500 animate-pulse" />
             </div>
-            <h4 className="text-4xl font-mono font-black text-white tracking-tighter leading-none">{hashRate} <span className="text-xs text-slate-700 font-sans">TH/s</span></h4>
-            <div className="h-1 bg-white/5 rounded-full overflow-hidden shadow-inner">
-               <div className="h-full bg-blue-600 animate-pulse" style={{ width: `${(hashRate / 15) * 100}%` }}></div>
+            <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none relative z-10">{hashRate} <span className="text-xl text-blue-500 italic">TH/s</span></h4>
+            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner relative z-10">
+               <div className="h-full bg-blue-600 animate-pulse shadow-[0_0_15px_#3b82f6]" style={{ width: `${(hashRate / 15) * 100}%` }}></div>
             </div>
          </div>
          
-         <div className="glass-card p-8 rounded-[40px] border border-emerald-500/20 bg-emerald-500/[0.02] space-y-4 group">
-            <div className="flex justify-between items-center">
-               <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.4em]">Block Height</p>
-               <Layers className="w-4 h-4 text-emerald-500" />
+         <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-500/[0.03] space-y-6 shadow-3xl group relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[10s]"><Layers size={120} /></div>
+            <div className="flex justify-between items-center relative z-10">
+               <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.5em]">Block Height</p>
+               <Layers className="w-5 h-5 text-emerald-500" />
             </div>
-            <h4 className="text-4xl font-mono font-black text-white tracking-tighter leading-none">#{blockchain.length + 428812}</h4>
-            <div className="flex items-center gap-2 text-[9px] font-black text-emerald-500/60 uppercase">
-               <div className={`w-1.5 h-1.5 rounded-full ${isMining ? 'bg-amber-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`}></div>
-               {isMining ? 'Finalizing Block...' : 'Live Sharding Active'}
-            </div>
-         </div>
-
-         <div className="glass-card p-8 rounded-[40px] border border-indigo-500/20 bg-indigo-500/[0.02] space-y-4 group">
-            <div className="flex justify-between items-center">
-               <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.4em]">Quorum Consensus</p>
-               <ShieldCheck className="w-4 h-4 text-indigo-500" />
-            </div>
-            <h4 className="text-4xl font-mono font-black text-white tracking-tighter leading-none">99.98<span className="text-xs text-slate-700 font-sans">%</span></h4>
-            <div className="h-1 bg-white/5 rounded-full overflow-hidden shadow-inner">
-               <div className="h-full bg-indigo-600" style={{ width: '99.98%' }}></div>
+            <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none relative z-10">#{blockchain.length + 428812}</h4>
+            <div className="flex items-center gap-3 text-[10px] font-black text-emerald-500/60 uppercase tracking-widest relative z-10">
+               <div className={`w-2.5 h-2.5 rounded-full ${isMining ? 'bg-amber-500 animate-ping shadow-[0_0_15px_#f59e0b]' : 'bg-emerald-500 animate-pulse shadow-[0_0_15px_#10b981]'}`}></div>
+               {isMining ? 'FINALIZING_BLOCK...' : 'LIVE_SHARDING_OK'}
             </div>
          </div>
 
-         <div className="glass-card p-8 rounded-[40px] border border-amber-500/20 bg-amber-500/[0.02] space-y-4 group">
-            <div className="flex justify-between items-center">
-               <p className="text-[10px] text-amber-400 font-black uppercase tracking-[0.4em]">Total Shards</p>
-               <Activity className="w-4 h-4 text-amber-500" />
+         <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-500/[0.03] space-y-6 shadow-3xl group relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[10s]"><ShieldCheck size={120} /></div>
+            <div className="flex justify-between items-center relative z-10">
+               <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.5em]">Quorum Consensus</p>
+               <ShieldCheck className="w-5 h-5 text-indigo-500" />
             </div>
-            <h4 className="text-4xl font-mono font-black text-white tracking-tighter leading-none">{allTransactions.length + 1242}<span className="text-xs text-slate-700 font-sans">SHDS</span></h4>
-            <div className="flex items-center gap-2 text-[9px] font-black text-amber-400/60 uppercase">
-               <TrendingUp className="w-3 h-3" /> Ledger Density: +0.12x
+            <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none relative z-10">99.98<span className="text-2xl text-indigo-500 italic">%</span></h4>
+            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner relative z-10">
+               <div className="h-full bg-indigo-600 shadow-[0_0_15px_#6366f1]" style={{ width: '99.98%' }}></div>
             </div>
+         </div>
+
+         <div className="glass-card p-10 rounded-[56px] border border-amber-500/20 bg-amber-500/[0.03] space-y-6 shadow-3xl group relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[10s]"><Target size={120} /></div>
+            <div className="flex justify-between items-center relative z-10">
+               <p className="text-[10px] text-amber-400 font-black uppercase tracking-[0.5em]">Total Shards</p>
+               <Target className="w-5 h-5 text-amber-500" />
+            </div>
+            <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none relative z-10">{allTransactions.length + 1242}<span className="text-xl text-amber-500 italic ml-1">S</span></h4>
+            <button onClick={handleRunPulseAnalysis} className="text-[10px] font-black text-amber-500 hover:text-white transition-colors uppercase tracking-[0.4em] flex items-center gap-2 relative z-10 border border-amber-500/20 bg-amber-500/5 px-4 py-1.5 rounded-full shadow-inner">
+               <Zap size={12} fill="currentColor" /> Analyze Pulse
+            </button>
          </div>
       </div>
 
       {/* 2. Ledger Navigation Shards */}
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4 overflow-x-auto scrollbar-hide">
+      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-full lg:w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-10 relative z-20">
         {[
           { id: 'blocks', label: 'Block Shards', icon: Box },
           { id: 'ledger', label: 'Transaction Ledger', icon: Terminal },
@@ -179,19 +198,68 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
         ].map(tab => (
           <button 
             key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            onClick={() => { setActiveTab(tab.id as any); setPulseVerdict(null); }}
+            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
-            <tab.icon className="w-4 h-4" /> {tab.label}
+            <tab.icon className="w-5 h-5" /> {tab.label}
           </button>
         ))}
       </div>
 
       {/* 3. Main Viewport */}
       <div className="min-h-[750px] px-4 md:px-0">
+
+        {/* --- DYNAMIC PULSE ANALYSIS VIEW (INTEGRATED) --- */}
+        {pulseVerdict || isAnalyzingPulse ? (
+           <div className="animate-in slide-in-from-bottom-10 duration-1000 max-w-5xl mx-auto space-y-12 mb-20">
+              <div className="p-12 md:p-20 bg-black/90 rounded-[80px] border-2 border-amber-500/20 shadow-3xl border-l-[24px] border-l-amber-600 relative overflow-hidden group/pulse">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/pulse:scale-110 transition-transform duration-[15s]"><Sparkles size={800} className="text-amber-500" /></div>
+                 <div className="flex justify-between items-center mb-16 relative z-10 border-b border-white/5 pb-10">
+                    <div className="flex items-center gap-8">
+                       <div className="w-20 h-20 rounded-[32px] bg-amber-600 flex items-center justify-center text-white shadow-3xl animate-float">
+                          <Bot size={44} className="animate-pulse" />
+                       </div>
+                       <div>
+                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Network Pulse Analysis</h4>
+                          <p className="text-amber-400/60 text-[11px] font-black uppercase tracking-[0.5em] mt-3 italic">ORACLE_INTEGRITY_SHARD</p>
+                       </div>
+                    </div>
+                    <button onClick={() => setPulseVerdict(null)} className="p-5 bg-white/5 border border-white/10 rounded-full text-slate-700 hover:text-white"><X size={28}/></button>
+                 </div>
+
+                 {isAnalyzingPulse ? (
+                    <div className="flex flex-col items-center justify-center space-y-12 py-32 text-center">
+                       <div className="relative">
+                          <Loader2 size={120} className="text-amber-500 animate-spin mx-auto" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                             <TrendingUp size={48} className="text-amber-400 animate-pulse" />
+                          </div>
+                       </div>
+                       <p className="text-amber-500 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic">CRAWLING_LEDGER_CONSTANTS...</p>
+                    </div>
+                 ) : (
+                    <div className="space-y-12 relative z-10">
+                       <div className="text-slate-300 text-3xl leading-relaxed italic whitespace-pre-line font-medium border-l-4 border-white/5 pl-10">
+                          {pulseVerdict?.text}
+                       </div>
+                       <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-10">
+                          <div className="flex items-center gap-6">
+                             <div className="p-4 bg-amber-500/10 rounded-2xl border border-amber-500/20 text-amber-500"><Stamp size={28} /></div>
+                             <div>
+                                <p className="text-lg font-black text-white uppercase italic">Impact Consensus</p>
+                                <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">SYMMETRIC_RESONANCE_STABLE</p>
+                             </div>
+                          </div>
+                          <button onClick={() => setPulseVerdict(null)} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5">Handshake Acknowledged</button>
+                       </div>
+                    </div>
+                 )}
+              </div>
+           </div>
+        ) : null}
         
         {/* --- VIEW: INSTITUTIONAL FINALITY (SETTLEMENT) --- */}
-        {activeTab === 'settlement' && (
+        {activeTab === 'settlement' && !pulseVerdict && (
           <div className="space-y-12 animate-in zoom-in duration-500">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="glass-card p-12 rounded-[80px] border-emerald-500/20 bg-emerald-950/5 flex flex-col items-center justify-center text-center space-y-10 shadow-3xl relative overflow-hidden group">
@@ -272,7 +340,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
           </div>
         )}
 
-        {activeTab === 'blocks' && (
+        {activeTab === 'blocks' && !pulseVerdict && (
            <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
               <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-8 px-4">
                  <div className="w-full">
@@ -295,7 +363,6 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                  {filteredBlocks.map((block, i) => (
                     <div 
                       key={block.hash} 
-                      onClick={() => setSelectedBlock(block)}
                       className="glass-card p-10 rounded-[56px] border-2 border-white/5 hover:border-emerald-500/30 transition-all group cursor-pointer relative overflow-hidden bg-black/40 shadow-3xl active:scale-[0.99] duration-300 animate-in slide-in-from-top-4"
                       style={{ animationDelay: `${i * 100}ms` }}
                     >
@@ -347,7 +414,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
         )}
 
         {/* TAB: TRANSACTION LEDGER maintained... */}
-        {activeTab === 'ledger' && (
+        {activeTab === 'ledger' && !pulseVerdict && (
            <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
                  <div>
@@ -399,7 +466,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
         )}
 
         {/* TAB: VALIDATOR QUORUM maintained... */}
-        {activeTab === 'consensus' && (
+        {activeTab === 'consensus' && !pulseVerdict && (
             <div className="space-y-12 animate-in zoom-in duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="glass-card p-12 rounded-[80px] border-indigo-500/20 bg-indigo-950/5 flex flex-col items-center justify-center text-center space-y-12 shadow-3xl relative overflow-hidden group">

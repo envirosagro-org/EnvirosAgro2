@@ -7,6 +7,7 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isOwner(stewardId) { return request.auth.uid == stewardId; }
     function isAuditor() { return exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)); }
+    function isImmutable() { return request.resource.data == resource.data; }
 
     // --- COLLECTION RULES ---
 
@@ -15,72 +16,38 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isOwner(stewardId);
     }
-    
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId);
-    }
 
     // Signals (Notifications)
     match /signals/{signalId} {
-      allow read: if isSignedIn() && (resource == null || isOwner(resource.data.stewardId));
+      allow read: if isSignedIn() && isOwner(resource.data.stewardId);
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && isOwner(resource.data.stewardId);
+      allow update, delete: if false; // Immutable audit trail
     }
 
     // Industrial Assets & Registry
     match /products/{productId} {
-      allow read: if true; 
+      allow read: if true; // Public marketplace visibility
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner(resource.data.supplierEsin) || isAuditor());
       allow delete: if false; 
-    }
-
-    // Industrial Units
-    match /industrial_units/{unitId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
-    }
-
-    // Live Products / Processes
-    match /live_products/{productId} {
-      allow read: if true;
-      allow write: if isSignedIn();
-    }
-
-    // Tasks
-    match /tasks/{taskId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
     }
 
     // Carbon Ingest & Telemetry
     match /telemetry/{esin} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow write: if isAuditor() || isOwner(esin);
     }
 
-    // Institutional Missions & Projects
+    // Institutional Missions
     match /contracts/{contractId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-    }
-    
-    match /projects/{projectId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner(resource.data.investorEsin) || isAuditor());
     }
 
-    // Orders
-    match /orders/{orderId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
-    }
-
-    // Financial Ledger
+    // Financial Ledger (Strict Immutability)
     match /transactions/{txId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (isOwner(resource.data.stewardId) || isAuditor());
       allow create: if isSignedIn();
       allow update, delete: if false; 
     }
@@ -88,12 +55,7 @@ service cloud.firestore {
     // Internal Auditor Registry
     match /auditors/{email} {
       allow read: if isSignedIn();
-      allow write: if false; 
-    }
-
-    // Recovery Shards
-    match /recovery_shards/{email} {
-      allow read, write: if true; // Public access for recovery process, managed by TTL
+      allow write: if false; // Managed via Admin SDK only
     }
   }
 }
