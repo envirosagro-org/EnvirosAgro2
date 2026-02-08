@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Sprout, 
@@ -526,7 +525,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, setProducts, 
                          onClick={() => setShowLinkModal('node')}
                          className="px-10 py-5 bg-blue-600/10 border border-blue-500/30 rounded-3xl text-[11px] font-black text-blue-400 uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center gap-4 shadow-xl active:scale-95"
                        >
-                          <SmartphoneNfc className="w-5 h-5" /> Link Ingest Node
+                          <SmartphoneNfc size={500} className="w-5 h-5" /> Link Ingest Node
                        </button>
                     </div>
                  )}

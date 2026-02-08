@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   History, 
@@ -28,7 +27,6 @@ import {
   CheckCircle2,
   FileCheck,
   Binoculars,
-  History as TimeIcon,
   Info,
   ShieldAlert,
   Coins,
@@ -323,14 +321,14 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                     <input 
                       type="text" value={queryId} onChange={e => setQueryId(e.target.value)}
                       placeholder="Enter Shard Identifier..." 
-                      className="w-full bg-black/60 border border-white/10 rounded-[40px] py-10 text-center text-3xl font-mono text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-stone-900 shadow-inner" 
+                      className="w-full bg-black/60 border border-white/10 rounded-[40px] py-10 text-center text-3xl font-mono text-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-stone-900 shadow-inner tracking-widest" 
                     />
                     <button 
                       onClick={handleRetrievePast}
                       disabled={isRetrieving || !queryId}
                       className="w-full py-10 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30"
                     >
-                       {isRetrieving ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <TimeIcon className="w-8 h-8" />}
+                       {isRetrieving ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <History className="w-8 h-8" />}
                        {isRetrieving ? 'QUERYING LEDGER...' : 'INITIALIZE RETRIEVAL'}
                     </button>
                  </div>
@@ -345,7 +343,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                     <div className="w-32 h-32 bg-indigo-600 rounded-[48px] flex items-center justify-center shadow-3xl border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
                        <Bot size={64} className="text-white animate-pulse" />
                     </div>
-                    <h3 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Regency <span className="text-indigo-400">Oracle</span></h3>
+                    <h3 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Regency <span className="text-indigo-400">Oracle</span></h3>
                  </div>
                  <button 
                   onClick={handleOracleCalc}

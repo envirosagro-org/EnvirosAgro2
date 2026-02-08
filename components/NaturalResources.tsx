@@ -485,7 +485,7 @@ const NaturalResources: React.FC<NaturalResourcesProps> = ({ user, type, onEarnE
                     />
                     <button 
                       onClick={handleOracleAudit}
-                      disabled={isAuditing || !oracleQuery.trim()}
+                      disabled={isAuditing}
                       className="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl active:scale-95 transition-all disabled:opacity-30 border-2 border-white/10 flex items-center justify-center gap-4"
                     >
                        {isAuditing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles size={24} />}
@@ -518,8 +518,7 @@ const NaturalResources: React.FC<NaturalResourcesProps> = ({ user, type, onEarnE
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
-        .animate-spin-slow { animation: spin 10s linear infinite; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>

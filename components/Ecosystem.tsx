@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Flower2, Music, Heart, Bot, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, Sparkles, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCw, Handshake,
   Stethoscope as DoctorIcon,
@@ -48,7 +48,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { User, ViewState } from '../types';
-import { runSpecialistDiagnostic, analyzeInstitutionalRisk, calibrateSonicResonance, AIResponse } from '../services/geminiService';
+import { runSpecialistDiagnostic, AIResponse } from '../services/geminiService';
 
 interface EcosystemProps {
   user: User;
@@ -93,6 +93,13 @@ const BRANDS: Brand[] = [
   { id: 'juizzycookiez', name: 'Juiezy Cookiez', icon: Cookie, color: 'text-orange-900', accent: 'text-orange-700', bg: 'bg-orange-900/10', desc: 'Artis artisanal Traceability. Solar-dried baked nodes from audited regenerative cycles.', action: 'Recipe Audit', thrust: 'industry', volume: '840K EAC', isLight: true },
 ];
 
+const PORTAL_TABS = [
+  { id: 'home', label: 'OPERATIONAL HUB', icon: LayoutGrid },
+  { id: 'telemetry', label: 'INFLOW STREAM', icon: Activity },
+  { id: 'audit', label: 'ORACLE AUDIT', icon: Bot },
+  { id: 'shards', label: 'REGISTRY ASSETS', icon: Database },
+];
+
 const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, onNavigate }) => {
   const [activeBrand, setActiveBrand] = useState<Brand | null>(null);
   const [filter, setFilter] = useState<'all' | ThrustType>('all');
@@ -102,6 +109,8 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<AIResponse | null>(null);
   const [telemetryStream, setTelemetryStream] = useState<any[]>([]);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const filteredBrands = filter === 'all' ? BRANDS : BRANDS.filter(b => b.thrust === filter);
 
@@ -127,6 +136,26 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
     }, 1000);
   };
 
+  const scrollToSection = (tabId: string) => {
+    if (!scrollContainerRef.current) return;
+    const index = PORTAL_TABS.findIndex(t => t.id === tabId);
+    const container = scrollContainerRef.current;
+    container.scrollTo({
+      left: container.clientWidth * index,
+      behavior: 'smooth'
+    });
+    setPortalTab(tabId);
+  };
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const { scrollLeft, clientWidth } = scrollContainerRef.current;
+    const index = Math.round(scrollLeft / clientWidth);
+    if (PORTAL_TABS[index] && portalTab !== PORTAL_TABS[index].id) {
+      setPortalTab(PORTAL_TABS[index].id);
+    }
+  };
+
   const handleRunAudit = async (category: string, desc: string) => {
     setIsAuditing(true);
     setAuditResult(null);
@@ -143,52 +172,57 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
   const renderBrandPortal = () => {
     if (!activeBrand) return null;
     const accentColor = activeBrand.color.replace('text-', '');
+    const activeIndex = PORTAL_TABS.findIndex(t => t.id === portalTab);
 
     return (
       <div className="fixed inset-0 z-[500] bg-black/98 backdrop-blur-3xl animate-in zoom-in duration-300 flex flex-col overflow-hidden">
-        {/* Portal Header HUD - Tightened */}
+        {/* Portal Header HUD */}
         <div className={`p-4 md:p-6 border-b border-${accentColor}-500/20 bg-black/60 flex items-center justify-between shrink-0 relative overflow-hidden`}>
            <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
               <div className={`w-full h-[1px] bg-${accentColor}-500 absolute top-0 animate-scan`}></div>
            </div>
+           
+           {/* Section Progress Rail */}
+           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/5 overflow-hidden">
+              <div 
+                className={`h-full bg-${accentColor}-500 transition-all duration-700 ease-out shadow-[0_0_10px_currentColor]`} 
+                style={{ width: `${((activeIndex + 1) / PORTAL_TABS.length) * 100}%` }}
+              ></div>
+           </div>
+
            <div className="flex items-center gap-6 relative z-10">
-              <div className={`w-14 h-14 rounded-2xl bg-${accentColor}-600 flex items-center justify-center text-white shadow-2xl border-2 border-white/10`}>
+              <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-${accentColor}-600 flex items-center justify-center text-white shadow-2xl border-2 border-white/10`}>
                  <activeBrand.icon size={28} />
               </div>
               <div>
                  <div className="flex items-center gap-3">
-                    <h2 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0">{activeBrand.name}</h2>
+                    <h2 className="text-xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{activeBrand.name}</h2>
                     <span className={`px-3 py-0.5 rounded-full text-[8px] font-black uppercase border border-${accentColor}-500/30 bg-${accentColor}-500/10 ${activeBrand.color} tracking-widest`}>
-                       THRUST: {activeBrand.thrust}
+                       {activeBrand.thrust}
                     </span>
                  </div>
-                 <p className="text-slate-600 font-mono text-[8px] uppercase tracking-[0.4em] mt-1">REGISTRY_PORTAL // NODE_{user.esin}</p>
+                 <p className="text-slate-600 font-mono text-[8px] uppercase tracking-[0.4em] mt-1">NODE_{user.esin} // SHARD_{portalTab.toUpperCase()}</p>
               </div>
            </div>
            <button 
              onClick={() => setActiveBrand(null)}
-             className={`p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all active:scale-90 shadow-2xl`}
+             className={`p-3 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all active:scale-90 shadow-2xl`}
            >
-              <X size={24} />
+              <X size={20} />
            </button>
         </div>
 
-        {/* Portal Body - Condensed layout */}
+        {/* Portal Body - Horizontal Slide Layout */}
         <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
            
-           {/* Navigation Sidebar - Narrower */}
-           <div className={`w-full md:w-64 border-r border-${accentColor}-500/10 bg-black/40 p-6 space-y-8 shrink-0`}>
-              <div className="space-y-3">
+           {/* Navigation Sidebar */}
+           <div className={`w-full md:w-60 border-r border-${accentColor}-500/10 bg-black/40 p-4 md:p-6 space-y-6 shrink-0`}>
+              <div className="space-y-2">
                  <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest px-4">Portal Ingests</p>
-                 {[
-                    { id: 'home', label: 'OPERATIONAL HUB', icon: LayoutGrid },
-                    { id: 'telemetry', label: 'INFLOW STREAM', icon: Activity },
-                    { id: 'audit', label: 'ORACLE AUDIT', icon: Bot },
-                    { id: 'shards', label: 'REGISTRY ASSETS', icon: Database },
-                 ].map(tab => (
+                 {PORTAL_TABS.map(tab => (
                     <button 
                       key={tab.id}
-                      onClick={() => { setPortalTab(tab.id); setAuditResult(null); }}
+                      onClick={() => scrollToSection(tab.id)}
                       className={`w-full flex items-center gap-3 px-5 py-4 rounded-xl transition-all ${portalTab === tab.id ? `bg-${accentColor}-600 text-white shadow-xl` : 'text-slate-600 hover:text-white hover:bg-white/5'}`}
                     >
                        <tab.icon size={16} />
@@ -197,7 +231,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                  ))}
               </div>
 
-              <div className={`p-6 rounded-[32px] border border-${accentColor}-500/20 bg-${accentColor}-500/5 space-y-4 shadow-xl`}>
+              <div className={`p-5 rounded-[28px] border border-${accentColor}-500/20 bg-${accentColor}-500/5 space-y-4 shadow-xl hidden md:block`}>
                  <div className="flex items-center gap-3">
                     <Activity size={14} className={activeBrand.color} />
                     <h4 className="text-[9px] font-black text-white uppercase tracking-widest">Shard Status</h4>
@@ -214,12 +248,16 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
               </div>
            </div>
 
-           {/* Content Area - Optimized spacing */}
-           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 bg-black/20">
+           {/* Content Area - Horizontal Flex Scroll */}
+           <div 
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-x-auto flex snap-x snap-mandatory scrollbar-hide bg-black/20"
+           >
               
               {/* HUB VIEW */}
-              {portalTab === 'home' && (
-                <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+              <section id="portal-home" className="min-w-full h-full snap-start overflow-y-auto custom-scrollbar p-6 md:p-12">
+                <div className="space-y-10 animate-in fade-in duration-500">
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       <div className={`glass-card p-8 rounded-[48px] border border-white/5 bg-white/[0.01] space-y-8 shadow-2xl relative overflow-hidden group`}>
                          <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><Sparkles size={200} /></div>
@@ -255,27 +293,27 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
 
                    <div className={`p-10 rounded-[56px] border border-${accentColor}-500/20 bg-${accentColor}-500/[0.03] flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl group/action`}>
                       <div className="flex items-center gap-8 text-center md:text-left flex-col md:flex-row">
-                         <div className={`w-20 h-20 rounded-3xl bg-${accentColor}-600 flex items-center justify-center shadow-xl animate-pulse ring-8 ring-white/5`}>
-                            <Zap size={32} className="text-white fill-current" />
+                         <div className={`w-16 h-16 rounded-3xl bg-${accentColor}-600 flex items-center justify-center shadow-xl animate-pulse ring-8 ring-white/5`}>
+                            <Zap size={28} className="text-white fill-current" />
                          </div>
                          <div className="space-y-1">
-                            <h4 className="text-2xl md:text-3xl font-black text-white uppercase italic m-0">Initialize <span className={activeBrand.color}>{activeBrand.action}</span></h4>
-                            <p className="text-slate-500 text-base font-medium italic">Commence industrial synchronization for this pillar.</p>
+                            <h4 className="text-xl md:text-2xl font-black text-white uppercase italic m-0">Initialize <span className={activeBrand.color}>{activeBrand.action}</span></h4>
+                            <p className="text-slate-500 text-sm font-medium italic">Commence industrial synchronization for this pillar.</p>
                          </div>
                       </div>
                       <button 
-                        onClick={() => setPortalTab('audit')}
+                        onClick={() => scrollToSection('audit')}
                         className={`px-12 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.3em] shadow-xl hover:scale-105 active:scale-95 transition-all border-2 border-white/10 ring-8 ring-${accentColor}-500/10`}
                       >
                          EXECUTE MISSION
                       </button>
                    </div>
                 </div>
-              )}
+              </section>
 
-              {/* TELEMETRY VIEW - More compact grid */}
-              {portalTab === 'telemetry' && (
-                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+              {/* TELEMETRY VIEW */}
+              <section id="portal-telemetry" className="min-w-full h-full snap-start overflow-y-auto custom-scrollbar p-6 md:p-12">
+                <div className="space-y-8 animate-in fade-in duration-500">
                    <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
                       <div className="space-y-2">
                          <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">TELEMETRY <span className={activeBrand.color}>INFLOW</span></h3>
@@ -315,18 +353,18 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                       </div>
                    </div>
                 </div>
-              )}
+              </section>
 
-              {/* ORACLE AUDIT VIEW - Compacted text */}
-              {portalTab === 'audit' && (
-                <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in duration-300 text-center">
+              {/* ORACLE AUDIT VIEW */}
+              <section id="portal-audit" className="min-w-full h-full snap-start overflow-y-auto custom-scrollbar p-6 md:p-12">
+                <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 text-center">
                    <div className={`p-10 md:p-16 glass-card rounded-[64px] border border-${accentColor}-500/20 bg-${accentColor}-950/[0.03] relative overflow-hidden flex flex-col items-center gap-10 shadow-3xl group`}>
                       <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
                          <Bot size={500} />
                       </div>
                       
                       <div className="relative z-10 space-y-8 w-full">
-                         <div className={`w-24 h-24 rounded-[32px] bg-${accentColor}-600 flex items-center justify-center shadow-2xl mx-auto border-2 border-white/10 group-hover:rotate-12 transition-transform duration-700 animate-float`}>
+                         <div className={`w-20 h-20 rounded-[32px] bg-${accentColor}-600 flex items-center justify-center shadow-2xl mx-auto border-2 border-white/10 group-hover:rotate-12 transition-transform duration-700 animate-float`}>
                             <Bot size={40} className="text-white animate-pulse" />
                          </div>
                          <div className="space-y-2">
@@ -365,7 +403,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                                </div>
                                <div className="flex justify-center gap-6">
                                   <button onClick={() => setAuditResult(null)} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all shadow-xl">Discard Shard</button>
-                                  <button className={`px-16 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-${accentColor}-500/5`}>
+                                  <button className={`px-16 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-${accentColor}-500/5`}>
                                      <Stamp size={20} /> ANCHOR TO LEDGER
                                   </button>
                                </div>
@@ -374,11 +412,11 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                       </div>
                    </div>
                 </div>
-              )}
+              </section>
 
-              {/* ASSET SHARDS VIEW - Dense grid */}
-              {portalTab === 'shards' && (
-                <div className="space-y-8 animate-in slide-in-from-left-4 duration-500">
+              {/* ASSET SHARDS VIEW */}
+              <section id="portal-shards" className="min-w-full h-full snap-start overflow-y-auto custom-scrollbar p-6 md:p-12">
+                <div className="space-y-8 animate-in fade-in duration-500">
                    <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
                       <div className="space-y-2">
                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">REGISTRY <span className={activeBrand.color}>ASSETS</span></h3>
@@ -414,7 +452,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                       ))}
                    </div>
                 </div>
-              )}
+              </section>
 
            </div>
         </div>
@@ -429,7 +467,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
          <div className="w-full h-[1px] bg-emerald-500/10 absolute top-0 animate-scan"></div>
       </div>
 
-      {/* Multiverse Header HUD - Tightened text */}
+      {/* Multiverse Header HUD */}
       <div className="px-4">
         <div className="glass-card p-8 md:p-12 rounded-[56px] border-emerald-500/20 bg-emerald-500/[0.02] relative overflow-hidden flex flex-col md:flex-row items-center gap-10 group shadow-3xl z-10 backdrop-blur-3xl">
            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[15s] pointer-events-none">
@@ -459,7 +497,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
         </div>
       </div>
 
-      {/* Multiverse Navigation Filter - More compact */}
+      {/* Multiverse Navigation Filter */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 px-4 relative z-20">
          <div className="flex flex-nowrap gap-3 p-1 glass-card rounded-[32px] border border-white/5 bg-black/40 shadow-2xl overflow-x-auto scrollbar-hide snap-x w-full md:w-auto px-6">
            <button 
@@ -480,7 +518,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
          </div>
       </div>
 
-      {/* Grid of Brand Nodes - Tighter and smaller text */}
+      {/* Grid of Brand Nodes */}
       <div className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-8 px-4 overflow-x-auto md:overflow-visible scrollbar-hide snap-x scroll-across pb-16 relative z-10">
         {filteredBrands.map((brand) => (
           <div 
