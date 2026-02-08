@@ -1,3 +1,4 @@
+
 export interface LinkedProvider {
   id: string;
   type: 'Mobile' | 'Bank' | 'Web3' | 'Card' | 'PayPal' | 'Visa' | 'Mastercard';
@@ -25,6 +26,21 @@ export interface AgroResource {
   status: 'PROVISIONAL' | 'VERIFIED' | 'REVOKED';
   capabilities: string[]; // e.g., ['Sound_Dashboard', 'Robot_Control', 'Carbon_Minting']
   verificationMeta: VerificationMeta;
+}
+
+export interface UserSettings {
+  notificationsEnabled: boolean;
+  privacyMode: 'Public' | 'Private' | 'Consensus_Only';
+  autoSync: boolean;
+  biometricLogin: boolean;
+  theme: 'Dark' | 'High_Resonance';
+}
+
+export interface SocialLinks {
+  twitter?: string;
+  threads?: string;
+  linkedin?: string;
+  website?: string;
 }
 
 export interface User {
@@ -56,6 +72,8 @@ export interface User {
   };
   resources?: AgroResource[];
   mutualStewards?: number;
+  settings?: UserSettings;
+  socialLinks?: SocialLinks;
 }
 
 export interface EACWallet {
@@ -337,7 +355,9 @@ export type ViewState =
   | 'network_signals'
   | 'media_ledger'
   | 'agrolang'
-  | 'network';
+  | 'network'
+  | 'sitemap'
+  | 'auth'; // Added auth state for login/register/recovery
 
 /**
  * Global notification and status types used across the EOS

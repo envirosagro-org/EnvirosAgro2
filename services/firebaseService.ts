@@ -54,9 +54,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Use initializeFirestore with experimentalForceLongPolling to fix "Could not reach Cloud Firestore backend"
+/** 
+ * Refined Firestore Initialization:
+ * Using experimentalForceLongPolling and disabling fetch streams to resolve 
+ * connectivity errors in restricted or high-latency network environments.
+ */
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
+  useFetchStreams: false
 });
 
 export const rtdb = getDatabase(app);

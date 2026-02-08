@@ -1,32 +1,32 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { 
-  User as UserIcon, MapPin, ShieldCheck, Key, Award, Mail, Calendar, Edit3, 
-  CheckCircle2, Lock, Activity, Fingerprint, Save, RefreshCcw, BadgeCheck, 
-  TrendingUp, Briefcase, X, Loader2, Scan, ShieldAlert, Cpu, Wifi, Send, 
-  LogOut, Trash2, AlertTriangle, Phone, Globe, Radio, Sparkles, Smartphone, 
-  Zap, Bell, MessageSquare, ChevronRight, MoreVertical, Check, UserPlus, 
-  Handshake, FileCode, FileSignature, Stamp, BookOpenCheck, Coins, Flower2, 
-  Download, Gift, Share2, Twitter, Linkedin, Youtube, AtSign, Facebook, Star, 
-  History, Terminal, Unlock, KeyRound, Eye, Settings, Database, 
-  HeartPulse, Info, Palette, Cloud, Wind, Music, Copy, ExternalLink,
-  Target, BarChart3, Binary, Layout, SmartphoneNfc, TreePine, Trophy, Clock, ShieldPlus,
-  Camera, Landmark, Pickaxe, Compass, Droplets, Gem, Boxes, Sprout, Crown, Wallet, ArrowRight,
-  ShieldX, MessageSquareCode, Printer, FileDown
+  User as UserIcon, MapPin, ShieldCheck, Edit3, 
+  BadgeCheck, Loader2, Star, Flower2, Stamp, Wallet, 
+  ChevronRight, Radio, ShieldPlus, Fingerprint, Plus,
+  Activity, Zap, ShieldAlert, Binary, Database,
+  TrendingUp, Dna, Microscope, Target, Waves,
+  Shield as ShieldIcon, Globe, Lock, Info, Download,
+  FileCode, History, Camera, UserPlus, HeartPulse,
+  Coins, ShieldX, Settings, Share2, Bell, LogOut,
+  Mail, Phone, ExternalLink, Globe2, Trash2, Save,
+  X, CheckCircle2, CreditCard, Key, AlertCircle,
+  Pencil, MessageSquare, Twitter, Linkedin, Facebook,
+  // Add missing icons
+  ArrowUpRight, Copy, SmartphoneNfc
 } from 'lucide-react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
-  ResponsiveContainer, Tooltip as RechartsTooltip,
-  Radar as RechartsRadar
+  ResponsiveContainer, Radar as RechartsRadar, Tooltip 
 } from 'recharts';
 import { User, ViewState, SignalShard } from '../types';
-import { auth, resendVerificationEmail, setupRecaptcha, requestPhoneCode } from '../services/firebaseService';
 import IdentityCard from './IdentityCard';
 
 interface UserProfileProps {
   user: User;
   isGuest: boolean;
   onUpdate: (user: User) => void;
-  onLogin: (user: User) => void;
+  onLogin: () => void;
   onNavigate: (view: ViewState) => void;
   onLogout?: () => void;
   onDeleteAccount?: () => void;
@@ -35,871 +35,526 @@ interface UserProfileProps {
   notify: any;
 }
 
-const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string; desc: string; zodiac: string; trait: string }> = {
-  'January': { flower: 'Carnation', trait: 'Devotion', zodiac: 'Capricorn/Aquarius', color: 'text-pink-400', hex: '#f472b6', desc: 'Symbol of fascination and divine love.' },
-  'February': { flower: 'Violet', trait: 'Loyalty', zodiac: 'Aquarius/Pisces', color: 'text-purple-400', hex: '#c084fc', desc: 'Symbol of loyalty, wisdom, and hope.' },
-  'March': { flower: 'Daffodil', trait: 'New Beginnings', zodiac: 'Pisces/Aries', color: 'text-yellow-400', hex: '#facc15', desc: 'Symbol of rebirth and new beginnings.' },
-  'April': { flower: 'Daisy', trait: 'Innocence', zodiac: 'Aries/Taurus', color: 'text-stone-200', hex: '#e7e5e4', desc: 'Symbol of purity, innocence, and true love.' },
-  'May': { flower: 'Lily Valley', trait: 'Happiness', zodiac: 'Taurus/Gemini', color: 'text-emerald-100', hex: '#ecfdf5', desc: 'Symbol of sweetness and return of happiness.' },
-  'June': { flower: 'Rose', trait: 'Passion', zodiac: 'Gemini/Cancer', color: 'text-rose-500', hex: '#f43f5e', desc: 'Symbol of passion, beauty, and friendship.' },
-  'July': { flower: 'Larkspur', trait: 'Positivity', zodiac: 'Cancer/Leo', color: 'text-blue-400', hex: '#60a5fa', desc: 'Symbol of positivity, dignity, and open heart.' },
-  'August': { flower: 'Gladiolus', trait: 'Strength', zodiac: 'Leo/Virgo', color: 'text-orange-500', hex: '#f97316', desc: 'Symbol of strength and moral integrity.' },
-  'September': { flower: 'Aster', trait: 'Wisdom', zodiac: 'Virgo/Libra', color: 'text-indigo-400', hex: '#818cf8', desc: 'Symbol of love, wisdom, and faith.' },
-  'October': { flower: 'Marigold', trait: 'Optimism', zodiac: 'Libra/Scorpio', color: 'text-amber-500', hex: '#f59e0b', desc: 'Symbol of optimism and prosperity.' },
-  'November': { flower: 'Chrysanthemum', trait: 'Abundance', zodiac: 'Scorpio/Sagittarius', color: 'text-red-500', hex: '#ef4444', desc: 'Symbol of joy and abundance.' },
-  'December': { flower: 'Narcissus', trait: 'Respect', zodiac: 'Sagittarius/Capricorn', color: 'text-blue-100', hex: '#f0f9ff', desc: 'Symbol of respect and faithfulness.' },
+const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string; trait: string; resonance: string }> = {
+  'JAN': { flower: 'Carnation', trait: 'Devotion', color: 'text-pink-400', hex: '#f472b6', resonance: '432Hz' },
+  'FEB': { flower: 'Violet', trait: 'Loyalty', color: 'text-purple-400', hex: '#c084fc', resonance: '528Hz' },
+  'MAR': { flower: 'Daffodil', trait: 'New Beginnings', color: 'text-fuchsia-400', hex: '#e879f9', resonance: '396Hz' },
+  'APR': { flower: 'Daisy', trait: 'Innocence', color: 'text-stone-200', hex: '#e7e5e4', resonance: '417Hz' },
+  'MAY': { flower: 'Lily Valley', trait: 'Happiness', color: 'text-emerald-100', hex: '#ecfdf5', resonance: '639Hz' },
+  'JUN': { flower: 'Rose', trait: 'Passion', color: 'text-rose-500', hex: '#f43f5e', resonance: '741Hz' },
+  'JUL': { flower: 'Larkspur', trait: 'Positivity', color: 'text-blue-400', hex: '#60a5fa', resonance: '852Hz' },
+  'AUG': { flower: 'Gladiolus', trait: 'Strength', color: 'text-orange-500', hex: '#f97316', resonance: '963Hz' },
+  'SEP': { flower: 'Aster', trait: 'Wisdom', color: 'text-indigo-400', hex: '#818cf8', resonance: '174Hz' },
+  'OCT': { flower: 'Marigold', trait: 'Optimism', color: 'text-amber-500', hex: '#f59e0b', resonance: '285Hz' },
+  'NOV': { flower: 'Chrysanthemum', trait: 'Abundance', color: 'text-red-500', hex: '#ef4444', resonance: '432Hz' },
+  'DEC': { flower: 'Narcissus', trait: 'Respect', color: 'text-blue-100', hex: '#f0f9ff', resonance: '528Hz' },
 };
 
-const PROGRESSION_TIERS = [
-  { level: 1, title: 'Seeder', icon: Sprout, col: 'text-emerald-400' },
-  { level: 2, title: 'Cultivator', icon: MapPin, col: 'text-emerald-500' },
-  { level: 3, title: 'Miner', icon: Pickaxe, col: 'text-amber-500' },
-  { level: 4, title: 'Steward', icon: ShieldCheck, col: 'text-blue-400' },
-  { level: 5, title: 'Super-Agro', icon: Crown, col: 'text-indigo-400' },
-];
-
-const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onNavigate, signals, setSignals, notify }) => {
-  const [activeTab, setActiveTab] = useState<'hub' | 'signals' | 'dossier' | 'security' | 'sharing'>('hub');
-  const [isEditing, setIsEditing] = useState(false);
+const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onNavigate, onLogout, notify, signals }) => {
+  const [activeTab, setActiveTab] = useState<'dossier' | 'card' | 'celestial' | 'edit' | 'settings' | 'sharing' | 'signals'>('dossier');
   const [isMintingCert, setIsMintingCert] = useState(false);
-  const [certMinted, setCertMinted] = useState(!!user.zodiacFlower?.certId);
-  const [editedUser, setEditedUser] = useState<User>({ ...user });
-  const avatarInputRef = useRef<HTMLInputElement>(null);
+  
+  // Defensive initialization of selectedMonth to ensure it maps to a key in MONTH_FLOWERS
+  const initialMonth = (user.zodiacFlower?.month?.substring(0, 3).toUpperCase()) || 'MAR';
+  const [selectedMonth, setSelectedMonth] = useState(MONTH_FLOWERS[initialMonth] ? initialMonth : 'MAR');
 
-  // Verification States
-  const [phoneInput, setPhoneInput] = useState(user.lineNumber || '');
-  const [otpStep, setOtpStep] = useState(false);
-  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
+  // Form states for "Edit"
+  const [editName, setEditName] = useState(user.name);
+  const [editRole, setEditRole] = useState(user.role);
+  const [editBio, setEditBio] = useState(user.bio || '');
+  const [editLocation, setEditLocation] = useState(user.location);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const isEmailVerified = (auth.currentUser as any)?.emailVerified;
-  const unreadCount = signals.filter(n => !n.read).length;
-
-  const currentTier = useMemo(() => {
-    const score = user.metrics.sustainabilityScore;
-    const hasLand = (user.resources || []).some(r => r.category === 'LAND');
-    if (score > 90 && hasLand) return PROGRESSION_TIERS[4];
-    if (score > 75 && hasLand) return PROGRESSION_TIERS[3];
-    if (hasLand && user.wallet.eatBalance > 5) return PROGRESSION_TIERS[2];
-    if (hasLand) return PROGRESSION_TIERS[1];
-    return PROGRESSION_TIERS[0];
-  }, [user.metrics.sustainabilityScore, user.resources, user.wallet.eatBalance]);
-
-  useEffect(() => {
-    if (activeTab === 'signals' && unreadCount > 0) {
-      setSignals(prev => prev.map(s => ({ ...s, read: true })));
-    }
-  }, [activeTab, unreadCount, setSignals]);
-
-  const skillData = useMemo(() => {
-    const base = [
-      { subject: 'Agronomy', A: 40 },
-      { subject: 'Robotics', A: 20 },
-      { subject: 'Commerce', A: 35 },
-      { subject: 'Ecology', A: 50 },
-      { subject: 'Ledger', A: 30 },
-    ];
-    return base.map(b => ({ ...b, A: user.skills?.[b.subject] || b.A }));
-  }, [user.skills]);
+  const skillsData = useMemo(() => [
+    { subject: 'Soil Science', A: (user.metrics.sustainabilityScore || 0) + 10 },
+    { subject: 'Hydraulics', A: 75 },
+    { subject: 'Botany', A: 88 },
+    { subject: 'Industrial OS', A: 92 },
+    { subject: 'Social Immunity', A: user.metrics.socialImmunity || 0 },
+  ], [user.metrics]);
 
   const handleUpdateMonth = (month: string) => {
-    const flowerData = MONTH_FLOWERS[month];
+    const normalizedMonth = month.substring(0, 3).toUpperCase();
+    const flowerData = MONTH_FLOWERS[normalizedMonth];
     if (!flowerData) return;
+    
+    setSelectedMonth(normalizedMonth);
     onUpdate({
       ...user,
       zodiacFlower: {
-        month,
+        month: normalizedMonth,
         flower: flowerData.flower,
         color: flowerData.color,
         hex: flowerData.hex,
         pointsAdded: true
       }
     });
-    setCertMinted(false);
-  };
-
-  const handleSaveProfile = () => {
-    onUpdate(editedUser);
-    setIsEditing(false);
-    alert("REGISTRY_UPDATE: Steward identity anchored successfully to local ledger.");
   };
 
   const handleMintCertificate = () => {
-    if (isGuest) {
-      alert("UPGRADE_REQUIRED: Minting certificates requires an anchored registry node.");
-      return;
-    }
     setIsMintingCert(true);
     setTimeout(() => {
       setIsMintingCert(false);
-      const certId = `CERT-ZOD-${Math.random().toString(36).substring(7).toUpperCase()}`;
-      setCertMinted(true);
-      onUpdate({
-        ...user,
-        zodiacFlower: {
-          ...user.zodiacFlower!,
-          certId: certId,
-          mintedAt: new Date().toISOString()
-        }
-      });
+      notify('success', 'CELESTIAL_ANCHOR', 'Birth cycle resonance sharded to registry.');
     }, 3500);
   };
 
-  const downloadProfessionalShard = () => {
-    // Generate a standalone HTML shard that looks like a professional card
-    const qrData = JSON.stringify({
-      esin: user.esin,
-      name: user.name,
-      role: user.role,
-      loc: user.location,
-      ver: "EOS-6.5",
-      reg: user.regDate
-    });
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}&bgcolor=050706&color=10b981`;
+  const handleSaveProfile = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      onUpdate({
+        ...user,
+        name: editName,
+        role: editRole,
+        bio: editBio,
+        location: editLocation
+      });
+      setIsSaving(false);
+      notify('success', 'PROFILE_UPDATED', 'Steward dossier has been resynced with the network.');
+    }, 1500);
+  };
 
-    const htmlContent = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>EnvirosAgro ID Shard - ${user.esin}</title>
-      <script src="https://cdn.tailwindcss.com"></script>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-      <style>
-        body { font-family: 'Inter', sans-serif; background: #000; color: #fff; }
-        .card { width: 85.6mm; height: 53.98mm; background: #050706; border-radius: 12px; border: 1px solid rgba(16,185,129,0.3); position: relative; overflow: hidden; }
-        .agro-gradient { background: linear-gradient(135deg, #065f46 0%, #10b981 100%); }
-      </style>
-    </head>
-    <body class="flex items-center justify-center min-h-screen">
-      <div class="card p-4 flex flex-col justify-between shadow-2xl">
-        <div class="flex justify-between items-start">
-           <div className="flex items-center gap-2">
-             <div class="w-8 h-8 agro-gradient rounded-lg flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.47 10-10 10z"/><path d="M11 20v-5"/></svg>
-             </div>
-             <div>
-               <h3 class="text-[10px] font-black uppercase tracking-tighter italic leading-none">Enviros<span class="text-emerald-400">Agro™</span></h3>
-               <p class="text-[5px] text-slate-500 uppercase tracking-[0.2em] font-bold">Industrial Identity</p>
-             </div>
-           </div>
-           <div class="text-right">
-             <p class="text-[5px] text-emerald-500 font-black uppercase tracking-widest px-2 py-0.5 border border-emerald-500/30 rounded bg-emerald-500/5">Authenticated</p>
-           </div>
-        </div>
-        <div class="flex gap-4 items-center">
-           <div class="flex-1 space-y-2">
-             <div class="space-y-0.5">
-               <p class="text-[5px] text-slate-600 font-bold uppercase tracking-widest">Steward Designation</p>
-               <h4 class="text-sm font-black italic tracking-tighter truncate uppercase">${user.name}</h4>
-             </div>
-             <div class="grid grid-cols-2 gap-2">
-               <div>
-                 <p class="text-[5px] text-slate-700 font-bold uppercase tracking-widest">Pillar Role</p>
-                 <p class="text-[7px] font-bold uppercase truncate">${user.role}</p>
-               </div>
-               <div>
-                 <p class="text-[5px] text-slate-700 font-bold uppercase tracking-widest">Registry ID</p>
-                 <p class="text-[7px] font-mono font-bold">${user.esin}</p>
-               </div>
-             </div>
-           </div>
-           <div class="w-16 h-16 bg-black p-1 rounded-lg border border-white/10">
-              <img src="${qrUrl}" class="w-full h-full">
-           </div>
-        </div>
-        <div class="flex justify-between items-end border-t border-white/10 pt-2">
-           <p class="text-[5px] text-slate-700 font-mono">HASH: 0x${Math.random().toString(16).substring(2, 8).toUpperCase()}</p>
-           <p class="text-[5px] text-slate-700 font-mono">REG: ${user.regDate}</p>
+  const tabs = [
+    { id: 'dossier', label: 'Dossier', icon: UserIcon },
+    { id: 'card', label: 'Identity Card', icon: Fingerprint },
+    { id: 'celestial', label: 'Celestial Vault', icon: Flower2 },
+    { id: 'edit', label: 'Edit Node', icon: Pencil },
+    { id: 'signals', label: 'Network Signals', icon: Bell },
+    { id: 'sharing', label: 'External Shards', icon: Share2 },
+    { id: 'settings', label: 'System Settings', icon: Settings },
+  ];
+
+  // Safety selector for flower data
+  const activeFlower = MONTH_FLOWERS[selectedMonth] || MONTH_FLOWERS['MAR'];
+
+  if (isGuest) {
+    return (
+      <div className="max-w-xl mx-auto py-20 animate-in fade-in zoom-in duration-700">
+        <div className="glass-card p-12 rounded-[56px] border-emerald-500/20 bg-black/40 text-center space-y-8 shadow-3xl">
+          <div className="w-24 h-24 rounded-[32px] bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-2xl animate-float">
+            <Lock size={48} className="text-emerald-400" />
+          </div>
+          <div className="space-y-4">
+             <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Guest <span className="text-emerald-400">Observer</span></h2>
+             <p className="text-slate-400 text-lg leading-relaxed font-medium italic">
+                "Anonymous nodes are restricted to read-only views. Sync your steward identity to unlock sharding, minting, and industrial finality."
+             </p>
+          </div>
+          <button 
+            onClick={onLogin}
+            className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all ring-8 ring-emerald-500/5"
+          >
+             Initialize Shard Sync
+          </button>
         </div>
       </div>
-    </body>
-    </html>
-    `;
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `STEWARD_CARD_${user.esin}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-    notify('success', 'SHARD_DOWNLOADED', 'Professional Identity Shard (HTML) saved to local node.');
-  };
-
-  const downloadCertificate = () => {
-    if (!user.zodiacFlower?.certId) return;
-    const certHtml = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Celestial Certificate - ${user.zodiacFlower.certId}</title>
-      <script src="https://cdn.tailwindcss.com"></script>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-      <style>
-        body { font-family: 'Inter', sans-serif; background: #020403; color: #fff; padding: 40px; display: flex; items-center; justify-center; min-height: 100vh; }
-        .cert { max-width: 800px; width: 100%; border: 8px double rgba(16,185,129,0.3); padding: 60px; background: rgba(5,7,6,0.8); border-radius: 40px; position: relative; }
-        .agro-gradient { background: linear-gradient(135deg, #065f46 0%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-      </style>
-    </head>
-    <body>
-      <div class="cert text-center space-y-12">
-        <div class="space-y-4">
-           <h1 class="text-5xl font-black uppercase italic tracking-tighter agro-gradient">Certificate of Bio-Resonance</h1>
-           <p class="text-xs text-slate-500 font-bold uppercase tracking-[0.5em]">EnvirosAgro™ Celestial Vault</p>
-        </div>
-        <div class="space-y-2">
-           <p class="text-xs text-slate-600 font-black uppercase tracking-widest">Presented to Steward</p>
-           <h2 class="text-4xl font-black uppercase italic">${user.name}</h2>
-           <p class="text-sm font-mono text-emerald-400">${user.esin}</p>
-        </div>
-        <div class="grid grid-cols-2 gap-8 py-10 border-y border-white/5">
-           <div>
-              <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Celestial Cycle</p>
-              <p class="text-2xl font-bold uppercase">${user.zodiacFlower.month}</p>
-           </div>
-           <div>
-              <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Resonant Flower</p>
-              <p class="text-2xl font-bold uppercase">${user.zodiacFlower.flower}</p>
-           </div>
-        </div>
-        <div class="space-y-2 pt-8">
-           <p class="text-[10px] text-slate-700 font-mono">CERTIFICATE_ID: ${user.zodiacFlower.certId}</p>
-           <p class="text-[10px] text-slate-700 font-mono">MINT_TIMESTAMP: ${user.zodiacFlower.mintedAt}</p>
-           <p class="text-[10px] text-emerald-600 font-black uppercase tracking-[0.3em] mt-4">Registry Finality: ZK_PROVEN</p>
-        </div>
-      </div>
-    </body>
-    </html>
-    `;
-    const blob = new Blob([certHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `CELESTIAL_CERT_${user.zodiacFlower.certId}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-    notify('success', 'CERT_DOWNLOADED', 'Verifiable Celestial Shard (HTML) saved.');
-  };
-
-  const handlePrintId = () => {
-    window.print();
-  };
-
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setEditedUser(prev => ({ ...prev, avatar: base64 }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // --- Verification Logic ---
-  const handleEmailResend = async () => {
-    setIsVerifying(true);
-    try {
-      await resendVerificationEmail();
-      alert("SIGNAL_TRANSMITTED: Verification shard sent to Gmail. Check your inbox.");
-    } catch (e) {
-      alert("SYNC_ERROR: Failed to transmit verification shard.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handlePhoneVerifyStart = async () => {
-    if (!phoneInput) return;
-    setIsVerifying(true);
-    setVerificationError(null);
-    try {
-      const verifier = setupRecaptcha('recaptcha-container-profile');
-      const result = await requestPhoneCode(phoneInput, verifier);
-      setConfirmationResult(result);
-      setOtpStep(true);
-    } catch (err: any) {
-      setVerificationError(err.message);
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleOtpVerify = async () => {
-    const code = otpCode.join('');
-    if (code.length < 6) return;
-    setIsVerifying(true);
-    try {
-      await confirmationResult.confirm(code);
-      const updatedUser: User = { ...user, isPhoneVerified: true, lineNumber: phoneInput };
-      onUpdate(updatedUser);
-      setOtpStep(false);
-      alert("HANDSHAKE_VERIFIED: Phone node anchored to registry.");
-    } catch (err: any) {
-      setVerificationError("INVALID_OTP: Code mismatch.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleOtpChange = (val: string, index: number) => {
-    if (!/^\d*$/.test(val)) return;
-    const newCode = [...otpCode];
-    newCode[index] = val.slice(-1);
-    setOtpCode(newCode);
-    if (val && index < 5) {
-      document.getElementById(`otp-profile-${index + 1}`)?.focus();
-    }
-  };
+    );
+  }
 
   return (
-    <div className="max-w-[1500px] mx-auto space-y-10 animate-in fade-in duration-700 pb-32">
-      <div id="recaptcha-container-profile"></div>
+    <div className="max-w-[1400px] mx-auto space-y-12 animate-in fade-in duration-700 pb-32 px-4 lg:px-0">
       
-      {/* 1. Profile Header / ID Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-4">
-        <div className="lg:col-span-8">
-           <div className="glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-500/[0.02] flex flex-col md:flex-row items-center gap-12 group shadow-3xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform duration-[15s] pointer-events-none">
-                 <Fingerprint className="w-[600px] h-[600px] text-white" />
+      {/* 1. Portal Header Section */}
+      <div className="glass-card p-10 md:p-14 rounded-[80px] bg-black/60 border border-white/5 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-3xl">
+         <div className="absolute inset-0 opacity-[0.03] pointer-events-none flex items-center justify-center">
+            <Fingerprint className="w-[800px] h-[800px] text-white" />
+         </div>
+         
+         <div className="relative group">
+            <div className="w-40 h-40 md:w-56 md:h-56 rounded-full bg-[#1e293b] border-4 border-white/5 shadow-3xl overflow-hidden flex items-center justify-center relative">
+               {user.avatar ? (
+                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+               ) : (
+                 <div className="w-full h-full bg-slate-800 flex items-center justify-center text-6xl font-black text-slate-700">
+                    {user.name[0]}
+                 </div>
+               )}
+               <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </div>
+            <div className="absolute top-1/2 -translate-y-1/2 -right-12 translate-x-1/2 z-10">
+               <div className="p-4 bg-indigo-600 rounded-full border-4 border-[#020403] shadow-[0_0_40px_rgba(99,102,241,0.5)] group-hover:scale-110 transition-transform duration-500">
+                  <BadgeCheck size={32} className="text-white" />
+               </div>
+            </div>
+         </div>
+
+         <div className="space-y-4 relative z-10">
+            <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{user.name}</h2>
+            <p className="text-emerald-400 font-mono text-lg md:text-2xl tracking-[0.4em] uppercase opacity-80">{user.esin}</p>
+         </div>
+
+         <div className="flex flex-wrap justify-center gap-4 relative z-10">
+            <span className="px-6 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-widest border border-emerald-500/20">{user.wallet.tier} Tier</span>
+            <span className="px-6 py-2 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-widest border border-blue-500/20">{user.role}</span>
+            <span className="px-6 py-2 bg-white/5 text-slate-400 text-[10px] font-black uppercase rounded-full tracking-widest border border-white/10">{user.location}</span>
+         </div>
+      </div>
+
+      {/* 2. Secondary Sections Navigation */}
+      <div className="flex justify-center">
+         <div className="flex flex-wrap justify-center gap-3 p-2 glass-card rounded-full bg-black/40 border border-white/5 shadow-3xl overflow-x-auto scrollbar-hide">
+            {tabs.map(tab => (
+              <button 
+                key={tab.id} 
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-3 px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+              >
+                <tab.icon size={14} /> {tab.label}
+              </button>
+            ))}
+         </div>
+      </div>
+
+      {/* 3. Render Area */}
+      <div className="min-h-[600px]">
+         {/* DOSSIER OVERVIEW */}
+         {activeTab === 'dossier' && (
+           <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-12">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                 <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/20 space-y-10 shadow-3xl flex flex-col justify-between overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Coins size={300} className="text-emerald-500" /></div>
+                    <h3 className="text-base font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-4 italic relative z-10">
+                       NODE TREASURY <Wallet className="w-5 h-5 text-emerald-500" />
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                       <div className="p-10 bg-black/60 rounded-[44px] border border-white/5 shadow-inner text-center space-y-4 group/util hover:border-emerald-500/20 transition-all">
+                          <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest">UTILITY EAC</p>
+                          <p className="text-6xl font-mono font-black text-white tracking-tighter">{user.wallet.balance.toLocaleString()}</p>
+                          <div className="flex items-center justify-center gap-2 text-emerald-500 font-black text-[9px] uppercase">
+                             <TrendingUp size={12} /> +12.4% Δ
+                          </div>
+                       </div>
+                       <div className="p-10 bg-black/60 rounded-[44px] border border-white/5 shadow-inner text-center space-y-4 group/equity hover:border-amber-500/20 transition-all">
+                          <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest">EQUITY EAT</p>
+                          <p className="text-6xl font-mono font-black text-amber-500 tracking-tighter">{user.wallet.eatBalance.toFixed(2)}</p>
+                          <div className="flex items-center justify-center gap-2 text-amber-500/60 font-black text-[9px] uppercase">
+                             <Target size={12} /> m-SYNC: 1.42x
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-8 shadow-3xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Microscope size={200} className="text-blue-400" /></div>
+                    <h3 className="text-base font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-4 italic px-4 relative z-10">
+                       SKILLS RESONANCE <Dna className="w-5 h-5 text-blue-400" />
+                    </h3>
+                    <div className="h-80 w-full relative z-10">
+                       <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillsData}>
+                             <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                             <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={11} fontStyle="italic" />
+                             <RechartsRadar name="Skill Level" dataKey="A" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
+                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '16px' }} />
+                          </RadarChart>
+                       </ResponsiveContainer>
+                    </div>
+                 </div>
               </div>
-              
-              <div className="relative shrink-0 flex flex-col items-center gap-4">
-                 <div className="w-44 h-44 rounded-full bg-slate-800 border-4 border-white/10 flex items-center justify-center text-8xl font-black text-emerald-400 shadow-2xl group-hover:scale-105 transition-transform duration-700 overflow-hidden relative">
-                   {user.avatar ? (
-                     <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                   ) : (
-                     user.name[0]
-                   )}
-                   {isEditing && (
-                     <button onClick={() => avatarInputRef.current?.click()} className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                        <Camera size={40} />
-                     </button>
-                   )}
-                 </div>
-                 <input type="file" ref={avatarInputRef} className="hidden" onChange={handleAvatarUpload} accept="image/*" />
-                 <div className="flex gap-2">
-                    <span className={`px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest ${currentTier.col}`}>
-                       Tier: {currentTier.title}
-                    </span>
-                 </div>
+           </div>
+         )}
+
+         {/* IDENTITY CARD */}
+         {activeTab === 'card' && (
+           <div className="animate-in zoom-in duration-500 flex flex-col items-center space-y-12">
+              <div className="text-center space-y-4">
+                 <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Physical <span className="text-emerald-400">Handshake Shard</span></h3>
+                 <p className="text-slate-500 italic text-lg">"Your sovereign industrial identity, verifiable via QR or NFC taps."</p>
+              </div>
+              <div className="p-10 glass-card rounded-[80px] bg-white/[0.01] border-2 border-white/5 shadow-3xl">
+                 <IdentityCard user={user} />
+              </div>
+              <div className="flex gap-4">
+                 <button className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center gap-3">
+                    <Download size={18} /> Export PDF Warrant
+                 </button>
+                 <button className="px-10 py-4 bg-indigo-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-3">
+                    <Stamp size={18} /> Order Physical Hard-Copy
+                 </button>
+              </div>
+           </div>
+         )}
+
+         {/* CELESTIAL VAULT */}
+         {activeTab === 'celestial' && (
+           <div className="animate-in zoom-in duration-700 space-y-16">
+              <div className="text-center space-y-6">
+                 <h2 className="text-6xl md:text-8xl font-black uppercase italic tracking-tighter m-0 leading-none text-white drop-shadow-[0_40px_80px_rgba(232,121,249,0.3)]">
+                    CELESTIAL <span className="text-fuchsia-400">VAULT</span>
+                 </h2>
+                 <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto opacity-70 leading-relaxed px-10">
+                    "Synchronizing industrial cycles with cosmic agricultural resonance."
+                 </p>
               </div>
 
-              <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
-                 <div className="space-y-2">
-                    <div className="flex items-center gap-4 justify-center md:justify-start">
-                       <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">{user.name}</h2>
-                       {!isGuest && <BadgeCheck className="w-8 h-8 text-blue-400 shadow-blue-500/20" />}
+              <div className="glass-card p-12 md:p-20 rounded-[80px] border-2 border-fuchsia-500/20 bg-fuchsia-950/5 space-y-12 shadow-3xl relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
+                    <Flower2 size={1000} className="text-fuchsia-500" />
+                 </div>
+                 
+                 <div className="flex flex-col md:flex-row items-center justify-between border-b border-white/5 pb-12 mb-10 relative z-10 gap-10">
+                    <div className="flex items-center gap-8">
+                       <div className="w-24 h-24 bg-fuchsia-800 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 group-hover:rotate-12 transition-transform duration-700">
+                          <Star className="text-white fill-current w-12 h-12 animate-pulse" />
+                       </div>
+                       <h3 className="text-4xl font-black text-white uppercase italic tracking-widest leading-none">BIRTH CYCLE <br/><span className="text-fuchsia-400">RESONANCE</span></h3>
                     </div>
-                    <p className="text-emerald-400 font-mono text-sm tracking-[0.4em] uppercase">{user.esin}</p>
+                    <div className="text-center md:text-right">
+                       <p className="text-[11px] text-fuchsia-400/60 font-black uppercase tracking-[0.5em] mb-3 italic">SYNC_FREQUENCY</p>
+                       {/* Defensive lookup using activeFlower fallback */}
+                       <p className="text-6xl font-mono font-black text-white leading-none">{activeFlower.resonance}</p>
+                    </div>
                  </div>
-                 <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-2">
-                    <span className="px-5 py-2 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{user.role}</span>
-                    <span className="px-5 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl text-[10px] font-black text-indigo-400 uppercase tracking-widest">{user.location}</span>
+
+                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {Object.keys(MONTH_FLOWERS).map(m => (
+                       <button 
+                          key={m} 
+                          onClick={() => handleUpdateMonth(m)}
+                          className={`py-8 rounded-[32px] text-xl font-black uppercase transition-all border-2 relative overflow-hidden group/btn ${selectedMonth === m ? 'bg-fuchsia-800 border-white text-white shadow-[0_0_100px_rgba(232,121,249,0.5)] scale-105' : 'bg-black/60 border-white/5 text-slate-700 hover:border-fuchsia-500/40 hover:text-fuchsia-400'}`}
+                       >
+                          {m}
+                       </button>
+                    ))}
                  </div>
-                 <div className="pt-4 flex justify-center md:justify-start">
+
+                 <div className="mt-20 flex flex-col md:flex-row items-center gap-16 relative z-10 pt-16 border-t border-white/5">
+                    <div className="w-48 h-48 rounded-[64px] bg-fuchsia-800/20 flex items-center justify-center border-4 border-fuchsia-500/30 shadow-3xl animate-float">
+                       {/* Defensive color application */}
+                       <Flower2 size={96} className={`${activeFlower.color}`} />
+                    </div>
+                    <div className="flex-1 space-y-6 text-center md:text-left">
+                       <h5 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{activeFlower.flower}</h5>
+                       <p className="text-slate-400 text-xl font-medium italic opacity-80 leading-relaxed">
+                          "Identifying a high resonance between your birth node and the current seasonal cycle. Minting this shard anchors 50 EAC growth yield to your registry account."
+                       </p>
+                       <button 
+                         onClick={handleMintCertificate}
+                         disabled={isMintingCert}
+                         className="w-full max-w-md py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6"
+                       >
+                          {isMintingCert ? <Loader2 className="animate-spin w-6 h-6" /> : <Stamp size={28} />}
+                          {isMintingCert ? 'MINTING SHARD...' : 'ANCHOR CELESTIAL SHARD'}
+                       </button>
+                    </div>
+                 </div>
+              </div>
+           </div>
+         )}
+
+         {/* EDIT PROFILE FORM */}
+         {activeTab === 'edit' && (
+           <div className="animate-in slide-in-from-right-6 duration-700 max-w-4xl mx-auto">
+              <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl">
+                 <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                    <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl text-white">
+                       <Pencil size={32} />
+                    </div>
+                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Edit Steward <span className="text-emerald-400">Dossier</span></h3>
+                 </div>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Alias</label>
+                       <input 
+                         type="text" value={editName} onChange={e => setEditName(e.target.value)}
+                         className="w-full bg-black border border-white/10 rounded-3xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
+                       />
+                    </div>
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Pillar Role</label>
+                       <input 
+                         type="text" value={editRole} onChange={e => setEditRole(e.target.value)}
+                         className="w-full bg-black border border-white/10 rounded-3xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
+                       />
+                    </div>
+                    <div className="space-y-3 md:col-span-2">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Biometric Location</label>
+                       <input 
+                         type="text" value={editLocation} onChange={e => setEditLocation(e.target.value)}
+                         className="w-full bg-black border border-white/10 rounded-3xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
+                       />
+                    </div>
+                    <div className="space-y-3 md:col-span-2">
+                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Identity Narrative (Bio)</label>
+                       <textarea 
+                         value={editBio} onChange={e => setEditBio(e.target.value)}
+                         className="w-full bg-black border border-white/10 rounded-[40px] p-8 text-white font-medium italic focus:ring-4 focus:ring-emerald-500/10 outline-none h-48 resize-none"
+                         placeholder="Describe your regenerative contribution..."
+                       />
+                    </div>
+                 </div>
+
+                 <div className="pt-10 border-t border-white/5 flex justify-end gap-6">
+                    <button onClick={() => setActiveTab('dossier')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase text-slate-500 hover:text-white transition-all">Discard</button>
                     <button 
-                      onClick={() => setIsEditing(!isEditing)}
-                      className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all shadow-xl"
+                       onClick={handleSaveProfile}
+                       disabled={isSaving}
+                       className="px-16 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
                     >
-                       <Edit3 size={16} /> {isEditing ? 'CANCEL EDIT' : 'EDIT CORE PROFILE'}
+                       {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                       {isSaving ? 'SYNCING_DOUCMENT...' : 'ANCHOR_CHANGES'}
                     </button>
                  </div>
               </div>
            </div>
-        </div>
+         )}
 
-        <div className="lg:col-span-4 glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 flex flex-col justify-between shadow-3xl group">
-           <div className="space-y-8">
-              <div className="flex justify-between items-center px-2">
-                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">Node Treasury</p>
-                 <Wallet className="w-5 h-5 text-emerald-500" />
+         {/* NETWORK SIGNALS (NOTIFICATIONS HISTORY) */}
+         {activeTab === 'signals' && (
+           <div className="animate-in slide-in-from-left-6 duration-700 space-y-10">
+              <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
+                 <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Signal <span className="text-indigo-400">Ledger</span></h3>
+                 <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">Personal Event Ingest</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center space-y-1 shadow-inner">
-                    <p className="text-[8px] text-slate-600 font-black uppercase">Utility EAC</p>
-                    <p className="text-2xl font-mono font-black text-white">{user.wallet.balance.toFixed(0)}</p>
+              <div className="space-y-4">
+                 {signals.length === 0 ? (
+                    <div className="py-40 text-center opacity-10">
+                       <Bell size={120} className="mx-auto mb-6" />
+                       <p className="text-2xl font-black uppercase tracking-[0.5em]">No signals sharded</p>
+                    </div>
+                 ) : (
+                    signals.map(sig => (
+                       <div key={sig.id} className="p-8 glass-card rounded-[48px] border border-white/5 bg-black/60 flex items-center justify-between group hover:border-indigo-500/20 transition-all shadow-2xl relative overflow-hidden">
+                          <div className="flex items-center gap-8 relative z-10">
+                             <div className={`w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform`}>
+                                <sig.actionIcon size={24} />
+                             </div>
+                             <div>
+                                <h4 className="text-2xl font-black text-white uppercase italic m-0">{sig.title}</h4>
+                                <p className="text-sm text-slate-400 mt-2 italic">"{sig.message}"</p>
+                             </div>
+                          </div>
+                          <div className="text-right shrink-0 relative z-10">
+                             <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest mb-2">{sig.timestamp}</p>
+                             <span className="px-4 py-1.5 bg-indigo-600/10 text-indigo-400 text-[8px] font-black uppercase rounded-full border border-indigo-500/20">ZK_ANCHOR_VERIFIED</span>
+                          </div>
+                       </div>
+                    ))
+                 )}
+              </div>
+           </div>
+         )}
+
+         {/* EXTERNAL SHARING */}
+         {activeTab === 'sharing' && (
+           <div className="animate-in zoom-in duration-700 space-y-12 max-w-4xl mx-auto">
+              <div className="glass-card p-16 rounded-[80px] border border-emerald-500/20 bg-emerald-950/5 text-center space-y-12 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s]"><Share2 size={600} className="text-emerald-400" /></div>
+                 <div className="w-32 h-32 rounded-[44px] bg-emerald-600 flex items-center justify-center shadow-3xl border-4 border-white/10 mx-auto animate-float">
+                    <Share2 size={56} className="text-white" />
                  </div>
-                 <div className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center space-y-1 shadow-inner">
-                    <p className="text-[8px] text-slate-600 font-black uppercase">Equity EAT</p>
-                    <p className="text-2xl font-mono font-black text-amber-500">{user.wallet.eatBalance.toFixed(2)}</p>
+                 <div className="space-y-6">
+                    <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Broadcasting <span className="text-emerald-400">Node</span></h3>
+                    <p className="text-slate-400 text-xl font-medium max-w-xl mx-auto italic leading-relaxed">"Propagate your industrial achievements across external planetary networks."</p>
+                 </div>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                    <button className="p-8 bg-blue-600/10 border border-blue-500/30 rounded-[44px] flex items-center justify-between group/link hover:bg-blue-600 transition-all shadow-xl">
+                       <div className="flex items-center gap-6">
+                          <Twitter className="w-10 h-10 text-blue-400 group-hover/link:text-white transition-colors" />
+                          <span className="text-xl font-black text-white italic tracking-tighter">X Sharding</span>
+                       </div>
+                       <ArrowUpRight className="text-blue-400 group-hover/link:text-white" />
+                    </button>
+                    <button className="p-8 bg-indigo-600/10 border border-indigo-500/30 rounded-[44px] flex items-center justify-between group/link hover:bg-indigo-600 transition-all shadow-xl">
+                       <div className="flex items-center gap-6">
+                          <Linkedin className="w-10 h-10 text-indigo-400 group-hover/link:text-white transition-colors" />
+                          <span className="text-xl font-black text-white italic tracking-tighter">Chain Link</span>
+                       </div>
+                       <ArrowUpRight className="text-indigo-400 group-hover/link:text-white" />
+                    </button>
+                    <button className="p-8 bg-rose-600/10 border border-rose-500/30 rounded-[44px] flex items-center justify-between group/link hover:bg-rose-600 transition-all shadow-xl md:col-span-2">
+                       <div className="flex items-center gap-6">
+                          <Globe2 className="w-10 h-10 text-rose-400 group-hover/link:text-white transition-colors" />
+                          <span className="text-xl font-black text-white italic tracking-tighter">Personal Web Shard</span>
+                       </div>
+                       <Copy className="text-rose-400 group-hover/link:text-white" />
+                    </button>
                  </div>
               </div>
            </div>
-           <button onClick={() => onNavigate('wallet')} className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 rounded-[28px] text-[10px] font-black text-white uppercase tracking-[0.3em] shadow-xl mt-6">Open Node Treasury</button>
-        </div>
-      </div>
+         )}
 
-      {/* 2. Main Tab Navigation */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-4 p-2 glass-card rounded-[32px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-6 mx-auto lg:mx-4 relative z-20">
-        {[
-          { id: 'hub', label: 'STEWARD HUB', icon: Layout },
-          { id: 'signals', label: 'NODE SIGNALS', icon: Bell, badge: unreadCount },
-          { id: 'dossier', label: 'CELESTIAL VAULT', icon: Flower2 },
-          { id: 'security', label: 'VAULT SECURITY', icon: Settings },
-          { id: 'sharing', label: 'GRID DIFFUSION', icon: Share2 },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap relative ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl scale-105 ring-4 ring-white/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon className="w-4 h-4" /> {tab.label}
-            {tab.badge && tab.badge > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-[#050706]">{tab.badge}</span>}
-          </button>
-        ))}
-      </div>
+         {/* SYSTEM SETTINGS */}
+         {activeTab === 'settings' && (
+           <div className="animate-in slide-in-from-right-6 duration-700 max-w-4xl mx-auto space-y-12">
+              <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl">
+                 <div className="flex items-center justify-between border-b border-white/5 pb-8 px-4">
+                    <div className="flex items-center gap-6">
+                       <div className="p-4 bg-slate-800 rounded-3xl shadow-xl text-slate-400">
+                          <Settings size={32} />
+                       </div>
+                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">System <span className="text-slate-500">Settings</span></h3>
+                    </div>
+                 </div>
 
-      <div className="min-h-[800px] px-4">
-        {isEditing ? (
-          <div className="max-w-4xl mx-auto glass-card p-12 rounded-[64px] border-indigo-500/20 bg-indigo-500/[0.02] shadow-3xl animate-in slide-in-from-bottom-6">
-             <div className="flex items-center gap-6 mb-12 border-b border-white/5 pb-10">
-                <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl text-white"><Edit3 size={32} /></div>
-                <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Edit <span className="text-indigo-400">Core Profile</span></h3>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-6">
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Name</label>
-                      <input type="text" value={editedUser.name} onChange={e => setEditedUser({...editedUser, name: e.target.value})} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold italic focus:ring-4 focus:ring-indigo-500/10 transition-all" />
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Role Shard</label>
-                      <input type="text" value={editedUser.role} onChange={e => setEditedUser({...editedUser, role: e.target.value})} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase tracking-widest" />
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Location Hub</label>
-                      <input type="text" value={editedUser.location} onChange={e => setEditedUser({...editedUser, location: e.target.value})} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold italic focus:ring-4 focus:ring-indigo-500/10 transition-all" />
-                   </div>
-                </div>
-                <div className="space-y-6">
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Gender Shard</label>
-                      <select value={editedUser.gender || 'Not Specified'} onChange={e => setEditedUser({...editedUser, gender: e.target.value as any})} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none focus:ring-4 focus:ring-indigo-500/10 transition-all">
-                         <option>Male</option>
-                         <option>Female</option>
-                         <option>Non-Binary</option>
-                         <option>Not Specified</option>
-                      </select>
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Bio (Social Hub)</label>
-                      <textarea value={editedUser.bio || ''} onChange={e => setEditedUser({...editedUser, bio: e.target.value})} placeholder="Describe your agricultural philosophy..." className="w-full bg-black border border-white/10 rounded-3xl p-6 text-white text-sm h-32 resize-none italic focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner" />
-                   </div>
-                </div>
-             </div>
-             <div className="pt-12 mt-12 border-t border-white/5 flex gap-6 justify-center">
-                <button onClick={() => setIsEditing(false)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl active:scale-95">Discard Changes</button>
-                <button onClick={handleSaveProfile} className="px-20 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border-2 border-white/10">ANCHOR UPDATED IDENTITY</button>
-             </div>
-          </div>
-        ) : (
-          <>
-            {activeTab === 'hub' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
-                 <div className="lg:col-span-8 space-y-10">
-                    <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 shadow-3xl relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s]"><Compass size={400} /></div>
-                       <div className="flex flex-col md:flex-row justify-between items-center mb-16 relative z-10 gap-10">
-                          <div className="flex items-center gap-8">
-                             <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl"><Compass className="w-10 h-10 text-white" /></div>
-                             <div>
-                                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Identity <span className="text-emerald-400">Shard Hub</span></h3>
-                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-3">EOS_IDENTITY_HANDSHAKE_v6.5</p>
-                             </div>
-                          </div>
-                          
-                          <div className="flex gap-4">
-                             <button 
-                               onClick={handlePrintId}
-                               className="px-8 py-4 bg-white rounded-2xl text-black font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 hover:bg-emerald-50 transition-all active:scale-95"
-                             >
-                                <Printer size={16} /> Print Card
-                             </button>
-                             <button 
-                               onClick={downloadProfessionalShard}
-                               className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 transition-all active:scale-95"
-                             >
-                                <FileDown size={16} /> Download Shard
-                             </button>
+                 <div className="space-y-10">
+                    <div className="flex items-center justify-between p-8 bg-white/[0.02] border border-white/5 rounded-[44px] group hover:border-emerald-500/20 transition-all">
+                       <div className="flex items-center gap-6">
+                          <div className="p-4 bg-white/5 rounded-2xl text-slate-500 group-hover:text-emerald-400 transition-colors"><Bell size={24} /></div>
+                          <div>
+                             <p className="text-xl font-black text-white italic tracking-widest leading-none">Telemetry Alerts</p>
+                             <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-3">High-frequency push notifications</p>
                           </div>
                        </div>
-
-                       <div className="flex justify-center py-10 relative z-10">
-                          <IdentityCard user={user} />
-                       </div>
-
-                       <div className="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
-                          <div className="flex items-center gap-6">
-                             <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-indigo-400 group-hover:scale-110 transition-all shadow-inner"><Target size={32} /></div>
-                             <div className="text-left">
-                                <p className="text-[9px] text-slate-600 font-black uppercase mb-1">Sustainability Baseline</p>
-                                <p className="text-3xl font-mono font-black text-white">{user.metrics.sustainabilityScore}%</p>
-                             </div>
-                          </div>
-                          <button onClick={() => onNavigate('online_garden')} className="px-12 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all">Go to Garden Hub</button>
+                       <div className="w-14 h-8 bg-emerald-600 rounded-full flex items-center px-1 shadow-inner relative group/toggle cursor-pointer">
+                          <div className="w-6 h-6 bg-white rounded-full translate-x-6 transition-transform"></div>
                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                       <div className="p-10 glass-card rounded-[56px] border border-blue-500/20 bg-blue-500/[0.02] space-y-8 shadow-xl relative overflow-hidden group">
-                          <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform duration-700"><SmartphoneNfc size={200} className="text-blue-500" /></div>
-                          <div className="flex items-center gap-4 relative z-10">
-                             <div className="p-3 bg-blue-600 rounded-2xl shadow-xl"><Binary size={24} className="text-white" /></div>
-                             <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Hardware <span className="text-blue-400">Registry</span></h4>
-                          </div>
-                          <p className="text-sm text-slate-400 italic relative z-10 leading-relaxed">"Manage sharded industrial nodes."</p>
-                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 shadow-inner relative z-10">
-                             <div className="flex justify-between items-center">
-                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Active Nodes</span>
-                                <span className="text-xl font-mono font-black text-blue-400">{(user.resources || []).filter(r => r.category === 'HARDWARE').length}</span>
-                             </div>
-                             <button onClick={() => onNavigate('registry_handshake')} className="w-full mt-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase text-slate-400 hover:text-white transition-all shadow-md">Open Handshake</button>
+                    <div className="flex items-center justify-between p-8 bg-white/[0.02] border border-white/5 rounded-[44px] group hover:border-blue-500/20 transition-all">
+                       <div className="flex items-center gap-6">
+                          <div className="p-4 bg-white/5 rounded-2xl text-slate-500 group-hover:text-blue-400 transition-colors"><ShieldIcon size={24} /></div>
+                          <div>
+                             <p className="text-xl font-black text-white italic tracking-widest leading-none">Privacy Sharding</p>
+                             <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-3">Obfuscate precise node coordinates</p>
                           </div>
                        </div>
-                       <div className="p-10 glass-card rounded-[56px] border border-emerald-500/20 bg-emerald-500/[0.02] space-y-8 shadow-xl relative overflow-hidden group">
-                          <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform duration-700"><TreePine size={200} className="text-emerald-500" /></div>
-                          <div className="flex items-center gap-4 relative z-10">
-                             <div className="p-3 bg-emerald-600 rounded-2xl shadow-xl"><MapPin size={24} className="text-white" /></div>
-                             <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Land <span className="text-emerald-400">Inventory</span></h4>
+                       <div className="w-14 h-8 bg-slate-800 rounded-full flex items-center px-1 shadow-inner relative group/toggle cursor-pointer">
+                          <div className="w-6 h-6 bg-slate-600 rounded-full transition-transform"></div>
+                       </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-8 bg-white/[0.02] border border-white/5 rounded-[44px] group hover:border-rose-500/20 transition-all">
+                       <div className="flex items-center gap-6">
+                          <div className="p-4 bg-white/5 rounded-2xl text-slate-500 group-hover:text-rose-500 transition-colors"><SmartphoneNfc size={24} /></div>
+                          <div>
+                             <p className="text-xl font-black text-white italic tracking-widest leading-none">Biometric Auth</p>
+                             <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-3">Local device biometric sharding</p>
                           </div>
-                          <p className="text-sm text-slate-400 italic relative z-10 leading-relaxed">"Verified geofence plots."</p>
-                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 shadow-inner relative z-10">
-                             <div className="flex justify-between items-center">
-                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Anchored Shards</span>
-                                <span className="text-xl font-mono font-black text-emerald-400">{(user.resources || []).filter(r => r.category === 'LAND').length}</span>
-                             </div>
-                             <button onClick={() => onNavigate('registry_handshake')} className="w-full mt-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase text-slate-400 hover:text-white transition-all shadow-md">Pair Physical Plot</button>
-                          </div>
+                       </div>
+                       <div className="w-14 h-8 bg-emerald-600 rounded-full flex items-center px-1 shadow-inner relative group/toggle cursor-pointer">
+                          <div className="w-6 h-6 bg-white rounded-full translate-x-6 transition-transform"></div>
                        </div>
                     </div>
                  </div>
 
-                 <div className="lg:col-span-4 space-y-8">
-                    <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden shadow-3xl flex flex-col items-center">
-                       <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-10">DOMAIN_PROFICIENCY</h4>
-                       <div className="h-64 w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillData}>
-                                <PolarGrid stroke="rgba(255,255,255,0.05)" />
-                                <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={10} fontStyle="italic" />
-                                <RechartsRadar name="Steward" dataKey="A" stroke="#818cf8" fill="#818cf8" fillOpacity={0.4} />
-                             </RadarChart>
-                          </ResponsiveContainer>
-                       </div>
-                       <div className="pt-10 border-t border-white/5 w-full mt-10 grid grid-cols-2 gap-4">
-                          <div className="text-center p-4 bg-white/5 rounded-2xl">
-                             <p className="text-[9px] text-slate-600 font-black uppercase mb-1">Reputation</p>
-                             <p className="text-xl font-mono font-black text-indigo-400">{user.wallet.lifetimeEarned.toFixed(0)}</p>
-                          </div>
-                          <div className="text-center p-4 bg-white/5 rounded-2xl">
-                             <p className="text-[9px] text-slate-600 font-black uppercase mb-1">Rank</p>
-                             <p className="text-xl font-mono font-black text-emerald-400">#{(Math.random()*100).toFixed(0)}</p>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="glass-card p-10 rounded-[56px] border border-fuchsia-500/20 bg-fuchsia-950/5 space-y-6 shadow-xl group/gift relative overflow-hidden">
-                       <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-125 transition-transform"><Flower2 size={120} /></div>
-                       <div className="flex items-center gap-4 relative z-10">
-                          <Gift className="w-6 h-6 text-fuchsia-400 animate-bounce" />
-                          <h4 className="text-xl font-black text-white uppercase italic">Celestial Shard</h4>
-                       </div>
-                       {!user.zodiacFlower ? (
-                         <div className="space-y-4 relative z-10">
-                            <p className="text-xs text-slate-500 italic">Identify birth cycle to unlock.</p>
-                            <button onClick={() => setActiveTab('dossier')} className="w-full py-4 bg-fuchsia-800 hover:bg-fuchsia-700 rounded-2xl text-[9px] font-black uppercase text-white shadow-xl transition-all">Go to Vault</button>
-                         </div>
-                       ) : (
-                         <div className="flex items-center gap-6 relative z-10 animate-in zoom-in">
-                            <div className="w-16 h-16 rounded-2xl bg-fuchsia-600/20 flex items-center justify-center border border-fuchsia-500/40">
-                               <Flower2 className={user.zodiacFlower.color} />
-                            </div>
-                            <div>
-                               <p className="text-lg font-black text-white uppercase italic leading-none">{user.zodiacFlower.flower}</p>
-                               <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest">{user.zodiacFlower.month} Shard</p>
-                            </div>
-                            <button onClick={() => setActiveTab('dossier')} className="ml-auto p-3 bg-white/5 rounded-xl text-fuchsia-400"><ArrowRight size={20}/></button>
-                         </div>
-                       )}
-                    </div>
+                 <div className="pt-12 border-t border-white/5 flex flex-col gap-6">
+                    <button 
+                      onClick={onLogout}
+                      className="w-full py-8 bg-rose-600/10 border-2 border-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white rounded-[40px] text-[13px] font-black uppercase tracking-[0.4em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-6"
+                    >
+                       <LogOut size={24} /> DECOUPLE NODE SESSION
+                    </button>
+                    <button className="text-[9px] font-black text-slate-700 hover:text-rose-400 uppercase tracking-[0.6em] transition-colors py-4">PERMANENT_REGISTRY_WIPE</button>
                  </div>
               </div>
-            )}
-
-            {activeTab === 'security' && (
-              <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-10 duration-500">
-                 <div className="p-16 glass-card rounded-[80px] border-2 border-indigo-500/20 bg-black/60 shadow-3xl space-y-16 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[12s]"><Lock size={500} className="text-indigo-400" /></div>
-                    <div className="relative z-10 text-center space-y-8 border-b border-white/5 pb-16">
-                       <div className="w-28 h-28 bg-indigo-600 rounded-[44px] flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 group-hover:rotate-12 transition-transform">
-                          <ShieldPlus size={56} className="text-white" />
-                       </div>
-                       <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Vault <span className="text-indigo-400">Security</span></h3>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
-                       <div className="space-y-10">
-                          <div className="p-10 bg-emerald-500/5 rounded-[56px] border border-emerald-500/20 space-y-8 shadow-inner">
-                             <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                                <ShieldCheck size={24} className="text-emerald-400" />
-                                <h4 className="text-xl font-black text-white uppercase italic m-0">Registry Trust</h4>
-                             </div>
-                             
-                             {/* Gmail Node Verification */}
-                             <div className="space-y-4">
-                               <div className="flex justify-between items-center px-4 py-3 bg-black/40 rounded-2xl border border-white/5">
-                                  <div className="flex items-center gap-3">
-                                     <Mail size={14} className="text-slate-500" />
-                                     <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Gmail Node</span>
-                                  </div>
-                                  <div className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${isEmailVerified ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                                     {isEmailVerified ? 'VERIFIED' : 'PENDING'}
-                                  </div>
-                               </div>
-                               {!isEmailVerified && (
-                                 <button onClick={handleEmailResend} disabled={isVerifying} className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-emerald-400 uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                                   {isVerifying ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-                                   Resend Verification Shard
-                                 </button>
-                               )}
-                             </div>
-
-                             {/* Phone Node Verification */}
-                             <div className="space-y-4 pt-4 border-t border-white/5">
-                               <div className="flex justify-between items-center px-4 py-3 bg-black/40 rounded-2xl border border-white/5">
-                                  <div className="flex items-center gap-3">
-                                     <Smartphone size={14} className="text-slate-500" />
-                                     <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Phone Node</span>
-                                  </div>
-                                  <div className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${user.isPhoneVerified ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                                     {user.isPhoneVerified ? 'VERIFIED' : 'PENDING'}
-                                  </div>
-                               </div>
-                               {!user.isPhoneVerified && (
-                                 <div className="space-y-4 animate-in slide-in-from-top-2">
-                                    {!otpStep ? (
-                                      <div className="flex gap-2">
-                                         <input 
-                                           type="tel" value={phoneInput} onChange={e => setPhoneInput(e.target.value)} 
-                                           placeholder="+254 700 000 000"
-                                           className="flex-1 bg-black border border-white/10 rounded-xl py-3 px-4 text-xs text-white focus:ring-2 focus:ring-blue-500/20 outline-none" 
-                                         />
-                                         <button onClick={handlePhoneVerifyStart} disabled={isVerifying || !phoneInput} className="px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[9px] font-black uppercase transition-all">
-                                            {isVerifying ? <Loader2 size={12} className="animate-spin" /> : 'Send OTP'}
-                                         </button>
-                                      </div>
-                                    ) : (
-                                      <div className="space-y-4 p-6 bg-black rounded-[32px] border border-white/10 shadow-inner">
-                                         <p className="text-[9px] text-slate-500 font-black uppercase text-center mb-4">Enter 6-Digit SMS Shard</p>
-                                         <div className="flex justify-center gap-2">
-                                            {otpCode.map((digit, i) => (
-                                              <input
-                                                key={i} id={`otp-profile-${i}`} type="text" maxLength={1} value={digit}
-                                                onChange={e => handleOtpChange(e.target.value, i)}
-                                                className="w-8 h-10 bg-black/60 border border-white/10 rounded-lg text-center text-xl font-mono font-black text-blue-400 outline-none focus:border-blue-500"
-                                              />
-                                            ))}
-                                         </div>
-                                         <button onClick={handleOtpVerify} disabled={isVerifying} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[9px] font-black uppercase transition-all shadow-xl">
-                                            {isVerifying ? <Loader2 size={12} className="animate-spin" /> : 'Verify & Anchor'}
-                                         </button>
-                                         <button onClick={() => setOtpStep(false)} className="w-full text-[8px] text-slate-600 font-black uppercase hover:text-white">Back</button>
-                                      </div>
-                                    )}
-                                 </div>
-                               )}
-                               {verificationError && <p className="text-[8px] text-rose-500 uppercase font-black px-4">{verificationError}</p>}
-                             </div>
-                          </div>
-                          
-                          <div className="p-10 bg-black/80 rounded-[56px] border border-white/5 space-y-6 shadow-inner group/phrase hover:border-indigo-500/30 transition-all">
-                             <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                                <KeyRound size={24} className="text-indigo-400" />
-                                <h4 className="text-xl font-black text-white uppercase italic m-0">Recovery Shards</h4>
-                             </div>
-                             <div className="grid grid-cols-3 gap-3">
-                                {user.mnemonic.split(' ').map((word, i) => (
-                                   <div key={i} className="p-3 bg-white/5 border border-white/5 rounded-2xl text-center relative group/word">
-                                      <span className="text-[9px] font-black text-white uppercase tracking-widest blur-md group-hover/word:blur-none transition-all cursor-help">{word}</span>
-                                   </div>
-                                ))}
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-            )}
-            
-            {activeTab === 'dossier' && (
-              <div className="max-w-5xl mx-auto space-y-16 animate-in zoom-in duration-500 text-center">
-                 <div className="space-y-6">
-                    <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">CELESTIAL <span className="text-fuchsia-400">VAULT</span></h3>
-                    <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto">"Managing cosmic agricultural resonance and birth cycle sharding."</p>
-                 </div>
-
-                 <div className="glass-card p-12 rounded-[80px] border border-fuchsia-500/20 bg-fuchsia-500/[0.02] space-y-12 shadow-3xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[10s]"><Flower2 size={600} className="text-fuchsia-400" /></div>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 relative z-10 text-left">
-                       <div className="space-y-8">
-                          <h4 className="text-3xl font-black text-white uppercase italic tracking-widest flex items-center gap-4">
-                             <Star className="w-8 h-8 text-fuchsia-400 fill-fuchsia-400" /> Birth Cycle Sync
-                          </h4>
-                          <p className="text-slate-400 text-lg leading-relaxed italic">Select your birth cycle:</p>
-                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-                             {Object.keys(MONTH_FLOWERS).map(m => (
-                                <button 
-                                   key={m} 
-                                   onClick={() => handleUpdateMonth(m)} 
-                                   className={`py-5 rounded-[24px] text-[10px] font-black uppercase transition-all border-2 ${user.zodiacFlower?.month === m ? 'bg-fuchsia-600 text-white border-white shadow-xl scale-110' : 'bg-black/40 border-white/10 text-slate-600 hover:text-fuchsia-400 hover:border-fuchsia-500/40'}`}
-                                >
-                                   {m.substring(0,3)}
-                                </button>
-                             ))}
-                          </div>
-                       </div>
-
-                       <div className="flex flex-col justify-center">
-                          {!user.zodiacFlower ? (
-                            <div className="text-center space-y-10 py-16 opacity-30 border-4 border-dashed border-white/5 rounded-[64px] bg-black/20">
-                               <Gift size={100} className="text-slate-500 mx-auto animate-bounce" />
-                               <p className="text-2xl font-black uppercase tracking-[0.5em] text-white">ORACLE STANDBY</p>
-                            </div>
-                          ) : (
-                            <div className="space-y-12 animate-in slide-in-from-right-10">
-                               <div className="glass-card p-12 rounded-[64px] bg-black/60 border-2 border-fuchsia-500/30 flex flex-col items-center text-center space-y-8 shadow-3xl relative overflow-hidden">
-                                  <div className="absolute top-0 right-0 p-4 opacity-[0.05]"><Sparkles size={120} /></div>
-                                  <div className="w-40 h-40 rounded-[48px] flex items-center justify-center shadow-[0_0_80px_rgba(232,121,249,0.2)] border-2 border-fuchsia-500/40 bg-fuchsia-500/5 group-hover:scale-105 transition-transform relative">
-                                     <Flower2 size={80} className={user.zodiacFlower.color} />
-                                  </div>
-                                  <div className="space-y-3">
-                                     <h5 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{user.zodiacFlower.flower}</h5>
-                                     <p className="text-xs text-fuchsia-400 font-black uppercase tracking-[0.3em]">{MONTH_FLOWERS[user.zodiacFlower.month].trait} INTEGRITY SHARD</p>
-                                  </div>
-                               </div>
-
-                               {!certMinted ? (
-                                 <button 
-                                   onClick={handleMintCertificate} 
-                                   disabled={isMintingCert}
-                                   className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(232,121,249,0.3)] flex items-center justify-center gap-6 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 ring-8 ring-white/5"
-                                 >
-                                    {isMintingCert ? <Loader2 size={32} className="animate-spin" /> : <Stamp size={32} />}
-                                    {isMintingCert ? 'SEQUENCING SHARD...' : 'MINT CELESTIAL CERTIFICATE'}
-                                 </button>
-                               ) : (
-                                 <button 
-                                   onClick={downloadCertificate}
-                                   className="w-full py-10 bg-emerald-600 hover:bg-emerald-500 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl flex items-center justify-center gap-6 transition-all"
-                                 >
-                                    <Download size={32} /> DOWNLOAD CERT SHARD
-                                 </button>
-                               )}
-                            </div>
-                          )}
-                       </div>
-                    </div>
-                 </div>
-              </div>
-            )}
-
-            {activeTab === 'signals' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-500">
-                <div className="lg:col-span-8 space-y-10">
-                   <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
-                      <div>
-                         <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Node <span className="text-indigo-400">Signals</span></h3>
-                         <p className="text-slate-500 text-lg font-medium italic mt-2">Sharded node alerts.</p>
-                      </div>
-                   </div>
-                   <div className="grid gap-6">
-                      {(signals || []).length === 0 ? (
-                         <div className="py-40 flex flex-col items-center justify-center text-center space-y-8 opacity-20 border-2 border-dashed border-white/5 rounded-[64px] bg-black/20">
-                            <Radio size={80} className="text-slate-600 animate-pulse" />
-                            <p className="text-2xl font-black uppercase tracking-[0.4em]">Signal Buffer Empty</p>
-                         </div>
-                      ) : (
-                        (signals || []).map(signal => (
-                            <div key={signal.id} className={`glass-card p-10 rounded-[48px] border-2 transition-all flex flex-col md:flex-row items-center justify-between gap-10 group relative overflow-hidden bg-black/40 shadow-2xl ${
-                               signal.read ? 'opacity-50 grayscale border-white/5' : signal.priority === 'high' ? 'border-rose-500/20' : 'border-white/5'
-                            }`}>
-                               <div className="flex items-center gap-8 w-full md:w-auto">
-                                  <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 text-white flex items-center justify-center"><Database size={24}/></div>
-                                  <div className="space-y-1">
-                                     <h4 className="text-xl font-black text-white uppercase italic">{signal.title}</h4>
-                                     <p className="text-slate-400 text-sm italic">"{signal.message}"</p>
-                                  </div>
-                               </div>
-                            </div>
-                         ))
-                      )}
-                   </div>
-                </div>
-              </div>
-            )}
-            
-            {activeTab === 'sharing' && (
-              <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-bottom-10 duration-700 text-center">
-                 <div className="p-20 glass-card rounded-[80px] border-2 border-emerald-500/20 bg-black/60 shadow-3xl space-y-16 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[15s]"><Share2 size={800} className="text-emerald-400" /></div>
-                    <div className="relative z-10 space-y-10">
-                       <div className="w-32 h-32 bg-emerald-600 rounded-[48px] flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)] mx-auto border-4 border-white/10">
-                          <Radio size={64} className="text-white animate-pulse" />
-                       </div>
-                       <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic m-0">Grid <span className="text-emerald-400">Diffusion</span></h3>
-                       <p className="text-slate-400 text-2xl font-medium mt-8 italic max-w-3xl mx-auto leading-relaxed">
-                          "Broadcast your stewardship metrics and node integrity across the local and global network mesh."
-                       </p>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 relative z-10 max-w-4xl mx-auto pt-10">
-                       {[
-                         { id: 'x', label: 'X / TWITTER', icon: Twitter, color: 'hover:text-blue-400' },
-                         { id: 'whatsapp', label: 'WHATSAPP', icon: MessageSquare, color: 'hover:text-emerald-400' },
-                         { id: 'facebook', label: 'FACEBOOK', icon: Facebook, color: 'hover:text-blue-600' },
-                         { id: 'linkedin', label: 'LINKEDIN', icon: Linkedin, color: 'hover:text-blue-500' },
-                       ].map(p => (
-                          <button 
-                             key={p.id} 
-                             className="flex flex-col items-center gap-8 p-12 bg-black/80 border border-white/10 rounded-[64px] transition-all hover:border-emerald-500/40 hover:bg-emerald-500/5 group/share shadow-2xl active:scale-95 ring-4 ring-white/5"
-                          >
-                             <p.icon size={64} className={`text-slate-700 transition-all group-hover/share:scale-110 group-hover/share:rotate-6 ${p.color}`} />
-                             <span className="text-xs font-black text-slate-500 group-hover/share:text-white uppercase tracking-[0.4em]">{p.label}</span>
-                          </button>
-                       ))}
-                    </div>
-                 </div>
-              </div>
-            )}
-          </>
-        )}
+           </div>
+         )}
       </div>
 
       <style>{`
-        .shadow-3xl { box-shadow: 0 40px 150px -20px rgba(0, 0, 0, 0.9); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .print-card, .print-card * {
-            visibility: visible;
-          }
-          .print-card {
-            position: absolute;
-            left: 0;
-            top: 0;
-            margin: 0;
-            padding: 0;
-          }
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .agro-gradient-fuchsia { background: linear-gradient(135deg, #701a75 0%, #d946ef 100%); }
+        @keyframes scan { 
+          0% { top: -10px; } 
+          100% { top: 100%; } 
         }
+        .animate-scan { animation: scan 3s linear infinite; }
+        .animate-spin-slow { animation: spin 20s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

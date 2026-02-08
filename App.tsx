@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Layers, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
   Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, Signal as SignalIcon, Target,
-  Truck
+  Truck, Layers, Map as MapIcon, Compass as CompassIcon, Server, Workflow, ShieldPlus, ChevronLeftCircle, ArrowLeft,
+  ChevronRight, ArrowUp, UserCheck
 } from 'lucide-react';
-import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, OrderStatus, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard } from './types';
+import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard } from './types';
 import Dashboard from './components/Dashboard';
 import Sustainability from './components/Sustainability';
 import Economy from './components/Economy';
@@ -54,52 +55,129 @@ import NetworkView from './components/NetworkView';
 import MediaLedger from './components/MediaLedger';
 import AgroLang from './components/AgroLang';
 import SignalCenter from './components/SignalCenter';
+import Sitemap from './components/Sitemap';
+
 import { 
   syncUserToCloud, 
   auth, 
   getStewardProfile, 
   signOutSteward, 
-  broadcastPulse, 
-  listenForGlobalEchoes, 
-  saveCollectionItem, 
   onAuthStateChanged,
-  listenToCollection
+  listenToCollection,
+  saveCollectionItem
 } from './services/firebaseService';
-import { createGenesisBlock, mineBlock, VALIDATORS } from './services/blockchainService';
 
-const BASE_EXCHANGE_RATE = 100.0;
-const PENALTY_FACTOR = 10.0;
+export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className}`}>
+    <path d="M100 180C100 180 95 160 100 145" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+    <path d="M100 145C100 145 70 140 50 120C30 100 20 80 25 55C30 30 55 20 75 35C85 45 100 30 100 30C100 30 115 45 125 35C145 20 170 30 175 55C180 80 170 100 150 120C130 140 100 145 100 145Z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" />
+  </svg>
+);
+
+const BOOT_LOGS = [
+  "INITIALIZING SYCAMORE_OS_v6.5...",
+  "MAPPING_GEOFENCE_SHARDS [OK]",
+  "CALIBRATING_M_CONSTANT_BASE [1.42]",
+  "SYNCING_L3_INDUSTRIAL_LEDGER...",
+  "ZK_PROOF_ENGINE_BOOT [SUCCESS]",
+  "ESTABLISHING_ORACLE_HANDSHAKE...",
+  "SEHTI_THRUST_ALIGNED",
+  "NODE_SYNC_FINALIZED"
+];
+
+const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [currentLog, setCurrentLog] = useState(0);
+
+  useEffect(() => {
+    const logInterval = setInterval(() => {
+      setCurrentLog(prev => (prev < BOOT_LOGS.length - 1 ? prev + 1 : prev));
+    }, 400);
+
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(progressInterval);
+          setTimeout(onComplete, 500);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, 30);
+
+    return () => {
+      clearInterval(logInterval);
+      clearInterval(progressInterval);
+    };
+  }, [onComplete]);
+
+  return (
+    <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center space-y-12 overflow-hidden">
+      {/* Scanline Overlay */}
+      <div className="absolute inset-0 pointer-events-none z-10 opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
+      
+      <div className="relative group">
+        <div className="w-48 h-48 rounded-[48px] bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center shadow-[0_0_80px_rgba(16,185,129,0.2)] animate-pulse relative z-20">
+          <SycamoreLogo size={100} className="text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.8)]" />
+        </div>
+        <div className="absolute inset-[-20px] border-2 border-dashed border-emerald-500/20 rounded-[64px] animate-spin-slow"></div>
+      </div>
+
+      <div className="w-full max-w-md space-y-6 relative z-20">
+        <div className="h-1 bg-white/5 rounded-full overflow-hidden p-px">
+          <div 
+            className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+           <p className="text-[10px] font-mono font-black text-emerald-400/80 uppercase tracking-[0.6em] animate-pulse">
+              {BOOT_LOGS[currentLog]}
+           </p>
+           <p className="text-[8px] font-mono text-slate-700 font-bold uppercase tracking-widest">
+              SECURE_BOOT // KERNEL_SYNC: {progress}%
+           </p>
+        </div>
+      </div>
+
+      <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-30">
+        <h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1>
+        <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Planetary Regeneration Grid</p>
+      </div>
+    </div>
+  );
+};
 
 const GUEST_STWD: User = {
-  name: 'Local Steward',
-  email: 'guest@local.node',
-  esin: 'EA-GUEST-NODE-0000',
-  mnemonic: 'local development node only no recovery required',
+  name: 'GUEST STEWARD',
+  email: 'guest@envirosagro.org',
+  esin: 'EA-GUEST-VOID-NODE',
+  mnemonic: 'none',
   regDate: new Date().toLocaleDateString(),
-  role: 'Explorer / Viewer',
-  location: 'Localhost Node',
+  role: 'OBSERVER',
+  location: 'GLOBAL MESH NODE',
   wallet: {
-    balance: 500,
+    balance: 0,
     eatBalance: 0,
-    exchangeRate: 600,
+    exchangeRate: 1.0,
     bonusBalance: 0,
     tier: 'Seed',
     lifetimeEarned: 0,
     linkedProviders: [],
-    miningStreak: 1,
+    miningStreak: 0,
     lastSyncDate: new Date().toISOString().split('T')[0],
     pendingSocialHarvest: 0,
     stakedEat: 0
   },
   metrics: {
-    agriculturalCodeU: 1.0,
-    timeConstantTau: 8.5,
-    sustainabilityScore: 50,
-    socialImmunity: 60,
+    agriculturalCodeU: 0,
+    timeConstantTau: 0,
+    sustainabilityScore: 0,
+    socialImmunity: 0,
     viralLoadSID: 0,
-    baselineM: 8.5
+    baselineM: 0
   },
-  skills: { 'General': 10 },
+  skills: {},
   isReadyForHire: false
 };
 
@@ -110,6 +188,7 @@ const REGISTRY_NODES = [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard },
       { id: 'network_signals', name: 'Signal Terminal', icon: SignalIcon },
       { id: 'network', name: 'Network Topology', icon: NetworkIcon },
+      { id: 'sitemap', name: 'Network Sitemap', icon: MapIcon },
       { id: 'farm_os', name: 'Farm OS', icon: Binary },
       { id: 'impact', name: 'Network Impact', icon: TrendingUp },
       { id: 'sustainability', name: 'Sustainability Shard', icon: Leaf },
@@ -143,14 +222,6 @@ const REGISTRY_NODES = [
     ]
   },
   {
-    category: 'Information & Shards',
-    items: [
-      { id: 'media_ledger', name: 'Media Ledger', icon: FileStack },
-      { id: 'media', name: 'Media Hub', icon: Tv },
-      { id: 'channelling', name: 'Channelling Hub', icon: Share2 }
-    ]
-  },
-  {
     category: 'Natural Resources',
     items: [
       { id: 'animal_world', name: 'Animal World', icon: PawPrint },
@@ -161,646 +232,401 @@ const REGISTRY_NODES = [
     ]
   },
   {
-    category: 'Mission & Capital',
-    items: [
-      { id: 'contract_farming', name: 'Contract Farming', icon: Handshake },
-      { id: 'investor', name: 'Vetting Registry', icon: Landmark },
-      { id: 'agrowild', name: 'Agrowild Portal', icon: PawPrint }
-    ]
-  },
-  {
-    category: 'Innovation Hub',
+    category: 'Innovation & Shards',
     items: [
       { id: 'agrolang', name: 'AgroLang IDE', icon: Code2 },
       { id: 'research', name: 'Invention Ledger', icon: Zap },
       { id: 'biotech_hub', name: 'Genetic Decoder', icon: Dna },
       { id: 'permaculture_hub', name: 'Design Resilience', icon: Compass },
-      { id: 'cea_portal', name: 'Controlled Enviro', icon: BoxSelect }
+      { id: 'cea_portal', name: 'Controlled Enviro', icon: BoxSelect },
+      { id: 'media_ledger', name: 'Media Ledger', icon: FileStack },
+      { id: 'media', name: 'Media Hub', icon: Tv },
+      { id: 'channelling', name: 'Channelling Hub', icon: Share2 }
     ]
   },
   {
-    category: 'Governance & Infrastructure',
+    category: 'Governance & Heritage',
     items: [
+      { id: 'community', name: 'Social Registry', icon: Users },
+      { id: 'info', name: 'Info Portal', icon: Info },
+      { id: 'intranet', name: 'HQ Portal', icon: Landmark },
+      { id: 'emergency_portal', name: 'Emergency Hub', icon: Siren },
+      { id: 'profile', name: 'Identity Dossier', icon: UserIcon },
       { id: 'registry_handshake', name: 'Registry Handshake', icon: QrCode },
       { id: 'vendor', name: 'Supplier Command', icon: Warehouse },
       { id: 'ingest', name: 'Network Ingest', icon: Cable },
-      { id: 'emergency_portal', name: 'Crisis Command', icon: Siren },
-      { id: 'agro_regency', name: 'Agro Regency', icon: Infinity },
-      { id: 'intranet', name: 'Audit Center', icon: ShieldCheck },
-      { id: 'envirosagro_store', name: 'Proprietary Store', icon: Store }
+      { id: 'agro_regency', name: 'Agro Regency', icon: History }
     ]
   },
   {
-    category: 'Heritage & Community',
+    category: 'Stores',
     items: [
-      { id: 'profile', name: 'Identity Dossier', icon: UserIcon },
-      { id: 'community', name: 'Heritage Hub', icon: Users },
-      { id: 'info', name: 'Portal Info', icon: Info }
+      { id: 'envirosagro_store', name: 'EnvirosAgro Store', icon: Store }
     ]
   }
 ];
 
 const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(true);
-  const [user, setUser] = useState<User>(GUEST_STWD);
-  const [isGuest, setIsGuest] = useState(true);
-  const [activeView, setActiveView] = useState<ViewState>('dashboard');
+  const [view, setView] = useState<ViewState>('dashboard');
+  const [user, setUser] = useState<User | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isVoiceBridgeOpen, setIsVoiceBridgeOpen] = useState(false);
-  const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
-  const [isCloudSynced, setIsCloudSynced] = useState(false);
-  const [showLoginOverlay, setShowLoginOverlay] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'Command & Strategy': true
-  });
-  const [notifications, setNotifications] = useState<NotificationShard[]>([]);
-  const [pendingShellCode, setPendingShellCode] = useState<string | null>(null);
-
-  // BLOCKCHAIN & NETWORK
-  const [blockchain, setBlockchain] = useState<AgroBlock[]>([]);
-  const [mempool, setMempool] = useState<AgroTransaction[]>([]);
-  const [isMining, setIsMining] = useState(false);
-  const [globalEchoes, setGlobalEchoes] = useState<any[]>([]);
-
-  // REGISTRY ENTITIES
-  const [transactions, setTransactions] = useState<AgroTransaction[]>([]);
+  
+  // App-wide data states
+  const [projects, setProjects] = useState<AgroProject[]>([]);
+  const [contracts, setContracts] = useState<FarmingContract[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
   const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
   const [industrialUnits, setIndustrialUnits] = useState<RegisteredUnit[]>([]);
-  const [contracts, setContracts] = useState<FarmingContract[]>([]);
-  const [projects, setProjects] = useState<AgroProject[]>([]);
-  const [networkSignals, setNetworkSignals] = useState<SignalShard[]>([]);
+  const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
+  const [blockchain, setBlockchain] = useState<AgroBlock[]>([]);
+  const [transactions, setTransactions] = useState<AgroTransaction[]>([]);
+  const [notifications, setNotifications] = useState<NotificationShard[]>([]);
   const [mediaShards, setMediaShards] = useState<MediaShard[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [signals, setSignals] = useState<SignalShard[]>([]);
+  
+  const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
+  const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<any | null>(null);
+  const [osInitialCode, setOsInitialCode] = useState<string | null>(null);
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+  // SCROLL MANAGEMENT
+  const mainContentRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [showZenithButton, setShowZenithButton] = useState(false);
 
-  const notify = useCallback((type: NotificationType, title: string, message: string, duration = 5000, actionLabel?: string, actionIcon?: any, meta?: any) => {
-    const id = `SHARD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    const newNotif: NotificationShard = { id, type, title, message, duration, actionLabel, actionIcon, meta };
-    
-    setNotifications(prev => [newNotif, ...prev]);
-
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, duration);
-  }, []);
-
+  // Reset scroll on view change
   useEffect(() => {
-    const unsubAuth = onAuthStateChanged(auth, async (firebaseUser: any) => {
-      if (firebaseUser) {
-        const profile = await getStewardProfile(firebaseUser.uid);
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [view]);
+
+  // Track scroll for progress bar and zenith button
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const progress = (target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100;
+    setScrollProgress(progress);
+    setShowZenithButton(target.scrollTop > 400);
+  };
+
+  const scrollToTop = () => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Synchronize authentication status with Firebase
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        const profile = await getStewardProfile(fbUser.uid);
         if (profile) {
           setUser(profile);
-          setIsGuest(false);
-          setIsCloudSynced(true);
-          notify('success', 'REGISTRY_SYNC', 'Node identification anchored to HQ cluster.');
         }
       } else {
-        const saved = localStorage.getItem('agro_steward');
-        if (saved) {
-           const parsed = JSON.parse(saved);
-           setUser(parsed);
-           setIsGuest(parsed.esin.startsWith('EA-GUEST'));
-        }
+        setUser(null);
       }
-      setIsBooting(false);
     });
-    return () => unsubAuth();
-  }, [notify]);
+    return () => unsubscribe();
+  }, []);
 
+  // Registry data synchronization listeners
   useEffect(() => {
-    if (isGuest || !auth.currentUser) return;
-    const unsubs = [
-      listenToCollection('transactions', (items) => setTransactions(items as AgroTransaction[])),
-      listenToCollection('orders', (items) => setOrders(items as Order[])),
-      listenToCollection('projects', (items) => setProjects(items as AgroProject[])),
-      listenToCollection('contracts', (items) => setContracts(items as FarmingContract[])),
-      listenToCollection('live_products', (items) => setLiveProducts(items as LiveAgroProduct[])),
-      listenToCollection('products', (items) => setVendorProducts(items as VendorProduct[])),
-      listenToCollection('signals', (items) => setNetworkSignals(items as SignalShard[])),
-      listenToCollection('media_shards', (items) => setMediaShards(items as MediaShard[])),
-      listenToCollection('tasks', (items) => setTasks(items as any[])),
-      listenToCollection('industrial_units', (items) => setIndustrialUnits(items as RegisteredUnit[])),
-      listenForGlobalEchoes(setGlobalEchoes)
-    ];
-    return () => unsubs.forEach(u => u());
-  }, [isGuest]);
+    const unsubProjects = listenToCollection('projects', (data) => setProjects(data));
+    const unsubContracts = listenToCollection('contracts', (data) => setContracts(data));
+    const unsubOrders = listenToCollection('orders', (data) => setOrders(data));
+    const unsubProducts = listenToCollection('products', (data) => setVendorProducts(data));
+    const unsubUnits = listenToCollection('industrial_units', (data) => setIndustrialUnits(data));
+    const unsubLive = listenToCollection('live_products', (data) => setLiveProducts(data));
+    const unsubTx = listenToCollection('transactions', (data) => setTransactions(data));
+    const unsubSignals = listenToCollection('signals', (data) => setSignals(data));
 
-  const addPulse = useCallback((msg: string) => {
-    if (!isGuest && user) broadcastPulse(user.esin, msg);
-  }, [isGuest, user]);
-
-  const commitToBlockchain = useCallback(async (txs: AgroTransaction[]) => {
-    setIsMining(true);
-    const lastBlock = blockchain[0] || await createGenesisBlock();
-    const validator = VALIDATORS[Math.floor(Math.random() * VALIDATORS.length)];
-    await new Promise(r => setTimeout(r, 2000));
-    const newBlock = await mineBlock(lastBlock, txs, validator);
-    setBlockchain(prev => [newBlock, ...prev]);
-    setIsMining(false);
-    addPulse(`Registry block ${newBlock.hash.substring(0, 8)} finalized by ${validator}`);
-    notify('success', 'BLOCK_FINALIZED', `Shard commit successful. Block hash: ${newBlock.hash.substring(0, 12)}...`);
-  }, [blockchain, addPulse, notify]);
-
-  const pushToMempool = useCallback((tx: AgroTransaction) => {
-    setMempool(prev => {
-        const updated = [...prev, tx];
-        if (updated.length >= 3) {
-            commitToBlockchain(updated);
-            return [];
-        }
-        return updated;
-    });
-  }, [commitToBlockchain]);
-
-  const handleUpdateUser = useCallback(async (updatedUser: User) => {
-    const m = updatedUser.metrics.timeConstantTau;
-    updatedUser.wallet.exchangeRate = BASE_EXCHANGE_RATE * (1 + (PENALTY_FACTOR / m));
-    setUser(updatedUser);
-    localStorage.setItem('agro_steward', JSON.stringify(updatedUser));
-    if (!isGuest) await syncUserToCloud(updatedUser);
-  }, [isGuest]);
-
-  const anchorTransaction = useCallback(async (tx: Partial<AgroTransaction>) => {
-    const newTx: AgroTransaction = {
-      id: tx.id || `TX-${Math.random().toString(36).substring(7).toUpperCase()}`,
-      type: tx.type || 'Transfer',
-      farmId: tx.farmId || 'NODE-CORE',
-      details: tx.details || 'Standard Registry Entry',
-      value: tx.value || 0,
-      unit: tx.unit || 'EAC'
+    return () => {
+      unsubProjects();
+      unsubContracts();
+      unsubOrders();
+      unsubProducts();
+      unsubUnits();
+      unsubLive();
+      unsubTx();
+      unsubSignals();
     };
-    if (!isGuest) await saveCollectionItem('transactions', newTx);
-    pushToMempool(newTx);
-    return newTx;
-  }, [isGuest, pushToMempool]);
+  }, [user]);
 
-  const earnEAC = useCallback(async (baseAmount: number, reason: string) => {
-    if (!user) return;
-    const multiplier = user.metrics.timeConstantTau / 8.5; 
-    const finalAmount = Math.ceil(baseAmount * multiplier);
-    await anchorTransaction({ type: 'Reward', details: reason, value: finalAmount, unit: 'EAC' });
-    handleUpdateUser({ 
-      ...user, 
-      wallet: { 
-        ...user.wallet, 
-        balance: user.wallet.balance + finalAmount, 
-        lifetimeEarned: user.wallet.lifetimeEarned + finalAmount 
-      } 
-    });
-    addPulse(`Registry reward: +${finalAmount} EAC - ${reason}`);
-    notify('success', 'REWARD_MINTED', `+${finalAmount} EAC sharded to treasury: ${reason}`);
-  }, [user, handleUpdateUser, anchorTransaction, addPulse, notify]);
+  const notify = (type: NotificationType, title: string, message: string) => {
+    const id = Math.random().toString(36).substring(7);
+    setNotifications(prev => [{ id, type, title, message, duration: 5000 }, ...prev]);
+  };
 
-  const spendEAC = async (amount: number, reason: string) => {
+  const handleSpendEAC = async (amount: number, reason: string): Promise<boolean> => {
+    if (!user) {
+      notify('warning', 'AUTH_REQUIRED', "You must anchor a steward node to execute industrial spends.");
+      setView('auth');
+      return false;
+    }
     if (user.wallet.balance < amount) {
-      notify('error', 'LIQUIDITY_VOID', 'Insufficient EAC for registry commitment.');
+      notify('error', 'INSUFFICIENT_FUNDS', `You need ${amount} EAC for ${reason}.`);
       return false;
     }
-    await anchorTransaction({ type: 'Burn', details: reason, value: -amount, unit: 'EAC' });
-    handleUpdateUser({ ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } });
-    notify('info', 'CAPITAL_ANCHORED', `${amount} EAC committed to: ${reason}`);
-    return true;
-  };
-
-  const swapEACforEAT = async (eatAmount: number) => {
-    const cost = eatAmount * user.wallet.exchangeRate;
-    if (user.wallet.balance < cost) {
-      notify('error', 'LIQUIDITY_VOID', 'Insufficient EAC for equity conversion.');
-      return false;
-    }
-    handleUpdateUser({ 
-      ...user, 
-      wallet: { 
-        ...user.wallet, 
-        balance: user.wallet.balance - cost, 
-        eatBalance: user.wallet.eatBalance + eatAmount 
-      } 
-    });
-    await anchorTransaction({ type: 'NodeSwap', details: 'EAC to EAT conversion', value: eatAmount, unit: 'EAT' });
-    notify('success', 'EQUITY_ANCHORED', `Converted EAC to ${eatAmount.toFixed(4)} EAT gold shards.`);
-    return true;
-  };
-
-  const handleLogout = () => {
-    signOutSteward();
-    localStorage.removeItem('agro_steward');
-    setUser(GUEST_STWD);
-    setIsGuest(true);
-    setIsCloudSynced(false);
-    setActiveView('dashboard');
-    notify('info', 'SESSION_TERMINATED', 'Node disconnected from HQ cluster.');
-  };
-
-  const handlePlaceOrder = async (orderData: Partial<Order>) => {
-    const newOrder: Order = {
-      id: `ORD-${Math.random().toString(36).substring(7).toUpperCase()}`,
-      itemId: orderData.itemId || 'unknown',
-      itemName: orderData.itemName || 'Asset Shard',
-      itemType: orderData.itemType || 'Product',
-      itemImage: orderData.itemImage,
-      cost: orderData.cost || 0,
-      status: 'ORD_PLACED',
-      supplierEsin: orderData.supplierEsin || 'EA-ORG-CORE',
-      customerEsin: user.esin,
-      timestamp: new Date().toISOString(),
-      trackingHash: `0x${Math.random().toString(16).substring(2, 10).toUpperCase()}`,
-      isReceiptIssued: true,
-      isPrnSigned: false,
-      sourceTab: orderData.sourceTab || 'market'
+    
+    const updatedUser = {
+      ...user,
+      wallet: {
+        ...user.wallet,
+        balance: user.wallet.balance - amount
+      }
     };
-    if (!isGuest) await saveCollectionItem('orders', newOrder);
-    await spendEAC(newOrder.cost, `PROCURING_${newOrder.itemName}`);
-    addPulse(`Procurement Handshake: ${newOrder.itemName}`);
-    notify('success', 'PROCUREMENT_START', `Initialized order for ${newOrder.itemName}. Tracking: ${newOrder.id}`);
+    
+    setUser(updatedUser);
+    await syncUserToCloud(updatedUser);
+    
+    const newTx: AgroTransaction = {
+      id: `TX-${Date.now()}`,
+      type: 'Transfer',
+      farmId: user.esin,
+      details: reason,
+      value: -amount,
+      unit: 'EAC'
+    };
+    
+    setTransactions(prev => [newTx, ...prev]);
+    saveCollectionItem('transactions', newTx);
+    return true;
   };
 
-  const handleUpdateOrderStatus = useCallback(async (orderId: string, status: OrderStatus, meta?: any) => {
-    const o = orders.find(ord => ord.id === orderId);
-    if (o) {
-       const updated = { ...o, status, ...meta };
-       if (!isGuest) await saveCollectionItem('orders', updated);
-       notify('info', 'LIFECYCLE_UPDATE', `Order ${orderId} promoted to ${status.replace(/_/g, ' ')}.`);
-    }
-  }, [isGuest, orders, notify]);
-
-  const handleRegisterProduct = useCallback(async (product: VendorProduct) => {
-    if (!isGuest) await saveCollectionItem('products', product);
-    addPulse(`New asset registered: ${product.name}`);
-    notify('success', 'ASSET_ANCHORED', `Provisioned ${product.name} to the global cloud catalogue.`);
-  }, [isGuest, addPulse, notify]);
-
-  const handleSaveProject = useCallback(async (project: AgroProject) => {
-    if (!isGuest) await saveCollectionItem('projects', project);
-    setProjects(prev => {
-      const idx = prev.findIndex(p => p.id === project.id);
-      if (idx > -1) {
-        const next = [...prev];
-        next[idx] = project;
-        return next;
+  const handleEarnEAC = (amount: number, reason: string) => {
+    if (!user) return;
+    const updatedUser = {
+      ...user,
+      wallet: {
+        ...user.wallet,
+        balance: user.wallet.balance + amount,
+        lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount
       }
-      return [project, ...prev];
-    });
-  }, [isGuest]);
-
-  const handleSaveLiveProduct = useCallback(async (product: LiveAgroProduct) => {
-    if (!isGuest) await saveCollectionItem('live_products', product);
-    setLiveProducts(prev => {
-      const idx = prev.findIndex(p => p.id === product.id);
-      if (idx > -1) {
-        const next = [...prev];
-        next[idx] = product;
-        return next;
-      }
-      return [product, ...prev];
-    });
-  }, [isGuest]);
-
-  const handleSaveTask = useCallback(async (task: any) => {
-    if (!isGuest) await saveCollectionItem('tasks', task);
-    setTasks(prev => {
-      const idx = prev.findIndex(t => t.id === task.id);
-      if (idx > -1) {
-        const next = [...prev];
-        next[idx] = task;
-        return next;
-      }
-      return [task, ...prev];
-    });
-  }, [isGuest]);
-
-  const handleSaveContract = useCallback(async (contract: FarmingContract) => {
-    if (!isGuest) await saveCollectionItem('contracts', contract);
-    setContracts(prev => {
-      const idx = prev.findIndex(c => c.id === contract.id);
-      if (idx > -1) {
-        const next = [...prev];
-        next[idx] = contract;
-        return next;
-      }
-      return [contract, ...prev];
-    });
-  }, [isGuest]);
-
-  const handleNavigate = (newView: ViewState) => {
-    setActiveView(newView);
-    setIsMobileMenuOpen(false);
-    const group = REGISTRY_NODES.find(g => g.items.some(i => i.id === newView));
-    if (group) setExpandedGroups(prev => ({ ...prev, [group.category]: true }));
+    };
+    setUser(updatedUser);
+    syncUserToCloud(updatedUser);
+    
+    const newTx: AgroTransaction = {
+      id: `TX-${Date.now()}`,
+      type: 'Reward',
+      farmId: user.esin,
+      details: reason,
+      value: amount,
+      unit: 'EAC'
+    };
+    setTransactions(prev => [newTx, ...prev]);
+    saveCollectionItem('transactions', newTx);
   };
 
-  const handleExecuteToShell = (code: string) => {
-    setPendingShellCode(code);
-    setActiveView('farm_os');
+  const handleLogout = async () => {
+    await signOutSteward();
+    setUser(null);
+    setView('dashboard');
   };
 
-  const toggleGroup = (category: string) => {
-    setExpandedGroups(prev => ({ ...prev, [category]: !prev[category] }));
+  const navigate = (v: ViewState, action: string | null = null) => {
+    setView(v);
   };
 
-  const SidebarContent = ({ forceLabel = false }: { forceLabel?: boolean }) => (
-    <>
-      <div className="p-4 md:p-8 flex items-center justify-between border-b border-white/5 bg-black/40">
-        <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => handleNavigate('dashboard')}>
-          <Layers className="text-emerald-500 w-8 h-8 shrink-0" />
-          {(isSidebarOpen || forceLabel) && (
-             <div className="animate-in fade-in slide-in-from-left-2 duration-500">
-                <span className="text-xl md:text-2xl font-black uppercase tracking-tighter italic">Enviros<span className="text-emerald-400">Agro</span></span>
-                <span className="text-[7px] font-black tracking-[0.6em] text-slate-500 uppercase ml-0.5 block">Industrial OS</span>
-             </div>
-          )}
-        </div>
-        {isMobile && <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400"><X size={24} /></button>}
-      </div>
+  const handleUpdateOrderStatus = (orderId: string, status: Order['status'], meta?: any) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status, ...meta } : o));
+    saveCollectionItem('orders', { id: orderId, status, ...meta });
+  };
 
-      {/* Profile Shortcut in Sidebar */}
-      <div className="px-4 mt-6">
-        <button 
-          onClick={() => handleNavigate('profile')}
-          className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all ${activeView === 'profile' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/5'}`}
-        >
-          <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-black border border-white/10 shrink-0 shadow-lg overflow-hidden">
-             {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name[0]}
-          </div>
-          {(isSidebarOpen || forceLabel) && (
-            <div className="text-left overflow-hidden">
-              <p className="text-[10px] font-black uppercase truncate">{user.name}</p>
-              <p className="text-[8px] text-slate-500 uppercase tracking-widest">{user.esin.substring(0, 12)}...</p>
-            </div>
-          )}
-        </button>
-      </div>
-
-      <div className="flex-1 mt-6 space-y-4 px-2 md:px-4 overflow-y-auto custom-scrollbar pb-10">
-        {REGISTRY_NODES.map((group, idx) => {
-          const isExpanded = expandedGroups[group.category];
-          const hasActiveInGroup = group.items.some(item => item.id === activeView);
-          return (
-            <div key={idx} className="space-y-1">
-               {(isSidebarOpen || forceLabel) ? (
-                 <button onClick={() => toggleGroup(group.category)} className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/[0.04] transition-all group/header">
-                    <h5 className={`text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] ${isExpanded || hasActiveInGroup ? 'text-emerald-400' : 'text-slate-300'}`}>{group.category}</h5>
-                    <ChevronDown size={10} className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                 </button>
-               ) : <div className="h-px bg-white/5 mx-4 my-4" />}
-               <div className={`space-y-1 overflow-hidden transition-all duration-500 ${isExpanded || !isSidebarOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                 {group.items.map((item) => (
-                   <button key={item.id} onClick={() => handleNavigate(item.id as ViewState)} className={`w-full flex items-center gap-3 md:gap-4 p-2.5 md:p-3 rounded-xl md:rounded-2xl transition-all ${activeView === item.id ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/[0.04]'}`}>
-                     <item.icon className={`w-4 h-4 shrink-0 ${activeView === item.id ? 'text-white' : 'text-slate-400'}`} />
-                     {(isSidebarOpen || forceLabel) && <span className="font-black text-[8px] md:text-[9px] uppercase tracking-[0.2em] truncate">{item.name}</span>}
-                   </button>
-                 ))}
-               </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="p-4 md:p-6 border-t border-white/5 space-y-4 bg-black/20">
-        <button onClick={() => { setIsVoiceBridgeOpen(true); if(isMobile) setIsMobileMenuOpen(false); }} className="w-full flex items-center justify-center gap-3 p-4 md:p-5 agro-gradient rounded-xl md:rounded-2xl text-white font-black text-[9px] md:text-[10px] uppercase tracking-[0.3em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-          <Mic size={16} /> {(isSidebarOpen || forceLabel) && <span>ORACLE VOICE</span>}
-        </button>
-      </div>
-    </>
-  );
-
-  const unreadCount = useMemo(() => networkSignals.filter(s => !s.read).length, [networkSignals]);
-
-  if (isBooting) return (
-    <div className="fixed inset-0 z-[500] bg-[#050706] flex flex-col items-center justify-center">
-      <Layers className="w-20 h-20 text-emerald-500 animate-float mb-8" />
-      <h1 className="text-3xl font-black text-white uppercase tracking-tighter italic">ENVIROS<span className="text-emerald-400">AGRO OS</span></h1>
-      <div className="w-48 h-1 bg-white/5 rounded-full mt-6 overflow-hidden"><div className="h-full bg-emerald-500 animate-boot-progress"></div></div>
-    </div>
-  );
+  const handleRegisterProduct = (product: VendorProduct) => {
+    setVendorProducts(prev => [product, ...prev]);
+    saveCollectionItem('products', product);
+  };
 
   const renderView = () => {
-    switch (activeView) {
-      case 'dashboard': return <Dashboard user={user} isGuest={isGuest} onNavigate={handleNavigate} orders={orders} blockchain={blockchain} isMining={isMining} />;
-      case 'network_signals': return <SignalCenter user={user} signals={networkSignals} setSignals={setNetworkSignals} onNavigate={handleNavigate} />;
+    const currentUser = user || GUEST_STWD;
+    const isGuest = !user;
+
+    switch (view) {
+      case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;
+      case 'dashboard': return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
+      case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
+      case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={notify} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={setUser!} />;
+      case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={setUser!} onSwap={async (eat) => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={notify} transactions={transactions} />;
+      case 'intelligence': return <Intelligence user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onOpenEvidence={() => setIsEvidenceOpen(true)} />;
+      case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
+      case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} />;
+      case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onUpdateUser={setUser!} onNavigate={navigate} />;
+      case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} notify={notify} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} />;
+      case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={setUser!} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={notify} onLogin={() => setView('auth')} onLogout={handleLogout} />;
+      case 'channelling': return <Channelling user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
+      case 'media': return <MediaHub user={currentUser} userBalance={currentUser.wallet.balance} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
+      case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} />;
+      case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} liveProducts={liveProducts} onNavigate={navigate} />;
+      case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} />;
+      case 'tools': return <ToolsSection user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onOpenEvidence={(t) => { setActiveTaskForEvidence(t); setIsEvidenceOpen(true); }} tasks={[]} onSaveTask={() => {}} notify={notify} />;
+      case 'research': return <ResearchInnovation user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
+      case 'live_farming': return <LiveFarming user={currentUser} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={handleEarnEAC} onSaveProduct={(p) => saveCollectionItem('live_products', p)} onNavigate={navigate} notify={notify} />;
+      case 'contract_farming': return <ContractFarming user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} contracts={contracts} setContracts={setContracts} onSaveContract={(c) => saveCollectionItem('contracts', c)} />;
+      case 'agrowild': return <Agrowild user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onPlaceOrder={(o) => saveCollectionItem('orders', o)} vendorProducts={vendorProducts} />;
+      case 'impact': return <Impact user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
+      case 'animal_world': return <NaturalResources user={currentUser} type="animal_world" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'plants_world': return <NaturalResources user={currentUser} type="plants_world" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'aqua_portal': return <NaturalResources user={currentUser} type="aqua_portal" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'soil_portal': return <NaturalResources user={currentUser} type="soil_portal" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'air_portal': return <NaturalResources user={currentUser} type="air_portal" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'intranet': return <IntranetPortal user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'cea_portal': return <CEA user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
+      case 'biotech_hub': return <Biotechnology user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'permaculture_hub': return <Permaculture user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'emergency_portal': return <EmergencyPortal user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
+      case 'agro_regency': return <AgroRegency user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
+      case 'code_of_laws': return <CodeOfLaws user={currentUser} />;
+      case 'agro_calendar': return <AgroCalendar user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
+      case 'chroma_system': return <ChromaSystem user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
+      case 'envirosagro_store': return <EnvirosAgroStore user={currentUser} onSpendEAC={handleSpendEAC} onPlaceOrder={(o) => saveCollectionItem('orders', o)} />;
+      case 'agro_value_enhancement': return <AgroValueEnhancement user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} liveProducts={liveProducts} orders={orders} onNavigate={navigate} />;
+      case 'digital_mrv': return <DigitalMRV user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={setUser!} onNavigate={navigate} />;
+      case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
+      case 'online_garden': return <OnlineGarden user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} notify={notify} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} />;
+      case 'farm_os': return <FarmOS user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialCode={osInitialCode} clearInitialCode={() => setOsInitialCode(null)} />;
+      case 'network_signals': return <SignalCenter user={currentUser} signals={signals} setSignals={setSignals} onNavigate={navigate} />;
       case 'network': return <NetworkView />;
-      case 'wallet': return <AgroWallet user={user} isGuest={isGuest} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} onSwap={swapEACforEAT} onEarnEAC={earnEAC} transactions={transactions} notify={notify} />;
-      case 'sustainability': return <Sustainability user={user} onNavigate={handleNavigate} onMintEAT={(v: number) => earnEAC(v, 'RESONANCE_IMPROVE')} />;
-      case 'economy': return <Economy user={user} isGuest={isGuest} onNavigate={handleNavigate} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onPlaceOrder={handlePlaceOrder} projects={projects} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={handleUpdateUser} notify={notify} />;
-      case 'industrial': return <Industrial user={user} industrialUnits={industrialUnits} setIndustrialUnits={setIndustrialUnits} onSpendEAC={spendEAC} onNavigate={handleNavigate} collectives={[]} setCollectives={() => {}} onSaveProject={handleSaveProject} notify={notify} />;
-      case 'intelligence': return <Intelligence user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onOpenEvidence={() => setIsEvidenceModalOpen(true)} />;
-      case 'code_of_laws': return <CodeOfLaws user={user} />;
-      case 'chroma_system': return <ChromaSystem user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />;
-      case 'agro_calendar': return <AgroCalendar user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
-      case 'impact': return <Impact user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />;
-      case 'ecosystem': return <Ecosystem user={user} onDeposit={earnEAC} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />;
-      case 'profile': return <UserProfile user={user} isGuest={isGuest} onUpdate={handleUpdateUser} onLogout={handleLogout} signals={networkSignals} setSignals={setNetworkSignals} onLogin={u => { setUser(u); setIsGuest(false); setIsCloudSynced(true); }} onNavigate={handleNavigate} notify={notify} />;
-      case 'explorer': return <Explorer blockchain={blockchain} isMining={isMining} onPulse={addPulse} user={user} />;
-      case 'community': return <Community user={user} isGuest={isGuest} onContribution={(type, cat) => earnEAC(5, `CONTRIBUTION_${type.toUpperCase()}_${cat.toUpperCase()}`)} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />;
-      case 'live_farming': return <LiveFarming user={user} products={liveProducts} setProducts={() => {}} onEarnEAC={earnEAC} onSaveProduct={handleSaveLiveProduct} onNavigate={handleNavigate} notify={notify} />;
-      case 'tqm': return <TQMGrid user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} onNavigate={handleNavigate} liveProducts={liveProducts} notify={notify} />;
-      case 'crm': return <NexusCRM user={user} onSpendEAC={spendEAC} vendorProducts={vendorProducts} onNavigate={handleNavigate} orders={orders} />;
-      case 'circular': return <CircularGrid user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} onNavigate={handleNavigate} />;
-      case 'tools': return <ToolsSection user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} tasks={tasks} onSaveTask={handleSaveTask} onOpenEvidence={(task) => { setIsEvidenceModalOpen(true); }} notify={notify} />;
-      case 'contract_farming': return <ContractFarming user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} contracts={contracts} setContracts={() => {}} onSaveContract={handleSaveContract} />;
-      case 'investor': return <InvestorPortal user={user} onUpdate={handleUpdateUser} onSpendEAC={spendEAC} projects={projects} onNavigate={handleNavigate} />;
-      case 'agrowild': return <Agrowild user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onPlaceOrder={handlePlaceOrder} vendorProducts={vendorProducts} />;
-      case 'research': return <ResearchInnovation user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
-      case 'biotech_hub': return <Biotechnology user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      case 'permaculture_hub': return <Permaculture user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      case 'cea_portal': return <CEA user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
-      case 'emergency_portal': return <EmergencyPortal user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
-      case 'agro_regency': return <AgroRegency user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
-      case 'intranet': return <IntranetPortal user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      case 'envirosagro_store': return <EnvirosAgroStore user={user} onSpendEAC={spendEAC} onPlaceOrder={handlePlaceOrder} />;
-      case 'media': return <MediaHub user={user} userBalance={user.wallet.balance} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} />;
-      case 'channelling': return <Channelling user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} />;
-      case 'info': return <InfoPortal />;
-      case 'ingest': return <NetworkIngest user={user} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      case 'vendor': return <VendorPortal user={user} onSpendEAC={spendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} />;
-      case 'agro_value_enhancement': return <AgroValueEnhancement user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} liveProducts={liveProducts} orders={orders} />;
-      case 'digital_mrv': return <DigitalMRV user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} onUpdateUser={handleUpdateUser} />;
-      case 'registry_handshake': return <RegistryHandshake user={user} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} />;
-      case 'online_garden': return <OnlineGarden user={user} onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} onExecuteToShell={handleExecuteToShell} notify={notify} />;
-      case 'farm_os': return <FarmOS user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onNavigate={handleNavigate} initialCode={pendingShellCode} clearInitialCode={() => setPendingShellCode(null)} />;
-      case 'media_ledger': return <MediaLedger user={user} shards={mediaShards} />;
-      case 'split': return <div />;
-      case 'agrolang': return <AgroLang user={user} onSpendEAC={spendEAC} onEarnEAC={earnEAC} onExecuteToShell={handleExecuteToShell} />;
-      case 'animal_world': return <NaturalResources user={user} type="animal_world" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      case 'plants_world': return <NaturalResources user={user} type="plants_world" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      case 'aqua_portal': return <NaturalResources user={user} type="aqua_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      case 'soil_portal': return <NaturalResources user={user} type="soil_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      case 'air_portal': return <NaturalResources user={user} type="air_portal" onEarnEAC={earnEAC} onSpendEAC={spendEAC} onNavigate={handleNavigate} />;
-      default: return <Dashboard user={user} isGuest={isGuest} onNavigate={handleNavigate} blockchain={blockchain} orders={orders} />;
+      case 'media_ledger': return <MediaLedger user={currentUser} shards={mediaShards} />;
+      case 'agrolang': return <AgroLang user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} />;
+      case 'sitemap': return <Sitemap nodes={REGISTRY_NODES} onNavigate={navigate} />;
+      case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} />;
+      case 'ingest': return <NetworkIngest user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }
   };
 
+  if (isBooting) {
+    return <InitializationScreen onComplete={() => setIsBooting(false)} />;
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden bg-[#050706] text-slate-200">
-      <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-80' : 'w-24'} glass-card border-r border-white/5 flex flex-col z-50 transition-all duration-500 bg-black/60`}>
-        <SidebarContent />
+    <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000">
+      <aside className={`fixed top-0 left-0 bottom-0 z-[100] bg-black/80 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 overflow-y-auto custom-scrollbar ${isSidebarOpen ? 'w-80' : 'w-20'}`}>
+        <div className="p-8 flex items-center gap-4">
+           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0">
+              <SycamoreLogo size={32} className="text-black" />
+           </div>
+           {isSidebarOpen && (
+             <div className="animate-in fade-in slide-in-from-left-2">
+                <h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1>
+                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Core Node Registry</p>
+             </div>
+           )}
+        </div>
+
+        <nav className="px-4 py-8 space-y-10">
+           {REGISTRY_NODES.map((group) => {
+             const hasActiveItem = group.items.some(i => i.id === view);
+             return (
+               <div key={group.category} className="space-y-4">
+                  {isSidebarOpen && <p className={`px-4 text-[9px] font-black uppercase tracking-widest transition-colors ${hasActiveItem ? 'text-emerald-400' : 'text-slate-600'}`}>{group.category}</p>}
+                  <div className="space-y-1">
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setView(item.id as ViewState)}
+                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                      >
+                        <item.icon size={20} className={view === item.id ? 'text-white' : 'text-slate-500'} />
+                        {isSidebarOpen && <span className="text-xs font-bold uppercase tracking-widest">{item.name}</span>}
+                      </button>
+                    ))}
+                  </div>
+               </div>
+             );
+           })}
+        </nav>
+
+        {user && (
+          <div className="mt-auto p-8">
+             <button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all">
+                <LogOut size={20} />
+                {isSidebarOpen && <span className="text-xs font-bold uppercase tracking-widest">Terminate Session</span>}
+             </button>
+          </div>
+        )}
       </aside>
 
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] lg:hidden">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-[#050706] border-r border-white/10 flex flex-col animate-in slide-in-from-left duration-300">
-            <SidebarContent forceLabel />
-          </aside>
+      <main 
+        ref={mainContentRef}
+        onScroll={handleScroll}
+        className={`transition-all duration-500 pt-10 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'pl-96 pr-10' : 'pl-32 pr-10'}`}
+      >
+        {/* Navigation Progress Shard */}
+        <div className="fixed top-0 left-0 right-0 z-[200] h-1 pointer-events-none">
+          <div 
+            className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" 
+            style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}
+          ></div>
         </div>
-      )}
 
-      {/* ROBUST NOTIFICATION HUD */}
-      <div className="fixed top-20 right-4 md:right-8 z-[1000] flex flex-col gap-3 w-full max-w-[calc(100%-2rem)] md:max-w-sm pointer-events-none">
-        {notifications.map(n => (
-          <div key={n.id} className="pointer-events-auto animate-in slide-in-from-right-10 duration-500">
-             <div className={`glass-card p-4 md:p-6 rounded-[24px] md:rounded-[32px] border-2 shadow-3xl flex items-start gap-4 md:gap-5 relative overflow-hidden bg-black/95 ${
-               n.type === 'success' ? 'border-emerald-500/40' : 
-               n.type === 'error' ? 'border-rose-500/40' : 
-               n.type === 'warning' ? 'border-amber-500/40' : 
-               'border-indigo-500/40'
-             }`}>
-                <div className="absolute inset-0 opacity-[0.02] pointer-events-none overflow-hidden">
-                   <div className="w-full h-1 bg-white absolute top-0 animate-scan"></div>
-                </div>
-                <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl shrink-0 ${
-                   n.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 
-                   n.type === 'error' ? 'bg-rose-500/10 text-rose-500' : 
-                   n.type === 'warning' ? 'bg-amber-500/10 text-amber-500' : 
-                   'bg-indigo-500/10 text-indigo-400'
-                }`}>
-                   {n.type === 'success' ? <BadgeCheck size={20} /> : 
-                    n.type === 'error' ? <ShieldAlert size={20} /> : 
-                    n.type === 'warning' ? <AlertTriangle size={20} /> : 
-                    <Activity size={20} />}
-                </div>
-                <div className="flex-1 space-y-1 pr-4">
-                   <h5 className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">{n.title}</h5>
-                   <p className="text-xs md:text-sm font-medium text-white italic leading-relaxed">"{n.message}"</p>
-                   {n.actionLabel && (
-                     <div className="pt-2 animate-in fade-in duration-700">
-                        <button 
-                          onClick={() => {
-                            if (n.meta?.target) handleNavigate(n.meta.target);
-                            setNotifications(prev => prev.filter(item => item.id !== n.id));
-                          }}
-                          className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[8px] md:text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 shadow-xl pointer-events-auto"
-                        >
-                           {n.actionIcon ? <n.actionIcon size={10} /> : <FileText size={10} />}
-                           {n.actionLabel}
-                        </button>
+        <header className="flex justify-between items-center mb-10 sticky top-0 bg-[#050706]/80 backdrop-blur-md py-4 z-[150] px-4 -mx-4 border-b border-white/5">
+           <div className="flex items-center gap-6">
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">
+                 {isSidebarOpen ? <X size={20}/> : <Menu size={20}/>}
+              </button>
+              <div className="space-y-1">
+                 <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">{view.replace(/_/g, ' ')}</h2>
+                 <p className="text-[9px] text-slate-500 font-mono tracking-widest uppercase">NODE_SYNC_STATUS: {user ? 'CLOUD_ANCHORED' : 'GUEST_OBSERVER'}</p>
+              </div>
+           </div>
+
+           <div className="flex items-center gap-4">
+              {user && (
+                <button onClick={() => setView('wallet')} className="px-6 py-3 glass-card rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-3 hover:bg-emerald-500/10 transition-all group">
+                   <Coins size={16} className="text-emerald-400 group-hover:rotate-12 transition-transform" />
+                   <span className="text-sm font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)} <span className="text-xs text-emerald-600/60 font-sans italic">EAC</span></span>
+                </button>
+              )}
+              <button 
+                onClick={() => setView('profile')} 
+                className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}
+              >
+                 {user ? (
+                   <>
+                     <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-white/20">
+                        {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={16} className="text-slate-500" />}
                      </div>
-                   )}
-                   <p className="text-[7px] md:text-[8px] font-mono text-slate-700 font-bold uppercase mt-2">REF: 0x{n.id.split('-')[1] || n.id.substring(0,6)}</p>
-                </div>
-                <button 
-                  onClick={() => setNotifications(prev => prev.filter(item => item.id !== n.id))}
-                  className="absolute top-3 right-3 p-1.5 text-slate-700 hover:text-white transition-all pointer-events-auto"
-                >
-                   <X size={12} />
-                </button>
-                <div className="absolute bottom-0 left-0 h-0.5 md:h-1 bg-white/5 w-full">
-                   <div 
-                    className={`h-full transition-all duration-[5000ms] ease-linear ${
-                      n.type === 'success' ? 'bg-emerald-500' : 
-                      n.type === 'error' ? 'bg-rose-500' : 
-                      n.type === 'warning' ? 'bg-amber-500' : 
-                      'bg-indigo-500'
-                    }`}
-                    style={{ width: '0%', animation: 'shrink 5s linear forwards' }}
-                   ></div>
-                </div>
-             </div>
-          </div>
-        ))}
-      </div>
-
-      <main className="flex-1 overflow-y-auto relative flex flex-col">
-        <header className="flex justify-between items-center bg-black/60 backdrop-blur-xl z-40 py-2 px-4 md:px-8 border-b border-white/5 h-16 md:h-20 shrink-0">
-          <div className="flex items-center gap-4">
-            <button onClick={() => isMobile ? setIsMobileMenuOpen(true) : setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-emerald-500 border border-white/10 rounded-lg md:rounded-xl"><Menu size={18} /></button>
-            <h1 className="text-lg md:text-xl font-black tracking-tighter uppercase italic hidden sm:block">{activeView.replace(/_/g, ' ').toUpperCase()} SHARD</h1>
-          </div>
-          <div className="flex items-center gap-3 md:gap-4">
-             {unreadCount > 0 && (
-                <button 
-                  onClick={() => handleNavigate('network_signals')}
-                  className="p-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all relative"
-                  title="Signal Terminal"
-                >
-                   <SignalIcon size={18} />
-                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 rounded-full text-[8px] font-bold flex items-center justify-center border-2 border-[#050706] animate-pulse">
-                      {unreadCount}
-                   </span>
-                </button>
-             )}
-             {isCloudSynced ? (
-                <div className="flex items-center gap-4">
-                   <div className="flex flex-col items-end hidden sm:flex">
-                      <span className="text-10px font-black text-white uppercase tracking-widest">{user.name}</span>
-                      <span className="text-[8px] font-mono text-emerald-400 font-bold uppercase">{user.esin}</span>
-                   </div>
-                   <button 
-                    onClick={() => handleNavigate('profile')} 
-                    className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-black shadow-2xl transition-all border border-white/10 ring-4 ring-white/5 hover:scale-105 ${activeView === 'profile' ? 'bg-emerald-500 ring-emerald-500/40' : 'bg-slate-800 text-emerald-400'}`}
-                   >
-                      {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="Biometric" /> : user.name[0]}
-                   </button>
-                   <button onClick={handleLogout} className="p-3 bg-rose-600/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-600 hover:text-white transition-all shadow-xl" title="Disconnect Node">
-                      <LogOut size={18} />
-                   </button>
-                </div>
-             ) : (
-                <button 
-                  onClick={() => setShowLoginOverlay(true)}
-                  className="px-6 py-2.5 agro-gradient rounded-xl text-white font-black text-[10px] md:text-[11px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-white/10"
-                >
-                   <UserPlus size={16} /> Sync Node
-                </button>
-             )}
-          </div>
+                     <span className="text-[10px] font-black uppercase text-white hidden md:block">{user.name.split(' ')[0]}</span>
+                   </>
+                 ) : (
+                   <>
+                     <UserPlus size={18} className="text-emerald-400" />
+                     <span className="text-[10px] font-black uppercase text-emerald-400">Sync Steward</span>
+                   </>
+                 )}
+              </button>
+           </div>
         </header>
 
-        <div className="bg-emerald-500/5 border-y border-white/5 p-1.5 px-4 md:px-8 overflow-hidden shrink-0">
-           <div className="whitespace-nowrap animate-marquee text-[8px] md:text-[9px] font-mono text-emerald-400/80 uppercase tracking-widest">
-             {globalEchoes.map(e => `[${e.esin?.split('-')[1] || 'NODE'}] ${e.message}`).join(' • ')}
-           </div>
-        </div>
-
-        <div className="p-4 md:p-8 flex-1 max-w-[1920px] mx-auto w-full">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           {renderView()}
         </div>
+
+        {/* Zenith Return Button */}
+        {showZenithButton && (
+          <button 
+            onClick={scrollToTop}
+            className="fixed bottom-10 right-10 p-5 agro-gradient rounded-3xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border-2 border-white/20 animate-in fade-in zoom-in duration-300"
+            title="Return to Zenith"
+          >
+            <ArrowUp size={24} />
+          </button>
+        )}
       </main>
 
-      {showLoginOverlay && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-in fade-in" onClick={() => setShowLoginOverlay(false)}></div>
-           <div className="relative z-10 w-full max-xl animate-in zoom-in duration-300">
-              <button 
-                onClick={() => setShowLoginOverlay(false)}
-                className="absolute -top-12 right-0 p-3 text-slate-500 hover:text-white transition-all flex items-center gap-2 font-black text-xs uppercase tracking-widest"
-              >
-                 <X size={20} /> CLOSE_AUTH
-              </button>
-              <Login 
-                onLogin={(u) => { 
-                  setUser(u); 
-                  setIsGuest(false); 
-                  setIsCloudSynced(true);
-                  setShowLoginOverlay(false);
-                  handleNavigate('dashboard');
-                }} 
-                isEmbed
-              />
-           </div>
-        </div>
-      )}
-
-      <EvidenceModal isOpen={isEvidenceModalOpen} onClose={() => setIsEvidenceModalOpen(false)} user={user} onMinted={(v) => earnEAC(v, 'EVIDENCE_VERIFIED')} onNavigate={handleNavigate} />
-      <FloatingConsultant user={user} />
-      <LiveVoiceBridge isOpen={isVoiceBridgeOpen} isGuest={isGuest} onClose={() => setIsVoiceBridgeOpen(false)} />
-      
-      <style>{`
-        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
-        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
-      `}</style>
+      <EvidenceModal 
+        isOpen={isEvidenceOpen} 
+        onClose={() => setIsEvidenceOpen(false)} 
+        user={user || GUEST_STWD} 
+        onMinted={handleEarnEAC} 
+        onNavigate={navigate} 
+        taskToIngest={activeTaskForEvidence} 
+      />
+      <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />
+      <FloatingConsultant user={user || GUEST_STWD} />
     </div>
   );
 };
