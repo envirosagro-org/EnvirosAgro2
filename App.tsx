@@ -56,7 +56,6 @@ import MediaLedger from './components/MediaLedger';
 import AgroLang from './components/AgroLang';
 import SignalCenter from './components/SignalCenter';
 import Sitemap from './components/Sitemap';
-import VerificationHUD from './components/VerificationHUD';
 
 import { 
   syncUserToCloud, 
@@ -283,7 +282,6 @@ const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(true);
   const [view, setView] = useState<ViewState>('dashboard');
   const [user, setUser] = useState<User | null>(null);
-  const [isEmailVerified, setIsEmailVerified] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -333,17 +331,21 @@ const App: React.FC = () => {
   useEffect(() => {
     return onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
-        // Phone users are verified upon SMS handshake completion.
-        // Email users must click the dispatch link.
-        setIsEmailVerified(fbUser.emailVerified || fbUser.providerData?.some(p => p.providerId === 'phone'));
-        const profile = await getStewardProfile(fbUser.uid);
-        if (profile) setUser(profile);
+        // Enforce verification before allowing ingest into application state
+        const isVerified = fbUser.emailVerified || fbUser.providerData?.some(p => p.providerId === 'phone');
+        if (isVerified) {
+          const profile = await getStewardProfile(fbUser.uid);
+          if (profile) setUser(profile);
+        } else {
+          // Keep as null (which renders Login) until verification complete
+          setUser(null);
+          if (view !== 'auth') setView('auth');
+        }
       } else {
         setUser(null);
-        setIsEmailVerified(true);
       }
     });
-  }, []);
+  }, [view]);
 
   useEffect(() => {
     const unsubProjects = listenToCollection('projects', setProjects);
@@ -457,17 +459,6 @@ const App: React.FC = () => {
     const currentUser = user || GUEST_STWD;
     const isGuest = !user;
 
-    // Email/Phone verification gate for non-guest users
-    if (user && !isEmailVerified) {
-       return (
-         <VerificationHUD 
-           userEmail={user.email} 
-           onVerified={() => setIsEmailVerified(true)} 
-           onLogout={handleLogout} 
-         />
-       );
-    }
-
     switch (view) {
       case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;
       case 'dashboard': return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
@@ -532,7 +523,7 @@ const App: React.FC = () => {
       {/* Network Pulse Ticker */}
       <div className="fixed top-0 left-0 right-0 z-[1000] h-8 bg-black/60 backdrop-blur-xl border-b border-white/5 flex items-center overflow-hidden">
         <div className="flex items-center gap-2 px-4 border-r border-white/10 h-full shrink-0">
-          <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+          <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
           <span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">NETWORK_PULSE</span>
         </div>
         <div className="flex-1 px-4 overflow-hidden">
