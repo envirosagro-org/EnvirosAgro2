@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --transition-speed: 0.4s;
+}
+
+* {
+  transition: background-color var(--transition-speed), border-color var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #020403;
+  color: #e2e8f0;
+  overflow: hidden;
+}
+
+.glass-card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.agro-gradient {
+  background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+}
+
+.scanline {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.02) 50%);
+  background-size: 100% 4px;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.12;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: url('https://grainy-gradients.vercel.app/noise.svg');
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 10000;
+}
