@@ -57,6 +57,7 @@ import MediaLedger from './components/MediaLedger';
 import AgroLang from './components/AgroLang';
 import SignalCenter from './components/SignalCenter';
 import Sitemap from './components/Sitemap';
+import VerificationHUD from './components/VerificationHUD';
 
 import { 
   syncUserToCloud, 
@@ -68,7 +69,8 @@ import {
   saveCollectionItem,
   dispatchNetworkSignal,
   markPermanentAction,
-  listenToPulse
+  listenToPulse,
+  refreshAuthUser
 } from './services/firebaseService';
 
 export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => (
@@ -282,6 +284,7 @@ const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(true);
   const [view, setView] = useState<ViewState>('dashboard');
   const [user, setUser] = useState<User | null>(null);
+  const [isEmailVerified, setIsEmailVerified] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -331,10 +334,12 @@ const App: React.FC = () => {
   useEffect(() => {
     return onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
+        setIsEmailVerified(fbUser.emailVerified || fbUser.providerData?.[0]?.providerId === 'phone');
         const profile = await getStewardProfile(fbUser.uid);
         if (profile) setUser(profile);
       } else {
         setUser(null);
+        setIsEmailVerified(true);
       }
     });
   }, []);
@@ -450,6 +455,17 @@ const App: React.FC = () => {
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
     const isGuest = !user;
+
+    // Email/Phone verification gate for non-guest users
+    if (user && !isEmailVerified) {
+       return (
+         <VerificationHUD 
+           userEmail={user.email} 
+           onVerified={() => setIsEmailVerified(true)} 
+           onLogout={handleLogout} 
+         />
+       );
+    }
 
     switch (view) {
       case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;

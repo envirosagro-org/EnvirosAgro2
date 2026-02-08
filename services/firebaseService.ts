@@ -11,7 +11,9 @@ import {
   signInWithPopup,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  ConfirmationResult
+  ConfirmationResult,
+  sendEmailVerification,
+  reload
 } from "firebase/auth";
 import { 
   initializeFirestore,
@@ -87,6 +89,23 @@ export const signInWithGoogle = async () => signInWithPopup(auth, new GoogleAuth
 export const signOutSteward = () => fbSignOut(auth);
 export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
+// Email Verification
+export const sendVerificationShard = async () => {
+  if (auth.currentUser) {
+    await sendEmailVerification(auth.currentUser);
+    return true;
+  }
+  return false;
+};
+
+export const refreshAuthUser = async () => {
+  if (auth.currentUser) {
+    await reload(auth.currentUser);
+    return auth.currentUser;
+  }
+  return null;
+};
+
 export const transmitRecoveryCode = async (email: string) => {
   console.log(`Transmitting recovery code to ${email}`);
   return true;
@@ -103,7 +122,7 @@ export const setupRecaptcha = (containerId: string) => {
     (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
       'size': 'invisible',
       'callback': (response: any) => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
+        // reCAPTCHA solved
       }
     });
   }

@@ -39,7 +39,8 @@ import {
   verifyRecoveryShard,
   signInWithGoogle,
   setupRecaptcha,
-  requestPhoneCode
+  requestPhoneCode,
+  sendVerificationShard
 } from '../services/firebaseService';
 
 interface LoginProps {
@@ -138,6 +139,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
 
     const syncSuccess = await syncUserToCloud(newUser, uid);
     if (syncSuccess) {
+      // Trigger verification on new email profile
+      if (userEmail) {
+        try { await sendVerificationShard(); } catch(e) { console.warn("Verification auto-dispatch failed"); }
+      }
       onLogin(newUser);
     }
     return syncSuccess;
@@ -210,7 +215,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
       if (mode === 'register') {
         const userCredential = await createUserWithEmailAndPassword(null, email, password);
         await createStewardProfile(userCredential.user.uid, email, name);
-        setMessage({ type: 'success', text: "REGISTRY_CREATED: Node synchronized. Welcome to the mesh." });
+        setMessage({ type: 'success', text: "REGISTRY_CREATED: Node synchronized. Identity verification link sharded to email." });
       } else if (mode === 'login') {
         const userCredential = await signInWithEmailAndPassword(null, email, password);
         const profile = await getStewardProfile(userCredential.user.uid);
