@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, 
@@ -53,7 +54,8 @@ import {
   Gavel
 } from 'lucide-react';
 import { AgroBlock, User, AgroTransaction } from '../types';
-import { validateBlockSustainability, settleRegistryBatch, AIResponse } from '../services/geminiService';
+// Fix: Removed missing validateBlockSustainability import
+import { settleRegistryBatch, AIResponse } from '../services/geminiService';
 
 interface ExplorerProps {
   blockchain?: AgroBlock[];

@@ -1,0 +1,61 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- HELPER FUNCTIONS ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(stewardId) { return request.auth.uid == stewardId; }
+    function isAuditor() { return exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)); }
+    function isImmutable() { return request.resource.data == resource.data; }
+
+    // --- COLLECTION RULES ---
+
+    // Stewards can manage their own profiles
+    match /stewards/{stewardId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(stewardId);
+    }
+
+    // Signals (Notifications)
+    match /signals/{signalId} {
+      allow read: if isSignedIn() && isOwner(resource.data.stewardId);
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Immutable audit trail
+    }
+
+    // Industrial Assets & Registry
+    match /products/{productId} {
+      allow read: if true; // Public marketplace visibility
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner(resource.data.supplierEsin) || isAuditor());
+      allow delete: if false; 
+    }
+
+    // Carbon Ingest & Telemetry
+    match /telemetry/{esin} {
+      allow read: if isSignedIn();
+      allow write: if isAuditor() || isOwner(esin);
+    }
+
+    // Institutional Missions
+    match /contracts/{contractId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner(resource.data.investorEsin) || isAuditor());
+    }
+
+    // Financial Ledger (Strict Immutability)
+    match /transactions/{txId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.stewardId) || isAuditor());
+      allow create: if isSignedIn();
+      allow update, delete: if false; 
+    }
+
+    // Internal Auditor Registry
+    match /auditors/{email} {
+      allow read: if isSignedIn();
+      allow write: if false; // Managed via Admin SDK only
+    }
+  }
+}

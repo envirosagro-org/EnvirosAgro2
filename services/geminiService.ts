@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, GenerateContentResponse, Modality, Type } from "@google/genai";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -16,15 +17,12 @@ export interface AIResponse {
   text: string;
   sources?: any[];
   is_compliant?: boolean;
-  risk_score?: number; // 0-100
-  sentiment_alpha?: number; // 0.0 - 1.0
+  risk_score?: number; 
+  sentiment_alpha?: number; 
   finality_hash?: string;
   impact_summary?: string;
 }
 
-/**
- * Resilient wrapper to handle transient 500 errors from Gemini API
- */
 const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise<any> => {
   let lastError: any;
   for (let i = 0; i < retries; i++) {
@@ -32,12 +30,11 @@ const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise
       return await fn();
     } catch (err: any) {
       lastError = err;
-      // If it's a 500 error, wait and retry
       if (err.status === 500 || (err.message && err.message.includes('500'))) {
-        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i))); // Exponential backoff
+        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
         continue;
       }
-      throw err; // For other errors, fail immediately
+      throw err;
     }
   }
   throw lastError;
@@ -46,25 +43,49 @@ const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise
 const handleAIError = (error: any): AIResponse => {
   console.error("Gemini API Error:", error);
   return { 
-    text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to an internal server congestion (Error 500)." 
+    text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion." 
   };
+};
+
+// Add missing runSpecialistDiagnostic for specialized audits
+export const runSpecialistDiagnostic = async (category: string, description: string): Promise<AIResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const ai = getAI();
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Perform a Specialist Diagnostic Audit. 
+        Category: ${category}
+        Observation: ${description}
+        
+        Context: ${FRAMEWORK_CONTEXT}`,
+        config: {
+          systemInstruction: "You are the EnvirosAgro Specialist Oracle. Provide technical diagnostics and alignment shards."
+        }
+      });
+      return { text: response.text || "" };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
 };
 
 export const settleRegistryBatch = async (transactions: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Perform an Institutional Settlement Audit on this transaction batch: ${JSON.stringify(transactions)}.
         1. Analyze the aggregate impact on the global m-constant.
         2. Verify adherence to the 'Sabbath-Yajna' fallow protocols.
-        3. Generate a 'Finality Abstract' and a unique 64-bit settlement hash.
+        3. Generate a 'Finality Abstract'.
         
         Context: ${FRAMEWORK_CONTEXT}`,
         config: {
           systemInstruction: "You are the EnvirosAgro Finality Oracle. You ensure that economic sharding never compromises biological resonance."
         }
-      }) as GenerateContentResponse;
+      });
       const text = response.text || "";
       return { 
         text,
@@ -80,16 +101,16 @@ export const settleRegistryBatch = async (transactions: any[]): Promise<AIRespon
 export const predictMarketSentiment = async (echoes: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Perform a Sentiment Audit on these global network echoes: ${JSON.stringify(echoes.slice(0, 20))}.
         Evaluate the "Community Trust Index" based on SEHTI principles. 
-        How should this impact the EAC pricing multipliers for agricultural shards?
-        Provide a Sentiment Alpha score (0.0 to 1.0) and a brief reasoning shard.`,
+        Return a Sentiment Alpha score (0.0 to 1.0) and a brief reasoning shard.`,
         config: {
           systemInstruction: "You are the EnvirosAgro Economic Oracle. Translate social signals into market resilience factors."
         }
-      }) as GenerateContentResponse;
+      });
       const text = response.text || "";
       const scoreMatch = text.match(/Alpha:?\s*(0\.\d+)/i);
       return { 
@@ -105,15 +126,16 @@ export const predictMarketSentiment = async (echoes: any[]): Promise<AIResponse>
 export const auditMeshStability = async (nodeData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Analyze the following mesh topology metrics: ${JSON.stringify(nodeData)}. 
-        Identify nodes at risk of SID (Social Influenza) contamination and suggest rerouting shards to high-resonance clusters.
+        Identify nodes at risk of SID (Social Influenza) contamination.
         Context: ${FRAMEWORK_CONTEXT}`,
         config: {
-          thinkingConfig: { thinkingBudget: 4000 } // Reduced budget for stability
+          thinkingConfig: { thinkingBudget: 4000 }
         }
-      }) as GenerateContentResponse;
+      });
       return { text: response.text || "" };
     });
   } catch (err) {
@@ -124,16 +146,16 @@ export const auditMeshStability = async (nodeData: any): Promise<AIResponse> => 
 export const analyzeInstitutionalRisk = async (txData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Perform an Institutional Risk Audit on the following sharding request: ${JSON.stringify(txData)}. 
         Framework Context: ${FRAMEWORK_CONTEXT}.
-        Evaluate m-constant stability, network liquidity depth, and potential for SID-contamination.
         Assign a Risk Score (0-100) and provide a "VERDICT" (PROCEED or CAUTION).`,
         config: {
           thinkingConfig: { thinkingBudget: 8000 }
         }
-      }) as GenerateContentResponse;
+      });
       const text = response.text || "";
       const riskMatch = text.match(/Risk Score:?\s*(\d+)/i);
       return { 
@@ -147,47 +169,20 @@ export const analyzeInstitutionalRisk = async (txData: any): Promise<AIResponse>
   }
 };
 
-export const calibrateSonicResonance = async (telemetry: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Analyze acoustic telemetry for node ${telemetry.node}: ${JSON.stringify(telemetry)}. 
-        Based on the EnvirosAgro Framework, recommend a corrective Solfeggio frequency (e.g. 432Hz for healing, 528Hz for repair).
-        Explain the biological impact on the soil microbial shard.`,
-        config: {
-          systemInstruction: "You are the AgroMusika Bio-Sonic Oracle. Provide technical frequency calibration shards."
-        }
-      }) as GenerateContentResponse;
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
 export const auditAgroLangCode = async (code: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Audit the following AgroLang Shard for EOS Framework Compliance. 
-        Code:
-        ${code}
-        
+        Code: ${code}
         Context: ${FRAMEWORK_CONTEXT}
-        
-        Rules:
-        1. Check for 'CONSTRAIN' keywords (Governance compliance).
-        2. Identify m-constant drift risks.
-        3. Verify 'COMMIT_SHARD' finality logic.
-        
-        Return a technical audit log and a final "COMPLIANCE_VERDICT" (COMPLIANT or VIOLATION).`,
+        Return "COMPLIANCE_VERDICT: COMPLIANT" if valid.`,
         config: {
           thinkingConfig: { thinkingBudget: 8000 }
         }
-      }) as GenerateContentResponse;
-      
+      });
       const text = response.text || "";
       return { 
         text,
@@ -199,28 +194,11 @@ export const auditAgroLangCode = async (code: string): Promise<AIResponse> => {
   }
 };
 
-export const validateBlockSustainability = async (blockHash: string, transactions: any[]): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Perform a Neural Audit on Block ${blockHash}. Transactions: ${JSON.stringify(transactions)}. Context: ${FRAMEWORK_CONTEXT}`,
-        config: {
-          systemInstruction: "You are the EnvirosAgro Consensus Auditor. Verify if the block's transactions align with the m-constant and C(a) framework. Assign a finality confidence score (0-100%).",
-          thinkingConfig: { thinkingBudget: 4000 }
-        }
-      }) as GenerateContentResponse;
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
 export const chatWithAgroExpert = async (message: string, history: any[], useSearch: boolean = false): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const chat = getAI().chats.create({
+      const ai = getAI();
+      const chat = ai.chats.create({
         model: 'gemini-3-flash-preview',
         config: {
           systemInstruction: `EnvirosAgro AI Expert. Use logic: ${FRAMEWORK_CONTEXT}`,
@@ -228,26 +206,11 @@ export const chatWithAgroExpert = async (message: string, history: any[], useSea
         },
         history,
       });
-      const response = await chat.sendMessage({ message }) as GenerateContentResponse;
-      return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const runSpecialistDiagnostic = async (category: string, description: string, imageBase64?: string): Promise<AIResponse> => {
-  const parts: any[] = [{ text: `EnvirosAgro ${category} Specialist. Context: ${FRAMEWORK_CONTEXT}. Diagnostic Request: ${description}` }];
-  if (imageBase64) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } });
-  
-  try {
-    return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({ 
-        model: 'gemini-3-flash-preview', 
-        contents: { parts },
-        config: { thinkingConfig: { thinkingBudget: 4000 } }
-      }) as GenerateContentResponse;
-      return { text: response.text || "" };
+      const response = await chat.sendMessage({ message });
+      return { 
+        text: response.text || "", 
+        sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any 
+      };
     });
   } catch (err) {
     return handleAIError(err);
@@ -257,9 +220,10 @@ export const runSpecialistDiagnostic = async (category: string, description: str
 export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Decode this agricultural telemetry: ${JSON.stringify(telemetry)}. Follow the Genetic Decoder rules and return JSON only.`,
+        contents: `Decode agricultural telemetry: ${JSON.stringify(telemetry)}. Return JSON matching schema.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -296,12 +260,11 @@ export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
 export const analyzeMiningYield = async (vouchData: any): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Analyze this mining session: ${JSON.stringify(vouchData)}. Context: ${FRAMEWORK_CONTEXT}`,
-        config: {
-          responseMimeType: "application/json"
-        }
+        contents: `Analyze mining session: ${JSON.stringify(vouchData)}. Return JSON only. Context: ${FRAMEWORK_CONTEXT}`,
+        config: { responseMimeType: "application/json" }
       });
       return JSON.parse(response.text || "{}");
     });
@@ -313,10 +276,25 @@ export const analyzeMiningYield = async (vouchData: any): Promise<any> => {
 export const generateAgroExam = async (topic: string): Promise<any[]> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Generate a 5-question exam for ${topic}. Context: ${FRAMEWORK_CONTEXT}`,
-        config: { responseMimeType: "application/json" }
+        contents: `Generate 5 multiple-choice questions for ${topic} within EnvirosAgro context. Return JSON array of objects with {question, options[], correct_index}.`,
+        config: { 
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                question: { type: Type.STRING },
+                options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                correct: { type: Type.INTEGER }
+              },
+              required: ["question", "options", "correct"]
+            }
+          }
+        }
       });
       return JSON.parse(response.text || "[]");
     });
@@ -328,12 +306,16 @@ export const generateAgroExam = async (topic: string): Promise<any[]> => {
 export const getGroundedAgroResources = async (query: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: query,
         config: { tools: [{ googleSearch: {} }] }
-      }) as GenerateContentResponse;
-      return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any[] };
+      });
+      return { 
+        text: response.text || "", 
+        sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any[] 
+      };
     });
   } catch (err) {
     return handleAIError(err);
@@ -343,12 +325,16 @@ export const getGroundedAgroResources = async (query: string): Promise<AIRespons
 export const getWeatherForecast = async (location: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Fetch technical weather telemetry for ${location}. Context: Industrial Agriculture.`,
+        contents: `Fetch technical weather telemetry for ${location} for industrial agriculture.`,
         config: { tools: [{ googleSearch: {} }] }
-      }) as GenerateContentResponse;
-      return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any[] };
+      });
+      return { 
+        text: response.text || "", 
+        sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any[] 
+      };
     });
   } catch (err) {
     return handleAIError(err);
@@ -358,12 +344,30 @@ export const getWeatherForecast = async (location: string): Promise<AIResponse> 
 export const analyzeMRVEvidence = async (desc: string, base64?: string): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {
+      const ai = getAI();
       const parts: any[] = [{ text: desc }];
       if (base64) parts.push({ inlineData: { mimeType: 'image/jpeg', data: base64 } });
-      const response = await getAI().models.generateContent({
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: { parts },
-        config: { responseMimeType: "application/json" }
+        config: { 
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              verification_narrative: { type: Type.STRING },
+              confidence_alpha: { type: Type.NUMBER },
+              metrics: {
+                type: Type.OBJECT,
+                properties: {
+                  estimated_dbh_cm: { type: Type.NUMBER },
+                  biomass_tonnes: { type: Type.NUMBER },
+                  carbon_sequestration_potential: { type: Type.NUMBER }
+                }
+              }
+            }
+          }
+        }
       });
       return JSON.parse(response.text || "{}");
     });
@@ -375,10 +379,21 @@ export const analyzeMRVEvidence = async (desc: string, base64?: string): Promise
 export const generateValueEnhancementStrategy = async (material: string, weight: string, context: string): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Design strategy for ${weight} of ${material}. Context: ${context}`,
-        config: { responseMimeType: "application/json" }
+        contents: `Design value enhancement strategy for ${weight} of ${material}. Context: ${context}`,
+        config: { 
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              strategy_abstract: { type: Type.STRING },
+              estimated_value_boost: { type: Type.NUMBER }
+            },
+            required: ["strategy_abstract"]
+          }
+        }
       });
       return JSON.parse(response.text || "{}");
     });
@@ -390,10 +405,11 @@ export const generateValueEnhancementStrategy = async (material: string, weight:
 export const analyzeMedia = async (base64: string, mime: string, prompt: string): Promise<string> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: { parts: [{ inlineData: { data: base64, mimeType: mime } }, { text: prompt }] }
-      }) as GenerateContentResponse;
+      });
       return response.text || "";
     });
   } catch (err) {
@@ -404,15 +420,19 @@ export const analyzeMedia = async (base64: string, mime: string, prompt: string)
 export const searchAgroTrends = async (q: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: q,
         config: { 
           tools: [{ googleSearch: {} }],
-          systemInstruction: "You are the EnvirosAgro Strategic Trend Oracle. Extract the latest agricultural trends focusing on regenerative farming and blockchain integration for carbon credit tracking. Always relate findings back to the m-constant and C(a) growth framework."
+          systemInstruction: "You are the EnvirosAgro Strategic Trend Oracle. Extract latest trends and relate findings to the m-constant framework."
         }
-      }) as GenerateContentResponse;
-      return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any[] };
+      });
+      return { 
+        text: response.text || "", 
+        sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any[] 
+      };
     });
   } catch (err) {
     return handleAIError(err);
@@ -422,11 +442,12 @@ export const searchAgroTrends = async (q: string): Promise<AIResponse> => {
 export const auditProductQuality = async (id: string, logs: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Audit ID ${id}. Logs: ${JSON.stringify(logs)}. Context: TQM Sharding.`,
         config: { thinkingConfig: { thinkingBudget: 2000 } }
-      }) as GenerateContentResponse;
+      });
       return { text: response.text || "" };
     });
   } catch (err) {
@@ -437,11 +458,12 @@ export const auditProductQuality = async (id: string, logs: any[]): Promise<AIRe
 export const diagnoseCropIssue = async (desc: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: desc,
         config: { thinkingConfig: { thinkingBudget: 4000 } }
-      }) as GenerateContentResponse;
+      });
       return { text: response.text || "" };
     });
   } catch (err) {
@@ -452,10 +474,11 @@ export const diagnoseCropIssue = async (desc: string): Promise<AIResponse> => {
 export const analyzeSustainability = async (farmData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Run a sustainability audit on the following farm data: ${JSON.stringify(farmData)}. Context: ${FRAMEWORK_CONTEXT}`,
-      }) as GenerateContentResponse;
+        contents: `Run a sustainability audit on: ${JSON.stringify(farmData)}. Context: ${FRAMEWORK_CONTEXT}`,
+      });
       return { text: response.text || "" };
     });
   } catch (err) {
@@ -466,18 +489,12 @@ export const analyzeSustainability = async (farmData: any): Promise<AIResponse> 
 export const generateAgroResearch = async (topic: string, thrust: string, iotData: any, context: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const response = await getAI().models.generateContent({
+      const ai = getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
-        contents: `Synthesize a formal research paper shard. 
-        Topic: ${topic}
-        Thrust: ${thrust}
-        IoT Data: ${JSON.stringify(iotData)}
-        Context: ${context}
-        Framework: ${FRAMEWORK_CONTEXT}`,
-        config: {
-          thinkingConfig: { thinkingBudget: 8000 }
-        }
-      }) as GenerateContentResponse;
+        contents: `Synthesize research shard. Topic: ${topic}, Thrust: ${thrust}, IoT: ${JSON.stringify(iotData)}, Context: ${context}.`,
+        config: { thinkingConfig: { thinkingBudget: 8000 } }
+      });
       return { text: response.text || "" };
     });
   } catch (err) {

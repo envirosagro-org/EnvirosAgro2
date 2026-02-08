@@ -51,7 +51,8 @@ import {
   Plus
 } from 'lucide-react';
 import { User, FarmingContract, ContractApplication, ViewState, AgroResource } from '../types';
-import { runSpecialistDiagnostic } from '../services/geminiService';
+// Fix: Import chatWithAgroExpert instead of runSpecialistDiagnostic
+import { chatWithAgroExpert } from '../services/geminiService';
 
 interface ContractFarmingProps {
   user: User;
@@ -124,7 +125,8 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
       Land Resource Shard: ${selectedLandForApp?.name} (${selectedLandForApp?.id})
       Labour Capacity: ${labourCapacity}
       Contract Goal: ${showApplyModal?.productType}`;
-      const res = await runSpecialistDiagnostic("Mission Vetting", prompt);
+      // Fix: Use chatWithAgroExpert instead of runSpecialistDiagnostic
+      const res = await chatWithAgroExpert(`Specialist Mission Vetting. ${prompt}`, []);
       setVettingReport(res.text);
     } catch (e) {
       setVettingReport("Oracle handshake failed. Local validation suggests high alignment with registry standards.");

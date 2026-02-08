@@ -7,7 +7,7 @@ import {
   Linkedin, AtSign, Pin, HelpCircle, Cloud, Wind, Facebook, MessageCircleQuestion, Eye,
   Target, Sparkles, Copyright, Shield, Award, CheckCircle2, BadgeCheck, Terminal,
   MessagesSquare, Copy, Check, ShieldPlus, Leaf, HelpCircle as FaqIcon,
-  ChevronDown
+  ChevronDown, Code, Database, Gavel, Stamp, ShieldX, FileSignature
 } from 'lucide-react';
 import { ViewState } from '../types';
 
@@ -24,6 +24,62 @@ const ENVIRONMENTS = [
   { name: 'Quora', url: 'https://www.quora.com/profile/EnvirosAgro?ch=10&oid=2274202272&share=cee3144a&srid=3uVNlE&target_type=user', icon: HelpCircle, color: 'text-red-700', bg: 'bg-red-700/10', desc: 'Expert scientific inquiries & Q&A.' },
   { name: 'Telegram', url: 'https://t.me/EnvirosAgro', icon: Send, color: 'text-sky-400', bg: 'bg-sky-400/10', desc: 'Encrypted signal hub.' },
   { name: 'LinkedIn', url: 'https://www.linkedin.com/company/modern-agrarian-revolution', icon: Linkedin, color: 'text-blue-600', bg: 'bg-blue-600/10', desc: 'Institutional partnerships.' },
+];
+
+const SECURITY_SHARDS = [
+  { 
+    title: "SOVEREIGN NODE PROTOCOL", 
+    logic: "allow write: if isOwner(stewardId);", 
+    desc: "Ensures only authorized Stewards can modify their own local node biometrics." 
+  },
+  { 
+    title: "IMMUTABLE LEDGER FINALITY", 
+    logic: "allow update, delete: if false;", 
+    desc: "Prevents historical revisionism. All commercial and biological shards are permanent." 
+  },
+  { 
+    title: "AUDITOR QUORUM", 
+    logic: "allow write: if isAuditor();", 
+    desc: "Restricts physical verification updates to verified HQ Auditor nodes." 
+  }
+];
+
+const LEGAL_REGISTRY = [
+  {
+    id: 'privacy',
+    title: 'Privacy & Data Sharding',
+    icon: Shield,
+    color: 'text-blue-400',
+    content: 'EnvirosAgro utilizes Zero-Knowledge (ZK) proofs to maintain steward anonymity while proving compliance. Personal telemetry—including geofence data and bio-signatures—is encrypted at the edge. No raw data is stored outside your node; only cryptographic hashes are sharded to the global registry.'
+  },
+  {
+    id: 'trademarks',
+    title: 'Trademarks & IP',
+    icon: Stamp,
+    color: 'text-amber-500',
+    content: 'The following are registered marks of the EnvirosAgro ecosystem: EnvirosAgro™, SEHTI™, C(a)™ (Agro Code), m™ (Time Signature), WhatIsAG™, MedicAg™, and Agroboto™. Unauthorized use of these designations within external agricultural frameworks is a violation of registry integrity.'
+  },
+  {
+    id: 'copyright',
+    title: 'Copyright Policy',
+    icon: Copyright,
+    color: 'text-indigo-400',
+    content: 'All research papers, media shards, and botanical blueprints generated through the Forge are protected by the Open Ledger Covenant. While shared within the mesh, commercial redistribution without an EAC-based licensing handshake is prohibited. "AgroInPDF" archives are immutable copyrighted records.'
+  },
+  {
+    id: 'consent',
+    title: 'Consent Protocols',
+    icon: FileSignature,
+    color: 'text-emerald-400',
+    content: 'Pairing a physical device or land plot constitutes explicit consent for telemetry ingest. Stewards retain the right to "Sever the Handshake," which ceases active syncing but leaves existing historical shards in the permanent archive for m-constant baseline integrity.'
+  },
+  {
+    id: 'disclaimer',
+    title: 'Legal Disclaimer',
+    icon: AlertTriangle,
+    color: 'text-rose-500',
+    content: 'EnvirosAgro is a decentralized autonomous network. Financial sharding and carbon minting are contingent on community consensus. The organization is not liable for m-constant decay resulting from unverified agricultural practices or SID-related node contamination.'
+  }
 ];
 
 const FAQ_ITEMS = [
@@ -61,11 +117,13 @@ const EnvirosAgroRocket: React.FC = () => {
 };
 
 const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'about' | 'environments' | 'faq' | 'contact'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'security' | 'environments' | 'faq' | 'contact' | 'legal'>('about');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const tabs = [
     { id: 'about', label: 'About', icon: Info },
+    { id: 'security', label: 'Security Shards', icon: ShieldCheck },
+    { id: 'legal', label: 'Legal Registry', icon: Gavel },
     { id: 'environments', label: 'Nodes', icon: Share2 },
     { id: 'faq', label: 'Registry FAQ', icon: FaqIcon },
     { id: 'contact', label: 'HQ Hub', icon: Globe },
@@ -123,6 +181,92 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
             </div>
 
             <EnvirosAgroRocket />
+          </div>
+        )}
+
+        {activeTab === 'security' && (
+          <div className="p-8 md:p-12 space-y-12 animate-in slide-in-from-right-4 duration-500">
+            <div className="text-center space-y-4">
+              <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter">NETWORK <span className="text-indigo-400">SECURITY SHARDS</span></h3>
+              <p className="text-slate-500 text-lg md:text-xl italic font-medium">Governing the flow of industrial data via Tooling.</p>
+            </div>
+            
+            <div className="grid gap-10">
+              {SECURITY_SHARDS.map((shard, i) => (
+                <div key={i} className="glass-card p-10 md:p-14 rounded-[64px] border-2 border-white/5 bg-black/40 relative overflow-hidden group shadow-3xl">
+                   <div className="absolute top-1/2 right-12 -translate-y-1/2 opacity-[0.05] group-hover:scale-110 transition-transform pointer-events-none">
+                     <Lock size={280} />
+                   </div>
+                   <div className="flex flex-col space-y-10 relative z-10">
+                      <div className="space-y-4">
+                         <h4 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter m-0">{shard.title}</h4>
+                         <p className="text-slate-400 text-lg md:text-xl italic font-medium opacity-80">"{shard.desc}"</p>
+                      </div>
+                      <div className="bg-black/60 rounded-[40px] p-8 md:p-12 border border-white/10 shadow-inner max-w-4xl">
+                         <div className="flex items-center gap-4 mb-6">
+                            <Code size={20} className="text-indigo-400" />
+                            <span className="text-xs md:text-sm font-mono font-black text-indigo-400 uppercase tracking-widest">RULES_ENGINE_v6.5</span>
+                         </div>
+                         <code className="text-emerald-400 font-mono text-lg md:text-2xl block bg-black/40 p-6 md:p-10 rounded-3xl border border-white/5 shadow-2xl">
+                            {shard.logic}
+                         </code>
+                      </div>
+                   </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-12 glass-card rounded-[80px] border border-white/5 bg-black/40 flex flex-col items-center text-center space-y-10 shadow-[0_50px_150px_rgba(0,0,0,0.8)] mt-12">
+               <div className="w-20 h-20 bg-indigo-600/10 rounded-[32px] flex items-center justify-center border border-indigo-500/20 shadow-2xl">
+                 <Database className="text-indigo-400 w-10 h-10" />
+               </div>
+               <div className="space-y-4 max-w-3xl">
+                  <h4 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter">DECENTRALIZED GOVERNANCE</h4>
+                  <p className="text-slate-500 text-lg md:text-xl italic leading-relaxed font-medium">
+                     These rules are anchored to the console and cannot be modified without a 3/5 multisig consensus from HQ Root Stewards.
+                  </p>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'legal' && (
+          <div className="p-8 md:p-12 space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center space-y-4">
+              <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter">LEGAL <span className="text-emerald-400">REGISTRY</span></h3>
+              <p className="text-slate-500 text-lg md:text-xl italic font-medium">Codifying the Agro-Legal Framework (SEHTI).</p>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
+               {LEGAL_REGISTRY.map((law, i) => (
+                 <div key={i} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 shadow-2xl group hover:border-emerald-500/30 transition-all relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><law.icon size={200} /></div>
+                    <div className="flex items-center gap-6 mb-8 border-b border-white/5 pb-6">
+                       <div className={`p-4 rounded-2xl bg-white/5 ${law.color} shadow-inner group-hover:rotate-6 transition-all`}>
+                          <law.icon size={32} />
+                       </div>
+                       <div>
+                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">{law.title}</h4>
+                          <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">SEHTI_STATUTE_OK</p>
+                       </div>
+                    </div>
+                    <p className="text-slate-300 text-lg leading-relaxed italic font-medium pl-6 border-l-4 border-white/10 group-hover:border-emerald-500/40 transition-colors">
+                      "{law.content}"
+                    </p>
+                 </div>
+               ))}
+            </div>
+
+            <div className="p-12 glass-card rounded-[80px] border border-emerald-500/20 bg-emerald-600/5 flex flex-col md:flex-row items-center justify-between gap-12 shadow-3xl mt-12">
+               <div className="flex items-center gap-8 text-center md:text-left">
+                  <div className="w-20 h-20 bg-emerald-600 rounded-[32px] flex items-center justify-center shadow-3xl shrink-0"><Stamp size={36} className="text-white" /></div>
+                  <div className="space-y-2">
+                     <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Finality & Jurisdictional Sync</h4>
+                     <p className="text-slate-400 text-lg italic font-medium leading-relaxed">"Every registry handshake is legally binding under the SEHTI Code of Laws. Shard finality is peer-verified."</p>
+                  </div>
+               </div>
+               <button className="px-12 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all">DOWNLOAD FULL SCROLL</button>
+            </div>
           </div>
         )}
 
@@ -198,7 +342,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .shadow-3xl { box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.7); }
       `}</style>
     </div>

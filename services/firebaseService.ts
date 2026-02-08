@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
@@ -32,7 +33,8 @@ import {
   set, 
   limitToLast, 
   query as rtdbQuery,
-  serverTimestamp as rtdbTimestamp
+  serverTimestamp as rtdbTimestamp,
+  off
 } from "firebase/database";
 import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
 
@@ -82,29 +84,21 @@ export const signInWithGoogle = async () => signInWithPopup(auth, new GoogleAuth
 export const signOutSteward = () => fbSignOut(auth);
 export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
-// Fix: Added missing transmitRecoveryCode export for password recovery flow
 export const transmitRecoveryCode = async (email: string) => {
-  // Simulated recovery code transmission logic for the registry
   console.log(`Transmitting recovery code to ${email}`);
   return true;
 };
 
-// Fix: Added missing verifyRecoveryShard export for password recovery flow
 export const verifyRecoveryShard = async (email: string, code: string) => {
-  // Simulated shard verification logic for the registry
   console.log(`Verifying shard ${code} for ${email}`);
   return code.length === 6;
 };
 
-// Fix: Added missing setupRecaptcha export for phone auth flow
 export const setupRecaptcha = (containerId: string) => {
-  // Simulated recaptcha setup logic for secure node ingest
   console.log(`Setting up reCAPTCHA on ${containerId}`);
 };
 
-// Fix: Added missing requestPhoneCode export for phone auth flow
 export const requestPhoneCode = async (phone: string) => {
-  // Simulated phone code request logic for node synchronization
   console.log(`Requesting phone code for ${phone}`);
   return "mock-verification-id";
 };
@@ -153,10 +147,30 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): P
 
   try {
     await setDoc(doc(db, "signals", id), cleanSignal);
+    
+    // Low-latency pulse broadcast
+    const pulseRef = ref(rtdb, 'network_pulse');
+    await push(pulseRef, {
+      message: `${rawSignal.title}: ${rawSignal.message}`,
+      timestamp: rtdbTimestamp()
+    });
+
     return cleanSignal as SignalShard;
   } catch (e) {
     return null;
   }
+};
+
+export const listenToPulse = (callback: (pulse: string) => void) => {
+  const pulseRef = rtdbQuery(ref(rtdb, 'network_pulse'), limitToLast(1));
+  onValue(pulseRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const latestKey = Object.keys(data)[0];
+      callback(data[latestKey].message);
+    }
+  });
+  return () => off(pulseRef);
 };
 
 // --- REGISTRY SYNC (FIRESTORE) ---
@@ -175,9 +189,6 @@ export const getStewardProfile = async (uid: string): Promise<AgroUser | null> =
   return snap.exists() ? snap.data() as AgroUser : null;
 };
 
-/**
- * Marks an action as permanent in the user's document
- */
 export const markPermanentAction = async (actionKey: string) => {
   const userId = auth.currentUser?.uid;
   if (!userId) return false;

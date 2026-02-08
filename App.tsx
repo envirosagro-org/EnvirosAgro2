@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
@@ -66,7 +67,8 @@ import {
   listenToCollection,
   saveCollectionItem,
   dispatchNetworkSignal,
-  markPermanentAction
+  markPermanentAction,
+  listenToPulse
 } from './services/firebaseService';
 
 export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => (
@@ -294,6 +296,7 @@ const App: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
   const [mediaShards, setMediaShards] = useState<MediaShard[]>([]);
   const [signals, setSignals] = useState<SignalShard[]>([]);
+  const [pulseMessage, setPulseMessage] = useState('Registry synchronized. No anomalies detected.');
   
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
   const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<any | null>(null);
@@ -345,10 +348,11 @@ const App: React.FC = () => {
     const unsubLive = listenToCollection('live_products', setLiveProducts);
     const unsubTx = listenToCollection('transactions', setTransactions);
     const unsubSignals = listenToCollection('signals', setSignals);
+    const unsubPulse = listenToPulse(setPulseMessage);
 
     return () => {
       unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts();
-      unsubUnits(); unsubLive(); unsubTx(); unsubSignals();
+      unsubUnits(); unsubLive(); unsubTx(); unsubSignals(); unsubPulse();
     };
   }, [user]);
 
@@ -422,9 +426,6 @@ const App: React.FC = () => {
     });
   };
 
-  /**
-   * Performs an action that should only happen once and stays permanent in the backend
-   */
   const handlePerformPermanentAction = async (actionKey: string, reward?: number, reason?: string) => {
     if (!user) return false;
     if (user.completedActions?.includes(actionKey)) return false;
@@ -510,8 +511,22 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000">
+      
+      {/* Network Pulse Ticker */}
+      <div className="fixed top-0 left-0 right-0 z-[1000] h-8 bg-black/60 backdrop-blur-xl border-b border-white/5 flex items-center overflow-hidden">
+        <div className="flex items-center gap-2 px-4 border-r border-white/10 h-full shrink-0">
+          <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+          <span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">NETWORK_PULSE</span>
+        </div>
+        <div className="flex-1 px-4 overflow-hidden">
+          <div className="whitespace-nowrap animate-marquee text-[9px] text-emerald-500/80 font-mono font-black uppercase tracking-widest">
+            {pulseMessage} • {new Date().toISOString()} • STABILITY: 1.42x • CONSENSUS: 100% • 
+          </div>
+        </div>
+      </div>
+
       <div 
-        className={`fixed top-0 left-0 bottom-0 z-[250] bg-black/90 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 overflow-y-auto custom-scrollbar 
+        className={`fixed top-8 left-0 bottom-0 z-[250] bg-black/90 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 overflow-y-auto custom-scrollbar 
         ${isSidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'} 
         ${isMobileMenuOpen ? 'w-80 translate-x-0' : ''}`}
       >
@@ -558,11 +573,11 @@ const App: React.FC = () => {
       <main 
         ref={mainContentRef} 
         onScroll={handleScroll} 
-        className={`transition-all duration-500 pt-6 pb-32 h-screen overflow-y-auto custom-scrollbar relative 
+        className={`transition-all duration-500 pt-14 pb-32 h-screen overflow-y-auto custom-scrollbar relative 
           ${isSidebarOpen ? 'lg:pl-80 pr-4 lg:pr-10' : 'lg:pl-24 pr-4 lg:pr-10'} 
           pl-4`}
       >
-        <div className="fixed top-0 left-0 right-0 z-[200] h-1 pointer-events-none">
+        <div className="fixed top-8 left-0 right-0 z-[200] h-1 pointer-events-none">
           <div 
             className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" 
             style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}

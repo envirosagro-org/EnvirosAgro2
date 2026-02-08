@@ -1,0 +1,16 @@
+
+{
+  "rules": {
+    "network_pulse": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$pulse_id": {
+        ".validate": "newData.hasChildren(['message', 'timestamp'])"
+      }
+    },
+    "global_metrics": {
+      ".read": true,
+      ".write": "auth != null && root.child('auditors').child(auth.token.email.replace('.', ',')).exists()"
+    }
+  }
+}
