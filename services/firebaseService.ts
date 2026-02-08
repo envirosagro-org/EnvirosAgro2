@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
@@ -41,6 +40,7 @@ import {
   serverTimestamp as rtdbTimestamp,
   off
 } from "firebase/database";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
 
 const firebaseConfig = {
@@ -53,7 +53,18 @@ const firebaseConfig = {
   appId: "1:218810534057:web:2d32abbb459755499fc1b8"
 };
 
+// 1. Initialize Firebase App Core
 const app = initializeApp(firebaseConfig);
+
+// 2. Initialize App Check immediately
+if (typeof window !== "undefined") {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6LcCwGMsAAAAALc8yXn0sAByijpJrIr5ShgP23zs'),
+    isTokenAutoRefreshEnabled: true
+  });
+}
+
+// 3. Initialize services
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
@@ -118,14 +129,21 @@ export const verifyRecoveryShard = async (email: string, code: string) => {
 
 // --- PHONE AUTH ---
 export const setupRecaptcha = (containerId: string) => {
-  if (!(window as any).recaptchaVerifier) {
-    (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      'size': 'invisible',
-      'callback': (response: any) => {
-        // reCAPTCHA solved
-      }
-    });
+  if ((window as any).recaptchaVerifier) {
+    try {
+      (window as any).recaptchaVerifier.clear();
+    } catch(e) {}
   }
+  
+  (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+    'size': 'invisible',
+    'callback': () => {
+      // reCAPTCHA solved
+    },
+    'expired-callback': () => {
+      // Response expired. Ask user to solve reCAPTCHA again.
+    }
+  });
   return (window as any).recaptchaVerifier;
 };
 

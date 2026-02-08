@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { 
@@ -140,7 +139,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     const syncSuccess = await syncUserToCloud(newUser, uid);
     if (syncSuccess) {
       // Trigger verification on new email profile
-      if (userEmail) {
+      if (userEmail && !userEmail.includes('@phone.auth')) {
         try { await sendVerificationShard(); } catch(e) { console.warn("Verification auto-dispatch failed"); }
       }
       onLogin(newUser);
@@ -179,7 +178,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
       setMessage({ type: 'info', text: "SMS_TRANSMITTED: 6-digit access shard sent to your device." });
     } catch (error: any) {
       setMessage({ type: 'error', text: `PHONE_AUTH_ERROR: ${error.message}` });
-      if ((window as any).recaptchaVerifier) (window as any).recaptchaVerifier.clear();
+      if ((window as any).recaptchaVerifier) {
+        try { (window as any).recaptchaVerifier.clear(); } catch(e) {}
+      }
     } finally {
       setLoading(false);
     }
@@ -249,7 +250,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
 
   return (
     <div className={isEmbed ? 'w-full' : 'min-h-[80vh] flex items-center justify-center p-4 relative overflow-hidden'}>
-      <div id="recaptcha-container"></div>
+      {/* Invisible reCAPTCHA container required for Phone Auth */}
+      <div id="recaptcha-container" className="fixed bottom-0 left-0"></div>
 
       <div className={`glass-card p-10 md:p-16 rounded-[64px] border-emerald-500/20 bg-black/60 shadow-3xl w-full text-center space-y-10 relative z-10 ${isEmbed ? '' : 'max-w-2xl'}`}>
          
@@ -357,7 +359,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-6 italic">Steward Mobile Node (International Format)</label>
                  <div className="relative group">
                    <Phone className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700 group-focus-within:text-blue-500 transition-colors" />
-                   <input type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+254 740 161 447" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 pl-16 pr-8 text-lg text-white outline-none focus:ring-8 focus:ring-blue-500/10 transition-all shadow-inner font-mono" />
+                   <input type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+2547XXXXXXXX" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 pl-16 pr-8 text-lg text-white outline-none focus:ring-8 focus:ring-blue-500/10 transition-all shadow-inner font-mono" />
                  </div>
               </div>
               <button 

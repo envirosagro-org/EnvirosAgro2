@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
@@ -334,7 +333,9 @@ const App: React.FC = () => {
   useEffect(() => {
     return onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
-        setIsEmailVerified(fbUser.emailVerified || fbUser.providerData?.[0]?.providerId === 'phone');
+        // Phone users are verified upon SMS handshake completion.
+        // Email users must click the dispatch link.
+        setIsEmailVerified(fbUser.emailVerified || fbUser.providerData?.some(p => p.providerId === 'phone'));
         const profile = await getStewardProfile(fbUser.uid);
         if (profile) setUser(profile);
       } else {
