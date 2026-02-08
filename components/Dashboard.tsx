@@ -35,8 +35,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700 w-full overflow-x-hidden pb-20">
       
-      {/* Network Pulse Ticker - Reduced tracking and text size */}
-      <div className="glass-card p-2 rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shadow-md shrink-0">
+      {/* Network Pulse Ticker - Improved readability on small screens */}
+      <div className="glass-card p-2 rounded-xl sm:rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shadow-md shrink-0">
         <div className="flex items-center gap-2 px-3 border-r border-white/10 shrink-0">
            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
            <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400 whitespace-nowrap">Live Pulse</span>
@@ -51,23 +51,25 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        {/* Main Identity & Metrics - Scaled down heading sizes */}
+        {/* Main Identity & Metrics - Fluid sizing for hero text */}
         <div className="xl:col-span-8">
-          <div className="glass-card p-6 md:p-10 rounded-[40px] md:rounded-[48px] relative overflow-hidden group h-full flex flex-col justify-between shadow-3xl bg-black/40 border border-white/5">
+          <div className="glass-card p-6 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[48px] relative overflow-hidden group h-full flex flex-col justify-between shadow-3xl bg-black/40 border border-white/5">
              <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none group-hover:scale-105 transition-transform duration-[10s]">
                 <SycamoreLogo size={500} className="text-white" />
              </div>
              
-             <div className="relative z-10 flex flex-col sm:flex-row justify-between gap-6 items-center pb-6 md:pb-10 border-b border-white/5 mb-8">
-                <div className="flex flex-col sm:flex-row gap-5 md:gap-8 items-center text-center sm:text-left">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-[20px] md:rounded-[28px] bg-white text-slate-900 flex items-center justify-center text-2xl md:text-4xl font-black shadow-2xl relative ring-4 ring-white/10 shrink-0">
+             <div className="relative z-10 flex flex-col sm:flex-row justify-between gap-6 items-center pb-6 sm:pb-8 md:pb-10 border-b border-white/5 mb-8">
+                <div className="flex flex-col sm:flex-row gap-5 md:gap-8 items-center text-center sm:text-left w-full">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-[28px] bg-white text-slate-900 flex items-center justify-center text-2xl md:text-4xl font-black shadow-2xl relative ring-4 ring-white/10 shrink-0">
                     {user.name[0]}
                     <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-emerald-500 flex items-center justify-center border-2 border-[#050706] shadow-2xl">
                       <ShieldCheck className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-xl md:text-3xl font-black tracking-tighter uppercase italic leading-none text-white break-words max-w-[250px] md:max-w-none">{user.name.toUpperCase()}</h3>
+                  <div className="space-y-1 w-full overflow-hidden">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black tracking-tighter uppercase italic leading-none text-white break-words">
+                      {user.name.toUpperCase()}
+                    </h3>
                     <p className="text-slate-500 text-xs md:text-sm font-medium italic">{user.role}</p>
                     <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-1">
                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[7px] md:text-[8px] font-black rounded-lg border border-emerald-500/20 uppercase tracking-widest shadow-inner whitespace-nowrap">{user.wallet.tier.toUpperCase()} TIER</span>
@@ -75,30 +77,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
                     </div>
                   </div>
                 </div>
-                <button onClick={() => setShowIdentityCard(true)} className="w-full sm:w-auto px-6 py-4 bg-white/5 border border-white/10 rounded-xl md:rounded-2xl text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white hover:bg-white/10 transition-all shadow-xl flex items-center justify-center gap-3 shrink-0">
+                
+                {/* Dossier button - responsive scaling */}
+                <button 
+                  onClick={() => setShowIdentityCard(true)} 
+                  className="w-full sm:w-auto px-4 sm:px-6 py-3 sm:py-4 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all shadow-xl flex items-center justify-center gap-3 shrink-0"
+                >
                   <Fingerprint className="w-4 h-4 text-emerald-400" />
                   Steward Dossier
                 </button>
              </div>
 
-             {/* Stats Carousel */}
-             <div className="relative overflow-x-auto scrollbar-hide snap-x scroll-across flex md:grid md:grid-cols-4 gap-4 relative z-10 -mx-2 px-2 md:mx-0 md:px-0 pb-2">
+             {/* Stats Grid - 2x2 on small, 4 columns on large */}
+             <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 pb-2">
                 {[
-                  { label: 'EAC Treasury', val: totalBalance.toFixed(0), unit: 'SHRD', icon: Coins, col: 'text-emerald-400', progress: 85 },
-                  { label: 'Growth Index', val: user.metrics.agriculturalCodeU.toFixed(1), unit: 'C(a)', icon: Binary, col: 'text-blue-400', progress: 62 },
-                  { label: 'Network Height', val: blockchain.length + 428812, unit: 'BLCK', icon: Activity, col: 'text-amber-500', progress: 100 },
-                  { label: 'Sustainability', val: user.metrics.sustainabilityScore, unit: '%', icon: Sprout, col: 'text-emerald-500', progress: user.metrics.sustainabilityScore },
+                  { label: 'Treasury', val: totalBalance.toFixed(0), unit: 'SHRD', icon: Coins, col: 'text-emerald-400', progress: 85 },
+                  { label: 'Growth', val: user.metrics.agriculturalCodeU.toFixed(1), unit: 'C(a)', icon: Binary, col: 'text-blue-400', progress: 62 },
+                  { label: 'Height', val: blockchain.length + 4281, unit: 'BLCK', icon: Activity, col: 'text-amber-500', progress: 100 },
+                  { label: 'Health', val: user.metrics.sustainabilityScore, unit: '%', icon: Sprout, col: 'text-emerald-500', progress: user.metrics.sustainabilityScore },
                 ].map((stat, i) => (
-                  <div key={i} className="min-w-[180px] md:min-w-0 snap-center p-5 md:p-6 bg-black/60 rounded-[28px] md:rounded-[36px] border border-white/5 space-y-2 md:space-y-3 group/stat hover:border-white/20 hover:bg-white/[0.04] transition-all shadow-inner overflow-hidden">
+                  <div key={i} className="p-4 sm:p-6 bg-black/60 rounded-2xl sm:rounded-[32px] border border-white/5 space-y-2 group/stat hover:border-white/20 hover:bg-white/[0.04] transition-all shadow-inner overflow-hidden">
                     <div className="flex items-center gap-2">
-                       <stat.icon className={`w-3.5 h-3.5 ${stat.col} opacity-40`} />
-                       <p className="text-[7px] md:text-[8px] text-slate-500 font-black uppercase tracking-widest truncate">{stat.label}</p>
+                       <stat.icon className={`w-3 h-3 ${stat.col} opacity-40`} />
+                       <p className="text-[7px] sm:text-[8px] text-slate-600 font-black uppercase tracking-widest truncate">{stat.label}</p>
                     </div>
-                    <p className={`text-xl md:text-2xl font-mono font-black text-white tracking-tighter ${stat.col} leading-none truncate`}>
+                    <p className={`text-lg sm:text-xl md:text-2xl font-mono font-black text-white tracking-tighter ${stat.col} leading-none truncate`}>
                       {stat.val}<span className="text-[8px] ml-1 opacity-20 font-sans font-medium uppercase">{stat.unit}</span>
                     </p>
                     <div className="h-0.5 bg-white/5 rounded-full overflow-hidden mt-2">
-                       <div className={`h-full ${stat.col.replace('text', 'bg')} transition-all duration-[2.5s] shadow-[0_0_8px_current]`} style={{ width: `${stat.progress}%` }}></div>
+                       <div className={`h-full ${stat.col.replace('text', 'bg')} transition-all duration-[2.5s]`} style={{ width: `${stat.progress}%` }}></div>
                     </div>
                   </div>
                 ))}
@@ -106,46 +113,46 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
           </div>
         </div>
 
-        {/* Oracle Hub - Scaled down heading and quote text */}
+        {/* Oracle Hub - Scaled down for mobile stacking */}
         <div className="xl:col-span-4">
-          <div className="glass-card p-6 md:p-8 rounded-[40px] md:rounded-[48px] border border-white/5 bg-black/40 h-full flex flex-col justify-between group overflow-hidden relative shadow-3xl min-h-[350px]">
+          <div className="glass-card p-6 sm:p-8 rounded-[32px] sm:rounded-[48px] border border-white/5 bg-black/40 h-full flex flex-col justify-between group overflow-hidden relative shadow-3xl min-h-[280px]">
              <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
-                <BrainCircuit className="w-32 h-32 md:w-48 md:h-48 text-white" />
+                <BrainCircuit className="w-24 h-24 sm:w-32 sm:h-32 text-white" />
              </div>
-             <div className="relative z-10 space-y-5 md:space-y-6">
+             <div className="relative z-10 space-y-4 sm:space-y-6">
                 <div className="flex items-center gap-4">
-                   <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-600 rounded-[18px] md:rounded-[24px] shadow-2xl flex items-center justify-center border-2 border-white/5 relative shrink-0">
-                      {isMining ? <Loader2 className="w-6 h-6 md:w-8 md:h-8 text-white animate-spin" /> : <Bot className="w-6 h-6 md:w-8 md:h-8 text-white" />}
+                   <div className="w-12 h-12 rounded-2xl bg-indigo-600 shadow-2xl flex items-center justify-center border-2 border-white/5 shrink-0">
+                      {isMining ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Bot className="w-6 h-6 text-white" />}
                    </div>
                    <div>
-                      <h4 className="text-lg md:text-xl font-black text-white uppercase tracking-tighter italic leading-none m-0">Oracle <span className="text-indigo-400">Hub</span></h4>
-                      <p className="text-[8px] font-mono text-indigo-400 font-bold uppercase mt-1 tracking-widest">{isMining ? 'PROCESSING' : 'Relay_Active'}</p>
+                      <h4 className="text-base sm:text-xl font-black text-white uppercase tracking-tighter italic leading-none m-0">Oracle <span className="text-indigo-400">Hub</span></h4>
+                      <p className="text-[7px] sm:text-[8px] font-mono text-indigo-400 font-bold uppercase mt-1 tracking-widest">{isMining ? 'PROCESSING' : 'Relay_Active'}</p>
                    </div>
                 </div>
-                <div className="p-5 md:p-8 bg-black/80 rounded-[28px] md:rounded-[36px] border border-white/10 relative overflow-hidden shadow-inner border-l-4 md:border-l-8 border-l-indigo-600/50">
-                   <p className="text-slate-300 text-xs md:text-base leading-relaxed italic font-medium">
-                     {isMining ? '"Finalizing ledger commit. Registry quorum confirmed."' : '"Regional m-Constant optimized by 14.2%. Strategic sharding recommended for Phase 4."'}
+                <div className="p-4 sm:p-6 bg-black/80 rounded-2xl sm:rounded-[28px] border border-white/10 shadow-inner border-l-4 border-l-indigo-600/50">
+                   <p className="text-slate-300 text-[11px] sm:text-sm md:text-base leading-relaxed italic font-medium">
+                     {isMining ? '"Finalizing ledger commit. Quorum confirmed."' : '"Regional m-Constant optimized by 14.2%. Strategic sharding recommended."'}
                    </p>
                 </div>
              </div>
-             <button onClick={() => onNavigate('intelligence')} className="relative z-10 w-full py-4 md:py-6 agro-gradient rounded-2xl md:rounded-[28px] text-white font-black text-[8px] md:text-[10px] uppercase tracking-[0.25em] shadow-3xl mt-6 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
+             <button onClick={() => onNavigate('intelligence')} className="relative z-10 w-full py-4 agro-gradient rounded-xl sm:rounded-2xl text-white font-black text-[8px] sm:text-[10px] uppercase tracking-widest shadow-3xl mt-4 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
                 <Zap className="w-4 h-4 fill-current" /> INITIALIZE INGEST
              </button>
           </div>
         </div>
       </div>
 
-      {/* Strategy Path - Scaled down cards */}
-      <div className="space-y-4 md:space-y-6 pt-4">
-        <div className="flex items-center justify-between px-4 md:px-8">
-          <h3 className="text-xs md:text-base font-black uppercase tracking-[0.25em] italic flex items-center gap-2 md:gap-3 text-white">
+      {/* Strategic Path - Optimized card layouts for smaller viewports */}
+      <div className="space-y-4 pt-4 px-2 sm:px-0">
+        <div className="flex items-center justify-between px-4">
+          <h3 className="text-xs sm:text-base font-black uppercase tracking-widest italic flex items-center gap-2 text-white">
              <Lightbulb className="w-4 h-4 text-amber-500" /> Strategic <span className="text-emerald-400">Path</span>
           </h3>
         </div>
         
-        <div className="relative overflow-x-auto scrollbar-hide snap-x scroll-across flex md:grid md:grid-cols-3 gap-4 md:gap-6 px-4 md:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4">
            {RECOMMENDATIONS.map((rec) => (
-             <div key={rec.id} className="min-w-[240px] md:min-w-0 snap-center glass-card p-6 md:p-8 rounded-[32px] md:rounded-[40px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/20 transition-all flex flex-col justify-between min-h-[260px]">
+             <div key={rec.id} className="glass-card p-5 sm:p-8 rounded-3xl sm:rounded-[40px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/20 transition-all flex flex-col justify-between min-h-[220px]">
                 <div className="space-y-3">
                    <div className="flex justify-between items-start">
                       <div className={`p-2.5 rounded-xl bg-white/5 border border-white/10 ${rec.col} shadow-inner`}>
@@ -159,12 +166,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
                          {rec.priority}
                       </span>
                    </div>
-                   <h4 className="text-base md:text-lg font-black text-white uppercase italic tracking-tight">{rec.title}</h4>
-                   <p className="text-[10px] md:text-xs text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100 line-clamp-3">"{rec.desc}"</p>
+                   <h4 className="text-base sm:text-lg font-black text-white uppercase italic tracking-tight leading-tight">{rec.title}</h4>
+                   <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">"{rec.desc}"</p>
                 </div>
                 <button 
                   onClick={() => onNavigate(rec.target as ViewState)}
-                  className="w-full py-3 mt-5 bg-white/5 border border-white/10 rounded-xl md:rounded-2xl text-[7px] md:text-[8px] font-black uppercase tracking-widest text-slate-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 mt-4 bg-white/5 border border-white/10 rounded-xl text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-slate-500 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-2"
                 >
                    Execute Strategy <ArrowRight size={12} />
                 </button>
@@ -172,12 +179,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
            ))}
         </div>
       </div>
-      
-      <style>{`
-        @keyframes marquee { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
-        .animate-marquee { animation: marquee 45s linear infinite; }
-        .shadow-3xl { box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.6); }
-      `}</style>
     </div>
   );
 };

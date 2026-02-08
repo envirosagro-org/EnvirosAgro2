@@ -124,7 +124,7 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
         <div className="absolute inset-[-20px] border-2 border-dashed border-emerald-500/20 rounded-[64px] animate-spin-slow"></div>
       </div>
 
-      <div className="w-full max-w-md space-y-6 relative z-20">
+      <div className="w-full max-w-md space-y-6 relative z-20 px-6">
         <div className="h-1 bg-white/5 rounded-full overflow-hidden p-px">
           <div 
             className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" 
@@ -271,7 +271,8 @@ const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(true);
   const [view, setView] = useState<ViewState>('dashboard');
   const [user, setUser] = useState<User | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // App-wide data states
   const [projects, setProjects] = useState<AgroProject[]>([]);
@@ -306,6 +307,17 @@ const App: React.FC = () => {
   };
 
   const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Handle Resize for Responsive States
+  useEffect(() => {
+    const handleResize = () => {
+      const isLg = window.innerWidth >= 1024;
+      setIsSidebarOpen(isLg);
+      if (isLg) setIsMobileMenuOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Synchronize authentication status
   useEffect(() => {
@@ -402,7 +414,11 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
-  const navigate = (v: ViewState) => setView(v);
+  
+  const navigate = (v: ViewState) => {
+    setView(v);
+    setIsMobileMenuOpen(false);
+  };
 
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
@@ -467,61 +483,179 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000">
-      <aside className={`fixed top-0 left-0 bottom-0 z-[100] bg-black/80 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 overflow-y-auto custom-scrollbar ${isSidebarOpen ? 'w-80' : 'w-20'}`}>
-        <div className="p-8 flex items-center gap-4">
-           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0"><SycamoreLogo size={32} className="text-black" /></div>
-           {isSidebarOpen && <div className="animate-in fade-in slide-in-from-left-2"><h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1><p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.3em]">Core Node Registry</p></div>}
+      
+      {/* MOBILE DRAWER BACKDROP */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
+
+      {/* RESPONSIVE SIDEBAR */}
+      <aside className={`fixed top-0 left-0 bottom-0 z-[250] bg-black/90 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 overflow-y-auto custom-scrollbar 
+        ${isSidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'} 
+        ${isMobileMenuOpen ? 'w-80 translate-x-0' : ''}`}
+      >
+        <div className="p-8 flex items-center justify-between">
+           <div className="flex items-center gap-4">
+             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-2xl">
+                <SycamoreLogo size={32} className="text-black" />
+             </div>
+             {(isSidebarOpen || isMobileMenuOpen) && (
+               <div className="animate-in fade-in slide-in-from-left-2">
+                 <h1 className="text-xl font-black text-white italic tracking-tighter leading-none">Enviros<span className="text-emerald-400">Agro</span></h1>
+                 <p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">Registry</p>
+               </div>
+             )}
+           </div>
+           {isMobileMenuOpen && (
+             <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 text-slate-500 hover:text-white">
+                <X size={20} />
+             </button>
+           )}
         </div>
+
         <nav className="px-4 py-8 space-y-10">
            {REGISTRY_NODES.map((group) => (
              <div key={group.category} className="space-y-4">
-                {isSidebarOpen && <p className={`px-4 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600`}>{group.category}</p>}
-                <div className="space-y-1">{group.items.map(item => (
-                    <button key={item.id} onClick={() => setView(item.id as ViewState)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+                {(isSidebarOpen || isMobileMenuOpen) && <p className={`px-4 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600`}>{group.category}</p>}
+                <div className="space-y-1">
+                  {group.items.map(item => (
+                    <button 
+                      key={item.id} 
+                      onClick={() => navigate(item.id as ViewState)} 
+                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                    >
                       <item.icon size={18} className={view === item.id ? 'text-white' : 'text-slate-500'} />
-                      {isSidebarOpen && <span className="text-[10px] font-bold uppercase tracking-widest text-left leading-none">{item.name}</span>}
+                      {(isSidebarOpen || isMobileMenuOpen) && <span className="text-[10px] font-bold uppercase tracking-widest text-left leading-none">{item.name}</span>}
                     </button>
-                ))}</div>
+                  ))}
+                </div>
              </div>
            ))}
         </nav>
       </aside>
 
-      <main ref={mainContentRef} onScroll={handleScroll} className={`transition-all duration-500 pt-10 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'pl-96 pr-10' : 'pl-32 pr-10'}`}>
-        <div className="fixed top-0 left-0 right-0 z-[200] h-1 pointer-events-none"><div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}></div></div>
-        <header className="flex justify-between items-center mb-10 sticky top-0 bg-[#050706]/80 backdrop-blur-md py-4 z-[150] px-4 -mx-4 border-b border-white/5">
-           <div className="flex items-center gap-6 overflow-hidden">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0">{isSidebarOpen ? <X size={20}/> : <Menu size={20}/>}</button>
-              <div className="space-y-0.5 truncate">
-                 <h2 className="text-lg md:text-xl font-black text-white uppercase italic tracking-tighter truncate">{view.replace(/_/g, ' ')}</h2>
-                 <p className="text-[8px] md:text-[9px] text-slate-500 font-mono tracking-widest uppercase truncate">SYNC: {user ? 'ANCHORED' : 'OBSERVER'}</p>
+      {/* MAIN CONTENT AREA */}
+      <main 
+        ref={mainContentRef} 
+        onScroll={handleScroll} 
+        className={`transition-all duration-500 pt-6 pb-32 h-screen overflow-y-auto custom-scrollbar relative 
+          ${isSidebarOpen ? 'lg:pl-80 pr-4 lg:pr-10' : 'lg:pl-24 pr-4 lg:pr-10'} 
+          pl-4`}
+      >
+        {/* SCROLL INDICATOR */}
+        <div className="fixed top-0 left-0 right-0 z-[200] h-1 pointer-events-none">
+          <div 
+            className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" 
+            style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}
+          ></div>
+        </div>
+
+        {/* TOP BAR / NAVIGATION */}
+        <header className="flex justify-between items-center mb-8 sticky top-0 bg-[#050706]/90 backdrop-blur-xl py-4 z-[150] px-2 -mx-2 border-b border-white/5">
+           <div className="flex items-center gap-4 overflow-hidden">
+              {/* DESKTOP TOGGLE */}
+              <button 
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                className="hidden lg:block p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0"
+              >
+                {isSidebarOpen ? <ChevronLeft size={20}/> : <Menu size={20}/>}
+              </button>
+              
+              {/* MOBILE TOGGLE */}
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)} 
+                className="lg:hidden p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0"
+              >
+                <Menu size={20}/>
+              </button>
+
+              <div className="space-y-0.5 truncate max-w-[150px] sm:max-w-none">
+                 <h2 className="text-base sm:text-xl font-black text-white uppercase italic tracking-tighter truncate leading-tight">
+                    {view.replace(/_/g, ' ')}
+                 </h2>
+                 <p className="text-[7px] sm:text-[9px] text-slate-600 font-mono tracking-widest uppercase truncate">SYNC: {user ? 'ANCHORED' : 'OBSERVER'}</p>
               </div>
            </div>
-           <div className="flex items-center gap-3 shrink-0">
-              {user && <button onClick={() => setView('wallet')} className="px-4 py-2.5 glass-card rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={14} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[10px] md:text-xs font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)} <span className="text-[8px] text-emerald-600/60 font-sans italic">EAC</span></span></button>}
-              <button onClick={() => setView('profile')} className={`flex items-center gap-2 px-3 py-2 rounded-2xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
-                 {user ? (<><div className="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden shrink-0 border border-white/20">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={14} className="text-slate-500" />}</div><span className="text-[9px] font-black uppercase text-white hidden md:block">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={16} className="text-emerald-400" /><span className="text-[9px] font-black uppercase text-emerald-400">Sync</span></>)}
+
+           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {user && (
+                <button 
+                  onClick={() => setView('wallet')} 
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 glass-card rounded-xl sm:rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"
+                >
+                  <Coins size={14} className="text-emerald-400 group-hover:rotate-12 transition-transform" />
+                  <span className="text-[10px] sm:text-xs font-mono font-black text-white">
+                    {(user?.wallet.balance || 0).toFixed(0)} 
+                    <span className="ml-1 text-[8px] text-emerald-600/60 font-sans italic hidden sm:inline">EAC</span>
+                  </span>
+                </button>
+              )}
+              <button 
+                onClick={() => setView('profile')} 
+                className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl sm:rounded-2xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}
+              >
+                 {user ? (
+                   <>
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">
+                      {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={14} className="text-slate-500 m-auto mt-1 sm:mt-2" />}
+                    </div>
+                    <span className="text-[9px] font-black uppercase text-white hidden sm:block truncate max-w-[80px]">
+                      {user.name.split(' ')[0]}
+                    </span>
+                   </>
+                 ) : (
+                   <>
+                    <UserPlus size={16} className="text-emerald-400" />
+                    <span className="text-[9px] font-black uppercase text-emerald-400">Sync</span>
+                   </>
+                 )}
               </button>
            </div>
         </header>
 
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">{renderView()}</div>
-        {showZenithButton && <button onClick={scrollToTop} className="fixed bottom-10 right-10 p-5 agro-gradient rounded-3xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border-2 border-white/20 animate-in fade-in zoom-in duration-300"><ArrowUp size={24} /></button>}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+          {renderView()}
+        </div>
+
+        {showZenithButton && (
+          <button 
+            onClick={scrollToTop} 
+            className="fixed bottom-6 right-6 sm:bottom-10 sm:right-10 p-4 sm:p-5 agro-gradient rounded-2xl sm:rounded-3xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border-2 border-white/20 animate-in fade-in zoom-in duration-300"
+          >
+            <ArrowUp size={24} />
+          </button>
+        )}
       </main>
 
-      <div className="fixed top-24 right-10 z-[500] space-y-4 max-w-sm w-full pointer-events-none">
+      {/* NOTIFICATION STACK */}
+      <div className="fixed top-24 right-4 sm:right-10 z-[500] space-y-4 max-w-[280px] sm:max-w-sm w-full pointer-events-none">
         {notifications.map(n => (
-          <div key={n.id} className={`p-6 rounded-3xl border shadow-3xl flex items-start gap-4 pointer-events-auto animate-in slide-in-from-right duration-500 ${n.type === 'error' ? 'bg-rose-950/40 border-rose-500/30 text-rose-500' : n.type === 'warning' ? 'bg-amber-950/40 border-amber-500/30 text-amber-400' : 'bg-black/90 border-emerald-500/20 text-emerald-400'}`}>
-            {n.type === 'error' ? <ShieldAlert className="shrink-0" /> : <Info className="shrink-0" />}
-            <div className="flex-1 space-y-1"><h5 className="text-[10px] font-black uppercase tracking-widest">{n.title}</h5><p className="text-[10px] italic text-slate-300 leading-tight">{n.message}</p></div>
-            <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="text-slate-500 hover:text-white"><X size={14}/></button>
+          <div 
+            key={n.id} 
+            className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border shadow-3xl flex items-start gap-3 sm:gap-4 pointer-events-auto animate-in slide-in-from-right duration-500 ${n.type === 'error' ? 'bg-rose-950/80 border-rose-500/30 text-rose-500' : n.type === 'warning' ? 'bg-amber-950/80 border-amber-500/30 text-amber-400' : 'bg-black/95 border-emerald-500/20 text-emerald-400'}`}
+          >
+            {n.type === 'error' ? <ShieldAlert className="shrink-0 mt-1" /> : <Info className="shrink-0 mt-1" />}
+            <div className="flex-1 space-y-1">
+              <h5 className="text-[10px] font-black uppercase tracking-widest">{n.title}</h5>
+              <p className="text-[10px] italic text-slate-300 leading-tight">{n.message}</p>
+            </div>
+            <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="text-slate-500 hover:text-white">
+              <X size={14}/>
+            </button>
           </div>
         ))}
       </div>
 
       <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={handleEarnEAC} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
       <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />
-      <FloatingConsultant user={user || GUEST_STWD} />
+      
+      {/* ADJUSTED FAB POSITION FOR MOBILE */}
+      <div className="lg:scale-100 scale-90">
+        <FloatingConsultant user={user || GUEST_STWD} />
+      </div>
     </div>
   );
 };
