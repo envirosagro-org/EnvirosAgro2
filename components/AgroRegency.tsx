@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   History, 
@@ -146,7 +147,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
          </div>
          <div className="space-y-6 relative z-10 text-center md:text-left">
             <div className="space-y-2">
-               <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20 shadow-inner">REGISTRY_REGENCY_v5.0</span>
+               <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20 shadow-inner italic">REGISTRY_REGENCY_v5.0</span>
                <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Agro <span className="text-indigo-400">Regency</span></h2>
             </div>
             <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl italic leading-relaxed">
@@ -176,7 +177,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
         {activeTab === 'calculus' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-500">
              <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden flex flex-col shadow-3xl group text-white">
-                <div className="flex justify-between items-center mb-12 relative z-10 px-4">
+                <div className="flex justify-between items-center mb-12 relative z-10 px-4 gap-8">
                    <div className="flex items-center gap-6">
                       <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 shadow-xl group-hover:scale-110 transition-transform">
                          <Activity className="w-10 h-10 text-indigo-400" />
@@ -299,7 +300,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                              "The fallowing law ensures that the variable 'm' does not decay to zero through over-extraction. One sixth of production time is the mathematical minimum for planetary balance."
                           </p>
                        </div>
-                       <div className="p-10 bg-black/80 rounded-[48px] border-2 border-indigo-500/20 w-full relative z-10 shadow-inner">
+                       <div className="p-10 bg-black/60 rounded-[48px] border-2 border-indigo-500/20 w-full relative z-10 shadow-inner">
                           <p className="text-[11px] text-slate-700 uppercase font-black mb-4">Registry Compliance Score</p>
                           <p className="text-7xl font-mono font-black text-indigo-400 tracking-tighter italic">0.98<span className="text-xl">μ</span></p>
                        </div>
@@ -316,7 +317,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                     <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-2xl animate-float">
                        <History size={48} />
                     </div>
-                    <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Retrieve <span className="text-indigo-400">Past Shards</span></h3>
+                    <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Retrieve <span className="text-indigo-400">Past Shards</span></h3>
                  </div>
                  <div className="space-y-8 max-w-xl mx-auto relative z-10">
                     <input 
@@ -329,7 +330,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                       disabled={isRetrieving || !queryId}
                       className="w-full py-10 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30"
                     >
-                       {isRetrieving ? <Loader2 className="w-8 h-8 animate-spin" /> : <TimeIcon className="w-8 h-8" />}
+                       {isRetrieving ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <TimeIcon className="w-8 h-8" />}
                        {isRetrieving ? 'QUERYING LEDGER...' : 'INITIALIZE RETRIEVAL'}
                     </button>
                  </div>
@@ -351,7 +352,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                   disabled={isAnalyzing}
                   className="w-full max-w-md py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
                  >
-                    {isAnalyzing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
+                    {isAnalyzing ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
                     {isAnalyzing ? "EXECUTING CALCULUS..." : "EXECUTE dy/dx AUDIT"}
                  </button>
                  {oracleReport && (

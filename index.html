@@ -13,6 +13,11 @@
         darkMode: 'class',
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              serif: ['Inter', 'sans-serif'], // Redirecting serif to use Inter for consistency
+              mono: ['JetBrains Mono', 'monospace'],
+            },
             colors: {
               agro: {
                 primary: '#10b981',
@@ -71,6 +76,10 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
+        font-size: 14px;
+      }
+      @media (max-width: 640px) {
+        body { font-size: 12px; }
       }
       #root {
         height: 100vh;
@@ -100,6 +109,10 @@
         opacity: 0.015;
         pointer-events: none;
         z-index: 10000;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
       }
     </style>
     <script type="importmap">

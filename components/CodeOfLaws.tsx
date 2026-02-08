@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Scale, ShieldCheck, Landmark, BookOpen, ScrollText, 
@@ -17,7 +18,6 @@ import {
   FileDigit,
   Waves,
   Scale as ScaleIcon,
-  // Added Sprout to fix the error on line 90
   Sprout
 } from 'lucide-react';
 import { User } from '../types';
@@ -147,7 +147,7 @@ const CodeOfLaws: React.FC<CodeOfLawsProps> = ({ user }) => {
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-32 max-w-[1100px] mx-auto px-4 md:px-0">
       
-      {/* 1. Supreme Equation HUD - Sacred Industrial Logic */}
+      {/* 1. Supreme Equation HUD - Clean Sans Typography */}
       <div className="glass-card p-12 md:p-16 rounded-[80px] border-emerald-500/20 bg-emerald-600/[0.03] relative overflow-hidden shadow-3xl mb-20 text-center flex flex-col items-center">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none rotate-12">
             <ScaleIcon className="w-[800px] h-[800px] text-emerald-400" />
@@ -159,21 +159,21 @@ const CodeOfLaws: React.FC<CodeOfLawsProps> = ({ user }) => {
                   <Fingerprint className="w-14 h-14 text-white" />
                </div>
                <div className="space-y-4">
-                  <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">THE SCROLL <span className="text-emerald-400">OF SEHTI</span></h2>
+                  <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">THE SCROLL <span className="text-emerald-400">OF SEHTI</span></h2>
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.8em]">Registry Statutes & Mandates</p>
                </div>
             </div>
 
-            {/* Supreme Equation Visualizer */}
+            {/* Supreme Equation Visualizer - Unified Sans */}
             <div className="p-12 bg-black/60 rounded-[64px] border border-white/5 shadow-inner relative overflow-hidden group">
                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-emerald-500/5 opacity-50"></div>
                <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-12">
                   <div className="text-right hidden md:block">
                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Resilience</p>
-                     <p className="text-6xl font-serif italic font-black text-white">m =</p>
+                     <p className="text-6xl font-sans italic font-black text-white">m =</p>
                   </div>
                   <div className="flex flex-col items-center">
-                     <div className="flex items-center gap-6 text-4xl md:text-7xl font-serif italic text-emerald-400 font-black tracking-tighter">
+                     <div className="flex items-center gap-6 text-4xl md:text-7xl font-sans italic text-emerald-400 font-black tracking-tighter">
                         <span className="text-white not-italic text-5xl">√</span>
                         <div className="flex flex-col items-center">
                            <div className="px-8 border-b-4 border-emerald-500/40 pb-2">
@@ -207,12 +207,10 @@ const CodeOfLaws: React.FC<CodeOfLawsProps> = ({ user }) => {
       <div className="space-y-16">
          {LAWS.map(law => (
             <div key={law.id} className="p-12 md:p-16 glass-card rounded-[80px] border border-white/5 bg-black/60 relative overflow-hidden group shadow-3xl transition-all duration-500 hover:border-white/10">
-               {/* Background Watermark Icon */}
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.04] pointer-events-none group-hover:scale-105 transition-transform duration-[15s]">
                   <law.icon size={600} className="text-white" />
                </div>
 
-               {/* Header: Icon and Thrust/Anchor */}
                <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 mb-12 gap-8">
                   <div className="flex items-center gap-8">
                     <div className={`w-28 h-28 rounded-[40px] ${law.bg} border border-white/10 shadow-3xl group-hover:rotate-3 transition-transform duration-700 flex items-center justify-center`}>
@@ -231,20 +229,17 @@ const CodeOfLaws: React.FC<CodeOfLawsProps> = ({ user }) => {
                   </div>
                </div>
 
-               {/* Title */}
                <h2 className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter m-0 leading-[0.85] drop-shadow-2xl relative z-10 mb-12">
                   {law.title}
                </h2>
 
-               {/* Statute Quote Block - Digital Parchment Style */}
-               <div className="p-12 md:p-20 bg-white/[0.01] backdrop-blur-3xl rounded-[64px] border border-white/5 shadow-inner relative z-10 group/statute">
+               <div className="p-12 md:p-20 bg-white/[0.01] backdrop-blur-3xl rounded-[64px] border border-white/5 shadow-inner relative z-10 group/statute text-center">
                   <div className="absolute top-10 left-10 opacity-20 text-emerald-500 group-hover/statute:scale-110 transition-transform">
                     <Quote size={60} />
                   </div>
-                  <p className="text-slate-200 text-2xl md:text-4xl italic leading-relaxed font-medium border-l-[12px] border-emerald-500/40 pl-16 md:pl-20 font-serif">
+                  <p className="text-slate-200 text-2xl md:text-4xl italic leading-relaxed font-medium border-l-[12px] border-emerald-500/40 pl-16 md:pl-20 font-sans">
                      {law.statute}
                   </p>
-                  {/* Digital Signature Seal - Gold Style */}
                   <div className="absolute -bottom-8 -right-8 w-40 h-40 opacity-20 group-hover:opacity-100 transition-opacity duration-1000">
                     <div className="relative w-full h-full flex items-center justify-center">
                        <Stamp className="w-full h-full text-amber-500/40 animate-spin-slow" />
@@ -253,9 +248,7 @@ const CodeOfLaws: React.FC<CodeOfLawsProps> = ({ user }) => {
                   </div>
                </div>
 
-               {/* Precedents and Action Box */}
                <div className="mt-20 pt-16 border-t border-white/5 relative z-10 space-y-12">
-                  {/* Precedents */}
                   <div className="space-y-8">
                      <div className="flex items-center gap-4 px-4">
                         <History size={18} className="text-emerald-500" />
@@ -271,7 +264,6 @@ const CodeOfLaws: React.FC<CodeOfLawsProps> = ({ user }) => {
                      </div>
                   </div>
 
-                  {/* Actions Section */}
                   <div className="flex flex-col md:flex-row gap-8 items-center pt-4">
                      <div className="flex-1 w-full p-2.5 bg-white/[0.01] border border-white/10 rounded-[48px] shadow-3xl flex items-center relative overflow-hidden group/action">
                         <button 
@@ -315,32 +307,10 @@ const CodeOfLaws: React.FC<CodeOfLawsProps> = ({ user }) => {
          ))}
       </div>
 
-      {/* 3. Global Sovereignty Shard Footer */}
-      <div className="p-16 md:p-24 glass-card rounded-[80px] border-emerald-500/20 bg-emerald-600/[0.03] flex flex-col md:flex-row items-center justify-between gap-16 relative overflow-hidden shadow-3xl mt-32 mx-4">
-         <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12">
-            <ShieldCheck className="w-[1000px] h-[1000px] text-emerald-400" />
-         </div>
-         <div className="flex items-center gap-16 relative z-10 text-center md:text-left flex-col md:flex-row">
-            <div className="w-40 h-40 bg-emerald-600 rounded-[56px] flex items-center justify-center shadow-3xl animate-pulse ring-[24px] ring-white/5 shrink-0">
-               <Fingerprint className="w-20 h-20 text-white" />
-            </div>
-            <div className="space-y-6">
-               <h4 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">REGISTRY <span className="text-emerald-400">SOVEREIGNTY</span></h4>
-               <p className="text-slate-400 text-2xl md:text-3xl font-medium italic leading-relaxed max-w-2xl">
-                 Every registry action is anchored to the Supreme Statutes of SEHTI. Transgressions result in automatic node multiplier slashing.
-               </p>
-            </div>
-         </div>
-         <div className="text-center md:text-right relative z-10 shrink-0 border-l border-white/10 pl-20">
-            <p className="text-[14px] text-slate-600 font-black uppercase mb-6 tracking-[0.8em]">LEGAL_QUORUM</p>
-            <p className="text-9xl md:text-[180px] font-mono font-black text-white tracking-tighter leading-none">100<span className="text-6xl text-emerald-400 ml-2">%</span></p>
-         </div>
-      </div>
-
       <style>{`
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         @keyframes scan {
           0% { top: -100%; }
           100% { top: 100%; }

@@ -115,7 +115,6 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
 
   return (
     <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center space-y-12 overflow-hidden">
-      {/* Scanline Overlay */}
       <div className="absolute inset-0 pointer-events-none z-10 opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
       
       <div className="relative group">
@@ -133,7 +132,7 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
           ></div>
         </div>
         <div className="flex flex-col items-center gap-2">
-           <p className="text-[10px] font-mono font-black text-emerald-400/80 uppercase tracking-[0.6em] animate-pulse">
+           <p className="text-[10px] font-mono font-black text-emerald-400/80 uppercase tracking-[0.3em] animate-pulse">
               {BOOT_LOGS[currentLog]}
            </p>
            <p className="text-[8px] font-mono text-slate-700 font-bold uppercase tracking-widest">
@@ -144,7 +143,7 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
 
       <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-30">
         <h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1>
-        <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Planetary Regeneration Grid</p>
+        <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest text-center">Planetary Regeneration Grid</p>
       </div>
     </div>
   );
@@ -337,10 +336,6 @@ const App: React.FC = () => {
     };
   }, [user]);
 
-  /**
-   * Enhanced multi-channel signal emission.
-   * Every major user action routes through here to the Signal Terminal.
-   */
   const emitSignal = async (signalData: Partial<SignalShard>) => {
     const signal = await dispatchNetworkSignal(signalData);
     if (signal) {
@@ -475,16 +470,16 @@ const App: React.FC = () => {
       <aside className={`fixed top-0 left-0 bottom-0 z-[100] bg-black/80 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 overflow-y-auto custom-scrollbar ${isSidebarOpen ? 'w-80' : 'w-20'}`}>
         <div className="p-8 flex items-center gap-4">
            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0"><SycamoreLogo size={32} className="text-black" /></div>
-           {isSidebarOpen && <div className="animate-in fade-in slide-in-from-left-2"><h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1><p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Core Node Registry</p></div>}
+           {isSidebarOpen && <div className="animate-in fade-in slide-in-from-left-2"><h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1><p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.3em]">Core Node Registry</p></div>}
         </div>
         <nav className="px-4 py-8 space-y-10">
            {REGISTRY_NODES.map((group) => (
              <div key={group.category} className="space-y-4">
-                {isSidebarOpen && <p className={`px-4 text-[9px] font-black uppercase tracking-widest text-slate-600`}>{group.category}</p>}
+                {isSidebarOpen && <p className={`px-4 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600`}>{group.category}</p>}
                 <div className="space-y-1">{group.items.map(item => (
                     <button key={item.id} onClick={() => setView(item.id as ViewState)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
-                      <item.icon size={20} className={view === item.id ? 'text-white' : 'text-slate-500'} />
-                      {isSidebarOpen && <span className="text-xs font-bold uppercase tracking-widest">{item.name}</span>}
+                      <item.icon size={18} className={view === item.id ? 'text-white' : 'text-slate-500'} />
+                      {isSidebarOpen && <span className="text-[10px] font-bold uppercase tracking-widest text-left leading-none">{item.name}</span>}
                     </button>
                 ))}</div>
              </div>
@@ -495,14 +490,17 @@ const App: React.FC = () => {
       <main ref={mainContentRef} onScroll={handleScroll} className={`transition-all duration-500 pt-10 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'pl-96 pr-10' : 'pl-32 pr-10'}`}>
         <div className="fixed top-0 left-0 right-0 z-[200] h-1 pointer-events-none"><div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}></div></div>
         <header className="flex justify-between items-center mb-10 sticky top-0 bg-[#050706]/80 backdrop-blur-md py-4 z-[150] px-4 -mx-4 border-b border-white/5">
-           <div className="flex items-center gap-6">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">{isSidebarOpen ? <X size={20}/> : <Menu size={20}/>}</button>
-              <div className="space-y-1"><h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">{view.replace(/_/g, ' ')}</h2><p className="text-[9px] text-slate-500 font-mono tracking-widest uppercase">NODE_SYNC_STATUS: {user ? 'CLOUD_ANCHORED' : 'GUEST_OBSERVER'}</p></div>
+           <div className="flex items-center gap-6 overflow-hidden">
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0">{isSidebarOpen ? <X size={20}/> : <Menu size={20}/>}</button>
+              <div className="space-y-0.5 truncate">
+                 <h2 className="text-lg md:text-xl font-black text-white uppercase italic tracking-tighter truncate">{view.replace(/_/g, ' ')}</h2>
+                 <p className="text-[8px] md:text-[9px] text-slate-500 font-mono tracking-widest uppercase truncate">SYNC: {user ? 'ANCHORED' : 'OBSERVER'}</p>
+              </div>
            </div>
-           <div className="flex items-center gap-4">
-              {user && <button onClick={() => setView('wallet')} className="px-6 py-3 glass-card rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-3 hover:bg-emerald-500/10 transition-all group"><Coins size={16} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-sm font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)} <span className="text-xs text-emerald-600/60 font-sans italic">EAC</span></span></button>}
-              <button onClick={() => setView('profile')} className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
-                 {user ? (<><div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-white/20">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={16} className="text-slate-500" />}</div><span className="text-[10px] font-black uppercase text-white hidden md:block">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={18} className="text-emerald-400" /><span className="text-[10px] font-black uppercase text-emerald-400">Sync Steward</span></>)}
+           <div className="flex items-center gap-3 shrink-0">
+              {user && <button onClick={() => setView('wallet')} className="px-4 py-2.5 glass-card rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={14} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[10px] md:text-xs font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)} <span className="text-[8px] text-emerald-600/60 font-sans italic">EAC</span></span></button>}
+              <button onClick={() => setView('profile')} className={`flex items-center gap-2 px-3 py-2 rounded-2xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
+                 {user ? (<><div className="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden shrink-0 border border-white/20">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={14} className="text-slate-500" />}</div><span className="text-[9px] font-black uppercase text-white hidden md:block">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={16} className="text-emerald-400" /><span className="text-[9px] font-black uppercase text-emerald-400">Sync</span></>)}
               </button>
            </div>
         </header>
@@ -515,7 +513,7 @@ const App: React.FC = () => {
         {notifications.map(n => (
           <div key={n.id} className={`p-6 rounded-3xl border shadow-3xl flex items-start gap-4 pointer-events-auto animate-in slide-in-from-right duration-500 ${n.type === 'error' ? 'bg-rose-950/40 border-rose-500/30 text-rose-500' : n.type === 'warning' ? 'bg-amber-950/40 border-amber-500/30 text-amber-400' : 'bg-black/90 border-emerald-500/20 text-emerald-400'}`}>
             {n.type === 'error' ? <ShieldAlert className="shrink-0" /> : <Info className="shrink-0" />}
-            <div className="flex-1 space-y-1"><h5 className="text-sm font-black uppercase tracking-widest">{n.title}</h5><p className="text-xs italic text-slate-300">{n.message}</p></div>
+            <div className="flex-1 space-y-1"><h5 className="text-[10px] font-black uppercase tracking-widest">{n.title}</h5><p className="text-[10px] italic text-slate-300 leading-tight">{n.message}</p></div>
             <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="text-slate-500 hover:text-white"><X size={14}/></button>
           </div>
         ))}
