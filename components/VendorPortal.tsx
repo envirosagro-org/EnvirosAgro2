@@ -33,35 +33,37 @@ import {
   Clock,
   Building2,
   PackageSearch,
-  CheckCircle,
-  FileSignature,
-  FileCheck,
-  Binary,
-  RotateCcw,
-  History,
-  FlaskConical,
-  Key,
-  Globe,
-  Activity,
-  Binoculars,
-  CalendarCheck,
-  Receipt,
-  BadgeDollarSign,
-  TrendingUp,
-  ArrowUpRight,
-  Wallet,
-  ArrowDownLeft
+  FileSignature, 
+  FileCheck, 
+  Binary, 
+  RotateCcw, 
+  History, 
+  FlaskConical, 
+  Key, 
+  Globe, 
+  Activity, 
+  Binoculars, 
+  CalendarCheck, 
+  Receipt, 
+  BadgeDollarSign, 
+  TrendingUp, 
+  ArrowUpRight, 
+  Wallet, 
+  ArrowDownLeft,
+  ArrowLeftCircle,
+  BadgeCheck,
+  Building
 } from 'lucide-react';
-import { User, Order, LogisticProvider, VendorProduct } from '../types';
+import { User, Order, LogisticProvider, VendorProduct, ViewState } from '../types';
 
 interface VendorPortalProps {
   user: User;
-  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, status: Order['status'], meta?: any) => void;
   vendorProducts: VendorProduct[];
   onRegisterProduct: (product: VendorProduct) => void;
+  onNavigate: (view: ViewState) => void;
 }
 
 const LOGISTIC_PROVIDERS: LogisticProvider[] = [
@@ -73,7 +75,15 @@ const LOGISTIC_PROVIDERS: LogisticProvider[] = [
 type SupplierType = 'REVERSE_RETURN' | 'RAW_MATERIALS' | 'FINISHED_PRODUCTS' | 'SERVICE_PROVIDER';
 type RegStep = 'identification' | 'item_ingest' | 'settlement' | 'audit_protocol' | 'success';
 
-const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct }) => {
+const VendorPortal: React.FC<VendorPortalProps> = ({ 
+  user, 
+  onSpendEAC, 
+  orders = [], 
+  onUpdateOrderStatus, 
+  vendorProducts = [], 
+  onRegisterProduct,
+  onNavigate 
+}) => {
   const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'ledger'>('shipments');
   const [selectedOrderForDispatch, setSelectedOrderForDispatch] = useState<Order | null>(null);
   const [isVerifying, setIsVerifying] = useState<string | null>(null);
@@ -106,9 +116,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
     setShowRegisterModal(true);
   };
 
-  // Fix: handleAuthorizeSettlement made async and awaits onSpendEAC to resolve Promise<boolean>
   const handleAuthorizeSettlement = async () => {
-    if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
+    if (esinSign.toUpperCase() !== (user?.esin || '').toUpperCase()) {
       alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
@@ -190,6 +199,16 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1400px] mx-auto px-4">
       
       {/* Header Segment */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 px-4">
+        <button 
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all group shadow-xl"
+        >
+          <ArrowLeftCircle className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          RETURN TO HUB
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-amber-500/20 bg-amber-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-2xl">
            <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform">
@@ -201,7 +220,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
            <div className="space-y-6 relative z-10 text-center md:text-left">
               <div className="space-y-2">
                  <span className="px-4 py-1.5 bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-amber-500/20">VENDOR_REGISTRY_NODE_v5</span>
-                 <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 leading-none">Supplier <span className="text-amber-500">Command</span></h2>
+                 <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 m-0 leading-none">Supplier <span className="text-amber-500">Command</span></h2>
               </div>
               <p className="text-slate-400 text-lg md:text-xl leading-relaxed max-w-2xl font-medium">
                  Provision your agricultural assets to the global grid. Multi-stage industrial vetting ensures 100% authenticity for all network shards.
@@ -234,7 +253,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl">
+      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4">
         {[
           { id: 'shipments', label: 'Inbound Orders', icon: ShoppingCart },
           { id: 'inventory', label: 'Asset Management', icon: Package },
@@ -325,7 +344,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                             {order.status === 'COMPLETED' && (
                                <div className="flex items-center gap-3 justify-end text-emerald-400">
                                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Cycle Finalized</span>
-                                  <CheckCircle size={14} />
+                                  <CheckCircle2 size={14} />
                                </div>
                             )}
                          </div>
@@ -494,7 +513,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
       {selectedOrderForDispatch && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setSelectedOrderForDispatch(null)}></div>
-           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col">
+           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in border-2 flex flex-col">
               <div className="p-10 md:p-16 space-y-12">
                  <div className="flex justify-between items-start">
                     <div className="flex items-center gap-8">
@@ -521,7 +540,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                              >
                                 <div className="flex items-center gap-8">
                                    <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-slate-600 group-hover:bg-emerald-600/10 group-hover:text-emerald-400 transition-all shadow-inner border border-white/10">
-                                      {lp.name.includes('Drone') ? <Bot size={28} /> : lp.name.includes('Rail') ? <Building2 size={28} /> : <HardHat size={28} />}
+                                      {lp.name.includes('Drone') ? <Bot size={28} /> : lp.name.includes('Rail') ? <Building size={28} /> : <HardHat size={28} />}
                                    </div>
                                    <div className="text-left">
                                       <p className="text-xl font-bold text-white uppercase italic leading-none">{lp.name}</p>
@@ -654,20 +673,20 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                  {regStep === 'settlement' && (
                     <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
                        <div className="text-center space-y-4">
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Registry <span className="text-amber-500">Handshake</span></h3>
-                          <p className="text-slate-400 text-sm">Authorize EAC for institutional vetting and node sharding.</p>
+                          <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl"><Coins className="w-10 h-10 text-emerald-400" /></div>
+                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Registry <span className="text-indigo-400">Settlement</span></h3>
                        </div>
-                       <div className="p-10 bg-black/60 rounded-[48px] border border-white/10 text-center space-y-10 shadow-inner">
+                       <div className="p-10 bg-black/60 rounded-[48px] border border-white/10 text-center space-y-8 shadow-inner">
                           <div className="flex justify-between items-center px-4">
-                             <span className="text-[10px] font-black text-slate-500 uppercase">Shard Designation</span>
+                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Shard Designation</span>
                              <span className="text-xs font-black text-amber-500 uppercase italic">{supplierType.replace('_', ' ')}</span>
                           </div>
                           <div className="flex justify-between items-center px-4 border-t border-white/5 pt-6">
                              <span className="text-[10px] font-black text-slate-500 uppercase">Registration Fee</span>
                              <span className="text-4xl font-mono font-black text-emerald-400">{getSettlementFee()} EAC</span>
                           </div>
-                          <div className="space-y-4 pt-6">
-                             <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.4em] text-center mb-4">Confirm Node Signature (ESIN)</p>
+                          <div className="space-y-4 pt-6 border-t border-white/5">
+                             <p className="text-[10px] text-slate-600 font-black uppercase text-center tracking-[0.4em]">Confirm Node Signature (ESIN)</p>
                              <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX-XXXX" className="w-full bg-transparent border-none text-center text-4xl font-mono text-white outline-none uppercase placeholder:text-slate-900 tracking-widest shadow-inner" />
                           </div>
                        </div>
@@ -711,7 +730,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
                  {regStep === 'success' && (
                     <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
                        <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(217,119,6,0.4)] scale-110 relative group">
-                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
+                          <BadgeCheck className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
                        </div>
                        <div className="space-y-4">
                           <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic m-0">Asset <span className="text-amber-500">Anchored</span></h3>
@@ -728,7 +747,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({ user, onSpendEAC, orders = 
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
