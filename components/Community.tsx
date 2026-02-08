@@ -14,12 +14,15 @@ import {
   UserPlus, MessageCircle, Video as VideoIcon, LogOut as LeaveIcon, Gavel,
   ChevronDown,
   Wand2,
-  ListTodo
+  ListTodo,
+  FileSearch,
+  Box,
+  LineChart as LineChartIcon
 } from 'lucide-react';
 import { 
   BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
-import { User, ViewState } from '../types';
+import { User, ViewState, SignalShard } from '../types';
 import { generateAgroExam, getGroundedAgroResources, chatWithAgroExpert, AIResponse } from '../services/geminiService';
 
 interface CommunityProps {
@@ -78,7 +81,7 @@ const EXAM_FEE = 50;
 const EXAM_REWARD_BOUNTY = 500;
 
 const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpendEAC, onContribution, onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'hub' | 'shards' | 'social' | 'lms' | 'manual' | 'report'>('shards');
+  const [activeTab, setActiveTab] = useState<'hub' | 'shards' | 'social' | 'lms' | 'manual' | 'report'>('social');
   const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams' | 'forge'>('modules');
   
   const [shards] = useState(INITIAL_SOCIAL_SHARDS);
@@ -86,7 +89,6 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
 
   const [isPosting, setIsPosting] = useState(false);
   const [postContent, setPostContent] = useState('');
-  const [selectedChapter, setSelectedChapter] = useState(CHAPTERS[0]);
   
   const [socialSearch, setSocialSearch] = useState('');
   const [selectedSteward, setSelectedSteward] = useState<any | null>(null);
@@ -113,7 +115,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
       onContribution('post', 'General');
       setPostContent('');
       setIsPosting(false);
-      alert("SIGNAL BROADCASTED");
+      alert("SIGNAL BROADCASTED TO SOCIAL REGISTRY");
     }, 1500);
   };
 
@@ -178,7 +180,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
 
   const handleAuthorizeExam = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR");
+      alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     if (await onSpendEAC(EXAM_FEE, "EXAM_INGEST")) {
@@ -215,7 +217,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
           <button 
             key={t.id} 
             onClick={() => setActiveTab(t.id as any)} 
-            className={`flex items-center gap-3 px-8 py-4 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-emerald-600 text-white shadow-xl scale-105 border-b-4 border-emerald-400 ring-8 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-3 px-8 py-4 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-emerald-600 text-white shadow-xl scale-105 border-b-4 border-emerald-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <t.icon size={16} /> {t.name}
           </button>
@@ -300,6 +302,96 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
            </div>
         )}
 
+        {/* --- TAB: SOCIAL FEED & PROFILES --- */}
+        {activeTab === 'social' && (
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="lg:col-span-8 space-y-8">
+                 {/* Create Post */}
+                 <div className="glass-card p-8 rounded-[48px] border-white/5 bg-black/40 space-y-6 shadow-xl">
+                    <div className="flex gap-6 items-start">
+                       <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg">
+                          <UserIcon size={28} />
+                       </div>
+                       <textarea 
+                          value={postContent}
+                          onChange={e => setPostContent(e.target.value)}
+                          placeholder="Broadcast a signal to the registry..."
+                          className="w-full bg-black/60 border border-white/10 rounded-3xl p-6 text-white text-lg font-medium italic focus:ring-4 focus:ring-indigo-500/10 outline-none h-32 resize-none placeholder:text-stone-900 shadow-inner"
+                       />
+                    </div>
+                    <div className="flex justify-end gap-4">
+                       <button onClick={handlePost} disabled={isPosting || !postContent.trim()} className="px-10 py-4 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95 disabled:opacity-30">
+                          {isPosting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                          BROADCAST SIGNAL
+                       </button>
+                    </div>
+                 </div>
+
+                 {/* Feed */}
+                 <div className="space-y-6">
+                    {MOCK_FEED.map(post => (
+                       <div key={post.id} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/20 space-y-8 shadow-xl hover:border-emerald-500/20 transition-all group">
+                          <div className="flex justify-between items-start">
+                             <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-emerald-400 shadow-inner">
+                                   <UserIcon size={24} />
+                                </div>
+                                <div>
+                                   <h4 className="text-xl font-black text-white uppercase italic tracking-tight m-0">{post.author}</h4>
+                                   <p className="text-[10px] text-slate-700 font-mono font-bold uppercase tracking-widest mt-1">{post.esin}</p>
+                                </div>
+                             </div>
+                             <span className="text-[10px] font-mono text-slate-800">{post.time}</span>
+                          </div>
+                          <p className="text-xl text-slate-300 italic leading-relaxed font-medium pl-8 border-l-2 border-emerald-500/20">"{post.text}"</p>
+                          <div className="pt-6 border-t border-white/5 flex gap-8">
+                             <button className="flex items-center gap-2 text-[10px] font-black text-slate-600 hover:text-rose-500 transition-all uppercase tracking-widest">
+                                <ThumbsUp size={14} /> {post.likes} VOUCHES
+                             </button>
+                             <button className="flex items-center gap-2 text-[10px] font-black text-slate-600 hover:text-indigo-400 transition-all uppercase tracking-widest">
+                                <MessageSquareShare size={14} /> {post.shares} SHARDS
+                             </button>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Sidebar Stewards */}
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl">
+                    <div className="flex items-center justify-between px-4">
+                       <h3 className="text-lg font-black text-white uppercase tracking-widest">Discover <span className="text-indigo-400">Stewards</span></h3>
+                       <button className="text-slate-600 hover:text-white transition-all"><RefreshCw size={14} /></button>
+                    </div>
+                    <div className="space-y-4">
+                       {MOCK_STEWARDS.map(steward => (
+                          <div key={steward.esin} className="p-6 bg-white/[0.02] border border-white/5 rounded-[40px] hover:border-indigo-500/30 transition-all flex items-center justify-between group cursor-pointer">
+                             <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:scale-105 transition-transform">
+                                   <img src={steward.avatar} alt="" className="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                   <p className="text-sm font-black text-white uppercase italic leading-none">{steward.name}</p>
+                                   <p className="text-[9px] text-slate-700 font-mono mt-1.5 uppercase">{steward.location}</p>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <div className="flex items-center gap-2 mb-1">
+                                   <div className={`w-1.5 h-1.5 rounded-full ${steward.online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-800'}`}></div>
+                                   <span className="text-xl font-mono font-black text-white">{steward.res}%</span>
+                                </div>
+                                <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest">Resonance</span>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                    <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all">VIEW GLOBAL NETWORK</button>
+                 </div>
+              </div>
+           </div>
+        )}
+
         {/* --- TAB: LEARNING (LMS) --- */}
         {activeTab === 'lms' && (
            <div className="space-y-12 animate-in slide-in-from-top-4 duration-700 max-w-[1400px] mx-auto">
@@ -336,7 +428,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                                 )}
                              </div>
                              <div className="space-y-4">
-                                <h4 className="text-4xl md:text-5xl font-black text-white uppercase italic leading-none group-hover:text-indigo-400 transition-colors m-0 tracking-tighter drop-shadow-2xl">{mod.title}</h4>
+                                <h4 className="text-4xl font-black text-white uppercase italic leading-none group-hover:text-indigo-400 transition-colors m-0 tracking-tighter drop-shadow-2xl">{mod.title}</h4>
                                 <p className="text-xl text-slate-500 italic leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">"{mod.desc}"</p>
                              </div>
                           </div>
@@ -356,6 +448,90 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                        </div>
                     ))}
                  </div>
+              )}
+
+              {lmsSubTab === 'exams' && (
+                <div className="max-w-4xl mx-auto animate-in zoom-in duration-700">
+                   {examStep === 'intro' && (
+                     <div className="glass-card p-16 rounded-[80px] border-2 border-indigo-500/20 bg-black/60 shadow-3xl text-center space-y-12">
+                        <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-3xl mx-auto">
+                           <BadgeCheck size={56} className="text-white" />
+                        </div>
+                        <div className="space-y-4">
+                           <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Vetting <span className="text-indigo-400">Exam</span></h3>
+                           <p className="text-slate-400 text-xl font-medium italic max-w-xl mx-auto">"Certify your node stewardship knowledge and unlock higher network tiers. Passing rewards 500 EAC."</p>
+                        </div>
+                        <div className="p-8 bg-black/80 rounded-[44px] border border-white/10 flex justify-between items-center max-w-md mx-auto">
+                           <div className="flex items-center gap-4">
+                              <Coins size={24} className="text-emerald-500" />
+                              <span className="text-xs font-black text-slate-500 uppercase">Exam Access Fee</span>
+                           </div>
+                           <span className="text-2xl font-mono font-black text-white">{EXAM_FEE} EAC</span>
+                        </div>
+                        <div className="space-y-4 max-w-sm mx-auto">
+                           <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">ADMIN SIGNATURE (ESIN)</label>
+                           <input type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} placeholder="EA-XXXX-XXXX" className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 text-center text-3xl font-mono text-white outline-none focus:ring-8 focus:ring-indigo-500/5 transition-all uppercase shadow-inner" />
+                        </div>
+                        <button onClick={handleAuthorizeExam} disabled={!esinSign} className="w-full max-w-md py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5">AUTHORIZE EXAM INGEST</button>
+                     </div>
+                   )}
+                   {examStep === 'generation' && (
+                     <div className="py-40 flex flex-col items-center gap-12 text-center">
+                        <Loader2 size={120} className="text-indigo-500 animate-spin" />
+                        <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">SEQUENCING EXAM SHARD...</p>
+                     </div>
+                   )}
+                   {examStep === 'active' && examQuestions.length > 0 && (
+                     <div className="glass-card p-12 md:p-20 rounded-[80px] border-2 border-white/5 bg-black/40 space-y-12 shadow-3xl">
+                        <div className="flex justify-between items-center px-4">
+                           <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">Question {currentQuestion + 1} / {examQuestions.length}</span>
+                           <div className="h-2 w-48 bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-indigo-500 shadow-xl" style={{ width: `${((currentQuestion + 1) / examQuestions.length) * 100}%` }}></div>
+                           </div>
+                        </div>
+                        <h4 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tight leading-tight">"{examQuestions[currentQuestion].question}"</h4>
+                        <div className="grid gap-4">
+                           {examQuestions[currentQuestion].options.map((opt: string, idx: number) => (
+                             <button key={idx} onClick={() => handleAnswerSelect(idx)} className="p-8 glass-card border-2 border-white/5 hover:border-indigo-500/40 bg-black/60 rounded-[40px] text-left text-xl font-medium italic transition-all group">
+                                <div className="flex items-center gap-6">
+                                   <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-800 group-hover:bg-indigo-600 group-hover:text-white transition-all font-mono font-black">{String.fromCharCode(65 + idx)}</div>
+                                   <span className="text-slate-300 group-hover:text-white transition-colors">{opt}</span>
+                                </div>
+                             </button>
+                           ))}
+                        </div>
+                     </div>
+                   )}
+                   {examStep === 'results' && examResult && (
+                      <div className="glass-card p-16 rounded-[80px] border-2 border-white/5 bg-black/60 shadow-3xl text-center space-y-12 relative overflow-hidden">
+                         <div className="absolute top-0 right-0 p-12 opacity-[0.03] animate-spin-slow"><BadgeCheck size={400} /></div>
+                         <div className={`w-32 h-32 rounded-full flex items-center justify-center mx-auto shadow-2xl border-4 ${examResult.passed ? 'bg-emerald-600 border-white' : 'bg-rose-600 border-white'}`}>
+                            {examResult.passed ? <CheckCircle2 size={56} className="text-white" /> : <ShieldAlert size={56} className="text-white" />}
+                         </div>
+                         <div className="space-y-4">
+                            <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">{examResult.passed ? 'EXAM_VERIFIED' : 'VETTING_FAILED'}</h3>
+                            <p className="text-slate-400 text-xl font-medium italic">"You achieved a resonance score of {examResult.percentage}%."</p>
+                         </div>
+                         {examResult.passed ? (
+                           <div className="p-10 bg-emerald-600/10 border-2 border-emerald-500/20 rounded-[56px] space-y-4">
+                              <p className="text-emerald-400 font-black text-3xl italic tracking-widest">+500 EAC</p>
+                              <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Rewards sharded to registry treasury</p>
+                           </div>
+                         ) : (
+                           <div className="p-10 bg-rose-600/10 border-2 border-rose-500/20 rounded-[56px] space-y-6">
+                              <p className="text-rose-500 font-black text-lg uppercase italic tracking-widest">MINIMUM RESONANCE: 80%</p>
+                              {studyResources && (
+                                <div className="text-left space-y-4 border-t border-rose-500/20 pt-6">
+                                   <p className="text-[10px] text-slate-600 uppercase font-black tracking-widest px-4">Suggested Knowledge Ingest</p>
+                                   <div className="text-slate-400 text-sm italic line-clamp-4 leading-relaxed px-4">"{studyResources.text}"</div>
+                                </div>
+                              )}
+                           </div>
+                         )}
+                         <button onClick={() => setExamStep('intro')} className="w-full py-6 bg-white/5 border border-white/10 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all">CLOSE TERMINAL</button>
+                      </div>
+                   )}
+                </div>
               )}
 
               {lmsSubTab === 'forge' && (
@@ -424,7 +600,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                              </div>
                              <div className="flex justify-center gap-10">
                                 <button onClick={() => setForgedModule(null)} className="px-16 py-8 bg-white/5 border-2 border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Synthesis</button>
-                                <button className="px-24 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[16px] ring-white/5">
+                                <button className="px-24 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-2 border-white/10 ring-[16px] ring-white/5">
                                    <Stamp size={32} /> ANCHOR MODULE TO LMS
                                 </button>
                              </div>
@@ -433,8 +609,122 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                     </div>
                  </div>
               )}
-              
-              {/* Other tabs maintained... */}
+           </div>
+        )}
+
+        {/* --- TAB: TECHNICAL MANUAL --- */}
+        {activeTab === 'manual' && (
+           <div className="space-y-12 animate-in slide-in-from-right-4 duration-700 max-w-[1400px] mx-auto">
+              <div className="text-center space-y-4 mb-20">
+                 <h2 className="text-6xl md:text-[100px] font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)]">TECHNICAL <span className="text-indigo-400">MANUAL</span></h2>
+                 <p className="text-slate-500 text-2xl font-medium italic max-w-3xl mx-auto leading-relaxed opacity-80">"Official documentation shards for network architecture, m-constant derivation, and EOS kernel protocols."</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                 {[
+                    { id: 'MAN-01', title: 'Network Architecture v6.5', type: 'System', size: '2.4 MB', icon: Database, color: 'text-blue-400' },
+                    { id: 'MAN-02', title: 'C(a) Biometric Derivation', type: 'Technical', size: '1.8 MB', icon: Binary, color: 'text-emerald-400' },
+                    { id: 'MAN-03', title: 'SEHTI Compliance Handbook', type: 'Legal', size: '4.2 MB', icon: Scale, color: 'text-indigo-400' },
+                    { id: 'MAN-04', title: 'Agro Musika Acoustic Lab', type: 'Technical', size: '8.4 MB', icon: Waves, color: 'text-teal-400' },
+                    { id: 'MAN-05', title: 'Tokenz DeFi Bridge Logic', type: 'Economic', size: '0.9 MB', icon: Coins, color: 'text-amber-500' },
+                    { id: 'MAN-06', title: 'Steward Identity Handshake', type: 'Protocol', size: '1.2 MB', icon: Fingerprint, color: 'text-slate-400' },
+                 ].map(manual => (
+                    <div key={manual.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col justify-between h-[450px] relative overflow-hidden active:scale-[0.98] shadow-3xl">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><manual.icon size={250} /></div>
+                       <div className="flex justify-between items-start mb-10 relative z-10">
+                          <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${manual.color} shadow-xl group-hover:rotate-6 transition-all`}>
+                             <manual.icon size={32} />
+                          </div>
+                          <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black uppercase text-slate-500 tracking-widest">{manual.type} Shard</span>
+                       </div>
+                       <div className="flex-1 space-y-4 relative z-10">
+                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-tight group-hover:text-indigo-400 transition-colors m-0">{manual.title}</h4>
+                          <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">{manual.id} // SIZE: {manual.size}</p>
+                       </div>
+                       <div className="mt-10 pt-8 border-t border-white/5 flex justify-between items-center relative z-10">
+                          <button className="text-[11px] font-black uppercase tracking-[0.4em] text-indigo-400 hover:text-white transition-all flex items-center gap-3">
+                             <FileSearch size={16} /> LOAD SHARD
+                          </button>
+                          <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all shadow-xl active:scale-90"><Download size={20}/></button>
+                       </div>
+                    </div>
+                 ))}
+              </div>
+           </div>
+        )}
+
+        {/* --- TAB: PERFORMANCE METRICS --- */}
+        {activeTab === 'report' && (
+           <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700 max-w-[1400px] mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                 <div className="lg:col-span-8 glass-card p-12 md:p-16 rounded-[64px] border-2 border-white/5 bg-black/40 relative overflow-hidden flex flex-col shadow-3xl">
+                    <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden">
+                       <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent absolute top-0 animate-scan opacity-20"></div>
+                    </div>
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-16 relative z-10 px-4 gap-8">
+                       <div className="flex items-center gap-8">
+                          <div className="p-6 bg-indigo-600 rounded-[32px] shadow-[0_0_50px_rgba(99,102,241,0.3)] border-2 border-white/10">
+                             <LineChartIcon className="w-10 h-10 text-white" />
+                          </div>
+                          <div>
+                             <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Global <span className="text-indigo-400">Resonance</span></h3>
+                             <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-4">COMMUNITY_EQUILIBRIUM_INDEX_v4.2</p>
+                          </div>
+                       </div>
+                       <div className="text-right border-l-4 border-indigo-500/20 pl-8">
+                          <p className="text-[11px] text-slate-600 font-black uppercase mb-2">Network Momentum</p>
+                          <p className="text-7xl font-mono font-black text-indigo-400 tracking-tighter leading-none drop-shadow-2xl">94<span className="text-2xl text-indigo-600 italic ml-1">%</span></p>
+                       </div>
+                    </div>
+
+                    <div className="flex-1 min-h-[450px] w-full relative z-10 p-6 bg-black/40 rounded-[56px] border border-white/5 shadow-inner">
+                       <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={MOCK_PERFORMANCE_HISTORY}>
+                             <defs>
+                                <linearGradient id="colorRes" x1="0" y1="0" x2="0" y2="1">
+                                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                </linearGradient>
+                             </defs>
+                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={false} />
+                             <XAxis dataKey="cycle" stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
+                             <YAxis stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
+                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px' }} />
+                             <Area type="monotone" name="Community Resonance" dataKey="resonance" stroke="#6366f1" strokeWidth={8} fillOpacity={1} fill="url(#colorRes)" strokeLinecap="round" />
+                             <Area type="stepAfter" name="Active Vouchers" dataKey="vouchers" stroke="#10b981" strokeWidth={2} fill="transparent" />
+                          </AreaChart>
+                       </ResponsiveContainer>
+                    </div>
+                 </div>
+
+                 <div className="lg:col-span-4 space-y-8 flex flex-col">
+                    <div className="glass-card p-12 rounded-[64px] border border-emerald-500/10 bg-emerald-600/5 flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden flex-1 group shadow-xl">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><Sprout size={300} className="text-emerald-400" /></div>
+                       <div className="w-24 h-24 bg-emerald-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 group-hover:rotate-12 transition-transform">
+                          <TrendingUp size={40} className="text-white" />
+                       </div>
+                       <div className="space-y-4 relative z-10">
+                          <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Yield <span className="text-emerald-400">Aggregation</span></h4>
+                          <p className="text-slate-400 text-lg leading-relaxed italic px-6">"Collective network rewards accrued through peer-to-peer knowledge sharding."</p>
+                       </div>
+                       <div className="p-8 bg-black/60 rounded-[40px] border border-emerald-500/20 w-full relative z-10 shadow-inner">
+                          <p className="text-[11px] text-slate-500 font-black uppercase tracking-widest mb-3">Community Treasury</p>
+                          <p className="text-5xl font-mono font-black text-emerald-400 tracking-tighter">1.2M <span className="text-lg">EAC</span></p>
+                       </div>
+                    </div>
+
+                    <div className="p-10 glass-card rounded-[48px] border border-blue-500/20 bg-blue-500/5 space-y-6 shadow-xl relative overflow-hidden group/tip">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/tip:scale-125 transition-transform"><Bot size={150} /></div>
+                       <div className="flex items-center gap-4 relative z-10">
+                          <Bot className="w-8 h-8 text-blue-400" />
+                          <h4 className="text-xl font-black text-white uppercase italic">Consensus Advice</h4>
+                       </div>
+                       <p className="text-slate-400 text-sm leading-relaxed italic relative z-10 border-l-2 border-blue-500/20 pl-6">
+                          "Network activity is 12% above seasonal average. High sharding frequency in Zone 4 suggests early carbon credit finality."
+                       </p>
+                    </div>
+                 </div>
+              </div>
            </div>
         )}
       </div>
