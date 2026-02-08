@@ -21,83 +21,67 @@ export interface VerificationMeta {
 export interface AgroResource {
   id: string;
   category: 'HARDWARE' | 'LAND' | 'INFRASTRUCTURE';
-  type: string; // e.g., 'Agro Musika Sensor', 'Acreage'
+  type: string;
   name: string;
   status: 'PROVISIONAL' | 'VERIFIED' | 'REVOKED';
-  capabilities: string[]; // e.g., ['Sound_Dashboard', 'Robot_Control', 'Carbon_Minting']
+  capabilities: string[];
   verificationMeta: VerificationMeta;
-}
-
-export interface UserSettings {
-  notificationsEnabled: boolean;
-  privacyMode: 'Public' | 'Private' | 'Consensus_Only';
-  autoSync: boolean;
-  biometricLogin: boolean;
-  theme: 'Dark' | 'High_Resonance';
-}
-
-export interface SocialLinks {
-  twitter?: string;
-  threads?: string;
-  linkedin?: string;
-  website?: string;
 }
 
 export interface User {
   name: string;
   email: string;
   gender?: 'Male' | 'Female' | 'Non-Binary' | 'Not Specified';
-  esin: string; // EnvirosAgro Social Identification Number
-  mnemonic: string; // 12-word recovery phrase
+  esin: string;
+  mnemonic: string;
   regDate: string;
   avatar?: string;
   bio?: string;
   role: string;
   location: string;
-  countryCode?: string;
-  lineNumber?: string;
-  isPhoneVerified?: boolean;
   wallet: EACWallet;
   metrics: SustainabilityMetrics;
-  skills: Record<string, number>; // Maps category (e.g., 'Hydroponics') to points
+  skills: Record<string, number>;
   isReadyForHire: boolean;
+  settings?: {
+    notificationsEnabled: boolean;
+    privacyMode: 'Public' | 'Private' | 'Consensus_Only';
+    autoSync: boolean;
+    biometricLogin: boolean;
+    theme: 'Dark' | 'High_Resonance';
+  };
+  resources?: AgroResource[];
+  // Added zodiacFlower for Celestial Vault calibration
   zodiacFlower?: {
     month: string;
     flower: string;
     color: string;
-    hex?: string;
+    hex: string;
     pointsAdded: boolean;
-    certId?: string;
-    mintedAt?: string;
   };
-  resources?: AgroResource[];
-  mutualStewards?: number;
-  settings?: UserSettings;
-  socialLinks?: SocialLinks;
 }
 
 export interface EACWallet {
-  balance: number; // EAC - "The Cash" (Utility)
-  eatBalance: number; // EAT - "The Gold" (Equity/Asset)
-  stakedEat?: number; // EAT currently locked for yield
-  exchangeRate: number; // Personalized EAC -> EAT rate based on 'm'
-  bonusBalance: number; // Non-withdrawable registration incentives
+  balance: number;
+  eatBalance: number;
+  stakedEat?: number;
+  exchangeRate: number;
+  bonusBalance: number;
   tier: 'Seed' | 'Sprout' | 'Harvest';
-  lifetimeEarned: number; // Used for "Reputation Score"
+  lifetimeEarned: number;
   linkedProviders: LinkedProvider[];
   lastSyncDate?: string;
   miningStreak?: number;
   pendingSocialHarvest?: number;
-  resonanceDrift?: number; // Real-time fluctuation of m-constant stability
 }
 
 export interface SustainabilityMetrics {
-  agriculturalCodeU: number; // C(a)
-  timeConstantTau: number;  // m-constant
+  agriculturalCodeU: number;
+  timeConstantTau: number;
   sustainabilityScore: number;
-  socialImmunity: number; // 0-100: Resistance to SID
-  viralLoadSID: number;   // 0-100: Presence of Social Influenza
-  baselineM: number; // Historical m-constant for Delta EAT calculation
+  socialImmunity: number;
+  viralLoadSID: number;
+  baselineM: number;
 }
 
 export interface VendorProduct {
@@ -107,13 +91,14 @@ export interface VendorProduct {
   price: number;
   stock: number;
   category: 'Seed' | 'Input' | 'Tool' | 'Technology' | 'Logistics' | 'Produce' | 'Service';
-  thrust: 'Societal' | 'Environmental' | 'Human' | 'Technological' | 'Industry';
   supplierEsin: string;
   supplierName: string;
   supplierType: 'REVERSE_RETURN' | 'RAW_MATERIALS' | 'FINISHED_PRODUCTS' | 'SERVICE_PROVIDER';
   status: 'PROVISIONAL' | 'AWAITING_AUDIT' | 'AUTHORIZED' | 'REVOKED';
   image?: string;
   timestamp: string;
+  // Added thrust for industrial pillar alignment
+  thrust?: string;
 }
 
 export type OrderStatus = 
@@ -134,126 +119,22 @@ export interface Order {
   itemImage?: string;
   cost: number;
   status: OrderStatus;
-  logisticsNode?: string;
   supplierEsin: string;
   customerEsin: string;
-  logisticProviderId?: string;
-  logisticCost?: number;
   timestamp: string;
   trackingHash: string;
-  isReceiptIssued: boolean;
-  isPrnSigned: boolean;
-  receiptUrl?: string;
   sourceTab: 'market' | 'circular' | 'store' | 'agrowild';
-}
-
-export interface LogisticProvider {
-  id: string;
-  name: string;
-  mResonance: number;
-  sustainabilityScore: number;
-  costEAC: number;
-  speed: string;
-  status: 'ACTIVE' | 'IDLE';
-}
-
-export interface RegisteredUnit {
-  id: string;
-  type: 'LOGISTICS' | 'WAREHOUSING' | 'MANUFACTURING' | 'TRANSFORMATION';
-  name: string;
-  location: string;
-  capacity: string;
-  status: 'ACTIVE' | 'AUDITING' | 'IDLE';
-  efficiency: number;
-}
-
-export interface LiveAgroProduct {
-  id: string;
-  stewardEsin: string;
-  stewardName: string;
-  productType: string;
-  category: 'Produce' | 'Manufactured' | 'Input';
-  stage: 'Inception' | 'Processing' | 'Quality_Audit' | 'Finalization' | 'Market_Ready';
-  progress: number;
-  votes: number;
-  location: string;
-  timestamp: string;
-  lastUpdate: string;
-  image?: string;
-  isAuthentic: boolean; // Result of Physical Audit
-  auditStatus: 'Pending' | 'In-Progress' | 'Verified' | 'Rejected';
-  tasks?: string[]; // IDs of linked industrial tasks
-  telemetryNodes?: string[]; // IDs of linked IoT hardware nodes
-}
-
-export interface FarmingContract {
-  id: string;
-  investorEsin: string;
-  investorName: string;
-  productType: string;
-  requiredLand: string;
-  requiredLabour: string;
-  budget: number;
-  status: 'Open' | 'Auditing' | 'Active' | 'Settled';
-  applications: ContractApplication[];
-  capitalIngested: boolean; // Whether investor has released resources
-}
-
-export interface ContractApplication {
-  id: string;
-  farmerEsin: string;
-  farmerName: string;
-  landResources: string;
-  labourCapacity: string;
-  auditStatus: 'Pending' | 'Field_Inspection' | 'Physically_Verified' | 'Rejected';
-  paymentEscrowed: number;
-}
-
-export interface ResearchPaper {
-  id: string;
-  title: string;
-  author: string;
-  authorEsin: string;
-  abstract: string;
-  content: string;
-  thrust: string;
-  status: 'Draft' | 'Peer-Review' | 'Registered' | 'Invention';
-  impactScore: number; // 0-100
-  rating: number; // 1-5
-  eacRewards: number;
-  timestamp: string;
-  iotDataUsed?: boolean;
-  externalDataHashes?: string[];
-}
-
-export interface WorkerProfile {
-  id: string;
-  name: string;
-  esin: string;
-  skills: string[];
-  sustainabilityRating: number;
-  verifiedHours: number;
-  isOpenToWork: boolean;
-  lifetimeEAC: number;
-  efficiency: number;
-  avatar?: string;
-  location: string;
-  gender?: 'Male' | 'Female' | 'Non-Binary' | 'Not Specified';
-}
-
-export interface ProjectTask {
-  id: string;
-  title: string;
-  status: string;
-  thrust: string;
-  esinSign: string;
+  logisticsNode?: string;
+  logisticProviderId?: string;
+  logisticCost?: number;
+  isReceiptIssued?: boolean;
+  isPrnSigned?: boolean;
 }
 
 export interface AgroProject {
   id: string;
   name: string;
   adminEsin: string;
-  collectiveId?: string; // Optional: Project led by a social collective
   description: string;
   thrust: 'Societal' | 'Environmental' | 'Human' | 'Technological' | 'Industry';
   status: 'Ideation' | 'Verification' | 'Funding' | 'Execution' | 'Closure';
@@ -261,15 +142,15 @@ export interface AgroProject {
   fundedAmount: number;
   batchesClaimed: number;
   totalBatches: number;
-  progress: number; // 0-100
-  roiEstimate: number; // Percentage
+  progress: number;
+  roiEstimate: number;
   collateralLocked: number;
-  profitsAccrued: number; // Total EAC profits generated by project
-  investorShareRatio: number; // Percentage (e.g. 0.15 for 15%)
-  performanceIndex: number; // 0-100 based on collective feedback
-  memberCount: number; // Number of collective members backing the project
-  isPreAudited: boolean; // New: Physical Audit before public listing
-  isPostAudited: boolean; // New: Physical Audit after capital requisition
+  profitsAccrued: number;
+  investorShareRatio: number;
+  performanceIndex: number;
+  memberCount: number;
+  isPreAudited: boolean;
+  isPostAudited: boolean;
 }
 
 export interface AgroBlock {
@@ -290,95 +171,42 @@ export interface AgroTransaction {
   unit: 'EAC' | 'EAT' | 'CO2e' | 'kg' | 'pH' | 'USD' | 'KES' | 'ETH' | 'm';
 }
 
+// Consolidated MediaShard interface
 export interface MediaShard {
   id: string;
   title: string;
   type: 'VIDEO' | 'AUDIO' | 'PAPER' | 'ORACLE' | 'POST' | 'INGEST';
-  source: 'Media Hub' | 'Research' | 'Channelling' | 'Value Forge' | 'Registry Ingest';
+  source: string;
   author: string;
   authorEsin: string;
   timestamp: string;
   hash: string;
   mImpact: string;
+  size: string;
   thumb?: string;
   content?: string;
-  downloadUrl: string;
-  size: string;
+  downloadUrl?: string;
 }
 
 export type ViewState = 
-  | 'dashboard' 
-  | 'wallet' 
-  | 'sustainability' 
-  | 'economy' 
-  | 'industrial' 
-  | 'intelligence' 
-  | 'community' 
-  | 'explorer' 
-  | 'ecosystem' 
-  | 'media' 
-  | 'info' 
-  | 'profile' 
-  | 'investor' 
-  | 'vendor' 
-  | 'ingest' 
-  | 'tools' 
-  | 'channelling' 
-  | 'circular' 
-  | 'crm' 
-  | 'tqm' 
-  | 'research' 
-  | 'live_farming' 
-  | 'contract_farming' 
-  | 'agrowild' 
-  | 'impact'
-  | 'animal_world'
-  | 'plants_world'
-  | 'aqua_portal'
-  | 'soil_portal'
-  | 'air_portal'
-  | 'intranet'
-  | 'cea_portal'
-  | 'biotech_hub'
-  | 'permaculture_hub'
-  | 'emergency_portal'
-  | 'agro_regency'
-  | 'code_of_laws'
-  | 'agro_calendar'
-  | 'chroma_system'
-  | 'envirosagro_store'
-  | 'agro_value_enhancement'
-  | 'digital_mrv'
-  | 'registry_handshake'
-  | 'online_garden'
-  | 'farm_os'
-  | 'network_signals'
-  | 'media_ledger'
-  | 'agrolang'
-  | 'network'
-  | 'sitemap'
-  | 'auth'; // Added auth state for login/register/recovery
+  | 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' 
+  | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' 
+  | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' 
+  | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research' 
+  | 'live_farming' | 'contract_farming' | 'agrowild' | 'impact'
+  | 'animal_world' | 'plants_world' | 'aqua_portal' | 'soil_portal' | 'air_portal'
+  | 'intranet' | 'cea_portal' | 'biotech_hub' | 'permaculture_hub' | 'emergency_portal'
+  | 'agro_regency' | 'code_of_laws' | 'agro_calendar' | 'chroma_system'
+  | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv' | 'registry_handshake'
+  | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger' | 'agrolang'
+  | 'network' | 'sitemap' | 'auth';
 
-/**
- * Global notification and status types used across the EOS
- */
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
-export interface NotificationShard {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  duration: number;
-  actionLabel?: string;
-  actionIcon?: any;
-  meta?: any;
-}
-
-export interface RoadmapStep {
-  label: string;
-  description: string;
-  status: 'PENDING' | 'ACTIVE' | 'COMPLETED';
+export interface DispatchChannel {
+  channel: 'EMAIL' | 'PHONE' | 'INBOX' | 'POPUP';
+  status: 'PENDING' | 'SENT' | 'FAILED' | 'READ';
+  timestamp?: string;
 }
 
 export interface SignalShard {
@@ -388,19 +216,114 @@ export interface SignalShard {
   message: string;
   timestamp: string;
   read: boolean;
-  priority: 'low' | 'medium' | 'high';
+  priority: 'low' | 'medium' | 'high' | 'critical';
   actionLabel?: string;
   actionIcon?: any;
-  roadmap?: RoadmapStep[];
   aiRemark?: string;
-  helpLink?: string;
+  dispatchLayers: DispatchChannel[];
   meta?: {
     target?: ViewState;
-    orderId?: string;
-    productId?: string;
-    stewardEsin?: string;
     payload?: any;
-    resolutionRequired?: boolean;
-    isResolved?: boolean;
   };
+}
+
+// Added missing exports for app-wide data models
+
+export interface FarmingContract {
+  id: string;
+  investorEsin: string;
+  investorName: string;
+  productType: string;
+  requiredLand: string;
+  requiredLabour: string;
+  budget: number;
+  status: 'Open' | 'Closed' | 'In_Progress';
+  applications: ContractApplication[];
+  capitalIngested: boolean;
+}
+
+export interface ContractApplication {
+  id: string;
+  farmerEsin: string;
+  farmerName: string;
+  landResources: string;
+  labourCapacity: string;
+  auditStatus: 'Pending' | 'Verified' | 'Rejected';
+  paymentEscrowed: number;
+}
+
+export interface RegisteredUnit {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  status: 'ACTIVE' | 'AUDITING' | 'INACTIVE';
+}
+
+export interface LiveAgroProduct {
+  id: string;
+  stewardEsin: string;
+  stewardName: string;
+  productType: string;
+  category: 'Produce' | 'Manufactured' | 'Input';
+  stage: 'Inception' | 'Processing' | 'Quality_Audit' | 'Finalization' | 'Market_Ready';
+  progress: number;
+  votes: number;
+  location: string;
+  timestamp: string;
+  lastUpdate: string;
+  isAuthentic: boolean;
+  auditStatus: string;
+  tasks?: string[];
+  telemetryNodes?: string[];
+}
+
+export interface NotificationShard {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+  duration?: number;
+  actionLabel?: string;
+  actionIcon?: any;
+}
+
+export interface WorkerProfile {
+  id: string;
+  name: string;
+  esin: string;
+  skills: string[];
+  sustainabilityRating: number;
+  verifiedHours: number;
+  isOpenToWork: boolean;
+  lifetimeEAC: number;
+  efficiency: number;
+  avatar: string;
+  location: string;
+}
+
+export interface LogisticProvider {
+  id: string;
+  name: string;
+  mResonance: number;
+  sustainabilityScore: number;
+  costEAC: number;
+  speed: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+export interface ResearchPaper {
+  id: string;
+  title: string;
+  author: string;
+  authorEsin: string;
+  abstract: string;
+  content: string;
+  thrust: string;
+  status: string;
+  impactScore: number;
+  rating: number;
+  eacRewards: number;
+  timestamp: string;
+  iotDataUsed: boolean;
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
@@ -64,7 +65,8 @@ import {
   signOutSteward, 
   onAuthStateChanged,
   listenToCollection,
-  saveCollectionItem
+  saveCollectionItem,
+  dispatchNetworkSignal
 } from './services/firebaseService';
 
 export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => (
@@ -294,150 +296,118 @@ const App: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
 
-  // Reset scroll on view change
   useEffect(() => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (mainContentRef.current) mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
   }, [view]);
 
-  // Track scroll for progress bar and zenith button
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
-    const progress = (target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100;
-    setScrollProgress(progress);
+    setScrollProgress((target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100);
     setShowZenithButton(target.scrollTop > 400);
   };
 
-  const scrollToTop = () => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+  const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Synchronize authentication status with Firebase
+  // Synchronize authentication status
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+    return onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         const profile = await getStewardProfile(fbUser.uid);
-        if (profile) {
-          setUser(profile);
-        }
+        if (profile) setUser(profile);
       } else {
         setUser(null);
       }
     });
-    return () => unsubscribe();
   }, []);
 
-  // Registry data synchronization listeners
+  // Registry data synchronization
   useEffect(() => {
-    const unsubProjects = listenToCollection('projects', (data) => setProjects(data));
-    const unsubContracts = listenToCollection('contracts', (data) => setContracts(data));
-    const unsubOrders = listenToCollection('orders', (data) => setOrders(data));
-    const unsubProducts = listenToCollection('products', (data) => setVendorProducts(data));
-    const unsubUnits = listenToCollection('industrial_units', (data) => setIndustrialUnits(data));
-    const unsubLive = listenToCollection('live_products', (data) => setLiveProducts(data));
-    const unsubTx = listenToCollection('transactions', (data) => setTransactions(data));
-    const unsubSignals = listenToCollection('signals', (data) => setSignals(data));
+    const unsubProjects = listenToCollection('projects', setProjects);
+    const unsubContracts = listenToCollection('contracts', setContracts);
+    const unsubOrders = listenToCollection('orders', setOrders);
+    const unsubProducts = listenToCollection('products', setVendorProducts);
+    const unsubUnits = listenToCollection('industrial_units', setIndustrialUnits);
+    const unsubLive = listenToCollection('live_products', setLiveProducts);
+    const unsubTx = listenToCollection('transactions', setTransactions);
+    const unsubSignals = listenToCollection('signals', setSignals);
 
     return () => {
-      unsubProjects();
-      unsubContracts();
-      unsubOrders();
-      unsubProducts();
-      unsubUnits();
-      unsubLive();
-      unsubTx();
-      unsubSignals();
+      unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts();
+      unsubUnits(); unsubLive(); unsubTx(); unsubSignals();
     };
   }, [user]);
 
-  const notify = (type: NotificationType, title: string, message: string) => {
-    const id = Math.random().toString(36).substring(7);
-    setNotifications(prev => [{ id, type, title, message, duration: 5000 }, ...prev]);
+  /**
+   * Enhanced multi-channel signal emission.
+   * Every major user action routes through here to the Signal Terminal.
+   */
+  const emitSignal = async (signalData: Partial<SignalShard>) => {
+    const signal = await dispatchNetworkSignal(signalData);
+    if (signal) {
+      const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP');
+      if (popupLayer) {
+        const id = Math.random().toString(36).substring(7);
+        setNotifications(prev => [{
+          id,
+          type: signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info',
+          title: signal.title,
+          message: signal.message,
+          duration: 6000,
+          actionLabel: signal.actionLabel,
+          actionIcon: signal.actionIcon
+        }, ...prev]);
+      }
+    }
   };
 
   const handleSpendEAC = async (amount: number, reason: string): Promise<boolean> => {
     if (!user) {
-      notify('warning', 'AUTH_REQUIRED', "You must anchor a steward node to execute industrial spends.");
-      setView('auth');
-      return false;
+      emitSignal({ title: 'AUTH_REQUIRED', message: "Steward node required for industrial spends.", priority: 'high', type: 'system' });
+      setView('auth'); return false;
     }
     if (user.wallet.balance < amount) {
-      notify('error', 'INSUFFICIENT_FUNDS', `You need ${amount} EAC for ${reason}.`);
+      emitSignal({ title: 'INSUFFICIENT_FUNDS', message: `Need ${amount} EAC for ${reason}.`, priority: 'high', type: 'commerce' });
       return false;
     }
     
-    const updatedUser = {
-      ...user,
-      wallet: {
-        ...user.wallet,
-        balance: user.wallet.balance - amount
-      }
-    };
-    
+    const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } };
     setUser(updatedUser);
     await syncUserToCloud(updatedUser);
     
-    const newTx: AgroTransaction = {
-      id: `TX-${Date.now()}`,
-      type: 'Transfer',
-      farmId: user.esin,
-      details: reason,
-      value: -amount,
-      unit: 'EAC'
-    };
-    
-    setTransactions(prev => [newTx, ...prev]);
+    const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Transfer', farmId: user.esin, details: reason, value: -amount, unit: 'EAC' };
     saveCollectionItem('transactions', newTx);
+    
+    emitSignal({ 
+      title: 'INDUSTRIAL_SETTLEMENT', 
+      message: `Successfully sharded ${amount} EAC for ${reason}.`, 
+      priority: 'medium', 
+      type: 'commerce',
+      actionIcon: Coins,
+      meta: { target: 'wallet' }
+    });
     return true;
   };
 
   const handleEarnEAC = (amount: number, reason: string) => {
     if (!user) return;
-    const updatedUser = {
-      ...user,
-      wallet: {
-        ...user.wallet,
-        balance: user.wallet.balance + amount,
-        lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount
-      }
-    };
+    const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount, lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount } };
     setUser(updatedUser);
     syncUserToCloud(updatedUser);
     
-    const newTx: AgroTransaction = {
-      id: `TX-${Date.now()}`,
-      type: 'Reward',
-      farmId: user.esin,
-      details: reason,
-      value: amount,
-      unit: 'EAC'
-    };
-    setTransactions(prev => [newTx, ...prev]);
+    const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Reward', farmId: user.esin, details: reason, value: amount, unit: 'EAC' };
     saveCollectionItem('transactions', newTx);
+
+    emitSignal({ 
+      title: 'REWARD_SYNCED', 
+      message: `Node ${user.esin} awarded ${amount} EAC: ${reason}.`, 
+      priority: 'low', 
+      type: 'commerce',
+      actionIcon: Coins
+    });
   };
 
-  const handleLogout = async () => {
-    await signOutSteward();
-    setUser(null);
-    setView('dashboard');
-  };
-
-  const navigate = (v: ViewState, action: string | null = null) => {
-    setView(v);
-  };
-
-  const handleUpdateOrderStatus = (orderId: string, status: Order['status'], meta?: any) => {
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status, ...meta } : o));
-    saveCollectionItem('orders', { id: orderId, status, ...meta });
-  };
-
-  const handleRegisterProduct = (product: VendorProduct) => {
-    setVendorProducts(prev => [product, ...prev]);
-    saveCollectionItem('products', product);
-  };
+  const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
+  const navigate = (v: ViewState) => setView(v);
 
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
@@ -447,22 +417,22 @@ const App: React.FC = () => {
       case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;
       case 'dashboard': return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
       case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
-      case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={notify} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={setUser!} />;
-      case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={setUser!} onSwap={async (eat) => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={notify} transactions={transactions} />;
+      case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={setUser!} />;
+      case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={setUser!} onSwap={async (eat) => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={emitSignal} transactions={transactions} />;
       case 'intelligence': return <Intelligence user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onOpenEvidence={() => setIsEvidenceOpen(true)} />;
       case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
       case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} />;
       case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onUpdateUser={setUser!} onNavigate={navigate} />;
-      case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} notify={notify} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} />;
-      case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={setUser!} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={notify} onLogin={() => setView('auth')} onLogout={handleLogout} />;
+      case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} notify={emitSignal} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} />;
+      case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={setUser!} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => setView('auth')} onLogout={handleLogout} />;
       case 'channelling': return <Channelling user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
       case 'media': return <MediaHub user={currentUser} userBalance={currentUser.wallet.balance} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
       case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} />;
-      case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} liveProducts={liveProducts} onNavigate={navigate} />;
+      case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} liveProducts={liveProducts} onNavigate={navigate} />;
       case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} />;
-      case 'tools': return <ToolsSection user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onOpenEvidence={(t) => { setActiveTaskForEvidence(t); setIsEvidenceOpen(true); }} tasks={[]} onSaveTask={() => {}} notify={notify} />;
+      case 'tools': return <ToolsSection user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onOpenEvidence={(t) => { setActiveTaskForEvidence(t); setIsEvidenceOpen(true); }} tasks={[]} onSaveTask={() => {}} notify={emitSignal} />;
       case 'research': return <ResearchInnovation user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
-      case 'live_farming': return <LiveFarming user={currentUser} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={handleEarnEAC} onSaveProduct={(p) => saveCollectionItem('live_products', p)} onNavigate={navigate} notify={notify} />;
+      case 'live_farming': return <LiveFarming user={currentUser} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={handleEarnEAC} onSaveProduct={(p) => saveCollectionItem('live_products', p)} onNavigate={navigate} notify={emitSignal} />;
       case 'contract_farming': return <ContractFarming user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} contracts={contracts} setContracts={setContracts} onSaveContract={(c) => saveCollectionItem('contracts', c)} />;
       case 'agrowild': return <Agrowild user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onPlaceOrder={(o) => saveCollectionItem('orders', o)} vendorProducts={vendorProducts} />;
       case 'impact': return <Impact user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
@@ -484,148 +454,74 @@ const App: React.FC = () => {
       case 'agro_value_enhancement': return <AgroValueEnhancement user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} liveProducts={liveProducts} orders={orders} onNavigate={navigate} />;
       case 'digital_mrv': return <DigitalMRV user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
-      case 'online_garden': return <OnlineGarden user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} notify={notify} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} />;
+      case 'online_garden': return <OnlineGarden user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} notify={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} />;
       case 'farm_os': return <FarmOS user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialCode={osInitialCode} clearInitialCode={() => setOsInitialCode(null)} />;
       case 'network_signals': return <SignalCenter user={currentUser} signals={signals} setSignals={setSignals} onNavigate={navigate} />;
       case 'network': return <NetworkView />;
       case 'media_ledger': return <MediaLedger user={currentUser} shards={mediaShards} />;
       case 'agrolang': return <AgroLang user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} />;
       case 'sitemap': return <Sitemap nodes={REGISTRY_NODES} onNavigate={navigate} />;
-      case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} vendorProducts={vendorProducts} onRegisterProduct={handleRegisterProduct} />;
+      case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} />;
       case 'ingest': return <NetworkIngest user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
       case 'info': return <InfoPortal onNavigate={navigate} />;
       default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }
   };
 
-  if (isBooting) {
-    return <InitializationScreen onComplete={() => setIsBooting(false)} />;
-  }
+  if (isBooting) return <InitializationScreen onComplete={() => setIsBooting(false)} />;
 
   return (
     <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000">
       <aside className={`fixed top-0 left-0 bottom-0 z-[100] bg-black/80 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 overflow-y-auto custom-scrollbar ${isSidebarOpen ? 'w-80' : 'w-20'}`}>
         <div className="p-8 flex items-center gap-4">
-           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0">
-              <SycamoreLogo size={32} className="text-black" />
-           </div>
-           {isSidebarOpen && (
-             <div className="animate-in fade-in slide-in-from-left-2">
-                <h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1>
-                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Core Node Registry</p>
-             </div>
-           )}
+           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0"><SycamoreLogo size={32} className="text-black" /></div>
+           {isSidebarOpen && <div className="animate-in fade-in slide-in-from-left-2"><h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1><p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Core Node Registry</p></div>}
         </div>
-
         <nav className="px-4 py-8 space-y-10">
-           {REGISTRY_NODES.map((group) => {
-             const hasActiveItem = group.items.some(i => i.id === view);
-             return (
-               <div key={group.category} className="space-y-4">
-                  {isSidebarOpen && <p className={`px-4 text-[9px] font-black uppercase tracking-widest transition-colors ${hasActiveItem ? 'text-emerald-400' : 'text-slate-600'}`}>{group.category}</p>}
-                  <div className="space-y-1">
-                    {group.items.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setView(item.id as ViewState)}
-                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-                      >
-                        <item.icon size={20} className={view === item.id ? 'text-white' : 'text-slate-500'} />
-                        {isSidebarOpen && <span className="text-xs font-bold uppercase tracking-widest">{item.name}</span>}
-                      </button>
-                    ))}
-                  </div>
-               </div>
-             );
-           })}
+           {REGISTRY_NODES.map((group) => (
+             <div key={group.category} className="space-y-4">
+                {isSidebarOpen && <p className={`px-4 text-[9px] font-black uppercase tracking-widest text-slate-600`}>{group.category}</p>}
+                <div className="space-y-1">{group.items.map(item => (
+                    <button key={item.id} onClick={() => setView(item.id as ViewState)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+                      <item.icon size={20} className={view === item.id ? 'text-white' : 'text-slate-500'} />
+                      {isSidebarOpen && <span className="text-xs font-bold uppercase tracking-widest">{item.name}</span>}
+                    </button>
+                ))}</div>
+             </div>
+           ))}
         </nav>
-
-        {user && (
-          <div className="mt-auto p-8">
-             <button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all">
-                <LogOut size={20} />
-                {isSidebarOpen && <span className="text-xs font-bold uppercase tracking-widest">Terminate Session</span>}
-             </button>
-          </div>
-        )}
       </aside>
 
-      <main 
-        ref={mainContentRef}
-        onScroll={handleScroll}
-        className={`transition-all duration-500 pt-10 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'pl-96 pr-10' : 'pl-32 pr-10'}`}
-      >
-        {/* Navigation Progress Shard */}
-        <div className="fixed top-0 left-0 right-0 z-[200] h-1 pointer-events-none">
-          <div 
-            className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" 
-            style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}
-          ></div>
-        </div>
-
+      <main ref={mainContentRef} onScroll={handleScroll} className={`transition-all duration-500 pt-10 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'pl-96 pr-10' : 'pl-32 pr-10'}`}>
+        <div className="fixed top-0 left-0 right-0 z-[200] h-1 pointer-events-none"><div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}></div></div>
         <header className="flex justify-between items-center mb-10 sticky top-0 bg-[#050706]/80 backdrop-blur-md py-4 z-[150] px-4 -mx-4 border-b border-white/5">
            <div className="flex items-center gap-6">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">
-                 {isSidebarOpen ? <X size={20}/> : <Menu size={20}/>}
-              </button>
-              <div className="space-y-1">
-                 <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">{view.replace(/_/g, ' ')}</h2>
-                 <p className="text-[9px] text-slate-500 font-mono tracking-widest uppercase">NODE_SYNC_STATUS: {user ? 'CLOUD_ANCHORED' : 'GUEST_OBSERVER'}</p>
-              </div>
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">{isSidebarOpen ? <X size={20}/> : <Menu size={20}/>}</button>
+              <div className="space-y-1"><h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">{view.replace(/_/g, ' ')}</h2><p className="text-[9px] text-slate-500 font-mono tracking-widest uppercase">NODE_SYNC_STATUS: {user ? 'CLOUD_ANCHORED' : 'GUEST_OBSERVER'}</p></div>
            </div>
-
            <div className="flex items-center gap-4">
-              {user && (
-                <button onClick={() => setView('wallet')} className="px-6 py-3 glass-card rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-3 hover:bg-emerald-500/10 transition-all group">
-                   <Coins size={16} className="text-emerald-400 group-hover:rotate-12 transition-transform" />
-                   <span className="text-sm font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)} <span className="text-xs text-emerald-600/60 font-sans italic">EAC</span></span>
-                </button>
-              )}
-              <button 
-                onClick={() => setView('profile')} 
-                className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}
-              >
-                 {user ? (
-                   <>
-                     <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-white/20">
-                        {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={16} className="text-slate-500" />}
-                     </div>
-                     <span className="text-[10px] font-black uppercase text-white hidden md:block">{user.name.split(' ')[0]}</span>
-                   </>
-                 ) : (
-                   <>
-                     <UserPlus size={18} className="text-emerald-400" />
-                     <span className="text-[10px] font-black uppercase text-emerald-400">Sync Steward</span>
-                   </>
-                 )}
+              {user && <button onClick={() => setView('wallet')} className="px-6 py-3 glass-card rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-3 hover:bg-emerald-500/10 transition-all group"><Coins size={16} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-sm font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)} <span className="text-xs text-emerald-600/60 font-sans italic">EAC</span></span></button>}
+              <button onClick={() => setView('profile')} className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
+                 {user ? (<><div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-white/20">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={16} className="text-slate-500" />}</div><span className="text-[10px] font-black uppercase text-white hidden md:block">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={18} className="text-emerald-400" /><span className="text-[10px] font-black uppercase text-emerald-400">Sync Steward</span></>)}
               </button>
            </div>
         </header>
 
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {renderView()}
-        </div>
-
-        {/* Zenith Return Button */}
-        {showZenithButton && (
-          <button 
-            onClick={scrollToTop}
-            className="fixed bottom-10 right-10 p-5 agro-gradient rounded-3xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border-2 border-white/20 animate-in fade-in zoom-in duration-300"
-            title="Return to Zenith"
-          >
-            <ArrowUp size={24} />
-          </button>
-        )}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">{renderView()}</div>
+        {showZenithButton && <button onClick={scrollToTop} className="fixed bottom-10 right-10 p-5 agro-gradient rounded-3xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border-2 border-white/20 animate-in fade-in zoom-in duration-300"><ArrowUp size={24} /></button>}
       </main>
 
-      <EvidenceModal 
-        isOpen={isEvidenceOpen} 
-        onClose={() => setIsEvidenceOpen(false)} 
-        user={user || GUEST_STWD} 
-        onMinted={handleEarnEAC} 
-        onNavigate={navigate} 
-        taskToIngest={activeTaskForEvidence} 
-      />
+      <div className="fixed top-24 right-10 z-[500] space-y-4 max-w-sm w-full pointer-events-none">
+        {notifications.map(n => (
+          <div key={n.id} className={`p-6 rounded-3xl border shadow-3xl flex items-start gap-4 pointer-events-auto animate-in slide-in-from-right duration-500 ${n.type === 'error' ? 'bg-rose-950/40 border-rose-500/30 text-rose-500' : n.type === 'warning' ? 'bg-amber-950/40 border-amber-500/30 text-amber-400' : 'bg-black/90 border-emerald-500/20 text-emerald-400'}`}>
+            {n.type === 'error' ? <ShieldAlert className="shrink-0" /> : <Info className="shrink-0" />}
+            <div className="flex-1 space-y-1"><h5 className="text-sm font-black uppercase tracking-widest">{n.title}</h5><p className="text-xs italic text-slate-300">{n.message}</p></div>
+            <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="text-slate-500 hover:text-white"><X size={14}/></button>
+          </div>
+        ))}
+      </div>
+
+      <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={handleEarnEAC} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
       <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />
       <FloatingConsultant user={user || GUEST_STWD} />
     </div>
