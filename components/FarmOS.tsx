@@ -19,13 +19,14 @@ import {
   MapPin, Dna
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { User } from '../types';
+import { User, SignalShard } from '../types';
 
 interface FarmOSProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
   onNavigate: (view: any) => void;
+  onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
   initialCode?: string | null;
   clearInitialCode?: () => void;
 }
@@ -38,7 +39,7 @@ const KERNEL_LAYERS = [
   { level: 'HARDWARE', agro: 'Physical Assets', status: 'READY', desc: 'Soil, Water, Bots, Life' },
 ];
 
-const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, initialCode, clearInitialCode }) => {
+const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialCode, clearInitialCode }) => {
   const [activeTab, setActiveTab] = useState<'kernel' | 'assets' | 'blockchain' | 'scheduler' | 'shell'>('kernel');
   const [bootStatus, setBootStatus] = useState<'OFF' | 'POST' | 'ON'>('ON');
   const [bootProgress, setBootProgress] = useState(100);
@@ -81,6 +82,15 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     setBootStatus('POST');
     setBootProgress(0);
     setLogs(["INITIALIZING AGRO-INIT SEQUENCE..."]);
+    onEmitSignal({
+      type: 'system',
+      origin: 'ORACLE',
+      title: 'KERNEL_BOOT_INITIALIZED',
+      message: `Node ${user.esin} initializing Sycamore OS v6.5 boot sequence.`,
+      priority: 'medium',
+      actionIcon: Power
+    });
+
     const interval = setInterval(() => {
       setBootProgress(prev => {
         if (prev >= 100) {
@@ -100,6 +110,15 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     setIsExecutingLogic(true);
     addLog("MOUNTING AGROLANG LOGIC SHARD...", 'info');
     
+    onEmitSignal({
+      type: 'task',
+      origin: 'ORACLE',
+      title: 'OS_LOGIC_EXECUTION',
+      message: `Kernel executing industrial optimization shard for ${user.esin}.`,
+      priority: 'high',
+      actionIcon: CpuIcon
+    });
+
     const lines = code.split('\n').filter(l => l.trim() && !l.startsWith('//'));
     
     for (const line of lines) {
@@ -126,6 +145,17 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
 
     await new Promise(r => setTimeout(r, 800));
     addLog("OS OPTIMIZATION FINALIZED.", 'success');
+    
+    onEmitSignal({
+      type: 'ledger_anchor',
+      origin: 'ORACLE',
+      title: 'KERNEL_STATE_SYNC',
+      message: `Optimization cycle successful. Regional m-constant boosted.`,
+      priority: 'high',
+      actionIcon: BadgeCheck,
+      meta: { target: 'farm_os', ledgerContext: 'INVENTION' }
+    });
+
     setIsExecutingLogic(false);
     if (clearInitialCode) clearInitialCode();
     onEarnEAC(100, 'OS_RESONANCE_TUNING');
@@ -259,7 +289,7 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                     { id: 'S', name: 'Societal', color: '#f43f5e', val: resourceLoad.S, i: Users },
                     { id: 'E', name: 'Enviro', color: '#10b981', val: resourceLoad.E, i: Leaf },
                     { id: 'H', name: 'Health', color: '#14b8a6', val: resourceLoad.H, i: HeartPulse },
-                    { id: 'T', name: 'Tech', color: '#3b82f6', val: resourceLoad.T, i: Cpu },
+                    { id: 'T', name: 'Tech', color: '#3b82f6', val: resourceLoad.T, i: CpuIcon },
                     { id: 'I', name: 'Info', color: '#818cf8', val: resourceLoad.I, i: Radio },
                  ].map(m => (
                     <div key={m.id} className="glass-card p-10 rounded-[56px] border-2 border-white/5 flex flex-col items-center text-center space-y-8 shadow-3xl hover:scale-105 transition-all group overflow-hidden bg-black/40">
@@ -311,8 +341,8 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                              <p className="text-base font-medium text-slate-300 italic">"Buffered logic detected. Execute to run optimization cycle."</p>
                           </div>
                           <div className="flex gap-4">
-                             <button onClick={clearInitialCode} className="p-4 text-slate-600"><X /></button>
-                             <button onClick={() => executeOptimization(initialCode)} className="px-12 py-5 bg-indigo-600 text-white font-black rounded-3xl">RUN_OPTIMIZE</button>
+                             <button onClick={clearInitialCode} className="p-4 text-slate-600 hover:text-white transition-colors"><X /></button>
+                             <button onClick={() => executeOptimization(initialCode)} className="px-12 py-5 bg-indigo-600 text-white font-black rounded-3xl hover:bg-indigo-500 shadow-xl transition-all">RUN_OPTIMIZE</button>
                           </div>
                        </div>
                     )}
@@ -323,9 +353,9 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                          onChange={e => setShellInput(e.target.value)}
                          disabled={isExecutingLogic}
                          placeholder="Enter industrial command..."
-                         className="w-full bg-white/5 border border-white/10 rounded-[40px] py-10 pl-12 pr-12 text-2xl text-white outline-none font-mono" 
+                         className="w-full bg-white/5 border border-white/10 rounded-[40px] py-10 pl-12 pr-28 text-2xl text-white outline-none font-mono focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner" 
                        />
-                       <button type="submit" className="absolute right-6 top-1/2 -translate-y-1/2 p-6 bg-emerald-600 rounded-3xl text-white"><ArrowRight /></button>
+                       <button type="submit" className="absolute right-6 top-1/2 -translate-y-1/2 p-6 bg-emerald-600 rounded-3xl text-white hover:bg-emerald-500 shadow-xl active:scale-90 transition-all"><ArrowRight /></button>
                     </form>
                  </div>
               </div>

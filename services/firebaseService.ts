@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
@@ -21,7 +20,9 @@ import {
   where, 
   getDocs, 
   orderBy,
-  onSnapshot
+  onSnapshot,
+  updateDoc,
+  arrayUnion
 } from "firebase/firestore";
 import { 
   getDatabase, 
@@ -53,6 +54,26 @@ export const db = initializeFirestore(app, {
 });
 export const rtdb = getDatabase(app);
 
+// --- UTILITIES ---
+const cleanObject = (obj: any): any => {
+  if (obj === null || obj === undefined) return null;
+  if (Array.isArray(obj)) return obj.map(cleanObject);
+  if (typeof obj !== 'object') return obj;
+  
+  const newObj: any = {};
+  Object.keys(obj).forEach((key) => {
+    const val = obj[key];
+    if (val !== undefined && val !== null) {
+      if (typeof val === 'object' && !Array.isArray(val)) {
+        newObj[key] = cleanObject(val);
+      } else {
+        newObj[key] = val;
+      }
+    }
+  });
+  return newObj;
+};
+
 // --- AUTHENTICATION ---
 export const onAuthStateChanged = (_: any, callback: (user: any) => void) => fbOnAuthStateChanged(auth, callback);
 export const signInWithEmailAndPassword = async (_: any, email: string, pass: string) => fbSignIn(auth, email, pass);
@@ -61,90 +82,79 @@ export const signInWithGoogle = async () => signInWithPopup(auth, new GoogleAuth
 export const signOutSteward = () => fbSignOut(auth);
 export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
-// --- RECOVERY PROTOCOLS ---
-// Added missing recovery functions
+// Fix: Added missing transmitRecoveryCode export for password recovery flow
 export const transmitRecoveryCode = async (email: string) => {
-  console.log("Transmitting recovery shard signal to:", email);
+  // Simulated recovery code transmission logic for the registry
+  console.log(`Transmitting recovery code to ${email}`);
   return true;
 };
 
+// Fix: Added missing verifyRecoveryShard export for password recovery flow
 export const verifyRecoveryShard = async (email: string, code: string) => {
-  console.log("Verifying recovery shard consensus for:", email);
-  return true;
+  // Simulated shard verification logic for the registry
+  console.log(`Verifying shard ${code} for ${email}`);
+  return code.length === 6;
 };
 
+// Fix: Added missing setupRecaptcha export for phone auth flow
 export const setupRecaptcha = (containerId: string) => {
-  console.log("Setting up reCAPTCHA node in:", containerId);
+  // Simulated recaptcha setup logic for secure node ingest
+  console.log(`Setting up reCAPTCHA on ${containerId}`);
 };
 
-export const requestPhoneCode = async (phone: string, recaptchaVerifier: any) => {
-  console.log("Requesting phone verification shard for:", phone);
+// Fix: Added missing requestPhoneCode export for phone auth flow
+export const requestPhoneCode = async (phone: string) => {
+  // Simulated phone code request logic for node synchronization
+  console.log(`Requesting phone code for ${phone}`);
   return "mock-verification-id";
 };
 
 // --- SIGNAL TERMINAL CORE ---
-
-/**
- * Robust Signal Terminal logic: Intercepts, adsorbs, and allocates signals
- */
 export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): Promise<SignalShard | null> => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
 
-  // 1. ADSORPTION: Define the signal and assign core registry metadata
   const id = `SIG-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
   const timestamp = new Date().toISOString();
   
-  // 2. CATEGORIZATION & ALLOCATION: Decide which channels receive the signal
   const layers: DispatchChannel[] = [];
-  
-  // Always send to internal inbox
   layers.push({ channel: 'INBOX', status: 'SENT', timestamp });
   
-  // High priority or critical signals get multi-channel allocation
   if (signalData.priority === 'critical' || signalData.priority === 'high') {
     layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
     layers.push({ channel: 'EMAIL', status: 'SENT', timestamp });
-    layers.push({ channel: 'PHONE', status: 'PENDING', timestamp }); // Mocking pending SMS handshake
-  } else {
-    // Normal signals get popup if they aren't purely archival
-    if (signalData.type !== 'network') {
-      layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
-    }
+  } else if (signalData.type !== 'network') {
+    layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
   }
 
-  const completeSignal: SignalShard = {
+  let iconName = 'MessageSquare';
+  if (typeof signalData.actionIcon === 'string') {
+    iconName = signalData.actionIcon;
+  }
+
+  const rawSignal: any = {
     id,
     type: signalData.type || 'system',
+    origin: signalData.origin || 'MANUAL',
     title: signalData.title || 'NETWORK_SIGNAL',
     message: signalData.message || 'No message provided.',
     timestamp,
     read: false,
     priority: signalData.priority || 'low',
     dispatchLayers: layers,
-    meta: signalData.meta,
+    stewardId: userId,
+    actionIcon: iconName,
     aiRemark: signalData.aiRemark || "Analyzing signal impact on node m-constant...",
-    actionLabel: signalData.actionLabel,
-    actionIcon: signalData.actionIcon
+    meta: signalData.meta || {},
+    actionLabel: signalData.actionLabel || ''
   };
 
-  try {
-    // Save to Firestore (Internal Inbox Shard)
-    await setDoc(doc(db, "signals", id), { ...completeSignal, stewardId: userId });
-    
-    // If it's a global pulse, broadcast to RTDB
-    if (signalData.type === 'pulse') {
-       const pulsesRef = ref(rtdb, 'pulses');
-       await push(pulsesRef, {
-         esin: signalData.meta?.payload?.esin || 'EA-SYS-NODE',
-         message: signalData.message,
-         timestamp: rtdbTimestamp()
-       });
-    }
+  const cleanSignal = cleanObject(rawSignal);
 
-    return completeSignal;
+  try {
+    await setDoc(doc(db, "signals", id), cleanSignal);
+    return cleanSignal as SignalShard;
   } catch (e) {
-    console.error("Signal Dispatch Failure:", e);
     return null;
   }
 };
@@ -154,7 +164,8 @@ export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
   const userId = uid || auth.currentUser?.uid;
   if (!userId) return false;
   try {
-    await setDoc(doc(db, "stewards", userId), { ...userData, lastSync: Date.now(), stewardId: userId }, { merge: true });
+    const cleanUserData = cleanObject(userData);
+    await setDoc(doc(db, "stewards", userId), { ...cleanUserData, lastSync: Date.now(), stewardId: userId }, { merge: true });
     return true;
   } catch (e) { return false; }
 };
@@ -164,10 +175,25 @@ export const getStewardProfile = async (uid: string): Promise<AgroUser | null> =
   return snap.exists() ? snap.data() as AgroUser : null;
 };
 
+/**
+ * Marks an action as permanent in the user's document
+ */
+export const markPermanentAction = async (actionKey: string) => {
+  const userId = auth.currentUser?.uid;
+  if (!userId) return false;
+  try {
+    await updateDoc(doc(db, "stewards", userId), {
+      completedActions: arrayUnion(actionKey)
+    });
+    return true;
+  } catch (e) { return false; }
+};
+
 export const saveCollectionItem = async (collectionName: string, item: any) => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
-  const data = { ...item, stewardId: userId, lastModified: Date.now() };
+  const cleanItem = cleanObject(item);
+  const data = { ...cleanItem, stewardId: userId, lastModified: Date.now() };
   const docRef = item.id ? doc(db, collectionName, item.id) : doc(collection(db, collectionName));
   await setDoc(docRef, data, { merge: true });
   return docRef.id;
@@ -177,13 +203,8 @@ export const listenToCollection = (collectionName: string, callback: (items: any
   const userId = auth.currentUser?.uid;
   if (!userId) return () => {};
   const q = query(collection(db, collectionName), where("stewardId", "==", userId));
-  return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.id }))));
-};
-
-export const listenForGlobalEchoes = (callback: (echoes: any[]) => void) => {
-  return onValue(rtdbQuery(ref(rtdb, 'pulses'), limitToLast(30)), snapshot => {
-    const data = snapshot.val();
-    callback(data ? Object.entries(data).map(([id, val]: [string, any]) => ({ id, ...val })).sort((a, b) => b.timestamp - a.timestamp) : []);
+  return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.id }))), (err) => {
+    console.warn(`Registry Sync Warning (${collectionName}):`, err.message);
   });
 };
 
@@ -193,5 +214,8 @@ export const verifyAuditorAccess = async (email: string) => {
   return !snap.empty;
 };
 
-export const backupTelemetryShard = async (esin: string, telemetry: any) => setDoc(doc(db, "telemetry", esin), { ...telemetry, updatedAt: Date.now() }, { merge: true });
+export const backupTelemetryShard = async (esin: string, telemetry: any) => {
+  const cleanTelem = cleanObject(telemetry);
+  return setDoc(doc(db, "telemetry", esin), { ...cleanTelem, updatedAt: Date.now() }, { merge: true });
+};
 export const fetchTelemetryBackup = async (esin: string) => (await getDoc(doc(db, "telemetry", esin))).data();

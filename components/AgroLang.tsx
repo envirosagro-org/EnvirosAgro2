@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Code2, 
@@ -22,6 +21,8 @@ import {
   Cpu, 
   Waves, 
   Search, 
+  /* Added SearchCode to fix the 'Cannot find name' error on line 133 */
+  SearchCode,
   Upload, 
   Download, 
   Binary, 
@@ -68,7 +69,7 @@ import {
   ShieldAlert,
   Gauge
 } from 'lucide-react';
-import { User } from '../types';
+import { User, SignalShard } from '../types';
 import { auditAgroLangCode, chatWithAgroExpert } from '../services/geminiService';
 
 interface AgroLangProps {
@@ -76,9 +77,10 @@ interface AgroLangProps {
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
   onExecuteToShell: (code: string) => void;
+  onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
 }
 
-const AgroLang: React.FC<AgroLangProps> = ({ user, onSpendEAC, onEarnEAC, onExecuteToShell }) => {
+const AgroLang: React.FC<AgroLangProps> = ({ user, onSpendEAC, onEarnEAC, onExecuteToShell, onEmitSignal }) => {
   const [activeTab, setActiveTab] = useState<'editor' | 'graph' | 'heatmap'>('editor');
   const [activeShard, setActiveShard] = useState('Production_Init.al');
   const [codeMap, setCodeMap] = useState<Record<string, string>>({
@@ -122,14 +124,42 @@ SEQUENCE Optimize_Cycle_882 {
     setIsCompiling(true);
     setComplianceStatus('IDLE');
     setOutput([]);
+    
+    onEmitSignal({
+      type: 'task',
+      origin: 'ORACLE',
+      title: 'AGROLANG_AUDIT_STARTED',
+      message: `Auditing code shard ${activeShard} for EOS Framework compliance.`,
+      priority: 'low',
+      actionIcon: SearchCode
+    });
+
     try {
       const res = await auditAgroLangCode(currentCode);
       setOutput([`[${new Date().toLocaleTimeString()}] INFO: Booting Runtime...`, `[${new Date().toLocaleTimeString()}] SUCCESS: Handshake with ${user.esin} OK.`]);
+      
       if (res.is_compliant) {
         setComplianceStatus('COMPLIANT');
         setHasNewForge(true);
+        onEmitSignal({
+          type: 'ledger_anchor',
+          origin: 'ORACLE',
+          title: 'AUDIT_COMPLIANT',
+          message: `Code shard ${activeShard} verified as compliant with SEHTI standards.`,
+          priority: 'medium',
+          actionIcon: ShieldCheck,
+          meta: { target: 'agrolang', ledgerContext: 'INVENTION' }
+        });
       } else {
         setComplianceStatus('VIOLATION');
+        onEmitSignal({
+          type: 'system',
+          origin: 'ORACLE',
+          title: 'AUDIT_VIOLATION',
+          message: `Code shard ${activeShard} failed compliance check. m-constant drift risk detected.`,
+          priority: 'high',
+          actionIcon: ShieldAlert
+        });
       }
     } catch (e) {
       setOutput(p => [...p, "ERROR: Oracle timeout."]);
@@ -138,10 +168,22 @@ SEQUENCE Optimize_Cycle_882 {
     }
   };
 
+  const handleDeploy = () => {
+    onEmitSignal({
+      type: 'network',
+      origin: 'MANUAL',
+      title: 'LOGIC_DEPLOY_REQUEST',
+      message: `Steward ${user.name} requesting kernel deployment of ${activeShard}.`,
+      priority: 'high',
+      actionIcon: Zap
+    });
+    onExecuteToShell(currentCode);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
       
-      {/* Header HUD maintained... */}
+      {/* Header HUD */}
       <div className="glass-card p-12 rounded-[64px] border-indigo-500/20 bg-indigo-500/[0.02] relative overflow-hidden flex flex-col items-center gap-12 group shadow-3xl text-center">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none rotate-12"><Braces className="w-[600px] h-[600px] text-white" /></div>
          <div className="w-40 h-40 rounded-[48px] bg-indigo-700 flex items-center justify-center shadow-3xl ring-8 ring-white/5 relative overflow-hidden group-hover:scale-105 transition-all">
@@ -176,11 +218,11 @@ SEQUENCE Optimize_Cycle_882 {
            <div className="glass-card rounded-[80px] border-2 border-white/5 bg-[#050706] overflow-hidden shadow-3xl flex flex-col h-[850px] relative">
               <div className="p-10 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-20">
                  <div className="flex items-center gap-4">
-                    <button onClick={handleCompile} disabled={isCompiling} className="px-12 py-5 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl flex items-center gap-4 transition-all">
+                    <button onClick={handleCompile} disabled={isCompiling} className="px-12 py-5 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl flex items-center gap-4 transition-all active:scale-95 disabled:opacity-50">
                        {isCompiling ? <Loader2 size={20} className="animate-spin" /> : <Play size={20} fill="white" />}
                        RUN_AUDIT
                     </button>
-                    {hasNewForge && <button onClick={() => onExecuteToShell(currentCode)} className="px-10 py-5 bg-indigo-600 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest animate-pulse">DEPLOY_TO_SHELL</button>}
+                    {hasNewForge && <button onClick={handleDeploy} className="px-10 py-5 bg-indigo-600 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest animate-pulse hover:bg-indigo-500 transition-all shadow-xl">DEPLOY_TO_SHELL</button>}
                  </div>
               </div>
 
@@ -194,7 +236,7 @@ SEQUENCE Optimize_Cycle_882 {
                           value={currentCode}
                           onChange={(e) => setCodeMap({ ...codeMap, [activeShard]: e.target.value })}
                           spellCheck={false}
-                          className="flex-1 bg-transparent border-none outline-none font-mono text-lg md:text-xl text-emerald-400/90 leading-[2.5] resize-none selection:bg-indigo-500/30 overflow-y-auto italic"
+                          className="flex-1 bg-transparent border-none outline-none font-mono text-lg md:text-xl text-emerald-400/90 leading-[2.5] resize-none selection:bg-indigo-500/30 overflow-y-auto italic custom-scrollbar-editor"
                        />
                     </div>
                  )}
@@ -205,7 +247,7 @@ SEQUENCE Optimize_Cycle_882 {
                          <div className="flex justify-between items-center px-10">
                             <h4 className="text-3xl font-black text-white uppercase italic tracking-widest">m-Constant <span className="text-indigo-400">Impact Analysis</span></h4>
                             <div className="flex items-center gap-3 px-6 py-2 bg-indigo-600/10 rounded-full border border-indigo-500/20 shadow-inner">
-                               <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>
+                               <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></div>
                                <span className="text-[10px] font-black text-indigo-400">NEURAL_MAP_ACTIVE</span>
                             </div>
                          </div>
@@ -229,7 +271,7 @@ SEQUENCE Optimize_Cycle_882 {
                                </div>
                             ))}
                          </div>
-                         <div className="p-8 glass-card rounded-[40px] border border-white/10 bg-black/60 text-center">
+                         <div className="p-8 glass-card rounded-[40px] border border-white/10 bg-black/60 text-center shadow-xl">
                             <p className="text-sm text-slate-400 italic">"Hot lines indicate high-frequency OS interactions. Optimize frequency sharding to reduce node load."</p>
                          </div>
                       </div>
@@ -244,11 +286,11 @@ SEQUENCE Optimize_Cycle_882 {
                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em]">Node_Output_Console</p>
                     </div>
                     <div className="flex items-center gap-3">
-                       <div className={`w-2 h-2 rounded-full ${complianceStatus === 'COMPLIANT' ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : complianceStatus === 'VIOLATION' ? 'bg-rose-600 shadow-[0_0_10px_#e11d48]' : 'bg-slate-800'}`}></div>
+                       <div className={`w-2 h-2 rounded-full ${complianceStatus === 'COMPLIANT' ? 'bg-emerald-500 shadow-[0_0_100px_#10b981]' : complianceStatus === 'VIOLATION' ? 'bg-rose-600 shadow-[0_0_100px_#e11d48]' : 'bg-slate-800'}`}></div>
                        <span className="text-[10px] font-mono text-slate-700 font-bold uppercase">{complianceStatus}</span>
                     </div>
                  </div>
-                 <div ref={terminalRef} className="flex-1 p-10 overflow-y-auto font-mono text-[12px] space-y-3 custom-scrollbar-terminal text-slate-400 leading-relaxed italic">
+                 <div className="flex-1 p-10 overflow-y-auto font-mono text-[12px] space-y-3 custom-scrollbar-terminal text-slate-400 leading-relaxed italic">
                     {output.map((log, i) => (
                       <div key={i} className="flex gap-6 animate-in slide-in-from-left-2 duration-300">
                         <span className="text-emerald-500/30 shrink-0 font-black">{" >>>"}</span>
@@ -257,6 +299,49 @@ SEQUENCE Optimize_Cycle_882 {
                     ))}
                  </div>
               </div>
+           </div>
+        </div>
+
+        <div className="xl:col-span-4 space-y-8">
+           <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl">
+              <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                 <History size={20} className="text-slate-500" />
+                 <h4 className="text-xl font-black text-white uppercase italic">Session Ledger</h4>
+              </div>
+              <div className="space-y-4">
+                 {[
+                    { id: 'S-1', title: 'Irrigation_Sequence', time: '12m ago', status: 'AUDITED' },
+                    { id: 'S-2', title: 'Swarm_Relay_Init', time: '1h ago', status: 'DEPLO' },
+                 ].map(s => (
+                    <div key={s.id} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-indigo-500/30 transition-all cursor-pointer group">
+                       <div className="flex items-center gap-4">
+                          <FileCode className="w-5 h-5 text-indigo-400 group-hover:rotate-12 transition-transform" />
+                          <div>
+                             <p className="text-xs font-black text-white uppercase leading-none">{s.title}</p>
+                             <p className="text-[8px] text-slate-600 font-mono mt-1">{s.time}</p>
+                          </div>
+                       </div>
+                       <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded border border-emerald-500/20">{s.status}</span>
+                    </div>
+                 ))}
+              </div>
+           </div>
+
+           <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-950/5 space-y-8 shadow-xl relative overflow-hidden group/oracle">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform duration-[12s]"><Bot size={300} className="text-indigo-400" /></div>
+              <div className="flex items-center gap-4 relative z-10">
+                 <Bot className="w-8 h-8 text-indigo-400" />
+                 <h4 className="text-xl font-black text-white uppercase italic">Forge <span className="text-indigo-400">Oracle</span></h4>
+              </div>
+              <p className="text-slate-400 text-sm leading-relaxed italic relative z-10 border-l-2 border-indigo-500/20 pl-6">
+                 "Registry patterns suggest using ZK-Proof finality for all harvest sharding to ensure 100% price resonance."
+              </p>
+              <button 
+                onClick={() => setShowForgeModal(true)}
+                className="relative z-10 w-full py-5 agro-gradient rounded-[28px] text-white font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all"
+              >
+                 FORGE NEW LOGIC
+              </button>
            </div>
         </div>
       </div>

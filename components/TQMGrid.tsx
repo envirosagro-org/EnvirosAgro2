@@ -61,20 +61,20 @@ import {
   Box,
   Binary as BinaryIcon
 } from 'lucide-react';
-import { User, Order, LiveAgroProduct, ViewState } from '../types';
+import { User, Order, LiveAgroProduct, ViewState, SignalShard } from '../types';
 import { auditProductQuality } from '../services/geminiService';
 
 interface TQMGridProps {
   user: User;
-  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, status: Order['status'], meta?: any) => void;
   liveProducts?: LiveAgroProduct[];
   onNavigate: (view: ViewState) => void;
+  onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
 }
 
-const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpdateOrderStatus, liveProducts = [], onNavigate }) => {
+const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpdateOrderStatus, liveProducts = [], onNavigate, onEmitSignal }) => {
   const [activeTab, setActiveTab] = useState<'orders' | 'trace' | 'oracle'>('orders');
   const [showGrnModal, setShowGrnModal] = useState<Order | null>(null);
   const [showShardInspector, setShowShardInspector] = useState<Order | null>(null);
@@ -95,10 +95,19 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
     [myOrders, searchTerm]
   );
 
-  // Fix: handleEscrowPayment made async and awaits onSpendEAC to resolve Promise<boolean>
   const handleEscrowPayment = async (order: Order) => {
     if (await onSpendEAC(order.cost, `PROCUREMENT_ESCROW_COMMITMENT_${order.id}`)) {
        onUpdateOrderStatus(order.id, 'PAYMENT_HELD');
+       
+       onEmitSignal({
+         type: 'ledger_anchor',
+         origin: 'TRACE',
+         title: 'ESCROW_COMMITMENT',
+         message: `Industrial capital shard ${order.cost} EAC locked in escrow for ${order.itemName}.`,
+         priority: 'medium',
+         actionIcon: Wallet,
+         meta: { target: 'tqm', ledgerContext: 'REVENUE' }
+       });
     }
   };
 
@@ -111,10 +120,22 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
 
     setIsSigning(true);
     setTimeout(() => {
+      const grade = ['A+', 'A', 'B+'][Math.floor(Math.random() * 3)];
       onUpdateOrderStatus(showGrnModal.id, 'COMPLETED', { 
         isPrnSigned: true,
-        qualityGrade: ['A+', 'A', 'B+'][Math.floor(Math.random() * 3)]
+        qualityGrade: grade
       });
+      
+      onEmitSignal({
+        type: 'ledger_anchor',
+        origin: 'TRACE',
+        title: 'CYCLE_FINALITY_REACHED',
+        message: `Steward ${user.name} signed delivery shard for ${showGrnModal.itemName}. Grade: ${grade}.`,
+        priority: 'high',
+        actionIcon: Stamp,
+        meta: { target: 'tqm', ledgerContext: 'TRACE' }
+      });
+
       setIsSigning(false);
       setShowGrnModal(null);
     }, 2500);
@@ -127,7 +148,6 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
     setOracleReport(null);
     
     try {
-      // Mock logs for the audit
       const mockLogs = [
         { stage: 'Genesis', status: 'Verified', hash: order.trackingHash },
         { stage: 'Logistics', node: order.logisticsNode || 'Pending', status: order.status },
@@ -218,8 +238,8 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
            <input 
              type="text" 
-             value={searchTerm}
-             onChange={e => setSearchTerm(e.target.value)}
+             value={searchTerm} 
+             onChange={e => setSearchTerm(e.target.value)} 
              placeholder="Audit Registry Shards..." 
              className="w-full bg-black/60 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-xs text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all font-mono shadow-inner"
            />
@@ -296,7 +316,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                                         <span>{liveMatch.progress}%</span>
                                      </div>
                                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full bg-emerald-500 shadow-[0_0_10px_#10b981]" style={{ width: `${liveMatch.progress}%` }}></div>
+                                        <div className="h-full bg-emerald-500 shadow-[0_0_100px_#10b981]" style={{ width: `${liveMatch.progress}%` }}></div>
                                      </div>
                                   </div>
                                ) : (
@@ -466,7 +486,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                        <Bot size={64} className="text-white animate-pulse" />
                     </div>
                     <div>
-                       <h3 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Integrity <span className="text-indigo-400">Oracle</span></h3>
+                       <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Integrity <span className="text-indigo-400">Oracle</span></h3>
                        <p className="text-slate-500 text-2xl font-medium mt-6 italic max-w-2xl mx-auto leading-relaxed">AI-powered risk auditing and integrity sharding for the supply chain registry.</p>
                     </div>
                  </div>
@@ -498,7 +518,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                                <BadgeCheck className="text-emerald-400" />
                                <h4 className="text-xl font-black text-white uppercase italic">Audit Report Shard</h4>
                             </div>
-                            <div className="text-slate-300 text-xl leading-loose italic whitespace-pre-line font-medium">
+                            <div className="text-slate-300 text-xl leading-loose italic whitespace-pre-line font-medium border-l border-white/5 pl-8">
                                {oracleReport}
                             </div>
                          </div>
@@ -516,145 +536,9 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
         )}
       </div>
 
-      {/* SHARD INSPECTOR MODAL */}
-      {showShardInspector && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowShardInspector(null)}></div>
-           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[64px] border-indigo-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
-              <div className="p-10 md:p-14 border-b border-white/5 bg-white/[0.02] flex justify-between items-center shrink-0">
-                 <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-xl">
-                       <Database size={32} />
-                    </div>
-                    <div>
-                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Shard <span className="text-indigo-400">Inspector</span></h3>
-                       <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-2">RAW_BLOCKCHAIN_DATA // {showShardInspector.id}</p>
-                    </div>
-                 </div>
-                 <button onClick={() => setShowShardInspector(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X size={24} /></button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-12">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-8">
-                       <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 space-y-4">
-                          <div className="flex justify-between items-center">
-                             <span className="text-[10px] font-black text-slate-500 uppercase">Registry Root</span>
-                             <span className="text-white font-mono text-xs">0x882...F42A</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                             <span className="text-[10px] font-black text-slate-500 uppercase">ZK_SNARK_AUTH</span>
-                             <span className="text-emerald-400 font-mono text-xs italic">VERIFIED</span>
-                          </div>
-                          <div className="h-px bg-white/5 w-full"></div>
-                          <div className="flex justify-between items-center">
-                             <span className="text-[10px] font-black text-slate-500 uppercase">Shard Weight</span>
-                             <span className="text-white font-mono text-xs">14.2 KB</span>
-                          </div>
-                       </div>
-
-                       <div className="p-8 glass-card rounded-[40px] border border-blue-500/20 bg-blue-500/5 space-y-4">
-                          <div className="flex items-center gap-3">
-                             <Fingerprint size={16} className="text-blue-400" />
-                             <span className="text-[10px] font-black text-white uppercase tracking-widest">Cryptographic Seal</span>
-                          </div>
-                          <p className="text-[10px] font-mono text-blue-300/60 break-all leading-relaxed">
-                             {showShardInspector.trackingHash}{btoa(showShardInspector.customerEsin).substring(0, 100)}
-                          </p>
-                       </div>
-                    </div>
-
-                    <div className="p-8 bg-black rounded-[40px] border border-white/10 space-y-6 flex flex-col">
-                       <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                          <Terminal size={18} className="text-emerald-400" />
-                          <h4 className="text-xs font-black text-white uppercase tracking-widest">Metadata Payload</h4>
-                       </div>
-                       <div className="flex-1 font-mono text-[11px] text-emerald-400/80 p-6 bg-black/60 rounded-3xl overflow-y-auto custom-scrollbar-terminal">
-                          <pre>
-{`{
-  "shard_id": "${showShardInspector.id}",
-  "itemName": "${showShardInspector.itemName}",
-  "cost": ${showShardInspector.cost},
-  "customer": "${showShardInspector.customerEsin}",
-  "supplier": "${showShardInspector.supplierEsin}",
-  "status": "${showShardInspector.status}",
-  "zk_session": "EOS_882_A",
-  "m_constant": 1.42,
-  "telemetry": {
-    "sync": true,
-    "drift": "±0.01",
-    "verified_at": "${showShardInspector.timestamp}"
-  }
-}`}
-                          </pre>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-
-              <div className="p-10 border-t border-white/5 flex justify-center gap-6">
-                 <button className="px-12 py-5 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all">Download Shard Raw</button>
-                 <button onClick={() => setShowShardInspector(null)} className="px-12 py-5 bg-indigo-600 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest shadow-xl">Close Inspector</button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* GRN MODAL maintained... */}
-      {showGrnModal && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowGrnModal(null)}></div>
-           <div className="relative z-10 w-full max-w-xl glass-card p-12 rounded-[64px] border-emerald-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2 space-y-10">
-              <button onClick={() => setShowGrnModal(null)} className="absolute top-10 right-10 p-3 bg-white/5 rounded-full text-slate-600 hover:text-white transition-all border border-white/5"><X size={24} /></button>
-              <div className="text-center space-y-6">
-                 <div className="w-24 h-24 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-emerald-500/20 shadow-2xl relative group">
-                    <Signature className="w-12 h-12 text-emerald-400 group-hover:scale-110 transition-transform" />
-                 </div>
-                 <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0 text-center leading-none">
-                    Delivery <span className="text-emerald-400">Handshake</span>
-                 </h3>
-                 <p className="text-slate-400 text-lg italic max-sm:text-sm max-w-sm mx-auto leading-relaxed">
-                   "Finalize the industrial cycle by signing the delivery shard to release capital from Escrow."
-                 </p>
-              </div>
-
-              <div className="p-10 bg-black/60 rounded-[48px] border border-white/10 space-y-6 shadow-inner">
-                 <div className="flex justify-between items-center px-4">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Shard Identity</span>
-                    <span className="text-sm font-mono text-white italic">"{showGrnModal.itemName}"</span>
-                 </div>
-                 <div className="flex justify-between items-center px-4 pt-6 border-t border-white/5">
-                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Escrow Settlement</span>
-                    <span className="text-4xl font-mono font-black text-emerald-400">{showGrnModal.cost} EAC</span>
-                 </div>
-              </div>
-
-              <div className="space-y-4">
-                 <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] text-center block">Consumer Auth Signature (ESIN)</label>
-                 <input 
-                  type="text" 
-                  value={esinSign}
-                  onChange={e => setEsinSign(e.target.value)}
-                  placeholder="EA-XXXX-XXXX-XXXX" 
-                  className="w-full bg-black border border-white/10 rounded-[40px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
-                 />
-              </div>
-
-              <button 
-                onClick={handleSignGrn}
-                disabled={isSigning || !esinSign}
-                className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all"
-              >
-                 {isSigning ? <Loader2 className="w-8 h-8 animate-spin" /> : <Signature className="w-8 h-8 fill-current" />}
-                 {isSigning ? "ANCHORING SETTLEMENT..." : "FINALIZE SIGNATURE"}
-              </button>
-           </div>
-        </div>
-      )}
-
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }

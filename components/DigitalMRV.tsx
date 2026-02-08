@@ -39,9 +39,10 @@ import {
   ArrowLeftCircle,
   Info,
   Network,
-  Trash2
+  Trash2,
+  Wind
 } from 'lucide-react';
-import { User, AgroResource, ViewState } from '../types';
+import { User, AgroResource, ViewState, SignalShard } from '../types';
 import { analyzeMRVEvidence } from '../services/geminiService';
 
 interface DigitalMRVProps {
@@ -50,9 +51,10 @@ interface DigitalMRVProps {
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onUpdateUser: (user: User) => void;
   onNavigate?: (view: ViewState) => void;
+  onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
 }
 
-const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, onUpdateUser, onNavigate }) => {
+const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, onUpdateUser, onNavigate, onEmitSignal }) => {
   const [isAccessVerifying, setIsAccessVerifying] = useState(true);
   
   const landResources = useMemo(() => 
@@ -136,6 +138,18 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
     setIsProcessing(true);
     setTimeout(() => {
       onEarnEAC(mintedValue, `MRV_VERIFIED_CARBON_MINT_SHARD_${selectedLand?.id || 'GLOBAL'}`);
+      
+      // Emit Ledger Signal
+      onEmitSignal({
+        type: 'ledger_anchor',
+        origin: 'CARBON',
+        title: 'CARBON_SHARD_MINTED',
+        message: `Node ${user.esin} minted ${mintedValue} EAC from ${oracleResult?.metrics?.carbon_sequestration_potential} tCO2e sequestration proof.`,
+        priority: 'high',
+        actionIcon: Wind,
+        meta: { target: 'digital_mrv', ledgerContext: 'CARBON' }
+      });
+
       setPipelineStep('success');
       setIsProcessing(false);
     }, 3000);
@@ -187,7 +201,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
 
       <div className="min-h-[500px] py-6">
         {pipelineStep === 'land_select' && (
-          <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500 flex-1 flex flex-col justify-center">
              <div className="text-center space-y-4">
                 <div className="w-20 h-20 bg-emerald-600/20 border border-emerald-500/30 rounded-[28px] flex items-center justify-center text-emerald-400 mx-auto shadow-2xl animate-float">
                    <Landmark size={36} />

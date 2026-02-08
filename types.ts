@@ -43,6 +43,7 @@ export interface User {
   metrics: SustainabilityMetrics;
   skills: Record<string, number>;
   isReadyForHire: boolean;
+  completedActions?: string[]; // Permanent, non-repeatable backend actions
   settings?: {
     notificationsEnabled: boolean;
     privacyMode: 'Public' | 'Private' | 'Consensus_Only';
@@ -51,7 +52,6 @@ export interface User {
     theme: 'Dark' | 'High_Resonance';
   };
   resources?: AgroResource[];
-  // Added zodiacFlower for Celestial Vault calibration
   zodiacFlower?: {
     month: string;
     flower: string;
@@ -97,7 +97,6 @@ export interface VendorProduct {
   status: 'PROVISIONAL' | 'AWAITING_AUDIT' | 'AUTHORIZED' | 'REVOKED';
   image?: string;
   timestamp: string;
-  // Added thrust for industrial pillar alignment
   thrust?: string;
 }
 
@@ -171,7 +170,6 @@ export interface AgroTransaction {
   unit: 'EAC' | 'EAT' | 'CO2e' | 'kg' | 'pH' | 'USD' | 'KES' | 'ETH' | 'm';
 }
 
-// Consolidated MediaShard interface
 export interface MediaShard {
   id: string;
   title: string;
@@ -211,23 +209,23 @@ export interface DispatchChannel {
 
 export interface SignalShard {
   id: string;
-  type: 'system' | 'engagement' | 'network' | 'commerce' | 'pulse' | 'task';
+  type: 'system' | 'engagement' | 'network' | 'commerce' | 'pulse' | 'task' | 'liturgical' | 'ledger_anchor';
+  origin: 'MANUAL' | 'CALENDAR' | 'ORACLE' | 'EXTERNAL' | 'TREASURY' | 'CARBON' | 'TRACE';
   title: string;
   message: string;
   timestamp: string;
   read: boolean;
   priority: 'low' | 'medium' | 'high' | 'critical';
   actionLabel?: string;
-  actionIcon?: any;
+  actionIcon?: string; // Stored as a string name for the DB
   aiRemark?: string;
   dispatchLayers: DispatchChannel[];
   meta?: {
     target?: ViewState;
     payload?: any;
+    ledgerContext?: 'TREASURY' | 'CARBON' | 'REVENUE' | 'RESOLUTION' | 'INVENTION' | 'SOCIAL';
   };
 }
-
-// Added missing exports for app-wide data models
 
 export interface FarmingContract {
   id: string;

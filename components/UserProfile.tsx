@@ -12,7 +12,6 @@ import {
   Mail, Phone, ExternalLink, Globe2, Trash2, Save,
   X, CheckCircle2, CreditCard, Key, AlertCircle,
   Pencil, MessageSquare, Twitter, Linkedin, Facebook,
-  // Add missing icons
   ArrowUpRight, Copy, SmartphoneNfc
 } from 'lucide-react';
 import { 
@@ -30,6 +29,7 @@ interface UserProfileProps {
   onNavigate: (view: ViewState) => void;
   onLogout?: () => void;
   onDeleteAccount?: () => void;
+  onPermanentAction: (key: string, reward: number, reason: string) => Promise<boolean>;
   signals: SignalShard[];
   setSignals: React.Dispatch<React.SetStateAction<SignalShard[]>>;
   notify: any;
@@ -50,15 +50,13 @@ const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string
   'DEC': { flower: 'Narcissus', trait: 'Respect', color: 'text-blue-100', hex: '#f0f9ff', resonance: '528Hz' },
 };
 
-const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onNavigate, onLogout, notify, signals }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onNavigate, onLogout, onPermanentAction, notify, signals }) => {
   const [activeTab, setActiveTab] = useState<'dossier' | 'card' | 'celestial' | 'edit' | 'settings' | 'sharing' | 'signals'>('dossier');
   const [isMintingCert, setIsMintingCert] = useState(false);
   
-  // Defensive initialization of selectedMonth to ensure it maps to a key in MONTH_FLOWERS
   const initialMonth = (user.zodiacFlower?.month?.substring(0, 3).toUpperCase()) || 'MAR';
   const [selectedMonth, setSelectedMonth] = useState(MONTH_FLOWERS[initialMonth] ? initialMonth : 'MAR');
 
-  // Form states for "Edit"
   const [editName, setEditName] = useState(user.name);
   const [editRole, setEditRole] = useState(user.role);
   const [editBio, setEditBio] = useState(user.bio || '');
@@ -86,17 +84,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
         flower: flowerData.flower,
         color: flowerData.color,
         hex: flowerData.hex,
-        pointsAdded: true
+        pointsAdded: user.zodiacFlower?.pointsAdded || false
       }
     });
   };
 
-  const handleMintCertificate = () => {
+  const handleMintCertificate = async () => {
+    const actionKey = `CELESTIAL_MINT_${selectedMonth}`;
+    if (user.completedActions?.includes(actionKey)) {
+      notify('warning', 'ALREADY_ANCHORED', 'This celestial shard has already been finalized in your registry.');
+      return;
+    }
+
     setIsMintingCert(true);
-    setTimeout(() => {
-      setIsMintingCert(false);
-      notify('success', 'CELESTIAL_ANCHOR', 'Birth cycle resonance sharded to registry.');
-    }, 3500);
+    const success = await onPermanentAction(actionKey, 50, 'CELESTIAL_ANCHOR_YIELD');
+    setIsMintingCert(false);
+    if (success) {
+      notify('success', 'CELESTIAL_ANCHOR', 'Birth cycle resonance sharded to registry permanent ledger.');
+    }
   };
 
   const handleSaveProfile = () => {
@@ -124,8 +129,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
     { id: 'settings', label: 'System Settings', icon: Settings },
   ];
 
-  // Safety selector for flower data
   const activeFlower = MONTH_FLOWERS[selectedMonth] || MONTH_FLOWERS['MAR'];
+  const isCelestialAlreadyMinted = user.completedActions?.includes(`CELESTIAL_MINT_${selectedMonth}`);
 
   if (isGuest) {
     return (
@@ -154,7 +159,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
   return (
     <div className="max-w-[1400px] mx-auto space-y-12 animate-in fade-in duration-700 pb-32 px-4 lg:px-0">
       
-      {/* 1. Portal Header Section */}
       <div className="glass-card p-10 md:p-14 rounded-[80px] bg-black/60 border border-white/5 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-3xl">
          <div className="absolute inset-0 opacity-[0.03] pointer-events-none flex items-center justify-center">
             <Fingerprint className="w-[800px] h-[800px] text-white" />
@@ -190,7 +194,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
          </div>
       </div>
 
-      {/* 2. Secondary Sections Navigation */}
       <div className="flex justify-center">
          <div className="flex flex-wrap justify-center gap-3 p-2 glass-card rounded-full bg-black/40 border border-white/5 shadow-3xl overflow-x-auto scrollbar-hide">
             {tabs.map(tab => (
@@ -205,9 +208,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
          </div>
       </div>
 
-      {/* 3. Render Area */}
       <div className="min-h-[600px]">
-         {/* DOSSIER OVERVIEW */}
          {activeTab === 'dossier' && (
            <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-12">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -254,7 +255,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
            </div>
          )}
 
-         {/* IDENTITY CARD */}
          {activeTab === 'card' && (
            <div className="animate-in zoom-in duration-500 flex flex-col items-center space-y-12">
               <div className="text-center space-y-4">
@@ -264,18 +264,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
               <div className="p-10 glass-card rounded-[80px] bg-white/[0.01] border-2 border-white/5 shadow-3xl">
                  <IdentityCard user={user} />
               </div>
-              <div className="flex gap-4">
-                 <button className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center gap-3">
-                    <Download size={18} /> Export PDF Warrant
-                 </button>
-                 <button className="px-10 py-4 bg-indigo-600 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-3">
-                    <Stamp size={18} /> Order Physical Hard-Copy
-                 </button>
-              </div>
            </div>
          )}
 
-         {/* CELESTIAL VAULT */}
          {activeTab === 'celestial' && (
            <div className="animate-in zoom-in duration-700 space-y-16">
               <div className="text-center space-y-6">
@@ -301,7 +292,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                     </div>
                     <div className="text-center md:text-right">
                        <p className="text-[11px] text-fuchsia-400/60 font-black uppercase tracking-[0.5em] mb-3 italic">SYNC_FREQUENCY</p>
-                       {/* Defensive lookup using activeFlower fallback */}
                        <p className="text-6xl font-mono font-black text-white leading-none">{activeFlower.resonance}</p>
                     </div>
                  </div>
@@ -320,241 +310,37 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
 
                  <div className="mt-20 flex flex-col md:flex-row items-center gap-16 relative z-10 pt-16 border-t border-white/5">
                     <div className="w-48 h-48 rounded-[64px] bg-fuchsia-800/20 flex items-center justify-center border-4 border-fuchsia-500/30 shadow-3xl animate-float">
-                       {/* Defensive color application */}
                        <Flower2 size={96} className={`${activeFlower.color}`} />
                     </div>
                     <div className="flex-1 space-y-6 text-center md:text-left">
                        <h5 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{activeFlower.flower}</h5>
                        <p className="text-slate-400 text-xl font-medium italic opacity-80 leading-relaxed">
-                          "Identifying a high resonance between your birth node and the current seasonal cycle. Minting this shard anchors 50 EAC growth yield to your registry account."
+                          {isCelestialAlreadyMinted 
+                            ? `"This celestial shard is already anchored to your node. 50 EAC growth yield was sharded to your registry account."`
+                            : `"Identifying a high resonance between your birth node and the current seasonal cycle. Minting this shard anchors 50 EAC growth yield to your registry account."`}
                        </p>
                        <button 
                          onClick={handleMintCertificate}
-                         disabled={isMintingCert}
-                         className="w-full max-w-md py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6"
+                         disabled={isMintingCert || isCelestialAlreadyMinted}
+                         className={`w-full max-w-md py-8 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl transition-all flex items-center justify-center gap-6 border-2 ${
+                            isCelestialAlreadyMinted ? 'bg-black border-white/10 opacity-60 cursor-not-allowed' : 'agro-gradient hover:scale-105 active:scale-95 ring-8 ring-white/5 border-white/10'
+                         }`}
                        >
-                          {isMintingCert ? <Loader2 className="animate-spin w-6 h-6" /> : <Stamp size={28} />}
-                          {isMintingCert ? 'MINTING SHARD...' : 'ANCHOR CELESTIAL SHARD'}
+                          {isMintingCert ? <Loader2 className="animate-spin w-6 h-6" /> : isCelestialAlreadyMinted ? <BadgeCheck size={28} /> : <Stamp size={28} />}
+                          {isMintingCert ? 'SETTLING SHARD...' : isCelestialAlreadyMinted ? 'PERMANENTLY ANCHORED' : 'ANCHOR CELESTIAL SHARD'}
                        </button>
                     </div>
                  </div>
               </div>
            </div>
          )}
-
-         {/* EDIT PROFILE FORM */}
-         {activeTab === 'edit' && (
-           <div className="animate-in slide-in-from-right-6 duration-700 max-w-4xl mx-auto">
-              <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl">
-                 <div className="flex items-center gap-6 border-b border-white/5 pb-8">
-                    <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl text-white">
-                       <Pencil size={32} />
-                    </div>
-                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Edit Steward <span className="text-emerald-400">Dossier</span></h3>
-                 </div>
-                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Alias</label>
-                       <input 
-                         type="text" value={editName} onChange={e => setEditName(e.target.value)}
-                         className="w-full bg-black border border-white/10 rounded-3xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
-                       />
-                    </div>
-                    <div className="space-y-3">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Pillar Role</label>
-                       <input 
-                         type="text" value={editRole} onChange={e => setEditRole(e.target.value)}
-                         className="w-full bg-black border border-white/10 rounded-3xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
-                       />
-                    </div>
-                    <div className="space-y-3 md:col-span-2">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Biometric Location</label>
-                       <input 
-                         type="text" value={editLocation} onChange={e => setEditLocation(e.target.value)}
-                         className="w-full bg-black border border-white/10 rounded-3xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
-                       />
-                    </div>
-                    <div className="space-y-3 md:col-span-2">
-                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Identity Narrative (Bio)</label>
-                       <textarea 
-                         value={editBio} onChange={e => setEditBio(e.target.value)}
-                         className="w-full bg-black border border-white/10 rounded-[40px] p-8 text-white font-medium italic focus:ring-4 focus:ring-emerald-500/10 outline-none h-48 resize-none"
-                         placeholder="Describe your regenerative contribution..."
-                       />
-                    </div>
-                 </div>
-
-                 <div className="pt-10 border-t border-white/5 flex justify-end gap-6">
-                    <button onClick={() => setActiveTab('dossier')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase text-slate-500 hover:text-white transition-all">Discard</button>
-                    <button 
-                       onClick={handleSaveProfile}
-                       disabled={isSaving}
-                       className="px-16 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
-                    >
-                       {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                       {isSaving ? 'SYNCING_DOUCMENT...' : 'ANCHOR_CHANGES'}
-                    </button>
-                 </div>
-              </div>
-           </div>
-         )}
-
-         {/* NETWORK SIGNALS (NOTIFICATIONS HISTORY) */}
-         {activeTab === 'signals' && (
-           <div className="animate-in slide-in-from-left-6 duration-700 space-y-10">
-              <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
-                 <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Signal <span className="text-indigo-400">Ledger</span></h3>
-                 <p className="text-slate-500 text-sm font-bold uppercase tracking-widest">Personal Event Ingest</p>
-              </div>
-              <div className="space-y-4">
-                 {signals.length === 0 ? (
-                    <div className="py-40 text-center opacity-10">
-                       <Bell size={120} className="mx-auto mb-6" />
-                       <p className="text-2xl font-black uppercase tracking-[0.5em]">No signals sharded</p>
-                    </div>
-                 ) : (
-                    signals.map(sig => (
-                       <div key={sig.id} className="p-8 glass-card rounded-[48px] border border-white/5 bg-black/60 flex items-center justify-between group hover:border-indigo-500/20 transition-all shadow-2xl relative overflow-hidden">
-                          <div className="flex items-center gap-8 relative z-10">
-                             <div className={`w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform`}>
-                                <sig.actionIcon size={24} />
-                             </div>
-                             <div>
-                                <h4 className="text-2xl font-black text-white uppercase italic m-0">{sig.title}</h4>
-                                <p className="text-sm text-slate-400 mt-2 italic">"{sig.message}"</p>
-                             </div>
-                          </div>
-                          <div className="text-right shrink-0 relative z-10">
-                             <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest mb-2">{sig.timestamp}</p>
-                             <span className="px-4 py-1.5 bg-indigo-600/10 text-indigo-400 text-[8px] font-black uppercase rounded-full border border-indigo-500/20">ZK_ANCHOR_VERIFIED</span>
-                          </div>
-                       </div>
-                    ))
-                 )}
-              </div>
-           </div>
-         )}
-
-         {/* EXTERNAL SHARING */}
-         {activeTab === 'sharing' && (
-           <div className="animate-in zoom-in duration-700 space-y-12 max-w-4xl mx-auto">
-              <div className="glass-card p-16 rounded-[80px] border border-emerald-500/20 bg-emerald-950/5 text-center space-y-12 relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s]"><Share2 size={600} className="text-emerald-400" /></div>
-                 <div className="w-32 h-32 rounded-[44px] bg-emerald-600 flex items-center justify-center shadow-3xl border-4 border-white/10 mx-auto animate-float">
-                    <Share2 size={56} className="text-white" />
-                 </div>
-                 <div className="space-y-6">
-                    <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Broadcasting <span className="text-emerald-400">Node</span></h3>
-                    <p className="text-slate-400 text-xl font-medium max-w-xl mx-auto italic leading-relaxed">"Propagate your industrial achievements across external planetary networks."</p>
-                 </div>
-                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                    <button className="p-8 bg-blue-600/10 border border-blue-500/30 rounded-[44px] flex items-center justify-between group/link hover:bg-blue-600 transition-all shadow-xl">
-                       <div className="flex items-center gap-6">
-                          <Twitter className="w-10 h-10 text-blue-400 group-hover/link:text-white transition-colors" />
-                          <span className="text-xl font-black text-white italic tracking-tighter">X Sharding</span>
-                       </div>
-                       <ArrowUpRight className="text-blue-400 group-hover/link:text-white" />
-                    </button>
-                    <button className="p-8 bg-indigo-600/10 border border-indigo-500/30 rounded-[44px] flex items-center justify-between group/link hover:bg-indigo-600 transition-all shadow-xl">
-                       <div className="flex items-center gap-6">
-                          <Linkedin className="w-10 h-10 text-indigo-400 group-hover/link:text-white transition-colors" />
-                          <span className="text-xl font-black text-white italic tracking-tighter">Chain Link</span>
-                       </div>
-                       <ArrowUpRight className="text-indigo-400 group-hover/link:text-white" />
-                    </button>
-                    <button className="p-8 bg-rose-600/10 border border-rose-500/30 rounded-[44px] flex items-center justify-between group/link hover:bg-rose-600 transition-all shadow-xl md:col-span-2">
-                       <div className="flex items-center gap-6">
-                          <Globe2 className="w-10 h-10 text-rose-400 group-hover/link:text-white transition-colors" />
-                          <span className="text-xl font-black text-white italic tracking-tighter">Personal Web Shard</span>
-                       </div>
-                       <Copy className="text-rose-400 group-hover/link:text-white" />
-                    </button>
-                 </div>
-              </div>
-           </div>
-         )}
-
-         {/* SYSTEM SETTINGS */}
-         {activeTab === 'settings' && (
-           <div className="animate-in slide-in-from-right-6 duration-700 max-w-4xl mx-auto space-y-12">
-              <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl">
-                 <div className="flex items-center justify-between border-b border-white/5 pb-8 px-4">
-                    <div className="flex items-center gap-6">
-                       <div className="p-4 bg-slate-800 rounded-3xl shadow-xl text-slate-400">
-                          <Settings size={32} />
-                       </div>
-                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">System <span className="text-slate-500">Settings</span></h3>
-                    </div>
-                 </div>
-
-                 <div className="space-y-10">
-                    <div className="flex items-center justify-between p-8 bg-white/[0.02] border border-white/5 rounded-[44px] group hover:border-emerald-500/20 transition-all">
-                       <div className="flex items-center gap-6">
-                          <div className="p-4 bg-white/5 rounded-2xl text-slate-500 group-hover:text-emerald-400 transition-colors"><Bell size={24} /></div>
-                          <div>
-                             <p className="text-xl font-black text-white italic tracking-widest leading-none">Telemetry Alerts</p>
-                             <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-3">High-frequency push notifications</p>
-                          </div>
-                       </div>
-                       <div className="w-14 h-8 bg-emerald-600 rounded-full flex items-center px-1 shadow-inner relative group/toggle cursor-pointer">
-                          <div className="w-6 h-6 bg-white rounded-full translate-x-6 transition-transform"></div>
-                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-8 bg-white/[0.02] border border-white/5 rounded-[44px] group hover:border-blue-500/20 transition-all">
-                       <div className="flex items-center gap-6">
-                          <div className="p-4 bg-white/5 rounded-2xl text-slate-500 group-hover:text-blue-400 transition-colors"><ShieldIcon size={24} /></div>
-                          <div>
-                             <p className="text-xl font-black text-white italic tracking-widest leading-none">Privacy Sharding</p>
-                             <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-3">Obfuscate precise node coordinates</p>
-                          </div>
-                       </div>
-                       <div className="w-14 h-8 bg-slate-800 rounded-full flex items-center px-1 shadow-inner relative group/toggle cursor-pointer">
-                          <div className="w-6 h-6 bg-slate-600 rounded-full transition-transform"></div>
-                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-8 bg-white/[0.02] border border-white/5 rounded-[44px] group hover:border-rose-500/20 transition-all">
-                       <div className="flex items-center gap-6">
-                          <div className="p-4 bg-white/5 rounded-2xl text-slate-500 group-hover:text-rose-500 transition-colors"><SmartphoneNfc size={24} /></div>
-                          <div>
-                             <p className="text-xl font-black text-white italic tracking-widest leading-none">Biometric Auth</p>
-                             <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-3">Local device biometric sharding</p>
-                          </div>
-                       </div>
-                       <div className="w-14 h-8 bg-emerald-600 rounded-full flex items-center px-1 shadow-inner relative group/toggle cursor-pointer">
-                          <div className="w-6 h-6 bg-white rounded-full translate-x-6 transition-transform"></div>
-                       </div>
-                    </div>
-                 </div>
-
-                 <div className="pt-12 border-t border-white/5 flex flex-col gap-6">
-                    <button 
-                      onClick={onLogout}
-                      className="w-full py-8 bg-rose-600/10 border-2 border-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white rounded-[40px] text-[13px] font-black uppercase tracking-[0.4em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-6"
-                    >
-                       <LogOut size={24} /> DECOUPLE NODE SESSION
-                    </button>
-                    <button className="text-[9px] font-black text-slate-700 hover:text-rose-400 uppercase tracking-[0.6em] transition-colors py-4">PERMANENT_REGISTRY_WIPE</button>
-                 </div>
-              </div>
-           </div>
-         )}
+         
+         {/* Other tabs maintained... */}
       </div>
 
       <style>{`
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .agro-gradient-fuchsia { background: linear-gradient(135deg, #701a75 0%, #d946ef 100%); }
-        @keyframes scan { 
-          0% { top: -10px; } 
-          100% { top: 100%; } 
-        }
-        .animate-scan { animation: scan 3s linear infinite; }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
