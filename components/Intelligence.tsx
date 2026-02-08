@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, Cpu, Activity, Zap, ShieldCheck, Binary, Layers, Microscope, FlaskConical, Scan, 
@@ -17,7 +18,7 @@ import {
   Globe2, ExternalLink
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, Radar as RechartsRadar } from 'recharts';
-import { chatWithAgroExpert, AIResponse, searchAgroTrends } from '../services/geminiService';
+import { chatWithAgroExpert, AIResponse, searchAgroTrends, runSimulationAnalysis } from '../services/geminiService';
 import { User, AgroResource, ViewState } from '../types';
 import { backupTelemetryShard, fetchTelemetryBackup } from '../services/firebaseService';
 
@@ -122,11 +123,17 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     setIsRunningSimulation(true);
     setSimulationReport(null);
     try {
-      const prompt = `EOS Oracle: Analyze C(a)=${simProjectionData[n_cycles].ca}, m=${simProjectionData[n_cycles].m}. recommended SEHTI intervention?`;
-      const res = await chatWithAgroExpert(prompt, []);
+      const simData = {
+        ca: simProjectionData[n_cycles].ca,
+        m: simProjectionData[n_cycles].m,
+        immunity: x_immunity,
+        stress: s_stress,
+        cycles: n_cycles
+      };
+      const res = await runSimulationAnalysis(simData);
       setSimulationReport(res.text);
     } catch (e) {
-      setSimulationReport("Handshake error.");
+      setSimulationReport("SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion.");
     } finally {
       setIsRunningSimulation(false);
     }
@@ -155,7 +162,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       setTrendsResult(res);
       onEarnEAC(10, "GLOBAL_TREND_INGEST_OK");
     } catch (e) {
-      setTrendsResult({ text: "Global trend link timed out. Mesh synchronization required." });
+      setTrendsResult({ text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion." });
     } finally {
       setIsIngestingTrends(false);
     }
@@ -182,7 +189,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       setAiResult(res);
       onEarnEAC(5, "ORACLE_INSIGHT_ANCHORED");
     } catch (e) {
-      setAiResult({ text: "Oracle sync timeout. Ledger congested." });
+      setAiResult({ text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion." });
     } finally {
       clearInterval(stepInterval);
       setAiThinking(false);
@@ -423,11 +430,21 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                 </ResponsiveContainer>
               </div>
               {simulationReport && (
-                <div className="p-10 glass-card border-l-8 border-emerald-500 bg-emerald-500/[0.02] animate-in slide-in-from-left-6 duration-700 shadow-xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-6 opacity-[0.03]"><Sparkles size={120} className="text-emerald-400" /></div>
-                  <div className="flex items-center gap-4 mb-6">
-                    <Bot className="w-8 h-8 text-emerald-400" />
-                    <h4 className="text-xl font-black text-white uppercase italic">Simulator Oracle Verdict</h4>
+                <div className={`p-10 glass-card border-l-8 transition-colors duration-500 animate-in slide-in-from-left-6 shadow-xl relative overflow-hidden ${simulationReport.includes('SYSTEM_ERROR') ? 'border-rose-600 bg-rose-950/20' : 'border-emerald-500 bg-emerald-500/[0.02]'}`}>
+                  <div className="absolute top-0 right-0 p-6 opacity-[0.03]"><Sparkles size={120} className={simulationReport.includes('SYSTEM_ERROR') ? 'text-rose-500' : 'text-emerald-400'} /></div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      {simulationReport.includes('SYSTEM_ERROR') ? <ShieldAlert className="w-8 h-8 text-rose-500" /> : <Bot className="w-8 h-8 text-emerald-400" />}
+                      <h4 className="text-xl font-black text-white uppercase italic">Simulator Oracle Verdict</h4>
+                    </div>
+                    {simulationReport.includes('SYSTEM_ERROR') && (
+                      <button 
+                        onClick={handleRunFullSimulation}
+                        className="px-6 py-2 bg-rose-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 transition-all flex items-center gap-2"
+                      >
+                        <RefreshCw size={12} /> RE-SYNC ORACLE
+                      </button>
+                    )}
                   </div>
                   <p className="text-slate-300 text-lg italic leading-relaxed whitespace-pre-line border-l border-white/5 pl-8 font-medium">{simulationReport}</p>
                 </div>
@@ -593,7 +610,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                          <div className="flex items-center gap-6">
                             <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl group overflow-hidden relative">
                                <Bot size={32} className="group-hover:scale-110 transition-transform relative z-10" />
-                               <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                               <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                             </div>
                             <div>
                                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Science <span className="text-indigo-400">Oracle Shard</span></h3>
@@ -642,7 +659,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                             </div>
                          ) : (
                             <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10 flex-1">
-                               <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-white/5 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-8 border-l-indigo-600/50 relative overflow-hidden group/shard">
+                               <div className={`p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-white/5 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-8 relative overflow-hidden group/shard ${aiResult.text.includes('SYSTEM_ERROR') ? 'border-rose-600 border-l-rose-600' : 'border-l-indigo-600/50'}`}>
                                   <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group/shard:scale-110 transition-transform duration-[10s]"><Activity size={600} className="text-indigo-400" /></div>
                                   
                                   <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
@@ -680,9 +697,18 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
                                <div className="flex justify-center gap-8">
                                   <button onClick={() => setAiResult(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
-                                  <button onClick={handleDownloadShard} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-white/5">
-                                     <Stamp size={24} /> ANCHOR TO LEDGER
-                                  </button>
+                                  {aiResult.text.includes('SYSTEM_ERROR') ? (
+                                    <button 
+                                      onClick={handleDeepAIQuery}
+                                      className="px-16 py-6 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-rose-500/20"
+                                    >
+                                      <RefreshCw size={24} /> RE-SYNC ORACLE
+                                    </button>
+                                  ) : (
+                                    <button onClick={handleDownloadShard} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-white/5">
+                                      <Stamp size={24} /> ANCHOR TO LEDGER
+                                    </button>
+                                  )}
                                </div>
                             </div>
                          )}

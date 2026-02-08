@@ -20,9 +20,9 @@ import {
   LineChart as LineChartIcon
 } from 'lucide-react';
 import { 
-  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { User, ViewState, SignalShard } from '../types';
+import { User, ViewState } from '../types';
 import { generateAgroExam, getGroundedAgroResources, chatWithAgroExpert, AIResponse } from '../services/geminiService';
 
 interface CommunityProps {
@@ -69,6 +69,7 @@ const MOCK_STEWARDS = [
 const MOCK_FEED = [
   { id: 'P-1', author: 'Steward Alpha', esin: 'EA-ALPHA-88', text: 'Just completed a successful 432Hz sweep on Sector 4. m-Constant increased by 0.05x!', time: '2h ago', likes: 12, shares: 3 },
   { id: 'P-2', author: 'Gaia Green', esin: 'EA-GAIA-02', text: 'Discovered a rare Bantu Sun-Orchid cluster. Documenting for the archive.', time: '5h ago', likes: 45, shares: 12 },
+  { id: 'P-3', author: 'Root Steward', esin: 'EA-CORE-01', text: 'Network quorum established for the Season of Awakening. Ensure all geofence shards are synced.', time: '8h ago', likes: 124, shares: 56 },
 ];
 
 const MOCK_PERFORMANCE_HISTORY = [
@@ -205,7 +206,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
     <div className="space-y-6 md:space-y-8 pb-20 animate-in fade-in duration-500 max-w-[1600px] mx-auto relative overflow-hidden">
       
       {/* Top Navigation */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit mx-auto lg:mx-4 border border-white/5 bg-black/40 shadow-2xl px-10 relative z-20">
+      <div className="flex flex-wrap justify-center gap-4 p-2 glass-card rounded-[40px] w-fit mx-auto lg:mx-4 border border-white/5 bg-black/40 shadow-2xl px-10 relative z-20">
         {[
           { id: 'hub', name: 'HERITAGE', icon: Globe },
           { id: 'shards', name: 'SHARDS', icon: Users2 },
@@ -217,7 +218,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
           <button 
             key={t.id} 
             onClick={() => setActiveTab(t.id as any)} 
-            className={`flex items-center gap-3 px-8 py-4 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-emerald-600 text-white shadow-xl scale-105 border-b-4 border-emerald-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-3 px-8 py-4 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-emerald-600 text-white shadow-xl scale-105 border-b-4 border-emerald-400 ring-8 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <t.icon size={16} /> {t.name}
           </button>
@@ -395,7 +396,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
         {/* --- TAB: LEARNING (LMS) --- */}
         {activeTab === 'lms' && (
            <div className="space-y-12 animate-in slide-in-from-top-4 duration-700 max-w-[1400px] mx-auto">
-              <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 bg-black/60 border border-white/5 shadow-2xl px-8 relative z-20">
+              <div className="flex flex-wrap justify-center gap-4 p-2 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 bg-black/60 border border-white/5 shadow-2xl px-8 relative z-20">
                  {[
                     { id: 'modules', label: 'Knowledge Modules', icon: Library },
                     { id: 'exams', label: 'Vetting Exams', icon: BadgeCheck },
@@ -600,7 +601,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                              </div>
                              <div className="flex justify-center gap-10">
                                 <button onClick={() => setForgedModule(null)} className="px-16 py-8 bg-white/5 border-2 border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Synthesis</button>
-                                <button className="px-24 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-2 border-white/10 ring-[16px] ring-white/5">
+                                <button className="px-24 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[16px] ring-white/5">
                                    <Stamp size={32} /> ANCHOR MODULE TO LMS
                                 </button>
                              </div>

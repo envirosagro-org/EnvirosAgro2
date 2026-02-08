@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, GenerateContentResponse, Modality, Type } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -13,6 +13,36 @@ EnvirosAgro™ Sustainability Framework (EOS):
 - AgroMusika: Bio-electric sonic remediation (432Hz, 528Hz, etc.) for cellular soil repair.
 `;
 
+const processAgroPaymentTool: FunctionDeclaration = {
+  name: "process_agro_payment",
+  description: "Initiates an M-Pesa STK push and queues a branded email invoice upon success.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      phoneNumber: { type: Type.STRING, description: "User's M-Pesa number in 2547XXXXXXXX format." },
+      amount: { type: Type.NUMBER, description: "The amount in KES to charge." },
+      email: { type: Type.STRING, description: "The user's email for the invoice." },
+      walletId: { type: Type.STRING, description: "The Agro Wallet ID to credit." }
+    },
+    required: ["phoneNumber", "amount", "email", "walletId"]
+  },
+};
+
+const createStripeWalletIntentTool: FunctionDeclaration = {
+  name: "create_stripe_wallet_intent",
+  description: "Generates a Stripe Payment Intent to top up an Agro Wallet. Returns a client secret or checkout URL.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      amount: { type: Type.NUMBER, description: "Amount in the smallest currency unit (e.g., 500 for $5.00)." },
+      currency: { type: Type.STRING, description: "3-letter ISO code (e.g., usd, kes, eur)." },
+      walletId: { type: Type.STRING, description: "Internal Agro Wallet ID to credit." },
+      email: { type: Type.STRING, description: "User email for the receipt." }
+    },
+    required: ["amount", "currency", "walletId", "email"]
+  }
+};
+
 export interface AIResponse {
   text: string;
   sources?: any[];
@@ -21,6 +51,7 @@ export interface AIResponse {
   sentiment_alpha?: number; 
   finality_hash?: string;
   impact_summary?: string;
+  functionCalls?: any[];
 }
 
 const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise<any> => {
@@ -47,7 +78,30 @@ const handleAIError = (error: any): AIResponse => {
   };
 };
 
-// Add missing runSpecialistDiagnostic for specialized audits
+export const consultFinancialOracle = async (query: string, context: any): Promise<AIResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const ai = getAI();
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Process financial query: "${query}". 
+        User Context: ${JSON.stringify(context)}. 
+        Pillar Context: ${FRAMEWORK_CONTEXT}`,
+        config: {
+          systemInstruction: "You are the EnvirosAgro Financial Oracle. You handle treasury requests, asset anchoring, and payment processing. Use process_agro_payment for M-Pesa or create_stripe_wallet_intent for Global Cards/Apple Pay.",
+          tools: [{ functionDeclarations: [processAgroPaymentTool, createStripeWalletIntentTool] }]
+        }
+      });
+      return { 
+        text: response.text || "Financial signal processed.",
+        functionCalls: response.functionCalls
+      };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
+};
+
 export const runSpecialistDiagnostic = async (category: string, description: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
@@ -61,6 +115,30 @@ export const runSpecialistDiagnostic = async (category: string, description: str
         Context: ${FRAMEWORK_CONTEXT}`,
         config: {
           systemInstruction: "You are the EnvirosAgro Specialist Oracle. Provide technical diagnostics and alignment shards."
+        }
+      });
+      return { text: response.text || "" };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
+};
+
+export const runSimulationAnalysis = async (simData: any): Promise<AIResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const ai = getAI();
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Analyze this sustainability simulation data: ${JSON.stringify(simData)}.
+        Focus on:
+        1. Identification of m-constant decay factors.
+        2. Recommendations for SEHTI thrust alignment.
+        3. Strategic sharding advice for maximum C(a) growth.
+        
+        Context: ${FRAMEWORK_CONTEXT}`,
+        config: {
+          systemInstruction: "You are the EnvirosAgro Simulation Oracle. You interpret complex agricultural modeling data into actionable industrial shards."
         }
       });
       return { text: response.text || "" };
