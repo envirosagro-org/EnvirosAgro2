@@ -97,6 +97,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ isOpen, onClose
     } catch (e) {
       setMessages(prev => [...prev, { role: 'bot', text: "Protocol sync error. Please verify your node signature." }]);
     } finally {
+      // Fix: removed setIsGenerating(false) as the state is not defined; setLoading handles the overall loading state.
       setLoading(false);
     }
   };

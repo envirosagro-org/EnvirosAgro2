@@ -13,7 +13,9 @@ import {
   GraduationCap,
   ArrowUpRight,
   ShoppingBag,
-  Sparkle
+  Sparkle,
+  Mail,
+  BellRing
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard } from './types';
 import Dashboard from './components/Dashboard';
@@ -483,7 +485,7 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                    <p className="text-slate-300 italic text-xl md:text-2xl leading-relaxed max-w-3xl">{aiDeepSuggestion.explanation}</p>
                    <button 
                      onClick={() => { onNavigate(aiDeepSuggestion.view as ViewState, aiDeepSuggestion.section); onClose(); }}
-                     className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5"
+                     className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5"
                    >
                       Navigate Shard <ArrowRight size={18} />
                    </button>
@@ -667,10 +669,11 @@ const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isConsultantOpen, setIsConsultantOpen] = useState(false);
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
   
   // Vector History Tracking
   const [history, setHistory] = useState<{view: ViewState, section: string | null}[]>([]);
-  const touchStartPos = useRef<number | null>(null);
+  const [forwardHistory, setForwardHistory] = useState<{view: ViewState, section: string | null}[]>([]);
 
   const [projects, setProjects] = useState<AgroProject[]>([]);
   const [contracts, setContracts] = useState<FarmingContract[]>([]);
@@ -703,6 +706,7 @@ const App: React.FC = () => {
       if (e.key === 'Escape') {
         setIsGlobalSearchOpen(false);
         setIsConsultantOpen(false);
+        setIsInboxOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -816,17 +820,20 @@ const App: React.FC = () => {
   const navigate = useCallback((v: ViewState, section?: string, pushToHistory = true) => {
     if (pushToHistory && v !== view) {
       setHistory(prev => [...prev, { view: view, section: viewSection }]);
+      setForwardHistory([]); // Clear forward history when navigating to a new node
     }
     setView(v);
     setViewSection(section || null);
     setIsMobileMenuOpen(false);
     setIsConsultantOpen(false);
+    setIsInboxOpen(false);
   }, [view, viewSection]);
 
   const goBack = useCallback(() => {
     if (history.length > 0) {
       const lastVector = history[history.length - 1];
       setHistory(prev => prev.slice(0, -1));
+      setForwardHistory(prev => [...prev, { view: view, section: viewSection }]);
       navigate(lastVector.view, lastVector.section || undefined, false);
       emitSignal({
         title: 'VECTOR_RETROGRADE',
@@ -839,22 +846,24 @@ const App: React.FC = () => {
     } else if (view !== 'dashboard') {
       navigate('dashboard', undefined, false);
     }
-  }, [history, view, navigate, emitSignal]);
+  }, [history, view, viewSection, navigate, emitSignal]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartPos.current = e.targetTouches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartPos.current === null) return;
-    const touchEndPos = e.changedTouches[0].clientX;
-    const diff = touchStartPos.current - touchEndPos;
-    // Swipe left = diff > threshold
-    if (diff > 80) {
-      goBack();
+  const goForward = useCallback(() => {
+    if (forwardHistory.length > 0) {
+      const nextVector = forwardHistory[forwardHistory.length - 1];
+      setForwardHistory(prev => prev.slice(0, -1));
+      setHistory(prev => [...prev, { view: view, section: viewSection }]);
+      navigate(nextVector.view, nextVector.section || undefined, false);
+      emitSignal({
+        title: 'VECTOR_ADVANCE',
+        message: `Advancing to ${nextVector.view.toUpperCase()} shard.`,
+        priority: 'low',
+        type: 'system',
+        origin: 'MANUAL',
+        actionIcon: 'ArrowRight'
+      });
     }
-    touchStartPos.current = null;
-  };
+  }, [forwardHistory, view, viewSection, navigate, emitSignal]);
 
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
@@ -917,14 +926,12 @@ const App: React.FC = () => {
     }
   };
 
+  const unreadSignalsCount = useMemo(() => signals.filter(s => !s.read).length, [signals]);
+
   if (isBooting) return <InitializationScreen onComplete={() => setIsBooting(false)} />;
 
   return (
-    <div 
-      className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000">
       <div className="fixed top-0 left-0 right-0 z-[1000] h-8 bg-black/60 backdrop-blur-xl border-b border-white/5 flex items-center overflow-hidden">
         <div className="flex items-center gap-2 px-4 border-r border-white/10 h-full shrink-0">
           <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
@@ -999,15 +1006,66 @@ const App: React.FC = () => {
            </div>
 
            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {/* Integrated AI Assistant Toggle */}
+              {/* Integrated AI Assistant Toggle (SycamoreLeaf Branding) */}
               <button 
-                onClick={() => { setIsConsultantOpen(!isConsultantOpen); setIsGlobalSearchOpen(false); }}
+                onClick={() => { setIsConsultantOpen(!isConsultantOpen); setIsGlobalSearchOpen(false); setIsInboxOpen(false); }}
                 className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
                 title="Concierge Oracle"
               >
                  <SycamoreLogo size={20} className={isConsultantOpen ? "text-white" : "text-emerald-400"} />
                  <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black ${isConsultantOpen ? 'animate-none' : 'animate-pulse'}`}></div>
               </button>
+
+              {/* User Inbox Trigger */}
+              {user && (
+                <div className="relative">
+                  <button 
+                    onClick={() => { setIsInboxOpen(!isInboxOpen); setIsGlobalSearchOpen(false); setIsConsultantOpen(false); }}
+                    className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center relative ${isInboxOpen ? 'bg-indigo-600 text-white border-white' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+                    title="User Inbox"
+                  >
+                    <BellRing size={20} className={unreadSignalsCount > 0 ? 'animate-pulse' : ''} />
+                    {unreadSignalsCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-black animate-in zoom-in">
+                        {unreadSignalsCount > 9 ? '9+' : unreadSignalsCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Compact Signal Inbox Dropdown */}
+                  {isInboxOpen && (
+                    <div className="absolute top-14 right-0 w-80 md:w-96 glass-card rounded-3xl border border-white/10 bg-[#050706] shadow-3xl overflow-hidden animate-in slide-in-from-top-4 z-[500]">
+                       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/5">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                             <Mail size={14} /> USER_INBOX_TERMINAL
+                          </span>
+                          <button onClick={() => navigate('network_signals')} className="text-[9px] font-black text-slate-500 hover:text-white uppercase">Full Terminal</button>
+                       </div>
+                       <div className="max-h-[400px] overflow-y-auto custom-scrollbar divide-y divide-white/5">
+                          {signals.filter(s => !s.read).slice(0, 5).length === 0 ? (
+                            <div className="p-10 text-center opacity-30 italic text-xs">No active engagement shards.</div>
+                          ) : (
+                            signals.filter(s => !s.read).slice(0, 5).map(sig => (
+                              <div 
+                                key={sig.id} 
+                                onClick={() => { navigate(sig.meta?.target as ViewState || 'network_signals'); setIsInboxOpen(false); }}
+                                className={`p-5 hover:bg-white/5 cursor-pointer transition-all border-l-4 ${sig.priority === 'critical' ? 'border-rose-600' : sig.priority === 'high' ? 'border-amber-500' : 'border-indigo-500'}`}
+                              >
+                                 <div className="flex items-center gap-3 mb-2">
+                                    <span className="text-[8px] font-mono text-slate-600">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded ${sig.priority === 'critical' ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-400'}`}>{sig.priority}</span>
+                                 </div>
+                                 <h5 className="text-[11px] font-black text-white uppercase italic truncate">{sig.title}</h5>
+                                 <p className="text-[10px] text-slate-500 mt-1 line-clamp-1 italic">"{sig.message}"</p>
+                              </div>
+                            ))
+                          )}
+                       </div>
+                       <button onClick={() => navigate('profile', 'signals')} className="w-full py-4 bg-indigo-600/10 text-indigo-400 text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">Go to Steward Dossier</button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button onClick={() => setIsGlobalSearchOpen(true)} className="md:hidden p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all"><Search size={18} className="text-slate-400" /></button>
               {user && <button onClick={() => setView('wallet')} className="px-3 sm:px-4 py-2 sm:py-2.5 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={14} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[10px] sm:text-xs font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
@@ -1021,45 +1079,84 @@ const App: React.FC = () => {
           {renderView()}
         </div>
 
-        <footer className="mt-20 pt-10 border-t border-white/5 pb-10 flex flex-col md:flex-row justify-between items-center gap-8 opacity-40 hover:opacity-100 transition-opacity duration-500 px-4">
-           <div className="flex items-center gap-4">
-              <SycamoreLogo size={24} className="text-emerald-500" />
-              <div className="text-left">
-                 <p className="text-[10px] font-black text-white uppercase italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></p>
-                 <p className="text-[7px] text-slate-600 font-bold uppercase tracking-widest">Planetary Regeneration Grid</p>
+        <footer className="mt-20 pt-8 border-t border-white/5 pb-12 flex flex-col items-center gap-10 opacity-60 hover:opacity-100 transition-opacity duration-500 px-4">
+           {/* Primary Control Row */}
+           <div className="flex w-full items-center justify-between gap-4">
+              {/* VECTOR ADVANCE (FORWARD) - Left Side */}
+              <button 
+                onClick={goForward} 
+                disabled={forwardHistory.length === 0}
+                className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border-2 transition-all active:scale-95 group/fwd ${forwardHistory.length > 0 ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
+                title="Vector Advance"
+              >
+                 <ChevronLeft size={20} className="group-hover/fwd:-translate-x-1 transition-transform" />
+                 <div className="flex flex-col items-start text-left hidden md:block">
+                    <span className="text-[9px] font-black uppercase tracking-widest leading-none">Vector Advance</span>
+                    <span className="text-[7px] font-mono opacity-50 mt-1 uppercase">Next_Shard</span>
+                 </div>
+              </button>
+
+              {/* STRATEGIC SHARD DOCK - Icon Based Center Nav */}
+              <div className="flex p-1.5 glass-card rounded-[32px] bg-white/5 border border-white/10 shadow-3xl">
+                 {[
+                   { id: 'dashboard', label: 'Command', icon: LayoutDashboard },
+                   { id: 'economy', label: 'Market', icon: Globe },
+                   { id: 'wallet', label: 'Treasury', icon: Coins },
+                   { id: 'intelligence', label: 'Science', icon: Microscope },
+                   { id: 'impact', label: 'Resonance', icon: TrendingUp },
+                   { id: 'sitemap', label: 'Matrix', icon: MapIcon }
+                 ].map(shard => (
+                   <button 
+                     key={shard.id}
+                     onClick={() => navigate(shard.id as ViewState)}
+                     className={`p-4 rounded-2xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                     title={shard.label}
+                   >
+                      <shard.icon size={20} />
+                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1 bg-black text-white text-[8px] font-black uppercase tracking-widest rounded-lg border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                         {shard.label}
+                      </div>
+                   </button>
+                 ))}
               </div>
-           </div>
-           
-           <div className="flex flex-wrap justify-center gap-8">
-              {[
-                { id: 'dashboard', label: 'Command' },
-                { id: 'wallet', label: 'Treasury' },
-                { id: 'economy', label: 'Market' },
-                { id: 'intelligence', label: 'Oracle' },
-                { id: 'impact', label: 'Impact' },
-                { id: 'sitemap', label: 'Matrix' },
-                { id: 'info', label: 'Safety' }
-              ].map(link => (
-                <button 
-                  key={link.id} 
-                  onClick={() => navigate(link.id as ViewState)} 
-                  className="text-[8px] font-black text-slate-500 hover:text-emerald-400 uppercase tracking-[0.3em] transition-colors"
-                >
-                  {link.label}
-                </button>
-              ))}
+
+              {/* VECTOR RETROGRADE (BACK) - Right Side */}
+              <button 
+                onClick={goBack} 
+                disabled={history.length === 0 && view === 'dashboard'}
+                className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border-2 transition-all active:scale-95 group/back ${history.length > 0 || view !== 'dashboard' ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
+                title="Vector Retrograde"
+              >
+                 <div className="flex flex-col items-end text-right hidden md:block">
+                    <span className="text-[9px] font-black uppercase tracking-widest leading-none">Vector Retrograde</span>
+                    <span className="text-[7px] font-mono opacity-50 mt-1 uppercase">Prev_Shard</span>
+                 </div>
+                 <ChevronRight size={20} className="group-hover/back:translate-x-1 transition-transform" />
+              </button>
            </div>
 
-           <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                 <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
-                 <span className="text-[7px] text-slate-700 font-mono uppercase font-black">ZK_SYSTEM_OK</span>
+           {/* Secondary Branding Row */}
+           <div className="flex flex-col md:flex-row items-center justify-between w-full gap-8 border-t border-white/5 pt-8 px-4 opacity-50">
+              <div className="flex items-center gap-4">
+                 <SycamoreLogo size={24} className="text-emerald-500" />
+                 <div className="text-left">
+                    <p className="text-[10px] font-black text-white uppercase italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></p>
+                    <p className="text-[7px] text-slate-600 font-bold uppercase tracking-widest">Planetary Regeneration Grid</p>
+                 </div>
               </div>
-              <p className="text-[8px] text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p>
+
+              <div className="flex items-center gap-10">
+                 <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-[8px] text-slate-700 font-mono uppercase font-black">ZK_SYSTEM_OK</span>
+                 </div>
+                 <p className="text-[8px] text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p>
+                 <button onClick={() => navigate('info')} className="text-[8px] font-black text-slate-500 hover:text-white uppercase tracking-[0.3em]">SAFETY_REGISTRY</button>
+              </div>
            </div>
         </footer>
 
-        {showZenithButton && <button onClick={scrollToTop} className="fixed bottom-6 right-6 sm:bottom-10 sm:right-10 p-4 sm:p-5 agro-gradient rounded-2xl sm:rounded-3xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border-2 border-white/20 animate-in fade-in zoom-in duration-300"><LucideIcons.ArrowUp size={24} /></button>}
+        {showZenithButton && <button onClick={scrollToTop} className="fixed bottom-32 right-6 sm:right-10 p-4 sm:p-5 agro-gradient rounded-2xl sm:rounded-3xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border-2 border-white/20 animate-in fade-in zoom-in duration-300"><LucideIcons.ArrowUp size={24} /></button>}
       </main>
 
       <div className="fixed top-24 right-4 sm:right-10 z-[500] space-y-4 max-w-[280px] sm:max-w-sm w-full pointer-events-none">
