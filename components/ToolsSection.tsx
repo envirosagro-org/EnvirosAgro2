@@ -43,6 +43,7 @@ import {
   ArrowRightCircle,
   ArrowDownCircle,
   ArrowLeftCircle,
+  ArrowRight,
   Stamp,
   Boxes,
   LayoutGrid,
@@ -70,9 +71,11 @@ import {
   Atom,
   ChevronDown,
   PieChart as PieChartIcon,
-  /* Added Maximize2 and Send to fix "Cannot find name" errors on lines 385 and 504 */
   Maximize2,
-  Send
+  Send,
+  Download,
+  // Added Radio to fix error on line 427
+  Radio
 } from 'lucide-react';
 import { 
   LineChart as RechartsLineChart, 
@@ -92,6 +95,8 @@ import {
   Pie
 } from 'recharts';
 import { chatWithAgroExpert } from '../services/geminiService';
+import { saveCollectionItem } from '../services/firebaseService';
+import { MediaShard } from '../types';
 
 interface ToolsSectionProps {
   user: any; 
@@ -101,6 +106,7 @@ interface ToolsSectionProps {
   tasks: any[];
   onSaveTask: (task: any) => void;
   notify: any;
+  initialSection?: string | null;
 }
 
 const TASK_INGEST_FEE = 10;
@@ -109,7 +115,7 @@ const CONTROL_CHART_DATA = [
   { batch: 'B1', val: 62, error: 2 }, { batch: 'B2', val: 65, error: 1 }, { batch: 'B3', val: 61, error: 3 },
   { batch: 'B4', val: 78, error: 8 }, { batch: 'B5', val: 63, error: 2 }, { batch: 'B6', val: 60, error: 1 },
   { batch: 'B7', val: 58, error: 4 }, { batch: 'B8', val: 85, error: 9 }, { batch: 'B9', val: 64, error: 2 },
-  { batch: 'B10', val: 61, error: 1 }, { batch: 'B11', val: 62, error: 1 }, { batch: 'B12', val: 63, error: 1 },
+  { batch: 'B10', val: 61, error: 1 }, { batch: 'B11', val: 62, error: 1 }, { batch: 'B12', v: 63, error: 1 },
 ];
 
 const KPI_DISTRIBUTION = [
@@ -140,12 +146,23 @@ const INDUSTRIAL_ASSETS = [
   { id: 'AST-Pump-12', name: 'HydraFlow Ingester', type: 'Liquid Logistics', health: 88, stability: 1.15, lastAudit: '1w ago', status: 'STANDBY', col: 'text-indigo-400' },
 ];
 
-const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC, onOpenEvidence, tasks = [], onSaveTask, notify }) => {
+const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC, onOpenEvidence, tasks = [], onSaveTask, notify, initialSection }) => {
   const [activeTool, setActiveTool] = useState<'kanban' | 'resources' | 'sigma' | 'kpis'>('kanban');
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [sigmaInput, setSigmaInput] = useState('');
   const [sigmaAdvice, setSigmaAdvice] = useState<string | null>(null);
   
+  // Vector Routing Logic
+  useEffect(() => {
+    if (initialSection) {
+      setActiveTool(initialSection as any);
+    }
+  }, [initialSection]);
+
+  // Archiving States
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
+
   const [showInitTask, setShowInitTask] = useState(false);
   const [initStep, setInitStep] = useState<'form' | 'sign' | 'minting' | 'success'>('form');
   const [taskTitle, setTaskTitle] = useState('');
@@ -163,522 +180,408 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
     if (dpmo <= 233) return 5.0;
     if (dpmo <= 6210) return 4.0;
     if (dpmo <= 66807) return 3.0;
+    if (dpmo <= 308537) return 2.0;
     return 1.0;
   }, [defects, opportunities]);
 
-  const handleSigmaAudit = async () => {
+  const handleRunSigmaOracle = async () => {
     if (!sigmaInput.trim()) return;
+    const fee = 15;
+    if (!await onSpendEAC(fee, 'SIGMA_OPTIMIZATION_AUDIT')) return;
+
     setIsOptimizing(true);
-    const prompt = `Perform a technical Six Sigma analysis for the following agricultural bottleneck: "${sigmaInput}". 
-    Provide a multi-stage DMAIC remediation shard. Focus on m-constant stability.`;
-    const response = await chatWithAgroExpert(prompt, []);
-    setSigmaAdvice(response.text);
-    setIsOptimizing(false);
+    setSigmaAdvice(null);
+    try {
+      const res = await chatWithAgroExpert(`Sigma Six Optimization. Target: ${sigmaInput}. Current Sigma Level: ${sigmaLevel}. Defects: ${defects}, Ops: ${opportunities}. Provide industrial remediation shards.`, []);
+      setSigmaAdvice(res.text);
+    } catch (e) {
+      setSigmaAdvice("Oracle link timeout.");
+    } finally {
+      setIsOptimizing(false);
+    }
   };
 
-  const handleInitializeTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!taskTitle.trim()) return;
-    setInitStep('sign');
-  };
-
-  const executeInitShard = async () => {
-    if (user && esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+  const handleInitTask = async () => {
+    if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
+      notify('error', 'SIGNATURE_MISMATCH', "Node ESIN mismatch.");
       return;
     }
 
-    if (!await onSpendEAC(TASK_INGEST_FEE, 'TASK_SHARD_REGISTRATION')) {
-      alert("LIQUIDITY ERROR: Insufficient EAC for task registration fee.");
-      return;
+    if (await onSpendEAC(TASK_INGEST_FEE, `TASK_INITIALIZATION_${taskTitle}`)) {
+      setIsMinting(true);
+      setTimeout(() => {
+        const newTask = {
+          id: `TSK-${Math.floor(Math.random() * 9000 + 1000)}`,
+          title: taskTitle,
+          thrust: taskThrust,
+          priority: taskPriority,
+          status: 'Inception',
+          timestamp: new Date().toISOString()
+        };
+        onSaveTask(newTask);
+        setIsMinting(false);
+        setInitStep('success');
+        notify('success', 'TASK_ANCHORED', `Industrial task shard ${taskTitle} registered.`);
+      }, 2000);
     }
-    
-    setInitStep('minting');
-    setIsMinting(true);
-    
-    setTimeout(() => {
-      const newShard = {
-        id: `T-${Math.floor(Math.random() * 9000 + 1000)}`,
-        title: taskTitle,
-        status: 'Inception',
-        thrust: taskThrust,
-        owner: user?.name || 'Local_Node',
-        priority: taskPriority,
-        seq: 1,
-        weight: '0.4 TB',
-        confidence: 0
-      };
-      
-      onSaveTask(newShard);
-      setIsMinting(false);
-      setInitStep('success');
-      onEarnEAC?.(5, 'NEW_TASK_SHARD_COMMITTED');
-    }, 2500);
-  };
-
-  const moveTask = (taskId: string, newStatus: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    const updated = { ...task, status: newStatus, confidence: Math.min(100, (task.confidence || 0) + 15) };
-    onSaveTask(updated);
-    onEarnEAC?.(2, `TASK_SEQUENCE_PROMOTION_${taskId}`);
-  };
-
-  const closeTaskModal = () => {
-    setShowInitTask(false);
-    setInitStep('form');
-    setTaskTitle('');
-    setEsinSign('');
   };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
       <div className="absolute top-0 right-0 p-40 opacity-[0.01] pointer-events-none rotate-12">
-        <Workflow size={1000} className="text-indigo-500" />
+        <Wrench size={1000} className="text-emerald-500" />
       </div>
 
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-10 relative z-10">
-        <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-2xl px-6">
-          {[
-            { id: 'kanban', label: 'Ledger Kanban', icon: Workflow },
-            /* Fixed: Use imported 'Boxes' instead of unresolved 'BoxesIcon' */
-            { id: 'resources', label: 'Resource Sharding', icon: Boxes },
-            { id: 'sigma', label: 'Precision Audit', icon: Target },
-            { id: 'kpis', label: 'Performance Matrix', icon: BarChart4 },
-          ].map(t => (
-            <button 
-              key={t.id} 
-              onClick={() => setActiveTool(t.id as any)} 
-              className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTool === t.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-            >
-              <t.icon size={18} /> {t.label}
-            </button>
-          ))}
-        </div>
-        
-        <div className="flex items-center gap-6">
-           <div className="px-6 py-3 glass-card rounded-full border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
-              <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">INDUSTRIAL_MESH_ACTIVE</span>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-3 glass-card p-12 md:p-16 rounded-[64px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-16 group shadow-3xl">
+           <div className="relative shrink-0">
+              <div className="w-44 h-44 rounded-[56px] bg-emerald-600 shadow-[0_0_120px_rgba(16,185,129,0.4)] flex items-center justify-center ring-8 ring-white/5 relative overflow-hidden group-hover:scale-105 transition-all duration-700">
+                 <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
+                 <Wrench size={80} className="text-white animate-float" />
+                 <div className="absolute inset-0 border-2 border-dashed border-white/20 rounded-[56px] animate-spin-slow"></div>
+              </div>
            </div>
-           <button 
-              onClick={() => { setShowInitTask(true); setInitStep('form'); }}
-              className="p-4 bg-indigo-600 rounded-2xl text-white shadow-3xl hover:bg-indigo-500 active:scale-90 transition-all border border-white/10"
-              title="Mint New Task"
-           >
-              <Plus size={24} />
-           </button>
+
+           <div className="space-y-8 relative z-10 text-center md:text-left flex-1">
+              <div className="space-y-4">
+                 <h2 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Industrial <span className="text-emerald-400">Tools.</span></h2>
+                 <p className="text-slate-400 text-2xl font-medium italic leading-relaxed max-w-3xl opacity-80 group-hover:opacity-100 transition-opacity">
+                   "Leveraging Lean and Six Sigma methodologies to minimize defect entropy (S) and maximize stewardship output (Ca)."
+                 </p>
+              </div>
+              <div className="flex flex-wrap justify-center md:justify-start gap-6 pt-6">
+                <button 
+                  onClick={() => { setShowInitTask(true); setInitStep('form'); }}
+                  className="px-14 py-7 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 border-2 border-white/10"
+                >
+                  <PlusCircle size={28} /> Initialize Process Shard
+                </button>
+              </div>
+           </div>
+        </div>
+
+        <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 flex flex-col justify-between text-center relative overflow-hidden shadow-3xl group">
+           <div className="space-y-4 relative z-10">
+              <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.6em] mb-4 italic">SIGMA_LEVEL</p>
+              <h4 className="text-8xl font-mono font-black text-white tracking-tighter drop-shadow-2xl italic">{sigmaLevel.toFixed(1)}</h4>
+              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4">STABLE_FLOW_OK</p>
+           </div>
+           <div className="space-y-6 relative z-10 pt-10 border-t border-white/5 mt-10">
+              <div className="flex justify-between items-center text-[11px] font-black uppercase text-slate-600 tracking-widest">
+                 <span>Lean Efficiency</span>
+                 <span className="text-emerald-400 font-mono">94.2%</span>
+              </div>
+              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
+                 <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_20px_#10b981]" style={{ width: '94%' }}></div>
+              </div>
+           </div>
         </div>
       </div>
 
-      <div className="min-h-[850px] relative z-10">
+      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 relative z-20 mx-auto lg:mx-0">
+        {[
+          { id: 'kanban', label: 'Kanban Matrix', icon: LayoutGrid },
+          { id: 'resources', label: 'Asset Monitor', icon: Monitor },
+          { id: 'sigma', label: 'Sigma Optimizer', icon: Target },
+          { id: 'kpis', label: 'KPI Ledger', icon: BarChart4 },
+        ].map(t => (
+          <button 
+            key={t.id} 
+            onClick={() => setActiveTool(t.id as any)}
+            className={`flex items-center gap-4 px-10 py-5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTool === t.id ? 'bg-indigo-600 text-white shadow-xl scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+          >
+            <t.icon className="w-4 h-4" /> {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="min-h-[700px] relative z-10">
         {activeTool === 'kanban' && (
-          <div className="space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                {KANBAN_STAGES.map((stage, idx) => (
-                  <div key={stage.id} className="flex flex-col gap-10 group/col">
-                     <div className={`p-10 rounded-[64px] border-2 bg-black/40 shadow-3xl transition-all duration-700 ${stage.bg} ${stage.border} min-h-[900px] flex flex-col`}>
-                        <div className="flex justify-between items-center mb-12 px-2">
-                           <div className="flex items-center gap-4">
-                              <div className={`w-3.5 h-3.5 rounded-full ${stage.color} animate-pulse shadow-[0_0_15px_currentColor]`}></div>
-                              <h4 className={`text-[13px] font-black uppercase tracking-[0.5em] italic ${stage.color}`}>{stage.label}</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in slide-in-from-bottom-8 duration-700">
+             {KANBAN_STAGES.map(stage => (
+                <div key={stage.id} className="space-y-6">
+                   <div className="flex items-center justify-between px-6">
+                      <h4 className={`text-sm font-black uppercase tracking-widest ${stage.color}`}>{stage.label}</h4>
+                      <span className="px-3 py-1 bg-white/5 rounded-lg text-[10px] font-mono text-slate-500">{tasks.filter((t:any) => t.status === stage.id).length}</span>
+                   </div>
+                   <div className="space-y-4 p-4 min-h-[500px] rounded-[48px] bg-black/20 border-2 border-dashed border-white/5">
+                      {tasks.filter((t:any) => t.status === stage.id).map((task:any) => (
+                        <div key={task.id} className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/60 shadow-xl space-y-6 group hover:border-emerald-500/30 transition-all cursor-pointer">
+                           <div className="flex justify-between items-start">
+                              <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">{task.thrust}</span>
+                              <div className={`p-2 rounded-lg bg-white/5 ${task.priority === 'High' ? 'text-rose-500' : 'text-emerald-400'}`}><AlertCircle size={14} /></div>
                            </div>
-                           <span className="px-4 py-1.5 bg-black/60 border border-white/5 rounded-full text-[10px] font-mono text-slate-500 font-black shadow-inner">
-                              {tasks.filter(t => t.status === stage.id).length} SHARDS
-                           </span>
+                           <h5 className="text-xl font-black text-white uppercase italic leading-tight">{task.title}</h5>
+                           <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                              <span className="text-[9px] text-slate-700 font-mono">ID: {task.id}</span>
+                              <button onClick={() => onOpenEvidence(task)} className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg hover:bg-indigo-500 transition-all"><Upload size={14}/></button>
+                           </div>
                         </div>
-
-                        <div className="space-y-8 flex-1">
-                           {tasks.filter(t => t.status === stage.id).map(task => (
-                              <div key={task.id} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/80 hover:border-indigo-500/40 transition-all group/task cursor-pointer active:scale-[0.98] shadow-3xl relative overflow-hidden border-l-[12px] border-l-indigo-600">
-                                 <div className="absolute inset-0 opacity-[0.02] pointer-events-none"><div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/20 to-transparent absolute top-0 animate-scan"></div></div>
-
-                                 <div className="flex justify-between items-start mb-8 relative z-10">
-                                    <span className="text-[11px] font-mono font-black text-slate-700 uppercase tracking-tighter">#{task.id}</span>
-                                    <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-lg ${
-                                       task.priority === 'High' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20 animate-pulse' : 
-                                       task.priority === 'Medium' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
-                                       'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                    }`}>
-                                       {task.priority} Priority
-                                    </div>
-                                 </div>
-
-                                 <h5 className="text-2xl font-black text-white mb-6 leading-tight tracking-tighter group/task:text-indigo-400 transition-colors uppercase italic drop-shadow-2xl">{task.title}</h5>
-                                 
-                                 <div className="grid grid-cols-2 gap-4 mb-8">
-                                    <div className="p-4 bg-black/60 rounded-3xl border border-white/5 space-y-1 shadow-inner">
-                                       <p className="text-[8px] text-slate-600 font-black uppercase">Shard Mass</p>
-                                       <p className="text-sm font-mono font-black text-white">{task.weight}</p>
-                                    </div>
-                                    <div className="p-4 bg-black/60 rounded-3xl border border-white/5 space-y-1 shadow-inner text-right">
-                                       <p className="text-[8px] text-slate-600 font-black uppercase">Consensus</p>
-                                       <p className="text-sm font-mono font-black text-emerald-400">{task.confidence}%</p>
-                                    </div>
-                                 </div>
-
-                                 <div className="flex justify-between items-center pt-8 border-t border-white/5 relative z-10">
-                                    <div className="flex items-center gap-3">
-                                       <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-400 shadow-inner group-hover/task:rotate-6 transition-all">
-                                          <User size={14} />
-                                       </div>
-                                       <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{task.owner}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                       <button 
-                                          onClick={(e) => { e.stopPropagation(); onOpenEvidence(task); }}
-                                          className="p-3 bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all shadow-md active:scale-90"
-                                       >
-                                          <Upload size={14} />
-                                       </button>
-                                       {idx < KANBAN_STAGES.length - 1 && (
-                                          <button 
-                                             onClick={(e) => { e.stopPropagation(); moveTask(task.id, KANBAN_STAGES[idx + 1].id); }}
-                                             className="p-3 bg-indigo-600 rounded-xl text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-90"
-                                          >
-                                             <ChevronRight size={14} />
-                                          </button>
-                                       )}
-                                    </div>
-                                 </div>
-                              </div>
-                           ))}
-                        </div>
-                     </div>
-                  </div>
-                ))}
-             </div>
+                      ))}
+                      {tasks.filter((t:any) => t.status === stage.id).length === 0 && (
+                         <div className="h-full flex flex-col items-center justify-center opacity-10 py-20">
+                            <PlusCircle size={48} className="text-slate-600 mb-4" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">Shard Buffer Clear</p>
+                         </div>
+                      )}
+                   </div>
+                </div>
+             ))}
           </div>
         )}
 
-        {activeTool === 'resources' && (
-           <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                 {INDUSTRIAL_ASSETS.map((asset) => (
-                    <div key={asset.id} className="p-10 glass-card rounded-[64px] border border-white/5 hover:border-indigo-500/40 transition-all group flex flex-col justify-between h-[520px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.98]">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform duration-[10s]"><Database size={180} /></div>
-                       
-                       <div className="space-y-8 relative z-10">
-                          <div className="flex justify-between items-start">
-                             <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${asset.col} shadow-2xl group-hover:rotate-6 transition-all`}>
-                                {asset.type.includes('Aerial') ? <Radar size={32} /> : asset.type.includes('Ground') ? <Workflow size={32} /> : <Database size={32} />}
-                             </div>
-                             <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase border tracking-widest shadow-lg ${
-                                asset.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
-                             }`}>{asset.status}</span>
-                          </div>
-                          <div>
-                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-indigo-400 transition-colors drop-shadow-2xl">{asset.name}</h4>
-                             <p className="text-[10px] text-slate-500 font-mono mt-4 font-bold tracking-widest uppercase italic">{asset.id} // {asset.type}</p>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                             <div className="p-6 bg-black/60 rounded-[36px] border border-white/5 space-y-2 shadow-inner group-hover/card:border-blue-500/20 transition-all">
-                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Node Health</p>
-                                <p className="text-3xl font-mono font-black text-white">{asset.health}%</p>
-                             </div>
-                             <div className="p-6 bg-black/60 rounded-[36px] border border-white/5 space-y-2 shadow-inner group-hover/card:border-emerald-500/20 transition-all text-right">
-                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">m-Factor</p>
-                                <p className="text-3xl font-mono font-black text-white">{asset.stability}x</p>
-                             </div>
-                          </div>
-                       </div>
-
-                       <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                          <p className="text-[9px] text-slate-700 font-black uppercase italic">Last Audit: {asset.lastAudit}</p>
-                          <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl active:scale-95"><Maximize2 size={20} /></button>
-                       </div>
-                    </div>
-                 ))}
-              </div>
-           </div>
-        )}
-
         {activeTool === 'sigma' && (
-           <div className="space-y-12 animate-in zoom-in duration-700">
+           <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                  <div className="lg:col-span-4 space-y-8">
-                    <div className="glass-card p-10 md:p-12 rounded-[56px] border border-emerald-500/20 bg-emerald-950/5 space-y-10 shadow-3xl flex flex-col justify-between overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s]"><Target size={300} className="text-emerald-400" /></div>
-                       <div className="flex items-center gap-6 relative z-10 border-b border-emerald-500/20 pb-8">
-                          <div className="p-4 bg-emerald-600 rounded-[28px] shadow-3xl group-hover:rotate-12 transition-transform">
-                             <Target size={32} className="text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Precision <span className="text-emerald-400">Sigma</span></h3>
-                            <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-3">TQM_精度の監査</p>
-                          </div>
+                    <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-black/40 space-y-10 shadow-3xl">
+                       <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                          <div className="p-4 bg-indigo-600 rounded-[28px] shadow-xl"><Target size={32} className="text-white" /></div>
+                          <h3 className="text-2xl font-black text-white uppercase italic">Sigma <span className="text-indigo-400">Forge</span></h3>
                        </div>
-                       
-                       <div className="space-y-8 relative z-10">
-                          <div className="grid grid-cols-1 gap-6">
-                             <div className="group/inp">
-                                <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover/inp:text-emerald-400 transition-colors">Observed Defects (D)</label><span className="text-xl font-mono text-white font-black">{defects}</span></div>
-                                <input type="range" min="0" max="50" step="1" value={defects} onChange={e => setDefects(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner group-hover/inp:h-3 transition-all" />
+                       <div className="space-y-6">
+                          <div className="space-y-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Optimization Target</label>
+                             <textarea 
+                                value={sigmaInput}
+                                onChange={e => setSigmaInput(e.target.value)}
+                                placeholder="Describe the industrial defect or bottleneck..."
+                                className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-lg font-medium italic outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all h-40 resize-none shadow-inner placeholder:text-stone-900"
+                             />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-2">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Defects Count</label>
+                                <input type="number" value={defects} onChange={e => setDefects(Number(e.target.value))} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-mono font-black" />
                              </div>
-                             <div className="group/inp">
-                                <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover/inp:text-emerald-400 transition-colors">Opportunities (O)</label><span className="text-xl font-mono text-white font-black">{opportunities}</span></div>
-                                <input type="range" min="100" max="10000" step="100" value={opportunities} onChange={e => setOpportunities(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner group-hover/inp:h-3 transition-all" />
+                             <div className="space-y-2">
+                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Total Ops</label>
+                                <input type="number" value={opportunities} onChange={e => setOpportunities(Number(e.target.value))} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-mono font-black" />
                              </div>
                           </div>
-
-                          <div className="p-10 bg-black/60 rounded-[48px] border border-emerald-500/20 shadow-inner text-center space-y-4">
-                             <p className="text-[11px] text-slate-500 uppercase font-black tracking-widest italic">CALCULATED_SIGMA_LEVEL</p>
-                             <h5 className="text-8xl font-mono font-black text-white tracking-tighter italic drop-shadow-[0_0_25px_rgba(255,255,255,0.2)]">{sigmaLevel.toFixed(1)}<span className="text-3xl text-emerald-500 ml-1">σ</span></h5>
-                             <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border tracking-widest shadow-lg inline-block ${
-                                sigmaLevel >= 5 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                             }`}>
-                                {sigmaLevel >= 5 ? 'INDUSTRIAL_SUPREMACY' : 'OPTIMIZATION_REQUIRED'}
-                             </div>
-                          </div>
+                          <button 
+                            onClick={handleRunSigmaOracle}
+                            disabled={isOptimizing || !sigmaInput.trim()}
+                            className="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all disabled:opacity-30"
+                          >
+                             {isOptimizing ? <Loader2 size={24} className="animate-spin" /> : <Bot size={24} />}
+                             {isOptimizing ? 'SYNTHESIZING...' : 'INITIALIZE SIGMA AUDIT'}
+                          </button>
                        </div>
                     </div>
                  </div>
 
-                 <div className="lg:col-span-8 flex flex-col gap-8">
-                    <div className="glass-card p-12 md:p-14 rounded-[72px] border-2 border-white/5 bg-black/20 flex-1 flex flex-col relative overflow-hidden shadow-3xl">
-                       <div className="p-8 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-20">
-                          <div className="flex items-center gap-6">
-                             <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl group overflow-hidden relative">
-                                <Bot size={32} className="group-hover:scale-110 transition-transform relative z-10" />
-                                <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-                             </div>
-                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">DMAIC <span className="text-indigo-400">Oracle</span></h4>
-                          </div>
-                          <div className="hidden sm:flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full">
-                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
-                             <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_STABLE</span>
+                 <div className="lg:col-span-8">
+                    <div className="glass-card rounded-[64px] min-h-[500px] border border-white/10 bg-black/60 shadow-3xl overflow-hidden flex flex-col relative group">
+                       <div className="absolute inset-0 bg-indigo-500/[0.02] pointer-events-none z-0 overflow-hidden">
+                          <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent absolute top-0 animate-scan"></div>
+                       </div>
+                       <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between relative z-10">
+                          <div className="flex items-center gap-4">
+                             <Terminal className="text-indigo-400 w-5 h-5" />
+                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Sigma Optimization Terminal</span>
                           </div>
                        </div>
-
-                       <div className="flex-1 p-10 overflow-y-auto custom-scrollbar relative z-20">
+                       <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-10">
                           {!sigmaAdvice && !isOptimizing ? (
-                             <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-10 group">
-                                <div className="relative">
-                                   <Target size={140} className="text-slate-500 group-hover:text-emerald-400 transition-colors duration-1000" />
-                                   <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
-                                </div>
-                                <div className="space-y-4">
-                                   <p className="text-5xl font-black uppercase tracking-[0.5em] text-white italic">PRECISION_STANDBY</p>
-                                   <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest">Describe process friction to synthesize advice</p>
-                                </div>
+                             <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-10">
+                                <Sparkles size={140} className="text-slate-500" />
+                                <p className="text-4xl font-black uppercase tracking-[0.6em] text-white italic">ORACLE_STANDBY</p>
                              </div>
                           ) : isOptimizing ? (
-                             <div className="h-full flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
+                             <div className="h-full flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in">
                                 <div className="relative">
-                                   <Loader2 size={120} className="text-indigo-500 animate-spin mx-auto" />
-                                   <div className="absolute inset-0 flex items-center justify-center">
-                                      <Binary size={40} className="text-indigo-400 animate-pulse" />
-                                   </div>
+                                   <div className="w-32 h-32 rounded-full border-t-4 border-indigo-500 animate-spin"></div>
+                                   <div className="absolute inset-0 flex items-center justify-center"><Sparkles size={40} className="text-indigo-400 animate-pulse" /></div>
                                 </div>
-                                <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">SEQUENCING REMEDIATION SHARDS...</p>
+                                <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">SEQUENCING REMEDIATION...</p>
                              </div>
                           ) : (
-                             <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10 flex-1">
-                                <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-[12px] border-l-indigo-600/50 relative overflow-hidden group/shard">
-                                   <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group/shard:scale-110 transition-transform duration-[12s]"><Target size={600} className="text-indigo-400" /></div>
-                                   <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">
+                             <div className="animate-in slide-in-from-bottom-10 duration-700 space-y-12">
+                                <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 border-2 border-indigo-500/20 shadow-3xl">
+                                   <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium border-l border-white/5 pl-10 relative z-10">
                                       {sigmaAdvice}
                                    </div>
                                 </div>
-                                <div className="flex justify-center gap-10">
-                                   <button onClick={() => setSigmaAdvice(null)} className="px-16 py-8 bg-white/5 border border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Analysis</button>
-                                   <button className="px-24 py-8 agro-gradient rounded-full text-white font-black text-[13px] uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-2 border-white/10 ring-8 ring-white/5">
-                                      <Stamp size={28} /> ANCHOR TO LEDGER
+                                <div className="flex justify-center gap-6">
+                                   <button onClick={() => setSigmaAdvice(null)} className="px-12 py-6 bg-white/5 border-2 border-white/10 rounded-full text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
+                                   <button className="px-20 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-2 border-white/10 ring-8 ring-white/5">
+                                      <Stamp size={24} /> ANCHOR TO LEDGER
                                    </button>
                                 </div>
                              </div>
                           )}
                        </div>
-
-                       <div className="p-10 border-t border-white/5 bg-black/90 relative z-20 shrink-0">
-                          <div className="max-w-5xl mx-auto relative group">
-                             <textarea 
-                                value={sigmaInput}
-                                onChange={e => setSigmaInput(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSigmaAudit())}
-                                placeholder="Describe the industrial friction (e.g. Inflow moisture variance in Zone 4)..."
-                                className="w-full bg-white/5 border border-white/10 rounded-[40px] py-8 pl-10 pr-28 text-xl text-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-stone-900 resize-none h-32 shadow-inner italic font-medium" 
-                             />
-                             <button 
-                                onClick={handleSigmaAudit}
-                                disabled={isOptimizing || !sigmaInput.trim()}
-                                className="absolute right-6 bottom-6 p-6 bg-indigo-600 rounded-[32px] text-white shadow-3xl hover:bg-indigo-500 transition-all disabled:opacity-30 active:scale-90 ring-4 ring-indigo-500/5 group-hover:scale-105"
-                             >
-                                <Send size={28} />
-                             </button>
-                          </div>
-                       </div>
                     </div>
                  </div>
               </div>
            </div>
         )}
-
-        {activeTool === 'kpis' && (
-           <div className="space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                 <div className="lg:col-span-8 glass-card p-14 rounded-[80px] border border-white/5 bg-black/40 shadow-3xl space-y-12 relative overflow-hidden group flex flex-col">
-                    <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden">
-                       <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent absolute top-0 animate-scan"></div>
-                    </div>
-                    <div className="flex flex-col md:flex-row justify-between items-center mb-10 relative z-10 px-4 gap-8">
-                       <div className="flex items-center gap-8">
-                          <div className="p-6 bg-indigo-600 rounded-[32px] shadow-3xl border border-white/10 group-hover:rotate-6 transition-transform">
-                             <BarChart3 className="w-10 h-10 text-white" />
-                          </div>
-                          <div>
-                             <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Process <span className="text-indigo-400">Control Limits</span></h3>
-                             <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-4">SHEWHART_ANALYTICS_v4.2</p>
-                          </div>
+        
+        {/* VIEW: ASSET MONITOR */}
+        {activeTool === 'resources' && (
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in slide-in-from-right-4 duration-700">
+              {INDUSTRIAL_ASSETS.map(asset => (
+                 <div key={asset.id} className="p-10 glass-card rounded-[64px] border-2 border-white/5 hover:border-white/20 transition-all flex flex-col justify-between h-[450px] shadow-3xl bg-black/40 group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={200} /></div>
+                    <div className="flex justify-between items-start mb-10 relative z-10">
+                       <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner group-hover:rotate-12 transition-all">
+                          {asset.name.includes('Drone') ? <Bot className={asset.col} size={28} /> : asset.name.includes('Node') ? <Radio className={asset.col} size={28} /> : <Construction className={asset.col} size={28} />}
                        </div>
+                       <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest shadow-xl ${asset.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'}`}>{asset.status}</span>
                     </div>
-
-                    <div className="flex-1 min-h-[450px] w-full relative z-10 p-10 bg-black rounded-[64px] border border-white/5 shadow-inner">
-                       <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={CONTROL_CHART_DATA}>
-                             <defs>
-                                <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                </linearGradient>
-                             </defs>
-                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={false} />
-                             <XAxis dataKey="batch" stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
-                             <YAxis stroke="rgba(128,128,128,0.4)" fontSize={11} fontStyle="italic" axisLine={false} tickLine={false} />
-                             <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px' }} />
-                             <ReferenceLine y={65} stroke="#10b981" strokeDasharray="10 10" label={{ position: 'right', value: 'UCL', fill: '#10b981', fontSize: 10, fontWeight: 'bold' }} />
-                             <ReferenceLine y={55} stroke="#ef4444" strokeDasharray="10 10" label={{ position: 'right', value: 'LCL', fill: '#ef4444', fontSize: 10, fontWeight: 'bold' }} />
-                             <Area type="monotone" name="Batch Stability" dataKey="val" stroke="#6366f1" strokeWidth={8} fillOpacity={1} fill="url(#colorVal)" strokeLinecap="round" />
-                          </AreaChart>
-                       </ResponsiveContainer>
+                    <div className="space-y-3 relative z-10">
+                       <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors">{asset.name}</h4>
+                       <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest">{asset.type} // {asset.id}</p>
+                    </div>
+                    <div className="pt-10 border-t border-white/5 space-y-6 relative z-10 mt-auto">
+                       <div className="space-y-2">
+                          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest"><span className="text-slate-600">Unit Health</span><span className="text-white font-mono">{asset.health}%</span></div>
+                          <div className="h-1 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner"><div className={`h-full rounded-full transition-all duration-[2s] ${asset.health > 80 ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-amber-500 shadow-[0_0_10px_#f59e0b]'}`} style={{ width: `${asset.health}%` }}></div></div>
+                       </div>
+                       <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-md">Execute Diagnostic</button>
                     </div>
                  </div>
+              ))}
+           </div>
+        )}
 
-                 <div className="lg:col-span-4 space-y-8 flex flex-col">
-                    <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 shadow-xl flex flex-col items-center justify-center text-center space-y-12 relative overflow-hidden flex-1 group">
-                       <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none group-hover:bg-indigo-500/[0.03] transition-colors"></div>
-                       <h4 className="text-2xl font-black text-white uppercase italic tracking-[0.2em] flex items-center gap-4 relative z-10">
-                          <PieChartIcon className="w-8 h-8 text-indigo-400" /> KPI <span className="text-indigo-400">Diffusion</span>
-                       </h4>
-                       <div className="h-80 w-full relative z-10">
-                          <ResponsiveContainer width="100%" height="100%">
-                             <PieChart>
-                                <Pie data={KPI_DISTRIBUTION} innerRadius={85} outerRadius={125} paddingAngle={8} dataKey="value" stroke="none">
-                                   {KPI_DISTRIBUTION.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={entry.color} />
-                                   ))}
-                                </Pie>
-                                <Tooltip contentStyle={{ backgroundColor: '#050706', border: 'none', borderRadius: '16px' }} />
-                             </PieChart>
-                          </ResponsiveContainer>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                             <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Total</p>
-                             <p className="text-4xl font-mono font-black text-white">100%</p>
+        {activeTool === 'kpis' && (
+           <div className="space-y-12 animate-in zoom-in duration-700 max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                 <div className="glass-card p-12 md:p-16 rounded-[80px] border-2 border-emerald-500/20 bg-emerald-950/5 relative overflow-hidden flex flex-col items-center justify-center text-center space-y-10 shadow-3xl group">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Stamp size={800} className="text-emerald-400" /></div>
+                    <div className="w-32 h-32 rounded-[44px] bg-emerald-600 flex items-center justify-center shadow-[0_0_120px_rgba(16,185,129,0.3)] border-4 border-white/10 mx-auto group-hover:rotate-12 transition-transform duration-700">
+                       <Stamp size={64} className="text-white" />
+                    </div>
+                    <div className="space-y-6">
+                       <h3 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">KPI <span className="text-emerald-400">LEDGER</span></h3>
+                       <p className="text-slate-400 text-2xl font-medium italic max-w-xl mx-auto leading-relaxed">"Quantifying the industrial resonance of node {user.esin} across the primary sustainability factors."</p>
+                    </div>
+                    <button className="px-16 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_80px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[12px] ring-emerald-500/5 group/btn">
+                       <LineChart className="w-8 h-8 group-hover/btn:scale-110 transition-transform" /> GENERATE AUDIT REPORT
+                    </button>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                    {KPI_DISTRIBUTION.map((kpi, i) => (
+                       <div key={i} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-white/20 transition-all flex flex-col justify-between group shadow-xl">
+                          <div className="flex justify-between items-start mb-10">
+                             <div className="p-5 rounded-3xl bg-white/5 border border-white/10 shadow-inner group-hover:scale-110 transition-transform" style={{ color: kpi.color }}>
+                                <BadgeCheck size={32} />
+                             </div>
+                             <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest">KPI_0x0{i+1}</p>
+                          </div>
+                          <div className="space-y-6">
+                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{kpi.name}</h4>
+                             <div className="space-y-4">
+                                <div className="flex justify-between text-[11px] font-black uppercase text-slate-500 px-2"><span>Target Sync</span><span className="text-white font-mono">{kpi.value}%</span></div>
+                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner"><div className="h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-[2.5s]" style={{ width: `${kpi.value}%`, backgroundColor: kpi.color }}></div></div>
+                             </div>
                           </div>
                        </div>
-                       <div className="grid grid-cols-2 gap-4 w-full relative z-10">
-                          {KPI_DISTRIBUTION.map(t => (
-                             <div key={t.name} className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/20 transition-all">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: t.color }}></div>
-                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">{t.name}</span>
-                             </div>
-                          ))}
-                       </div>
-                    </div>
+                    ))}
                  </div>
               </div>
            </div>
         )}
       </div>
 
-      {/* Task Initialization Modal */}
+      {/* --- TASK INITIALIZATION MODAL --- */}
       {showInitTask && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={closeTaskModal}></div>
-           <div className="relative z-10 w-full max-xl glass-card rounded-[64px] border-indigo-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
-              <div className="p-10 md:p-14 border-b border-white/5 bg-indigo-500/[0.02] flex justify-between items-center shrink-0">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowInitTask(false)}></div>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+              <div className="p-10 md:p-14 border-b border-white/5 bg-emerald-500/[0.02] flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-2xl animate-float">
+                    <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white shadow-2xl animate-float">
                        <PlusCircle size={32} />
                     </div>
                     <div>
-                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Initialize <span className="text-indigo-400">Shard</span></h3>
-                       <p className="text-indigo-400/60 font-mono text-[10px] tracking-widest uppercase mt-3 italic">KANBAN_INGEST_INIT</p>
+                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Task <span className="text-emerald-400">Ingest</span></h3>
+                       <p className="text-emerald-400/60 font-mono text-[10px] tracking-widest uppercase mt-3 italic">INDUSTRIAL_PROCESS_INIT</p>
                     </div>
                  </div>
-                 <button onClick={closeTaskModal} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20"><X size={24} /></button>
+                 <button onClick={() => setShowInitTask(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20 hover:rotate-90 active:scale-90"><X size={24} /></button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-12 bg-black/40">
                  {initStep === 'form' && (
-                    <form onSubmit={handleInitializeTask} className="space-y-10 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
-                       <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Shard Label (Title)</label>
-                          <input 
-                            type="text" value={taskTitle} onChange={e => setTaskTitle(e.target.value)}
-                            placeholder="e.g. Zone 4 Moisture Calibration..."
-                            className="w-full bg-black border border-white/10 rounded-2xl py-6 px-10 text-2xl font-bold text-white outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase placeholder:text-stone-900 shadow-inner" 
-                          />
+                    <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
+                       <div className="space-y-6 text-center">
+                          <h4 className="text-2xl font-black text-white uppercase italic">Shard Definition</h4>
+                          <p className="text-slate-500 text-base font-medium leading-relaxed italic px-10">Configure the industrial metadata for this new process lifecycle.</p>
                        </div>
-                       <div className="grid grid-cols-2 gap-6">
-                          <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Pillar Alignment</label>
-                             <select value={taskThrust} onChange={e => setTaskThrust(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase text-xs">
-                                <option>Environmental</option>
-                                <option>Technological</option>
-                                <option>Societal</option>
-                                <option>Industry</option>
-                                <option>Human</option>
-                             </select>
+                       <div className="space-y-8">
+                          <div className="space-y-3 px-4">
+                             <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] block text-left">Task Alias (Name)</label>
+                             <input 
+                                type="text" required value={taskTitle} onChange={e => setTaskTitle(e.target.value)}
+                                placeholder="e.g. Substrate Repair Shard..." 
+                                className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-stone-900 italic shadow-inner" 
+                             />
                           </div>
-                          <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Execution Priority</label>
-                             <select value={taskPriority} onChange={e => setTaskPriority(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase text-xs">
-                                <option>Low</option>
-                                <option>Medium</option>
-                                <option>High</option>
-                             </select>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
+                             <div className="space-y-3">
+                                <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Pillar Alignment</label>
+                                <select value={taskThrust} onChange={e => setTaskThrust(e.target.value)} className="w-full bg-black border-2 border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/40">
+                                   <option>Technological</option>
+                                   <option>Environmental</option>
+                                   <option>Societal</option>
+                                   <option>Industry</option>
+                                   <option>Human</option>
+                                </select>
+                             </div>
+                             <div className="space-y-3">
+                                <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Node Priority</label>
+                                <select value={taskPriority} onChange={e => setTaskPriority(e.target.value)} className="w-full bg-black border-2 border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-rose-500/40">
+                                   <option>Critical</option>
+                                   <option>High</option>
+                                   <option>Medium</option>
+                                   <option>Standard</option>
+                                </select>
+                             </div>
                           </div>
                        </div>
-                       <button type="submit" disabled={!taskTitle.trim()} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10">CONTINUE TO SIGNATURE</button>
-                    </form>
+                       <button onClick={() => setInitStep('sign')} disabled={!taskTitle.trim()} className="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-4 border-white/10 ring-[12px] ring-indigo-500/5">PROCEED TO SIGNATURE <ArrowRight className="w-8 h-8" /></button>
+                    </div>
                  )}
 
                  {initStep === 'sign' && (
                     <div className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex flex-col justify-center flex-1">
-                       <div className="text-center space-y-6">
-                          <div className="w-24 h-24 bg-indigo-600/10 border-2 border-indigo-500/20 rounded-[32px] flex items-center justify-center mx-auto text-indigo-400 shadow-3xl relative group overflow-hidden">
-                             <div className="absolute inset-0 bg-indigo-500/5 animate-pulse"></div>
+                       <div className="text-center space-y-8">
+                          <div className="w-32 h-32 bg-emerald-600/10 border-2 border-emerald-500/20 rounded-[44px] flex items-center justify-center mx-auto text-emerald-400 shadow-3xl group relative overflow-hidden">
+                             <div className="absolute inset-0 bg-emerald-500/5 animate-pulse"></div>
                              <Fingerprint size={48} className="relative z-10 group-hover:scale-110 transition-transform" />
                           </div>
-                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Node <span className="text-indigo-400">Signature</span></h4>
+                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter italic leading-none m-0">Node <span className="text-emerald-400">Signature</span></h4>
                        </div>
 
                        <div className="p-8 bg-black/60 border border-white/10 rounded-[44px] flex justify-between items-center shadow-inner group/fee hover:border-emerald-500/30 transition-all">
                           <div className="flex items-center gap-4">
                              <Coins size={24} className="text-emerald-500 group-hover:scale-110 transition-transform" />
-                             <span className="text-xs font-black text-slate-300 uppercase tracking-widest">Ingest Fee</span>
+                             <span className="text-xs font-black text-slate-300 uppercase tracking-widest">Provisioning Fee</span>
                           </div>
-                          <span className="text-2xl font-mono font-black text-white">10 <span className="text-sm text-emerald-500 italic">EAC</span></span>
+                          <span className="text-2xl font-mono font-black text-white">{TASK_INGEST_FEE} <span className="text-sm text-emerald-500 italic">EAC</span></span>
                        </div>
 
-                       <div className="space-y-4">
+                       <div className="space-y-4 max-w-xl mx-auto w-full">
                           <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.5em] block text-center">Auth Signature (ESIN)</label>
                           <input 
                              type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
-                             placeholder="EA-XXXX-XXXX" 
-                             className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 text-center text-5xl font-mono text-white tracking-[0.1em] focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all uppercase placeholder:text-stone-900 shadow-inner" 
+                             placeholder="EA-XXXX-XXXX-XXXX" 
+                             className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 text-center text-5xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all uppercase placeholder:text-stone-900 shadow-inner" 
                           />
                        </div>
 
                        <div className="flex gap-4">
-                          <button onClick={() => setInitStep('form')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl active:scale-95">Back</button>
+                          <button onClick={() => setInitStep('form')} className="flex-1 py-10 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl active:scale-95">Back</button>
                           <button 
-                            onClick={executeInitShard}
+                            onClick={handleInitTask}
                             disabled={isMinting || !esinSign}
-                            className="flex-[2] py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.3)] flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
+                            className="flex-[2] py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(16,185,129,0.3)] flex items-center justify-center gap-8 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
                           >
-                             {isMinting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Stamp size={28} className="fill-current" />}
+                             {isMinting ? <Loader2 className="w-10 h-10 animate-spin" /> : <Stamp size={28} className="fill-current" />}
                              {isMinting ? "MINTING SHARD..." : "AUTHORIZE MINT"}
                           </button>
                        </div>
@@ -686,16 +589,16 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                  )}
 
                  {initStep === 'success' && (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center">
-                       <div className="w-48 h-48 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(16,185,129,0.3)] relative group scale-110">
-                          <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
-                          <div className="absolute inset-[-15px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-20 py-20 animate-in zoom-in duration-1000 text-center relative">
+                       <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_200px_rgba(16,185,129,0.5)] scale-110 relative group">
+                          <CheckCircle2 size={32} className="text-white group-hover:scale-110 transition-transform" />
+                          <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
                        </div>
-                       <div className="space-y-4 text-center">
-                          <h3 className="text-8xl font-black text-white uppercase tracking-tighter italic m-0">Shard <span className="text-emerald-400">Anchored.</span></h3>
-                          <p className="text-emerald-500 text-sm font-black uppercase tracking-[0.8em] font-mono">REGISTRY_HASH: 0x882_TASK_OK_SYNC</p>
+                       <div className="space-y-6 text-center">
+                          <h3 className="text-8xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Task <span className="text-emerald-400">Anchored.</span></h3>
+                          <p className="text-emerald-500 text-sm font-black uppercase tracking-[1em] font-mono">REGISTRY_HASH: 0x882_TASK_OK_SYNC</p>
                        </div>
-                       <button onClick={closeTaskModal} className="w-full max-w-md py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command Hub</button>
+                       <button onClick={() => setShowInitTask(false)} className="w-full max-w-md py-10 bg-white/5 border border-white/10 rounded-[56px] text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command Hub</button>
                     </div>
                  )}
               </div>
@@ -705,10 +608,16 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
-        .shadow-3xl { box-shadow: 0 40px 120px -20px rgba(0, 0, 0, 0.9); }
+        .custom-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9); }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }

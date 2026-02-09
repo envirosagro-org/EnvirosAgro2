@@ -13,6 +13,7 @@ import {
   Compass, 
   Clock, 
   ArrowUpRight, 
+  ArrowRight,
   Search, 
   Trash2, 
   Database, 
@@ -38,11 +39,13 @@ import {
   Gavel,
   ShieldPlus,
   TrendingUp,
-  Circle
+  Circle,
+  FileDown
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { User } from '../types';
+import { User, MediaShard } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
+import { saveCollectionItem } from '../services/firebaseService';
 
 interface AgroRegencyProps {
   user: User;
@@ -69,6 +72,10 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
   const [productionCycles, setProductionCycles] = useState(4);
   const [isSabbathActive, setIsSabbathActive] = useState(false);
   const [isRecalibrating, setIsRecalibrating] = useState(false);
+
+  // Archiving States
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
 
   const derivativeData = useMemo(() => {
     // Modify velocity based on sabbath status
@@ -100,6 +107,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
 
     setIsAnalyzing(true);
     setOracleReport(null);
+    setIsArchived(false);
     try {
       const prompt = `Act as an EnvirosAgro Regency Oracle. Execute the dy/dx derivative for this node:
       Current C(a): ${user.metrics.agriculturalCodeU}
@@ -116,6 +124,62 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleAnchorToLedger = async () => {
+    if (!oracleReport || isArchiving || isArchived) return;
+    
+    setIsArchiving(true);
+    try {
+      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const newShard: Partial<MediaShard> = {
+        title: `REGENCY_DERIVATIVE: dy/dx_AUDIT`,
+        type: 'ORACLE',
+        source: 'Regency Oracle',
+        author: user.name,
+        authorEsin: user.esin,
+        timestamp: new Date().toISOString(),
+        hash: shardHash,
+        mImpact: (user.metrics.timeConstantTau).toFixed(2),
+        size: '1.8 KB',
+        content: oracleReport
+      };
+      
+      await saveCollectionItem('media_ledger', newShard);
+      setIsArchived(true);
+      onEarnEAC(20, 'REGENCY_SHARD_ANCHOR_SUCCESS');
+    } catch (e) {
+      alert("LEDGER_FAILURE: Finality check failed.");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleDownloadReport = () => {
+    if (!oracleReport) return;
+    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const report = `
+ENVIROSAGRO™ REGENCY DERIVATIVE SHARD
+======================================
+REGISTRY_ID: ${shardId}
+NODE_AUTH: ${user.esin}
+CALCULUS_TYPE: dy/dx Regenerative Velocity
+TIMESTAMP: ${new Date().toISOString()}
+
+ORACLE REPORT:
+-------------------
+${oracleReport}
+
+-------------------
+(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
+    `;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `REGENCY_AUDIT_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleAuthorizeFallow = async () => {
@@ -143,12 +207,12 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
          <div className="w-40 h-40 rounded-[48px] bg-indigo-600 flex items-center justify-center shadow-[0_0_80px_rgba(99,102,241,0.3)] ring-4 ring-white/10 shrink-0">
             <History className="w-20 h-20 text-white animate-spin-slow" />
          </div>
-         <div className="space-y-6 relative z-10 text-center md:text-left">
+         <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
             <div className="space-y-2">
                <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20 shadow-inner italic">REGISTRY_REGENCY_v5.0</span>
                <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Agro <span className="text-indigo-400">Regency</span></h2>
             </div>
-            <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl italic leading-relaxed">
+            <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl">
                "Retrieving the past to calculate the derivative of the future. Executing dy/dx sustainability framework shards for absolute node calibration."
             </p>
          </div>
@@ -177,7 +241,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
              <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden flex flex-col shadow-3xl group text-white">
                 <div className="flex justify-between items-center mb-12 relative z-10 px-4 gap-8">
                    <div className="flex items-center gap-6">
-                      <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 shadow-xl group-hover:scale-110 transition-transform">
+                      <div className="p-4 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 shadow-xl group-hover:scale-110 transition-transform">
                          <Activity className="w-10 h-10 text-indigo-400" />
                       </div>
                       <div>
@@ -354,8 +418,21 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
                     {isAnalyzing ? "EXECUTING CALCULUS..." : "EXECUTE dy/dx AUDIT"}
                  </button>
                  {oracleReport && (
-                    <div className="mt-10 p-10 bg-black/60 rounded-[48px] border border-indigo-500/20 text-left animate-in fade-in">
+                    <div className="mt-10 p-10 bg-black/60 rounded-[48px] border border-indigo-500/20 text-left animate-in fade-in space-y-10">
                        <p className="text-slate-300 text-xl leading-loose italic">{oracleReport}</p>
+                       <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
+                          <button onClick={handleDownloadReport} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                             <Download size={18} /> Download Shard
+                          </button>
+                          <button 
+                            onClick={handleAnchorToLedger}
+                            disabled={isArchiving || isArchived}
+                            className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${isArchived ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                          >
+                             {isArchiving ? <Loader2 size={18} className="animate-spin" /> : isArchived ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                             {isArchived ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
+                          </button>
+                       </div>
                     </div>
                  )}
               </div>

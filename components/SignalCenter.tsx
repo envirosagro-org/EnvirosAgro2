@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
@@ -31,6 +30,7 @@ interface SignalCenterProps {
   signals: SignalShard[];
   setSignals: React.Dispatch<React.SetStateAction<SignalShard[]>>;
   onNavigate: (view: ViewState) => void;
+  initialSection?: string | null;
 }
 
 // Map string icon names to Lucide components
@@ -39,11 +39,18 @@ const DynamicIcon: React.FC<{ name: string; size?: number; className?: string }>
   return <IconComponent size={size} className={className} />;
 };
 
-const SignalCenter: React.FC<SignalCenterProps> = ({ user, signals = [], setSignals, onNavigate }) => {
+const SignalCenter: React.FC<SignalCenterProps> = ({ user, signals = [], setSignals, onNavigate, initialSection }) => {
   const [activeView, setActiveView] = useState<'terminal' | 'ledger' | 'jit' | 'topology'>('terminal');
   const [filter, setFilter] = useState<'all' | 'task' | 'system' | 'commerce' | 'pulse' | 'liturgical' | 'ledger_anchor'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedShardId, setExpandedShardId] = useState<string | null>(null);
+
+  // Vector Routing Logic
+  useEffect(() => {
+    if (initialSection) {
+      setActiveView(initialSection as any);
+    }
+  }, [initialSection]);
 
   const [pulseSchedule] = useState([
     { id: 'P1', label: 'EAC MINT QUORUM', time: 'T+4m', status: 'WAITING', type: 'CORE' },

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Flower2, Music, Heart, Bot, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, Sparkles, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCw, Handshake,
@@ -47,8 +46,9 @@ import {
   Box,
   Maximize2
 } from 'lucide-react';
-import { User, ViewState } from '../types';
+import { User, ViewState, MediaShard } from '../types';
 import { runSpecialistDiagnostic, AIResponse } from '../services/geminiService';
+import { saveCollectionItem } from '../services/firebaseService';
 
 interface EcosystemProps {
   user: User;
@@ -110,6 +110,10 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
   const [auditResult, setAuditResult] = useState<AIResponse | null>(null);
   const [telemetryStream, setTelemetryStream] = useState<any[]>([]);
 
+  // Archiving states
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const filteredBrands = filter === 'all' ? BRANDS : BRANDS.filter(b => b.thrust === filter);
@@ -133,6 +137,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
       setPortalTab('home');
       setIsSyncing(false);
       setAuditResult(null);
+      setIsArchived(false);
     }, 1000);
   };
 
@@ -159,6 +164,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
   const handleRunAudit = async (category: string, desc: string) => {
     setIsAuditing(true);
     setAuditResult(null);
+    setIsArchived(false);
     try {
       const res = await runSpecialistDiagnostic(category, desc);
       setAuditResult(res);
@@ -167,6 +173,63 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
     } finally {
       setIsAuditing(false);
     }
+  };
+
+  const handleAnchorToLedger = async () => {
+    if (!auditResult || isArchiving || isArchived || !activeBrand) return;
+    
+    setIsArchiving(true);
+    try {
+      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const newShard: Partial<MediaShard> = {
+        title: `BRAND_AUDIT: ${activeBrand.name}`,
+        type: 'ORACLE',
+        source: `${activeBrand.name} Portal`,
+        author: user.name,
+        authorEsin: user.esin,
+        timestamp: new Date().toISOString(),
+        hash: shardHash,
+        mImpact: (1.42 + Math.random() * 0.05).toFixed(2),
+        size: '1.1 KB',
+        content: auditResult.text
+      };
+      
+      await saveCollectionItem('media_ledger', newShard);
+      setIsArchived(true);
+      onDeposit(10, 'BRAND_MISSION_LEDGER_ANCHOR');
+    } catch (e) {
+      alert("LEDGER_FAILURE: Finality check failed.");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleDownloadReport = () => {
+    if (!auditResult || !activeBrand) return;
+    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const report = `
+ENVIROSAGRO™ BRAND MISSION SHARD
+=================================
+REGISTRY_ID: ${shardId}
+BRAND_NODE: ${activeBrand.name}
+STEWARD_AUTH: ${user.esin}
+THRUST: ${activeBrand.thrust.toUpperCase()}
+TIMESTAMP: ${new Date().toISOString()}
+
+VETTING VERDICT:
+-------------------
+${auditResult.text}
+
+-------------------
+(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
+    `;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BRAND_AUDIT_${activeBrand.name}_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const renderBrandPortal = () => {
@@ -403,9 +466,19 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                                </div>
                                <div className="flex justify-center gap-6">
                                   <button onClick={() => setAuditResult(null)} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all shadow-xl">Discard Shard</button>
-                                  <button className={`px-16 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-${accentColor}-500/5`}>
-                                     <Stamp size={20} /> ANCHOR TO LEDGER
-                                  </button>
+                                  <div className="flex gap-4">
+                                     <button onClick={handleDownloadReport} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-white font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3">
+                                        <Download size={20} /> Download
+                                     </button>
+                                     <button 
+                                       onClick={handleAnchorToLedger}
+                                       disabled={isArchiving || isArchived}
+                                       className={`px-16 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${isArchived ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                     >
+                                        {isArchiving ? <Loader2 size={24} className="animate-spin" /> : isArchived ? <CheckCircle2 size={24} /> : <Stamp size={24} />}
+                                        {isArchived ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
+                                     </button>
+                                  </div>
                                </div>
                             </div>
                          )}
@@ -438,7 +511,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
                                <span className="text-[9px] font-mono text-slate-800 font-black uppercase">SH_0x{Math.random().toString(16).slice(2, 6).toUpperCase()}</span>
                             </div>
                             <div className="space-y-2 relative z-10">
-                               <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight">Resource Unit #0{i}</h4>
+                               <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors">Resource Unit #0{i}</h4>
                                <p className="text-[10px] text-slate-600 font-medium italic leading-relaxed">"Verified biological asset provisioned for the ${activeBrand.name} cycle."</p>
                             </div>
                             <div className="pt-6 border-t border-white/5 mt-auto relative z-10 flex justify-between items-center">

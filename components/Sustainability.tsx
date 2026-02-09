@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  User, ViewState 
+  User, ViewState, MediaShard 
 } from '../types';
 import { 
   Leaf, Activity, Zap, Info, ShieldCheck, Binary, 
@@ -12,10 +12,10 @@ import {
   Eye, Monitor, AlertCircle, Terminal, Cpu,
   BadgeCheck, Sun, Download, X, Gavel, KeyRound, Stamp,
   LineChart, Bot,
-  // Added FileDigit and ChevronRight to fix errors on lines 212 and 291
   FileDigit, ChevronRight
 } from 'lucide-react';
 import { analyzeSustainability, AIResponse } from '../services/geminiService';
+import { saveCollectionItem } from '../services/firebaseService';
 
 interface SustainabilityProps {
   user: User;
@@ -66,6 +66,10 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
   const [isAuditing, setIsAuditing] = useState(false);
   const [oracleVerdict, setOracleVerdict] = useState<AIResponse | null>(null);
 
+  // Finality States
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
+
   const currentOmega = useMemo(() => (atmStatic * 0.75) / (soilResonance * 1.2), [atmStatic, soilResonance]);
   const integrityStatus = currentOmega > 1.618 ? 'HIGH' : currentOmega > 1.4 ? 'NOMINAL' : 'FRACTURED';
 
@@ -79,6 +83,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
   const handleRunDiagnostic = async () => {
     setIsAuditing(true);
     setOracleVerdict(null);
+    setIsArchived(false);
     try {
       const data = {
         node_id: user.esin,
@@ -97,16 +102,61 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
     }
   };
 
-  const handleRestoreCycle = () => {
-    setIsRestoring(true);
-    setTimeout(() => {
-      setIsRestoring(false);
-      setSoilResonance(0.82);
-      setAtmStatic(1.42);
-      setShowSuccess(true);
-      if (onMintEAT) onMintEAT(50, 'MUGUMO_RECALIBRATION_SHARD');
-      setTimeout(() => setShowSuccess(false), 4000);
-    }, 3500);
+  const handleAnchorToLedger = async () => {
+    if (!oracleVerdict || isArchiving || isArchived) return;
+    
+    setIsArchiving(true);
+    try {
+      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const newShard: Partial<MediaShard> = {
+        title: `SUSTAINABILITY_AUDIT: ${integrityStatus}`,
+        type: 'ORACLE',
+        source: 'Sustainability Oracle',
+        author: user.name,
+        authorEsin: user.esin,
+        timestamp: new Date().toISOString(),
+        hash: shardHash,
+        mImpact: (currentOmega / 10).toFixed(2),
+        size: '1.4 KB',
+        content: oracleVerdict.text
+      };
+      
+      await saveCollectionItem('media_ledger', newShard);
+      setIsArchived(true);
+      if (onMintEAT) onMintEAT(20, 'DIAGNOSTIC_LEDGER_ANCHOR_SUCCESS');
+    } catch (e) {
+      alert("LEDGER_FAILURE: Verification node timeout.");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleDownloadReport = () => {
+    if (!oracleVerdict) return;
+    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const report = `
+ENVIROSAGRO™ SUSTAINABILITY AUDIT SHARD
+=======================================
+REGISTRY_ID: ${shardId}
+NODE_AUTH: ${user.esin}
+INTEGRITY_STATUS: ${integrityStatus}
+OMEGA_EQUILIBRIUM: ${currentOmega.toFixed(3)}
+TIMESTAMP: ${new Date().toISOString()}
+
+ORACLE VERDICT:
+-------------------
+${oracleVerdict.text}
+
+-------------------
+(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
+    `;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SUSTAINABILITY_REPORT_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -216,12 +266,32 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
                           <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
                              {oracleVerdict.text}
                           </div>
+
+                          <div className="mt-16 pt-10 border-t border-white/10 relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                             <div className="flex items-center gap-6">
+                                <Fingerprint size={40} className="text-indigo-400" />
+                                <div className="text-left">
+                                   <p className="text-[9px] text-slate-600 font-black uppercase">RESONANCE_HASH</p>
+                                   <p className="text-lg font-mono text-white">0x{Math.random().toString(16).slice(2, 10).toUpperCase()}_AUDIT_OK</p>
+                                </div>
+                             </div>
+                             <div className="flex gap-4">
+                                <button onClick={handleDownloadReport} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest">
+                                   <Download size={18} /> Download
+                                </button>
+                                <button 
+                                  onClick={handleAnchorToLedger}
+                                  disabled={isArchiving || isArchived}
+                                  className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${isArchived ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                >
+                                   {isArchiving ? <Loader2 size={18} className="animate-spin" /> : isArchived ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                                   {isArchived ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
+                                </button>
+                             </div>
+                          </div>
                        </div>
                        <div className="flex justify-center gap-8 relative z-10">
                           <button onClick={() => setOracleVerdict(null)} className="px-14 py-6 bg-white/5 border border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
-                          <button className="px-24 py-6 agro-gradient rounded-full text-white font-black text-[13px] uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-2 border-white/10 ring-8 ring-white/5">
-                             <Stamp size={28} /> ANCHOR TO LEDGER
-                          </button>
                        </div>
                     </div>
                  ) : (

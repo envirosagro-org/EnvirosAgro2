@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Database, 
   PlusCircle, 
   Share2, 
   Hammer, 
-  // Fix: Aliased Target as TargetIcon to resolve error on line 427
   Target as TargetIcon, 
   Users, 
   ShieldCheck, 
@@ -53,7 +51,6 @@ import {
   ArrowUpRight,
   Star,
   Pickaxe,
-  // Fix: Added missing UserPlus and Handshake icons to resolve errors on lines 352 and 617
   UserPlus,
   Handshake
 } from 'lucide-react';
@@ -83,6 +80,7 @@ interface IndustrialProps {
   setIndustrialUnits: React.Dispatch<React.SetStateAction<RegisteredUnit[]>>;
   onInitializeLiveProcess?: (params: any) => void;
   notify: any;
+  initialSection?: string | null;
 }
 
 const MOCK_WORKERS: WorkerProfile[] = [
@@ -100,13 +98,20 @@ const TENDER_BOUNTIES = [
 const SHARD_REG_FEE = 100;
 
 const Industrial: React.FC<IndustrialProps> = ({ 
-  user, onSpendEAC, collectives, setCollectives, onSaveProject, industrialUnits, setIndustrialUnits, onNavigate, notify 
+  user, onSpendEAC, collectives, setCollectives, onSaveProject, industrialUnits, setIndustrialUnits, onNavigate, notify, initialSection 
 }) => {
   const [activeTab, setActiveTab] = useState<'facilities' | 'workers' | 'mesh' | 'tenders'>('facilities');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWorker, setSelectedWorker] = useState<WorkerProfile | null>(null);
   const [selectedTender, setSelectedTender] = useState<any | null>(null);
   
+  // Vector Routing Logic
+  useEffect(() => {
+    if (initialSection) {
+      setActiveTab(initialSection as any);
+    }
+  }, [initialSection]);
+
   const [globalThroughput, setGlobalThroughput] = useState(142.8);
   const [activePeers, setActivePeers] = useState(1242);
 
@@ -282,7 +287,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                                 <p className="text-3xl font-mono font-black text-emerald-400">98.2%</p>
                              </div>
                              <div className="p-6 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group/val hover:border-indigo-500/20 transition-all text-right">
-                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center justify-end gap-2">Load</p>
+                                <p className="text-[9px] text-slate-600 font-black uppercase flex items-center justify-end gap-2">Load</p>
                                 <p className="text-3xl font-mono font-black text-indigo-400">1.42<span className="text-sm">m</span></p>
                              </div>
                           </div>
@@ -323,7 +328,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                              <img src={worker.avatar} className="w-full h-full object-cover" alt="" />
                           </div>
                           <div className="text-right">
-                             <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[9px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest">VERIFIED_EXPERT</span>
+                             <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest">VERIFIED_EXPERT</span>
                              <p className="text-[10px] text-slate-700 font-mono font-bold tracking-widest uppercase italic">{worker.esin}</p>
                           </div>
                        </div>
@@ -566,7 +571,6 @@ const Industrial: React.FC<IndustrialProps> = ({
                           <h3 className="text-8xl font-black text-white uppercase tracking-tighter italic m-0">Shard <span className="text-emerald-400">Anchored.</span></h3>
                           <p className="text-emerald-500 text-sm font-black uppercase tracking-[0.8em] font-mono">REGISTRY_HASH: 0x882_COLL_OK_SYNC</p>
                        </div>
-                       <p className="text-slate-500 text-xl font-medium italic max-w-sm mx-auto leading-relaxed">"Industrial collective shard successfully synchronized with the global quorum."</p>
                        <button onClick={() => setShowShardModal(false)} className="w-full max-w-md py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command Hub</button>
                     </div>
                  )}

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, Cpu, Activity, Zap, ShieldCheck, Binary, Layers, Microscope, FlaskConical, Scan, 
@@ -15,12 +14,13 @@ import {
   Brain, Network, FileDigit,
   Settings, Download, Globe, Camera,
   Box, Database as Disk, ShieldCheck as VerifiedIcon,
-  Globe2, ExternalLink
+  Globe2, ExternalLink,
+  ScanLine
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, Radar as RechartsRadar } from 'recharts';
-import { chatWithAgroExpert, AIResponse, searchAgroTrends, runSimulationAnalysis } from '../services/geminiService';
-import { User, AgroResource, ViewState } from '../types';
-import { backupTelemetryShard, fetchTelemetryBackup } from '../services/firebaseService';
+import { chatWithAgroExpert, AIResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/geminiService';
+import { User, AgroResource, ViewState, MediaShard } from '../types';
+import { backupTelemetryShard, fetchTelemetryBackup, saveCollectionItem } from '../services/firebaseService';
 
 interface IntelligenceProps {
   user: User;
@@ -28,25 +28,94 @@ interface IntelligenceProps {
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onOpenEvidence?: () => void;
   onNavigate: (view: ViewState) => void;
+  initialSection?: string | null;
 }
 
 type TabState = 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry' | 'trends';
-type OracleMode = 'REGISTRY_AUDIT' | 'BIO_RESONANCE' | 'SEHTI_STRATEGY' | 'MARKET_PREDICT';
+type OracleMode = 'BIO_DIAGNOSTIC' | 'SPECTRAL_AUDIT' | 'GENOMIC_INQUIRY' | 'SOIL_REMEDIATION';
 
 const ORACLE_QUERY_COST = 25;
 
 const NEURAL_STEPS = [
-  "Initializing Handshake...",
-  "Ingesting Node Telemetry...",
-  "Consulting EOS Registry...",
+  "Inflow Detected. Buffering Shard...",
+  "Analyzing Spectral Pigments...",
+  "Querying Biological Knowledge Shards...",
   "Sequencing Multi-Thrust Neurals...",
-  "Performing Quantum Integrity Sweep...",
-  "Finalizing Output Shard..."
+  "Identifying Anomaly Vectors...",
+  "Synthesizing Diagnostic Verdict..."
 ];
 
-const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC, onOpenEvidence, onNavigate }) => {
+const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC, onOpenEvidence, onNavigate, initialSection }) => {
   const [activeTab, setActiveTab] = useState<TabState>('simulator');
   
+  // Vector Routing Logic
+  useEffect(() => {
+    if (initialSection) {
+      setActiveTab(initialSection as TabState);
+    }
+  }, [initialSection]);
+
+  // General Archiving Logic
+  const [archivedShards, setArchivedShards] = useState<Set<string>>(new Set());
+  const [isArchiving, setIsArchiving] = useState<string | null>(null);
+
+  const anchorToLedger = async (content: string, type: string, mode: string) => {
+    const shardKey = `${type}_${mode}_${content.substring(0, 20)}`;
+    if (archivedShards.has(shardKey)) return;
+    
+    setIsArchiving(shardKey);
+    try {
+      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const newShard: Partial<MediaShard> = {
+        title: `${type.toUpperCase()}: ${mode.replace('_', ' ')}`,
+        type: 'ORACLE',
+        source: 'Science Oracle',
+        author: user.name,
+        authorEsin: user.esin,
+        timestamp: new Date().toISOString(),
+        hash: shardHash,
+        mImpact: (1.42 + Math.random() * 0.1).toFixed(2),
+        size: `${(content.length / 1024).toFixed(1)} KB`,
+        content: content
+      };
+      
+      await saveCollectionItem('media_ledger', newShard);
+      setArchivedShards(prev => new Set(prev).add(shardKey));
+      onEarnEAC(15, `LEDGER_ANCHOR_${type.toUpperCase()}_SUCCESS`);
+    } catch (e) {
+      alert("LEDGER_FAILURE: Verification node timeout.");
+    } finally {
+      setIsArchiving(null);
+    }
+  };
+
+  const downloadShard = (content: string, mode: string, type: string) => {
+    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const report = `
+ENVIROSAGRO™ ${type.toUpperCase()} SHARD
+=================================
+REGISTRY_ID: ${shardId}
+NODE_AUTH: ${user.esin}
+MODE: ${mode}
+TIMESTAMP: ${new Date().toISOString()}
+ZK_CONSENSUS: VERIFIED (99.9%)
+
+VERDICT:
+-------------------
+${content}
+
+-------------------
+(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
+    `;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EA_${type}_${mode}_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // --- IOT TELEMETRY STATES ---
   const hardwareNodes = useMemo(() => 
     (user.resources || []).filter(r => r.category === 'HARDWARE'),
@@ -142,12 +211,82 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   // --- SID STATES ---
   const [sidLoad, setSidLoad] = useState(user.metrics.viralLoadSID);
 
-  // --- SCIENCE ORACLE (EOS AI) ENHANCED STATES ---
+  // --- SCIENCE ORACLE (EOS AI) MULTIMODAL STATES ---
   const [aiQuery, setAiQuery] = useState('');
   const [aiThinking, setAiThinking] = useState(false);
   const [aiResult, setAiResult] = useState<AIResponse | null>(null);
-  const [oracleMode, setOracleMode] = useState<OracleMode>('BIO_RESONANCE');
+  const [oracleMode, setOracleMode] = useState<OracleMode>('BIO_DIAGNOSTIC');
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  // File Ingest States for Oracle
+  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [fileMime, setFileMime] = useState<string>('image/jpeg');
+  const [fileBase64, setFileBase64] = useState<string | null>(null);
+  const oracleFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOracleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setUploadedFile(base64String);
+        setFileMime(file.type);
+        setFileBase64(base64String.split(',')[1]);
+        setAiResult(null); // Clear previous result when new data arrives
+        onEarnEAC(5, 'ORACLE_DATA_BUFFERED');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearOracleBuffer = () => {
+    setUploadedFile(null);
+    setFileBase64(null);
+    setAiResult(null);
+    if (oracleFileInputRef.current) oracleFileInputRef.current.value = '';
+  };
+
+  const handleDeepAIQuery = async () => {
+    if (!aiQuery.trim() || aiThinking) return;
+    if (!uploadedFile) {
+        alert("INGEST_REQUIRED: The Science Oracle requires agricultural data (images/docs) to perform a diagnostic audit.");
+        return;
+    }
+    
+    if (!await onSpendEAC(ORACLE_QUERY_COST, "ORACLE_DIAGNOSTIC_INQUIRY")) return;
+    
+    setAiThinking(true);
+    setAiResult(null);
+    setCurrentStepIndex(0);
+
+    const stepInterval = setInterval(() => {
+      setCurrentStepIndex(prev => (prev < NEURAL_STEPS.length - 1 ? prev + 1 : prev));
+    }, 1000);
+
+    try {
+      const technicalPrompt = `Act as the EnvirosAgro Science Oracle. 
+      MODE: ${oracleMode}
+      USER QUERY: "${aiQuery}"
+      
+      STEPS:
+      1. Identify exactly what is being shown in the uploaded data shard.
+      2. If it is a disease or anomaly (e.g., cow skin disease, leaf mold), provide a scientific identification.
+      3. Map this to the EnvirosAgro Sustainability Framework (EOS).
+      4. Provide a 4-stage technical remediation shard.
+      
+      FORMAT: technical, industrial, authoritative. Mention impact on node m-constant.`;
+
+      const responseText = await analyzeMedia(fileBase64!, fileMime, technicalPrompt);
+      setAiResult({ text: responseText });
+      onEarnEAC(10, "ORACLE_DIAGNOSTIC_FINALIZED");
+    } catch (e) {
+      setAiResult({ text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion." });
+    } finally {
+      clearInterval(stepInterval);
+      setAiThinking(false);
+    }
+  };
 
   // --- TREND INGEST STATES ---
   const [isIngestingTrends, setIsIngestingTrends] = useState(false);
@@ -166,44 +305,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     } finally {
       setIsIngestingTrends(false);
     }
-  };
-
-  const handleDeepAIQuery = async () => {
-    if (!aiQuery.trim() || aiThinking) return;
-    if (!await onSpendEAC(ORACLE_QUERY_COST, "ORACLE_INQUIRY")) return;
-    
-    setAiThinking(true);
-    setAiResult(null);
-    setCurrentStepIndex(0);
-
-    const stepInterval = setInterval(() => {
-      setCurrentStepIndex(prev => (prev < NEURAL_STEPS.length - 1 ? prev + 1 : prev));
-    }, 800);
-
-    try {
-      const contextPrompt = `[MODE: ${oracleMode}] [NODE: ${user.esin}] [LOC: ${user.location}] 
-      Process the following agricultural query within the EnvirosAgro scientific framework. 
-      Query: ${aiQuery}`;
-      
-      const res = await chatWithAgroExpert(contextPrompt, [], true);
-      setAiResult(res);
-      onEarnEAC(5, "ORACLE_INSIGHT_ANCHORED");
-    } catch (e) {
-      setAiResult({ text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion." });
-    } finally {
-      clearInterval(stepInterval);
-      setAiThinking(false);
-    }
-  };
-
-  const handleDownloadShard = () => {
-    if (!aiResult) return;
-    const blob = new Blob([`ENVIROSAGRO_ORACLE_SHARD\nID: 0x${Math.random().toString(16).slice(2,10).toUpperCase()}\nMODE: ${oracleMode}\nTIMESTAMP: ${new Date().toISOString()}\n\nVERDICT:\n${aiResult.text}`], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ORACLE_SHARD_${oracleMode}_${new Date().getTime()}.txt`;
-    a.click();
   };
 
   return (
@@ -323,6 +424,20 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                              </div>
                           </div>
                         )}
+                        
+                        <div className="mt-12 pt-10 border-t border-white/10 flex justify-center gap-6 relative z-10">
+                           <button onClick={() => downloadShard(trendsResult?.text || '', 'Trend_Sync', 'Report')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                              <Download size={18} /> Download Shard
+                           </button>
+                           <button 
+                             onClick={() => anchorToLedger(trendsResult?.text || '', 'Trend', 'Synthesis')}
+                             disabled={!!isArchiving || archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`)}
+                             className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                           >
+                              {isArchiving === `Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                              {archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
+                           </button>
+                        </div>
                      </div>
                      <div className="flex justify-center">
                         <button onClick={() => setTrendsResult(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl">DISCARD ANALYSIS</button>
@@ -421,8 +536,8 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="cycle" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                    <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="cycle" stroke="rgba(128,128,128,0.4)" fontSize={10} axisLine={false} tickLine={false} />
+                    <YAxis stroke="rgba(128,128,128,0.4)" fontSize={10} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '15px' }} />
                     <Area type="monotone" name="Sustainability Index" dataKey="score" stroke="#10b981" strokeWidth={5} fillOpacity={1} fill="url(#colorScore)" strokeLinecap="round" />
                     <Area type="monotone" name="Resilience Factor (m)" dataKey="m" stroke="#3b82f6" strokeWidth={3} fill="#3b82f605" strokeDasharray="5 5" />
@@ -437,16 +552,33 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                       {simulationReport.includes('SYSTEM_ERROR') ? <ShieldAlert className="w-8 h-8 text-rose-500" /> : <Bot className="w-8 h-8 text-emerald-400" />}
                       <h4 className="text-xl font-black text-white uppercase italic">Simulator Oracle Verdict</h4>
                     </div>
-                    {simulationReport.includes('SYSTEM_ERROR') && (
-                      <button 
-                        onClick={handleRunFullSimulation}
-                        className="px-6 py-2 bg-rose-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 transition-all flex items-center gap-2"
-                      >
-                        <RefreshCw size={12} /> RE-SYNC ORACLE
-                      </button>
-                    )}
                   </div>
                   <p className="text-slate-300 text-lg italic leading-relaxed whitespace-pre-line border-l border-white/5 pl-8 font-medium">{simulationReport}</p>
+                  
+                  {!simulationReport.includes('SYSTEM_ERROR') && (
+                    <div className="mt-12 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
+                       <button onClick={() => downloadShard(simulationReport, 'Simulation_Report', 'Industrial')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                          <Download size={18} /> Download Shard
+                       </button>
+                       <button 
+                         onClick={() => anchorToLedger(simulationReport, 'Simulation', 'Physics_Audit')}
+                         disabled={!!isArchiving || archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`)}
+                         className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                       >
+                          {isArchiving === `Simulation_Physics_Audit_${simulationReport.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                          {archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
+                       </button>
+                    </div>
+                  )}
+
+                  {simulationReport.includes('SYSTEM_ERROR') && (
+                    <button 
+                      onClick={handleRunFullSimulation}
+                      className="mt-6 px-10 py-4 bg-rose-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 transition-all flex items-center gap-2 mx-auto"
+                    >
+                      <RefreshCw size={14} /> RE-SYNC ORACLE
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -535,12 +667,12 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
            </div>
         )}
 
-        {/* --- TAB: SCIENCE ORACLE (EOS AI) --- */}
+        {/* --- TAB: SCIENCE ORACLE (EOS AI) DATA-FIRST --- */}
         {activeTab === 'eos_ai' && (
           <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 
-                {/* Left: Control Panel */}
+                {/* Left: Diagnostic Control Chamber */}
                 <div className="lg:col-span-4 space-y-8">
                    <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden group">
                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform duration-700"><Settings size={300} className="text-indigo-400" /></div>
@@ -551,13 +683,13 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
                       <div className="space-y-6 relative z-10">
                          <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Diagnostic Mode</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Diagnostic Shard Type</label>
                             <div className="grid grid-cols-1 gap-3">
                                {[
-                                 { id: 'BIO_RESONANCE', label: 'Bio-Resonance', icon: Sprout, col: 'text-emerald-400' },
-                                 { id: 'REGISTRY_AUDIT', label: 'Registry Audit', icon: ShieldCheck, col: 'text-blue-400' },
-                                 { id: 'SEHTI_STRATEGY', label: 'SEHTI Strategy', icon: Network, col: 'text-indigo-400' },
-                                 { id: 'MARKET_PREDICT', label: 'Market Prediction', icon: TrendingUp, col: 'text-amber-500' },
+                                 { id: 'BIO_DIAGNOSTIC', label: 'Biological Diagnostic', icon: Radiation, col: 'text-rose-400' },
+                                 { id: 'SPECTRAL_AUDIT', label: 'Spectral Audit', icon: ShieldCheck, col: 'text-blue-400' },
+                                 { id: 'GENOMIC_INQUIRY', label: 'Genomic Inquiry', icon: Dna, col: 'text-indigo-400' },
+                                 { id: 'SOIL_REMEDIATION', label: 'Soil Remediation', icon: Mountain, col: 'text-amber-500' },
                                ].map(mode => (
                                  <button 
                                    key={mode.id}
@@ -589,150 +721,185 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                    <div className="p-10 glass-card rounded-[56px] border border-emerald-500/10 bg-emerald-500/5 space-y-6 shadow-xl group">
                       <div className="flex items-center gap-4">
                          <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><Sparkles size={24} className="text-emerald-500" /></div>
-                         <h4 className="text-xl font-black text-white uppercase italic m-0">Neural <span className="text-emerald-400">Integrity</span></h4>
+                         <h4 className="text-xl font-black text-white uppercase italic">Neural <span className="text-emerald-400">Integrity</span></h4>
                       </div>
                       <p className="text-sm text-slate-400 italic leading-relaxed font-medium">
-                         "The Science Oracle utilizes high-frequency thinking budgets to ensure diagnostic shards possess 99% accuracy before registry anchoring."
+                         "The Science Oracle identifies biological anomalies from visual shards before recommending industrial remediation paths."
                       </p>
                    </div>
                 </div>
 
-                {/* Right: Terminal Area */}
+                {/* Right: Diagnostic Ingest Chamber */}
                 <div className="lg:col-span-8">
                    <div className="glass-card rounded-[64px] min-h-[850px] border-2 border-white/10 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
                       
-                      {/* Terminal Scanline FX */}
                       <div className="absolute inset-0 pointer-events-none z-10">
                         <div className="w-full h-[2px] bg-indigo-500/20 absolute top-0 animate-scan"></div>
                       </div>
 
-                      <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20">
-                         <div className="flex items-center gap-6">
-                            <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl group overflow-hidden relative">
-                               <Bot size={32} className="group-hover:scale-110 transition-transform relative z-10" />
+                      <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20 px-14">
+                         <div className="flex items-center gap-10">
+                            <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-xl relative overflow-hidden group/ico">
+                               <Bot size={40} className="relative z-10 group-hover/ico:scale-110 transition-transform" />
                                <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                             </div>
                             <div>
-                               <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Science <span className="text-indigo-400">Oracle Shard</span></h3>
-                               <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_NEURAL_LINK // MODE: {oracleMode}</p>
+                               <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Diagnostic <span className="text-indigo-400">Chamber</span></h3>
+                               <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_DIAG_LINK // MODE: {oracleMode}</p>
                             </div>
                          </div>
                          <div className="flex items-center gap-4">
-                            {aiResult && (
-                              <button onClick={handleDownloadShard} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl"><Download size={20} /></button>
-                            )}
-                            <div className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full">
-                               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
-                               <span className="text-[9px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_STABLE</span>
+                            <div className="hidden sm:flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-full">
+                               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_20px_#10b981]"></div>
+                               <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_ACTIVE</span>
                             </div>
                          </div>
                       </div>
 
                       <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-20 flex flex-col">
-                         {!aiResult && !aiThinking ? (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center space-y-12 opacity-30 group">
+                         
+                         {/* DATA INGEST ZONE */}
+                         {!uploadedFile && !aiThinking && (
+                            <div 
+                              onClick={() => oracleFileInputRef.current?.click()}
+                              className="flex-1 flex flex-col items-center justify-center text-center space-y-12 border-4 border-dashed border-white/10 rounded-[64px] bg-black/40 group cursor-pointer hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all duration-700 mx-10 my-20 shadow-inner"
+                            >
+                               <input type="file" ref={oracleFileInputRef} onChange={handleOracleFileSelect} className="hidden" accept="image/*" />
                                <div className="relative">
-                                  <BrainCircuit size={140} className="text-slate-500 group-hover:text-indigo-400 transition-colors duration-700" />
-                                  <div className="absolute inset-[-40px] border-2 border-dashed border-white/10 rounded-full animate-spin-slow"></div>
+                                  <ScanLine size={140} className="text-slate-500 group-hover:text-indigo-400 transition-colors duration-700" />
+                                  <div className="absolute inset-[-30px] border-2 border-dashed border-white/10 rounded-full animate-spin-slow"></div>
                                </div>
                                <div className="space-y-4">
-                                  <p className="text-5xl font-black uppercase tracking-[0.5em] text-white italic">TERMINAL_STANDBY</p>
-                                  <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest">Inquire with the Oracle for industrial diagnostics</p>
+                                  <p className="text-5xl font-black uppercase tracking-[0.5em] text-white italic leading-none">SHARD_AWAITING</p>
+                                  <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest px-10">Upload visual crop or animal data for Oracle Identification</p>
                                </div>
                             </div>
-                         ) : aiThinking ? (
+                         )}
+
+                         {uploadedFile && !aiResult && !aiThinking && (
+                            <div className="flex-1 flex flex-col animate-in zoom-in duration-500">
+                               <div className="flex-1 flex flex-col md:flex-row gap-12 items-center justify-center">
+                                  <div className="w-full max-w-lg aspect-square glass-card rounded-[56px] overflow-hidden border-2 border-indigo-500/20 shadow-3xl relative group/preview">
+                                     <img src={uploadedFile} className="w-full h-full object-cover group-hover/preview:scale-105 transition-transform duration-[10s]" alt="Ingest Data" />
+                                     <div className="absolute inset-0 bg-indigo-500/10 pointer-events-none animate-scan"></div>
+                                     <button onClick={clearOracleBuffer} className="absolute top-6 right-6 p-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-rose-600 transition-colors shadow-2xl active:scale-90"><X size={24} /></button>
+                                  </div>
+                                  <div className="max-w-md space-y-10 text-center md:text-left">
+                                     <div className="space-y-4">
+                                        <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Inflow <span className="text-indigo-400">Buffered</span></h4>
+                                        <p className="text-slate-500 text-lg leading-relaxed italic font-medium">"Biological shard ingested. Input technical query below to initialize the diagnostic handshake."</p>
+                                     </div>
+                                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                                        <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full text-indigo-400 text-[10px] font-black uppercase">DATA_READY_α1.0</div>
+                                        <div className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-slate-600 text-[10px] font-mono font-black">{fileMime.toUpperCase()}</div>
+                                     </div>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
+
+                         {aiThinking ? (
                             <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
                                <div className="relative">
                                   <div className="w-64 h-64 rounded-full border-8 border-indigo-500/10 flex items-center justify-center shadow-[0_0_100px_rgba(99,102,241,0.2)]">
                                      <Brain size={100} className="text-indigo-500 animate-pulse" />
                                   </div>
-                                  <div className="absolute inset-[-10px] border-t-8 border-indigo-500 rounded-full animate-spin"></div>
+                                  <div className="absolute inset-[-15px] border-t-8 border-indigo-500 rounded-full animate-spin"></div>
                                </div>
                                <div className="space-y-8">
                                   <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">{NEURAL_STEPS[currentStepIndex]}</p>
-                                  <div className="flex justify-center gap-2">
-                                     {[...Array(6)].map((_, i) => (
-                                        <div key={i} className="w-1.5 h-12 bg-indigo-500/20 rounded-full animate-bounce" style={{ animationDelay: `${i*0.1}s` }}></div>
+                                  <div className="flex justify-center gap-3 pt-4">
+                                     {[...Array(8)].map((_, i) => (
+                                        <div key={i} className="w-1.5 h-12 bg-indigo-500/20 rounded-full animate-bounce shadow-xl" style={{ animationDelay: `${i*0.1}s` }}></div>
                                      ))}
                                   </div>
                                </div>
                             </div>
-                         ) : (
+                         ) : aiResult ? (
                             <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10 flex-1">
-                               <div className={`p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-white/5 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-8 relative overflow-hidden group/shard ${aiResult.text.includes('SYSTEM_ERROR') ? 'border-rose-600 border-l-rose-600' : 'border-l-indigo-600/50'}`}>
-                                  <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group/shard:scale-110 transition-transform duration-[10s]"><Activity size={600} className="text-indigo-400" /></div>
-                                  
-                                  <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
-                                     <div className="flex items-center gap-6">
-                                        <FileDigit size={32} className="text-indigo-400" />
-                                        <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Diagnostic Result</h4>
-                                     </div>
-                                     <div className="text-right">
-                                        <p className="text-[10px] text-slate-500 font-black uppercase">Consensus Confidence</p>
-                                        <p className="text-2xl font-mono font-black text-emerald-400">99.8%</p>
+                               <div className="flex flex-col md:flex-row gap-10">
+                                  <div className="w-full md:w-1/3 aspect-square glass-card rounded-[48px] overflow-hidden border-2 border-white/10 shadow-2xl sticky top-0 group/mini">
+                                     <img src={uploadedFile!} className="w-full h-full object-cover group-hover/mini:scale-110 transition-transform duration-[10s]" alt="Reference Shard" />
+                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+                                     <div className="absolute bottom-6 left-6 right-6">
+                                        <p className="text-[10px] font-black text-white uppercase tracking-widest border border-white/20 bg-black/40 backdrop-blur-md rounded-full px-4 py-1 inline-block">Reference Shard</p>
                                      </div>
                                   </div>
 
-                                  <div className="text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">
-                                     {aiResult.text}
-                                  </div>
-
-                                  {aiResult.sources && aiResult.sources.length > 0 && (
-                                     <div className="mt-16 pt-10 border-t border-white/10 relative z-10 space-y-6">
-                                        <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] italic">Grounding Shards / Registry Ref:</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                           {aiResult.sources.map((s, i) => (
-                                              <a key={i} href={s.web?.uri || '#'} target="_blank" rel="noopener noreferrer" className="p-6 bg-white/[0.02] border border-white/5 rounded-[32px] flex items-center justify-between group hover:border-indigo-500/40 transition-all">
-                                                 <div className="flex items-center gap-4">
-                                                    <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400"><Globe size={18} /></div>
-                                                    <span className="text-xs font-black text-slate-300 uppercase italic truncate max-w-[200px]">{s.web?.title || 'Registry Shard'}</span>
-                                                 </div>
-                                                 <ArrowUpRight size={18} className="text-slate-700 group-hover:text-indigo-400 transition-all" />
-                                              </a>
-                                           ))}
+                                  <div className={`flex-1 p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-white/5 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-[16px] relative overflow-hidden group/shard ${aiResult.text.includes('SYSTEM_ERROR') ? 'border-rose-600 border-l-rose-600' : 'border-l-indigo-600/50'}`}>
+                                     <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group/shard:scale-110 transition-transform duration-[10s]"><Activity size={600} className="text-indigo-400" /></div>
+                                     
+                                     <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
+                                        <div className="flex items-center gap-8">
+                                           <FileDigit size={40} className="text-indigo-400" />
+                                           <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Diagnostic Oracle Verdict</h4>
+                                        </div>
+                                        <div className="text-right">
+                                           <p className="text-[10px] text-slate-500 font-black uppercase">Consensus Confidence</p>
+                                           <p className="text-3xl font-mono font-black text-emerald-400">99.8%</p>
                                         </div>
                                      </div>
-                                  )}
+
+                                     <div className="text-slate-300 text-2xl leading-[2.1] italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
+                                        {aiResult.text}
+                                     </div>
+
+                                     <div className="mt-16 pt-10 border-t border-white/10 relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
+                                        <div className="flex items-center gap-6">
+                                           <Fingerprint size={48} className="text-indigo-400" />
+                                           <div className="text-left space-y-1">
+                                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">DIAGNOSTIC_HASH</p>
+                                              <p className="text-xl font-mono text-white">0x{Math.random().toString(16).slice(2,10).toUpperCase()}_OK_FINAL</p>
+                                           </div>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button onClick={() => downloadShard(aiResult.text, oracleMode, 'Science_Oracle')} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-white font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3">
+                                               <Download size={20} /> Download Report
+                                            </button>
+                                            <button 
+                                              onClick={() => anchorToLedger(aiResult.text, 'Oracle', oracleMode)}
+                                              disabled={!!isArchiving || archivedShards.has(`Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}`)}
+                                              className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                            >
+                                               {isArchiving === `Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}` ? <Loader2 size={24} className="animate-spin" /> : archivedShards.has(`Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? <CheckCircle2 size={24} /> : <Stamp size={24} />}
+                                               {archivedShards.has(`Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
+                                            </button>
+                                        </div>
+                                     </div>
+                                  </div>
                                </div>
 
                                <div className="flex justify-center gap-8">
-                                  <button onClick={() => setAiResult(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
-                                  {aiResult.text.includes('SYSTEM_ERROR') ? (
-                                    <button 
-                                      onClick={handleDeepAIQuery}
-                                      className="px-16 py-6 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-rose-500/20"
-                                    >
-                                      <RefreshCw size={24} /> RE-SYNC ORACLE
-                                    </button>
-                                  ) : (
-                                    <button onClick={handleDownloadShard} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-white/5">
-                                      <Stamp size={24} /> ANCHOR TO LEDGER
-                                    </button>
-                                  )}
+                                  <button onClick={clearOracleBuffer} className="px-16 py-8 bg-white/5 border-2 border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">De-Ingest Shard</button>
                                </div>
                             </div>
-                         )}
+                         ) : null}
                       </div>
 
-                      <div className="p-10 border-t border-white/5 bg-black/90 relative z-20 shrink-0">
-                         <div className="max-w-4xl mx-auto relative group">
+                      {/* INQUIRY CONTROL FOOTER */}
+                      <div className="p-10 border-t border-white/5 bg-black/95 relative z-20 shrink-0">
+                         <div className="max-w-5xl mx-auto relative group">
                             <textarea 
                                value={aiQuery}
                                onChange={e => setAiQuery(e.target.value)}
                                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleDeepAIQuery())}
-                               placeholder="Input diagnostic query or technical observation shard..."
-                               className="w-full bg-white/5 border border-white/10 rounded-[40px] py-8 pl-10 pr-28 text-xl text-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-800 resize-none h-32 shadow-inner italic" 
+                               placeholder={uploadedFile ? "Query the Oracle about the sharded data (e.g. 'What is this skin disease and how do I remediate?')..." : "Ingest agricultural data shard to begin inquiry..."}
+                               disabled={!uploadedFile || aiThinking}
+                               className={`w-full bg-black border-2 border-white/10 rounded-[48px] py-10 pl-14 pr-32 text-2xl text-white focus:outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all placeholder:text-stone-900 resize-none h-40 shadow-inner italic font-medium leading-snug ${!uploadedFile ? 'opacity-30 cursor-not-allowed' : ''}`} 
                             />
                             <button 
                                onClick={handleDeepAIQuery}
-                               disabled={aiThinking || !aiQuery.trim()}
-                               className={`absolute right-6 bottom-6 p-7 rounded-[32px] text-white shadow-3xl transition-all disabled:opacity-30 active:scale-90 ring-4 ring-indigo-500/5 group-hover:scale-105 ${aiThinking ? 'bg-indigo-900/50' : 'bg-indigo-600 hover:bg-indigo-500'}`}
+                               disabled={aiThinking || !aiQuery.trim() || !uploadedFile}
+                               className={`absolute right-8 bottom-8 p-8 rounded-[40px] text-white shadow-[0_0_100px_rgba(99,102,241,0.3)] transition-all disabled:opacity-30 active:scale-90 ring-8 ring-indigo-500/5 group-hover:scale-105 ${aiThinking ? 'bg-indigo-900/50' : 'bg-indigo-600 hover:bg-indigo-500'}`}
                             >
-                               {aiThinking ? <Loader2 className="w-10 h-10 animate-spin" /> : <Send size={36} />}
+                               {aiThinking ? <Loader2 className="w-10 h-10 animate-spin" /> : <Send size={44} />}
                             </button>
                          </div>
-                         <div className="mt-6 flex justify-between items-center px-10">
-                            <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">Proprietary Oracle v5.2 // End-to-End Shard encryption Active</p>
+                         <div className="mt-8 flex justify-between items-center px-14">
+                            <div className="flex items-center gap-6">
+                               <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.5em]">Science Oracle v6.5 // secured sharding protocol</p>
+                               {uploadedFile && <div className="px-4 py-1 bg-indigo-600/10 border border-indigo-500/20 rounded-full text-indigo-400 font-mono text-[8px] font-black uppercase animate-pulse">SHARD_LINK_ACTIVE</div>}
+                            </div>
                          </div>
                       </div>
                    </div>

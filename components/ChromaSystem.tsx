@@ -66,12 +66,12 @@ import {
   ThermometerSun,
   Layers,
   Circle,
-  // Added FlaskConical and Atom to fix "Cannot find name" errors on lines 786 and 812
   FlaskConical,
   Atom
 } from 'lucide-react';
-import { User, ViewState } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { User, ViewState, MediaShard } from '../types';
+import { chatWithAgroExpert, analyzeMedia } from '../services/geminiService';
+import { saveCollectionItem } from '../services/firebaseService';
 import { GoogleGenAI } from "@google/genai";
 
 interface ChromaSystemProps {
@@ -126,6 +126,67 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
   const [designCategory, setDesignCategory] = useState('Lilies_Around_Blueprint');
   const [isForgingDesign, setIsForgingDesign] = useState(false);
   const [designShard, setDesignShard] = useState<string | null>(null);
+
+  // General Archiving States
+  const [archivedShards, setArchivedShards] = useState<Set<string>>(new Set());
+  const [isArchiving, setIsArchiving] = useState<string | null>(null);
+
+  const anchorToLedger = async (content: string, type: string, mode: string) => {
+    const shardKey = `${type}_${mode}_${content.substring(0, 20)}`;
+    if (archivedShards.has(shardKey)) return;
+    
+    setIsArchiving(shardKey);
+    try {
+      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const newShard: Partial<MediaShard> = {
+        title: `${type.toUpperCase()}: ${mode.replace('_', ' ')}`,
+        type: 'ORACLE',
+        source: 'Chroma System',
+        author: user.name,
+        authorEsin: user.esin,
+        timestamp: new Date().toISOString(),
+        hash: shardHash,
+        mImpact: (1.42 + Math.random() * 0.1).toFixed(2),
+        size: `${(content.length / 1024).toFixed(1)} KB`,
+        content: content
+      };
+      
+      await saveCollectionItem('media_ledger', newShard);
+      setArchivedShards(prev => new Set(prev).add(shardKey));
+      onEarnEAC(20, `LEDGER_ANCHOR_${type.toUpperCase()}_SUCCESS`);
+    } catch (e) {
+      alert("LEDGER_FAILURE: Registry handshake failed.");
+    } finally {
+      setIsArchiving(null);
+    }
+  };
+
+  const downloadReport = (content: string, mode: string, type: string) => {
+    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const report = `
+ENVIROSAGRO™ ${type.toUpperCase()} SHARD
+=================================
+REGISTRY_ID: ${shardId}
+NODE_AUTH: ${user.esin}
+MODE: ${mode}
+TIMESTAMP: ${new Date().toISOString()}
+ZK_CONSENSUS: VERIFIED (99.8%)
+
+DIAGNOSTIC VERDICT:
+-------------------
+${content}
+
+-------------------
+(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
+    `;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EA_${type}_${mode}_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim()) return;
@@ -519,7 +580,7 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
                            value={designDescription}
                            onChange={e => setDesignDescription(e.target.value)}
                            placeholder="Describe the aesthetic botanical architecture: Symmetry, celestial alignment, fuchsia sharding..."
-                           className="w-full bg-black/80 border border-white/10 rounded-[40px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-fuchsia-500/5 transition-all outline-none h-48 resize-none placeholder:text-stone-900 shadow-inner"
+                           className="w-full bg-black/80 border border-white/10 rounded-[40px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-fuchsia-500/5 transition-all outline-none h-48 resize-none shadow-inner placeholder:text-stone-900"
                          />
                       </div>
 
@@ -595,12 +656,22 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
                               <div className="text-slate-300 text-3xl leading-[2] italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">
                                  {designShard}
                               </div>
+                              <div className="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
+                                 <button onClick={() => downloadReport(designShard || '', designCategory, 'Design')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                                    <Download size={18} /> Download Shard
+                                 </button>
+                                 <button 
+                                   onClick={() => anchorToLedger(designShard || '', 'Design', designCategory)}
+                                   disabled={isArchiving === `Design_${designCategory}_${designShard?.substring(0, 20)}` || archivedShards.has(`Design_${designCategory}_${designShard?.substring(0, 20)}`)}
+                                   className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Design_${designCategory}_${designShard?.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                 >
+                                    {isArchiving === `Design_${designCategory}_${designShard?.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Design_${designCategory}_${designShard?.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                                    {archivedShards.has(`Design_${designCategory}_${designShard?.substring(0, 20)}`) ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
+                                 </button>
+                              </div>
                            </div>
                            <div className="flex justify-center gap-10">
                               <button onClick={() => setDesignShard(null)} className="px-16 py-8 bg-white/5 border border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
-                              <button className="px-24 py-8 bg-fuchsia-800 rounded-full text-white font-black text-[13px] uppercase tracking-[0.6em] shadow-[0_0_120px_rgba(162,28,175,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-2 border-white/10 ring-[16px] ring-white/5">
-                                 <Stamp size={32} /> ANCHOR AESTHETIC SHARD
-                              </button>
                            </div>
                         </div>
                       )}
@@ -719,7 +790,7 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
                 <div className="glass-card p-10 rounded-[56px] border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl">
                    <div className="flex items-center gap-6 border-b border-white/5 pb-8">
                       <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl">
-                         <Microscope size={8} className="w-8 h-8 text-white" />
+                         <Microscope size={32} className="text-white" />
                        </div>
                        <div>
                           <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Pigment <span className="text-emerald-400">Lab</span></h3>
@@ -787,7 +858,6 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
                       {!chromaDiagnosis && !isScanning ? (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-16 py-20 opacity-10 group">
                            <div className="relative">
-                              {/* Fix: Line 786 error handled by adding FlaskConical to lucide-react imports */}
                               <FlaskConical size={180} className="text-slate-500 group-hover:text-emerald-500 transition-colors duration-1000" />
                               <div className="absolute inset-[-60px] border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
                            </div>
@@ -814,7 +884,6 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
                       ) : (
                         <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10 flex-1">
                            <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-emerald-500/20 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-[12px] border-l-emerald-600 relative overflow-hidden group/shard">
-                              {/* Fix: Line 812 error handled by adding Atom to lucide-react imports */}
                               <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group/shard:scale-110 transition-transform duration-[10s]"><Atom size={600} className="text-emerald-400" /></div>
                               
                               <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
@@ -832,17 +901,27 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
                                  {chromaDiagnosis!.report}
                               </div>
 
-                              <div className="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+                              <div className="mt-16 pt-10 border-t border-white/10 relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
                                  <div className="flex items-center gap-6">
                                     <Fingerprint size={40} className="text-indigo-400" />
                                     <div className="text-left">
                                        <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">CHROMATOGRAPHY_HASH</p>
-                                       <p className="text-lg font-mono text-white">0x882...PIGMENT_SYNC</p>
+                                       <p className="text-lg font-mono text-white">0x{Math.random().toString(16).slice(2, 10).toUpperCase()}_PIGMENT_SYNC</p>
                                     </div>
                                  </div>
-                                 <button className="px-10 py-5 bg-emerald-800 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-white/5">
-                                    <Stamp size={24} /> ANCHOR SHARD TO LEDGER
-                                 </button>
+                                 <div className="flex gap-4">
+                                     <button onClick={() => downloadReport(chromaDiagnosis!.report, 'Chromatography', 'Laboratory')} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-white font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 shadow-xl">
+                                        <Download size={20} /> Download Report
+                                     </button>
+                                     <button 
+                                       onClick={() => anchorToLedger(chromaDiagnosis!.report, 'Chromatography', 'Diagnostic')}
+                                       disabled={isArchiving === `Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}` || archivedShards.has(`Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}`)}
+                                       className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                     >
+                                        {isArchiving === `Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                                        {archivedShards.has(`Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
+                                     </button>
+                                 </div>
                               </div>
                            </div>
                         </div>
