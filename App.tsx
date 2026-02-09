@@ -5,14 +5,14 @@ import {
   Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, Signal as SignalIcon, Target,
   Truck, Layers, Map as MapIcon, Compass as CompassIcon, Server, Workflow, ShieldPlus, ChevronLeftCircle, ArrowLeft,
   ChevronRight, ArrowUp, UserCheck, BookOpen, Stamp, Binoculars, Command, Bot, Wand2, Brain, ArrowRight, Home,
-  Building, ShieldX, Cpu as CpuIcon, MessageSquare, UserCheck as UserCheckIcon,
-  MessageCircle,
-  FileBadge,
-  ArrowUpRight,
+  Building, ShieldX, ScanLine,
+  MapPin,
+  Download,
   FileDigit,
   Music,
   GraduationCap,
-  Download
+  ArrowUpRight,
+  ShoppingBag
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard } from './types';
 import Dashboard from './components/Dashboard';
@@ -436,78 +436,102 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-xl flex items-start justify-center p-4 pt-10 md:pt-20 animate-in fade-in duration-300">
-      <div className="w-full max-w-4xl glass-card rounded-[48px] border-2 border-emerald-500/30 overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.2)] flex flex-col h-[85vh]">
-        <div className="p-8 md:p-10 border-b border-white/10 flex items-center gap-6 shrink-0">
-          <Search className="w-8 h-8 text-emerald-400" />
-          <input 
-            ref={inputRef}
-            type="text" 
-            value={searchTerm} 
-            onChange={e => { setSearchTerm(e.target.value); setAiDeepSuggestion(null); }}
-            onKeyDown={e => e.key === 'Enter' && handleAiDeepQuery()}
-            placeholder="Search Shards, PDFs, Stewards or Missions..."
-            className="flex-1 bg-transparent border-none outline-none text-2xl md:text-3xl text-white placeholder:text-stone-900 font-bold italic"
-          />
-          <button onClick={handleAiDeepQuery} disabled={isAiSearching || !searchTerm.trim()} className="p-5 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/30 rounded-3xl transition-all shadow-xl group">
-             {isAiSearching ? <Loader2 className="animate-spin text-white w-8 h-8" /> : <Sparkles className="text-emerald-400 group-hover:text-white w-8 h-8" />}
-          </button>
-          <button onClick={onClose} className="p-3 text-slate-500 hover:text-white transition-colors bg-white/5 rounded-2xl"><X size={28} /></button>
+    <div 
+      className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-4xl glass-card rounded-[40px] md:rounded-[64px] border border-white/10 overflow-hidden shadow-[0_0_150px_rgba(0,0,0,0.8)] flex flex-col h-[85vh] md:h-[80vh] animate-in zoom-in-95 duration-300">
+        
+        {/* Modern Integrated Header */}
+        <div className="p-6 md:p-10 border-b border-white/5 flex items-center gap-4 md:gap-8 shrink-0 bg-black/20">
+          <Search className="w-6 h-6 md:w-8 md:h-8 text-emerald-400 shrink-0" />
+          <div className="flex-1 relative">
+            <input 
+              ref={inputRef}
+              type="text" 
+              value={searchTerm} 
+              onChange={e => { setSearchTerm(e.target.value); setAiDeepSuggestion(null); }}
+              onKeyDown={e => e.key === 'Enter' && handleAiDeepQuery()}
+              placeholder="Query ledgers, media, stewards..."
+              className="w-full bg-transparent border-none outline-none text-xl md:text-3xl text-white placeholder:text-slate-700 font-bold italic"
+            />
+          </div>
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <button 
+              onClick={handleAiDeepQuery} 
+              disabled={isAiSearching || !searchTerm.trim()} 
+              className="p-3 md:p-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl md:rounded-3xl transition-all shadow-xl group active:scale-95 disabled:opacity-30"
+              title="Oracle deep query"
+            >
+               {isAiSearching ? <Loader2 className="animate-spin text-white w-6 h-6" /> : <Sparkles className="text-emerald-400 group-hover:text-white w-6 h-6" />}
+            </button>
+            <button onClick={onClose} className="p-3 md:p-4 text-slate-500 hover:text-white transition-colors bg-white/5 rounded-2xl active:scale-95"><X size={24} /></button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 bg-black/40 space-y-12">
+        {/* Dynamic Content Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 space-y-12 bg-[#050706]/40">
            {aiDeepSuggestion && (
-             <div className="p-8 md:p-10 bg-indigo-900/10 border-2 border-indigo-500/30 rounded-[48px] animate-in slide-in-from-top-4 duration-500 space-y-8 relative overflow-hidden group/sugg">
-                <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/sugg:rotate-12 transition-transform"><Bot size={120} className="text-indigo-400" /></div>
+             <div className="p-8 md:p-12 bg-indigo-900/10 border-2 border-indigo-500/30 rounded-[48px] animate-in slide-in-from-top-4 duration-500 space-y-8 relative overflow-hidden group/sugg">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/sugg:rotate-12 transition-transform"><Bot size={180} className="text-indigo-400" /></div>
                 <div className="flex items-center gap-4 relative z-10">
-                   <div className="p-3 bg-indigo-600 rounded-2xl shadow-2xl"><Sparkles size={24} className="text-white" /></div>
-                   <h5 className="text-lg font-black text-indigo-400 uppercase tracking-widest italic">Multi-Ledger AI Match</h5>
+                   <div className="p-3 bg-indigo-600 rounded-2xl shadow-2xl"><Sparkles size={20} className="text-white" /></div>
+                   <h5 className="text-xs font-black text-indigo-400 uppercase tracking-widest italic">Oracle Logic Match</h5>
                 </div>
-                <div className="space-y-6 border-l-4 border-indigo-600/40 pl-8 relative z-10">
-                   <p className="text-slate-300 italic text-xl md:text-2xl leading-relaxed">{aiDeepSuggestion.explanation}</p>
+                <div className="space-y-8 border-l-4 border-indigo-600/40 pl-8 md:pl-12 relative z-10">
+                   <p className="text-slate-300 italic text-xl md:text-2xl leading-relaxed max-w-3xl">{aiDeepSuggestion.explanation}</p>
                    <button 
                      onClick={() => { onNavigate(aiDeepSuggestion.view as ViewState, aiDeepSuggestion.section); onClose(); }}
-                     className="px-12 py-5 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center gap-3"
+                     className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5"
                    >
-                      Navigate to {aiDeepSuggestion.view.toUpperCase()} Shard <ArrowRight size={16} />
+                      Navigate Shard <ArrowRight size={18} />
                    </button>
                 </div>
              </div>
            )}
 
            {searchTerm.trim() === '' ? (
-             <div className="py-20 flex flex-col items-center justify-center text-center opacity-20 space-y-8">
-                <LucideIcons.Command size={100} className="text-slate-500 animate-float" />
-                <div className="space-y-2">
-                  <p className="text-3xl font-black uppercase tracking-[0.5em] text-white">SEARCH_MATRIX</p>
-                  <p className="text-sm font-bold uppercase tracking-widest italic text-slate-500">Query ledgers, media, stewards, or industrial logic</p>
+             <div className="h-full flex flex-col items-center justify-center text-center opacity-30 space-y-10 py-16">
+                <div className="relative">
+                   <Command size={100} className="text-slate-600 animate-float" />
+                   <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-4xl md:text-6xl font-black uppercase tracking-[0.5em] text-white italic drop-shadow-2xl">SEARCH_MATRIX</p>
+                  <p className="text-sm md:text-lg font-bold uppercase tracking-widest italic text-slate-500 max-w-md mx-auto leading-relaxed">
+                    Query organizational ledgers, media shards, or industrial stewards
+                  </p>
                 </div>
              </div>
            ) : (
-             <div className="space-y-16">
-                {/* 1. STEWARDS RESULTS */}
+             <div className="space-y-20">
+                {/* RESULTS GROUPING */}
+                
+                {/* 1. STEWARDS */}
                 {filteredResults.stewards.length > 0 && (
-                   <div className="space-y-6">
-                      <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.6em] px-4 border-b border-white/5 pb-4 italic">Social_Steward_Registry</p>
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4">
+                        <Users size={16} className="text-indigo-400" />
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Social_Steward_Registry</p>
+                      </div>
                       <div className="grid gap-4">
                          {filteredResults.stewards.map(steward => (
-                            <div key={steward.esin} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99]">
-                               <div className="flex items-center gap-6 relative z-10 w-full md:w-auto">
+                            <div key={steward.esin} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] group/card">
+                               <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
                                   <div className="relative shrink-0">
-                                     <div className="w-20 h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover:border-indigo-500 transition-all shadow-xl">
+                                     <div className="w-16 h-16 md:w-24 md:h-24 rounded-[28px] md:rounded-[40px] overflow-hidden border-2 border-white/10 group-hover/card:border-indigo-500 transition-all shadow-xl">
                                         <img src={steward.avatar} className="w-full h-full object-cover" alt="" />
                                      </div>
                                      <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-black ${steward.online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-700'}`}></div>
                                   </div>
-                                  <div className="space-y-1">
-                                     <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-indigo-400 transition-colors">{steward.name}</h4>
-                                     <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-2">{steward.role} // {steward.esin}</p>
+                                  <div className="space-y-2">
+                                     <h4 className="text-2xl md:text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover/card:text-indigo-400 transition-colors">{steward.name}</h4>
+                                     <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-2">{steward.role} // {steward.esin}</p>
                                   </div>
                                </div>
-                               <div className="flex gap-3 relative z-10 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-8 justify-center md:justify-end">
-                                  <button onClick={() => { onNavigate('profile'); onClose(); }} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl" title="Profile View"><UserIcon size={20} /></button>
-                                  <button className="p-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl text-indigo-400 hover:text-white transition-all shadow-xl" title="Direct Message"><LucideIcons.MessageCircle size={20} /></button>
-                                  <button onClick={() => { onNavigate('contract_farming'); onClose(); }} className="p-4 bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-500/20 rounded-2xl text-emerald-400 hover:text-white transition-all shadow-xl" title="Initiate Contract"><LucideIcons.FileBadge size={20} /></button>
+                               <div className="flex gap-4 relative z-10 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-10 justify-center md:justify-end">
+                                  <button onClick={() => { onNavigate('profile'); onClose(); }} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl"><UserIcon size={20} /></button>
+                                  <button onClick={() => { onNavigate('contract_farming'); onClose(); }} className="px-8 py-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl text-indigo-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">Connect Shard</button>
                                </div>
                             </div>
                          ))}
@@ -515,26 +539,32 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                    </div>
                 )}
 
-                {/* 2. KNOWLEDGE & MEDIA (PDFs, Exams) */}
+                {/* 2. KNOWLEDGE & MEDIA */}
                 {filteredResults.knowledge.length > 0 && (
-                   <div className="space-y-6">
-                      <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.6em] px-4 border-b border-white/5 pb-4 italic">Knowledge_&_Media_Ledger</p>
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4">
+                        <FileStack size={16} className="text-blue-400" />
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Knowledge_&_Media_Archive</p>
+                      </div>
                       <div className="grid gap-4">
                          {filteredResults.knowledge.map((item: any) => (
-                            <div key={item.id} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-blue-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99]">
+                            <div key={item.id} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-blue-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99]">
                                <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
-                                  <div className="p-5 rounded-3xl bg-blue-600/10 border border-blue-500/20 text-blue-400 group-hover:rotate-6 transition-all shadow-inner">
-                                     <item.icon size={32} />
+                                  <div className="p-6 rounded-[28px] md:rounded-[36px] bg-blue-600/10 border border-blue-500/20 text-blue-400 group-hover:rotate-6 transition-all shadow-inner">
+                                     <item.icon size={40} />
                                   </div>
-                                  <div className="space-y-1">
-                                     <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-blue-400 transition-colors">{item.title}</h4>
-                                     <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-2">{item.source || item.category} // {item.id}</p>
+                                  <div className="space-y-2">
+                                     <h4 className="text-xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-blue-400 transition-colors leading-tight">{item.title}</h4>
+                                     <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-1">{item.source || item.category} // {item.id}</p>
                                   </div>
                                </div>
                                <div className="flex gap-4 relative z-10 shrink-0">
-                                  <button onClick={() => { onNavigate(item.reward ? 'community' : 'media_ledger'); onClose(); }} className="px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3">
-                                     {item.type === 'PAPER' ? <Download size={16} /> : <Zap size={16} />} 
-                                     {item.type === 'PAPER' ? 'Access PDF' : item.category === 'Vetting' ? 'Start Exam' : 'Enter Shard'}
+                                  <button 
+                                    onClick={() => { onNavigate(item.reward ? 'community' : 'media_ledger'); onClose(); }} 
+                                    className="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95"
+                                  >
+                                     {item.type === 'PAPER' ? <Download size={18} /> : <Zap size={18} />} 
+                                     Access Shard
                                   </button>
                                </div>
                             </div>
@@ -543,25 +573,35 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                    </div>
                 )}
 
-                {/* 3. INDUSTRIAL ASSETS (Market, Agrowild) */}
+                {/* 3. INDUSTRIAL ASSETS */}
                 {filteredResults.assets.length > 0 && (
-                   <div className="space-y-6">
-                      <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.6em] px-4 border-b border-white/5 pb-4 italic">Industrial_Asset_Quorum</p>
-                      <div className="grid gap-4">
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4">
+                        <ShoppingBag size={16} className="text-emerald-400" />
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Industrial_Asset_Quorum</p>
+                      </div>
+                      <div className="grid gap-6 md:grid-cols-2">
                          {filteredResults.assets.map((item: any) => (
-                            <div key={item.id} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] md:flex-row">
-                               <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
-                                  <div className="w-20 h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover:scale-105 transition-transform">
-                                     <img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=200'} className="w-full h-full object-cover" alt="" />
+                            <div key={item.id} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col justify-between h-[380px] shadow-2xl relative overflow-hidden active:scale-[0.99] group/asset">
+                               <div className="absolute top-0 right-0 p-8 opacity-[0.01] group-hover/asset:opacity-[0.05] group-hover/asset:scale-110 transition-all"><ShoppingCart size={200} /></div>
+                               <div className="flex items-start justify-between mb-6 relative z-10">
+                                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover/asset:border-emerald-500 transition-all shadow-xl">
+                                     <img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400'} className="w-full h-full object-cover" alt="" />
                                   </div>
-                                  <div className="space-y-1">
-                                     <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-emerald-400 transition-colors">{item.name || item.title}</h4>
-                                     <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-2">{item.price || item.cost} EAC // {item.id}</p>
-                                  </div>
+                                  <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-inner">ASSET_MINTED</span>
                                </div>
-                               <button onClick={() => { onNavigate(item.node ? 'agrowild' : 'economy'); onClose(); }} className="px-10 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3">
-                                  <ShoppingCart size={16} /> Procure Asset Shard
-                               </button>
+                               <div className="space-y-2 relative z-10">
+                                  <h4 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter group-hover/asset:text-emerald-400 transition-colors m-0 drop-shadow-2xl">{item.name || item.title}</h4>
+                                  <p className="text-[9px] text-slate-700 font-mono font-black uppercase tracking-widest mt-2">{item.price || item.cost} EAC // {item.id}</p>
+                               </div>
+                               <div className="pt-6 border-t border-white/5 mt-auto flex justify-end relative z-10">
+                                  <button 
+                                    onClick={() => { onNavigate(item.node ? 'agrowild' : 'economy'); onClose(); }} 
+                                    className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center gap-3 transition-all active:scale-95"
+                                  >
+                                     <ArrowUpRight size={14} /> Procure Shard
+                                  </button>
+                               </div>
                             </div>
                          ))}
                       </div>
@@ -570,22 +610,28 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
 
                 {/* 4. SITEMAP NODES */}
                 {filteredResults.shards.length > 0 && (
-                   <div className="space-y-6">
-                      <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.6em] px-4 border-b border-white/5 pb-4 italic">Registry_Shards</p>
-                      <div className="grid gap-2">
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4">
+                        <NetworkIcon size={16} className="text-indigo-400" />
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Registry_Nodes</p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {filteredResults.shards.map(res => (
                           <div key={res.id} className="w-full">
-                            <button onClick={() => { onNavigate(res.id as ViewState); onClose(); }} className="w-full p-6 md:p-8 hover:bg-indigo-600/10 rounded-[32px] border-2 border-transparent hover:border-indigo-500/30 bg-black/20 flex items-center justify-between group transition-all">
-                               <div className="flex items-center gap-8 text-left">
-                                  <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-indigo-600 transition-all shadow-xl">
-                                     <res.icon size={28} className="text-slate-400 group-hover:text-white" />
+                            <button 
+                              onClick={() => { onNavigate(res.id as ViewState); onClose(); }} 
+                              className="w-full p-6 md:p-8 hover:bg-indigo-600/10 rounded-[32px] border-2 border-transparent hover:border-indigo-500/30 bg-black/40 flex items-center justify-between group transition-all active:scale-[0.98] shadow-xl"
+                            >
+                               <div className="flex items-center gap-6 text-left">
+                                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-indigo-600 transition-all shadow-inner">
+                                     <res.icon size={28} className="text-slate-500 group-hover:text-white" />
                                   </div>
                                   <div>
-                                     <h4 className="text-2xl font-black text-white uppercase italic leading-none group-hover:text-indigo-400 transition-colors m-0 tracking-tight">{res.name}</h4>
-                                     <p className="text-[11px] text-slate-600 font-mono mt-2 uppercase tracking-widest font-black italic">{res.category}</p>
+                                     <h4 className="text-lg md:text-2xl font-black text-white uppercase italic leading-none group-hover:text-indigo-400 transition-colors m-0 tracking-tighter">{res.name}</h4>
+                                     <p className="text-[9px] text-slate-700 font-mono mt-2 uppercase tracking-widest font-black italic">{res.category}</p>
                                   </div>
                                </div>
-                               <ArrowUpRight size={24} className="text-slate-800 group-hover:text-indigo-400 transition-all" />
+                               <ArrowUpRight size={20} className="text-slate-800 group-hover:text-indigo-400 transition-all" />
                             </button>
                           </div>
                         ))}
@@ -594,6 +640,17 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                 )}
              </div>
            )}
+        </div>
+
+        {/* Dynamic Footer Status */}
+        <div className="p-6 md:p-8 border-t border-white/5 bg-black/80 flex items-center justify-between shrink-0 relative z-10">
+           <div className="flex items-center gap-4 text-[9px] font-black text-slate-700 uppercase tracking-[0.4em] italic">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/20 animate-pulse"></div>
+              Multi-Ledger Indexing Active
+           </div>
+           <div className="flex items-center gap-3">
+              <span className="text-[8px] font-mono text-slate-800 uppercase tracking-widest">v6.5.2 // QUORUM_SYNC</span>
+           </div>
         </div>
       </div>
     </div>
@@ -940,7 +997,7 @@ const App: React.FC = () => {
               <button onClick={() => setIsGlobalSearchOpen(true)} className="md:hidden p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all"><Search size={18} className="text-slate-400" /></button>
               {user && <button onClick={() => setView('wallet')} className="px-3 sm:px-4 py-2 sm:py-2.5 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={14} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[10px] sm:text-xs font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
               <button onClick={() => setView('profile')} className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
-                 {user ? (<><div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={14} className="text-slate-500 m-auto mt-1 sm:mt-2" />}</div><span className="text-9px font-black text-white hidden sm:block truncate max-w-[80px]">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={16} className="text-emerald-400" /><span className="text-[9px] font-black uppercase text-emerald-400">Sync</span></>)}
+                 {user ? (<><div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={14} className="text-slate-500 m-auto mt-1 sm:mt-2" />}</div><span className="text-[9px] font-black text-white hidden sm:block truncate max-w-[80px]">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={16} className="text-emerald-400" /><span className="text-[9px] font-black uppercase text-emerald-400">Sync</span></>)}
               </button>
            </div>
         </header>
