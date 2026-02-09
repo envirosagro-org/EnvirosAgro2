@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { 
   Siren, 
@@ -42,13 +43,14 @@ import {
   Stamp
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { User } from '../types';
+import { User, SignalShard } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
 
 interface EmergencyProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
+  onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
 }
 
 const REGIONAL_HAZARDS = [
@@ -64,13 +66,14 @@ const SAFETY_SHARDS = [
   { title: 'Emergency Soil Purge', cat: 'Environmental', icon: RotateCcw, col: 'text-emerald-400' },
 ];
 
-const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC }) => {
+const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC, onEmitSignal }) => {
   const [activeTab, setActiveTab] = useState<'alerts' | 'sos' | 'safety' | 'remediation'>('alerts');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [sosStep, setSosStep] = useState<'form' | 'sign' | 'success'>('form');
   const [sosType, setSosType] = useState('Pest Outbreak');
   const [sosDesc, setSosDesc] = useState('');
   const [esinSign, setEsinSign] = useState('');
+  const [broadcastedIds, setBroadcastedIds] = useState<Set<string>>(new Set());
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [remediationAdvice, setRemediationAdvice] = useState<string | null>(null);
@@ -94,7 +97,33 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
       setIsBroadcasting(false);
       setSosStep('success');
       onEarnEAC(20, 'EMERGENCY_SHARD_BROADCAST');
+      
+      onEmitSignal({
+        type: 'emergency',
+        origin: 'EMERGENCY_CMD',
+        title: `CRITICAL_SOS: ${sosType.toUpperCase()}`,
+        message: sosDesc,
+        priority: 'critical',
+        actionIcon: 'Siren',
+        meta: { target: 'emergency_portal', ledgerContext: 'EMERGENCY' }
+      });
     }, 2500);
+  };
+
+  const handleBroadcastAlert = async (hazard: any) => {
+    if (broadcastedIds.has(hazard.id)) return;
+    
+    await onEmitSignal({
+      type: 'emergency',
+      origin: 'EMERGENCY_CMD',
+      title: `REGIONAL_HAZARD: ${hazard.title.toUpperCase()}`,
+      message: `Anomaly detected at ${hazard.node}. Verification pending. Level: ${hazard.risk}.`,
+      priority: hazard.risk === 'Critical' ? 'critical' : 'high',
+      actionIcon: 'AlertTriangle',
+      meta: { target: 'emergency_portal', ledgerContext: 'EMERGENCY' }
+    });
+    
+    setBroadcastedIds(prev => new Set(prev).add(hazard.id));
   };
 
   const runEmergencyDiagnostic = async () => {
@@ -123,7 +152,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
-      <div className="glass-card p-12 rounded-[56px] border-rose-500/20 bg-rose-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-2xl">
+      <div className="glass-card p-12 rounded-[56px] border-rose-500/20 bg-rose-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform pointer-events-none">
             <Siren className="w-96 h-96 text-white" />
          </div>
@@ -183,7 +212,13 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                               <p className="text-[8px] text-slate-600 font-black uppercase mb-1">Impact Level</p>
                               <span className={`text-xl font-mono font-black ${h.col}`}>{h.risk.toUpperCase()}</span>
                            </div>
-                           <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all shadow-xl">Audit Data</button>
+                           <button 
+                             onClick={() => handleBroadcastAlert(h)}
+                             disabled={broadcastedIds.has(h.id)}
+                             className={`px-8 py-4 border rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl ${broadcastedIds.has(h.id) ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-500 cursor-default' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+                           >
+                             {broadcastedIds.has(h.id) ? 'BROADCASTED' : 'BROADCAST TO MESH'}
+                           </button>
                         </div>
                      </div>
                    ))}
@@ -274,15 +309,15 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                        disabled={isBroadcasting || !esinSign}
                        className="w-full py-10 agro-gradient-rose rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
                      >
-                        {isBroadcasting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Send className="w-8 h-8 fill-current" />}
+                        {isBroadcasting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Send size={24} fill="current" />}
                         {isBroadcasting ? "BROADCASTING SHARD..." : "AUTHORIZE SOS SIGNAL"}
                      </button>
                   </div>
                 )}
                 {sosStep === 'success' && (
                   <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center relative z-10">
-                     <div className="w-56 h-56 agro-gradient-rose rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(244,63,94,0.3)] relative group">
-                        <CheckCircle2 className="w-24 h-24 text-white group-hover:scale-110 transition-transform" />
+                     <div className="w-56 h-56 agro-gradient-rose rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_150px_rgba(244,63,94,0.3)] relative group">
+                        <CheckCircle2 size={24} h-24 text-white group-hover:scale-110 transition-transform />
                      </div>
                      <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic m-0">Signal <span className="text-rose-500">Sent</span></h3>
                      <button onClick={() => setSosStep('form')} className="w-full max-w-md py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Hub</button>
@@ -314,7 +349,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                         disabled={isAnalyzing || !threatSubject.trim()}
                         className="w-full py-8 agro-gradient-rose rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
                       >
-                         {isAnalyzing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
+                         {isAnalyzing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap size={20} fill="current" />}
                          {isAnalyzing ? "ANALYZING THREAT..." : "INITIALIZE REMEDIATION"}
                       </button>
                    </div>
@@ -337,7 +372,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                        ) : remediationAdvice ? (
                           <div className="animate-in slide-in-from-bottom-10 duration-700">
                              <div className="p-12 md:p-16 bg-black/60 rounded-[64px] border border-rose-500/20 border-l-8 shadow-inner relative overflow-hidden">
-                                <div className="prose prose-invert prose-rose max-w-none text-slate-300 text-xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-8">
+                                <div className="prose prose-invert prose-rose max-w-none text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-8">
                                    {remediationAdvice}
                                 </div>
                              </div>
@@ -383,7 +418,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(244, 63, 94, 0.2); border-radius: 10px; }
         .agro-gradient-rose { background: linear-gradient(135deg, #be123c 0%, #f43f5e 100%); }
         .animate-spin-slow { animation: spin 15s linear infinite; }

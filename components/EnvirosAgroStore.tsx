@@ -25,33 +25,34 @@ import {
   Info,
   Layers,
   Sparkles,
-  Bot,
-  Binary,
-  Star,
-  Tag,
-  ArrowUpRight,
-  Heart,
-  Briefcase,
-  Microscope,
-  Loader2,
-  Building,
-  Scale,
-  ShieldPlus,
-  Terminal,
-  Database,
-  Fingerprint,
-  ChevronRight,
-  Stamp,
-  Link2,
-  ShieldAlert,
-  Wallet,
+  Bot, 
+  Binary, 
+  Star, 
+  Tag, 
+  ArrowUpRight, 
+  Heart, 
+  Briefcase, 
+  Microscope, 
+  Loader2, 
+  Building, 
+  Scale, 
+  ShieldPlus, 
+  Terminal, 
+  Database, 
+  Fingerprint, 
+  ChevronRight, 
+  Stamp, 
+  Link2, 
+  ShieldAlert, 
+  Wallet, 
   ArrowLeft
 } from 'lucide-react';
 import { User, Order } from '../types';
 
 interface EnvirosAgroStoreProps {
   user: User;
-  onSpendEAC: (amount: number, reason: string) => boolean;
+  // Fix: changed onSpendEAC to return Promise<boolean> to match async implementation in App.tsx
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC?: (amount: number, reason: string) => void;
   onPlaceOrder: (order: Partial<Order>) => void;
 }
@@ -181,13 +182,14 @@ const EnvirosAgroStore: React.FC<EnvirosAgroStoreProps> = ({ user, onSpendEAC, o
     setProvisionStep('escrow');
   };
 
-  const handleExecuteEscrow = () => {
+  // Fix: handleExecuteEscrow made async and awaits onSpendEAC to handle Promise<boolean> correctly.
+  const handleExecuteEscrow = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
       alert("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
-    if (onSpendEAC(selectedAsset.price, `OFFICIAL_STORE_PROVISION_${selectedAsset.id}`)) {
+    if (await onSpendEAC(selectedAsset.price, `OFFICIAL_STORE_PROVISION_${selectedAsset.id}`)) {
       setProvisionStep('anchor');
       setIsProcessing(true);
       setTimeout(() => {
@@ -394,7 +396,7 @@ const EnvirosAgroStore: React.FC<EnvirosAgroStoreProps> = ({ user, onSpendEAC, o
 
                        <button 
                          onClick={handleStepVetting}
-                         className="w-full py-8 bg-emerald-600 hover:bg-emerald-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
+                         className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
                        >
                           COMMENCE VETTING SHARD <ChevronRight size={20} />
                        </button>
@@ -452,7 +454,7 @@ const EnvirosAgroStore: React.FC<EnvirosAgroStoreProps> = ({ user, onSpendEAC, o
                              value={esinSign}
                              onChange={e => setEsinSign(e.target.value)}
                              placeholder="EA-XXXX-XXXX-XXXX" 
-                             className="w-full bg-black/60 border border-white/10 rounded-[40px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
+                             className="w-full bg-black/60 border border-white/10 rounded-[40px] py-10 text-center text-4xl font-mono text-white outline-none focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
                           />
                        </div>
 
@@ -543,7 +545,7 @@ const EnvirosAgroStore: React.FC<EnvirosAgroStoreProps> = ({ user, onSpendEAC, o
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .animate-spin-slow { animation: spin 10s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

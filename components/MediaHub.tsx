@@ -1,4 +1,7 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+// Added LucideIcons namespace import to fix dynamic icon lookup in IconComponent
+import * as LucideIcons from 'lucide-react';
 import { 
   Play, 
   Pause, 
@@ -97,7 +100,10 @@ import {
   ThumbsUp,
   MessageSquare,
   CircleDot,
-  Send
+  Send,
+  Leaf,
+  Ear,
+  Waves as WavesIcon
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 import { searchAgroTrends, chatWithAgroExpert, AIResponse } from '../services/geminiService';
@@ -122,6 +128,13 @@ const INITIAL_AUDIO_TRACKS = [
   { title: "M-CONSTANT RESONANCE V2.1", type: "SOIL STIMULATION", duration: "45:00", cost: "FREE", icon: Radio, free: true },
   { title: "SID TRAUMA CLEARING PROTOCOL", type: "WELLNESS", duration: "20:00", cost: "5 EAC", icon: Heart, free: false },
   { title: "BANTU RHYTHMIC INGEST", type: "ANCESTRAL HERITAGE", duration: "60:00", cost: "FREE", icon: Globe, free: true },
+];
+
+const AGROMUSIKA_SOURCES = [
+  { id: 'SRC-01', name: 'Amazonian Fern', biome: 'Tropical', phi: 0.98, color: 'text-emerald-400', freq: 432 },
+  { id: 'SRC-02', name: 'Highland Moss', biome: 'Alpine', phi: 1.42, color: 'text-blue-400', freq: 432 },
+  { id: 'SRC-03', name: 'Bantu Sun-Orchid', biome: 'Savannah', phi: 1.618, color: 'text-amber-400', freq: 432 },
+  { id: 'SRC-04', name: 'Mangrove Root', biome: 'Coastal', phi: 0.82, color: 'text-teal-400', freq: 432 },
 ];
 
 const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEarnEAC, onNavigate }) => {
@@ -149,6 +162,15 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
   // Device References
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Audio Engine States
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const oscillatorRef = useRef<OscillatorNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const filterRef = useRef<BiquadFilterNode | null>(null);
+  const [selectedSource, setSelectedSource] = useState(AGROMUSIKA_SOURCES[0]);
+  const [bioVoltage, setBioVoltage] = useState(0);
+  const [spatialValue, setSpatialValue] = useState(0);
 
   // Blog States
   const [blogTopic, setBlogTopic] = useState('');
@@ -200,6 +222,68 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
       if (reactionInterval) clearInterval(reactionInterval);
     };
   }, [isBroadcasting, onEarnEAC, streamTitle]);
+
+  // Bio-Acoustic Engine Logic
+  useEffect(() => {
+    let bioInterval: any;
+    if (isPlaying && tab === 'waves') {
+      bioInterval = setInterval(() => {
+        const newVal = Math.random();
+        setBioVoltage(newVal);
+        
+        if (oscillatorRef.current && gainRef.current) {
+          // Implementing the math: y(t) = sin(wt + phi_plant)
+          // We modulate frequency based on plant resonance delta
+          const baseFreq = selectedSource.freq;
+          const shift = (newVal - 0.5) * 10; // Phase shift simulation
+          oscillatorRef.current.frequency.setTargetAtTime(baseFreq + shift, audioCtxRef.current!.currentTime, 0.1);
+          
+          // Spatial panning simulation
+          setSpatialValue(Math.sin(Date.now() * 0.001));
+        }
+      }, 100);
+    }
+    return () => clearInterval(bioInterval);
+  }, [isPlaying, tab, selectedSource]);
+
+  const initAudioEngine = () => {
+    if (!audioCtxRef.current) {
+      const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+      audioCtxRef.current = new AC();
+      
+      const osc = audioCtxRef.current.createOscillator();
+      const gain = audioCtxRef.current.createGain();
+      const filter = audioCtxRef.current.createBiquadFilter();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(selectedSource.freq, audioCtxRef.current.currentTime);
+      
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1000, audioCtxRef.current.currentTime);
+      
+      gain.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtxRef.current.destination);
+      
+      osc.start();
+      
+      oscillatorRef.current = osc;
+      gainRef.current = gain;
+      filterRef.current = filter;
+    }
+  };
+
+  const toggleAudio = () => {
+    initAudioEngine();
+    if (isPlaying) {
+      gainRef.current?.gain.setTargetAtTime(0, audioCtxRef.current!.currentTime, 0.2);
+    } else {
+      gainRef.current?.gain.setTargetAtTime(0.3, audioCtxRef.current!.currentTime, 0.2);
+    }
+    setIsPlaying(!isPlaying);
+  };
 
   const stopStream = () => {
     if (streamRef.current) {
@@ -339,7 +423,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
           { id: 'audio', label: 'ACOUSTIC REGISTRY' },
           { id: 'waves', label: 'PLANT WAVE LAB' },
         ].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id as any)} className={`flex-1 lg:flex-none px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${tab === t.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+          <button key={t.id} onClick={() => { setTab(t.id as any); if (t.id !== 'waves') { setIsPlaying(false); gainRef.current?.gain.setValueAtTime(0, audioCtxRef.current?.currentTime || 0); } }} className={`flex-1 lg:flex-none px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${tab === t.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
             {t.label}
           </button>
         ))}
@@ -420,7 +504,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                                <span className="text-indigo-400 font-mono">{publicProofWeight.toFixed(1)}%</span>
                             </div>
                             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                               <div className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.6)]" style={{ width: `${publicProofWeight}%` }}></div>
+                               <div className="h-full bg-indigo-500 shadow-[0_0_100px_rgba(99,102,241,0.6)]" style={{ width: `${publicProofWeight}%` }}></div>
                             </div>
                          </div>
 
@@ -561,7 +645,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                    {VIDEO_NODES.filter(n => n.status === 'LIVE').map(node => (
                       <div key={node.id} className="glass-card rounded-[56px] overflow-hidden border-2 border-rose-500/20 hover:border-rose-500 transition-all flex flex-col group active:scale-[0.98] duration-300 bg-black/60 shadow-3xl">
                          <div className="h-72 relative overflow-hidden">
-                            <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[8s]" alt="" />
+                            <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[8s] grayscale-[0.3] group-hover:grayscale-0" alt="" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
                             <div className="absolute top-6 left-6 flex gap-3">
                                <div className="px-4 py-1.5 bg-rose-600 rounded-full text-white text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl animate-pulse">
@@ -652,7 +736,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                     </div>
                     <div className="space-y-6 relative z-10">
                        <textarea value={blogTopic} onChange={e => setBlogTopic(e.target.value)} placeholder="Enter technical topic for industrial synthesis..." className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-sm font-medium italic focus:ring-4 focus:ring-indigo-500/10 outline-none h-48 resize-none placeholder:text-slate-900 shadow-inner" />
-                       <button onClick={handleForgeBlog} disabled={isForgingBlog || !blogTopic.trim()} className="w-full py-8 agro-gradient rounded-40px text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30">
+                       <button onClick={handleForgeBlog} disabled={isForgingBlog || !blogTopic.trim()} className="w-full py-8 agro-gradient rounded-40px text-white font-black text-sm uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30">
                           {isForgingBlog ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 fill-current" />} {isForgingBlog ? 'SYNTHESIZING...' : 'FORGE SHARD'}
                        </button>
                     </div>
@@ -698,8 +782,8 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                        <div className="space-y-4 pt-10 border-t border-white/5">
                           <div className="flex justify-between text-[10px] font-black uppercase"><span className="text-slate-500">Duration</span><span className="text-white font-mono">{track.duration}</span></div>
                           <div className="flex justify-between text-[10px] font-black uppercase"><span className="text-slate-500">Node Fee</span><span className={track.free ? 'text-emerald-400' : 'text-amber-500'}>{track.cost}</span></div>
-                          <button onClick={() => setIsPlaying(!isPlaying)} className={`w-full py-4 mt-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-3 ${track.free ? 'bg-white/5 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'bg-indigo-600 text-white hover:bg-indigo-500'}`}>
-                             <Play size={14} className="fill-current" /> PLAY SHARD
+                          <button onClick={toggleAudio} className={`w-full py-4 mt-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-3 ${track.free ? 'bg-white/5 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'bg-indigo-600 text-white hover:bg-indigo-500'}`}>
+                             {isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />} {isPlaying ? 'STOP SHARD' : 'PLAY SHARD'}
                           </button>
                        </div>
                     </div>
@@ -708,26 +792,187 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
            </div>
         )}
 
-        {/* TAB: PLANT WAVE LAB */}
+        {/* TAB: PLANT WAVE LAB - UPDATED AUDITORY SYSTEM */}
         {tab === 'waves' && (
-          <div className="max-w-5xl mx-auto space-y-12 animate-in zoom-in duration-500">
-             <div className="p-16 glass-card rounded-[80px] border border-emerald-500/20 bg-emerald-950/5 relative overflow-hidden flex flex-col items-center text-center space-y-12 shadow-3xl group">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[10s]"><Waves size={500} className="text-emerald-400" /></div>
-                <div className="w-32 h-32 rounded-[48px] bg-emerald-600 flex items-center justify-center shadow-[0_0_80px_rgba(16,185,129,0.3)] border-4 border-white/10 relative z-10 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
-                   <AudioWaveform size={64} className="text-white animate-pulse" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-500">
+             {/* Left: Agromusika Sources & Controls */}
+             <div className="lg:col-span-4 space-y-8">
+                <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl">
+                   <div className="flex items-center gap-4 border-b border-white/5 pb-8">
+                      <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl flex items-center justify-center border border-white/10">
+                         <Sprout className="w-8 h-8 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Bio-Acoustic <span className="text-emerald-400">Sources</span></h3>
+                        <p className="text-[10px] text-emerald-500/60 font-mono uppercase tracking-widest mt-2">AGROMUSIKA_v6.5</p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-4">
+                      {AGROMUSIKA_SOURCES.map(source => (
+                         <button 
+                            key={source.id} 
+                            onClick={() => setSelectedSource(source)}
+                            className={`w-full p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${selectedSource.id === source.id ? 'bg-emerald-600/10 border-emerald-500 text-white shadow-xl scale-105' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}
+                         >
+                            <div className="flex items-center gap-5">
+                               <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:rotate-6 transition-transform ${source.color}`}>
+                                  <Leaf size={24} />
+                               </div>
+                               <div>
+                                  <p className="text-sm font-black uppercase tracking-tight italic">{source.name}</p>
+                                  <p className="text-[9px] text-slate-500 font-mono mt-1 uppercase">{source.biome} // {source.freq}Hz</p>
+                               </div>
+                            </div>
+                            <ChevronRight size={20} className={selectedSource.id === source.id ? 'text-emerald-400' : 'text-slate-800'} />
+                         </button>
+                      ))}
+                   </div>
+
+                   <div className="pt-8 border-t border-white/5 space-y-6">
+                      <div className="p-6 bg-emerald-950/20 border border-emerald-500/20 rounded-[32px] flex items-center justify-between shadow-inner group/tune">
+                         <div className="flex items-center gap-4">
+                            <Headphones size={20} className="text-emerald-400 group-hover/tune:scale-110 transition-transform" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Acoustic Sync</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono font-black text-white">432Hz</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                         </div>
+                      </div>
+                      <button 
+                         onClick={toggleAudio}
+                         className={`w-full py-8 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-emerald-500/5 flex items-center justify-center gap-6 ${isPlaying ? 'bg-rose-600' : 'bg-emerald-600'}`}
+                      >
+                         {isPlaying ? <CircleStop size={28} /> : <Ear size={28} />}
+                         {isPlaying ? 'SEVER HANDSHAKE' : 'LISTEN TO WAVES'}
+                      </button>
+                   </div>
                 </div>
-                <div className="space-y-6 relative z-10">
-                   <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic m-0">Plant Wave <span className="text-emerald-400">Synthesis</span></h3>
+
+                <div className="p-10 glass-card rounded-[48px] border border-indigo-500/10 bg-indigo-900/5 space-y-6 group shadow-xl">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 group-hover:rotate-12 transition-transform"><AudioWaveform size={24} className="text-indigo-400" /></div>
+                      <h4 className="text-xl font-black text-white uppercase italic">Resonance <span className="text-indigo-400">Mapping</span></h4>
+                   </div>
+                   <p className="text-xs text-slate-400 italic leading-relaxed">
+                      "Translating biological micro-voltages into 432Hz sine waves. Bio-electric sharding promotes high-resonance growth patterns."
+                   </p>
                 </div>
-                <div className="flex items-end gap-3 h-48 justify-center w-full max-w-4xl relative z-10 px-10">
-                   {[...Array(40)].map((_, i) => (
-                      <div key={i} className="flex-1 bg-emerald-500/40 rounded-full animate-bounce" style={{ height: `${20 + Math.random() * 80}%`, animationDelay: `${i * 0.05}s`, animationDuration: `${0.5 + Math.random()}s` }}></div>
-                   ))}
-                </div>
-                <div className="grid grid-cols-3 gap-8 w-full max-w-3xl relative z-10 py-10 border-y border-white/5">
-                   <div><p className="text-[10px] text-slate-500 font-black uppercase mb-1">Signal Strength</p><p className="text-4xl font-mono font-black text-white">94%</p></div>
-                   <div><p className="text-[10px] text-slate-500 font-black uppercase mb-1">Active Root Link</p><p className="text-4xl font-mono font-black text-emerald-400">0.82v</p></div>
-                   <div><p className="text-[10px] text-slate-500 font-black uppercase mb-1">Registry Scale</p><p className="text-4xl font-mono font-black text-indigo-400">432Hz</p></div>
+             </div>
+
+             {/* Right: Immersive Sonic Orb Interface */}
+             <div className="lg:col-span-8">
+                <div className="glass-card rounded-[64px] border-2 border-emerald-500/20 bg-[#050706] relative overflow-hidden flex flex-col justify-center items-center h-full min-h-[750px] shadow-[0_40px_150px_rgba(0,0,0,0.9)] group">
+                   
+                   {/* Background Dynamic Waveform Grid */}
+                   <div className="absolute inset-0 z-0 opacity-20 overflow-hidden">
+                      <div className="grid grid-cols-24 h-full gap-1 items-center px-10">
+                         {[...Array(48)].map((_, i) => (
+                            <div 
+                               key={i} 
+                               className="w-1 bg-emerald-500/40 rounded-full transition-all duration-300"
+                               style={{ 
+                                  height: isPlaying ? `${20 + Math.random() * 60}%` : '2px',
+                                  opacity: isPlaying ? 0.4 : 0.1
+                               }}
+                            ></div>
+                         ))}
+                      </div>
+                   </div>
+
+                   {/* THE SONIC ORB */}
+                   <div className="relative z-10 flex flex-col items-center space-y-16">
+                      <div className="relative w-80 h-80 flex items-center justify-center">
+                         {/* Static Inner Core */}
+                         <div className={`absolute w-32 h-32 rounded-full border-4 border-emerald-500/40 shadow-[0_0_60px_rgba(16,185,129,0.3)] flex items-center justify-center transition-all duration-1000 ${isPlaying ? 'scale-125' : 'scale-100 opacity-20'}`}>
+                            <AudioLines size={48} className={`text-emerald-400 ${isPlaying ? 'animate-pulse' : ''}`} />
+                         </div>
+
+                         {/* Reactive Outer Shells */}
+                         <div 
+                           className={`absolute inset-0 rounded-full border-2 border-dashed border-emerald-500/20 transition-all duration-[2s] ${isPlaying ? 'animate-spin-slow scale-110' : 'opacity-10'}`}
+                           style={{ animationDuration: '20s' }}
+                         ></div>
+                         <div 
+                           className={`absolute inset-[-40px] rounded-full border border-indigo-500/10 transition-all duration-[4s] ${isPlaying ? 'animate-spin scale-110' : 'opacity-10'}`}
+                           style={{ animationDirection: 'reverse', animationDuration: '40s' }}
+                         ></div>
+
+                         {/* Binaural Aura Effect */}
+                         {isPlaying && (
+                           <div className="absolute inset-[-100px] pointer-events-none">
+                              <div 
+                                 className="absolute top-1/2 left-0 w-4 h-4 bg-emerald-500 rounded-full blur-sm animate-bounce"
+                                 style={{ transform: `translateX(${spatialValue * 150}px)`, animationDuration: '2s' }}
+                              ></div>
+                              <div 
+                                 className="absolute top-1/2 right-0 w-4 h-4 bg-indigo-500 rounded-full blur-sm animate-bounce"
+                                 style={{ transform: `translateX(${-spatialValue * 150}px)`, animationDuration: '2.5s' }}
+                              ></div>
+                           </div>
+                         )}
+
+                         {/* Ingest Heat Gradient */}
+                         <div className={`absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] transition-opacity duration-1000 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}></div>
+                      </div>
+
+                      <div className="text-center space-y-6">
+                         <div className="space-y-2">
+                            <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">
+                               {isPlaying ? <span className="animate-pulse">RESONANCE_LIVE</span> : 'SHARD_STANDBY'}
+                            </h3>
+                            <p className="text-emerald-500/60 font-mono text-[10px] font-black uppercase tracking-[0.8em]">NODE_SYNC_A882 // 432HZ_LOCKED</p>
+                         </div>
+                         
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-6 border-t border-white/5">
+                            <div>
+                               <p className="text-[9px] text-slate-700 font-black uppercase tracking-widest mb-1">Bio-Voltage</p>
+                               <p className="text-2xl font-mono font-black text-white">{isPlaying ? (bioVoltage * 100).toFixed(2) : '0.00'}<span className="text-xs ml-1 text-emerald-800 italic">mV</span></p>
+                            </div>
+                            <div>
+                               <p className="text-[9px] text-slate-700 font-black uppercase tracking-widest mb-1">Phi Factor</p>
+                               <p className="text-2xl font-mono font-black text-white">{selectedSource.phi}<span className="text-xs ml-1 text-indigo-800 italic">α</span></p>
+                            </div>
+                            <div className="hidden md:block">
+                               <p className="text-[9px] text-slate-700 font-black uppercase tracking-widest mb-1">Spectral Albedo</p>
+                               <p className="text-2xl font-mono font-black text-white">0.14<span className="text-xs ml-1 text-slate-800">λ</span></p>
+                            </div>
+                            <div className="hidden md:block">
+                               <p className="text-[9px] text-slate-700 font-black uppercase tracking-widest mb-1">Registry Shard</p>
+                               <p className="text-2xl font-mono font-black text-emerald-400">#882A</p>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* Absolute HUD Overlays */}
+                   <div className="absolute top-10 left-10 p-6 glass-card rounded-[40px] border border-white/10 bg-black/80 shadow-2xl backdrop-blur-md hidden md:block">
+                      <div className="flex items-center gap-4 mb-4">
+                         <Radio size={16} className="text-emerald-400 animate-pulse" />
+                         <span className="text-[9px] font-black text-white uppercase tracking-widest">Inflow Telemetry</span>
+                      </div>
+                      <div className="h-20 w-48 overflow-hidden relative border border-white/5 rounded-xl bg-[#020403]">
+                         <svg viewBox="0 0 200 80" className="w-full h-full">
+                            <path 
+                              d={`M0,40 Q25,${40 + bioVoltage*40} 50,40 T100,40 T150,40 T200,40`}
+                              fill="none" 
+                              stroke="#10b981" 
+                              strokeWidth="2"
+                              className={isPlaying ? 'animate-dash' : ''}
+                            />
+                         </svg>
+                      </div>
+                   </div>
+
+                   <div className="absolute bottom-10 right-10 flex gap-4">
+                      <button className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all shadow-3xl">
+                         <Volume2 size={24} />
+                      </button>
+                      <button className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all shadow-3xl">
+                         <Maximize2 size={24} />
+                      </button>
+                   </div>
                 </div>
              </div>
           </div>
@@ -740,10 +985,31 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
         .shadow-3xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9); }
         .custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(16, 185, 129, 0.2) transparent; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal { scrollbar-width: thin; scrollbar-color: rgba(99, 102, 241, 0.2) transparent; }
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-editor::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-editor::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 20s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes dash { to { stroke-dashoffset: -100; } }
+        .animate-dash { stroke-dasharray: 10; animation: dash 20s linear infinite; }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );
 };
+
+// Helper components for Post Creator and Feed Icons
+const IconComponent: React.FC<{name: string, size?: number, className?: string}> = ({name, size = 18, className = ""}) => {
+  const Icon = (LucideIcons as any)[name] || LucideIcons.FileCode;
+  return <Icon size={size} className={className} />;
+};
+
+const MOCK_FEED = [
+  { id: 'P-1', authorName: 'Steward Alpha', authorEsin: 'EA-ALPHA-88', text: 'Just completed a successful 432Hz sweep on Sector 4. m-Constant increased by 0.05x!', timestamp: new Date().toISOString(), likes: 12, shares: 3, comments: [], mediaType: 'PHOTO' },
+  { id: 'P-2', authorName: 'Gaia Green', authorEsin: 'EA-GAIA-02', text: 'Discovered a rare Bantu Sun-Orchid cluster. Documenting for the archive.', timestamp: new Date().toISOString(), likes: 45, shares: 12, comments: [] },
+  { id: 'P-3', authorName: 'Root Steward', authorEsin: 'EA-CORE-01', text: 'Network quorum established for the Season of Awakening. Ensure all geofence shards are synced.', timestamp: new Date().toISOString(), likes: 124, shares: 56, comments: [] },
+];
 
 export default MediaHub;

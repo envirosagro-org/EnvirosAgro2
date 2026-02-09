@@ -17,7 +17,6 @@ import {
   Globe, Coins, Cookie, Users, Leaf, HeartPulse, ArrowRight,
   Code2, Link2, Share2, Gem, Landmark, ShieldX, ScanLine,
   MapPin, Dna,
-  // Added Fan to fix the "Cannot find name 'Fan'" error on line 302
   Fan
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -143,6 +142,10 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
         addLog("Robot swarm signal transmitted.", 'success');
         setResourceLoad(prev => ({ ...prev, T: Math.min(100, prev.T + 12) }));
       }
+      if (line.includes('Net.bridge_external')) {
+        addLog("External Ingest Bridge Synchronized.", 'success');
+        setResourceLoad(prev => ({ ...prev, I: Math.min(100, prev.I + 15) }));
+      }
       if (line.includes('COMMIT_SHARD')) {
         addLog("Finality reached. Shard anchored.", 'success');
         setResourceLoad(prev => ({ ...prev, I: Math.min(100, prev.I + 4) }));
@@ -167,7 +170,7 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     onEarnEAC(100, 'OS_RESONANCE_TUNING');
   };
 
-  const handleShellSubmit = (e: React.FormEvent) => {
+  const handleShellSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!shellInput.trim() || isExecutingLogic) return;
     const cmd = shellInput.toLowerCase().trim();
@@ -175,10 +178,22 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     
     if (cmd === 'agro-apply-logic' && initialCode) {
       executeOptimization(initialCode);
+    } else if (cmd === 'net-sync') {
+      addLog("Probing all virtual ingest nodes...", 'info');
+      await new Promise(r => setTimeout(r, 1000));
+      addLog("Mesh synchronization agile. All packets aligned.", 'success');
+    } else if (cmd === 'mesh-finality') {
+      addLog("Executing global quorum check...", 'info');
+      await new Promise(r => setTimeout(r, 1500));
+      addLog("Finality reached at 0x882A. m-Constant updated.", 'success');
+    } else if (cmd.startsWith('ingest-status')) {
+      addLog("Status of Pipeline L1: ACTIVE", 'info');
+      addLog("Status of Relay L2: NOMINAL", 'info');
+      addLog("Status of Consensus L3: 100%", 'success');
     } else if (cmd === 'clear') {
       setLogs([]);
     } else if (cmd === 'help') {
-      addLog("Commands: agro-apply-logic, clear, help, sudo blockchain-sync", 'info');
+      addLog("Syscalls: net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
     } else {
       addLog(`Unknown syscall: ${cmd}`, 'error');
     }
@@ -216,7 +231,7 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                  <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Enviros<span className="text-indigo-400">Agro OS</span></h2>
               </div>
               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-2xl opacity-80 group-hover:opacity-100 transition-opacity">
-                 "Orchestrating the quintuplicate SEHTI pillars. Absolute node control at the binary level."
+                 "Orchestrating the quintuplicate SEHTI pillars. Lean integration of external networks via the Kernel Shell."
               </p>
            </div>
         </div>
@@ -250,9 +265,9 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
-            <tab.icon className="w-4 h-4" /> {tab.label}
+            <tab.icon size={14} /> {tab.label}
           </button>
         ))}
       </div>
@@ -293,7 +308,7 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
           </div>
         )}
 
-        {/* VIEW: HARDWARE MONITOR (NEW ENHANCEMENT) */}
+        {/* VIEW: HARDWARE MONITOR */}
         {activeTab === 'hardware' && (
            <div className="space-y-12 animate-in slide-in-from-right-10 duration-1000">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -431,7 +446,7 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                          value={shellInput}
                          onChange={e => setShellInput(e.target.value)}
                          disabled={isExecutingLogic}
-                         placeholder="Enter system instruction..."
+                         placeholder="Enter syscall (e.g. 'net-sync', 'mesh-finality')..."
                          className="w-full bg-black border-2 border-white/10 rounded-[48px] py-10 pl-16 pr-32 text-2xl text-white outline-none font-mono focus:ring-8 focus:ring-emerald-500/10 transition-all shadow-inner placeholder:text-emerald-950 italic" 
                        />
                        <button 

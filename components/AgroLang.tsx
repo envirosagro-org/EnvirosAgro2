@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
+/* Added ArrowUpRight to lucide-react imports to fix error on line 339 */
 import { 
   Code2, Play, ShieldCheck, Scale, Terminal, Bot, Sparkles, 
   Loader2, CheckCircle2, AlertTriangle, History, FileCode, 
@@ -12,7 +12,15 @@ import {
   ChevronDown, LayoutGrid, Settings, Flame, MousePointer2, 
   Box, Braces, Plus, FlaskConical, Code, Network, Share, 
   LineChart, Eye, GitGraph, Split, Table as TableIcon, 
-  ShieldAlert, Gauge, List, Layout
+  ShieldAlert, Gauge, List, Layout,
+  RefreshCw,
+  Braces as BracesIcon,
+  Globe,
+  Radio,
+  FileSearch,
+  CheckCircle,
+  HelpCircle,
+  ArrowUpRight
 } from 'lucide-react';
 import { User, SignalShard } from '../types';
 import { auditAgroLangCode, chatWithAgroExpert } from '../services/geminiService';
@@ -26,13 +34,45 @@ interface AgroLangProps {
 }
 
 const SNIPPETS = [
-  { id: 'S1', title: 'MOISTURE_SYNC', desc: 'Auto-calibrate soil humidity shards.', icon: Waves },
-  { id: 'S2', title: 'SWARM_DEFEND', desc: 'Deploy robotic pest containment shards.', icon: Bot },
-  { id: 'S3', title: 'LEDGER_SETTLE', desc: 'Anchor commercial finality to L3.', icon: Database },
+  { 
+    id: 'NET-1', 
+    title: 'NET_BRIDGE_CORE', 
+    desc: 'Establish lean external network sync.', 
+    icon: Globe,
+    code: `IMPORT EOS.Network AS Net;\nNet.bridge_external(id: "EA-EXT-01", protocol: "ZK_HANDSHAKE");`
+  },
+  { 
+    id: 'NET-2', 
+    title: 'TELEMETRY_CALIBRATE', 
+    desc: 'Recalibrate spectral ingest loads.', 
+    icon: Activity,
+    code: `IMPORT EOS.Kernel AS Kernel;\nKernel.calibrate_ingest(source: "SATELLITE", weight: 0.85);`
+  },
+  { 
+    id: 'S1', 
+    title: 'MOISTURE_SYNC', 
+    desc: 'Auto-calibrate soil humidity shards.', 
+    icon: Waves,
+    code: `Bio.sync_moisture(zone: "SECTOR_4", target: "OPTIMAL");`
+  },
+  { 
+    id: 'S2', 
+    title: 'SWARM_DEFEND', 
+    desc: 'Deploy robotic pest containment shards.', 
+    icon: Bot,
+    code: `Bot.swarm_deploy(units: 12, mode: "MIN_STRESS");`
+  },
+  { 
+    id: 'S3', 
+    title: 'LEDGER_SETTLE', 
+    desc: 'Anchor commercial finality to L3.', 
+    icon: Database,
+    code: `COMMIT_SHARD(registry: "GLOBAL_L3", finality: ZK_PROVEN);`
+  },
 ];
 
 const AgroLang: React.FC<AgroLangProps> = ({ user, onSpendEAC, onEarnEAC, onExecuteToShell, onEmitSignal }) => {
-  const [activeTab, setActiveTab] = useState<'editor' | 'graph' | 'heatmap'>('editor');
+  const [activeTab, setActiveTab] = useState<'editor' | 'translator' | 'graph'>('editor');
   const [activeShard, setActiveShard] = useState('Production_Init.al');
   const [codeMap, setCodeMap] = useState<Record<string, string>>({
     'Production_Init.al': `// AGROLANG_ENVIRONMENT: EnvirosAgro OS v6.5
@@ -63,6 +103,11 @@ SEQUENCE Optimize_Cycle_882 {
   const [complianceStatus, setComplianceStatus] = useState<'IDLE' | 'COMPLIANT' | 'VIOLATION'>('IDLE');
   const [hasNewForge, setHasNewForge] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(true);
+
+  // Translator States
+  const [externalSchema, setExternalSchema] = useState('');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translationResult, setTranslationResult] = useState<string | null>(null);
 
   const handleCompile = async () => {
     const fee = 25;
@@ -121,6 +166,33 @@ SEQUENCE Optimize_Cycle_882 {
     }
   };
 
+  const handleTranslate = async () => {
+    if (!externalSchema.trim()) return;
+    const fee = 10;
+    if (!await onSpendEAC(fee, 'ORACLE_TRANSLATION_HANDSHAKE')) return;
+    
+    setIsTranslating(true);
+    setTranslationResult(null);
+    try {
+      const prompt = `Act as the AgroLang Translator. Convert the following external JSON telemetry schema into valid AgroLang industrial logic for EnvirosAgro OS v6.5. 
+      Schema: "${externalSchema}"
+      Requirements: Include IMPORT statements for EOS.Network and EOS.Kernel. Wrap in a SEQUENCE block. Ensure m-constant optimization is mentioned.`;
+      
+      const res = await chatWithAgroExpert(prompt, []);
+      setTranslationResult(res.text);
+      onEarnEAC(5, 'NETWORK_INTEGRATION_ADAPTER_FORGED');
+    } catch (e) {
+      setTranslationResult("// Translation failed. Check Oracle connectivity.");
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const insertSnippet = (snippet: any) => {
+    const currentCode = codeMap[activeShard];
+    setCodeMap({ ...codeMap, [activeShard]: currentCode + "\n" + snippet.code });
+  };
+
   const handleDeploy = () => {
     onEmitSignal({
       type: 'network',
@@ -146,7 +218,7 @@ SEQUENCE Optimize_Cycle_882 {
          <div className="space-y-6 relative z-10 max-w-4xl">
             <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">AGROLANG <span className="text-indigo-400">STUDIO.</span></h2>
             <p className="text-slate-400 text-xl md:text-2xl font-medium italic leading-relaxed opacity-80">
-               "Designing industrial sequences that optimize the EnvirosAgro operating system kernel."
+               "Forging the agile language of the mesh. Translate external telemetry into industrial finality."
             </p>
          </div>
       </div>
@@ -155,8 +227,8 @@ SEQUENCE Optimize_Cycle_882 {
          <div className="p-1 glass-card bg-black/40 rounded-2xl flex border border-white/5 shadow-2xl">
             {[
               { id: 'editor', label: 'Logic Editor', icon: Code2 },
-              { id: 'graph', label: 'Signal Flow', icon: GitGraph },
-              { id: 'heatmap', label: 'm-Impact Heatmap', icon: Gauge }
+              { id: 'translator', label: 'Agro Translation', icon: Languages },
+              { id: 'graph', label: 'Signal Flow', icon: GitGraph }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -188,12 +260,12 @@ SEQUENCE Optimize_Cycle_882 {
         {isLibraryOpen && (
            <div className="xl:col-span-3 glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 space-y-10 shadow-3xl animate-in slide-in-from-left-4">
               <div className="flex items-center justify-between border-b border-white/5 pb-6">
-                 <h4 className="text-sm font-black text-white uppercase italic tracking-widest">Snippet <span className="text-indigo-400">Registry</span></h4>
+                 <h4 className="text-sm font-black text-white uppercase italic tracking-widest">Protocol <span className="text-indigo-400">Registry</span></h4>
                  <button className="p-2 text-slate-700 hover:text-white transition-colors"><Plus size={16} /></button>
               </div>
               <div className="space-y-4">
                  {SNIPPETS.map(s => (
-                    <div key={s.id} className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/[0.05] hover:border-indigo-500/30 transition-all cursor-pointer group">
+                    <div key={s.id} onClick={() => insertSnippet(s)} className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/[0.05] hover:border-indigo-500/30 transition-all cursor-pointer group">
                        <div className="flex items-center gap-4 mb-3">
                           <div className="p-3 bg-indigo-600/10 rounded-xl text-indigo-400 group-hover:rotate-12 transition-transform shadow-inner"><s.icon size={18} /></div>
                           <span className="text-xs font-black text-white uppercase tracking-tighter">{s.title}</span>
@@ -202,18 +274,12 @@ SEQUENCE Optimize_Cycle_882 {
                     </div>
                  ))}
               </div>
-              <div className="p-6 bg-indigo-500/5 rounded-3xl border border-indigo-500/20 mt-10">
-                 <p className="text-[10px] text-indigo-300 italic leading-relaxed font-medium text-center">"Drag shards into the editor to extend your industrial logic."</p>
-              </div>
            </div>
         )}
 
         <div className={`${isLibraryOpen ? 'xl:col-span-9' : 'xl:col-span-12'} space-y-8 flex flex-col`}>
            <div className="glass-card rounded-[64px] border-2 border-white/5 bg-[#050706] overflow-hidden shadow-3xl flex flex-col h-[700px] relative group">
-              <div className="absolute inset-0 pointer-events-none opacity-5 group-hover:opacity-10 transition-opacity">
-                 <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/20 to-transparent absolute top-0 animate-scan"></div>
-              </div>
-
+              
               <div className="flex-1 flex flex-col overflow-hidden relative">
                  {activeTab === 'editor' && (
                     <div className="flex-1 flex gap-10 p-12 bg-black relative overflow-hidden">
@@ -229,43 +295,66 @@ SEQUENCE Optimize_Cycle_882 {
                     </div>
                  )}
 
-                 {activeTab === 'heatmap' && (
-                   <div className="flex-1 p-20 animate-in zoom-in duration-500 bg-black/40 flex flex-col items-center justify-center">
-                      <div className="max-w-4xl w-full space-y-12">
-                         <div className="flex justify-between items-center px-10">
-                            <h4 className="text-3xl font-black text-white uppercase italic tracking-widest">m-Constant <span className="text-indigo-400">Load Map</span></h4>
-                            <div className="flex items-center gap-3 px-6 py-2 bg-indigo-600/10 rounded-full border border-indigo-500/20 shadow-inner">
-                               <div className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse shadow-[0_0_15px_#6366f1]"></div>
-                               <span className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">NEURAL_CALIBRATION_ACTIVE</span>
-                            </div>
-                         </div>
-                         <div className="grid gap-6">
-                            {[
-                               { line: 'IMPORT...', impact: 0, col: 'bg-slate-800' },
-                               { line: 'AUTHENTICATE...', impact: 12, col: 'bg-indigo-950' },
-                               { line: 'CONSTRAIN...', impact: 35, col: 'bg-blue-900' },
-                               { line: 'Bio.apply_freq...', impact: 94, col: 'bg-indigo-800 animate-pulse' },
-                               { line: 'Bot.swarm_deploy...', impact: 68, col: 'bg-blue-800' },
-                               { line: 'COMMIT_SHARD...', impact: 100, col: 'bg-emerald-600 shadow-[0_0_20px_#10b981]' },
-                            ].map((heat, i) => (
-                               <div key={i} className="flex items-center gap-10 group">
-                                  <span className="w-32 text-[11px] font-mono text-slate-600 group-hover:text-white transition-colors">{heat.line}</span>
-                                  <div className="flex-1 h-14 bg-black/60 rounded-[32px] border border-white/5 overflow-hidden p-1 shadow-inner relative">
-                                     <div className={`h-full rounded-[28px] transition-all duration-[2.5s] ${heat.col}`} style={{ width: `${heat.impact}%` }}></div>
-                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                        <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Impact Vector: {heat.impact}%</span>
-                                     </div>
-                                  </div>
-                               </div>
-                            ))}
-                         </div>
-                         <div className="p-10 glass-card rounded-[56px] border border-white/10 bg-black/80 text-center shadow-3xl">
-                            <p className="text-slate-400 text-lg italic leading-relaxed font-medium">
-                               "Thermal clusters indicate high-frequency OS syscalls. Ensure Bio-Aura frequencies are balanced before final sharding to prevent kernel fatigue."
-                            </p>
-                         </div>
-                      </div>
-                   </div>
+                 {activeTab === 'translator' && (
+                    <div className="flex-1 p-12 animate-in slide-in-from-right-10 duration-700 bg-black/40 flex flex-col gap-8">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
+                          <div className="flex flex-col space-y-6">
+                             <div className="flex justify-between items-center px-4">
+                                <h4 className="text-xl font-black text-white uppercase italic tracking-widest">External <span className="text-indigo-400">Telemetry</span></h4>
+                                <span className="text-[8px] font-mono text-slate-700 uppercase">Input_Schema_Buffer</span>
+                             </div>
+                             <textarea 
+                                value={externalSchema}
+                                onChange={e => setExternalSchema(e.target.value)}
+                                placeholder='Paste raw network schema here (e.g. {"temp": 24.2, "humidity": 60})...'
+                                className="flex-1 bg-black/80 border-2 border-white/10 rounded-[40px] p-10 text-white font-mono text-sm focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-stone-900 shadow-inner italic"
+                             />
+                             <button 
+                                onClick={handleTranslate}
+                                disabled={isTranslating || !externalSchema.trim()}
+                                className="w-full py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl flex items-center justify-center gap-4 disabled:opacity-30"
+                             >
+                                {isTranslating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                                GENERATE_AGROLANG_ADAPTER
+                             </button>
+                          </div>
+
+                          <div className="flex flex-col space-y-6">
+                             <div className="flex justify-between items-center px-4">
+                                <h4 className="text-xl font-black text-white uppercase italic tracking-widest">AgroLang <span className="text-emerald-400">Handshake</span></h4>
+                                <span className="text-[8px] font-mono text-slate-700 uppercase">Internal_Protocol_Forge</span>
+                             </div>
+                             <div className="flex-1 bg-black/60 border-2 border-white/5 rounded-[40px] p-10 font-mono text-sm text-emerald-400/80 leading-relaxed italic overflow-y-auto custom-scrollbar-editor shadow-inner relative">
+                                {isTranslating ? (
+                                   <div className="absolute inset-0 flex flex-col items-center justify-center space-y-6 bg-black/40 backdrop-blur-sm">
+                                      <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+                                      <p className="text-emerald-400 font-black text-[10px] uppercase tracking-widest animate-pulse">Forging Sycamore Shard...</p>
+                                   </div>
+                                ) : translationResult ? (
+                                   <>
+                                      <pre>{translationResult}</pre>
+                                      <button 
+                                         onClick={() => { setCodeMap({ ...codeMap, [activeShard]: translationResult }); setActiveTab('editor'); }}
+                                         className="absolute bottom-6 right-6 p-4 bg-emerald-600 rounded-2xl text-white shadow-3xl hover:bg-emerald-500 transition-all active:scale-90"
+                                      >
+                                         <ArrowUpRight size={20} />
+                                      </button>
+                                   </>
+                                ) : (
+                                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-10">
+                                      <RefreshCw size={48} className="animate-spin-slow" />
+                                      <p className="text-xs uppercase tracking-widest font-black">Awaiting Handshake Trigger</p>
+                                   </div>
+                                )}
+                             </div>
+                             <div className="p-6 bg-emerald-500/5 rounded-[32px] border border-emerald-500/20">
+                                <p className="text-[10px] text-emerald-400 italic leading-relaxed text-center font-medium">
+                                   "Translation logic aligns third-party telemetry with SEHTI Pillar IV (Technological) ensuring zero data friction."
+                                </p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
                  )}
               </div>
 
@@ -306,11 +395,27 @@ SEQUENCE Optimize_Cycle_882 {
         .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 10px; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );
 };
+
+// Internal Helper for Translator
+const Languages = ({ size = 24, className = "" }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>
+  </svg>
+);
 
 export default AgroLang;

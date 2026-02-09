@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
@@ -21,7 +22,8 @@ import {
   Coins,
   Wind,
   Box,
-  Binary
+  Binary,
+  Siren
 } from 'lucide-react';
 import { User, SignalShard, ViewState } from '../types';
 
@@ -41,7 +43,7 @@ const DynamicIcon: React.FC<{ name: string; size?: number; className?: string }>
 
 const SignalCenter: React.FC<SignalCenterProps> = ({ user, signals = [], setSignals, onNavigate, initialSection }) => {
   const [activeView, setActiveView] = useState<'terminal' | 'ledger' | 'jit' | 'topology'>('terminal');
-  const [filter, setFilter] = useState<'all' | 'task' | 'system' | 'commerce' | 'pulse' | 'liturgical' | 'ledger_anchor'>('all');
+  const [filter, setFilter] = useState<'all' | 'task' | 'system' | 'commerce' | 'pulse' | 'liturgical' | 'ledger_anchor' | 'emergency'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedShardId, setExpandedShardId] = useState<string | null>(null);
 
@@ -85,6 +87,7 @@ const SignalCenter: React.FC<SignalCenterProps> = ({ user, signals = [], setSign
       case 'REVENUE': return 'text-blue-400 border-blue-500/20 bg-blue-500/5';
       case 'RESOLUTION': return 'text-rose-400 border-rose-500/20 bg-rose-500/5';
       case 'INVENTION': return 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5';
+      case 'EMERGENCY': return 'text-rose-600 border-rose-500/20 bg-rose-500/5';
       default: return 'text-slate-400 border-white/5 bg-white/5';
     }
   };
@@ -177,7 +180,7 @@ const SignalCenter: React.FC<SignalCenterProps> = ({ user, signals = [], setSign
 
       {/* 3. Filter Ribbon */}
       <div className="flex gap-4 overflow-x-auto scrollbar-hide px-4">
-         {['all', 'ledger_anchor', 'liturgical', 'task', 'system', 'commerce', 'pulse'].map(f => (
+         {['all', 'emergency', 'ledger_anchor', 'liturgical', 'task', 'system', 'commerce', 'pulse'].map(f => (
            <button 
              key={f} 
              onClick={() => setFilter(f as any)}
@@ -208,6 +211,7 @@ const SignalCenter: React.FC<SignalCenterProps> = ({ user, signals = [], setSign
                     filteredSignals.map((sig) => {
                       const isExpanded = expandedShardId === sig.id;
                       const isLedger = sig.type === 'ledger_anchor';
+                      const isEmergency = sig.type === 'emergency';
                       const ledgerContext = sig.meta?.ledgerContext || 'NONE';
                       const ledgerColor = getLedgerColor(ledgerContext);
 
@@ -217,18 +221,20 @@ const SignalCenter: React.FC<SignalCenterProps> = ({ user, signals = [], setSign
                               onClick={() => setExpandedShardId(isExpanded ? null : sig.id)}
                               className={`grid grid-cols-12 p-8 md:p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer border-l-[8px] ${
                                 sig.read ? 'border-transparent opacity-40' : 
+                                isEmergency ? 'border-rose-600 animate-pulse bg-rose-500/5' :
                                 isLedger ? `border-${ledgerColor.split(' ')[0].replace('text-', '')} ${ledgerColor.split(' ').slice(2).join(' ')}` :
                                 sig.priority === 'critical' ? 'border-rose-600 animate-pulse' : 
                                 sig.priority === 'high' ? 'border-amber-500' : 'border-indigo-600'
                               }`}
                            >
                               <div className="col-span-5 flex items-center gap-5">
-                                 <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl border flex items-center justify-center group-hover:scale-110 transition-all shrink-0 ${isLedger ? ledgerColor : 'bg-white/5 border-white/10 text-indigo-400'}`}>
+                                 <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl border flex items-center justify-center group-hover:scale-110 transition-all shrink-0 ${isEmergency ? 'bg-rose-600/10 border-rose-500/30 text-rose-500' : isLedger ? ledgerColor : 'bg-white/5 border-white/10 text-indigo-400'}`}>
                                     <DynamicIcon name={sig.actionIcon || 'MessageSquare'} size={24} />
                                  </div>
                                  <div className="truncate pr-4">
                                     <h4 className="text-sm md:text-lg font-black text-white uppercase italic tracking-tight m-0 leading-none group-hover:text-indigo-400 transition-colors truncate">
                                       {isLedger && <span className="text-[10px] mr-2 opacity-50">[{ledgerContext}]</span>}
+                                      {isEmergency && <span className="text-[10px] mr-2 text-rose-500">[ALERT]</span>}
                                       {sig.title}
                                     </h4>
                                     <p className="text-[10px] text-slate-500 italic mt-2 line-clamp-1 opacity-80 group-hover:opacity-100 font-medium">"{sig.message}"</p>
@@ -380,6 +386,7 @@ const SignalCenter: React.FC<SignalCenterProps> = ({ user, signals = [], setSign
       </div>
 
       <style>{`
+        .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
