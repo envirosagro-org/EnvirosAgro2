@@ -12,7 +12,8 @@ import {
   Music,
   GraduationCap,
   ArrowUpRight,
-  ShoppingBag
+  ShoppingBag,
+  Sparkle
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard } from './types';
 import Dashboard from './components/Dashboard';
@@ -665,6 +666,7 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [isConsultantOpen, setIsConsultantOpen] = useState(false);
   
   // Vector History Tracking
   const [history, setHistory] = useState<{view: ViewState, section: string | null}[]>([]);
@@ -698,7 +700,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsGlobalSearchOpen(prev => !prev); }
-      if (e.key === 'Escape') setIsGlobalSearchOpen(false);
+      if (e.key === 'Escape') {
+        setIsGlobalSearchOpen(false);
+        setIsConsultantOpen(false);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -815,6 +820,7 @@ const App: React.FC = () => {
     setView(v);
     setViewSection(section || null);
     setIsMobileMenuOpen(false);
+    setIsConsultantOpen(false);
   }, [view, viewSection]);
 
   const goBack = useCallback(() => {
@@ -890,7 +896,6 @@ const App: React.FC = () => {
       case 'emergency_portal': return <EmergencyPortal user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
       case 'agro_regency': return <AgroRegency user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
       case 'code_of_laws': return <CodeOfLaws user={currentUser} />;
-      /* Fixed: replaced currentTime with currentUser */
       case 'agro_calendar': return <AgroCalendar user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onEmitSignal={emitSignal} onNavigate={navigate} />;
       case 'chroma_system': return <ChromaSystem user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
       case 'envirosagro_store': return <EnvirosAgroStore user={currentUser} onSpendEAC={handleSpendEAC} onPlaceOrder={(o) => saveCollectionItem('orders', o)} />;
@@ -974,7 +979,7 @@ const App: React.FC = () => {
            <div className="flex items-center gap-4 overflow-hidden">
               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden lg:block p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0">{isSidebarOpen ? <ChevronLeft size={20}/> : <Menu size={20}/>}</button>
               <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0"><Menu size={20}/></button>
-              <div className="space-y-0.5 truncate max-w-[150px] sm:max-w-none">
+              <div className="space-y-0.5 truncate max-w-[120px] sm:max-w-none">
                  <h2 className="text-base sm:text-xl font-black text-white uppercase italic tracking-tighter truncate leading-tight">{view.replace(/_/g, ' ')}</h2>
                  <p className="text-[7px] sm:text-[9px] text-slate-600 font-mono tracking-widest uppercase truncate">SYNC: {user ? 'ANCHORED' : 'OBSERVER'}</p>
               </div>
@@ -994,6 +999,16 @@ const App: React.FC = () => {
            </div>
 
            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Integrated AI Assistant Toggle */}
+              <button 
+                onClick={() => { setIsConsultantOpen(!isConsultantOpen); setIsGlobalSearchOpen(false); }}
+                className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
+                title="Concierge Oracle"
+              >
+                 <SycamoreLogo size={20} className={isConsultantOpen ? "text-white" : "text-emerald-400"} />
+                 <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black ${isConsultantOpen ? 'animate-none' : 'animate-pulse'}`}></div>
+              </button>
+
               <button onClick={() => setIsGlobalSearchOpen(true)} className="md:hidden p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all"><Search size={18} className="text-slate-400" /></button>
               {user && <button onClick={() => setView('wallet')} className="px-3 sm:px-4 py-2 sm:py-2.5 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={14} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[10px] sm:text-xs font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
               <button onClick={() => setView('profile')} className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
@@ -1060,7 +1075,7 @@ const App: React.FC = () => {
       <GlobalSearch isOpen={isGlobalSearchOpen} onClose={() => setIsGlobalSearchOpen(false)} onNavigate={navigate} vendorProducts={vendorProducts} />
       <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={handleEarnEAC} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
       <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />
-      <FloatingConsultant user={user || GUEST_STWD} onNavigate={navigate} />
+      <FloatingConsultant isOpen={isConsultantOpen} onClose={() => setIsConsultantOpen(false)} user={user || GUEST_STWD} onNavigate={navigate} />
     </div>
   );
 };
