@@ -50,7 +50,14 @@ export interface User {
     privacyMode: 'Public' | 'Private' | 'Consensus_Only';
     autoSync: boolean;
     biometricLogin: boolean;
-    theme: 'Dark' | 'High_Resonance';
+    theme: 'Dark' | 'High_Resonance' | 'OLED_Black';
+    fontSize?: number;
+    units?: 'Metric' | 'Imperial';
+    locationAccuracy?: 'High' | 'Battery';
+    connectivityMode?: 'Satellite' | 'LoRaWAN' | 'Cellular';
+    anonymizedSharing?: boolean;
+    geofenceSecurity?: boolean;
+    dataRefreshRate?: 'Real-time' | '5m' | '1h';
   };
   resources?: AgroResource[];
   zodiacFlower?: {
@@ -396,7 +403,7 @@ export type ViewState =
   | 'agro_regency' | 'code_of_laws' | 'agro_calendar' | 'chroma_system'
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv' | 'registry_handshake'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger' | 'agrolang'
-  | 'network' | 'sitemap' | 'auth' | 'ai_analyst';
+  | 'network' | 'sitemap' | 'auth' | 'ai_analyst' | 'settings';
 
 /**
  * Vector address representation: [Dimension].[Element]

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, Factory, Monitor, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBooy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, Factory, Monitor, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
   Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, Signal as SignalIcon, Target,
   Truck, Layers, Map as MapIcon, Compass as CompassIcon, Server, Workflow, ShieldPlus, ChevronLeftCircle, ArrowLeft,
   ChevronRight, ArrowUp, UserCheck, BookOpen, Stamp, Binoculars, Command, Bot, Wand2, Brain, ArrowRight, Home,
@@ -16,7 +16,9 @@ import {
   ShoppingBag,
   Sparkle,
   Mail,
-  BellRing
+  BellRing,
+  Settings,
+  CheckCircle2
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress } from './types';
 import Dashboard from './components/Dashboard';
@@ -71,6 +73,7 @@ import SignalCenter from './components/SignalCenter';
 import Sitemap from './components/Sitemap';
 import AIAnalyst from './components/AIAnalyst';
 import VerificationHUD from './components/VerificationHUD';
+import SettingsPortal from './components/SettingsPortal';
 
 import { 
   syncUserToCloud, 
@@ -83,7 +86,9 @@ import {
   dispatchNetworkSignal,
   markPermanentAction,
   listenToPulse,
-  refreshAuthUser
+  refreshAuthUser,
+  updateSignalReadStatus,
+  markAllSignalsAsReadInDb
 } from './services/firebaseService';
 import { chatWithAgroExpert } from './services/geminiService';
 
@@ -138,6 +143,16 @@ const LOGISTICS_SHARDS = [
 const LMS_EXAMS_MODULES = [
   { id: 'EXM-882', title: 'EOS Framework Master Exam', reward: '500 EAC', category: 'Vetting', icon: BadgeCheck },
   { id: 'MOD-104', title: 'm-Constant Resilience Theory', reward: '150 EAC', category: 'Technical', icon: GraduationCap },
+];
+
+const RECOMMENDED_SEARCHES = [
+  { label: 'Market Cloud', icon: Globe, query: 'economy' },
+  { label: 'Carbon Credits', icon: Wind, query: 'carbon' },
+  { label: 'Steward Alpha', icon: UserIcon, query: 'Steward Alpha' },
+  { label: 'Soil Analysis', icon: Microscope, query: 'soil' },
+  { label: 'Agro OS Kernel', icon: Binary, query: 'farm_os' },
+  { label: 'Bantu Seeds', icon: Sprout, query: 'bantu' },
+  { label: 'Registry Map', icon: MapIcon, query: 'sitemap' },
 ];
 
 const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
@@ -233,7 +248,14 @@ const GUEST_STWD: User = {
   },
   skills: {},
   isReadyForHire: false,
-  completedActions: []
+  completedActions: [],
+  settings: {
+    notificationsEnabled: true,
+    privacyMode: 'Public',
+    autoSync: true,
+    biometricLogin: false,
+    theme: 'Dark'
+  }
 };
 
 export interface RegistryItem {
@@ -254,6 +276,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
     items: [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
       { id: 'ai_analyst', name: 'Neural Analyst', icon: Brain },
+      { id: 'settings', name: 'System Settings', icon: Settings },
       { id: 'profile', name: 'Steward Profile', icon: UserIcon },
       { id: 'network_signals', name: 'Signal Terminal', icon: SignalIcon, sections: [{id: 'terminal', label: 'Inbound Feed'}, {id: 'ledger', label: 'Signal History'}] },
       { id: 'network', name: 'Network Topology', icon: NetworkIcon },
@@ -497,16 +520,58 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
            )}
 
            {searchTerm.trim() === '' ? (
-             <div className="h-full flex flex-col items-center justify-center text-center opacity-30 space-y-10 py-16">
-                <div className="relative">
-                   <Command size={100} className="text-slate-600 animate-float" />
-                   <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+             <div className="h-full flex flex-col space-y-16 py-8">
+                {/* Visual Splash */}
+                <div className="flex flex-col items-center justify-center text-center opacity-30 space-y-10">
+                   <div className="relative">
+                      <Command size={100} className="text-slate-600 animate-float" />
+                      <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+                   </div>
+                   <div className="space-y-4">
+                     <p className="text-4xl md:text-6xl font-black uppercase tracking-[0.5em] text-white italic drop-shadow-2xl">SEARCH_MATRIX</p>
+                     <p className="text-sm md:text-lg font-bold uppercase tracking-widest italic text-slate-500 max-w-md mx-auto leading-relaxed">
+                       Query organizational ledgers, media shards, or industrial stewards
+                     </p>
+                   </div>
                 </div>
-                <div className="space-y-4">
-                  <p className="text-4xl md:text-6xl font-black uppercase tracking-[0.5em] text-white italic drop-shadow-2xl">SEARCH_MATRIX</p>
-                  <p className="text-sm md:text-lg font-bold uppercase tracking-widest italic text-slate-500 max-w-md mx-auto leading-relaxed">
-                    Query organizational ledgers, media shards, or industrial stewards
-                  </p>
+
+                {/* Search Recommendations / Chips */}
+                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-1000">
+                   <div className="flex items-center gap-4 px-4">
+                      <Sparkles size={16} className="text-emerald-400" />
+                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Recommended_Queries</p>
+                   </div>
+                   <div className="flex flex-wrap gap-4 px-4">
+                      {RECOMMENDED_SEARCHES.map((rec, i) => (
+                         <button
+                           key={i}
+                           onClick={() => setSearchTerm(rec.query)}
+                           className="flex items-center gap-4 px-8 py-5 bg-white/5 hover:bg-emerald-600/10 border-2 border-white/5 hover:border-emerald-500/40 rounded-[32px] transition-all group/chip active:scale-95 shadow-xl"
+                         >
+                            <rec.icon size={18} className="text-slate-500 group-hover/chip:text-emerald-400 transition-colors" />
+                            <span className="text-sm font-black text-slate-400 group-hover/chip:text-white uppercase tracking-widest italic">{rec.label}</span>
+                         </button>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="p-8 bg-indigo-900/10 border-2 border-indigo-500/20 rounded-[48px] flex items-center justify-between group/bot-hint shadow-2xl mx-4">
+                   <div className="flex items-center gap-8">
+                      <div className="p-5 bg-indigo-600 rounded-[28px] shadow-3xl border-2 border-white/10 group-hover/bot-hint:rotate-12 transition-transform">
+                         <Bot size={32} className="text-white animate-pulse" />
+                      </div>
+                      <div className="text-left">
+                         <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0">Need more depth?</h4>
+                         <p className="text-[10px] text-slate-500 mt-2 font-medium italic opacity-80 group-hover/bot-hint:opacity-100 transition-opacity">
+                            "Initialize an Oracle Deep Query to perform a high-fidelity scan across all unindexed sharded data."
+                         </p>
+                      </div>
+                   </div>
+                   <div className="hidden md:flex gap-4">
+                      <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
+                         <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest italic">NEURAL_READY</span>
+                      </div>
+                   </div>
                 </div>
              </div>
            ) : (
@@ -683,6 +748,7 @@ const App: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
   const [industrialUnits, setIndustrialUnits] = useState<RegisteredUnit[]>([]);
+  const [bitrate, setBitrate] = useState(4500);
   const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
   const [blockchain, setBlockchain] = useState<AgroBlock[]>([]);
   const [transactions, setTransactions] = useState<AgroTransaction[]>([]);
@@ -818,6 +884,34 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
+
+  const markSignalAsRead = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    // Optimistic update
+    setSignals(prev => prev.map(s => s.id === id ? { ...s, read: true } : s));
+    // Persist to Firestore
+    await updateSignalReadStatus(id, true);
+  };
+
+  const markAllSignalsAsRead = async () => {
+    const unreadIds = signals.filter(s => !s.read).map(s => s.id);
+    if (unreadIds.length === 0) return;
+
+    // Optimistic update
+    setSignals(prev => prev.map(s => ({ ...s, read: true })));
+    
+    // Persist to Firestore
+    await markAllSignalsAsReadInDb(unreadIds);
+
+    emitSignal({
+      title: 'INBOX_SYNCHRONIZED',
+      message: 'All unread network signals have been cleared and archived.',
+      priority: 'low',
+      type: 'system',
+      origin: 'MANUAL',
+      actionIcon: 'CheckCircle2'
+    });
+  };
   
   // Refined Vector Navigation
   const navigate = useCallback((v: ViewState, section?: string, pushToHistory = true) => {
@@ -934,6 +1028,7 @@ const App: React.FC = () => {
       case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} initialSection={viewSection} />;
       case 'ingest': return <NetworkIngest user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
       case 'info': return <InfoPortal onNavigate={navigate} />;
+      case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
       default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }
   };
@@ -1051,7 +1146,16 @@ const App: React.FC = () => {
                           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
                              <Mail size={14} /> USER_INBOX_TERMINAL
                           </span>
-                          <button onClick={() => navigate('network_signals')} className="text-[9px] font-black text-slate-500 hover:text-white uppercase">Full Terminal</button>
+                          <div className="flex items-center gap-4">
+                            <button 
+                              onClick={markAllSignalsAsRead} 
+                              className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-1.5 transition-colors"
+                              title="Mark all signals as verified"
+                            >
+                               <CheckCircle2 size={12} /> Mark All Read
+                            </button>
+                            <button onClick={() => navigate('network_signals')} className="text-[9px] font-black text-slate-500 hover:text-white uppercase">Full Terminal</button>
+                          </div>
                        </div>
                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar divide-y divide-white/5">
                           {signals.filter(s => !s.read).slice(0, 5).length === 0 ? (
@@ -1061,11 +1165,20 @@ const App: React.FC = () => {
                               <div 
                                 key={sig.id} 
                                 onClick={() => { navigate(sig.meta?.target as ViewState || 'network_signals'); setIsInboxOpen(false); }}
-                                className={`p-5 hover:bg-white/5 cursor-pointer transition-all border-l-4 ${sig.priority === 'critical' ? 'border-rose-600' : sig.priority === 'high' ? 'border-amber-500' : 'border-indigo-500'}`}
+                                className={`p-5 hover:bg-white/5 cursor-pointer transition-all border-l-4 group/msg ${sig.priority === 'critical' ? 'border-rose-600' : sig.priority === 'high' ? 'border-amber-500' : 'border-indigo-500'}`}
                               >
-                                 <div className="flex items-center gap-3 mb-2">
-                                    <span className="text-[8px] font-mono text-slate-600">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded ${sig.priority === 'critical' ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-400'}`}>{sig.priority}</span>
+                                 <div className="flex items-center justify-between gap-3 mb-2">
+                                    <div className="flex items-center gap-3">
+                                       <span className="text-[8px] font-mono text-slate-600">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                       <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded ${sig.priority === 'critical' ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-400'}`}>{sig.priority}</span>
+                                    </div>
+                                    <button 
+                                      onClick={(e) => markSignalAsRead(sig.id, e)}
+                                      className="opacity-0 group-hover/msg:opacity-100 p-1.5 hover:bg-emerald-500/10 rounded-lg text-emerald-500 transition-all"
+                                      title="Mark Read"
+                                    >
+                                       <CheckCircle2 size={12} />
+                                    </button>
                                  </div>
                                  <h5 className="text-[11px] font-black text-white uppercase italic truncate">{sig.title}</h5>
                                  <p className="text-[10px] text-slate-500 mt-1 line-clamp-1 italic">"{sig.message}"</p>

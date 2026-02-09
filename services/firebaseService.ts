@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
@@ -15,7 +16,7 @@ import {
   reload
 } from "firebase/auth";
 import { 
-  initializeFirestore,
+  getFirestore,
   doc, 
   setDoc, 
   getDoc, 
@@ -27,7 +28,8 @@ import {
   orderBy,
   onSnapshot,
   updateDoc,
-  arrayUnion
+  arrayUnion,
+  writeBatch
 } from "firebase/firestore";
 import { 
   getDatabase, 
@@ -66,10 +68,7 @@ if (typeof window !== "undefined") {
 
 // 3. Initialize services
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-  useFetchStreams: false
-});
+export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 
 // --- UTILITIES ---
@@ -209,6 +208,31 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): P
   }
 };
 
+export const updateSignalReadStatus = async (id: string, read: boolean) => {
+  try {
+    await updateDoc(doc(db, "signals", id), { read });
+    return true;
+  } catch (e) {
+    console.error("Failed to update signal read status", e);
+    return false;
+  }
+};
+
+export const markAllSignalsAsReadInDb = async (signalIds: string[]) => {
+  if (signalIds.length === 0) return true;
+  try {
+    const batch = writeBatch(db);
+    signalIds.forEach(id => {
+      batch.update(doc(db, "signals", id), { read: true });
+    });
+    await batch.commit();
+    return true;
+  } catch (e) {
+    console.error("Failed to mark all signals as read", e);
+    return false;
+  }
+};
+
 export const listenToPulse = (callback: (pulse: string) => void) => {
   const pulseRef = rtdbQuery(ref(rtdb, 'network_pulse'), limitToLast(1));
   onValue(pulseRef, (snapshot) => {
@@ -277,4 +301,7 @@ export const backupTelemetryShard = async (esin: string, telemetry: any) => {
   const cleanTelem = cleanObject(telemetry);
   return setDoc(doc(db, "telemetry", esin), { ...cleanTelem, updatedAt: Date.now() }, { merge: true });
 };
-export const fetchTelemetryBackup = async (esin: string) => (await getDoc(doc(db, "telemetry", esin))).data();
+export const fetchTelemetryBackup = async (esin: string) => {
+  const snap = await getDoc(doc(db, "telemetry", esin));
+  return snap.exists() ? snap.data() : null;
+};

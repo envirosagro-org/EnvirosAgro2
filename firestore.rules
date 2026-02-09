@@ -21,7 +21,9 @@ service cloud.firestore {
     match /signals/{signalId} {
       allow read: if isSignedIn() && isOwner(resource.data.stewardId);
       allow create: if isSignedIn();
-      allow update, delete: if false; // Immutable audit trail
+      // Allow update only for the 'read' field by the owner
+      allow update: if isSignedIn() && isOwner(resource.data.stewardId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if false; // Immutable audit trail
     }
 
     // Industrial Assets & Registry
