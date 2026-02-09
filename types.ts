@@ -384,6 +384,7 @@ export interface MediaShard {
   downloadUrl?: string;
 }
 
+// Vector-based view state for synchronized matrix routing
 export type ViewState = 
   | 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' 
   | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' 
@@ -396,6 +397,17 @@ export type ViewState =
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv' | 'registry_handshake'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger' | 'agrolang'
   | 'network' | 'sitemap' | 'auth' | 'ai_analyst';
+
+/**
+ * Vector address representation: [Dimension].[Element]
+ * Dimension (D): The parent component (e.g., Economy)
+ * Element (E): The specific sub-section (e.g., Catalogue)
+ */
+export interface VectorAddress {
+  dimension: ViewState;
+  element: string | null;
+  matrixIndex?: string; // e.g. "[2.1]"
+}
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -424,8 +436,6 @@ export interface SignalShard {
     ledgerContext?: 'TREASURY' | 'CARBON' | 'REVENUE' | 'RESOLUTION' | 'INVENTION' | 'SOCIAL' | 'EMERGENCY';
   };
 }
-
-// --- NEW COMMUNITY & SOCIAL TYPES ---
 
 export interface Collective {
   id: string;

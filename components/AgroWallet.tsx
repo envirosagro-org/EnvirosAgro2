@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Wallet, 
@@ -141,10 +142,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   const [isMpesaFlow, setIsMpesaFlow] = useState(false);
   const [mpesaStatus, setMpesaStatus] = useState<'IDLE' | 'STK_PUSH' | 'AWAITING_PIN' | 'VERIFIED'>('IDLE');
 
-  // Stripe Specific
-  const [isStripeFlow, setIsStripeFlow] = useState(false);
-  const [stripeStatus, setStripeStatus] = useState<'IDLE' | 'CREATING_INTENT' | 'CHECKOUT' | 'SUCCESS'>('IDLE');
-
   // Harvest States
   const [isHarvesting, setIsHarvesting] = useState(false);
   const pendingHarvest = user.wallet.pendingSocialHarvest || 0;
@@ -258,12 +255,11 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   const handleGatewayProcess = async () => {
     const isMpesa = selectedProvider?.name.toLowerCase().includes('mpesa') || selectedProvider?.type === 'Mobile';
-    const isStripe = selectedProvider?.name.toLowerCase().includes('stripe') || selectedProvider?.type === 'Card';
     
     if (isMpesa && showGatewayModal === 'deposit') {
       setIsMpesaFlow(true);
       setMpesaStatus('STK_PUSH');
-      // Simulated Oracle Interaction using process_agro_payment tool logic
+      // Simulated Oracle Interaction
       await consultFinancialOracle(`Initiate M-Pesa payment for ${gatewayAmount} KES`, {
         phone: selectedProvider?.accountFragment,
         wallet: user.esin
@@ -272,19 +268,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       setTimeout(() => setMpesaStatus('AWAITING_PIN'), 2000);
       setTimeout(() => setMpesaStatus('VERIFIED'), 5000);
       setTimeout(() => setGatewayStep('sign'), 6500);
-    } else if (isStripe && showGatewayModal === 'deposit') {
-      setIsStripeFlow(true);
-      setStripeStatus('CREATING_INTENT');
-      // Simulated Oracle Interaction using create_stripe_wallet_intent tool logic
-      await consultFinancialOracle(`Initialize Stripe payment for ${gatewayAmount} USD`, {
-        email: user.email,
-        walletId: user.esin
-      });
-      
-      setTimeout(() => setStripeStatus('CHECKOUT'), 2500);
-      // Simulating user filling card info
-      setTimeout(() => setStripeStatus('SUCCESS'), 6000);
-      setTimeout(() => setGatewayStep('sign'), 7500);
     } else {
       setGatewayStep('handoff');
       setTimeout(() => setGatewayStep('external_sync'), 2000);
@@ -314,8 +297,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
     setActiveSubTab('treasury');
     setIsMpesaFlow(false);
     setMpesaStatus('IDLE');
-    setIsStripeFlow(false);
-    setStripeStatus('IDLE');
   };
 
   const totalSpendable = user.wallet.balance + (user.wallet.bonusBalance || 0);
@@ -496,7 +477,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                 <button 
                   onClick={handleExecuteStake}
                   disabled={isStaking || !esinSign}
-                  className="w-full py-10 agro-gradient rounded-full text-white font-black text-base uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[16px] ring-white/5 disabled:opacity-30"
+                  className="w-full py-10 agro-gradient rounded-full text-white font-black text-base uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(59,130,246,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[16px] ring-white/5 disabled:opacity-30"
                 >
                    {isStaking ? <Loader2 size={32} className="animate-spin" /> : <Layers size={32} />}
                    {isStaking ? 'ANCHORING EQUITY...' : 'COMMENCE STAKING HANDSHAKE'}

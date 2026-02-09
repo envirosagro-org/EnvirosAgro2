@@ -227,6 +227,9 @@ const Economy: React.FC<EconomyProps> = ({
           itemImage: item.image,
           cost: item.finalPrice,
           supplierEsin: item.supplierEsin,
+          customerEsin: user.esin,
+          timestamp: new Date().toISOString(),
+          trackingHash: `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
           sourceTab: item.isUserGenerated ? 'books' : 'market'
         });
       }
@@ -495,7 +498,7 @@ const Economy: React.FC<EconomyProps> = ({
         {activeTab === 'forecasting' && (
            <div className="space-y-12 animate-in zoom-in duration-700 px-4 md:px-0">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div className="lg:col-span-8 glass-card p-12 md:p-16 rounded-[80px] border-2 border-white/5 bg-black/60 shadow-3xl relative overflow-hidden flex flex-col">
+                <div className="lg:col-span-8 glass-card p-12 md:p-16 rounded-[80px] border-2 border-white/5 bg-black/40 shadow-3xl relative overflow-hidden flex flex-col">
                    <div className="flex flex-col md:flex-row justify-between items-center mb-20 relative z-10 px-6 gap-10">
                       <div className="flex items-center gap-10">
                          <div className="p-8 bg-blue-600 rounded-[36px] shadow-[0_0_80px_rgba(59,130,246,0.3)] border-2 border-white/10 animate-float">

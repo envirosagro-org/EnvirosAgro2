@@ -18,7 +18,7 @@ import {
   Mail,
   BellRing
 } from 'lucide-react';
-import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard } from './types';
+import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress } from './types';
 import Dashboard from './components/Dashboard';
 import Sustainability from './components/Sustainability';
 import Economy from './components/Economy';
@@ -488,7 +488,7 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                    <p className="text-slate-300 italic text-xl md:text-2xl leading-relaxed max-w-3xl">{aiDeepSuggestion.explanation}</p>
                    <button 
                      onClick={() => { onNavigate(aiDeepSuggestion.view as ViewState, aiDeepSuggestion.section); onClose(); }}
-                     className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5"
+                     className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5"
                    >
                       Navigate Shard <ArrowRight size={18} />
                    </button>
@@ -674,9 +674,9 @@ const App: React.FC = () => {
   const [isConsultantOpen, setIsConsultantOpen] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   
-  // Vector History Tracking
-  const [history, setHistory] = useState<{view: ViewState, section: string | null}[]>([]);
-  const [forwardHistory, setForwardHistory] = useState<{view: ViewState, section: string | null}[]>([]);
+  // Vector History Tracking for Retrograde/Advance
+  const [history, setHistory] = useState<VectorAddress[]>([]);
+  const [forwardHistory, setForwardHistory] = useState<VectorAddress[]>([]);
 
   const [projects, setProjects] = useState<AgroProject[]>([]);
   const [contracts, setContracts] = useState<FarmingContract[]>([]);
@@ -819,10 +819,12 @@ const App: React.FC = () => {
 
   const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
   
+  // Refined Vector Navigation
   const navigate = useCallback((v: ViewState, section?: string, pushToHistory = true) => {
-    if (pushToHistory && v !== view) {
-      setHistory(prev => [...prev, { view: view, section: viewSection }]);
-      setForwardHistory([]); // Clear forward history when navigating to a new node
+    if (pushToHistory) {
+      const currentAddress: VectorAddress = { dimension: view, element: viewSection };
+      setHistory(prev => [...prev, currentAddress]);
+      setForwardHistory([]); // Clear forward vector on new action
     }
     setView(v);
     setViewSection(section || null);
@@ -833,32 +835,40 @@ const App: React.FC = () => {
 
   const goBack = useCallback(() => {
     if (history.length > 0) {
+      const currentAddress: VectorAddress = { dimension: view, element: viewSection };
       const lastVector = history[history.length - 1];
+      
+      setForwardHistory(prev => [...prev, currentAddress]);
       setHistory(prev => prev.slice(0, -1));
-      setForwardHistory(prev => [...prev, { view: view, section: viewSection }]);
-      navigate(lastVector.view, lastVector.section || undefined, false);
+      
+      navigate(lastVector.dimension, lastVector.element || undefined, false);
+      
       emitSignal({
         title: 'VECTOR_RETROGRADE',
-        message: `Returning to ${lastVector.view.toUpperCase()} shard.`,
+        message: `Sharding back to ${lastVector.dimension.toUpperCase()}${lastVector.element ? `/${lastVector.element}` : ''}.`,
         priority: 'low',
         type: 'system',
         origin: 'MANUAL',
         actionIcon: 'ArrowLeft'
       });
     } else if (view !== 'dashboard') {
-      navigate('dashboard', undefined, false);
+      navigate('dashboard', undefined, true);
     }
   }, [history, view, viewSection, navigate, emitSignal]);
 
   const goForward = useCallback(() => {
     if (forwardHistory.length > 0) {
+      const currentAddress: VectorAddress = { dimension: view, element: viewSection };
       const nextVector = forwardHistory[forwardHistory.length - 1];
+      
+      setHistory(prev => [...prev, currentAddress]);
       setForwardHistory(prev => prev.slice(0, -1));
-      setHistory(prev => [...prev, { view: view, section: viewSection }]);
-      navigate(nextVector.view, nextVector.section || undefined, false);
+      
+      navigate(nextVector.dimension, nextVector.element || undefined, false);
+      
       emitSignal({
         title: 'VECTOR_ADVANCE',
-        message: `Advancing to ${nextVector.view.toUpperCase()} shard.`,
+        message: `Advancing to ${nextVector.dimension.toUpperCase()}${nextVector.element ? `/${nextVector.element}` : ''}.`,
         priority: 'low',
         type: 'system',
         origin: 'MANUAL',
@@ -911,9 +921,7 @@ const App: React.FC = () => {
       case 'chroma_system': return <ChromaSystem user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
       case 'envirosagro_store': return <EnvirosAgroStore user={currentUser} onSpendEAC={handleSpendEAC} onPlaceOrder={(o) => saveCollectionItem('orders', o)} />;
       case 'agro_value_enhancement': return <AgroValueEnhancement user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} />;
-      /* Changed onNavigate={onNavigate} to onNavigate={navigate} to fix error in digital_mrv case */
       case 'digital_mrv': return <DigitalMRV user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={setUser!} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
-      /* Changed onNavigate={onNavigate} to onNavigate={navigate} to fix error in registry_handshake case */
       case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'online_garden': return <OnlineGarden user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} notify={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} initialSection={viewSection} />;
       case 'farm_os': return <FarmOS user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialCode={osInitialCode} clearInitialCode={() => setOsInitialCode(null)} initialSection={viewSection} />;
@@ -1083,24 +1091,25 @@ const App: React.FC = () => {
           {renderView()}
         </div>
 
+        {/* --- VECTOR RETROGRADE & ADVANCE CONTROLS --- */}
         <footer className="mt-20 pt-8 border-t border-white/5 pb-12 flex flex-col items-center gap-10 opacity-60 hover:opacity-100 transition-opacity duration-500 px-4">
            {/* Primary Control Row */}
            <div className="flex w-full items-center justify-between gap-4">
-              {/* VECTOR ADVANCE (FORWARD) - Left Side */}
+              {/* VECTOR RETROGRADE (BACK) */}
               <button 
-                onClick={goForward} 
-                disabled={forwardHistory.length === 0}
-                className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border-2 transition-all active:scale-95 group/fwd ${forwardHistory.length > 0 ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
-                title="Vector Advance"
+                onClick={goBack} 
+                disabled={history.length === 0}
+                className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border-2 transition-all active:scale-95 group/back ${history.length > 0 ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
+                title="Vector Retrograde"
               >
-                 <ChevronLeft size={20} className="group-hover/fwd:-translate-x-1 transition-transform" />
+                 <ChevronLeft size={20} className="group-hover/back:-translate-x-1 transition-transform" />
                  <div className="flex flex-col items-start text-left hidden md:block">
-                    <span className="text-[9px] font-black uppercase tracking-widest leading-none">Vector Advance</span>
-                    <span className="text-[7px] font-mono opacity-50 mt-1 uppercase">Next_Shard</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest leading-none">Retrograde</span>
+                    <span className="text-[7px] font-mono opacity-50 mt-1 uppercase">Prev_Vector</span>
                  </div>
               </button>
 
-              {/* STRATEGIC SHARD DOCK - Icon Based Center Nav */}
+              {/* STRATEGIC SHARD DOCK - Quick Navigation Hub */}
               <div className="flex p-1.5 glass-card rounded-[32px] bg-white/5 border border-white/10 shadow-3xl">
                  {[
                    { id: 'dashboard', label: 'Command', icon: LayoutDashboard },
@@ -1124,18 +1133,18 @@ const App: React.FC = () => {
                  ))}
               </div>
 
-              {/* VECTOR RETROGRADE (BACK) - Right Side */}
+              {/* VECTOR ADVANCE (FORWARD) */}
               <button 
-                onClick={goBack} 
-                disabled={history.length === 0 && view === 'dashboard'}
-                className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border-2 transition-all active:scale-95 group/back ${history.length > 0 || view !== 'dashboard' ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
-                title="Vector Retrograde"
+                onClick={goForward} 
+                disabled={forwardHistory.length === 0}
+                className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border-2 transition-all active:scale-95 group/fwd ${forwardHistory.length > 0 ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
+                title="Vector Advance"
               >
                  <div className="flex flex-col items-end text-right hidden md:block">
-                    <span className="text-[9px] font-black uppercase tracking-widest leading-none">Vector Retrograde</span>
-                    <span className="text-[7px] font-mono opacity-50 mt-1 uppercase">Prev_Shard</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest leading-none">Advance</span>
+                    <span className="text-[7px] font-mono opacity-50 mt-1 uppercase">Next_Vector</span>
                  </div>
-                 <ChevronRight size={20} className="group-hover/back:translate-x-1 transition-transform" />
+                 <ChevronRight size={20} className="group-hover/fwd:translate-x-1 transition-transform" />
               </button>
            </div>
 
@@ -1152,7 +1161,7 @@ const App: React.FC = () => {
               <div className="flex items-center gap-10">
                  <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-[8px] text-slate-700 font-mono uppercase font-black">ZK_SYSTEM_OK</span>
+                    <span className="text-[8px] text-slate-700 font-mono uppercase font-black">MATRIX_SYNC_OK</span>
                  </div>
                  <p className="text-[8px] text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p>
                  <button onClick={() => navigate('info')} className="text-[8px] font-black text-slate-500 hover:text-white uppercase tracking-[0.3em]">SAFETY_REGISTRY</button>
