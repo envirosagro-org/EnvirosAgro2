@@ -35,19 +35,19 @@ const SYSTEM_MANIFEST = [
 const DNAHelix: React.FC<{ isAggressive: boolean }> = ({ isAggressive }) => {
   return (
     <div className="relative w-full h-[300px] flex items-center justify-center overflow-hidden">
-      <svg viewBox="0 0 200 400" className="w-full h-full opacity-100 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+      <svg viewBox="0 0 200 400" className="w-full h-full opacity-100">
         {[...Array(12)].map((_, i) => {
           const y = i * 35 + 20;
           const delay = i * 0.2;
           return (
             <g key={i}>
-              <circle cx="50" cy={y} r="6" className="fill-emerald-400 filter blur-[1px]">
+              <circle cx="50" cy={y} r="8" className="fill-emerald-400 drop-shadow-[0_0_12px_#10b981]">
                 <animate attributeName="cx" values="50;150;50" dur={`${isAggressive ? 2 : 4}s`} begin={`${delay}s`} repeatCount="indefinite" />
               </circle>
-              <circle cx="150" cy={y} r="6" className="fill-indigo-500 filter blur-[1px]">
+              <circle cx="150" cy={y} r="8" className="fill-indigo-500 drop-shadow-[0_0_12px_#6366f1]">
                 <animate attributeName="cx" values="150;50;150" dur={`${isAggressive ? 2 : 4}s`} begin={`${delay}s`} repeatCount="indefinite" />
               </circle>
-              <line y1={y} y2={y} x1="50" x2="150" stroke="white" strokeWidth="2" className="opacity-20">
+              <line y1={y} y2={y} x1="50" x2="150" stroke="white" strokeWidth="2" className="opacity-40">
                 <animate attributeName="x1" values="50;150;50" dur={`${isAggressive ? 2 : 4}s`} begin={`${delay}s`} repeatCount="indefinite" />
                 <animate attributeName="x2" values="150;50;150" dur={`${isAggressive ? 2 : 4}s`} begin={`${delay}s`} repeatCount="indefinite" />
               </line>
@@ -160,31 +160,6 @@ ${oracleVerdict.text}
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 relative max-w-2xl mx-auto px-4 md:px-0">
       
-      {/* Redesigned Header HUD */}
-      <div className="flex items-center justify-between py-4 border-b border-white/5 sticky top-0 bg-[#050706] z-[100]">
-        <div className="flex items-center gap-4">
-          <button className="p-2 bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors">
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="space-y-0.5">
-            <h1 className="text-lg font-black text-white tracking-tighter leading-none italic uppercase">SUSTAINABILI...</h1>
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">SYNC : OBSERVER</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-950/20 border border-emerald-500/20 flex items-center justify-center">
-            <Heart className="w-5 h-5 text-emerald-500" />
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-            <Search className="w-5 h-5 text-slate-400" />
-          </div>
-          <button className="px-5 py-2 bg-emerald-900/30 border border-emerald-500/40 rounded-xl flex items-center gap-2 group hover:bg-emerald-800/40 transition-all">
-            <UserPlus className="w-4 h-4 text-emerald-400" />
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">SYNC</span>
-          </button>
-        </div>
-      </div>
-
       {/* Omega Equilibrium Card */}
       <div className="glass-card p-10 md:p-14 rounded-[64px] border border-white/5 bg-black/40 text-center space-y-8 shadow-3xl">
         <div className="space-y-2">
@@ -235,10 +210,10 @@ ${oracleVerdict.text}
           ) : oracleVerdict ? (
             <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-10">
               <div className="p-12 bg-black/80 rounded-[56px] border-2 border-indigo-500/20 shadow-3xl border-l-[16px] border-l-indigo-600 relative overflow-hidden">
-                <p className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
+                <div className="prose prose-invert max-w-none text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
                   {oracleVerdict.text}
-                </p>
-                <div className="mt-10 flex gap-4">
+                </div>
+                <div className="mt-10 flex gap-4 relative z-10">
                   <button onClick={handleDownloadReport} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest">
                     <Download size={20} />
                   </button>
@@ -254,11 +229,11 @@ ${oracleVerdict.text}
             </div>
           ) : (
             <div className="space-y-16 py-12 flex flex-col items-center">
-              <div className="flex items-end gap-3 h-48 justify-center w-full max-w-xl opacity-30 group-hover:opacity-50 transition-opacity duration-1000">
+              <div className="flex items-end gap-3 h-48 justify-center w-full max-w-xl opacity-60 group-hover:opacity-100 transition-opacity duration-1000">
                 {[...Array(24)].map((_, i) => (
                   <div 
                     key={i} 
-                    className="flex-1 rounded-full bg-[#f43f5e] transition-all duration-[2s]"
+                    className="flex-1 rounded-full bg-[#f43f5e] transition-all duration-[2s] shadow-[0_0_15px_rgba(244,63,94,0.4)]"
                     style={{ 
                       height: `${20 + Math.random() * 80}%`,
                       animationDelay: `${i * 0.08}s`,
@@ -325,11 +300,6 @@ ${oracleVerdict.text}
            ))}
         </div>
       </div>
-
-      {/* Floating Action Button */}
-      <button className="fixed bottom-10 right-10 p-5 bg-[#10b981] rounded-2xl text-white shadow-[0_20px_50px_rgba(16,185,129,0.4)] border-2 border-white/20 hover:scale-110 active:scale-95 transition-all z-[400] animate-in zoom-in">
-        <ChevronUp size={28} />
-      </button>
 
       <style>{`
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
