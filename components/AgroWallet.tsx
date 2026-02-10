@@ -42,7 +42,6 @@ import {
   Shield,
   Lock as LockIcon,
   ArrowRightLeft,
-  // Added ArrowRight to fix "Cannot find name 'ArrowRight'" error
   ArrowRight,
   Key,
   Database,
@@ -291,7 +290,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
           <button 
             key={tab.id} 
             onClick={() => setActiveSubTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon size={16} /> {tab.label}
           </button>
@@ -611,7 +610,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                                 </div>
                                 <div>
                                    <p className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:text-indigo-400 transition-colors m-0">{tx.details}</p>
-                                   <p className="text-[10px] text-slate-700 font-mono font-black tracking-widest italic">{tx.id}</p>
+                                   <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase font-black tracking-widest italic">{tx.id}</p>
                                 </div>
                              </div>
                              <div>
@@ -747,7 +746,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                                    </div>
                                    <p className="text-white font-black text-sm uppercase tracking-tighter">Enter M-Pesa PIN on Device</p>
                                    <div className="p-4 bg-black/60 border border-white/5 rounded-2xl">
-                                      <p className="text-[10px] text-emerald-500 font-mono">KES {gatewayAmount} -> EnvAgro</p>
+                                      <p className="text-[10px] text-emerald-500 font-mono">KES {gatewayAmount} &rarr; EnvAgro</p>
                                    </div>
                                 </div>
                              )}
@@ -812,7 +811,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                              <input 
                                 type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
                                 placeholder="EA-XXXX-XXXX-XXXX" 
-                                className="w-full bg-black border-2 border-white/10 rounded-[56px] py-12 text-center text-5xl font-mono text-white outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all uppercase placeholder:text-stone-950 shadow-inner" 
+                                className="w-full bg-black border-2 border-white/10 rounded-[56px] py-12 text-center text-5xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-emerald-500/10 transition-all uppercase placeholder:text-stone-900 shadow-inner" 
                              />
                           </div>
                           <button 
