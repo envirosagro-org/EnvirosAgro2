@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   History, 
@@ -40,9 +41,26 @@ import {
   ShieldPlus,
   TrendingUp,
   Circle,
-  FileDown
+  FileDown,
+  Globe,
+  PlaneTakeoff,
+  Map,
+  Timer,
+  Navigation,
+  Globe2,
+  Cpu,
+  Workflow,
+  MapPin,
+  Atom,
+  Dna,
+  Landmark,
+  Cloud,
+  ChevronDown
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  ComposedChart, Bar, Cell 
+} from 'recharts';
 import { User, MediaShard } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
@@ -59,8 +77,38 @@ const HISTORICAL_SHARDS = [
   { id: 'REG-G-882', date: '2025.01.15', ca: 1.20, m: 8.5, type: 'Cycle 2 Expansion', status: 'ACTIVE' },
 ];
 
+const TRAVEL_DIMENSIONS = [
+  { id: 'location', label: 'Geography', icon: Globe2 },
+  { id: 'development', label: 'Industrial State', icon: Landmark },
+  { id: 'genetics', label: 'Genomic State', icon: Dna },
+  { id: 'temporal', label: 'Temporal State', icon: Clock },
+];
+
+const STATE_SHARDS: Record<string, any[]> = {
+  location: [
+    { id: 'kenya', name: 'Kenya (Baseline)', intensity: 0.42, density: 0.35, col: 'text-emerald-400', desc: 'Regional agricultural hub. Moderate tech sharding.' },
+    { id: 'singapore', name: 'Singapore (Vertical)', intensity: 0.98, density: 1.42, col: 'text-blue-400', desc: 'Ultra-dense vertical agricultural flows.' },
+    { id: 'netherlands', name: 'Netherlands (Precision)', intensity: 0.88, density: 0.92, col: 'text-amber-500', desc: 'Global leader in precision nutrient loops.' },
+  ],
+  development: [
+    { id: 'primitive', name: 'Primitive / Barbaric', intensity: 0.15, density: 0.18, col: 'text-rose-500', desc: 'Unsharded land. Manual labor, high manual stress (S).' },
+    { id: 'emerging', name: 'Emerging Ingest', intensity: 0.45, density: 0.52, col: 'text-emerald-400', desc: 'Basic sensor registry. Partial m-constant sync.' },
+    { id: 'modern', name: 'Neural Industrial', intensity: 1.25, density: 1.40, col: 'text-indigo-400', desc: 'Full AI Studio integration. Swarm-based finality.' },
+  ],
+  genetics: [
+    { id: 'native', name: 'Native Heritage Maize', intensity: 0.35, density: 0.40, col: 'text-emerald-500', desc: 'Ancestral DNA. Resilient but lower industrial throughput.' },
+    { id: 'f1', name: 'Hybrid F1 Shard', intensity: 0.70, density: 0.75, col: 'text-blue-500', desc: 'Optimized cross-lineage. Standard industrial bridge.' },
+    { id: 'gmo', name: 'GMO / Synthetic Helix', intensity: 1.35, density: 1.10, col: 'text-fuchsia-500', desc: 'Engineered trait sharding for maximum yield extraction.' },
+  ],
+  temporal: [
+    { id: 'present', name: 'Current Cycle (Present)', intensity: 0.50, density: 0.50, col: 'text-slate-400', desc: 'Current network status and planetary resonance.' },
+    { id: 'future_10', name: 'Cycle T+10 (Decade)', intensity: 0.95, density: 0.90, col: 'text-blue-400', desc: 'Projected evolution of climate and tech resonance.' },
+    { id: 'future_50', name: 'Cycle T+50 (Singularity)', intensity: 2.10, density: 2.45, col: 'text-amber-400', desc: 'Post-industrial agriculture. Infinite sharding loops.' },
+  ]
+};
+
 const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }) => {
-  const [activeTab, setActiveTab] = useState<'calculus' | 'retrieval' | 'oracle' | 'compliance'>('calculus');
+  const [activeTab, setActiveTab] = useState<'calculus' | 'retrieval' | 'oracle' | 'compliance' | 'travel'>('calculus');
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [queryId, setQueryId] = useState('');
   const [restoredShard, setRestoredShard] = useState<any | null>(null);
@@ -73,12 +121,17 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
   const [isSabbathActive, setIsSabbathActive] = useState(false);
   const [isRecalibrating, setIsRecalibrating] = useState(false);
 
+  // Agro Travel States
+  const [travelDimension, setTravelDimension] = useState('location');
+  const [selectedState, setSelectedState] = useState(STATE_SHARDS.location[1]);
+  const [isTraveling, setIsTraveling] = useState(false);
+  const [travelForecast, setTravelForecast] = useState<string | null>(null);
+
   // Archiving States
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
 
   const derivativeData = useMemo(() => {
-    // Modify velocity based on sabbath status
     const multiplier = isSabbathActive ? 1.5 : 1.0;
     return [
       { t: 'T1', velocity: 2.1 * multiplier, accel: 0.4 },
@@ -89,6 +142,51 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
       { t: 'T6', velocity: 8.2 * multiplier, accel: 3.5 },
     ];
   }, [isSabbathActive]);
+
+  const travelComparisonData = useMemo(() => {
+    const userCa = user.metrics.agriculturalCodeU || 1.2;
+    const localIntensity = 0.42; 
+    const localDensity = 0.35;
+    const localS = 0.12;
+
+    const localM = Math.sqrt((localDensity * localIntensity * userCa) / localS);
+    const targetM = Math.sqrt((selectedState.density * selectedState.intensity * userCa) / localS);
+
+    return [
+      { name: 'Present Baseline', m: Number(localM.toFixed(2)), color: '#10b981' },
+      { name: 'Target Destination', m: Number(targetM.toFixed(2)), color: '#3b82f6' }
+    ];
+  }, [user.metrics.agriculturalCodeU, selectedState]);
+
+  const handleRunTravelOracle = async () => {
+    const fee = 40;
+    if (!await onSpendEAC(fee, `AGRO_TRAVEL_DIMENSION_${travelDimension.toUpperCase()}`)) return;
+
+    setIsTraveling(true);
+    setTravelForecast(null);
+    try {
+      const prompt = `Act as the EnvirosAgro Travel Oracle. A user is performing a "state transition" across the following dimension: ${travelDimension}.
+      INITIAL STATE: Local baseline.
+      TARGET STATE: ${selectedState.name}.
+      CURRENT METRICS: Ca = ${user.metrics.agriculturalCodeU} (Sustainability constant).
+      TARGET ENVIRONMENT: Intensity = ${selectedState.intensity}, Density = ${selectedState.density}.
+      
+      Requirements:
+      1. Forecast how their Resilience (m) would deviate if their sustainability code (Ca) remained constant but they adopted the destination's growth state.
+      2. If transitioning from "Barbaric" to "Modern", or "Native" to "GMO", analyze the m-constant drift and societal implications.
+      3. Predict future anomalies they might encounter as they "travel ahead" in development.
+      4. Provide a technical path for maintaining equilibrium during this state-switch.
+      Format as a technical industrial report. Use markdown.`;
+
+      const res = await chatWithAgroExpert(prompt, []);
+      setTravelForecast(res.text);
+      onEarnEAC(20, 'TEMPORAL_STATE_SHARD_FORGED');
+    } catch (e) {
+      setTravelForecast("Temporal link unstable. Shard lost in transition.");
+    } finally {
+      setIsTraveling(false);
+    }
+  };
 
   const handleRetrievePast = () => {
     if (!queryId.trim()) return;
@@ -127,13 +225,17 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
   };
 
   const handleAnchorToLedger = async () => {
-    if (!oracleReport || isArchiving || isArchived) return;
+    if (!oracleReport && !travelForecast) return;
+    if (isArchiving || isArchived) return;
     
     setIsArchiving(true);
     try {
+      const content = travelForecast || oracleReport || "";
+      const typeLabel = travelForecast ? 'TRAVEL_FORECAST' : 'REGENCY_DERIVATIVE';
       const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      
       const newShard: Partial<MediaShard> = {
-        title: `REGENCY_DERIVATIVE: dy/dx_AUDIT`,
+        title: `${typeLabel}: ${user.esin}`,
         type: 'ORACLE',
         source: 'Regency Oracle',
         author: user.name,
@@ -141,8 +243,8 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
         timestamp: new Date().toISOString(),
         hash: shardHash,
         mImpact: (user.metrics.timeConstantTau).toFixed(2),
-        size: '1.8 KB',
-        content: oracleReport
+        size: '2.4 KB',
+        content: content
       };
       
       await saveCollectionItem('media_ledger', newShard);
@@ -153,33 +255,6 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     } finally {
       setIsArchiving(false);
     }
-  };
-
-  const handleDownloadReport = () => {
-    if (!oracleReport) return;
-    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
-    const report = `
-ENVIROSAGRO™ REGENCY DERIVATIVE SHARD
-======================================
-REGISTRY_ID: ${shardId}
-NODE_AUTH: ${user.esin}
-CALCULUS_TYPE: dy/dx Regenerative Velocity
-TIMESTAMP: ${new Date().toISOString()}
-
-ORACLE REPORT:
--------------------
-${oracleReport}
-
--------------------
-(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
-    `;
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `REGENCY_AUDIT_${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleAuthorizeFallow = async () => {
@@ -198,19 +273,46 @@ ${oracleReport}
     }, 3000);
   };
 
+  const downloadShard = (content: string, mode: string, type: string) => {
+    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const report = `
+ENVIROSAGRO™ ${type.toUpperCase()} SHARD
+=================================
+REGISTRY_ID: ${shardId}
+NODE_AUTH: ${user.esin}
+MODE: ${mode}
+TIMESTAMP: ${new Date().toISOString()}
+ZK_CONSENSUS: VERIFIED (99.9%)
+
+VERDICT:
+-------------------
+${content}
+
+-------------------
+(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
+    `;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EA_${type}_${mode}_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
       <div className="glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl text-white">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none">
             <Infinity className="w-96 h-96 text-white" />
          </div>
-         <div className="w-40 h-40 rounded-[48px] bg-indigo-600 flex items-center justify-center shadow-[0_0_80px_rgba(99,102,241,0.3)] ring-4 ring-white/10 shrink-0">
+         <div className="w-40 h-40 rounded-[48px] bg-indigo-600 flex items-center justify-center shadow-[0_0_80px_rgba(99,102,241,0.3)] ring-4 ring-white/5 shrink-0">
             <History className="w-20 h-20 text-white animate-spin-slow" />
          </div>
          <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
             <div className="space-y-2">
                <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20 shadow-inner italic">REGISTRY_REGENCY_v5.0</span>
-               <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Agro <span className="text-indigo-400">Regency</span></h2>
+               <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Agro <span className="text-indigo-400">Regency</span></h2>
             </div>
             <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl">
                "Retrieving the past to calculate the derivative of the future. Executing dy/dx sustainability framework shards for absolute node calibration."
@@ -222,20 +324,216 @@ ${oracleReport}
         {[
           { id: 'calculus', label: 'dy/dx Calculus', icon: Infinity },
           { id: 'compliance', label: 'Sabbath-Yajna Monitor', icon: Gavel },
+          { id: 'travel', label: 'Agro Travel', icon: PlaneTakeoff },
           { id: 'retrieval', label: 'Shard Retrieval', icon: FileSearch },
           { id: 'oracle', label: 'Regency Oracle', icon: Bot },
         ].map(tab => (
           <button 
             key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            onClick={() => { setActiveTab(tab.id as any); setRestoredShard(null); setOracleReport(null); setTravelForecast(null); }}
+            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-slate-200'}`}
           >
-            <tab.icon className="w-4 h-4" /> {tab.label}
+            <tab.icon size={14} /> {tab.label}
           </button>
         ))}
       </div>
 
       <div className="min-h-[700px]">
+        {/* --- VIEW: AGRO TRAVEL --- */}
+        {activeTab === 'travel' && (
+          <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                
+                {/* Left: Travel Terminal Controls */}
+                <div className="lg:col-span-5 space-y-8">
+                   <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden group/term">
+                      <div className="absolute inset-0 bg-indigo-500/[0.02] pointer-events-none group-hover/term:bg-indigo-500/[0.05] transition-colors"></div>
+                      <div className="flex items-center gap-6 relative z-10 border-b border-white/5 pb-8">
+                         <div className="p-4 bg-indigo-600 rounded-3xl shadow-3xl border-2 border-white/10 group-hover/term:rotate-12 transition-transform">
+                            <PlaneTakeoff size={32} className="text-white" />
+                         </div>
+                         <div>
+                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Temporal <span className="text-indigo-400">Terminal</span></h3>
+                            <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-3">STATE_SWITCH_ENGINE_v6.5</p>
+                         </div>
+                      </div>
+
+                      <div className="space-y-8 relative z-10">
+                         {/* Dimension Switcher */}
+                         <div className="flex flex-wrap gap-2 p-1 bg-black/40 rounded-2xl border border-white/5 mx-2">
+                           {TRAVEL_DIMENSIONS.map(dim => (
+                             <button
+                               key={dim.id}
+                               onClick={() => { setTravelDimension(dim.id); setSelectedState(STATE_SHARDS[dim.id][0]); }}
+                               className={`flex-1 flex flex-col items-center gap-2 py-3 rounded-xl transition-all ${travelDimension === dim.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300'}`}
+                             >
+                               <dim.icon size={16} />
+                               <span className="text-[8px] font-black uppercase tracking-tighter">{dim.label}</span>
+                             </button>
+                           ))}
+                         </div>
+
+                         <div className="space-y-4 px-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Destination State / Shard</label>
+                            <div className="grid grid-cols-1 gap-3">
+                               {STATE_SHARDS[travelDimension].map(dest => (
+                                 <button 
+                                   key={dest.id}
+                                   onClick={() => setSelectedState(dest)}
+                                   className={`p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group/btn ${selectedState.id === dest.id ? 'bg-indigo-600/10 border-indigo-500 shadow-xl' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}
+                                 >
+                                    <div className="flex items-center gap-4">
+                                       <Target size={20} className={selectedState.id === dest.id ? dest.col : 'text-slate-800'} />
+                                       <div className="text-left">
+                                          <span className={`text-[11px] font-black uppercase tracking-widest block ${selectedState.id === dest.id ? 'text-white' : ''}`}>{dest.name}</span>
+                                          <p className="text-[8px] text-slate-500 uppercase font-bold mt-1 line-clamp-1">{dest.desc}</p>
+                                       </div>
+                                    </div>
+                                    <ChevronRight size={18} className={selectedState.id === dest.id ? 'text-indigo-400' : 'text-slate-900'} />
+                                 </button>
+                               ))}
+                            </div>
+                         </div>
+
+                         <button 
+                           onClick={handleRunTravelOracle}
+                           disabled={isTraveling}
+                           className="w-full py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 disabled:opacity-30 border-2 border-white/10 ring-8 ring-indigo-500/5"
+                         >
+                            {isTraveling ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} className="fill-current" />}
+                            {isTraveling ? 'SYNCHRONIZING STATE...' : 'INITIATE STATE SHIFT'}
+                         </button>
+                      </div>
+                   </div>
+
+                   <div className="p-10 glass-card rounded-[56px] border border-blue-500/20 bg-blue-950/10 space-y-6 group shadow-xl">
+                      <div className="flex items-center gap-4">
+                         <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-500/20 group-hover:rotate-12 transition-transform"><Bot size={24} className="text-blue-500" /></div>
+                         <h4 className="text-xl font-black text-white uppercase italic">Travel <span className="text-blue-400">Logic</span></h4>
+                      </div>
+                      <p className="text-sm text-slate-400 italic leading-relaxed">
+                         "Traveling ahead or retrograde across developmental states allows a node to forecast maturation deltas. Sustainability ($C_a$) remains the constant anchor for planetary equilibrium."
+                      </p>
+                   </div>
+                </div>
+
+                {/* Right: Output & Forecast Visuals */}
+                <div className="lg:col-span-7 space-y-8">
+                   {/* Resilience Deviation Chart */}
+                   <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-[#050706] shadow-3xl h-[400px] flex flex-col relative overflow-hidden group/chart">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/chart:scale-110 transition-transform duration-[10s]"><Activity size={200} className="text-emerald-500" /></div>
+                      <div className="flex justify-between items-center mb-10 px-4 relative z-10">
+                         <div className="flex items-center gap-4">
+                            <Target size={18} className="text-emerald-400" />
+                            <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">State Resilience (m) Deviation</h4>
+                         </div>
+                         <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                               <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                               <span className="text-[9px] text-slate-700 font-bold uppercase">Present</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                               <span className="text-[9px] text-slate-700 font-bold uppercase">Destination</span>
+                            </div>
+                         </div>
+                      </div>
+                      
+                      <div className="flex-1 w-full relative z-10">
+                         <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={travelComparisonData} layout="vertical">
+                               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" horizontal={false} />
+                               <XAxis type="number" hide />
+                               <YAxis dataKey="name" type="category" stroke="rgba(255,255,255,0.4)" fontSize={11} fontStyle="italic" width={100} axisLine={false} tickLine={false} />
+                               <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
+                               <Bar dataKey="m" radius={[0, 20, 20, 0]} barSize={40}>
+                                  {travelComparisonData.map((entry, index) => (
+                                     <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))}
+                               </Bar>
+                            </ComposedChart>
+                         </ResponsiveContainer>
+                      </div>
+                      
+                      <div className="pt-6 border-t border-white/5 mt-4 flex items-center justify-between text-[10px] font-black text-slate-700 relative z-10">
+                         <span>CONSTANT ANCHOR: C(a) = {user.metrics.agriculturalCodeU}</span>
+                         <span className="italic">CALCULATED_DELTA: {(((travelComparisonData[1].m - travelComparisonData[0].m)/travelComparisonData[0].m) * 100).toFixed(1)}%</span>
+                      </div>
+                   </div>
+
+                   {/* Futuring Narrative Area */}
+                   <div className="glass-card rounded-[64px] border-2 border-white/5 bg-black/60 min-h-[500px] flex flex-col relative overflow-hidden shadow-3xl">
+                      <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 px-14">
+                         <div className="flex items-center gap-6">
+                            <Bot className="text-indigo-400 w-8 h-8" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Futuring Oracle Terminal</span>
+                         </div>
+                         {travelForecast && (
+                            <button onClick={() => setTravelForecast(null)} className="p-3 bg-white/5 border border-white/10 rounded-full text-slate-700 hover:text-white transition-all"><Trash2 size={18}/></button>
+                         )}
+                      </div>
+
+                      <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative bg-[#050706]">
+                         {isTraveling ? (
+                           <div className="h-full flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in duration-500">
+                              <div className="relative">
+                                 <Loader2 size={120} className="text-indigo-500 animate-spin mx-auto" />
+                                 <div className="absolute inset-0 flex items-center justify-center">
+                                    <Sparkles className="w-12 h-12 text-indigo-400 animate-pulse" />
+                                 </div>
+                              </div>
+                              <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic m-0">SYNTHESIZING_STATE_SHARD...</p>
+                           </div>
+                         ) : travelForecast ? (
+                           <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12">
+                              <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 prose prose-invert prose-emerald max-w-none shadow-3xl border-l-[16px] border-l-indigo-600 relative overflow-hidden group/shard">
+                                 <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/shard:scale-110 transition-transform duration-[12s]"><Atom size={600} className="text-indigo-400" /></div>
+                                 <div className="text-slate-300 text-xl md:text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-6">
+                                    {travelForecast}
+                                 </div>
+                                 <div className="mt-20 pt-10 border-t border-white/10 relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                                    <div className="flex items-center gap-6">
+                                       <Fingerprint size={48} className="text-indigo-400" />
+                                       <div className="text-left">
+                                          <p className="text-[9px] text-slate-600 font-black uppercase">TEMPORAL_HASH</p>
+                                          <p className="text-xl font-mono text-white">0x{Math.random().toString(16).slice(2, 10).toUpperCase()}_TRANSITION_OK</p>
+                                       </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                       <button onClick={() => downloadShard(travelForecast, selectedState.name, 'Futuring')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                                          <Download size={18} /> Download Shard
+                                       </button>
+                                       <button 
+                                          onClick={handleAnchorToLedger}
+                                          disabled={isArchiving || isArchived}
+                                          className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${isArchived ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                       >
+                                          {isArchiving ? <Loader2 size={18} className="animate-spin" /> : isArchived ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                                          {isArchived ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
+                                       </button>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                         ) : (
+                           <div className="h-full flex flex-col items-center justify-center text-center space-y-12 py-20 opacity-20 group">
+                              <div className="relative">
+                                 <PlaneTakeoff size={140} className="text-slate-600 group-hover:text-indigo-400 transition-colors duration-1000" />
+                                 <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
+                              </div>
+                              <div className="space-y-4">
+                                 <p className="text-5xl font-black uppercase tracking-[0.6em] text-white italic">FUTURING_STANDBY</p>
+                                 <p className="text-xl font-bold italic text-slate-700 uppercase tracking-widest px-10">Select a dimension and state to begin temporal sharding</p>
+                              </div>
+                           </div>
+                         )}
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
+
         {activeTab === 'calculus' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-500">
              <div className="lg:col-span-8 glass-card p-12 rounded-[56px] border border-white/5 bg-black/60 relative overflow-hidden flex flex-col shadow-3xl group text-white">
@@ -265,7 +563,7 @@ ${oracleReport}
                          </defs>
                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                          <XAxis dataKey="t" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                         <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
+                         <YAxis stroke="rgba(128,128,128,0.4)" fontSize={10} axisLine={false} tickLine={false} />
                          <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
                          <Area type="monotone" name="Velocity (dy/dx)" dataKey="velocity" stroke="#6366f1" strokeWidth={6} fillOpacity={1} fill="url(#colorVelocity)" />
                          <Area type="stepAfter" name="Acceleration" dataKey="accel" stroke="#10b981" strokeWidth={2} fill="transparent" />
@@ -414,14 +712,14 @@ ${oracleReport}
                   disabled={isAnalyzing}
                   className="w-full max-w-md py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
                  >
-                    {isAnalyzing ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <Zap className="w-8 h-8 fill-current" />}
+                    {isAnalyzing ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <Zap size={20} fill="current" />}
                     {isAnalyzing ? "EXECUTING CALCULUS..." : "EXECUTE dy/dx AUDIT"}
                  </button>
                  {oracleReport && (
                     <div className="mt-10 p-10 bg-black/60 rounded-[48px] border border-indigo-500/20 text-left animate-in fade-in space-y-10">
                        <p className="text-slate-300 text-xl leading-loose italic">{oracleReport}</p>
                        <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
-                          <button onClick={handleDownloadReport} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                          <button onClick={() => downloadShard(oracleReport || "", "Regency", "Audit")} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
                              <Download size={18} /> Download Shard
                           </button>
                           <button 
@@ -430,7 +728,7 @@ ${oracleReport}
                             className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${isArchived ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
                           >
                              {isArchiving ? <Loader2 size={18} className="animate-spin" /> : isArchived ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
-                             {isArchived ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
+                             {isArchived ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
                           </button>
                        </div>
                     </div>
