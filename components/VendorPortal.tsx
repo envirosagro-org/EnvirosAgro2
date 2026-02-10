@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Warehouse, 
@@ -57,7 +58,8 @@ import {
   CreditCard,
   Layers,
   Radio,
-  AudioWaveform
+  AudioWaveform,
+  Zap as ZapIcon
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -68,7 +70,7 @@ import {
   Tooltip, 
   ResponsiveContainer
 } from 'recharts';
-import { User, Order, LogisticProvider, VendorProduct, ViewState } from '../types';
+import { User, Order, LogisticProvider, VendorProduct, ViewState, SignalShard } from '../types';
 import { runSpecialistDiagnostic, analyzeDemandForecast } from '../services/geminiService';
 
 interface VendorPortalProps {
@@ -80,6 +82,8 @@ interface VendorPortalProps {
   onRegisterProduct: (product: VendorProduct) => void;
   onNavigate: (view: ViewState) => void;
   initialSection?: string | null;
+  onUpdateProduct?: (product: VendorProduct) => void;
+  onEmitSignal?: (signal: Partial<SignalShard>) => Promise<void>;
 }
 
 const FORECAST_DATA = [
@@ -94,9 +98,8 @@ const ASSET_CATEGORIES = [
   "Warehousing", "Distribution", "Veterinary", "Tour Guide"
 ];
 
-// Added missing default export and completed truncated component
 const VendorPortal: React.FC<VendorPortalProps> = ({ 
-  user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct, onNavigate, initialSection 
+  user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct, onNavigate, initialSection, onUpdateProduct, onEmitSignal
 }) => {
   const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'live_terminal' | 'ledger'>('inventory');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -117,6 +120,9 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   // Live Terminal States
   const [isForecasting, setIsForecasting] = useState(false);
   const [forecastReport, setForecastReport] = useState<string | null>(null);
+
+  // JIT Logic States
+  const [isActivatingJit, setIsActivatingJit] = useState<string | null>(null);
 
   // Routing synchronization
   useEffect(() => {
@@ -194,13 +200,39 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
           timestamp: new Date().toISOString(),
           sku: generatedSku,
           sonicSignature: sonicSignature,
-          isQualified: true
+          isQualified: true,
+          isLiveProcessing: false
         };
         onRegisterProduct(newProduct);
         setIsProcessing(false);
         setRegStep('success');
       }, 2500);
     }
+  };
+
+  const handleToggleJitFlow = async (product: VendorProduct) => {
+    setIsActivatingJit(product.id);
+    // Mimic JIT Sync Handshake
+    await new Promise(r => setTimeout(r, 2000));
+    
+    const nextLiveStatus = !product.isLiveProcessing;
+    const updated = { ...product, isLiveProcessing: nextLiveStatus };
+    
+    if (onUpdateProduct) onUpdateProduct(updated);
+    
+    if (onEmitSignal && nextLiveStatus) {
+      onEmitSignal({
+        type: 'pulse',
+        origin: 'MANUAL',
+        title: 'JIT_PROCESS_ACTIVE',
+        message: `Node ${user.esin} triggered live processing for ${product.name}. Availability verified on-chain.`,
+        priority: 'medium',
+        actionIcon: 'Zap',
+        meta: { target: 'economy' }
+      });
+    }
+
+    setIsActivatingJit(null);
   };
 
   const handleFetchForecast = async () => {
@@ -255,7 +287,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
         <div className="lg:col-span-2 glass-card p-10 rounded-[48px] border border-white/10 bg-black/40 flex items-center justify-between shadow-3xl">
            <div className="space-y-6 flex-1">
-              <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Register <span className="text-amber-500">Agricultural Asset</span></h3>
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Register <span className="text-amber-500">Agricultural Asset</span></h3>
               <p className="text-slate-500 text-sm italic font-medium max-w-sm">"Bridge your physical assets to the digital Market Cloud via SEHTI-vetted sharding."</p>
               <button 
                 onClick={handleStartRegistration}
@@ -275,7 +307,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
         {[
           { id: 'inventory', label: 'Local Registry', icon: Package },
-          { id: 'live_terminal', label: 'Live Processing', icon: Zap },
+          { id: 'live_terminal', label: 'Live Processing', icon: ZapIcon },
           { id: 'shipments', label: 'Inbound Signals', icon: ShoppingCart },
           { id: 'ledger', label: 'Financial Ledger', icon: History },
         ].map(tab => (
@@ -304,7 +336,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                   </div>
                 ) : (
                   myProducts.map(product => (
-                    <div key={product.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 hover:border-amber-500/40 transition-all group flex flex-col justify-between h-[580px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99]">
+                    <div key={product.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 hover:border-amber-500/40 transition-all group flex flex-col justify-between h-[620px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99]">
                        <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={300} /></div>
                        
                        <div className="space-y-8 relative z-10">
@@ -312,10 +344,13 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                              <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 text-amber-500 shadow-2xl group-hover:rotate-6 transition-all`}>
                                 <Package size={32} />
                              </div>
-                             <div className="text-right">
+                             <div className="text-right flex flex-col items-end gap-2">
                                 <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl ${
                                    product.status === 'QUALIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
                                 }`}>{product.status}</span>
+                                {product.isLiveProcessing && (
+                                   <span className="px-3 py-1 bg-indigo-600/20 text-indigo-400 border border-indigo-500/40 rounded-lg text-[8px] font-black animate-pulse">JIT_ACTIVE</span>
+                                )}
                              </div>
                           </div>
                           <div className="space-y-3">
@@ -325,7 +360,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                           <p className="text-sm text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity line-clamp-3 font-medium">"{product.description}"</p>
                        </div>
 
-                       <div className="mt-auto pt-10 border-t border-white/5 space-y-8 relative z-10">
+                       <div className="mt-auto pt-10 border-t border-white/5 space-y-6 relative z-10">
                           <div className="grid grid-cols-2 gap-4">
                              <div className="p-4 bg-black/60 rounded-3xl border border-white/5 text-center">
                                 <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Stock Level</p>
@@ -335,11 +370,26 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                                 <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Sonic Auth</p>
                                 <div className="flex items-center justify-center gap-2 text-fuchsia-500">
                                    <Music size={12} />
-                                   <span className="text-xs font-mono font-black uppercase">SYNC</span>
+                                   <span className="text-[10px] font-mono font-black uppercase">SYNC</span>
                                 </div>
                              </div>
                           </div>
-                          <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all shadow-xl">MANAGE SHARD</button>
+                          
+                          <div className="flex flex-col gap-3">
+                             <button 
+                                onClick={() => handleToggleJitFlow(product)}
+                                disabled={isActivatingJit === product.id}
+                                className={`w-full py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${
+                                   product.isLiveProcessing 
+                                   ? 'bg-rose-600/10 border border-rose-500/20 text-rose-500 hover:bg-rose-600 hover:text-white' 
+                                   : 'bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-600 hover:text-white'
+                                }`}
+                             >
+                                {isActivatingJit === product.id ? <Loader2 size={14} className="animate-spin" /> : <ZapIcon size={14} />}
+                                {product.isLiveProcessing ? 'DEACTIVATE JIT FLOW' : 'ACTIVATE JIT FLOW'}
+                             </button>
+                             <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all shadow-md">MANAGE SHARD</button>
+                          </div>
                        </div>
                     </div>
                   ))
@@ -493,12 +543,12 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
               
               <div className="p-12 md:p-16 border-b border-white/5 bg-amber-500/[0.01] flex justify-between items-center shrink-0 relative z-20 px-20">
                  <div className="flex items-center gap-10">
-                    <div className="w-20 h-20 rounded-[32px] bg-amber-600 flex items-center justify-center text-white shadow-3xl border-2 border-white/10 relative overflow-hidden group">
+                    <div className="w-20 h-20 rounded-3xl bg-amber-600 flex items-center justify-center text-white shadow-3xl border-2 border-white/10 relative overflow-hidden group">
                        <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                        <Stamp size={40} className="text-white relative z-10 group-hover:scale-110 transition-transform" />
                     </div>
                     <div>
-                       <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0">Asset <span className="text-amber-500">Lifecycle</span></h3>
+                       <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0">Asset <span className="text-amber-500">Lifecycle</span></h3>
                        <p className="text-amber-400/60 text-[11px] font-mono tracking-[0.5em] uppercase mt-4 italic leading-none">HANDSHAKE_v5.2 // SECURED_INGEST</p>
                     </div>
                  </div>
@@ -587,7 +637,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-3xl mx-auto w-full">
                           <button 
                             onClick={() => setIngestMethod('hardware')}
-                            className={`p-12 rounded-[56px] border-2 transition-all flex flex-col items-center gap-8 group ${ingestMethod === 'hardware' ? 'bg-blue-600/10 border-blue-500 text-blue-400 shadow-xl scale-105' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}
+                            className={`p-12 rounded-[56px] border-2 transition-all flex flex-col items-center gap-8 group ${ingestMethod === 'hardware' ? 'bg-blue-600/10 border-blue-500 text-blue-400 shadow-xl scale-105' : 'bg-black border-white/5 text-slate-700 hover:border-white/20'}`}
                           >
                              <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner group-hover:rotate-6 transition-transform">
                                 <SmartphoneNfc size={40} className={ingestMethod === 'hardware' ? 'text-blue-400' : 'text-slate-700'} />
@@ -599,7 +649,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                           </button>
                           <button 
                             onClick={() => setIngestMethod('network')}
-                            className={`p-12 rounded-[56px] border-2 transition-all flex flex-col items-center gap-8 group ${ingestMethod === 'network' ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400 shadow-xl scale-105' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}
+                            className={`p-12 rounded-[56px] border-2 transition-all flex flex-col items-center gap-8 group ${ingestMethod === 'network' ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400 shadow-xl scale-105' : 'bg-black border-white/5 text-slate-700 hover:border-white/20'}`}
                           >
                              <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner group-hover:rotate-6 transition-transform">
                                 <Globe size={40} className={ingestMethod === 'network' ? 'text-indigo-400' : 'text-slate-700'} />
@@ -627,9 +677,9 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                  {regStep === 'audit' && (
                     <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
                        <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-amber-500/20 shadow-3xl border-l-[16px] border-l-amber-600 relative overflow-hidden group/audit">
-                          <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/audit:scale-125 transition-transform duration-[15s] pointer-events-none"><Sparkles size={600} className="text-amber-500" /></div>
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/audit:scale-125 transition-transform duration-[15s] pointer-events-none"><Sparkles size={600} className="text-amber-500" /></div>
                           <div className="flex items-center gap-8 mb-12 border-b border-white/5 pb-10 relative z-10">
-                             <div className="w-20 h-20 bg-amber-600 rounded-3xl flex items-center justify-center shadow-3xl animate-float">
+                             <div className="w-20 h-20 bg-amber-600 rounded-3xl flex items-center justify-center text-white shadow-3xl animate-float">
                                 <Bot size={44} className="text-white animate-pulse" />
                              </div>
                              <div>
@@ -722,7 +772,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                           <h3 className="text-8xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Asset <span className="text-emerald-400">Qualified.</span></h3>
                           <p className="text-emerald-500 text-sm font-black uppercase tracking-[1em] font-mono leading-none">HASH_COMMIT_0x{(Math.random() * 1000).toFixed(0)}_OK</p>
                        </div>
-                       <button onClick={resetPortal} className="w-full max-w-md py-10 bg-white/5 border-2 border-white/10 rounded-[56px] text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Hub</button>
+                       <button onClick={resetPortal} className="w-full max-w-md py-10 bg-white/5 border border-white/10 rounded-[56px] text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Hub</button>
                     </div>
                  )}
               </div>

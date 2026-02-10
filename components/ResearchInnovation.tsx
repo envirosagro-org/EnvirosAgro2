@@ -305,7 +305,6 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       await saveCollectionItem('books', newBook);
       
       // Auto-list to Market Cloud as a Vendor Product
-      // Fix: Removed duplicate supplierName property (Error on line 316)
       const marketProduct: VendorProduct = {
         id: newBook.id,
         name: `BOOK: ${newBook.title}`,
@@ -657,7 +656,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                              <span className="text-slate-600 group-hover/met:text-slate-200 transition-colors">{m.label}</span>
                              <span className="text-white font-mono">{m.val}%</span>
                           </div>
-                          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5">
+                          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
                              <div className={`h-full rounded-full transition-all duration-[3s] ${m.col}`} style={{ width: `${m.val}%` }}></div>
                           </div>
                        </div>

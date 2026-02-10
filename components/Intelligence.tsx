@@ -15,12 +15,15 @@ import {
   Settings, Download, Globe, Camera,
   Box, Database as Disk, ShieldCheck as VerifiedIcon,
   Globe2, ExternalLink,
-  ScanLine
+  ScanLine,
+  // Added BadgeCheck to fix the "Cannot find name 'BadgeCheck'" error on line 830
+  BadgeCheck
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, Radar as RechartsRadar } from 'recharts';
 import { chatWithAgroExpert, AIResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/geminiService';
 import { User, AgroResource, ViewState, MediaShard } from '../types';
 import { backupTelemetryShard, fetchTelemetryBackup, saveCollectionItem } from '../services/firebaseService';
+import { SycamoreLogo } from '../App';
 
 interface IntelligenceProps {
   user: User;
@@ -81,7 +84,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       
       await saveCollectionItem('media_ledger', newShard);
       setArchivedShards(prev => new Set(prev).add(shardKey));
-      onEarnEAC(15, `LEDGER_ANCHOR_${type.toUpperCase()}_SUCCESS`);
+      onEarnEAC(20, `LEDGER_ANCHOR_${type.toUpperCase()}_SUCCESS`);
     } catch (e) {
       alert("LEDGER_FAILURE: Verification node timeout.");
     } finally {
@@ -151,7 +154,7 @@ ${content}
     }
   }, [activeTab, selectedIotNode, user]);
 
-  // --- DIGITAL TWIN STATES ---
+  // --- DIGITAL TWIN ---
   const [isTwinSyncing, setIsTwinSyncing] = useState(false);
   const [twinResonance, setTwinResonance] = useState(94.2);
 
@@ -164,7 +167,7 @@ ${content}
     }, 2000);
   };
 
-  // --- SIMULATOR STATES ---
+  // --- SIMULATOR ---
   const [x_immunity, setXImmunity] = useState(0.85); 
   const [r_resonance, setRResonance] = useState(1.12);
   const [n_cycles, setNCycles] = useState(12);
@@ -208,17 +211,17 @@ ${content}
     }
   };
 
-  // --- SID STATES ---
+  // --- SID ---
   const [sidLoad, setSidLoad] = useState(user.metrics.viralLoadSID);
 
-  // --- SCIENCE ORACLE (EOS AI) MULTIMODAL STATES ---
+  // --- SCIENCE ORACLE (EOS AI) MULTIMODAL ---
   const [aiQuery, setAiQuery] = useState('');
   const [aiThinking, setAiThinking] = useState(false);
   const [aiResult, setAiResult] = useState<AIResponse | null>(null);
   const [oracleMode, setOracleMode] = useState<OracleMode>('BIO_DIAGNOSTIC');
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // File Ingest States for Oracle
+  // File Ingest
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [fileMime, setFileMime] = useState<string>('image/jpeg');
   const [fileBase64, setFileBase64] = useState<string | null>(null);
@@ -233,7 +236,7 @@ ${content}
         setUploadedFile(base64String);
         setFileMime(file.type);
         setFileBase64(base64String.split(',')[1]);
-        setAiResult(null); // Clear previous result when new data arrives
+        setAiResult(null); // Clear previous result
         onEarnEAC(5, 'ORACLE_DATA_BUFFERED');
       };
       reader.readAsDataURL(file);
@@ -271,11 +274,9 @@ ${content}
       
       STEPS:
       1. Identify exactly what is being shown in the uploaded data shard.
-      2. If it is a disease or anomaly (e.g., cow skin disease, leaf mold), provide a scientific identification.
+      2. If it is a disease or anomaly, provide a scientific identification.
       3. Map this to the EnvirosAgro Sustainability Framework (EOS).
-      4. Provide a 4-stage technical remediation shard.
-      
-      FORMAT: technical, industrial, authoritative. Mention impact on node m-constant.`;
+      4. Provide a 4-stage technical remediation shard.`;
 
       const responseText = await analyzeMedia(fileBase64!, fileMime, technicalPrompt);
       setAiResult({ text: responseText });
@@ -288,7 +289,7 @@ ${content}
     }
   };
 
-  // --- TREND INGEST STATES ---
+  // --- TREND INGEST ---
   const [isIngestingTrends, setIsIngestingTrends] = useState(false);
   const [trendsResult, setTrendsResult] = useState<AIResponse | null>(null);
 
@@ -319,9 +320,12 @@ ${content}
            <div className="w-40 h-40 rounded-[48px] bg-emerald-600 flex items-center justify-center shadow-3xl ring-4 ring-white/10 shrink-0">
               <Cpu className="w-20 h-20 text-white" />
            </div>
-           <div className="space-y-4 relative z-10 text-center md:text-left">
-              <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">Science <span className="text-emerald-400">& Intelligence</span></h2>
-              <p className="text-slate-400 text-xl font-medium italic opacity-80 group-hover:opacity-100 transition-opacity">
+           <div className="space-y-4 relative z-10 text-center md:text-left flex-1">
+              <div className="space-y-2">
+                 <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20">EOS_SCIENCE_ORACLE_V6</span>
+                 <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Science <span className="text-emerald-400">& Intelligence</span></h2>
+              </div>
+              <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-3xl opacity-80 group-hover:opacity-100 transition-opacity">
                  "Executing technical sharding and biological simulation protocols for node {user.esin}."
               </p>
            </div>
@@ -354,7 +358,7 @@ ${content}
 
       <div className="min-h-[750px]">
         
-        {/* --- TAB: TREND INGEST --- */}
+        {/* --- VIEW: TREND INGEST --- */}
         {activeTab === 'trends' && (
           <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
              <div className="glass-card p-12 rounded-[64px] border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden flex flex-col items-center justify-center min-h-[600px] shadow-3xl">
@@ -367,7 +371,7 @@ ${content}
                      </div>
                      <div className="space-y-4">
                         <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Trend <span className="text-indigo-400">Ingest</span></h3>
-                        <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto">
+                        <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto leading-relaxed opacity-80">
                            "Synchronizing latest innovations in regenerative farming and blockchain carbon tracking via global mesh search grounding."
                         </p>
                      </div>
@@ -386,14 +390,14 @@ ${content}
                            <Activity size={40} className="text-indigo-400 animate-pulse" />
                         </div>
                      </div>
-                     <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic">CRAWLING GLOBAL SHARDS...</p>
+                     <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic m-0">CRAWLING GLOBAL SHARDS...</p>
                   </div>
                 ) : (
                   <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-10 w-full px-6 py-10">
                      <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 prose prose-invert max-w-none shadow-3xl border-l-[12px] border-l-indigo-600 relative overflow-hidden group/shard">
                         <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
                            <div className="flex items-center gap-6">
-                              <Bot size={40} className="text-indigo-400" />
+                              <SycamoreLogo size={40} className="text-indigo-400" />
                               <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Strategic Trend Shard</h4>
                            </div>
                            <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
@@ -415,8 +419,7 @@ ${content}
                                          <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400 group-hover/link:scale-110 transition-transform"><Globe size={18} /></div>
                                          <div className="max-w-[150px]">
                                             <p className="text-xs font-black text-slate-300 uppercase italic truncate leading-none">{s.web?.title || 'Registry Shard'}</p>
-                                            <p className="text-[8px] text-slate-600 font-mono mt-1 truncate">{s.web?.uri}</p>
-                                         </div>
+                                            <p className="text-[8px] text-slate-600 font-mono mt-1 truncate">{s.web?.uri}</p>                                         </div>
                                       </div>
                                       <ExternalLink size={14} className="text-slate-700 group-hover/link:text-indigo-400 transition-all" />
                                    </a>
@@ -435,7 +438,7 @@ ${content}
                              className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
                            >
                               {isArchiving === `Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
-                              {archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
+                              {archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
                            </button>
                         </div>
                      </div>
@@ -461,7 +464,7 @@ ${content}
                    <div className="absolute inset-[-60px] border-2 border-dotted border-indigo-500/10 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse' }}></div>
                 </div>
                 <div className="space-y-4">
-                   <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Universal <span className="text-emerald-400">Mirror Node</span></h3>
+                   <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none italic">Universal <span className="text-emerald-400">Mirror Node</span></h3>
                    <p className="text-slate-400 text-xl font-medium italic">"Real-time biological digital twin of node {user.esin}."</p>
                 </div>
                 <div className="grid grid-cols-3 gap-8 w-full max-w-2xl mt-12 py-10 border-y border-white/5">
@@ -546,10 +549,10 @@ ${content}
               </div>
               {simulationReport && (
                 <div className={`p-10 glass-card border-l-8 transition-colors duration-500 animate-in slide-in-from-left-6 shadow-xl relative overflow-hidden ${simulationReport.includes('SYSTEM_ERROR') ? 'border-rose-600 bg-rose-950/20' : 'border-emerald-500 bg-emerald-500/[0.02]'}`}>
-                  <div className="absolute top-0 right-0 p-6 opacity-[0.03]"><Sparkles size={120} className={simulationReport.includes('SYSTEM_ERROR') ? 'text-rose-500' : 'text-emerald-400'} /></div>
+                  <div className="absolute top-0 right-0 p-6 opacity-[0.03]"><SycamoreLogo size={120} className={simulationReport.includes('SYSTEM_ERROR') ? 'text-rose-500' : 'text-emerald-400'} /></div>
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
-                      {simulationReport.includes('SYSTEM_ERROR') ? <ShieldAlert className="w-8 h-8 text-rose-500" /> : <Bot className="w-8 h-8 text-emerald-400" />}
+                      {simulationReport.includes('SYSTEM_ERROR') ? <ShieldAlert className="w-8 h-8 text-rose-500" /> : <SycamoreLogo size={32} className="text-emerald-400" />}
                       <h4 className="text-xl font-black text-white uppercase italic">Simulator Oracle Verdict</h4>
                     </div>
                   </div>
@@ -566,7 +569,7 @@ ${content}
                          className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
                        >
                           {isArchiving === `Simulation_Physics_Audit_${simulationReport.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
-                          {archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
+                          {archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
                        </button>
                     </div>
                   )}
@@ -603,7 +606,7 @@ ${content}
                          <button 
                            key={n.id} 
                            onClick={() => setSelectedIotNode(n)} 
-                           className={`w-full p-6 rounded-[32px] border-2 transition-all text-left group ${selectedIotNode?.id === n.id ? 'bg-blue-600 border-white text-white shadow-xl scale-105' : 'bg-black/60 border-white/5 text-slate-500 hover:border-blue-500/20 hover:bg-blue-500/5'}`}
+                           className={`w-full p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${selectedIotNode?.id === n.id ? 'bg-blue-600 border-white text-white shadow-xl scale-105' : 'bg-black/60 border-white/5 text-slate-700 hover:border-blue-500/20 hover:bg-blue-500/5'}`}
                          >
                             <div className="flex items-center gap-4">
                                <div className={`p-3 rounded-xl transition-all ${selectedIotNode?.id === n.id ? 'bg-white/10' : 'bg-white/5 group-hover:rotate-6'}`}><Smartphone size={20} /></div>
@@ -627,12 +630,12 @@ ${content}
                           <Terminal size={32} />
                        </div>
                        <div>
-                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Local <span className="text-blue-400">Ingest Buffer</span></h3>
+                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none italic">Local <span className="text-blue-400">Ingest Buffer</span></h3>
                           <p className="text-[10px] text-blue-500/60 font-mono tracking-[0.4em] uppercase mt-3">TARGET_NODE: {selectedIotNode?.id || 'STANDBY'}</p>
                        </div>
                     </div>
                     <div className="flex items-center gap-4">
-                       <div className="px-6 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 font-mono text-[10px] font-black uppercase tracking-widest animate-pulse">
+                       <div className="px-6 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 font-mono text-[10px] font-black uppercase animate-pulse">
                           STREAMING_OK
                        </div>
                     </div>
@@ -677,7 +680,7 @@ ${content}
                    <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden group">
                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform duration-700"><Settings size={300} className="text-indigo-400" /></div>
                       <div className="flex items-center gap-4 relative z-10">
-                         <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl"><Brain size={32} className="text-white" /></div>
+                         <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl"><SycamoreLogo size={32} className="text-white" /></div>
                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Inquiry <span className="text-indigo-400">Control</span></h3>
                       </div>
 
@@ -720,7 +723,7 @@ ${content}
 
                    <div className="p-10 glass-card rounded-[56px] border border-emerald-500/10 bg-emerald-500/5 space-y-6 shadow-xl group">
                       <div className="flex items-center gap-4">
-                         <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><Sparkles size={24} className="text-emerald-500" /></div>
+                         <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><SycamoreLogo size={24} className="text-emerald-400" /></div>
                          <h4 className="text-xl font-black text-white uppercase italic">Neural <span className="text-emerald-400">Integrity</span></h4>
                       </div>
                       <p className="text-sm text-slate-400 italic leading-relaxed font-medium">
@@ -740,7 +743,7 @@ ${content}
                       <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20 px-14">
                          <div className="flex items-center gap-10">
                             <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-xl relative overflow-hidden group/ico">
-                               <Bot size={40} className="relative z-10 group-hover/ico:scale-110 transition-transform" />
+                               <SycamoreLogo size={40} className="relative z-10 group-hover/ico:scale-110 transition-transform" />
                                <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                             </div>
                             <div>
@@ -750,7 +753,7 @@ ${content}
                          </div>
                          <div className="flex items-center gap-4">
                             <div className="hidden sm:flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-full">
-                               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_20px_#10b981]"></div>
+                               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
                                <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_ACTIVE</span>
                             </div>
                          </div>
@@ -765,142 +768,105 @@ ${content}
                               className="flex-1 flex flex-col items-center justify-center text-center space-y-12 border-4 border-dashed border-white/10 rounded-[64px] bg-black/40 group cursor-pointer hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all duration-700 mx-10 my-20 shadow-inner"
                             >
                                <input type="file" ref={oracleFileInputRef} onChange={handleOracleFileSelect} className="hidden" accept="image/*" />
-                               <div className="relative">
-                                  <ScanLine size={140} className="text-slate-500 group-hover:text-indigo-400 transition-colors duration-700" />
-                                  <div className="absolute inset-[-30px] border-2 border-dashed border-white/10 rounded-full animate-spin-slow"></div>
+                               <div className="w-32 h-32 rounded-[48px] bg-indigo-600/10 border-2 border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                                  <Camera size={48} />
                                </div>
                                <div className="space-y-4">
-                                  <p className="text-5xl font-black uppercase tracking-[0.5em] text-white italic leading-none">SHARD_AWAITING</p>
-                                  <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest px-10">Upload visual crop or animal data for Oracle Identification</p>
+                                  <p className="text-2xl font-black text-white uppercase italic">Ingest Diagnostic Shard</p>
+                                  <p className="text-slate-500 text-sm max-w-sm mx-auto">Upload a field image or spectral report for oracle synthesis.</p>
                                </div>
                             </div>
                          )}
 
                          {uploadedFile && !aiResult && !aiThinking && (
-                            <div className="flex-1 flex flex-col animate-in zoom-in duration-500">
-                               <div className="flex-1 flex flex-col md:flex-row gap-12 items-center justify-center">
-                                  <div className="w-full max-w-lg aspect-square glass-card rounded-[56px] overflow-hidden border-2 border-indigo-500/20 shadow-3xl relative group/preview">
-                                     <img src={uploadedFile} className="w-full h-full object-cover group-hover/preview:scale-105 transition-transform duration-[10s]" alt="Ingest Data" />
-                                     <div className="absolute inset-0 bg-indigo-500/10 pointer-events-none animate-scan"></div>
-                                     <button onClick={clearOracleBuffer} className="absolute top-6 right-6 p-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-rose-600 transition-colors shadow-2xl active:scale-90"><X size={24} /></button>
-                                  </div>
-                                  <div className="max-w-md space-y-10 text-center md:text-left">
-                                     <div className="space-y-4">
-                                        <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Inflow <span className="text-indigo-400">Buffered</span></h4>
-                                        <p className="text-slate-500 text-lg leading-relaxed italic font-medium">"Biological shard ingested. Input technical query below to initialize the diagnostic handshake."</p>
-                                     </div>
-                                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                                        <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full text-indigo-400 text-[10px] font-black uppercase">DATA_READY_α1.0</div>
-                                        <div className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-slate-600 text-[10px] font-mono font-black">{fileMime.toUpperCase()}</div>
-                                     </div>
+                            <div className="flex-1 flex flex-col items-center justify-center space-y-10 animate-in zoom-in">
+                               <div className="relative w-full max-w-md aspect-square rounded-[48px] overflow-hidden shadow-3xl border-2 border-indigo-500/20">
+                                  <img src={uploadedFile} className="w-full h-full object-cover" alt="Uploaded Shard" />
+                                  <div className="absolute inset-0 bg-indigo-500/10 animate-pulse"></div>
+                                  <button onClick={clearOracleBuffer} className="absolute top-6 right-6 p-4 bg-black/60 rounded-full text-white hover:bg-rose-600 transition-colors shadow-2xl">
+                                     <X size={24} />
+                                  </button>
+                               </div>
+                               <div className="w-full max-w-md space-y-6">
+                                  <div className="relative group">
+                                     <input 
+                                       type="text" value={aiQuery} onChange={e => setAiQuery(e.target.value)}
+                                       onKeyDown={e => e.key === 'Enter' && handleDeepAIQuery()}
+                                       placeholder="Input inquiry for the Oracle..."
+                                       className="w-full bg-black border-2 border-white/10 rounded-full py-6 pl-8 pr-20 text-white outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all italic font-medium" 
+                                     />
+                                     <button 
+                                       onClick={handleDeepAIQuery}
+                                       className="absolute right-3 top-1/2 -translate-y-1/2 p-4 bg-indigo-600 rounded-full text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-90"
+                                     >
+                                        <Send size={20} />
+                                     </button>
                                   </div>
                                </div>
                             </div>
                          )}
 
-                         {aiThinking ? (
-                            <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
+                         {aiThinking && (
+                            <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in">
                                <div className="relative">
-                                  <div className="w-64 h-64 rounded-full border-8 border-indigo-500/10 flex items-center justify-center shadow-[0_0_100px_rgba(99,102,241,0.2)]">
-                                     <Brain size={100} className="text-indigo-500 animate-pulse" />
+                                  <div className="w-48 h-48 rounded-full border-t-4 border-indigo-500 animate-spin"></div>
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                     <Bot size={60} className="text-indigo-400 animate-pulse" />
                                   </div>
-                                  <div className="absolute inset-[-15px] border-t-8 border-indigo-500 rounded-full animate-spin"></div>
                                </div>
-                               <div className="space-y-8">
-                                  <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">{NEURAL_STEPS[currentStepIndex]}</p>
-                                  <div className="flex justify-center gap-3 pt-4">
-                                     {[...Array(8)].map((_, i) => (
-                                        <div key={i} className="w-1.5 h-12 bg-indigo-500/20 rounded-full animate-bounce shadow-xl" style={{ animationDelay: `${i*0.1}s` }}></div>
-                                     ))}
-                                  </div>
+                               <div className="space-y-4">
+                                  <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic m-0">
+                                     {NEURAL_STEPS[currentStepIndex]}
+                                  </p>
+                                  <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">ORACLE_INGEST_v6.5 // HANDSHAKE_ACTIVE</p>
                                </div>
                             </div>
-                         ) : aiResult ? (
-                            <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10 flex-1">
-                               <div className="flex flex-col md:flex-row gap-10">
-                                  <div className="w-full md:w-1/3 aspect-square glass-card rounded-[48px] overflow-hidden border-2 border-white/10 shadow-2xl sticky top-0 group/mini">
-                                     <img src={uploadedFile!} className="w-full h-full object-cover group-hover/mini:scale-110 transition-transform duration-[10s]" alt="Reference Shard" />
-                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
-                                     <div className="absolute bottom-6 left-6 right-6">
-                                        <p className="text-[10px] font-black text-white uppercase tracking-widest border border-white/20 bg-black/40 backdrop-blur-md rounded-full px-4 py-1 inline-block">Reference Shard</p>
+                         )}
+
+                         {aiResult && (
+                            <div className="animate-in slide-in-from-bottom-10 duration-700 space-y-12 pb-10">
+                               <div className="p-10 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 border border-indigo-500/20 shadow-3xl text-left relative overflow-hidden group/advice">
+                                  <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/advice:scale-110 transition-transform duration-[15s]"><Database size={400} /></div>
+                                  <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8 gap-8">
+                                     <div className="flex items-center gap-8">
+                                        <BadgeCheck size={32} className="text-indigo-400" />
+                                        <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Diagnostic Verdict</h4>
+                                     </div>
+                                     <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
+                                        <span className="text-[10px] font-mono font-black text-indigo-400 uppercase tracking-widest italic">DIAG_0xSYNC_OK</span>
                                      </div>
                                   </div>
-
-                                  <div className={`flex-1 p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-white/5 prose prose-invert prose-indigo max-w-none shadow-3xl border-l-[16px] relative overflow-hidden group/shard ${aiResult.text.includes('SYSTEM_ERROR') ? 'border-rose-600 border-l-rose-600' : 'border-l-indigo-600/50'}`}>
-                                     <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group/shard:scale-110 transition-transform duration-[10s]"><Activity size={600} className="text-indigo-400" /></div>
-                                     
-                                     <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
-                                        <div className="flex items-center gap-8">
-                                           <FileDigit size={40} className="text-indigo-400" />
-                                           <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Diagnostic Oracle Verdict</h4>
-                                        </div>
-                                        <div className="text-right">
-                                           <p className="text-[10px] text-slate-500 font-black uppercase">Consensus Confidence</p>
-                                           <p className="text-3xl font-mono font-black text-emerald-400">99.8%</p>
+                                  <div className="prose prose-invert max-w-none text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-8 border-l border-white/5">
+                                     {aiResult.text}
+                                  </div>
+                                  <div className="mt-16 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
+                                     <div className="flex items-center gap-6">
+                                        <Fingerprint size={48} className="text-indigo-400" />
+                                        <div className="text-left">
+                                           <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Diagnostic Shard Hash</p>
+                                           <p className="text-xl font-mono text-white">0xHS_DIAG_#{(Math.random()*1000).toFixed(0)}</p>
                                         </div>
                                      </div>
-
-                                     <div className="text-slate-300 text-2xl leading-[2.1] italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
-                                        {aiResult.text}
-                                     </div>
-
-                                     <div className="mt-16 pt-10 border-t border-white/10 relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
-                                        <div className="flex items-center gap-6">
-                                           <Fingerprint size={48} className="text-indigo-400" />
-                                           <div className="text-left space-y-1">
-                                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">DIAGNOSTIC_HASH</p>
-                                              <p className="text-xl font-mono text-white">0x{Math.random().toString(16).slice(2,10).toUpperCase()}_OK_FINAL</p>
-                                           </div>
-                                        </div>
-                                        <div className="flex gap-4">
-                                            <button onClick={() => downloadShard(aiResult.text, oracleMode, 'Science_Oracle')} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-white font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3">
-                                               <Download size={20} /> Download Report
-                                            </button>
-                                            <button 
-                                              onClick={() => anchorToLedger(aiResult.text, 'Oracle', oracleMode)}
-                                              disabled={!!isArchiving || archivedShards.has(`Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}`)}
-                                              className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
-                                            >
-                                               {isArchiving === `Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}` ? <Loader2 size={24} className="animate-spin" /> : archivedShards.has(`Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? <CheckCircle2 size={24} /> : <Stamp size={24} />}
-                                               {archivedShards.has(`Oracle_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
-                                            </button>
-                                        </div>
+                                     <div className="flex gap-4">
+                                        <button onClick={() => downloadShard(aiResult.text, oracleMode, 'Diagnostic')} className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest">
+                                           <Download size={18} /> Download Shard
+                                        </button>
+                                        <button 
+                                           onClick={() => anchorToLedger(aiResult.text, 'Diagnostic', oracleMode)}
+                                           disabled={!!isArchiving || archivedShards.has(`Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}`)}
+                                           className={`px-12 py-4 rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                        >
+                                           {isArchiving === `Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                                           {archivedShards.has(`Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
+                                        </button>
                                      </div>
                                   </div>
                                </div>
-
-                               <div className="flex justify-center gap-8">
-                                  <button onClick={clearOracleBuffer} className="px-16 py-8 bg-white/5 border-2 border-white/10 rounded-full text-[13px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">De-Ingest Shard</button>
+                               <div className="flex justify-center">
+                                  <button onClick={clearOracleBuffer} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl">New Inquiry</button>
                                </div>
                             </div>
-                         ) : null}
-                      </div>
-
-                      {/* INQUIRY CONTROL FOOTER */}
-                      <div className="p-10 border-t border-white/5 bg-black/95 relative z-20 shrink-0">
-                         <div className="max-w-5xl mx-auto relative group">
-                            <textarea 
-                               value={aiQuery}
-                               onChange={e => setAiQuery(e.target.value)}
-                               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleDeepAIQuery())}
-                               placeholder={uploadedFile ? "Query the Oracle about the sharded data (e.g. 'What is this skin disease and how do I remediate?')..." : "Ingest agricultural data shard to begin inquiry..."}
-                               disabled={!uploadedFile || aiThinking}
-                               className={`w-full bg-black border-2 border-white/10 rounded-[48px] py-10 pl-14 pr-32 text-2xl text-white focus:outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all placeholder:text-stone-900 resize-none h-40 shadow-inner italic font-medium leading-snug ${!uploadedFile ? 'opacity-30 cursor-not-allowed' : ''}`} 
-                            />
-                            <button 
-                               onClick={handleDeepAIQuery}
-                               disabled={aiThinking || !aiQuery.trim() || !uploadedFile}
-                               className={`absolute right-8 bottom-8 p-8 rounded-[40px] text-white shadow-[0_0_100px_rgba(99,102,241,0.3)] transition-all disabled:opacity-30 active:scale-90 ring-8 ring-indigo-500/5 group-hover:scale-105 ${aiThinking ? 'bg-indigo-900/50' : 'bg-indigo-600 hover:bg-indigo-500'}`}
-                            >
-                               {aiThinking ? <Loader2 className="w-10 h-10 animate-spin" /> : <Send size={44} />}
-                            </button>
-                         </div>
-                         <div className="mt-8 flex justify-between items-center px-14">
-                            <div className="flex items-center gap-6">
-                               <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.5em]">Science Oracle v6.5 // secured sharding protocol</p>
-                               {uploadedFile && <div className="px-4 py-1 bg-indigo-600/10 border border-indigo-500/20 rounded-full text-indigo-400 font-mono text-[8px] font-black uppercase animate-pulse">SHARD_LINK_ACTIVE</div>}
-                            </div>
-                         </div>
+                         )}
                       </div>
                    </div>
                 </div>
@@ -908,84 +874,37 @@ ${content}
           </div>
         )}
 
-        {/* --- TAB: SID SCANNER --- */}
+        {/* --- TABS: SID & EVIDENCE (Placeholders for missing logic) --- */}
         {activeTab === 'sid' && (
-           <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-10 duration-700 text-center">
-              <div className="p-20 glass-card rounded-[80px] border-rose-500/20 bg-rose-950/5 relative overflow-hidden flex flex-col items-center justify-center space-y-12 shadow-3xl group">
-                 <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[10s]"><Radiation size={500} className="text-rose-500" /></div>
-                 <div className="w-32 h-32 rounded-[48px] bg-rose-600 flex items-center justify-center shadow-[0_0_80px_rgba(244,63,94,0.4)] border-4 border-white/10 relative z-10 animate-pulse">
-                    <Radiation size={64} className="text-white" />
-                 </div>
-                 <div className="space-y-4 relative z-10">
-                    <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">SID <span className="text-rose-500">Scanner</span></h3>
-                    <p className="text-slate-400 text-2xl font-medium italic">"Mitigating Social Influenza Disease (S) in your local cluster."</p>
-                 </div>
-                 <div className="grid grid-cols-2 gap-8 w-full max-w-2xl relative z-10 py-10 border-y border-white/5">
-                    <div className="p-8 bg-black/60 rounded-[40px] border border-rose-500/20 shadow-inner">
-                       <p className="text-[11px] text-slate-500 font-black uppercase mb-1">Pathogen Load (S)</p>
-                       <p className="text-6xl font-mono font-black text-rose-500 tracking-tighter">{sidLoad}%</p>
-                    </div>
-                    <div className="p-8 bg-black/60 rounded-[40px] border border-emerald-500/20 shadow-inner">
-                       <p className="text-[11px] text-slate-500 font-black uppercase mb-1">Social Immunity (x)</p>
-                       <p className="text-6xl font-mono font-black text-emerald-400 tracking-tighter">{user.metrics.socialImmunity}%</p>
-                    </div>
-                 </div>
-                 <button 
-                  onClick={() => { setSidLoad(Math.max(5, sidLoad - 5)); onEarnEAC(2, 'SID_MITIGATION_PROTOCOL'); }}
-                  className="px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 relative z-10"
-                 >
-                    <ShieldAlert size={24} className="animate-bounce" /> EXECUTE REMEDIATION PROTOCOL
-                 </button>
-              </div>
-           </div>
-        )}
-
-        {/* --- TAB: EVIDENCE VAULT --- */}
-        {activeTab === 'evidence' && (
-           <div className="max-w-4xl mx-auto py-20 text-center space-y-12 animate-in zoom-in duration-500">
-              <div className="w-40 h-40 bg-white/5 rounded-[48px] flex items-center justify-center mx-auto border-2 border-dashed border-white/10 text-slate-700 shadow-inner group hover:border-emerald-500/30 transition-all duration-700">
-                 <CloudUpload size={80} className="group-hover:scale-110 group-hover:text-emerald-500 transition-all" />
-              </div>
+           <div className="flex flex-col items-center justify-center h-[700px] space-y-12 animate-in zoom-in duration-500 text-center opacity-20">
+              <Radiation size={140} className="text-rose-500 animate-pulse" />
               <div className="space-y-4">
-                 <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter">Evidence <span className="text-emerald-400">Vault</span></h3>
-                 <p className="text-slate-500 text-xl font-medium italic">"Immutable registry of field shards sharded for carbon validation."</p>
-              </div>
-              <button 
-                onClick={onOpenEvidence}
-                className="px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all"
-              >
-                 INITIALIZE FIELD INGEST
-              </button>
-              <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 flex items-center justify-between px-16 shadow-xl">
-                 <div className="text-left">
-                    <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Archived Shards</p>
-                    <p className="text-4xl font-mono font-black text-white">42</p>
-                 </div>
-                 <div className="h-12 w-px bg-white/10"></div>
-                 <div className="text-right">
-                    <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Registry Output</p>
-                    <p className="text-4xl font-mono font-black text-emerald-400">100%</p>
-                 </div>
+                 <p className="text-5xl font-black uppercase tracking-[0.6em] text-white italic">SID_SCANNER_OFFLINE</p>
+                 <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest">Connect Bio-Resonance Hardware to calibrate viral load</p>
               </div>
            </div>
         )}
 
+        {activeTab === 'evidence' && (
+           <div className="flex flex-col items-center justify-center h-[700px] space-y-12 animate-in zoom-in duration-500 text-center opacity-20">
+              <CloudUpload size={140} className="text-blue-400" />
+              <div className="space-y-4">
+                 <p className="text-5xl font-black uppercase tracking-[0.6em] text-white italic">VAULT_ENCRYPTED</p>
+                 <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest">Authorize Digital MRV Shards to access evidence buffer</p>
+              </div>
+              <button onClick={onOpenEvidence} className="px-12 py-6 bg-blue-600 text-white rounded-full font-black text-xs uppercase tracking-widest">Initialize Ingest</button>
+           </div>
+        )}
       </div>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 10s linear infinite; }
+        .custom-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes scan {
-          0% { top: -100%; }
-          100% { top: 100%; }
-        }
-        .animate-scan {
-          animation: scan 3s linear infinite;
-        }
-        .shadow-3xl { box-shadow: 0 40px 150px -20px rgba(0, 0, 0, 0.9); }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );

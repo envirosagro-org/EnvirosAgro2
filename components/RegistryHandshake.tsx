@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   QrCode, 
@@ -57,7 +56,7 @@ import { User, AgroResource, ViewState } from '../types';
 interface RegistryHandshakeProps {
   user: User;
   onUpdateUser: (user: User) => void;
-  onNavigate?: (view: ViewState) => void;
+  onNavigate?: (view: ViewState, action?: string | null) => void;
 }
 
 const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUser, onNavigate }) => {
@@ -318,7 +317,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
                         <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest leading-relaxed">
                            Broadcast a live 30s ingest of the hardware in operation to finalize the digital twin handshake.
                         </p>
-                        <button onClick={() => onNavigate?.('media')} className="px-8 py-3 bg-white/5 border border-white/10 rounded-full text-slate-300 font-black text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all">Go to Broadcast Room</button>
+                        <button onClick={() => onNavigate?.('media', 'VERIFICATION')} className="px-8 py-3 bg-white/5 border border-white/10 rounded-full text-slate-300 font-black text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all">Go to Broadcast Room</button>
                      </div>
                   </div>
                </div>
@@ -450,7 +449,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
               <div className="w-24 h-24 bg-emerald-500/10 rounded-3xl flex items-center justify-center text-emerald-400 border border-emerald-500/30 shadow-2xl">
                  <ScanLine size={40} className="animate-pulse" />
               </div>
-              <div className="space-y-4 max-w-xl text-center">
+              <div className="space-y-4 max-xl text-center">
                  <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Document <span className="text-emerald-400">Ingest</span></h4>
                  <p className="text-slate-400 text-lg italic leading-relaxed">
                    "Upload the authorized physical document to trigger the final HQ System Audit."
@@ -529,7 +528,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ user, onUpdateUse
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.85); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
       `}</style>
     </div>
   );

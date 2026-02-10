@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, 
@@ -55,6 +54,7 @@ import {
 } from 'lucide-react';
 import { AgroBlock, User, AgroTransaction } from '../types';
 import { settleRegistryBatch, AIResponse, auditMeshStability } from '../services/geminiService';
+import { SycamoreLogo } from '../App';
 
 interface ExplorerProps {
   blockchain?: AgroBlock[];
@@ -176,7 +176,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
          </div>
 
          <div className="glass-card p-10 rounded-[56px] border border-amber-500/20 bg-amber-500/[0.03] space-y-6 shadow-3xl group relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[10s]"><Target size={120} /></div>
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-[10s]"><Target size={120} /></div>
             <div className="flex justify-between items-center relative z-10">
                <p className="text-[10px] text-amber-400 font-black uppercase tracking-[0.5em]">Total Shards</p>
                <Target className="w-5 h-5 text-amber-500" />
@@ -217,7 +217,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                  <div className="flex justify-between items-center mb-16 relative z-10 border-b border-white/5 pb-10">
                     <div className="flex items-center gap-8">
                        <div className="w-20 h-20 rounded-[32px] bg-amber-600 flex items-center justify-center text-white shadow-3xl animate-float">
-                          <Bot size={44} className="animate-pulse" />
+                          <SycamoreLogo size={44} className="text-white animate-pulse" />
                        </div>
                        <div>
                           <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Network Pulse Analysis</h4>
@@ -305,7 +305,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                             <div className="p-10 bg-black/60 rounded-[48px] border border-emerald-500/20 shadow-inner border-l-8 border-l-emerald-500 relative overflow-hidden group/bubble">
                                <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/bubble:scale-125 transition-transform duration-[12s]"><Sparkles size={250} className="text-emerald-400" /></div>
                                <div className="flex items-center gap-5 mb-8 border-b border-white/5 pb-6">
-                                  <Bot size={32} className="text-emerald-400" />
+                                  <SycamoreLogo size={32} className="text-emerald-400" />
                                   <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Settlement Abstract</h4>
                                </div>
                                <div className="space-y-8 relative z-10">
@@ -413,7 +413,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
            </div>
         )}
 
-        {/* TAB: TRANSACTION LEDGER maintained... */}
+        {/* TAB: TRANSACTION LEDGER */}
         {activeTab === 'ledger' && !pulseVerdict && (
            <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-end border-b border-white/5 pb-8 px-4">
@@ -465,7 +465,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
            </div>
         )}
 
-        {/* TAB: VALIDATOR QUORUM maintained... */}
+        {/* TAB: VALIDATOR QUORUM */}
         {activeTab === 'consensus' && !pulseVerdict && (
             <div className="space-y-12 animate-in zoom-in duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">

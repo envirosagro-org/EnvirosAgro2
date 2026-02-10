@@ -17,7 +17,7 @@ interface EvidenceModalProps {
   onClose: () => void;
   user: User;
   onMinted: (value: number) => void;
-  onNavigate: (view: ViewState) => void;
+  onNavigate: (view: ViewState, action?: string | null) => void;
   taskToIngest?: any | null; // Optional task context passed from the system
 }
 
@@ -93,7 +93,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
 
   const handleLiveIngest = () => {
     onClose();
-    onNavigate('media');
+    onNavigate('media', 'EVIDENCE');
   };
 
   const reset = () => {
@@ -296,7 +296,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
       </div>
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
       `}</style>
     </div>

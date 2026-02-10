@@ -1,8 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Loader2, BarChart2, ShieldCheck, Info, TrendingUp, Globe, ExternalLink } from 'lucide-react';
 // Fix: Removed missing GroundingChunk import as it is not exported from geminiService
 import { chatWithAgroExpert, analyzeSustainability, AIResponse } from '../services/geminiService';
+import { SycamoreLogo } from '../App';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -71,7 +71,7 @@ const AIAnalyst: React.FC = () => {
       <div className="lg:col-span-1 space-y-4 h-full flex flex-col">
         <div className="glass-card p-5 rounded-2xl flex-1">
           <div className="flex items-center gap-2 mb-6">
-            <Sparkles className="w-5 h-5 text-emerald-400" />
+            <SycamoreLogo size={20} className="text-emerald-400" />
             <h3 className="font-bold text-white">AI Capabilities</h3>
           </div>
           
@@ -123,7 +123,7 @@ const AIAnalyst: React.FC = () => {
           <div className="flex gap-3">
             <Info className="w-5 h-5 text-amber-500 shrink-0" />
             <p className="text-xs text-amber-200/80 leading-relaxed">
-              When Search is enabled, Gemini consultations include real-time web references and grounding sources.
+              When Search is enabled, EnvirosAgro consultations include real-time web references and grounding sources.
             </p>
           </div>
         </div>
@@ -134,13 +134,13 @@ const AIAnalyst: React.FC = () => {
         <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 agro-gradient rounded-full flex items-center justify-center shadow-lg">
-              <Bot className="text-white w-6 h-6" />
+              <SycamoreLogo size={24} className="text-white" />
             </div>
             <div>
               <h3 className="font-bold text-white">Expert Advisor</h3>
               <span className="text-[10px] text-emerald-400 uppercase tracking-widest flex items-center gap-1">
                 <div className="w-1 h-1 rounded-full bg-emerald-400"></div>
-                Gemini 3 Flash • {useSearch ? 'Search Grounding ON' : 'Standard Mode'}
+                {useSearch ? 'Search Grounding ON' : 'STANDARD MODE'}
               </span>
             </div>
           </div>
@@ -155,7 +155,7 @@ const AIAnalyst: React.FC = () => {
               <div className={`flex flex-col gap-2 max-w-[85%] ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center ${m.role === 'user' ? 'bg-indigo-600' : 'agro-gradient'}`}>
-                    {m.role === 'user' ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
+                    {m.role === 'user' ? <User className="w-4 h-4 text-white" /> : <SycamoreLogo size={18} className="text-white" />}
                   </div>
                   <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
                     m.role === 'user' 
@@ -191,7 +191,7 @@ const AIAnalyst: React.FC = () => {
             <div className="flex justify-start">
               <div className="flex gap-3">
                 <div className="w-8 h-8 shrink-0 rounded-full agro-gradient flex items-center justify-center animate-pulse">
-                  <Bot className="w-4 h-4 text-white" />
+                  <SycamoreLogo size={18} className="text-white" />
                 </div>
                 <div className="bg-white/5 border border-white/10 p-4 rounded-2xl rounded-tl-none">
                   <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />

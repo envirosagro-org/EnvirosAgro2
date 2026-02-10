@@ -255,7 +255,7 @@ ${oracleVerdict.text}
 
       {/* Mugumo Root DID Section */}
       <div className="glass-card p-12 rounded-[64px] border border-white/10 bg-[#050706] shadow-3xl flex flex-col items-center gap-12 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.08)_0%,_transparent_70%)] pointer-events-none group-hover:scale-110 transition-transform duration-[10s]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.08)_0%,_transparent_70%)] pointer-events-none group-hover:scale-110 transition-transform duration-[10s] text-white"></div>
         
         <div className="text-center relative z-10 space-y-4">
            <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">MUGUMO <span className="text-emerald-400">ROOT DID</span></h3>

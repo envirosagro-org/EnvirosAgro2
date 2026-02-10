@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Cable, 
@@ -54,6 +53,7 @@ import {
 } from 'lucide-react';
 import { User, ViewState, AgroResource } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
+import { SycamoreLogo } from '../App';
 
 interface LogEntry {
   id: string;
@@ -285,7 +285,7 @@ SEQUENCE External_Ingest_Handshake {
                     </p>
                  </div>
               </div>
-              <p className="text-slate-400 text-lg leading-relaxed max-w-xl font-medium italic">
+              <p className="text-slate-400 text-lg md:text-xl font-medium leading-relaxed max-w-xl font-medium italic">
                  "Orchestrating agile telemetry inflow. Synchronize external networks through the Farm OS kernel bridge for real-time optimization."
               </p>
               <div className="flex flex-wrap gap-4 pt-4">
@@ -379,7 +379,7 @@ SEQUENCE External_Ingest_Handshake {
                    </div>
                    <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                      <span className="text-[10px] font-mono text-emerald-500 tracking-widest">STREAMING_ACTIVE_SHARD_8</span>
+                      <span className="text-[10px] font-mono text-emerald-400 tracking-widest">STREAMING_ACTIVE_SHARD_8</span>
                    </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-8 font-mono text-[11px] space-y-4 bg-[#050706]">
@@ -529,7 +529,7 @@ SEQUENCE External_Ingest_Handshake {
                    <div>
                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Stream Analyzer</h3>
                       <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-1">
-                         <Sparkles className="w-3 h-3" /> Gemini 3 Flash Oracle
+                         <SycamoreLogo size={12} className="text-emerald-400" /> EnvirosAgro Oracle
                       </p>
                    </div>
                 </div>
@@ -541,7 +541,7 @@ SEQUENCE External_Ingest_Handshake {
                      <div className="max-w-md space-y-4">
                         <h4 className="text-xl font-bold text-white uppercase tracking-widest">Analyze Packet Trends</h4>
                         <p className="text-slate-500 text-sm leading-relaxed italic">
-                           "Invoke the Gemini oracle to interpret live telemetry patterns and verify ingest success at the atomic level."
+                           "Invoke the oracle to interpret live telemetry patterns and verify ingest success at the atomic level."
                         </p>
                         <button 
                          onClick={handleRunAnalysis}

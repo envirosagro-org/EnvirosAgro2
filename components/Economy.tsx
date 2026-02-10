@@ -12,7 +12,6 @@ import {
   Scale, Signature, FileSignature, Clock, BookOpen, Eye, Star, Download, 
   CreditCard, ChevronDown, Warehouse, Factory, PackageSearch, Receipt, 
   Music, Palette, Map as MapIcon,
-  // Fix: Import the missing 'Database' icon from lucide-react
   Database
 } from 'lucide-react';
 import { 
@@ -382,6 +381,11 @@ const Economy: React.FC<EconomyProps> = ({
                            <span className={`px-6 py-2 rounded-full text-[9px] font-black uppercase border-2 tracking-[0.3em] shadow-2xl backdrop-blur-xl ${item.isOfficial ? 'bg-emerald-600/40 text-emerald-400 border-emerald-500/40' : item.isUserGenerated ? 'bg-indigo-600/40 text-indigo-400 border-indigo-500/40' : 'bg-black/60 text-slate-400 border-white/10'}`}>
                               {item.category}
                            </span>
+                           {item.isLiveProcessing && (
+                             <div className="px-4 py-1.5 bg-indigo-600/60 backdrop-blur-md rounded-full border border-indigo-400 text-[9px] font-black text-white flex items-center gap-2 animate-pulse shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                               <Zap size={12} fill="white" /> JIT_IN_FLOW
+                             </div>
+                           )}
                            {item.distance > 0 && (
                              <div className="px-4 py-1.5 bg-black/80 rounded-full border border-emerald-500/30 text-[9px] font-mono font-black text-emerald-400 flex items-center gap-2">
                                <MapPin size={12} /> {item.distance.toFixed(1)} km
@@ -406,6 +410,13 @@ const Economy: React.FC<EconomyProps> = ({
                               <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-[0.4em] italic truncate">ORIGIN: {item.supplierName.toUpperCase()}</p>
                            </div>
                            <p className="text-base text-slate-400 italic line-clamp-4 leading-loose opacity-80 group-hover:opacity-100 transition-opacity font-medium">"{item.description}"</p>
+                           {item.isLiveProcessing && (
+                              <div className="p-4 bg-indigo-950/20 border border-indigo-500/20 rounded-2xl">
+                                 <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <Activity size={12} /> Supplier Condition: IN-FLOW (Verified)
+                                 </p>
+                              </div>
+                           )}
                         </div>
 
                         <div className="pt-8 border-t border-white/5 flex items-end justify-between">
@@ -557,7 +568,7 @@ const Economy: React.FC<EconomyProps> = ({
                       </div>
                    </div>
                 </div>
-             </div>
+              </div>
            </div>
         )}
 

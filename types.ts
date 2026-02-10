@@ -128,6 +128,7 @@ export interface VendorProduct {
   sku?: string;
   sonicSignature?: string;
   isQualified?: boolean;
+  isLiveProcessing?: boolean;
 }
 
 export interface ChapterShard {

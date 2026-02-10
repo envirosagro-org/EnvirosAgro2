@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Satellite, Zap, ShieldCheck, Bot, Sparkles, 
@@ -27,13 +26,14 @@ interface OnlineGardenProps {
   initialSection?: string | null;
 }
 
-// Define common styles for shard cards
+// Common styles for consistency with the EOS design framework
 const shardCardBaseStyle = "glass-card p-12 rounded-[72px] border-2 transition-all flex flex-col justify-between shadow-3xl bg-black/40 relative overflow-hidden h-[720px] group cursor-pointer active:scale-[0.98] duration-300";
-
-// Define common styles for icons
 const iconContainerStyle = (color: string) => `p-6 rounded-3xl bg-white/5 border border-white/10 ${color} shadow-2xl group-hover:rotate-6 group-hover:scale-110 transition-all`;
 
-// Define component for a resource shard with TQM Traceability
+/**
+ * ResourceShard component for individual garden nodes
+ * Implements TQM Traceability and Agrolang generation
+ */
 const ResourceShard: React.FC<{
   resource: AgroResource;
   isSelected: boolean;
@@ -133,11 +133,11 @@ SEQUENCE Tune_Telemetry {
          </div>
 
          <div className="p-6 bg-black/80 rounded-[44px] border border-white/5 space-y-4 shadow-inner">
-            <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-600">
+            <div className="flex justify-between items-center text-[9px] font-black text-slate-600">
                <span className="flex items-center gap-2"><Hash size={10} /> Genesis Hash</span>
                <span className="text-slate-400 font-mono truncate ml-4">{genesisHash}</span>
             </div>
-            <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-600">
+            <div className="flex justify-between items-center text-[9px] font-black text-slate-600">
                <span className="flex items-center gap-2"><Workflow size={10} /> Current Thread</span>
                <span className="text-emerald-500 font-mono truncate ml-4">{currentHash}</span>
             </div>
@@ -190,20 +190,11 @@ const SHARD_TYPES = [
   { id: 'virtual', label: 'Sim Shard', desc: 'Strategy testing & Reaction Mining', badge: 'VIRTUAL', col: 'text-indigo-400', bg: 'bg-indigo-500/10' },
 ];
 
-const MOCK_HISTORICAL_YIELD = [
-  { cycle: 'C1', yield: 42, resonance: 0.84 },
-  { cycle: 'C2', yield: 56, resonance: 0.92 },
-  { cycle: 'C3', yield: 48, resonance: 0.88 },
-  { cycle: 'C4', yield: 72, resonance: 1.15 },
-  { cycle: 'C5', yield: 64, resonance: 1.05 },
-  { cycle: 'C6', yield: 92, resonance: 1.42 },
-];
-
 const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, onExecuteToShell, notify, initialSection }) => {
   const [activeTab, setActiveTab] = useState<'bridge' | 'shards' | 'roadmap' | 'mining'>('bridge');
   const [activeShardType, setActiveShardType] = useState<'physical' | 'virtual'>(user.resources?.some(r => r.category === 'LAND') ? 'physical' : 'virtual');
   
-  // Vector Routing Logic
+  // Vector Routing Logic synchronization
   useEffect(() => {
     if (initialSection) {
       setActiveTab(initialSection as any);
@@ -269,14 +260,12 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
     setMiningInference(null);
 
     try {
-      const data = {
+      const res = await analyzeMiningYield({
         pressure: type === 'reaction' ? 85 : 12.4,
         type,
         node_id: user.esin,
         m_constant: user.metrics.timeConstantTau
-      };
-      const res = await analyzeMiningYield(data);
-      // Mock unique hash for the mining event
+      });
       const eventHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}_MINED`;
       setMiningInference({ ...res, eventHash });
       onEarnEAC(type === 'carbon' ? 50 : 25, `${type.toUpperCase()}_MINING_CYCLE_COMPLETE`);
@@ -299,13 +288,13 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
     <div className="space-y-10 animate-in fade-in duration-700 pb-24 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
       
       {/* Visual Scanline Effect */}
-      <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden">
+      <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none overflow-hidden z-0">
         <div className="w-full h-[2px] bg-indigo-500/10 absolute top-0 animate-scan"></div>
       </div>
 
       {/* 1. Header Hero HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-500/[0.03] relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
+        <div className={`lg:col-span-3 glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-500/[0.03] relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl`}>
            <div className="relative shrink-0">
               <div className={`w-44 h-44 rounded-[56px] flex items-center justify-center ring-8 ring-white/5 relative overflow-hidden group-hover:scale-105 transition-all duration-1000 ${
                 activeShardType === 'physical' ? 'bg-emerald-600 shadow-[0_0_100px_rgba(16,185,129,0.4)]' : 'bg-indigo-700 shadow-[0_0_100px_rgba(79,70,229,0.4)]'
@@ -375,7 +364,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
             >
-              <tab.icon className="w-4 h-4" /> {tab.label}
+              <tab.icon size={14} /> {tab.label}
             </button>
           ))}
       </div>
@@ -438,256 +427,174 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                       </div>
                     )}
                  </div>
+              </div>
 
-                 <div className="p-10 glass-card rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl">
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl">
                     <h4 className="text-xl font-black text-white uppercase italic tracking-widest px-4 flex items-center gap-4">
                        <History size={24} className="text-blue-400" /> Ingest Archive
                     </h4>
+                    <div className="space-y-4 max-h-[350px] overflow-y-auto custom-scrollbar pr-2">
+                       {[...Array(5)].map((_, i) => (
+                          <div key={i} className="p-5 bg-white/[0.02] border border-white/5 rounded-[24px] flex items-center justify-between group hover:bg-white/[0.05] transition-all">
+                             <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-400">
+                                   <History size={18} />
+                                </div>
+                                <div>
+                                   <p className="text-xs font-black uppercase text-white">SYNC_SHARD_#{(4282+i)}</p>
+                                   <p className="text-[8px] font-mono text-slate-700">12:0{i} PM // 0.98a</p>
+                                </div>
+                             </div>
+                             <CheckCircle2 size={16} className="text-emerald-500/40" />
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
+
+        {/* TAB: SHARD MANAGER */}
+        {activeTab === 'shards' && (
+           <div className="space-y-12 animate-in slide-in-from-right-4 duration-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+                {[...landResources, ...hardwareResources].map(res => (
+                   <ResourceShard 
+                    key={res.id} 
+                    resource={res} 
+                    isSelected={selectedShardId === res.id} 
+                    onSelect={() => setSelectedShardId(res.id)} 
+                    onExecute={handleExecuteOS} 
+                   />
+                ))}
+                {(landResources.length + hardwareResources.length) === 0 && (
+                   <div className="col-span-full py-40 text-center opacity-10 border-4 border-dashed border-white/5 rounded-[80px] flex flex-col items-center gap-10">
+                      <BoxesIcon size={120} />
+                      <p className="text-4xl font-black uppercase tracking-[0.5em]">No physical shards linked</p>
+                      <button onClick={() => onNavigate('registry_handshake')} className="px-12 py-5 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-widest shadow-xl">Start Handshake</button>
+                   </div>
+                )}
+              </div>
+           </div>
+        )}
+
+        {/* TAB: SUPER-AGRO PATH */}
+        {activeTab === 'roadmap' && (
+           <div className="max-w-4xl mx-auto space-y-12 animate-in zoom-in duration-700">
+              <div className="text-center space-y-4">
+                 <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter">Super-Agro <span className="text-emerald-400">Path.</span></h3>
+                 <p className="text-slate-500 text-xl italic font-medium">Calibrating your individual node progression across the organizational grid.</p>
+              </div>
+              <div className="relative space-y-6">
+                 {PROGRESSION_TIERS.map((tier, i) => (
+                    <div key={i} className={`p-10 glass-card rounded-[56px] border-2 transition-all flex flex-col md:flex-row items-center justify-between gap-10 relative overflow-hidden ${currentTier.level >= tier.level ? 'border-emerald-500/40 bg-emerald-500/[0.03] shadow-3xl' : 'border-white/5 bg-black/40 opacity-40'}`}>
+                       <div className="flex items-center gap-10 relative z-10">
+                          <div className={`w-20 h-20 rounded-[32px] flex items-center justify-center border-2 ${tier.col} ${tier.bg} border-current shadow-2xl`}>
+                             <tier.icon size={36} />
+                          </div>
+                          <div>
+                             <h4 className="text-3xl font-black text-white uppercase italic leading-none">{tier.title}</h4>
+                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-3">REQUIREMENT: {tier.req}</p>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className="text-[10px] text-slate-600 font-black uppercase mb-1">Access Tier</p>
+                          <p className="text-xl font-mono font-black text-white uppercase italic">{tier.access}</p>
+                       </div>
+                       {currentTier.level >= tier.level && (
+                          <div className="absolute top-6 right-6">
+                             <CheckCircle2 className="text-emerald-500" size={32} />
+                          </div>
+                       )}
+                    </div>
+                 ))}
+              </div>
+           </div>
+        )}
+
+        {/* TAB: EXTRACTION NODE (MINING) */}
+        {activeTab === 'mining' && (
+           <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-bottom-6 duration-700">
+              <div className="glass-card p-16 md:p-24 rounded-[80px] border-2 border-amber-500/20 bg-amber-950/5 relative overflow-hidden shadow-3xl text-center space-y-12 group">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s]"><Zap size={800} className="text-amber-400" /></div>
+                 
+                 <div className="relative z-10 space-y-10">
+                    <div className="w-32 h-32 rounded-[44px] bg-amber-600 flex items-center justify-center shadow-[0_0_120px_rgba(245,158,11,0.3)] border-4 border-white/10 mx-auto group-hover:rotate-12 transition-transform duration-700 animate-float">
+                       <Pickaxe size={64} className="text-white animate-pulse" />
+                    </div>
                     <div className="space-y-4">
-                       {[
-                         { id: 'S-882', time: '2h ago', source: 'SATELLITE', status: 'SUCCESS', vol: '14.2 MB', hash: '0x882A_TRUTH' },
-                         { id: 'S-881', time: '5h ago', source: 'INGEST_P4', status: 'SUCCESS', vol: '2.8 MB', hash: '0x104B_SYNC' },
-                         { id: 'S-880', time: '1d ago', source: 'SATELLITE', status: 'SUCCESS', vol: '45.1 MB', hash: '0x042C_ANCHOR' },
-                       ].map(log => (
-                         <div key={log.id} className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-[32px] hover:bg-white/[0.05] transition-all group">
-                            <div className="flex items-center gap-6">
-                               <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 group-hover:text-blue-400 transition-colors shadow-inner"><Monitor size={20} /></div>
-                               <div>
-                                  <p className="text-sm font-black text-white uppercase italic leading-none">{log.source} Shard Anchored</p>
-                                  <p className="text-[9px] text-slate-700 font-mono font-bold mt-2 uppercase tracking-widest">HASH: {log.hash} // {log.time}</p>
-                               </div>
-                            </div>
-                            <div className="text-right">
-                               <p className="text-sm font-mono font-black text-emerald-400">{log.vol}</p>
-                               <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Mass committed</span>
-                            </div>
-                         </div>
+                       <h3 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter m-0 leading-none drop-shadow-2xl">RESOURCE <span className="text-amber-500">MINING.</span></h3>
+                       <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto opacity-80">"Extracting surplus biological energy (Ca) into liquid utility (EAC) shards."</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-center gap-6 pt-10">
+                       {SHARD_TYPES.map(s => (
+                          <button 
+                            key={s.id} 
+                            onClick={() => handleStartMining(s.id as any)}
+                            className={`p-8 rounded-[48px] border-2 transition-all flex-1 flex flex-col items-center gap-6 group/btn ${miningType === s.id && isMining ? 'bg-amber-600 border-white text-white' : 'bg-black/60 border-white/10 text-slate-500 hover:border-amber-400'}`}
+                          >
+                             <div className={`p-5 rounded-2xl bg-white/5 border border-white/10 ${s.col} shadow-inner group-hover/btn:scale-110 transition-transform`}>
+                                <Zap size={32} />
+                             </div>
+                             <div>
+                                <h5 className="text-2xl font-black uppercase italic leading-none">{s.label}</h5>
+                                <p className="text-[10px] font-bold mt-2 uppercase opacity-60">{s.desc}</p>
+                             </div>
+                          </button>
                        ))}
                     </div>
                  </div>
               </div>
 
-              <div className="lg:col-span-4 space-y-8">
-                 <div className="glass-card p-10 rounded-[56px] border-indigo-500/20 bg-indigo-950/10 flex flex-col items-center text-center space-y-10 shadow-3xl relative overflow-hidden group/oracle">
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform duration-[12s]"><Bot size={300} className="text-indigo-400" /></div>
-                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 group-hover:rotate-12 transition-transform duration-700 relative z-10 animate-float">
-                       <Bot size={48} className="text-white" />
+              {isMining && (
+                 <div className="flex flex-col items-center justify-center space-y-8 animate-in zoom-in duration-500">
+                    <div className="relative">
+                       <Loader2 size={120} className="text-amber-500 animate-spin mx-auto" />
+                       <div className="absolute inset-0 flex items-center justify-center">
+                          <Binary size={40} className="text-amber-400 animate-pulse" />
+                       </div>
                     </div>
-                    <div className="space-y-6 relative z-10">
-                       <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Bridge <span className="text-indigo-400">Oracle</span></h4>
-                       <p className="text-slate-400 text-lg leading-relaxed italic px-6 font-medium">
-                          "Analyzing multi-silo registry logs. Shard sequentiality verified for node {user.esin}. High resonance predicted for next cycle."
-                       </p>
-                    </div>
-                    <div className="p-8 bg-black/60 rounded-[40px] border border-indigo-500/20 w-full relative z-10 shadow-inner group-hover/oracle:border-indigo-400 transition-colors">
-                       <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-3">Ingest Confidence</p>
-                       <p className="text-5xl font-mono font-black text-indigo-400 tracking-tighter leading-none">99<span className="text-2xl italic font-sans text-indigo-700 ml-1">.9%</span></p>
-                    </div>
+                    <p className="text-amber-500 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic">SEQUENCING_YIELD...</p>
                  </div>
+              )}
 
-                 <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 space-y-6 shadow-xl group">
-                    <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                       <ShieldCheck className="w-6 h-6 text-emerald-400 group-hover:scale-110 transition-transform" />
-                       <h4 className="text-lg font-black text-white uppercase italic tracking-widest">Finality shard</h4>
-                    </div>
-                    <div className="space-y-4">
-                       <p className="text-slate-500 text-xs italic leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
-                          "Telemetry sharding uses 256-bit cryptographic handshakes to anchor physical field data to the digital twin."
-                       </p>
-                       <div className="p-4 bg-white/5 border border-white/5 rounded-2xl font-mono text-[9px] text-slate-700 break-all select-all italic uppercase tracking-widest">
-                          SHA256_ANCHOR: 0x882A_SYNC_FINALITY_OK
+              {miningInference && !isMining && (
+                 <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-8">
+                    <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-amber-500/20 shadow-3xl border-l-[16px] border-l-amber-600 relative overflow-hidden group/advice">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform"><Sparkles size={600} className="text-amber-500" /></div>
+                       <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
+                          <div className="flex items-center gap-6">
+                             <Bot size={40} className="text-amber-400" />
+                             <h4 className="text-3xl font-black text-white uppercase italic m-0">Mining Shard Yield</h4>
+                          </div>
+                          <div className="px-6 py-2 bg-amber-600/10 border border-amber-500/20 rounded-full">
+                             <span className="text-[11px] font-mono font-black text-amber-400 uppercase tracking-widest italic">0xMINED_OK</span>
+                          </div>
+                       </div>
+                       <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/5">
+                          {miningInference.text}
+                       </div>
+                       <div className="mt-12 pt-10 border-t border-white/10 relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
+                          <div className="flex items-center gap-6">
+                             <Fingerprint size={48} className="text-amber-400" />
+                             <div className="text-left">
+                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">EVENT_HASH</p>
+                                <p className="text-xl font-mono text-white italic">{miningInference.eventHash}</p>
+                             </div>
+                          </div>
+                          <button onClick={() => setMiningInference(null)} className="px-16 py-8 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border-2 border-white/10">SETTLE YIELD SHARD</button>
                        </div>
                     </div>
                  </div>
-              </div>
+              )}
            </div>
         )}
-
-        {/* TAB: SHARD MANAGER (SKU & HASH FOCUS) */}
-        {activeTab === 'shards' && (
-          <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 px-4 md:px-0">
-             <div className="flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-10 px-6 gap-8">
-                <div className="space-y-3">
-                   <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">SHARD <span className="text-indigo-400">MANAGER</span></h3>
-                   <p className="text-slate-500 text-xl font-medium italic opacity-80">"Administering virtual twins and regional SKU shards via immutable threads."</p>
-                </div>
-                <button 
-                  onClick={() => onNavigate('registry_handshake')}
-                  className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center gap-4 hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border border-white/10"
-                >
-                   <Plus size={20} /> MINT NEW VIRTUAL SHARD
-                </button>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-                {activeShardType === 'physical' ? (
-                  landResources.concat(hardwareResources).map(resource => (
-                    <ResourceShard 
-                      key={resource.id} 
-                      resource={resource} 
-                      isSelected={selectedShardId === resource.id}
-                      onSelect={() => setSelectedShardId(resource.id)}
-                      onExecute={handleExecuteOS}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-full py-40 flex flex-col items-center justify-center text-center space-y-8 opacity-20 border-2 border-dashed border-white/5 rounded-[48px] bg-black/20">
-                    <LayoutGrid size={80} className="text-slate-600" />
-                    <p className="text-2xl font-black uppercase tracking-[0.5em]">Virtual Shard Buffer Empty</p>
-                    <button className="px-10 py-5 bg-indigo-600 rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl">Initialize Sim Node</button>
-                  </div>
-                )}
-             </div>
-          </div>
-        )}
-        
-        {/* ROADMAP VIEW maintained... */}
-        {activeTab === 'roadmap' && (
-           <div className="space-y-16 animate-in zoom-in duration-700 px-4 md:px-0 max-w-6xl mx-auto">
-              <div className="text-center space-y-6 mb-20">
-                 <h3 className="text-6xl md:text-[100px] font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)]">ROADMAP <span className="text-emerald-400">TO SUPER-AGRO</span></h3>
-                 <p className="text-slate-500 text-2xl font-medium italic max-w-3xl mx-auto leading-relaxed opacity-80">"Scaling your node from a seed to a sovereign planetary steward. Every milestone anchored in industrial logic."</p>
-              </div>
-              <div className="relative space-y-12">
-                 <div className="absolute left-[50px] top-10 bottom-10 w-[3px] bg-gradient-to-b from-emerald-500 via-blue-500 to-indigo-600 opacity-20 hidden md:block"></div>
-                 {PROGRESSION_TIERS.map((tier, i) => {
-                    const isCompleted = currentTier.level >= tier.level;
-                    const isNext = currentTier.level + 1 === tier.level;
-                    return (
-                      <div key={tier.level} className={`flex gap-12 group relative z-10 transition-all duration-700 ${isCompleted ? 'opacity-100' : isNext ? 'opacity-90' : 'opacity-30 grayscale'}`}>
-                         <div className={`w-24 h-24 rounded-[36px] flex items-center justify-center shrink-0 border-4 transition-all duration-700 shadow-3xl relative overflow-hidden group-hover:scale-110 group-hover:rotate-6 ${isCompleted ? `${tier.bg} border-emerald-500/40 text-emerald-400` : isNext ? 'bg-black border-white/20 text-slate-700 animate-pulse' : 'bg-black border-white/5 text-slate-800'}`}>
-                            <tier.icon size={48} className="relative z-10" />
-                         </div>
-                         <div className={`flex-1 glass-card p-10 rounded-[56px] border-2 transition-all duration-700 group-hover:border-white/20 shadow-3xl flex flex-col md:flex-row justify-between items-center gap-10 bg-black/40 ${isNext ? 'border-blue-500/40' : 'border-white/5'}`}>
-                            <div className="space-y-4 flex-1 text-center md:text-left">
-                               <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">{tier.title}</h4>
-                               <p className="text-slate-400 text-lg italic leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">"{tier.req}. Access to: <span className="text-white font-bold">{tier.access}</span>"</p>
-                            </div>
-                         </div>
-                      </div>
-                    );
-                 })}
-              </div>
-           </div>
-        )}
-
-        {/* --- TAB: EXTRACTION NODE (MINING WITH HASHES) --- */}
-        {activeTab === 'mining' && (
-           <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                 
-                 {/* Extraction Control */}
-                 <div className="glass-card p-12 md:p-16 rounded-[72px] border-2 border-emerald-500/20 bg-black/60 shadow-3xl flex flex-col items-center justify-center text-center space-y-10 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Zap size={600} className="text-emerald-400" /></div>
-                    
-                    <div className="relative z-10 space-y-12 w-full">
-                       <div className="w-32 h-32 bg-emerald-600 rounded-[44px] flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.3)] border-4 border-white/10 group-hover:rotate-12 transition-transform duration-700 mx-auto">
-                          <Pickaxe size={64} className="text-white animate-float" />
-                       </div>
-                       <div className="space-y-4">
-                          <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0">Extraction <span className="text-emerald-400">Node</span></h3>
-                          <p className="text-slate-500 text-xl italic mt-4 opacity-80 max-w-sm mx-auto">"Mining biological and social energy shards for registry rewards."</p>
-                       </div>
-
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-xl mx-auto">
-                          <button 
-                            onClick={() => handleStartMining('carbon')}
-                            disabled={isMining}
-                            className="p-8 glass-card border-2 border-emerald-500/20 hover:border-emerald-500 bg-emerald-500/5 rounded-[48px] flex flex-col items-center gap-4 transition-all active:scale-95 group/btn"
-                          >
-                             <Wind size={32} className="text-emerald-400 group-hover/btn:scale-110 transition-transform" />
-                             <span className="text-[11px] font-black text-white uppercase tracking-widest italic">Carbon Mining</span>
-                          </button>
-                          <button 
-                            onClick={() => handleStartMining('reaction')}
-                            disabled={isMining}
-                            className="p-8 glass-card border-2 border-indigo-500/20 hover:border-indigo-500 bg-indigo-500/5 rounded-[48px] flex flex-col items-center gap-4 transition-all active:scale-95 group/btn"
-                          >
-                             <Heart size={32} className="text-indigo-400 group-hover/btn:scale-110 transition-transform" />
-                             <span className="text-[11px] font-black text-white uppercase tracking-widest italic">Reaction Mining</span>
-                          </button>
-                       </div>
-                    </div>
-                 </div>
-
-                 {/* Oracle Extraction Terminal */}
-                 <div className="glass-card rounded-[72px] border-2 border-white/5 bg-[#050706] shadow-3xl flex flex-col relative overflow-hidden">
-                    <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 px-14">
-                       <div className="flex items-center gap-6">
-                          <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl flex items-center justify-center border border-white/10">
-                             <Bot size={28} className="text-white animate-pulse" />
-                          </div>
-                          <div>
-                             <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Extraction <span className="text-indigo-400">Oracle</span></h4>
-                             <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-2">ZK_EXTRACTION_LINK // EOS_SYNC</p>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative bg-black/40">
-                       {isMining ? (
-                          <div className="h-full flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in duration-500">
-                             <div className="relative">
-                                <Loader2 size={120} className="text-emerald-500 animate-spin mx-auto" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                   <Zap size={40} className="text-emerald-400 animate-pulse" />
-                                </div>
-                             </div>
-                             <div className="space-y-4">
-                                <p className="text-emerald-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic m-0">EXTRACTING_ENERGY_SHARDS...</p>
-                                <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">QUERYING_ORACLE_QUORUM // COMMITTING_HASHES</p>
-                             </div>
-                          </div>
-                       ) : miningInference ? (
-                          <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12">
-                             <div className="p-12 md:p-14 bg-black/80 rounded-[64px] border border-emerald-500/20 prose prose-invert max-w-none shadow-3xl border-l-[16px] border-l-emerald-600 relative overflow-hidden group/advice">
-                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={600} className="text-emerald-400" /></div>
-                                <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8 gap-8">
-                                   <div className="flex items-center gap-6">
-                                      <Stamp size={40} className="text-emerald-400" />
-                                      <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Extraction Verdict</h4>
-                                   </div>
-                                </div>
-                                <div className="text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
-                                   {miningInference.text}
-                                </div>
-                                <div className="mt-12 pt-8 border-t border-white/10 space-y-6 relative z-10">
-                                   <div className="flex justify-between items-center px-4">
-                                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Unique Product Hash</p>
-                                      <p className="text-xs font-mono font-black text-white">{miningInference.eventHash}</p>
-                                   </div>
-                                   <div className="flex justify-between items-center px-4">
-                                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Validator Node</p>
-                                      <p className="text-xs font-mono font-black text-emerald-400 italic">CERT_AI_STUDIO_V6</p>
-                                   </div>
-                                </div>
-                             </div>
-                             <div className="flex justify-center gap-6">
-                                <button onClick={() => setMiningInference(null)} className="px-16 py-7 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border-2 border-white/10">Handshake Acknowledged</button>
-                             </div>
-                          </div>
-                       ) : (
-                          <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-10 group/ready">
-                             <div className="relative">
-                                <Zap size={140} className="text-slate-600 group-hover/ready:text-emerald-400 transition-colors duration-1000" />
-                                <div className="absolute inset-[-40px] border-4 border-dashed border-white/5 rounded-full scale-125 animate-spin-slow"></div>
-                             </div>
-                             <div className="space-y-4">
-                                <p className="text-5xl font-black uppercase tracking-[0.6em] text-white italic leading-none">MINER_READY</p>
-                                <p className="text-xl font-bold italic text-slate-700 uppercase tracking-[0.4em]">Select an extraction protocol to initialize harvesting</p>
-                             </div>
-                          </div>
-                       )}
-                    </div>
-                 </div>
-              </div>
-           </div>
-        )}
-
       </div>
 
       <style>{`
-        .shadow-3xl { box-shadow: 0 50px 150px -20px rgba(0, 0, 0, 0.9); }
+        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
@@ -696,10 +603,6 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .custom-scrollbar-editor::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-editor::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 10px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
       `}</style>
     </div>
   );
