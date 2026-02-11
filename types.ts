@@ -324,6 +324,10 @@ export interface LiveAgroProduct {
   telemetryNodes?: string[];
   marketStatus?: 'Forecasting' | 'Processing' | 'Ready';
   vouchYieldMultiplier?: number;
+  isPhysicallyVerified?: boolean;
+  isSystemAudited?: boolean;
+  evidenceCount?: number;
+  isBroadcasting?: boolean;
 }
 
 export interface NotificationShard {
@@ -392,7 +396,6 @@ export interface MediaShard {
   downloadUrl?: string;
 }
 
-// Vector-based view state for synchronized matrix routing
 export type ViewState = 
   | 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' 
   | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' 
@@ -406,11 +409,6 @@ export type ViewState =
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger' | 'agrolang'
   | 'network' | 'sitemap' | 'auth' | 'ai_analyst' | 'settings';
 
-/**
- * Vector address representation: [Dimension].[Element]
- * Dimension (D): The parent component (e.g., Economy)
- * Element (E): The specific sub-section (e.g., Catalogue)
- */
 export interface VectorAddress {
   dimension: ViewState;
   element: string | null;

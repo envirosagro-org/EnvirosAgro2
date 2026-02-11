@@ -1,16 +1,21 @@
-
 {
   "rules": {
     "network_pulse": {
       ".read": "auth != null",
       ".write": "auth != null",
       "$pulse_id": {
-        ".validate": "newData.hasChildren(['message', 'timestamp'])"
+        ".validate": "newData.hasChildren(['message', 'timestamp']) && newData.child('message').isString()"
       }
     },
     "global_metrics": {
       ".read": true,
-      ".write": "auth != null && root.child('auditors').child(auth.token.email.replace('.', ',')).exists()"
+      ".write": "auth != null && root.child('auditors').child(auth.token.email.replace('.', ',')).exists()",
+      "m_constant": {
+        ".validate": "newData.isNumber() && newData.val() >= 1.0"
+      },
+      "ca_index": {
+        ".validate": "newData.isNumber()"
+      }
     }
   }
 }

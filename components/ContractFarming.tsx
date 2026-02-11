@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Landmark, 
@@ -60,13 +59,25 @@ import {
   Layout,
   Star,
   ChevronDown,
-  /* Added missing icon imports to fix compilation errors */
   Sprout,
   ArrowUpRight,
   MessageSquare,
   Send,
   Cpu,
-  SmartphoneNfc
+  SmartphoneNfc,
+  Edit2,
+  BrainCircuit,
+  FlaskConical,
+  Upload,
+  Cable,
+  Settings,
+  LineChart,
+  Video,
+  // Added BadgeCheck and Smartphone to fix the "Cannot find name" errors
+  BadgeCheck,
+  Smartphone,
+  // Added Wifi to fix the "Wifi is not defined" ReferenceError
+  Wifi
 } from 'lucide-react';
 import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone } from '../types';
 import { analyzeBidHandshake, AIResponse } from '../services/geminiService';
@@ -96,6 +107,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   // Selection & Ingestion States
   const [showApplyModal, setShowApplyModal] = useState<FarmingContract | null>(null);
   const [showDeployModal, setShowDeployModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [applyStep, setApplyStep] = useState<'selection' | 'ingestion' | 'matching' | 'success'>('selection');
   
   // Application Data
@@ -105,7 +117,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   const [matchResult, setMatchResult] = useState<any>(null);
   const [esinSign, setEsinSign] = useState('');
 
-  // Deployment Data
+  // Deployment & Edit Data
   const [newMissionCategory, setNewMissionCategory] = useState<MissionCategory>('INVESTMENT');
   const [newMissionTitle, setNewMissionTitle] = useState('');
   const [newMissionBudget, setNewMissionBudget] = useState('5000');
@@ -114,13 +126,21 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   // Management Terminal States
   const [activeMission, setActiveMission] = useState<FarmingContract | null>(null);
 
+  // Added toggleAsset function to fix the "Cannot find name 'toggleAsset'" errors
+  const toggleAsset = (id: string) => {
+    const next = new Set(selectedAssets);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedAssets(next);
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => setIsAccessVerifying(false), 1200);
     return () => clearTimeout(timer);
   }, []);
 
   const availableMissions = useMemo(() => contracts.filter(c => c.status === 'Open'), [contracts]);
-  const activeMissions = useMemo(() => contracts.filter(c => c.status === 'In_Progress'), [contracts]);
+  const activeMissions = useMemo(() => contracts.filter(c => c.status === 'In_Progress' || (c.investorEsin === user.esin && c.status === 'Open')), [contracts, user.esin]);
 
   const filteredManifest = useMemo(() => {
     return availableMissions.filter(m => 
@@ -209,25 +229,35 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
       onSaveContract(newContract);
       setShowDeployModal(false);
       setNewMissionTitle('');
+      setEsinSign('');
     }
   };
 
-  if (isAccessVerifying) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-12 animate-in fade-in duration-700">
-        <div className="relative">
-          <div className="w-32 h-32 rounded-[40px] bg-indigo-600/10 border-2 border-indigo-500/20 flex items-center justify-center text-indigo-500 shadow-3xl">
-            <Lock size={48} className="animate-pulse" />
-          </div>
-          <div className="absolute inset-[-10px] border-2 border-indigo-500/30 rounded-[50px] animate-ping opacity-20"></div>
-        </div>
-        <div className="text-center space-y-4">
-          <h3 className="text-3xl font-black text-white uppercase tracking-[0.4em] italic leading-none">VETTING MISSION ACCESS...</h3>
-          <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">Handshake_Protocol_v6.5 // Consensus: Syncing</p>
-        </div>
-      </div>
-    );
-  }
+  const handleStartEdit = () => {
+    if (!activeMission) return;
+    setNewMissionTitle(activeMission.productType);
+    setNewMissionBudget(activeMission.budget.toString());
+    setNewMissionCategory(activeMission.category);
+    setIsStreamingRequired(activeMission.streamingRequirement || false);
+    setShowEditModal(true);
+  };
+
+  const handleCommitEdit = () => {
+    if (!activeMission || !newMissionTitle || esinSign.toUpperCase() !== user.esin.toUpperCase()) return;
+    
+    const updated: FarmingContract = {
+      ...activeMission,
+      productType: newMissionTitle,
+      budget: Number(newMissionBudget),
+      category: newMissionCategory,
+      streamingRequirement: isStreamingRequired
+    };
+    
+    onSaveContract(updated);
+    setActiveMission(updated);
+    setShowEditModal(false);
+    setEsinSign('');
+  };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
@@ -330,7 +360,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                                  <meta.icon size={40} />
                               </div>
                               <div className="text-right flex flex-col items-end gap-3">
-                                 <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase border tracking-widest shadow-lg ${meta.color} border-white/10`}>
+                                 <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase border tracking-widest shadow-xl ${meta.color} border-white/10`}>
                                    {meta.label}
                                  </span>
                                  <p className="text-[10px] text-slate-700 font-mono font-black uppercase italic">{mission.id}</p>
@@ -338,7 +368,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                            </div>
 
                            <div className="space-y-6">
-                              <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-blue-400 transition-colors drop-shadow-2xl">{mission.productType}</h4>
+                              <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-blue-400 transition-colors drop-shadow-2xl">{mission.productType}</h4>
                               <p className="text-slate-400 text-lg leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity line-clamp-4">"{mission.investorName} is seeking a steward node for this mission."</p>
                            </div>
 
@@ -393,332 +423,453 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                             <span className="text-[10px] font-mono text-slate-700">{activeMissions.length} ACTIVE</span>
                          </div>
                          <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
-                            {activeMissions.map(m => (
-                               <button 
-                                 key={m.id}
-                                 onClick={() => setActiveMission(m)}
-                                 className={`w-full p-8 rounded-[40px] border-2 transition-all text-left flex items-center justify-between group ${activeMission?.id === m.id ? 'bg-blue-600 border-white text-white shadow-xl scale-105' : 'bg-white/[0.01] border-white/5 text-slate-600 hover:border-white/20'}`}
-                               >
-                                  <div className="flex items-center gap-6">
-                                     <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:rotate-6 transition-transform text-blue-400`}>
-                                        <Activity size={28} />
-                                     </div>
-                                     <div>
-                                        <p className="text-lg font-black uppercase tracking-tight italic leading-none">{m.productType}</p>
-                                        <p className="text-[10px] font-mono opacity-50 mt-3 uppercase">{m.id} // IN_PROGRESS</p>
-                                     </div>
-                                  </div>
-                                  <ChevronRight size={24} className={`transition-transform duration-500 ${activeMission?.id === m.id ? 'rotate-90 text-white' : 'text-slate-800'}`} />
-                               </button>
-                            ))}
+                           {activeMissions.map(m => (
+                             <button 
+                               key={m.id}
+                               onClick={() => setActiveMission(m)}
+                               className={`w-full p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${activeMission?.id === m.id ? 'bg-blue-600 border-white text-white shadow-xl scale-105' : 'bg-white/[0.01] border-white/5 text-slate-600 hover:border-white/20'}`}
+                             >
+                                <div className="flex items-center gap-4">
+                                   <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 ${activeMission?.id === m.id ? 'text-white' : 'text-blue-400'}`}>
+                                      {CATEGORY_META[m.category].icon ? <div className="w-5 h-5 flex items-center justify-center"><Activity size={20} /></div> : <Briefcase size={20} />}
+                                   </div>
+                                   <div>
+                                      <p className="text-sm font-black uppercase italic leading-none">{m.productType}</p>
+                                      <p className="text-[9px] font-mono opacity-50 mt-1 uppercase">{m.id} // {m.status}</p>
+                                   </div>
+                                </div>
+                             </button>
+                           ))}
                          </div>
                       </div>
                    </div>
 
-                   {/* Right: Management Dashboard */}
-                   <div className="xl:col-span-8 space-y-10">
-                      {activeMission ? (
-                        <div className="animate-in slide-in-from-right-10 duration-700 space-y-10">
-                           <div className="glass-card p-12 md:p-16 rounded-[72px] border-2 border-white/5 bg-black/60 relative overflow-hidden shadow-3xl">
-                              <div className="absolute inset-0 bg-blue-500/[0.01] pointer-events-none overflow-hidden">
-                                 <div className="w-full h-1/2 bg-gradient-to-b from-blue-500/10 to-transparent absolute top-0 animate-scan"></div>
-                              </div>
-                              
-                              <div className="flex flex-col md:flex-row justify-between items-start mb-16 relative z-10 px-4 gap-10">
-                                 <div className="flex items-center gap-10">
-                                    <div className={`p-8 rounded-[36px] bg-indigo-600 shadow-2xl group-hover:rotate-6 transition-all border-2 border-white/10`}>
-                                       <Activity className="w-14 h-14 text-white animate-pulse" />
-                                    </div>
-                                    <div>
-                                       <h3 className="text-5xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{activeMission.productType}</h3>
-                                       <p className="text-slate-500 text-[10px] font-mono tracking-[0.6em] uppercase mt-4 italic">STAKE_LOCKED: {activeMission.budget} EAC // ZK_SECURED</p>
-                                    </div>
-                                 </div>
-                                 <div className="text-right">
-                                    <div className="px-6 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px] font-black uppercase animate-pulse shadow-inner rounded-full">
-                                       INGEST_ACTIVE
-                                    </div>
-                                 </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
-                                 {/* Milestones Panel */}
-                                 <div className="p-10 bg-black/80 rounded-[56px] border border-white/5 space-y-8 shadow-inner flex flex-col">
-                                    <div className="flex justify-between items-center px-4">
-                                       <h5 className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
-                                          <Target size={18} className="text-blue-400" /> Milestone Sharding
-                                       </h5>
-                                       <span className="text-[9px] font-mono text-slate-800">SLA_V5</span>
-                                    </div>
-                                    <div className="space-y-4">
-                                       {activeMission.milestones.map((ms, i) => (
-                                          <div key={ms.id} className={`p-8 rounded-[36px] border-2 transition-all flex items-center justify-between group/ms ${ms.status === 'COMPLETED' ? 'bg-emerald-600/10 border-emerald-500/30' : ms.status === 'ACTIVE' ? 'bg-blue-600/10 border-blue-500 shadow-2xl' : 'bg-white/[0.02] border-white/5 opacity-40'}`}>
-                                             <div className="flex items-center gap-6">
-                                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all ${ms.status === 'COMPLETED' ? 'bg-emerald-600 text-white' : ms.status === 'ACTIVE' ? 'bg-blue-600 text-white shadow-xl' : 'bg-black border-white/10'}`}>
-                                                   {ms.status === 'COMPLETED' ? <CheckCircle2 size={24} /> : <Target size={24} />}
-                                                </div>
-                                                <div>
-                                                   <p className="text-xl font-black text-white uppercase italic tracking-tight m-0">{ms.label}</p>
-                                                   <p className="text-[9px] text-slate-500 font-mono mt-1 uppercase tracking-widest">Stake Release: {ms.stakeReleasePercent}%</p>
-                                                </div>
-                                             </div>
-                                             {ms.status === 'ACTIVE' && <ArrowUpRight size={24} className="text-blue-400 animate-bounce" />}
-                                          </div>
-                                       ))}
-                                    </div>
-                                 </div>
-
-                                 {/* Interactions Panel */}
-                                 <div className="p-10 glass-card rounded-[56px] border border-indigo-500/20 bg-indigo-950/10 space-y-8 shadow-xl relative overflow-hidden flex flex-col group/msg">
-                                    <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/msg:scale-110 transition-transform duration-[12s]"><Users2 size={300} className="text-indigo-400" /></div>
-                                    <h5 className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-4 flex items-center gap-4">
-                                       <MessageSquare size={18} className="text-indigo-400" /> Encrypted Relay
-                                    </h5>
-                                    <div className="flex-1 space-y-4 overflow-y-auto max-h-[300px] custom-scrollbar pr-4 pb-4">
-                                       <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 italic text-slate-400 text-sm leading-relaxed border-l-4 border-l-indigo-600 ml-4">
-                                          "Steward Alpha: Genesis Ingest sequence initiated for Nebraska Shard #42. Requesting spectral confirmation."
-                                       </div>
-                                       <div className="p-6 bg-indigo-600/20 rounded-[32px] border border-indigo-500/30 italic text-white text-sm leading-relaxed border-r-4 border-r-indigo-400 mr-4 text-right">
-                                          "Investor Node: Handshake confirmed. Initial stake release buffered."
-                                       </div>
-                                    </div>
-                                    <div className="relative pt-4">
-                                       <input type="text" placeholder="Signal to node..." className="w-full bg-black/60 border border-white/10 rounded-full py-5 px-8 text-sm text-white focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
-                                       <button className="absolute right-2 top-1/2 -translate-y-1/2 p-4 bg-indigo-600 rounded-full text-white shadow-xl active:scale-95"><Send size={18}/></button>
-                                    </div>
-                                 </div>
-                              </div>
-
-                              <div className="mt-12 pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
-                                 <div className="flex items-center gap-12 text-center md:text-left">
-                                    <div>
-                                       <p className="text-[11px] text-slate-600 font-black uppercase mb-2">Streaming Capacity</p>
-                                       <div className="flex items-end gap-1.5 h-10">
-                                          {[...Array(12)].map((_, i) => (
-                                             <div key={i} className="w-1.5 bg-blue-500/40 rounded-full animate-bounce" style={{ height: `${20 + Math.random() * 80}%`, animationDelay: `${i * 0.1}s` }}></div>
-                                          ))}
-                                       </div>
-                                    </div>
-                                    <div className="h-12 w-px bg-white/5 hidden md:block"></div>
-                                    <div>
-                                       <p className="text-[11px] text-slate-600 font-black uppercase mb-1">Reputation Score</p>
-                                       <p className="text-4xl font-mono font-black text-blue-400">98.2<span className="text-base italic">v</span></p>
-                                    </div>
-                                 </div>
-                                 <button className="px-16 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5">COMMENCE REPUTATION MINING</button>
-                              </div>
-                           </div>
+                   {/* Right: Detailed Management HUD */}
+                   <div className="xl:col-span-8 space-y-8">
+                      {!activeMission ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center opacity-10 space-y-10 group">
+                           <Monitor size={140} className="text-slate-500 group-hover:text-blue-400 transition-colors duration-1000" />
+                           <p className="text-3xl font-black uppercase tracking-[0.5em] italic">STANDBY_NODE</p>
                         </div>
                       ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-10 group/idle">
-                           <div className="relative">
-                              <Database size={180} className="text-slate-500 group-hover:text-blue-400 transition-colors duration-1000" />
-                              <div className="absolute inset-[-60px] border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
-                           </div>
-                           <div className="space-y-4">
-                              <p className="text-6xl font-black uppercase tracking-[0.5em] text-white italic">NODE_STANDBY</p>
-                              <p className="text-2xl font-bold italic text-slate-700 uppercase tracking-[0.4em]">Select an active industrial mission to initialize the MMT</p>
+                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                           {/* HEADER & OWNERSHIP */}
+                           <div className="glass-card p-12 md:p-14 rounded-[64px] border-2 border-white/10 bg-black/60 relative overflow-hidden shadow-3xl">
+                              <div className="flex flex-col md:flex-row justify-between items-start mb-10 gap-8 relative z-10">
+                                 <div className="flex items-center gap-10">
+                                    <div className="w-24 h-24 rounded-[32px] bg-blue-600 shadow-2xl flex items-center justify-center text-white border-4 border-white/10 animate-float">
+                                       <Target size={40} />
+                                    </div>
+                                    <div>
+                                       <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{activeMission.productType}</h3>
+                                       <p className="text-[10px] text-slate-500 font-mono tracking-widest mt-3 uppercase italic">COMMAND_ID: {activeMission.id} // INVESTOR: {activeMission.investorName}</p>
+                                    </div>
+                                 </div>
+                                 {activeMission.investorEsin === user.esin && (
+                                   <button 
+                                     onClick={handleStartEdit}
+                                     className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 transition-all active:scale-95"
+                                   >
+                                      <Edit2 size={16} /> Edit Mission Shard
+                                   </button>
+                                 )}
+                              </div>
+
+                              {/* STRATEGIC TOOLING HUB - 9 ROUTING TRIGGERS */}
+                              <div className="space-y-6 relative z-10 pt-10 border-t border-white/5">
+                                 <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.6em] px-4 italic mb-6">STRATEGIC_TOOLING_HUB</h4>
+                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {[
+                                       { label: 'Mission Optimization', icon: BrainCircuit, target: 'intelligence', col: 'text-indigo-400' },
+                                       { label: 'Live Farming', icon: Sprout, target: 'live_farming', col: 'text-emerald-400' },
+                                       { label: 'Value Enhancement', icon: FlaskConical, target: 'agro_value_enhancement', col: 'text-fuchsia-400' },
+                                       { label: 'Live Broadcast', icon: Video, target: 'media', action: 'PROCESS_STREAM', col: 'text-rose-500' },
+                                       { label: 'Evidence Ingest', icon: Upload, target: 'digital_mrv', action: 'ingest', col: 'text-blue-400' },
+                                       { label: 'Registry Handshake', icon: SmartphoneNfc, target: 'registry_handshake', col: 'text-amber-500' },
+                                       { label: 'Network Ingest', icon: Wifi, target: 'ingest', col: 'text-teal-400' },
+                                       { label: 'Collective Registry', icon: Users, target: 'community', action: 'shards', col: 'text-indigo-400' },
+                                       { label: 'Industrial Cloud', icon: Factory, target: 'industrial', col: 'text-slate-400' },
+                                    ].map((tool, i) => (
+                                       <button 
+                                          key={i}
+                                          onClick={() => onNavigate(tool.target as ViewState, tool.action)}
+                                          className="p-8 bg-white/[0.02] border border-white/5 hover:border-white/20 rounded-[40px] flex flex-col items-center text-center gap-5 transition-all group active:scale-95 shadow-xl relative overflow-hidden"
+                                       >
+                                          <div className="absolute inset-0 bg-indigo-500/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                          <tool.icon size={32} className={`${tool.col} group-hover:scale-110 transition-transform relative z-10`} />
+                                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-white relative z-10">{tool.label}</span>
+                                       </button>
+                                    ))}
+                                 </div>
+                              </div>
+
+                              {/* MILESTONE CONTROL */}
+                              <div className="mt-12 space-y-8 relative z-10 pt-10 border-t border-white/5">
+                                 <h4 className="text-[11px] font-black text-blue-400 uppercase tracking-[0.6em] px-4 italic mb-6">MILESTONE_SHARDING_CONTROL</h4>
+                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {activeMission.milestones.map((ms, i) => (
+                                       <div key={i} className={`p-8 rounded-[48px] border-2 flex flex-col items-center text-center space-y-6 shadow-2xl relative overflow-hidden group/ms ${ms.status === 'COMPLETED' ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400' : ms.status === 'ACTIVE' ? 'bg-blue-600/10 border-blue-500 text-blue-400 animate-pulse' : 'bg-black/60 border-white/5 text-slate-700'}`}>
+                                          <div className="absolute top-0 right-0 p-4 opacity-[0.1] group-hover/ms:scale-110 transition-transform"><CheckCircle2 size={100} /></div>
+                                          <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover/ms:rotate-12 transition-transform">
+                                             <Stamp size={24} />
+                                          </div>
+                                          <div className="space-y-1 relative z-10">
+                                             <h5 className="text-sm font-black uppercase italic leading-none">{ms.label}</h5>
+                                             <p className="text-[9px] font-mono mt-1.5 opacity-60">YIELD_RELEASE: {ms.stakeReleasePercent}%</p>
+                                          </div>
+                                          <div className="w-full pt-6 border-t border-white/5 relative z-10">
+                                             <p className="text-[10px] font-black uppercase tracking-widest">{ms.status}</p>
+                                          </div>
+                                       </div>
+                                    ))}
+                                 </div>
+                              </div>
                            </div>
                         </div>
                       )}
                    </div>
                 </div>
               )}
-          </div>
+           </div>
         )}
       </div>
 
-      {/* --- MODAL: BID INITIALIZATION & ASSET INGEST --- */}
-      {showApplyModal && (
-        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowApplyModal(null)}></div>
-           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[80px] border-blue-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
-              <div className="p-10 md:p-14 border-b border-white/5 bg-blue-500/[0.01] flex justify-between items-center shrink-0">
-                 <div className="flex items-center gap-8">
-                    <div className="w-16 md:w-20 h-16 md:h-20 rounded-3xl bg-blue-600 flex items-center justify-center text-white shadow-2xl animate-float">
-                       <PlusCircle size={40} />
+      {/* --- DEPLOY MISSION MODAL --- */}
+      {showDeployModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowDeployModal(false)}></div>
+           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[80px] border-blue-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+              <div className="p-12 md:p-16 border-b border-white/5 bg-blue-500/[0.01] flex justify-between items-center shrink-0">
+                 <div className="flex items-center gap-10">
+                    <div className="w-20 h-20 rounded-3xl bg-blue-600 flex items-center justify-center text-white shadow-3xl border-2 border-white/10">
+                       <Plus size={44} />
                     </div>
                     <div>
-                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Bid <span className="text-blue-400">Handshake</span></h3>
-                       <p className="text-blue-500/60 font-mono text-[10px] tracking-widest uppercase mt-3 italic">STAGE: {applyStep.toUpperCase()}</p>
+                       <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Deploy <span className="text-blue-400">Mission</span></h3>
+                       <p className="text-blue-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">CAPITAL_INGEST_v6.5</p>
                     </div>
                  </div>
-                 <button onClick={() => setShowApplyModal(null)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20 hover:rotate-90 active:scale-90 shadow-2xl"><X size={32} /></button>
+                 <button onClick={() => setShowDeployModal(false)} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-12 bg-black/40">
-                 {applyStep === 'selection' && (
-                    <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
-                       <div className="text-center space-y-6">
-                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Primary <span className="text-blue-400">Asset Ingest</span></h4>
-                          <p className="text-slate-400 text-xl font-medium italic leading-relaxed px-10">"Registry initiation requires a proof of capacity. Select verified physical shards to attach to your bid."</p>
+              <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar space-y-12 bg-black/40">
+                 <div className="space-y-10">
+                    <div className="space-y-3 px-4">
+                       <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Mission Designation (Title)</label>
+                       <input 
+                         type="text" value={newMissionTitle} onChange={e => setNewMissionTitle(e.target.value)} 
+                         placeholder="e.g. Maize Cycle 882 Inflow..." 
+                         className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-blue-500/10 outline-none transition-all placeholder:text-stone-900 italic" 
+                       />
+                    </div>
+                    <div className="grid grid-cols-2 gap-10">
+                       <div className="space-y-3 px-4">
+                          <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Initial Capital (EAC)</label>
+                          <input 
+                            type="number" value={newMissionBudget} onChange={e => setNewMissionBudget(e.target.value)} 
+                            className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-4xl font-mono font-black text-white focus:ring-8 focus:ring-blue-500/10 outline-none transition-all" 
+                          />
                        </div>
-                       
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          {/* Land Shards */}
-                          <div className="space-y-6">
-                             <div className="flex items-center gap-3 px-4">
-                                <TreePine size={18} className="text-emerald-400" />
-                                <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">Land Shards</span>
-                             </div>
-                             <div className="grid gap-3">
-                                {landResources.map(res => (
-                                   <button 
-                                     key={res.id} 
-                                     onClick={() => {
-                                        const next = new Set(selectedAssets);
-                                        if (next.has(res.id)) next.delete(res.id);
-                                        else next.add(res.id);
-                                        setSelectedAssets(next);
-                                     }}
-                                     className={`p-6 rounded-[32px] border-2 transition-all flex items-center justify-between group ${selectedAssets.has(res.id) ? 'bg-emerald-600/10 border-emerald-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-600'}`}
-                                   >
-                                      <div className="flex items-center gap-4">
-                                         <MapPin size={20} className={selectedAssets.has(res.id) ? 'text-emerald-400' : 'text-slate-800'} />
-                                         <span className="text-sm font-black uppercase italic">{res.name}</span>
-                                      </div>
-                                      {selectedAssets.has(res.id) && <CheckCircle2 size={16} className="text-emerald-400" />}
-                                   </button>
-                                ))}
-                             </div>
-                          </div>
-
-                          {/* Hardware Shards */}
-                          <div className="space-y-6">
-                             <div className="flex items-center gap-3 px-4">
-                                <Cpu size={18} className="text-blue-400" />
-                                <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">Hardware Shards</span>
-                             </div>
-                             <div className="grid gap-3">
-                                {hardwareResources.map(res => (
-                                   <button 
-                                     key={res.id}
-                                     onClick={() => {
-                                        const next = new Set(selectedAssets);
-                                        if (next.has(res.id)) next.delete(res.id);
-                                        else next.add(res.id);
-                                        setSelectedAssets(next);
-                                     }}
-                                     className={`p-6 rounded-[32px] border-2 transition-all flex items-center justify-between group ${selectedAssets.has(res.id) ? 'bg-blue-600/10 border-blue-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-600'}`}
-                                   >
-                                      <div className="flex items-center gap-4">
-                                         <SmartphoneNfc size={20} className={selectedAssets.has(res.id) ? 'text-blue-400' : 'text-slate-800'} />
-                                         <span className="text-sm font-black uppercase italic">{res.name}</span>
-                                      </div>
-                                      {selectedAssets.has(res.id) && <CheckCircle2 size={16} className="text-blue-400" />}
-                                   </button>
-                                ))}
-                             </div>
-                          </div>
+                       <div className="space-y-3 px-4">
+                          <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Mission Pillar</label>
+                          <select 
+                            value={newMissionCategory} onChange={e => setNewMissionCategory(e.target.value as any)}
+                            className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-sm font-black uppercase text-white outline-none focus:ring-8 focus:ring-blue-500/10 appearance-none cursor-pointer"
+                          >
+                             {Object.entries(CATEGORY_META).map(([key, meta]) => (
+                               <option key={key} value={key}>{meta.label}</option>
+                             ))}
+                          </select>
                        </div>
+                    </div>
 
-                       <div className="p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-950/10 space-y-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-10">
+                    <div className="p-10 bg-blue-600/5 border-2 border-blue-500/20 rounded-[56px] space-y-10">
+                       <div className="flex justify-between items-center px-4">
                           <div className="flex items-center gap-6">
-                             <div className="p-4 bg-indigo-600 rounded-3xl text-white shadow-2xl animate-float"><Users size={28} /></div>
+                             <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-3xl animate-float"><Fingerprint size={28} /></div>
+                             <div>
+                                <p className="text-[11px] text-slate-500 font-black uppercase tracking-widest">Node Signature Auth</p>
+                                <p className="text-3xl font-mono font-black text-white italic">ZK_SIGN_PENDING</p>
+                             </div>
+                          </div>
+                          <div className="text-right">
+                             <input 
+                               type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} 
+                               placeholder="EA-XXXX-XXXX"
+                               className="bg-transparent border-none text-right text-4xl font-mono font-black text-blue-500 outline-none uppercase placeholder:text-stone-950 w-full" 
+                             />
+                          </div>
+                       </div>
+                       <button 
+                         onClick={handleDeployMission}
+                         disabled={!newMissionTitle || esinSign.toUpperCase() !== user.esin.toUpperCase()}
+                         className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-white/5 disabled:opacity-20"
+                       >
+                          <Stamp size={40} className="fill-current" /> COMMIT MISSION TO LEDGER
+                       </button>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* --- EDIT MISSION MODAL --- */}
+      {showEditModal && activeMission && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowEditModal(false)}></div>
+           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[80px] border-indigo-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+              <div className="p-12 md:p-16 border-b border-white/5 bg-indigo-500/[0.01] flex justify-between items-center shrink-0">
+                 <div className="flex items-center gap-10">
+                    <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-3xl border-2 border-white/10">
+                       <Edit2 size={36} />
+                    </div>
+                    <div>
+                       <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Edit <span className="text-indigo-400">Mission</span></h3>
+                       <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">REGISTRY_MODIFICATION_v6.5</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowEditModal(false)} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar space-y-12 bg-black/40">
+                 <div className="space-y-10">
+                    <div className="space-y-3 px-4">
+                       <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Mission Title</label>
+                       <input 
+                         type="text" value={newMissionTitle} onChange={e => setNewMissionTitle(e.target.value)} 
+                         className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all italic" 
+                       />
+                    </div>
+                    <div className="grid grid-cols-2 gap-10">
+                       <div className="space-y-3 px-4">
+                          <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Budget Allocation (EAC)</label>
+                          <input 
+                            type="number" value={newMissionBudget} onChange={e => setNewMissionBudget(e.target.value)} 
+                            className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-4xl font-mono font-black text-white focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all" 
+                          />
+                       </div>
+                       <div className="space-y-3 px-4">
+                          <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Mission Pillar</label>
+                          <select 
+                            value={newMissionCategory} onChange={e => setNewMissionCategory(e.target.value as any)}
+                            className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-sm font-black uppercase text-white outline-none focus:ring-8 focus:ring-blue-500/10 appearance-none cursor-pointer"
+                          >
+                             {Object.entries(CATEGORY_META).map(([key, meta]) => (
+                               <option key={key} value={key}>{meta.label}</option>
+                             ))}
+                          </select>
+                       </div>
+                    </div>
+
+                    <div className="p-10 bg-indigo-600/5 border-2 border-indigo-500/20 rounded-[56px] space-y-10">
+                       <div className="flex justify-between items-center px-4">
+                          <div className="flex items-center gap-6">
+                             <div className="p-4 bg-indigo-600 rounded-2xl text-white shadow-3xl animate-float"><Fingerprint size={28} /></div>
+                             <div>
+                                <p className="text-[11px] text-slate-500 font-black uppercase tracking-widest">Auth Signature (ESIN)</p>
+                                <p className="text-sm font-mono font-black text-indigo-400">SIGN_REQUIRED</p>
+                             </div>
+                          </div>
+                          <div className="text-right">
+                             <input 
+                               type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)} 
+                               placeholder="EA-XXXX-XXXX"
+                               className="bg-transparent border-none text-right text-4xl font-mono font-black text-indigo-500 outline-none uppercase placeholder:text-stone-950 w-full" 
+                             />
+                          </div>
+                       </div>
+                       <button 
+                         onClick={handleCommitEdit}
+                         disabled={!newMissionTitle || esinSign.toUpperCase() !== user.esin.toUpperCase()}
+                         className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-white/5 disabled:opacity-20"
+                       >
+                          <Stamp size={40} className="fill-current" /> COMMIT MISSION UPDATE
+                       </button>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* --- BID APPLY MODAL --- */}
+      {showApplyModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowApplyModal(null)}></div>
+           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[80px] border-blue-500/30 bg-[#050706] shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+              
+              <div className="p-12 border-b border-white/5 bg-blue-500/[0.01] flex justify-between items-center shrink-0">
+                 <div className="flex items-center gap-10">
+                    <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl">
+                       <FileSignature size={32} />
+                    </div>
+                    <div>
+                       <h3 className="text-3xl font-black text-white uppercase italic m-0">Initialize Bid Shard</h3>
+                       <p className="text-blue-400/60 font-mono text-[10px] uppercase mt-2 tracking-widest">MISSION: {showApplyModal.id}</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowApplyModal(null)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X size={24} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar flex flex-col bg-black/40 relative z-10">
+                 {applyStep === 'selection' && (
+                    <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
+                       <div className="text-center space-y-4">
+                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter">Asset <span className="text-blue-400">Ingestion</span></h4>
+                          <p className="text-slate-400 text-xl italic font-medium max-w-2xl mx-auto">"Select the physical nodes and geofence shards to pledge as collateral for this mission."</p>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-6">
+                             <div className="flex items-center gap-4 border-b border-white/5 pb-4 px-2">
+                                <TreePine size={20} className="text-emerald-400" />
+                                <h5 className="text-sm font-black text-white uppercase italic">Registered Plots</h5>
+                             </div>
+                             <div className="grid gap-3">
+                                {landResources.length === 0 ? (
+                                  <div className="p-8 text-center opacity-20 border-2 border-dashed border-white/5 rounded-3xl text-xs uppercase italic">No Land Shards Anchored</div>
+                                ) : landResources.map(land => (
+                                   <button 
+                                     key={land.id}
+                                     onClick={() => toggleAsset(land.id)}
+                                     className={`p-6 rounded-[32px] border-2 transition-all flex items-center justify-between group ${selectedAssets.has(land.id) ? 'bg-emerald-600/10 border-emerald-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-600 hover:border-white/10'}`}
+                                   >
+                                      <div className="flex items-center gap-4">
+                                         <div className={`p-3 rounded-xl ${selectedAssets.has(land.id) ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white/5 group-hover:rotate-6'}`}><MapPin size={20} /></div>
+                                         <span className="text-xs font-black uppercase tracking-widest">{land.name}</span>
+                                      </div>
+                                      {selectedAssets.has(land.id) && <CheckCircle2 size={20} className="text-emerald-400" />}
+                                   </button>
+                                ))}
+                             </div>
+                          </div>
+
+                          <div className="space-y-6">
+                             <div className="flex items-center gap-4 border-b border-white/5 pb-4 px-2">
+                                <Cpu size={20} className="text-blue-400" />
+                                <h5 className="text-sm font-black text-white uppercase italic">Active Hardware</h5>
+                             </div>
+                             <div className="grid gap-3">
+                                {hardwareResources.length === 0 ? (
+                                  <div className="p-8 text-center opacity-20 border-2 border-dashed border-white/5 rounded-3xl text-xs uppercase italic">No Hardware Nodes Linked</div>
+                                ) : hardwareResources.map(hw => (
+                                   <button 
+                                     key={hw.id}
+                                     onClick={() => toggleAsset(hw.id)}
+                                     className={`p-6 rounded-[32px] border-2 transition-all flex items-center justify-between group ${selectedAssets.has(hw.id) ? 'bg-blue-600/10 border-blue-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-600 hover:border-white/10'}`}
+                                   >
+                                      <div className="flex items-center gap-4">
+                                         <div className={`p-3 rounded-xl ${selectedAssets.has(hw.id) ? 'bg-blue-600 text-white shadow-lg' : 'bg-white/5 group-hover:rotate-6'}`}><Smartphone size={20} /></div>
+                                         <span className="text-xs font-black uppercase tracking-widest">{hw.name}</span>
+                                      </div>
+                                      {selectedAssets.has(hw.id) && <CheckCircle2 size={20} className="text-blue-400" />}
+                                   </button>
+                                ))}
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="p-10 glass-card rounded-[56px] border border-blue-500/10 bg-blue-500/5 flex items-center justify-between shadow-inner">
+                          <div className="flex items-center gap-6">
+                             <div className="p-4 bg-blue-600 rounded-2xl shadow-xl"><Users2 size={24} className="text-white" /></div>
                              <div className="text-left">
-                                <p className="text-xl font-black text-white uppercase italic leading-none">Worker Cloud Integration</p>
-                                <p className="text-xs text-slate-500 mt-2 font-medium">Rent verified steward workforce shards via AI Studio.</p>
+                                <p className="text-xl font-bold text-white uppercase italic">Worker Cloud Sync</p>
+                                <p className="text-xs text-slate-500 italic">"Ingest verified labor shards to bolster bid match score."</p>
                              </div>
                           </div>
                           <button 
                             onClick={() => setIsWorkerCloudNeeded(!isWorkerCloudNeeded)}
-                            className={`px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-widest border-2 transition-all ${isWorkerCloudNeeded ? 'bg-indigo-600 border-white text-white shadow-xl' : 'bg-white/5 border-white/10 text-slate-500 hover:text-white'}`}
+                            className={`w-16 h-8 rounded-full transition-all relative ${isWorkerCloudNeeded ? 'bg-blue-600' : 'bg-slate-800'}`}
                           >
-                             {isWorkerCloudNeeded ? 'INTEGRATED_SHARD' : 'ACTIVATE RENTAL'}
+                             <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all ${isWorkerCloudNeeded ? 'right-1' : 'left-1'}`}></div>
                           </button>
                        </div>
 
                        <button 
-                         onClick={handleRunMatch}
+                         onClick={() => setApplyStep('ingestion')}
                          disabled={selectedAssets.size === 0}
-                         className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-blue-500/5 disabled:opacity-30"
+                         className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-blue-500/5 disabled:opacity-20"
                        >
-                          COMMENCE BID MATCHING <ArrowRight className="w-8 h-8 ml-4" />
+                          COMMENCE BIOMASS HANDSHAKE <ChevronRight className="w-8 h-8 ml-4" />
                        </button>
                     </div>
                  )}
 
-                 {applyStep === 'matching' && (
+                 {applyStep === 'ingestion' && (
                     <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in duration-500">
+                       <div className="relative">
+                          <div className="w-48 h-48 rounded-full border-t-4 border-blue-500 animate-spin"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                             <Bot size={56} className="text-blue-500 animate-pulse" />
+                          </div>
+                       </div>
+                       <div className="space-y-4">
+                          <p className="text-blue-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">HANDSHAKING ORACLE...</p>
+                          <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">COMPARING_INGESTED_ASSETS // CALC_MATCH_RESONANCE</p>
+                       </div>
+                       <div className="flex gap-2">
+                          {[...Array(5)].map((_, i) => <div key={i} className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: `${i*0.1}s` }}></div>)}
+                       </div>
+                    </div>
+                 )}
+
+                 {applyStep === 'matching' && (
+                    <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-1000 flex-1 flex flex-col justify-center">
                        {isAnalyzing ? (
-                          <>
-                             <div className="relative">
-                                <Loader2 size={120} className="text-blue-500 animate-spin mx-auto" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                   <Bot size={44} className="text-blue-400 animate-pulse" />
-                                </div>
-                             </div>
-                             <p className="text-blue-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic m-0">ANALYZING ASSET ALIGNMENT...</p>
-                          </>
-                       ) : (
-                          <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700 w-full px-6">
-                             <div className="p-12 md:p-16 bg-black/80 rounded-[80px] border-2 border-indigo-500/20 shadow-3xl border-l-[24px] border-l-indigo-600 relative overflow-hidden group/audit text-left">
-                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/audit:scale-110 transition-transform duration-[15s]"><Sparkles size={800} className="text-indigo-400" /></div>
-                                <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8 gap-8">
+                          <div className="flex flex-col items-center gap-12 py-20">
+                             <Loader2 size={100} className="text-blue-500 animate-spin" />
+                             <p className="text-blue-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">SEQUENCING VERDICT...</p>
+                          </div>
+                       ) : matchResult ? (
+                          <div className="space-y-12">
+                             <div className="p-12 bg-black/80 rounded-[64px] border border-blue-500/20 shadow-3xl border-l-[16px] border-l-blue-600 relative overflow-hidden group/advice">
+                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/advice:scale-125 transition-transform duration-[15s]"><Sparkles size={600} className="text-blue-400" /></div>
+                                <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
                                    <div className="flex items-center gap-8">
-                                      <div className="w-20 h-20 rounded-[32px] bg-indigo-600 flex items-center justify-center text-white shadow-3xl animate-float">
-                                         <Bot size={44} className="animate-pulse" />
+                                      <BadgeCheck size={44} className="text-blue-400" />
+                                      <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Bid Matching Verdict</h4>
+                                   </div>
+                                   <div className="text-right">
+                                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Match Score</p>
+                                      <p className="text-6xl font-mono font-black text-emerald-400 leading-none">{(matchResult.match_score * 100).toFixed(0)}<span className="text-2xl text-emerald-800 ml-1">%</span></p>
+                                   </div>
+                                </div>
+                                <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/5">
+                                   {matchResult.reasoning}
+                                </div>
+                                {matchResult.gap_analysis?.length > 0 && (
+                                   <div className="mt-12 pt-8 border-t border-white/5 space-y-4 relative z-10">
+                                      <p className="text-[11px] font-black text-indigo-400 uppercase tracking-widest px-4 italic">IDENTIFIED_RESOURCE_GAPS</p>
+                                      <div className="flex flex-wrap gap-4 px-2">
+                                         {matchResult.gap_analysis.map((gap: string, i: number) => (
+                                            <span key={i} className="px-6 py-2 bg-rose-950/20 border border-rose-500/20 rounded-full text-rose-500 text-[10px] font-black uppercase tracking-widest italic">{gap}</span>
+                                         ))}
                                       </div>
-                                      <div>
-                                         <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Oracle Matching Shard</h4>
-                                         <p className="text-indigo-400/60 text-[11px] font-black uppercase tracking-[0.5em] mt-3 italic">ZK_BID_VERDICT_#882A</p>
-                                      </div>
                                    </div>
-                                   <div className="text-right shrink-0">
-                                      <p className="text-[12px] text-slate-500 font-black uppercase tracking-widest mb-2 italic">Match Score (α)</p>
-                                      <p className="text-7xl font-mono font-black text-indigo-400 leading-none">{(matchResult?.match_score * 100).toFixed(0)}%</p>
-                                   </div>
-                                </div>
-                                <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 border-l-4 border-indigo-500/20 pl-10">
-                                   {matchResult?.reasoning}
-                                </div>
-                                <div className="mt-16 space-y-6 relative z-10">
-                                   <h5 className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-10 italic">Resource Gap Analysis</h5>
-                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      {matchResult?.gap_analysis.map((gap: string, i: number) => (
-                                         <div key={i} className="p-6 bg-rose-950/20 border border-rose-500/20 rounded-[32px] flex items-center gap-6 group hover:bg-rose-500/10 transition-all">
-                                            <AlertTriangle size={24} className="text-rose-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-black text-rose-400 uppercase italic tracking-tight">{gap}</span>
-                                         </div>
-                                      ))}
-                                   </div>
-                                </div>
+                                )}
                              </div>
-                             
-                             <div className="max-w-2xl mx-auto space-y-10 pt-10">
-                                <div className="space-y-4">
-                                   <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.8em] block text-center italic">NODE_SIGNATURE_AUTH (ESIN)</label>
-                                   <input 
-                                      type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
-                                      placeholder="EA-XXXX-XXXX-XXXX" 
-                                      className="w-full bg-black border-2 border-white/10 rounded-[56px] py-12 text-center text-5xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-indigo-500/5 outline-none transition-all uppercase placeholder:text-stone-900 shadow-inner" 
-                                   />
-                                </div>
-                                <button 
-                                   onClick={finalizeApplication}
-                                   disabled={!esinSign}
-                                   className="w-full py-12 agro-gradient rounded-[64px] text-white font-black text-lg md:text-xl uppercase tracking-[0.6em] shadow-[0_0_200px_rgba(37,99,235,0.3)] flex items-center justify-center gap-10 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-[32px] ring-white/5"
-                                >
-                                   <Stamp size={40} className="fill-current" /> COMMIT BID SHARD
-                                </button>
+                             <div className="flex justify-center gap-10">
+                                <button onClick={() => setApplyStep('selection')} className="px-16 py-8 bg-white/5 border border-white/10 rounded-full text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">RECONFIGURE ASSETS</button>
+                                <button onClick={finalizeApplication} className="px-24 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(37,99,235,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5">COMMIT BID SHARD</button>
                              </div>
                           </div>
-                       )}
+                       ) : null}
                     </div>
                  )}
 
                  {applyStep === 'success' && (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-20 py-20 animate-in zoom-in duration-1000 text-center relative">
-                       <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_200px_rgba(16,185,129,0.5)] scale-110 relative group">
-                          <CheckCircle2 size={32} className="text-white group-hover:scale-110 transition-transform" />
-                          <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-1000 text-center">
+                       <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_200px_rgba(37,99,235,0.4)] relative group scale-110">
+                          <CheckCircle2 size={120} className="group-hover:scale-110 transition-transform" />
+                          <div className="absolute inset-[-15px] rounded-full border-4 border-blue-500/20 animate-ping opacity-30"></div>
                           <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
                        </div>
-                       <div className="space-y-6 text-center">
-                          <h3 className="text-8xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">Bid <span className="text-emerald-400">Anchored.</span></h3>
-                          <p className="text-emerald-500 text-sm font-black uppercase tracking-[1em] font-mono">REGISTRY_HASH: 0x882_BID_OK_SYNC</p>
+                       <div className="space-y-4 text-center">
+                          <h3 className="text-8xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Shard <span className="text-blue-400">Anchored.</span></h3>
+                          <p className="text-blue-500 text-sm font-black uppercase tracking-[0.8em] font-mono mt-6">BID_COMMIT_0x{(Math.random()*1000).toFixed(0)}_FINAL</p>
                        </div>
-                       <button onClick={() => { setShowApplyModal(null); setApplyStep('selection'); }} className="w-full max-w-md py-10 bg-white/5 border border-white/10 rounded-[56px] text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Manifest</button>
+                       <button onClick={() => setShowApplyModal(null)} className="px-24 py-8 bg-white/5 border border-white/10 rounded-full text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Hub</button>
                     </div>
                  )}
               </div>
@@ -726,110 +877,26 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
         </div>
       )}
 
-      {/* --- MODAL: MISSION DEPLOYMENT --- */}
-      {showDeployModal && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowDeployModal(false)}></div>
-           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[80px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
-              <div className="p-10 md:p-14 border-b border-white/5 bg-emerald-500/[0.02] flex justify-between items-center shrink-0 relative z-10">
-                 <div className="flex items-center gap-10">
-                    <div className="w-20 h-20 rounded-3xl bg-emerald-600 flex items-center justify-center text-white shadow-2xl animate-float">
-                       <PlusCircle size={40} />
-                    </div>
-                    <div>
-                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Mission <span className="text-emerald-400">Deployment</span></h3>
-                       <p className="text-emerald-500/60 font-mono text-[10px] tracking-widest uppercase mt-3 italic">CAPITAL_SHARD_PROVISIONING</p>
-                    </div>
-                 </div>
-                 <button onClick={() => setShowDeployModal(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all z-20 hover:rotate-90 active:scale-90 shadow-2xl"><X size={32} /></button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar space-y-12 bg-black/40">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-4">
-                       <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] px-6">Mission Category</label>
-                       <select 
-                         value={newMissionCategory}
-                         onChange={e => setNewMissionCategory(e.target.value as MissionCategory)}
-                         className="w-full bg-black border-2 border-white/10 rounded-3xl py-6 px-10 text-white font-black uppercase italic outline-none focus:ring-4 focus:ring-emerald-500/10 shadow-inner"
-                       >
-                          {Object.keys(CATEGORY_META).map(cat => (
-                             <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
-                          ))}
-                       </select>
-                    </div>
-                    <div className="space-y-4">
-                       <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] px-6">Target Budget (EAC)</label>
-                       <input 
-                         type="number" 
-                         value={newMissionBudget}
-                         onChange={e => setNewMissionBudget(e.target.value)}
-                         className="w-full bg-black border-2 border-white/10 rounded-3xl py-6 px-10 text-3xl font-mono font-black text-emerald-400 outline-none focus:ring-4 focus:ring-emerald-500/10 shadow-inner" 
-                       />
-                    </div>
-                 </div>
-
-                 <div className="space-y-4">
-                    <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] px-6 italic">Mission Title</label>
-                    <input 
-                      type="text" 
-                      value={newMissionTitle}
-                      onChange={e => setNewMissionTitle(e.target.value)}
-                      placeholder="e.g. Bantu Maize Expansion Cycle 12..."
-                      className="w-full bg-black border-2 border-white/10 rounded-[32px] py-8 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-stone-900 italic shadow-inner" 
-                    />
-                 </div>
-
-                 <div className="flex items-center justify-between p-8 bg-black/60 rounded-[48px] border border-white/10 shadow-inner group">
-                    <div className="flex items-center gap-6">
-                       <div className="p-4 bg-white/5 rounded-2xl group-hover:rotate-6 transition-transform">
-                          <Radio size={24} className="text-emerald-500" />
-                       </div>
-                       <div className="text-left">
-                          <p className="text-xl font-black text-white uppercase italic">Live Streaming Proof</p>
-                          <p className="text-xs text-slate-500 mt-2">Force high-reputation streaming capacity for this mission.</p>
-                       </div>
-                    </div>
-                    <button 
-                      onClick={() => setIsStreamingRequired(!isStreamingRequired)}
-                      className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border-2 transition-all ${isStreamingRequired ? 'bg-emerald-600 border-white text-white shadow-xl' : 'bg-white/5 border-white/10 text-slate-500 hover:text-white'}`}
-                    >
-                       {isStreamingRequired ? 'ENFORCED' : 'OPTIONAL'}
-                    </button>
-                 </div>
-
-                 <div className="space-y-8 pt-8 border-t border-white/5">
-                    <div className="space-y-4">
-                       <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.6em] block text-center italic">Investor Signature (ESIN)</label>
-                       <input 
-                          type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
-                          placeholder="EA-XXXX-XXXX-XXXX" 
-                          className="w-full bg-black border-2 border-white/10 rounded-[48px] py-10 text-center text-5xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all uppercase placeholder:text-stone-950 shadow-inner" 
-                       />
-                    </div>
-                    <button 
-                      onClick={handleDeployMission}
-                      disabled={!esinSign || !newMissionTitle}
-                      className="w-full py-10 agro-gradient rounded-[56px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[16px] ring-white/5"
-                    >
-                       <Stamp size={40} className="fill-current" /> AUTHORIZE DEPLOYMENT
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
+      {/* --- ROADMAP / ARCHIVE VIEW --- */}
+      {activeTab === 'archive' && (
+         <div className="py-40 text-center opacity-10 space-y-8 flex flex-col items-center justify-center">
+            <History size={160} className="text-slate-600 animate-spin-slow" />
+            <p className="text-5xl font-black uppercase tracking-[0.6em] italic text-white leading-none">RESOLUTION_LEDGER_EMPTY</p>
+            <p className="text-xl font-bold italic text-slate-700 uppercase tracking-[0.3em]">Awaiting first industrial harvest cycle finality</p>
+         </div>
       )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(37, 99, 235, 0.2); border-radius: 10px; }
+        .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(37, 99, 235, 0.4); border-radius: 10px; }
       `}</style>
     </div>
   );

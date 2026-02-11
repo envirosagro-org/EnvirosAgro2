@@ -1,58 +1,16 @@
-
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Sprout, 
-  Activity, 
-  CheckCircle2, 
-  ArrowRight, 
-  Loader2, 
-  MapPin, 
-  Zap, 
-  ThumbsUp, 
-  PlusCircle, 
-  Monitor, 
-  Clock, 
-  TrendingUp, 
-  Eye, 
-  X,
-  Upload,
-  Bot,
-  Factory,
-  Package,
-  Cpu,
-  Layers,
-  ShieldCheck, 
-  ShieldAlert, 
-  Database, 
-  Terminal, 
-  Wifi, 
-  Scan, 
-  Share2, 
-  Sparkles, 
-  Gauge,
-  Smartphone,
-  Wrench,
-  SmartphoneNfc,
-  ClipboardList,
-  Target,
-  Plus,
-  ArrowUpRight,
-  CircleStop,
-  Stamp,
-  Workflow,
-  Radio,
-  Fingerprint,
-  Info,
-  ChevronRight,
-  LayoutGrid,
-  Trello,
-  Boxes,
-  LineChart,
-  ShoppingCart,
-  Video
+  Sprout, Activity, CheckCircle2, ArrowRight, Loader2, MapPin, Zap, ThumbsUp, 
+  PlusCircle, Monitor, Clock, TrendingUp, Eye, X, Upload, Bot, Factory, 
+  Package, Cpu, Layers, ShieldCheck, ShieldAlert, Database, Terminal, 
+  Wifi, Scan, Share2, Sparkles, Gauge, Smartphone, Wrench, 
+  /* Added ClipboardCheck to fix error on line 354 */
+  SmartphoneNfc, ClipboardList, ClipboardCheck, Target, Plus, ArrowUpRight, Stamp, 
+  Workflow, Radio, Fingerprint, Info, ChevronRight, LayoutGrid, 
+  Trello, Boxes, LineChart, ShoppingCart, Video, Edit3, Briefcase, Users, FlaskConical,
+  Search, BadgeCheck, History, Menu, List
 } from 'lucide-react';
-import { User, LiveAgroProduct, ViewState, AgroResource } from '../types';
-import { forecastMarketReadiness } from '../services/geminiService';
+import { User, LiveAgroProduct, ViewState } from '../types';
 
 interface LiveFarmingProps {
   user: User;
@@ -65,422 +23,489 @@ interface LiveFarmingProps {
   initialSection?: string | null;
 }
 
-const INDUSTRIAL_TASK_POOL = [
-  { id: 'T-1', title: 'Substrate DNA Sequence', thrust: 'Environmental', duration: '2h', seq: 1 },
-  { id: 'T-2', title: 'Spectral Drone Calibration', thrust: 'Technological', duration: '1h', seq: 2 },
-  { id: 'T-3', title: 'Yield Shard Finality', thrust: 'Industry', duration: '4h', seq: 3 },
-  { id: 'T-4', title: 'Carbon Minting Vouch', thrust: 'Industry', duration: '6h', seq: 4 },
-];
+const STAGES = ['Inception', 'Processing', 'Quality_Audit', 'Finalization', 'Market_Ready'];
 
-const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, setProducts, onEarnEAC, onSaveProduct, onNavigate, notify, initialSection }) => {
-  const [step, setStep] = useState<'registration' | 'verification' | 'terminal' | 'exit'>('terminal');
+const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct, onNavigate, notify, initialSection }) => {
+  const [activeTab, setActiveTab] = useState<'ledger' | 'terminal'>('ledger');
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [isProcessingAction, setIsProcessingAction] = useState<string | null>(null);
+
+  // New Asset Form
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedDossier, setSelectedDossier] = useState<LiveAgroProduct | null>(null);
+  const [newAsset, setNewAsset] = useState({ name: '', category: 'Produce' as const });
+
+  // Filter products where the user is the owner
+  const myAssets = useMemo(() => products.filter(p => p.stewardEsin === user.esin), [products, user.esin]);
   
-  const [newProductName, setNewProductName] = useState('');
-  const [newProductCategory, setNewProductCategory] = useState<'Produce' | 'Manufactured' | 'Input'>('Produce');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Currently selected asset in Management Terminal
+  const selectedAsset = useMemo(() => 
+    products.find(p => p.id === selectedAssetId), 
+  [products, selectedAssetId]);
 
-  const [votedProducts, setVotedProducts] = useState<string[]>([]);
-  const [isForecasting, setIsForecasting] = useState(false);
-  const [forecastReport, setForecastReport] = useState<string | null>(null);
-
+  // Vector Routing Logic: Pick up product ID from navigation
   useEffect(() => {
-    if (initialSection === 'lifecycle') setStep('terminal');
+    if (initialSection) {
+      if (initialSection === 'ledger' || initialSection === 'terminal') {
+        setActiveTab(initialSection as any);
+      } else {
+        // Assume initialSection is a Product ID
+        setSelectedAssetId(initialSection);
+        setActiveTab('terminal');
+      }
+    }
   }, [initialSection]);
 
-  const handleStartRegistration = () => {
-    setStep('registration');
-    setShowAddModal(true);
-  };
-
-  const handleRegisterMetadata = (e: React.FormEvent) => {
+  const handleCreateAsset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProductName.trim()) return;
+    if (!newAsset.name.trim()) return;
+    setIsProcessingAction('creating');
     
-    setIsSubmitting(true);
+    const id = `LIVE-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const product: LiveAgroProduct = {
+      id,
+      stewardEsin: user.esin,
+      stewardName: user.name,
+      productType: newAsset.name,
+      category: newAsset.category,
+      stage: 'Inception',
+      progress: 0,
+      votes: 0,
+      location: user.location,
+      timestamp: new Date().toLocaleTimeString(),
+      lastUpdate: 'Just now',
+      isAuthentic: false,
+      auditStatus: 'Awaiting Ingest',
+      tasks: ['Biometric Handshake', 'Moisture Sync'],
+      telemetryNodes: [],
+      marketStatus: 'Forecasting',
+      vouchYieldMultiplier: 1.0,
+      evidenceCount: 0,
+      isBroadcasting: false,
+      isPhysicallyVerified: false,
+      isSystemAudited: false
+    };
+
     setTimeout(() => {
-      const newProduct: LiveAgroProduct = {
-        id: `LIVE-${Math.floor(Math.random() * 9000 + 1000)}`,
-        stewardEsin: user.esin,
-        stewardName: user.name,
-        productType: newProductName,
-        category: newProductCategory,
-        stage: 'Inception',
-        progress: 5,
-        votes: 0,
-        location: user.location,
-        timestamp: new Date().toLocaleTimeString(),
-        lastUpdate: 'Just now',
-        isAuthentic: false,
-        auditStatus: 'Awaiting Handshake',
-        tasks: [],
-        telemetryNodes: [],
-        marketStatus: 'Forecasting',
-        vouchYieldMultiplier: 1.0
+      onSaveProduct(product);
+      setIsProcessingAction(null);
+      setShowAddModal(false);
+      setNewAsset({ name: '', category: 'Produce' });
+      setSelectedAssetId(id);
+      setActiveTab('terminal');
+      notify({ title: 'ASSET_INITIALIZED', message: `Industrial thread ${id} anchored to node.`, type: 'success' });
+    }, 1200);
+  };
+
+  const triggerMandatoryCheck = (type: 'verify' | 'audit') => {
+    if (!selectedAsset) return;
+    setIsProcessingAction(type);
+    
+    setTimeout(() => {
+      const updated = { 
+        ...selectedAsset, 
+        [type === 'verify' ? 'isPhysicallyVerified' : 'isSystemAudited']: true,
+        progress: Math.min(100, selectedAsset.progress + 25),
+        stage: selectedAsset.progress + 25 >= 100 ? 'Finalization' : selectedAsset.stage
       };
-      
-      onSaveProduct(newProduct);
-      setIsSubmitting(false);
-      setStep('verification');
-      onEarnEAC(5, 'LIVE_ASSET_METADATA_INGEST');
-    }, 1500);
+      onSaveProduct(updated as LiveAgroProduct);
+      setIsProcessingAction(null);
+      notify({ 
+        title: type === 'verify' ? 'PHYSICAL_VERIFIED' : 'SYSTEM_AUDIT_OK', 
+        message: `Industrial shard ${selectedAsset.id} passed qualification.`, 
+        type: 'success' 
+      });
+    }, 2000);
   };
 
-  const handleHandshake = () => {
-    if (!products.length) return;
-    const current = products[products.length - 1]; 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      const updated = { ...current, isAuthentic: true, auditStatus: 'Verified', progress: 15 };
-      onSaveProduct(updated);
-      setIsSubmitting(false);
-      setStep('terminal');
-      notify('success', 'REGISTRY_HANDSHAKE_OK', "Physical hardware linked to digital twin.");
-    }, 2500);
-  };
-
-  const handleVote = (productId: string) => {
-    const product = products.find(p => p.id === productId);
-    if (!product?.isAuthentic) {
-      notify('error', 'UNVERIFIED_SHARD', "Assets require physical audit before social vouching.");
-      return;
-    }
-    if (votedProducts.includes(productId)) return;
-    
-    setVotedProducts([...votedProducts, productId]);
-    const updated = { 
-      ...product, 
-      votes: product.votes + 1,
-      vouchYieldMultiplier: (product.vouchYieldMultiplier || 1.0) + 0.05 
-    };
+  const handleVouch = (id: string) => {
+    const asset = products.find(p => p.id === id);
+    if (!asset) return;
+    const updated = { ...asset, votes: asset.votes + 1 };
     onSaveProduct(updated);
-    notify('success', 'VOUCH_RECORDED', `Social energy sharded. Yield multiplier increased.`);
+    notify({ title: 'RESONANCE_VOUCH', message: `Sharding social energy to ${asset.id}.`, type: 'info' });
   };
 
-  const handleMarketExit = (product: LiveAgroProduct) => {
-    if (product.progress < 100) {
-      notify('warning', 'PROCESSING_INCOMPLETE', "Asset must reach 100% processing before Market exit.");
-      return;
-    }
-    setIsSubmitting(true);
-    setTimeout(() => {
-      notify('success', 'MARKET_CLOUD_EXIT', `${product.productType} sharded to Global Market.`);
-      setProducts(prev => prev.filter(p => p.id !== product.id));
-      setIsSubmitting(false);
-      onNavigate('economy');
-    }, 3000);
-  };
-
-  const runForecastOracle = async (product: LiveAgroProduct) => {
-    setIsForecasting(true);
-    try {
-      const res = await forecastMarketReadiness(product);
-      setForecastReport(res.text);
-    } catch (e) {
-      setForecastReport("Oracle link drift detected.");
-    } finally {
-      setIsForecasting(false);
-    }
-  };
-
-  const handleTaskComplete = (product: LiveAgroProduct, taskId: string) => {
-    const updatedTasks = [...(product.tasks || []), taskId];
-    const newProgress = Math.min(100, product.progress + 20);
-    const updated = { 
-      ...product, 
-      tasks: updatedTasks, 
-      progress: newProgress,
-      stage: (newProgress >= 100 ? 'Market_Ready' : product.stage) as LiveAgroProduct['stage'],
-      marketStatus: (newProgress >= 100 ? 'Ready' : 'Processing') as LiveAgroProduct['marketStatus']
-    };
-    onSaveProduct(updated);
-    onEarnEAC(10, `TASK_COMPLETED_${taskId}`);
+  const handlePublishToMarket = () => {
+    if (!selectedAsset) return;
+    const updated = { ...selectedAsset, stage: 'Market_Ready', marketStatus: 'Ready', progress: 100 };
+    onSaveProduct(updated as LiveAgroProduct);
+    notify({ title: 'MARKET_PUBLISHED', message: `Asset ${selectedAsset.id} is now live in the Market Cloud.`, type: 'success' });
+    onNavigate('economy', 'catalogue');
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+    <div className="space-y-8 animate-in fade-in duration-700 pb-24">
       
-      {/* 1. Industrial Control HUD */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10">
-        <div className="lg:col-span-3 glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-500/[0.03] relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
-           <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none">
-              <div className="w-full h-[2px] bg-indigo-500/10 absolute top-0 animate-scan"></div>
-           </div>
-           
-           <div className="w-40 h-40 rounded-[48px] bg-emerald-600 shadow-[0_0_100px_rgba(16,185,129,0.3)] flex items-center justify-center shrink-0 border-4 border-white/10 relative overflow-hidden group-hover:scale-105 transition-all">
-              <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-              <Factory size={80} className="text-white animate-float" />
-              <div className="absolute inset-0 border-2 border-dashed border-white/20 rounded-[48px] animate-spin-slow"></div>
-           </div>
-
-           <div className="space-y-4 relative z-10 text-center md:text-left flex-1">
-              <div className="space-y-2">
-                 <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                    <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-emerald-500/20 shadow-inner">INFLOW_CONTROL_v6.5</span>
-                    <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-blue-500/20 shadow-inner">ZK_READY</span>
-                 </div>
-                 <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">Live <span className="text-emerald-400">Processing.</span></h2>
-              </div>
-              <p className="text-slate-500 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl">
-                 "Orchestrating industrial transformation cycles. Register physical assets, perform handshakes, and exit to the Market Cloud."
-              </p>
-              <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-6">
-                <button 
-                  onClick={handleStartRegistration}
-                  className="px-12 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 border-2 border-white/10 ring-8 ring-emerald-500/5"
-                >
-                  <PlusCircle size={24} /> INITIALIZE LIVE PROCESS
-                </button>
-                <button 
-                  onClick={() => onNavigate('media', 'PROCESS_STREAM')}
-                  className="px-10 py-6 bg-rose-600/10 border border-rose-500/20 rounded-full text-rose-500 font-black text-xs uppercase tracking-[0.4em] hover:bg-rose-600 hover:text-white transition-all shadow-xl flex items-center gap-4"
-                >
-                  <Video size={24} className="animate-pulse" /> Stream Process
-                </button>
-              </div>
-           </div>
+      {/* 1. Header & Section Control */}
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-6 px-4">
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-[0_0_50px_rgba(16,185,129,0.3)] animate-float">
+            <Factory size={32} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Live <span className="text-emerald-400">Processing</span></h2>
+            <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-1">Industrial_Finality_Monitor // v6.5</p>
+          </div>
         </div>
 
-        <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-500/[0.03] flex flex-col justify-between items-center text-center relative overflow-hidden shadow-3xl group">
-           <div className="space-y-4 relative z-10 w-full">
-              <p className="text-[11px] text-slate-600 font-black uppercase tracking-[0.6em] mb-4 italic">TOTAL_ACTIVE_SHARDS</p>
-              <h4 className="text-7xl font-mono font-black text-white tracking-tighter leading-none">{products.length}</h4>
-              <div className="flex items-center justify-center gap-3 text-indigo-400 text-[10px] font-black uppercase relative z-10 tracking-widest bg-white/5 py-2 rounded-full mt-6 border border-white/5">
-                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div> EOS_QUORUM_OK
-              </div>
-           </div>
+        <div className="flex p-1.5 glass-card bg-black/40 rounded-3xl border border-white/5 shadow-2xl">
+          <button 
+            onClick={() => setActiveTab('ledger')}
+            className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${activeTab === 'ledger' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}
+          >
+            <LayoutGrid size={16} /> Processing Ledger
+          </button>
+          <button 
+            onClick={() => setActiveTab('terminal')}
+            className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${activeTab === 'terminal' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}
+          >
+            <Monitor size={16} /> Management Terminal
+          </button>
         </div>
       </div>
 
-      {/* 2. Main Portal Area */}
-      <div className="min-h-[850px] relative z-10">
-        {step === 'terminal' && (
-          <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
-             {products.length === 0 ? (
-               <div className="py-40 flex flex-col items-center justify-center text-center space-y-10 opacity-20 group/empty">
-                  <div className="relative">
-                    <Monitor size={120} className="text-slate-600 group-hover/empty:scale-110 transition-transform duration-[10s]" />
-                    <div className="absolute inset-[-40px] border-4 border-dashed border-white/5 rounded-full animate-spin-slow"></div>
-                  </div>
-                  <button onClick={handleStartRegistration} className="px-12 py-5 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95">
-                    <Plus size={18} /> Initialize First Shard
-                  </button>
+      <div className="min-h-[700px] px-4">
+        {activeTab === 'ledger' ? (
+          /* SECTION: ASSETS PROCESSING LEDGER (Public View) */
+          <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
+            <div className="flex justify-between items-center px-4">
+               <div className="flex items-center gap-4">
+                  <Activity className="text-emerald-400" />
+                  <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest italic">Global_Inflow_Registry</span>
                </div>
-             ) : (
-               <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-                  <div className="xl:col-span-4 space-y-8">
-                     <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-2xl">
-                        <div className="flex items-center justify-between px-4">
-                           <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Live <span className="text-emerald-400">Inventory</span></h4>
-                           <span className="text-[10px] font-mono text-slate-700">{products.length} SHARDS</span>
-                        </div>
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                           {products.map(p => (
-                             <button 
-                               key={p.id}
-                               onClick={() => setSelectedDossier(p)}
-                               className={`w-full p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${selectedDossier?.id === p.id ? 'bg-emerald-600/10 border-emerald-500 text-white shadow-xl scale-105' : 'bg-white/[0.01] border-white/5 text-slate-600 hover:border-white/20'}`}
-                             >
-                                <div className="flex items-center gap-5">
-                                   <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:rotate-6 transition-all ${p.category === 'Produce' ? 'text-emerald-400' : 'text-blue-400'}`}>
-                                      {p.category === 'Produce' ? <Sprout size={24} /> : <Factory size={24} />}
-                                   </div>
-                                   <div>
-                                      <p className="text-sm font-black uppercase tracking-tight italic">{p.productType}</p>
-                                      <p className="text-[9px] font-mono opacity-60 mt-1 uppercase">{p.id} // {p.progress}%</p>
-                                   </div>
-                                </div>
-                             </button>
-                           ))}
-                        </div>
+               <div className="relative w-72">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700" />
+                  <input type="text" placeholder="Search Industrial Threads..." className="w-full bg-black/40 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500/20" />
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              {products.length === 0 ? (
+                <div className="col-span-full py-40 text-center opacity-20 italic font-black uppercase tracking-widest">Awaiting Registry Inflow...</div>
+              ) : products.map(asset => (
+                <div key={asset.id} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 shadow-3xl group relative overflow-hidden flex flex-col h-[520px]">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-[12s]"><Database size={250} /></div>
+                  
+                  <div className="flex justify-between items-start mb-8 relative z-10">
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner group-hover:rotate-6 transition-all text-emerald-400">
+                      {asset.category === 'Produce' ? <Sprout size={28} /> : <Factory size={28} />}
+                    </div>
+                    <div className="text-right">
+                       <span className={`px-4 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[8px] font-black uppercase tracking-widest shadow-xl`}>
+                          {asset.stage.replace('_', ' ')}
+                       </span>
+                       <p className="text-[10px] text-slate-700 font-mono mt-2 font-bold">{asset.id}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 relative z-10">
+                    <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors">{asset.productType}</h4>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Steward: {asset.stewardName}</p>
+                    
+                    <div className="pt-6 space-y-4">
+                       <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-600">
+                          <span>Processing Alpha</span>
+                          <span className="text-white font-mono">{asset.progress}%</span>
+                       </div>
+                       <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5">
+                          <div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-1000" style={{ width: `${asset.progress}%` }}></div>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 mt-8 relative z-10">
+                     <div className="p-4 bg-black/60 border border-white/5 rounded-2xl text-center space-y-1 shadow-inner">
+                        <p className="text-[8px] text-slate-700 font-black uppercase">Vouches</p>
+                        <p className="text-lg font-mono font-black text-emerald-400">{asset.votes}</p>
+                     </div>
+                     <div className="p-4 bg-black/60 border border-white/5 rounded-2xl text-center space-y-1 shadow-inner">
+                        <p className="text-[8px] text-slate-700 font-black uppercase">Evidence</p>
+                        <p className="text-lg font-mono font-black text-blue-400">{asset.evidenceCount || 0}</p>
+                     </div>
+                     <div className="p-4 bg-black/60 border border-white/5 rounded-2xl text-center space-y-1 shadow-inner">
+                        <p className="text-[8px] text-slate-700 font-black uppercase">Broadcast</p>
+                        <div className={`w-3 h-3 rounded-full mx-auto mt-2 ${asset.isBroadcasting ? 'bg-rose-500 animate-pulse shadow-[0_0_10px_#e11d48]' : 'bg-slate-800'}`}></div>
                      </div>
                   </div>
 
-                  <div className="xl:col-span-8 space-y-10">
-                     {selectedDossier ? (
-                       <div className="space-y-10 animate-in slide-in-from-right-10 duration-700">
-                          <div className="glass-card p-12 rounded-[72px] border-2 border-white/5 bg-black/60 relative overflow-hidden shadow-3xl">
-                             <div className="flex flex-col md:flex-row justify-between items-start mb-12 relative z-10 px-4 gap-10">
-                                <div className="flex items-center gap-10">
-                                   <div className={`p-6 rounded-[32px] bg-blue-600 shadow-2xl group-hover:rotate-6 transition-all border-2 border-white/10`}>
-                                      <Activity className="w-12 h-12 text-white animate-pulse" />
-                                   </div>
-                                   <div>
-                                      <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{selectedDossier.productType}</h3>
-                                      <p className="text-slate-500 text-[10px] font-mono tracking-[0.6em] uppercase mt-4">TERMINAL_ID: {selectedDossier.id} // ZK_SECURED</p>
-                                   </div>
-                                </div>
-                                <div className="text-right flex flex-col items-end gap-3">
-                                   <div className={`px-5 py-2 rounded-full bg-white/5 border border-white/10 text-emerald-400 font-mono text-[10px] font-black uppercase animate-pulse shadow-inner`}>
-                                      STREAMING_DATA_OK
-                                   </div>
-                                   <p className="text-xl font-mono font-black text-white">{selectedDossier.progress}% <span className="text-xs text-slate-700 uppercase italic">Progress</span></p>
-                                </div>
-                             </div>
-
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
-                                <div className="p-8 bg-black rounded-[48px] border-2 border-white/5 space-y-6 shadow-inner flex flex-col h-[400px]">
-                                   <div className="flex justify-between items-center px-4">
-                                      <h5 className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
-                                         <Terminal size={14} className="text-blue-400" /> Live Signal Ingest
-                                      </h5>
-                                   </div>
-                                   <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[11px] space-y-3 pr-4">
-                                      {[...Array(8)].map((_, i) => (
-                                         <div key={i} className="flex gap-6 p-4 bg-white/[0.02] border border-white/[0.03] rounded-2xl">
-                                            <span className="text-slate-800 w-16 shrink-0">[{new Date().toLocaleTimeString([], {hour12: false})}]</span>
-                                            <span className="flex-1 text-slate-300 italic">PACKET_INGEST_SHARD_{Math.random().toString(16).slice(2,8).toUpperCase()}</span>
-                                            <CheckCircle2 size={14} className="text-emerald-500/30" />
-                                         </div>
-                                      ))}
-                                   </div>
-                                </div>
-
-                                <div className="p-10 glass-card rounded-[48px] border-2 border-indigo-500/20 bg-indigo-950/10 space-y-8 shadow-xl relative overflow-hidden group/mission">
-                                   <div className="flex justify-between items-center relative z-10 border-b border-indigo-500/20 pb-4 px-2">
-                                      <div className="flex items-center gap-4">
-                                         <Trello size={18} className="text-indigo-400" />
-                                         <h5 className="text-[11px] font-black text-white uppercase tracking-widest italic">Mission Sharding</h5>
-                                      </div>
-                                   </div>
-                                   <div className="space-y-4 relative z-10 overflow-y-auto max-h-[250px] custom-scrollbar pr-4">
-                                      {INDUSTRIAL_TASK_POOL.map(task => {
-                                         const isComplete = (selectedDossier.tasks || []).includes(task.id);
-                                         return (
-                                           <div 
-                                             key={task.id} 
-                                             onClick={() => !isComplete && handleTaskComplete(selectedDossier, task.id)}
-                                             className={`p-6 rounded-[32px] border-2 transition-all flex items-center justify-between ${
-                                               isComplete ? 'bg-emerald-600/10 border-emerald-500/30 opacity-60' : 'bg-black/60 border-white/5 hover:border-indigo-400/40 cursor-pointer active:scale-95'
-                                             }`}
-                                           >
-                                              <div className="flex items-center gap-5">
-                                                 <div className={`p-3 rounded-xl border-2 transition-all ${isComplete ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-white/5 border-white/10 text-slate-700'}`}>
-                                                    {isComplete ? <CheckCircle2 size={18} /> : <Target size={18} />}
-                                                 </div>
-                                                 <div>
-                                                    <p className="text-sm font-black text-white uppercase italic tracking-tight m-0">{task.title}</p>
-                                                 </div>
-                                              </div>
-                                           </div>
-                                         );
-                                      })}
-                                   </div>
-                                </div>
-                             </div>
-
-                             <div className="mt-12 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
-                                <button 
-                                   onClick={() => handleMarketExit(selectedDossier)}
-                                   disabled={selectedDossier.progress < 100 || isSubmitting}
-                                   className={`px-16 py-8 rounded-full font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(0,0,0,0.4)] flex items-center justify-center gap-6 transition-all border-4 border-white/10 ${
-                                     selectedDossier.progress >= 100 
-                                      ? 'agro-gradient text-white hover:scale-105 active:scale-95 ring-[16px] ring-emerald-500/5' 
-                                      : 'bg-white/5 text-slate-800 border-white/5 cursor-not-allowed grayscale'
-                                   }`}
-                                >
-                                   {isSubmitting ? <Loader2 className="w-8 h-8 animate-spin" /> : <ShoppingCart size={28} className="fill-current" />}
-                                   {isSubmitting ? 'BUFFERING_EXIT...' : 'COMMENCE MARKET EXIT'}
-                                </button>
-                             </div>
-                          </div>
-                       </div>
-                     ) : (
-                       <div className="h-[750px] flex flex-col items-center justify-center text-center space-y-12 opacity-10 group/idle">
-                          <div className="relative">
-                             <Database size={180} className="text-slate-500" />
-                             <div className="absolute inset-[-60px] border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
-                          </div>
-                          <p className="text-2xl font-bold italic text-slate-700 uppercase tracking-[0.4em]">Select an inflow shard to initialize the terminal</p>
-                       </div>
-                     )}
+                  <div className="mt-auto pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
+                    <button 
+                      onClick={() => handleVouch(asset.id)}
+                      className="px-6 py-3 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white hover:bg-emerald-600 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-xl"
+                    >
+                      <ThumbsUp size={14} /> Vouch Shard
+                    </button>
+                    <button 
+                      onClick={() => { setSelectedAssetId(asset.id); setActiveTab('terminal'); }}
+                      className="p-3 bg-indigo-600 text-white rounded-xl shadow-xl hover:scale-110 active:scale-95 transition-all"
+                      title="Inspect Details"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
                   </div>
-               </div>
-             )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* SECTION: MANAGEMENT TERMINAL (Owner View) */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-500">
+            
+            {/* Sidebar: Owned Asset Selector */}
+            <div className="lg:col-span-4 space-y-6">
+              <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
+                <div className="flex items-center justify-between px-2">
+                   <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Owned <span className="text-indigo-400">Assets</span></h4>
+                   <button 
+                    onClick={() => setShowAddModal(true)} 
+                    className="p-2 bg-emerald-600 rounded-xl text-white shadow-xl hover:scale-110 transition-all"
+                   >
+                    <Plus size={18}/>
+                   </button>
+                </div>
+                <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                  {myAssets.length === 0 ? (
+                    <div className="py-20 text-center opacity-20 italic text-xs uppercase tracking-widest flex flex-col items-center gap-4">
+                       <Boxes size={48} />
+                       No Active Flows
+                    </div>
+                  ) : myAssets.map(asset => (
+                    <button 
+                      key={asset.id}
+                      onClick={() => setSelectedAssetId(asset.id)}
+                      className={`w-full p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${selectedAssetId === asset.id ? 'bg-indigo-600 border-white text-white shadow-xl scale-105' : 'bg-white/[0.01] border-white/5 text-slate-600 hover:border-white/20'}`}
+                    >
+                      <div className="flex items-center gap-4">
+                         <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 ${selectedAssetId === asset.id ? 'text-white' : 'text-indigo-400'}`}>
+                            {asset.category === 'Produce' ? <Sprout size={20} /> : <Factory size={20} />}
+                         </div>
+                         <div>
+                            <p className="text-sm font-black uppercase italic leading-none">{asset.productType}</p>
+                            <p className="text-[9px] font-mono opacity-50 mt-1 uppercase">{asset.id} // {asset.progress}%</p>
+                         </div>
+                      </div>
+                      {asset.isPhysicallyVerified && asset.isSystemAudited && (
+                        <CheckCircle2 size={16} className="text-emerald-400" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-card p-10 rounded-[48px] border border-blue-500/20 bg-blue-500/5 space-y-4 shadow-xl">
+                 <div className="flex items-center gap-3">
+                    <Info size={16} className="text-blue-400" />
+                    <h5 className="text-[10px] font-black text-white uppercase tracking-widest">Protocol Notice</h5>
+                 </div>
+                 <p className="text-xs text-slate-500 italic leading-relaxed">
+                    "Asset qualification requires successful sharding of physical evidence and an industrial system audit. Market publish is restricted until finality."
+                 </p>
+              </div>
+            </div>
+
+            {/* Main Command Console */}
+            <div className="lg:col-span-8">
+              {!selectedAsset ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-10 group opacity-40">
+                  <div className="relative">
+                    <Monitor size={140} className="text-slate-500 group-hover:text-indigo-400 transition-colors duration-1000" />
+                    <div className="absolute inset-[-30px] border-2 border-dashed border-white/10 rounded-full animate-spin-slow"></div>
+                  </div>
+                  <p className="text-3xl font-black uppercase tracking-[0.5em] italic">COMMAND_STANDBY</p>
+                </div>
+              ) : (
+                <div className="space-y-8 animate-in zoom-in duration-500">
+                  {/* Asset Identity HUD */}
+                  <div className="glass-card p-10 md:p-12 rounded-[64px] border-2 border-white/10 bg-black/60 relative overflow-hidden shadow-3xl">
+                     <div className="flex flex-col md:flex-row justify-between items-start mb-10 gap-8 relative z-10">
+                        <div className="flex items-center gap-8">
+                           <div className="w-20 h-20 rounded-[28px] bg-indigo-600 shadow-2xl flex items-center justify-center text-white border-4 border-white/10 animate-float">
+                              <Edit3 size={32} />
+                           </div>
+                           <div>
+                              <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{selectedAsset.productType}</h3>
+                              <p className="text-[10px] text-slate-500 font-mono tracking-widest mt-2 uppercase italic font-bold">COMMAND_ID: {selectedAsset.id}</p>
+                           </div>
+                        </div>
+                        <div className="flex flex-wrap gap-4">
+                           <div className={`px-5 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${selectedAsset.isPhysicallyVerified ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400' : 'bg-rose-600/10 border-rose-500/40 text-rose-500'}`}>
+                              {selectedAsset.isPhysicallyVerified ? <ShieldCheck size={12}/> : <ShieldAlert size={12}/>}
+                              PHYSICAL_VERIFIED
+                           </div>
+                           <div className={`px-5 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${selectedAsset.isSystemAudited ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400' : 'bg-rose-600/10 border-rose-500/40 text-rose-500'}`}>
+                              {selectedAsset.isSystemAudited ? <BadgeCheck size={12}/> : <History size={12}/>}
+                              SYSTEM_AUDITED
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* STRATEGIC TOOLING HUB - Grid of 9 Routing Triggers */}
+                     <div className="space-y-6 relative z-10 pt-10 border-t border-white/5">
+                        <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.6em] px-4 italic mb-6">STRATEGIC_TOOLING_HUB</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                           {[
+                              { label: 'Ingest Evidence', icon: Upload, target: 'digital_mrv', action: 'ingest', col: 'text-blue-400' },
+                              { label: 'Registry Handshake', icon: SmartphoneNfc, target: 'registry_handshake', col: 'text-indigo-400' },
+                              { label: 'Network Ingest', icon: Wifi, target: 'ingest', col: 'text-teal-400' },
+                              { label: 'Live Broadcast', icon: Video, target: 'media', action: 'PROCESS_STREAM', col: 'text-rose-500' },
+                              { label: 'Value Analysis', icon: FlaskConical, target: 'agro_value_enhancement', action: 'synthesis', col: 'text-fuchsia-400' },
+                              { label: 'Mission Sync', icon: Briefcase, target: 'contract_farming', col: 'text-amber-500' },
+                              { label: 'Collective Hub', icon: Users, target: 'community', action: 'shards', col: 'text-indigo-400' },
+                              { label: 'Industrial Pair', icon: Factory, target: 'industrial', action: 'bridge', col: 'text-slate-400' },
+                              { label: 'TQM Audit', icon: ClipboardCheck, target: 'tqm', col: 'text-emerald-500' },
+                           ].map((tool, i) => (
+                              <button 
+                                 key={i}
+                                 onClick={() => onNavigate(tool.target as ViewState, tool.action)}
+                                 className="p-6 bg-white/[0.02] border border-white/5 hover:border-white/20 rounded-[32px] flex flex-col items-center text-center gap-4 transition-all group active:scale-95 shadow-lg relative overflow-hidden"
+                              >
+                                 <div className="absolute inset-0 bg-indigo-500/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                 <tool.icon size={24} className={`${tool.col} group-hover:scale-110 transition-transform relative z-10`} />
+                                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 group-hover:text-white relative z-10">{tool.label}</span>
+                              </button>
+                           ))}
+                        </div>
+                     </div>
+
+                     {/* QUALIFICATION GATE TRIGGERS (Mandatory) */}
+                     <div className="mt-12 p-8 bg-indigo-950/20 border-2 border-indigo-500/20 rounded-[56px] flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.05] pointer-events-none"><Sparkles size={200} className="text-indigo-400" /></div>
+                        <div className="flex items-center gap-8 relative z-10">
+                           <div className="w-16 h-16 rounded-[24px] bg-indigo-600 flex items-center justify-center text-white shadow-xl"><Bot size={32} /></div>
+                           <div className="text-left space-y-1">
+                              <h5 className="text-xl font-black text-white uppercase italic m-0">Qualification Gate</h5>
+                              <p className="text-slate-500 text-[9px] uppercase font-bold italic tracking-widest">MANDATORY_REGISTRY_VERIFICATION</p>
+                           </div>
+                        </div>
+                        <div className="flex gap-4 relative z-10">
+                           <button 
+                             onClick={() => triggerMandatoryCheck('verify')}
+                             disabled={selectedAsset.isPhysicallyVerified || isProcessingAction === 'verify'}
+                             className={`px-8 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all ${
+                               selectedAsset.isPhysicallyVerified ? 'bg-emerald-600 text-white' : 'bg-black border border-white/10 text-slate-400 hover:text-white hover:border-indigo-400'
+                             }`}
+                           >
+                              {isProcessingAction === 'verify' ? <Loader2 size={14} className="animate-spin"/> : selectedAsset.isPhysicallyVerified ? <CheckCircle2 size={14}/> : <Monitor size={14}/>}
+                              Physical Verify
+                           </button>
+                           <button 
+                             onClick={() => triggerMandatoryCheck('audit')}
+                             disabled={selectedAsset.isSystemAudited || isProcessingAction === 'audit'}
+                             className={`px-8 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all ${
+                               selectedAsset.isSystemAudited ? 'bg-emerald-600 text-white' : 'bg-black border border-white/10 text-slate-400 hover:text-white hover:border-indigo-400'
+                             }`}
+                           >
+                              {isProcessingAction === 'audit' ? <Loader2 size={14} className="animate-spin"/> : selectedAsset.isSystemAudited ? <CheckCircle2 size={14}/> : <ClipboardList size={14}/>}
+                              System Audit
+                           </button>
+                        </div>
+                     </div>
+
+                     {/* PUBLISH TRIGGER */}
+                     <div className="mt-12 pt-10 border-t border-white/5 flex justify-between items-center relative z-10">
+                        <div className="space-y-1">
+                           <p className="text-[10px] text-slate-700 font-black uppercase tracking-widest italic leading-none">Industrial Readiness</p>
+                           <p className="text-3xl font-mono font-black text-emerald-400 leading-none">{selectedAsset.progress}% α</p>
+                        </div>
+                        <button 
+                           onClick={handlePublishToMarket}
+                           disabled={!selectedAsset.isPhysicallyVerified || !selectedAsset.isSystemAudited || selectedAsset.stage === 'Market_Ready'}
+                           className={`px-16 py-8 rounded-full font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(0,0,0,0.4)] flex items-center justify-center gap-6 transition-all border-4 border-white/10 ${
+                              selectedAsset.isPhysicallyVerified && selectedAsset.isSystemAudited && selectedAsset.stage !== 'Market_Ready'
+                              ? 'agro-gradient text-white hover:scale-105 active:scale-95 ring-[16px] ring-emerald-500/5' 
+                              : 'bg-white/5 text-slate-800 border-white/5 cursor-not-allowed grayscale'
+                           }`}
+                        >
+                           <ArrowUpRight size={28} /> {selectedAsset.stage === 'Market_Ready' ? 'PUBLISHED' : 'PUBLISH TO MARKET'}
+                        </button>
+                     </div>
+                  </div>
+
+                  {/* Task Registry for selected asset */}
+                  <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-2xl">
+                     <div className="flex items-center gap-4 border-b border-white/5 pb-4 px-2">
+                        <Trello size={24} className="text-indigo-400" />
+                        <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Tasks <span className="text-indigo-400">In-Thread</span></h4>
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(selectedAsset.tasks || []).map((task, i) => (
+                           <div key={i} className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center justify-between group hover:border-emerald-500/30 transition-all">
+                              <div className="flex items-center gap-4">
+                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                 <span className="text-xs font-black text-slate-300 uppercase tracking-tighter">{task}</span>
+                              </div>
+                              <CheckCircle2 size={16} className="text-emerald-500/40" />
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* REGISTRATION MODAL OVERLAY */}
+      {/* NEW ASSET REGISTRATION MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowAddModal(false)}></div>
-           <div className="relative z-10 w-full max-w-2xl glass-card rounded-[80px] border-emerald-500/30 bg-[#050706] shadow-3xl animate-in zoom-in border-2 flex flex-col max-h-[90vh]">
-              
-              <div className="p-10 md:p-14 border-b border-white/5 bg-emerald-500/[0.01] flex justify-between items-center shrink-0">
-                 <div className="flex items-center gap-8">
-                    <div className="w-16 md:w-20 h-16 md:h-20 rounded-3xl bg-emerald-600 flex items-center justify-center text-white shadow-2xl animate-float">
-                       <PlusCircle size={40} />
-                    </div>
+           <div className="relative z-10 w-full max-w-xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in border-2 flex flex-col">
+              <div className="p-10 border-b border-white/5 bg-emerald-500/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white shadow-2xl"><PlusCircle size={32} /></div>
                     <div>
-                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter italic m-0">Inflow <span className="text-emerald-400">Ingest</span></h3>
+                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Register <span className="text-emerald-400">Flow</span></h3>
                     </div>
                  </div>
-                 <button onClick={() => setShowAddModal(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all z-20 hover:rotate-90 active:scale-90 shadow-2xl"><X size={32} /></button>
+                 <button onClick={() => setShowAddModal(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X size={24} /></button>
               </div>
-
-              <div className="flex-1 overflow-y-auto p-12 custom-scrollbar space-y-12 bg-black/40">
-                 {step === 'registration' && (
-                    <form onSubmit={handleRegisterMetadata} className="space-y-12 animate-in slide-in-from-right-4 duration-500 flex-1 flex flex-col justify-center">
-                       <div className="space-y-8">
-                          <div className="space-y-3 px-4">
-                             <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] block">Asset Designation (Name)</label>
-                             <input 
-                                type="text" required value={newProductName} onChange={e => setNewProductName(e.target.value)}
-                                placeholder="e.g. Bantu Maize Shard #42..." 
-                                className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-stone-900 italic shadow-inner" 
-                             />
-                          </div>
-                          <div className="space-y-3 px-4">
-                             <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] block">Pillar Category</label>
-                             <div className="grid grid-cols-3 gap-4">
-                                {['Produce', 'Manufactured', 'Input'].map(cat => (
-                                   <button 
-                                      key={cat} type="button" onClick={() => setNewProductCategory(cat as any)}
-                                      className={`p-6 rounded-[32px] border-2 transition-all text-xs font-black uppercase tracking-widest shadow-xl ${newProductCategory === cat ? 'bg-emerald-600 border-white text-white scale-105 ring-8 ring-emerald-500/5' : 'bg-black/60 border-white/10 text-slate-500 hover:border-white/20'}`}
-                                   >
-                                      {cat}
-                                   </button>
-                                ))}
-                             </div>
-                          </div>
-                       </div>
-                       <button 
-                        type="submit"
-                        disabled={isSubmitting || !newProductName.trim()}
-                        className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[16px] ring-white/5 disabled:opacity-30"
-                       >
-                          {isSubmitting ? <Loader2 size={32} className="animate-spin" /> : <ChevronRight size={32} />}
-                          {isSubmitting ? 'MINTING SHARD...' : 'INITIALIZE VERIFICATION'}
-                       </button>
-                    </form>
-                 )}
-
-                 {step === 'verification' && (
-                    <div className="space-y-16 animate-in zoom-in duration-1000 flex flex-col items-center justify-center text-center flex-1">
-                       <div className="space-y-10">
-                          <div className="relative">
-                             <div className="w-48 h-48 rounded-[64px] bg-amber-500/10 flex items-center justify-center border-4 border-amber-500/30 shadow-[0_0_120px_rgba(245,158,11,0.2)] animate-pulse">
-                                <Fingerprint size={80} className="text-amber-500" />
-                             </div>
-                             <div className="absolute inset-[-20px] border-2 border-dashed border-amber-400/20 rounded-[80px] animate-spin-slow"></div>
-                          </div>
-                       </div>
-                       <button 
-                          onClick={handleHandshake}
-                          disabled={isSubmitting}
-                          className="w-full max-w-md py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.6em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[20px] ring-white/5"
-                       >
-                          {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : <Stamp size={24} />}
-                          {isSubmitting ? 'ANCHORING...' : 'AUTHORIZE HANDSHAKE'}
-                       </button>
+              <form onSubmit={handleCreateAsset} className="p-12 space-y-8 bg-black/40">
+                 <div className="space-y-3 px-4">
+                    <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Asset Designation</label>
+                    <input 
+                       type="text" required value={newAsset.name} onChange={e => setNewAsset({ ...newAsset, name: e.target.value })}
+                       placeholder="e.g. High-Yield Maize Inflow..." 
+                       className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-stone-900 italic shadow-inner" 
+                    />
+                 </div>
+                 <div className="space-y-3 px-4">
+                    <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Category</label>
+                    <div className="grid grid-cols-2 gap-4">
+                       {['Produce', 'Manufactured'].map(cat => (
+                          <button 
+                             key={cat} type="button" onClick={() => setNewAsset({ ...newAsset, category: cat as any })}
+                             className={`p-6 rounded-[32px] border-2 transition-all text-xs font-black uppercase tracking-widest ${newAsset.category === cat ? 'bg-emerald-600 border-white text-white scale-105 shadow-2xl' : 'bg-black/60 border-white/5 text-slate-600 hover:border-white/20'}`}
+                          >
+                             {cat}
+                          </button>
+                       ))}
                     </div>
-                 )}
-              </div>
+                 </div>
+                 <button 
+                   type="submit"
+                   disabled={isProcessingAction === 'creating' || !newAsset.name}
+                   className="w-full py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.6em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[20px] ring-white/5"
+                 >
+                    {isProcessingAction === 'creating' ? <Loader2 size={24} className="animate-spin mx-auto" /> : "INITIALIZE INDUSTRIAL THREAD"}
+                 </button>
+              </form>
            </div>
         </div>
       )}
+
+      <style>{`
+        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
+        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(37, 99, 235, 0.4); border-radius: 10px; }
+      `}</style>
     </div>
   );
 };

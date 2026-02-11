@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Warehouse, 
@@ -80,7 +79,7 @@ interface VendorPortalProps {
   onUpdateOrderStatus: (orderId: string, status: Order['status'], meta?: any) => void;
   vendorProducts: VendorProduct[];
   onRegisterProduct: (product: VendorProduct) => void;
-  onNavigate: (view: ViewState) => void;
+  onNavigate: (view: ViewState, action?: string | null) => void;
   initialSection?: string | null;
   onUpdateProduct?: (product: VendorProduct) => void;
   onEmitSignal?: (signal: Partial<SignalShard>) => Promise<void>;
@@ -388,7 +387,12 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                                 {isActivatingJit === product.id ? <Loader2 size={14} className="animate-spin" /> : <ZapIcon size={14} />}
                                 {product.isLiveProcessing ? 'DEACTIVATE JIT FLOW' : 'ACTIVATE JIT FLOW'}
                              </button>
-                             <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all shadow-md">MANAGE SHARD</button>
+                             <button 
+                               onClick={() => onNavigate('live_farming', product.id)}
+                               className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all shadow-md"
+                             >
+                                MANAGE SHARD
+                             </button>
                           </div>
                        </div>
                     </div>
@@ -548,7 +552,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                        <Stamp size={40} className="text-white relative z-10 group-hover:scale-110 transition-transform" />
                     </div>
                     <div>
-                       <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0">Asset <span className="text-amber-500">Lifecycle</span></h3>
+                       <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter m-0">Asset <span className="text-amber-500">Lifecycle</span></h3>
                        <p className="text-amber-400/60 text-[11px] font-mono tracking-[0.5em] uppercase mt-4 italic leading-none">HANDSHAKE_v5.2 // SECURED_INGEST</p>
                     </div>
                  </div>
@@ -611,7 +615,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                        <div className="p-8 bg-amber-500/5 border border-amber-500/10 rounded-[44px] flex justify-between items-center shadow-inner group/fee hover:border-amber-400 transition-all">
                           <div className="flex items-center gap-6">
                              <div className="p-4 bg-amber-600 rounded-2xl text-white shadow-2xl group-hover/fee:rotate-12 transition-transform"><Coins size={24} /></div>
-                             <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Calculated Registry Fee (1%)</span>
+                             <span className="text-xs font-black text-slate-300 uppercase tracking-[0.2em]">Calculated Registry Fee (1%)</span>
                           </div>
                           <span className="text-3xl font-mono font-black text-white">{regFee.toFixed(2)} <span className="text-sm text-amber-500 italic">EAC</span></span>
                        </div>

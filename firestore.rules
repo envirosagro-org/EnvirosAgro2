@@ -1,63 +1,103 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // --- HELPER FUNCTIONS ---
-    function isSignedIn() { return request.auth != null; }
-    function isOwner(stewardId) { return request.auth.uid == stewardId; }
-    function isAuditor() { return exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)); }
-    function isImmutable() { return request.resource.data == resource.data; }
-
-    // --- COLLECTION RULES ---
-
-    // Stewards can manage their own profiles
-    match /stewards/{stewardId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(stewardId);
+    // --- CORE ENVIROSAGRO HELPER FUNCTIONS ---
+    
+    function isSignedIn() { 
+      return request.auth != null; 
+    }
+    
+    function isOwner(esin) { 
+      // Mapping Firebase UID to the ESIN signature in the document data
+      return isSignedIn() && (
+        resource == null || 
+        resource.data.stewardEsin == esin || 
+        resource.data.authorEsin == esin || 
+        resource.data.supplierEsin == esin ||
+        resource.data.farmerEsin == esin ||
+        resource.data.stewardId == request.auth.uid
+      ); 
     }
 
-    // Signals (Notifications)
+    function isAuditor() { 
+      // Verify if email is present in the authorized auditor node shard
+      return exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)); 
+    }
+
+    // --- COLLECTION PROTOCOLS ---
+
+    // 1. Stewards: Personal node dossier
+    match /stewards/{stewardId} {
+      allow read: if isSignedIn();
+      allow write: if request.auth.uid == stewardId;
+    }
+
+    // 2. Signals: Encrypted engagement shards
     match /signals/{signalId} {
-      allow read: if isSignedIn() && isOwner(resource.data.stewardId);
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow create: if isSignedIn();
-      // Allow update only for the 'read' field by the owner
-      allow update: if isSignedIn() && isOwner(resource.data.stewardId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow update: if isSignedIn() && resource.data.stewardId == request.auth.uid;
       allow delete: if false; // Immutable audit trail
     }
 
-    // Industrial Assets & Registry
+    // 3. Products & Industrial Assets (Market Cloud)
     match /products/{productId} {
-      allow read: if true; // Public marketplace visibility
+      allow read: if true; // Public discovery feed
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (isOwner(resource.data.supplierEsin) || isAuditor());
-      allow delete: if false; 
+      allow delete: if false; // Prevention of resource voiding
     }
 
-    // Carbon Ingest & Telemetry
-    match /telemetry/{esin} {
-      allow read: if isSignedIn();
-      allow write: if isAuditor() || isOwner(esin);
+    // 4. Live Inflow (Industrial Shards in processing)
+    match /live_products/{id} {
+      allow read: if true; // Public ledger monitoring
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner(resource.data.stewardEsin) || isAuditor());
+      allow delete: if false;
     }
 
-    // Institutional Missions
+    // 5. Media Ledger: Knowledge shards and AgroInPDF
+    match /media_ledger/{shardId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner(resource.data.authorEsin) || isAuditor());
+      allow delete: if false;
+    }
+
+    // 6. Financial Ledger (Transactions): Absolute Immutability
+    match /transactions/{txId} {
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Ledger entries cannot be modified or purged
+    }
+
+    // 7. Missions & Contracts (Contract Farming)
     match /contracts/{contractId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner(resource.data.investorEsin) || isAuditor());
+      allow update: if isSignedIn(); // Applications added by farmers, status by investors/auditors
+      allow delete: if false;
     }
 
-    // Financial Ledger (Strict Immutability)
-    match /transactions/{txId} {
-      allow read: if isSignedIn() && (isOwner(resource.data.stewardId) || isAuditor());
+    // 8. Collectives: Steward Guilds
+    match /collectives/{id} {
+      allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if false; 
+      allow update: if isSignedIn(); // Membership sharding
+      allow delete: if false;
     }
 
-    // Internal Auditor Registry
+    // 9. Telemetry: Biometric node backups
+    match /telemetry/{esin} {
+      allow read: if isSignedIn() && (isOwner(esin) || isAuditor());
+      allow write: if isSignedIn() && (isOwner(esin) || isAuditor());
+    }
+
+    // 10. Auditors: Internal HQ Authority
     match /auditors/{email} {
       allow read: if isSignedIn();
-      allow write: if false; // Managed via Admin SDK only
+      allow write: if false; // Immutable via client-side, managed by root nodes only
     }
   }
 }
