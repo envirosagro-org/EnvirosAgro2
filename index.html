@@ -77,10 +77,10 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        font-size: 14px;
+        font-size: 13px; /* Tighter base font size */
       }
       @media (max-width: 640px) {
-        body { font-size: 12px; }
+        body { font-size: 11px; } /* High density for mobile devices */
       }
       #root {
         height: 100vh;
@@ -114,6 +114,9 @@
       h1, h2, h3, h4, h5, h6 {
         overflow-wrap: break-word;
         word-wrap: break-word;
+      }
+      code, pre, .font-mono {
+        letter-spacing: -0.025em; /* Tighter mono for industrial feel */
       }
     </style>
   <script type="importmap">

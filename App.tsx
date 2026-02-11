@@ -589,13 +589,13 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                             <div key={steward.esin} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] duration-300 group/card">
                                <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
                                   <div className="relative shrink-0">
-                                     <div className="w-16 h-16 md:w-24 md:h-24 rounded-[28px] md:rounded-[40px] overflow-hidden border-2 border-white/10 group-hover/card:border-indigo-500 transition-all shadow-xl">
+                                     <div className="w-16 h-16 md:w-24 md:h-24 rounded-[28px] md:rounded-[40px] overflow-hidden border-2 border-white/10 group-hover:card:border-indigo-500 transition-all shadow-xl">
                                         <img src={steward.avatar} className="w-full h-full object-cover" alt="" />
                                      </div>
                                      <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-black ${steward.online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-800'}`}></div>
                                   </div>
                                   <div className="space-y-2">
-                                     <h4 className="text-2xl md:text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover/card:text-indigo-400 transition-colors">{steward.name}</h4>
+                                     <h4 className="text-2xl md:text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:card:text-indigo-400 transition-colors">{steward.name}</h4>
                                      <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-2">{steward.role} // {steward.esin}</p>
                                   </div>
                                </div>
@@ -713,13 +713,13 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
         </div>
 
         {/* Dynamic Footer Status */}
-        <div className="p-6 md:p-8 border-t border-white/5 bg-black/80 flex items-center justify-between shrink-0 relative z-10">
-           <div className="flex items-center gap-4 text-[9px] font-black text-slate-700 uppercase tracking-[0.4em] italic">
+        <div className="p-6 md:p-8 border-t border-white/5 border-emerald-500/10 bg-black/80 flex items-center justify-between shrink-0 relative z-10">
+           <div className="flex items-center gap-4 text-[7px] font-black text-slate-700 uppercase tracking-[0.5em] italic">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/20 animate-pulse"></div>
-              Multi-Ledger Indexing Active
+              MULTI_LEDGER_INDEXING_ACTIVE
            </div>
            <div className="flex items-center gap-3">
-              <span className="text-[8px] font-mono text-slate-800 uppercase tracking-widest">v6.5.2 // QUORUM_SYNC</span>
+              <span className="text-[7px] font-mono text-slate-800 uppercase tracking-widest">v6.5.2 // QUORUM_SYNC</span>
            </div>
         </div>
       </div>
@@ -1040,11 +1040,11 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000">
       <div className="fixed top-0 left-0 right-0 z-[1000] h-8 bg-black/60 backdrop-blur-xl border-b border-white/5 flex items-center overflow-hidden">
         <div className="flex items-center gap-2 px-4 border-r border-white/10 h-full shrink-0">
-          <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-          <span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">NETWORK_PULSE</span>
+          <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+          <span className="text-[7px] font-black uppercase text-emerald-400 tracking-widest">NETWORK_PULSE</span>
         </div>
         <div className="flex-1 px-4 overflow-hidden">
-          <div className="whitespace-nowrap animate-marquee text-[9px] text-emerald-500/80 font-mono font-black uppercase tracking-widest">
+          <div className="whitespace-nowrap animate-marquee text-[7px] text-emerald-500/80 font-mono font-black uppercase tracking-widest">
             {pulseMessage} • {new Date().toISOString()} • STABILITY: 1.42x • CONSENSUS: 100% • 
           </div>
         </div>
@@ -1058,8 +1058,8 @@ const App: React.FC = () => {
              </div>
              {(isSidebarOpen || isMobileMenuOpen) && (
                <div className="animate-in fade-in slide-in-from-left-2">
-                 <h1 className="text-xl font-black text-white italic tracking-tighter leading-none">Enviros<span className="text-emerald-400">Agro</span></h1>
-                 <p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">Registry</p>
+                 <h1 className="text-lg font-black text-white italic tracking-tighter leading-none uppercase">Enviros<span className="text-emerald-400">Agro</span></h1>
+                 <p className="text-[6px] text-slate-500 font-black uppercase tracking-[0.4em] mt-1 italic">Registry</p>
                </div>
              )}
            </div>
@@ -1069,12 +1069,12 @@ const App: React.FC = () => {
         <nav className="px-4 py-8 space-y-10">
            {REGISTRY_NODES.map((group) => (
              <div key={group.category} className="space-y-4">
-                {(isSidebarOpen || isMobileMenuOpen) && <p className={`px-4 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600`}>{group.category}</p>}
+                {(isSidebarOpen || isMobileMenuOpen) && <p className={`px-4 text-[7px] font-black uppercase tracking-[0.3em] text-slate-700 italic`}>{group.category}</p>}
                 <div className="space-y-1">
                   {group.items.map(item => (
-                    <button key={item.id} onClick={() => navigate(item.id as ViewState)} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
-                      <item.icon size={18} className={view === item.id ? 'text-white' : 'text-slate-500'} />
-                      {(isSidebarOpen || isMobileMenuOpen) && <span className="text-[10px] font-bold uppercase tracking-widest text-left leading-none">{item.name}</span>}
+                    <button key={item.id} onClick={() => navigate(item.id as ViewState)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+                      <item.icon size={16} className={view === item.id ? 'text-white' : 'text-slate-500'} />
+                      {(isSidebarOpen || isMobileMenuOpen) && <span className="text-[8px] font-black uppercase tracking-[0.2em] text-left leading-none">{item.name}</span>}
                     </button>
                   ))}
                 </div>
@@ -1084,29 +1084,29 @@ const App: React.FC = () => {
       </div>
 
       <main ref={mainContentRef} onScroll={(e) => handleScroll(e.currentTarget)} className={`transition-all duration-500 pt-14 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'lg:pl-80 pr-4 lg:pr-10' : 'lg:pl-24 pr-4 lg:pr-10'} pl-4`}>
-        <div className="fixed top-8 left-0 right-0 z-[200] h-1 pointer-events-none">
+        <div className="fixed top-8 left-0 right-0 z-[200] h-0.5 pointer-events-none">
           <div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}></div>
         </div>
 
-        <header className="flex justify-between items-center mb-8 sticky top-0 bg-[#050706]/90 backdrop-blur-xl py-4 z-[150] px-2 -mx-2 border-b border-white/5">
+        <header className="flex justify-between items-center mb-6 md:mb-8 sticky top-0 bg-[#050706]/90 backdrop-blur-xl py-3 md:py-4 z-[150] px-2 -mx-2 border-b border-emerald-500/10 shadow-lg">
            <div className="flex items-center gap-4 overflow-hidden">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden lg:block p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0">{isSidebarOpen ? <ChevronLeft size={20}/> : <Menu size={20}/>}</button>
-              <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0"><Menu size={20}/></button>
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden lg:block p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0">{isSidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}</button>
+              <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0"><Menu size={18}/></button>
               <div className="space-y-0.5 truncate max-w-[120px] sm:max-w-none">
-                 <h2 className="text-base sm:text-xl font-black text-white uppercase italic tracking-tighter truncate leading-tight">{(view || '').replace(/_/g, ' ')}</h2>
-                 <p className="text-[7px] sm:text-[9px] text-slate-600 font-mono tracking-widest uppercase truncate">SYNC: {user ? 'ANCHORED' : 'OBSERVER'}</p>
+                 <h2 className="text-sm sm:text-lg font-black text-white uppercase italic tracking-widest truncate leading-tight">{(view || '').replace(/_/g, ' ')}</h2>
+                 <p className="text-[6px] sm:text-[8px] text-slate-600 font-mono tracking-widest uppercase truncate font-bold">STATUS: {user ? 'ANCHORED' : 'OBSERVER_MODE'}</p>
               </div>
            </div>
            
            <div className="flex-1 max-w-md mx-6 hidden md:block">
-              <button onClick={() => setIsGlobalSearchOpen(true)} className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-6 flex items-center justify-between text-slate-500 hover:border-emerald-500/40 hover:bg-white/10 transition-all group shadow-inner">
+              <button onClick={() => setIsGlobalSearchOpen(true)} className="w-full h-10 bg-white/5 border border-white/10 rounded-2xl px-6 flex items-center justify-between text-slate-500 hover:border-emerald-500/40 hover:bg-white/10 transition-all group shadow-inner">
                  <div className="flex items-center gap-3">
-                    <Search size={16} className="group-hover:text-emerald-400 transition-colors" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Search Multi-Ledger Registry...</span>
+                    <Search size={14} className="group-hover:text-emerald-400 transition-colors" />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em]">Search Multi-Ledger Registry...</span>
                  </div>
-                 <div className="flex items-center gap-1.5 opacity-40">
-                    <span className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] font-mono">⌘</span>
-                    <span className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] font-mono">K</span>
+                 <div className="flex items-center gap-1.5 opacity-30">
+                    <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">⌘</span>
+                    <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">K</span>
                  </div>
               </button>
            </div>
@@ -1115,11 +1115,11 @@ const App: React.FC = () => {
               {/* Integrated AI Assistant Toggle (SycamoreLeaf Branding) */}
               <button 
                 onClick={() => { setIsConsultantOpen(!isConsultantOpen); setIsGlobalSearchOpen(false); setIsInboxOpen(false); }}
-                className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
+                className={`p-2.5 rounded-xl border transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
                 title="Concierge Oracle"
               >
-                 <SycamoreLogo size={20} className={isConsultantOpen ? "text-white" : "text-emerald-400"} />
-                 <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black ${isConsultantOpen ? 'animate-none' : 'animate-pulse'}`}></div>
+                 <SycamoreLogo size={18} className={isConsultantOpen ? "text-white" : "text-emerald-400"} />
+                 <div className={`absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-black ${isConsultantOpen ? 'animate-none' : 'animate-pulse'}`}></div>
               </button>
 
               {/* User Inbox Trigger */}
@@ -1127,12 +1127,12 @@ const App: React.FC = () => {
                 <div className="relative">
                   <button 
                     onClick={() => { setIsInboxOpen(!isInboxOpen); setIsGlobalSearchOpen(false); setIsConsultantOpen(false); }}
-                    className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center relative ${isInboxOpen ? 'bg-indigo-600 text-white border-white' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+                    className={`p-2.5 rounded-xl border transition-all flex items-center justify-center relative ${isInboxOpen ? 'bg-indigo-600 text-white border-white' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
                     title="User Inbox"
                   >
-                    <BellRing size={20} className={unreadSignalsCount > 0 ? 'animate-pulse' : ''} />
+                    <BellRing size={18} className={unreadSignalsCount > 0 ? 'animate-pulse' : ''} />
                     {unreadSignalsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-black animate-in zoom-in">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[7px] font-black flex items-center justify-center rounded-full border border-black animate-in zoom-in">
                         {unreadSignalsCount > 9 ? '9+' : unreadSignalsCount}
                       </span>
                     )}
@@ -1141,60 +1141,57 @@ const App: React.FC = () => {
                   {/* Compact Signal Inbox Dropdown */}
                   {isInboxOpen && (
                     <div className="absolute top-14 right-0 w-80 md:w-96 glass-card rounded-3xl border border-white/10 bg-[#050706] shadow-3xl overflow-hidden animate-in slide-in-from-top-4 z-[500]">
-                       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/5">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
-                             <Mail size={14} /> USER_INBOX_TERMINAL
+                       <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5">
+                          <span className="text-[8px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                             <Mail size={12} /> INBOX_TERMINAL
                           </span>
                           <div className="flex items-center gap-4">
                             <button 
                               onClick={markAllSignalsAsRead} 
-                              className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-1.5 transition-colors"
-                              title="Mark all signals as verified"
+                              className="text-[7px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-1.5 transition-colors"
                             >
-                               <CheckCircle2 size={12} /> Mark All Read
+                               <CheckCircle2 size={10} /> Mark All Read
                             </button>
-                            <button onClick={() => navigate('network_signals')} className="text-[9px] font-black text-slate-500 hover:text-white uppercase">Full Terminal</button>
                           </div>
                        </div>
                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar divide-y divide-white/5">
                           {signals.filter(s => !s.read).slice(0, 5).length === 0 ? (
-                            <div className="p-10 text-center opacity-30 italic text-xs">No active engagement shards.</div>
+                            <div className="p-10 text-center opacity-30 italic text-[10px] uppercase font-black">No active shards.</div>
                           ) : (
                             signals.filter(s => !s.read).slice(0, 5).map(sig => (
                               <div 
                                 key={sig.id} 
                                 onClick={() => { navigate(sig.meta?.target as ViewState || 'network_signals'); setIsInboxOpen(false); }}
-                                className={`p-5 hover:bg-white/5 cursor-pointer transition-all border-l-4 group/msg ${sig.priority === 'critical' ? 'border-rose-600' : sig.priority === 'high' ? 'border-amber-500' : 'border-indigo-500'}`}
+                                className={`p-4 md:p-5 hover:bg-white/5 cursor-pointer transition-all border-l-4 group/msg ${sig.priority === 'critical' ? 'border-rose-600' : sig.priority === 'high' ? 'border-amber-500' : 'border-indigo-500'}`}
                               >
-                                 <div className="flex items-center justify-between gap-3 mb-2">
-                                    <div className="flex items-center gap-3">
-                                       <span className="text-[8px] font-mono text-slate-600">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                       <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded ${sig.priority === 'critical' ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-400'}`}>{sig.priority}</span>
+                                 <div className="flex items-center justify-between gap-3 mb-1">
+                                    <div className="flex items-center gap-2">
+                                       <span className="text-[7px] font-mono text-slate-700">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                       <span className={`text-[6px] font-black uppercase px-1.5 py-0.5 rounded ${sig.priority === 'critical' ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-600'}`}>{sig.priority}</span>
                                     </div>
                                     <button 
                                       onClick={(e) => markSignalAsRead(sig.id, e)}
-                                      className="opacity-0 group-hover/msg:opacity-100 p-1.5 hover:bg-emerald-500/10 rounded-lg text-emerald-500 transition-all"
-                                      title="Mark Read"
+                                      className="opacity-0 group-hover/msg:opacity-100 p-1 hover:bg-emerald-500/10 rounded text-emerald-500 transition-all"
                                     >
-                                       <CheckCircle2 size={12} />
+                                       <CheckCircle2 size={10} />
                                     </button>
                                  </div>
-                                 <h5 className="text-[11px] font-black text-white uppercase italic truncate">{sig.title}</h5>
-                                 <p className="text-[10px] text-slate-500 mt-1 line-clamp-1 italic">"{sig.message}"</p>
+                                 <h5 className="text-[10px] font-black text-white uppercase italic truncate">{sig.title}</h5>
+                                 <p className="text-[9px] text-slate-500 mt-1 line-clamp-1 italic">"{sig.message}"</p>
                               </div>
                             ))
                           )}
                        </div>
-                       <button onClick={() => navigate('profile', 'signals')} className="w-full py-4 bg-indigo-600/10 text-indigo-400 text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">Go to Steward Dossier</button>
+                       <button onClick={() => navigate('profile', 'signals')} className="w-full py-3 bg-indigo-600/10 text-indigo-400 text-[8px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">Go to Steward Dossier</button>
                     </div>
                   )}
                 </div>
               )}
 
-              <button onClick={() => setIsGlobalSearchOpen(true)} className="md:hidden p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all"><Search size={18} className="text-slate-400" /></button>
-              {user && <button onClick={() => setView('wallet')} className="px-3 sm:px-4 py-2 sm:py-2.5 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={14} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[10px] sm:text-xs font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
-              <button onClick={() => setView('profile')} className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl border-2 transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
-                 {user ? (<><div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={14} className="text-slate-500 m-auto mt-1 sm:mt-2" />}</div><span className="text-[9px] font-black text-white hidden sm:block truncate max-w-[80px]">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={16} className="text-emerald-400" /><span className="text-[9px] font-black uppercase text-emerald-400">Sync</span></>)}
+              <button onClick={() => setIsGlobalSearchOpen(true)} className="md:hidden p-2.5 bg-white/5 rounded-xl hover:bg-white/10 transition-all"><Search size={16} className="text-slate-400" /></button>
+              {user && <button onClick={() => setView('wallet')} className="px-3 py-2 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={12} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[8px] sm:text-[10px] font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
+              <button onClick={() => setView('profile')} className={`flex items-center gap-2 px-2 py-1.5 rounded-xl border transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
+                 {user ? (<><div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={12} className="text-slate-500 m-auto mt-1 sm:mt-1.5" />}</div><span className="text-[8px] font-black text-white hidden sm:block truncate max-w-[60px] uppercase italic">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={14} className="text-emerald-400" /><span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Sync</span></>)}
               </button>
            </div>
         </header>
@@ -1211,18 +1208,18 @@ const App: React.FC = () => {
               <button 
                 onClick={goBack} 
                 disabled={history.length === 0}
-                className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border-2 transition-all active:scale-95 group/back ${history.length > 0 ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
+                className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all active:scale-95 group/back ${history.length > 0 ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
                 title="Vector Retrograde"
               >
-                 <ChevronLeft size={20} className="group-hover/back:-translate-x-1 transition-transform" />
+                 <ChevronLeft size={16} className="group-hover/back:-translate-x-1 transition-transform" />
                  <div className="flex flex-col items-start text-left hidden md:block">
-                    <span className="text-[9px] font-black uppercase tracking-widest leading-none">Retrograde</span>
-                    <span className="text-[7px] font-mono opacity-50 mt-1 uppercase">Prev_Vector</span>
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span>
+                    <span className="text-[6px] font-mono opacity-50 mt-1 uppercase">Prev_Vector</span>
                  </div>
               </button>
 
               {/* STRATEGIC SHARD DOCK - Quick Navigation Hub */}
-              <div className="flex p-1.5 glass-card rounded-[32px] bg-white/5 border border-white/10 shadow-3xl">
+              <div className="flex p-1 glass-card rounded-[24px] bg-black/40 border border-white/5 shadow-3xl">
                  {[
                    { id: 'dashboard', label: 'Command', icon: LayoutDashboard },
                    { id: 'economy', label: 'Market', icon: Globe },
@@ -1234,11 +1231,11 @@ const App: React.FC = () => {
                    <button 
                      key={shard.id}
                      onClick={() => navigate(shard.id as ViewState)}
-                     className={`p-4 rounded-2xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                     className={`p-3 rounded-xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-600 hover:text-white hover:bg-white/5'}`}
                      title={shard.label}
                    >
-                      <shard.icon size={20} />
-                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1 bg-black text-white text-[8px] font-black uppercase tracking-widest rounded-lg border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                      <shard.icon size={16} />
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[7px] font-black uppercase tracking-widest rounded border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                          {shard.label}
                       </div>
                    </button>
@@ -1249,47 +1246,47 @@ const App: React.FC = () => {
               <button 
                 onClick={goForward} 
                 disabled={forwardHistory.length === 0}
-                className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border-2 transition-all active:scale-95 group/fwd ${forwardHistory.length > 0 ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
+                className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all active:scale-95 group/fwd ${forwardHistory.length > 0 ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
                 title="Vector Advance"
               >
                  <div className="flex flex-col items-end text-right hidden md:block">
-                    <span className="text-[9px] font-black uppercase tracking-widest leading-none">Advance</span>
-                    <span className="text-[7px] font-mono opacity-50 mt-1 uppercase">Next_Vector</span>
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Advance</span>
+                    <span className="text-[6px] font-mono opacity-50 mt-1 uppercase">Next_Vector</span>
                  </div>
-                 <ChevronRight size={20} className="group-hover/fwd:translate-x-1 transition-transform" />
+                 <ChevronRight size={16} className="group-hover/fwd:translate-x-1 transition-transform" />
               </button>
            </div>
 
            {/* Secondary Branding Row */}
-           <div className="flex flex-col md:flex-row items-center justify-between w-full gap-8 border-t border-white/5 pt-8 px-4 opacity-50">
+           <div className="flex flex-col md:flex-row items-center justify-between w-full gap-8 border-t border-white/5 pt-8 px-4 opacity-40">
               <div className="flex items-center gap-4">
-                 <SycamoreLogo size={24} className="text-emerald-500" />
+                 <SycamoreLogo size={20} className="text-emerald-500" />
                  <div className="text-left">
-                    <p className="text-[10px] font-black text-white uppercase italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></p>
-                    <p className="text-[7px] text-slate-600 font-bold uppercase tracking-widest">Planetary Regeneration Grid</p>
+                    <p className="text-[9px] font-black text-white uppercase italic tracking-widest leading-none">Enviros<span className="text-emerald-400">Agro</span></p>
+                    <p className="text-[6px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">Planetary_Regeneration_Grid</p>
                  </div>
               </div>
 
-              <div className="flex items-center gap-10">
+              <div className="flex items-center gap-8">
                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-[8px] text-slate-700 font-mono uppercase font-black">MATRIX_SYNC_OK</span>
+                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-[7px] text-slate-700 font-mono uppercase font-black">MATRIX_SYNC_OK</span>
                  </div>
-                 <p className="text-[8px] text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p>
-                 <button onClick={() => navigate('info')} className="text-[8px] font-black text-slate-500 hover:text-white uppercase tracking-[0.3em]">SAFETY_REGISTRY</button>
+                 <p className="text-[7px] text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p>
+                 <button onClick={() => navigate('info')} className="text-[7px] font-black text-slate-600 hover:text-white uppercase tracking-[0.4em]">SAFETY_REGISTRY</button>
               </div>
            </div>
         </footer>
 
-        {showZenithButton && <button onClick={scrollToTop} className="fixed bottom-32 right-6 sm:right-10 p-4 sm:p-5 agro-gradient rounded-2xl sm:rounded-3xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border-2 border-white/20 animate-in fade-in zoom-in duration-300"><LucideIcons.ArrowUp size={24} /></button>}
+        {showZenithButton && <button onClick={scrollToTop} className="fixed bottom-32 right-6 sm:right-10 p-3.5 sm:p-4 agro-gradient rounded-xl sm:rounded-2xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border border-white/20 animate-in fade-in zoom-in duration-300"><LucideIcons.ArrowUp size={20} /></button>}
       </main>
 
       <div className="fixed top-24 right-4 sm:right-10 z-[500] space-y-4 max-w-[280px] sm:max-w-sm w-full pointer-events-none">
         {notifications.map(n => (
-          <div key={n.id} className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border shadow-3xl flex items-start gap-3 sm:gap-4 pointer-events-auto animate-in slide-in-from-right duration-500 ${n.type === 'error' ? 'bg-rose-950/80 border-rose-500/30 text-rose-500' : n.type === 'warning' ? 'bg-amber-950/80 border-amber-500/30 text-amber-400' : 'bg-black/95 border-emerald-500/20 text-emerald-400'}`}>
-            {n.type === 'error' ? <LucideIcons.ShieldAlert className="shrink-0 mt-1" /> : <LucideIcons.Info className="shrink-0 mt-1" />}
-            <div className="flex-1 space-y-1"><h5 className="text-[10px] font-black uppercase tracking-widest">{n.title}</h5><p className="text-[10px] italic text-slate-300 leading-tight">{n.message}</p></div>
-            <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="text-slate-500 hover:text-white"><X size={14}/></button>
+          <div key={n.id} className={`p-4 sm:p-5 rounded-2xl border shadow-3xl flex items-start gap-3 pointer-events-auto animate-in slide-in-from-right duration-500 ${n.type === 'error' ? 'bg-rose-950/80 border-rose-500/30 text-rose-500' : n.type === 'warning' ? 'bg-amber-950/80 border-amber-500/30 text-amber-400' : 'bg-black/95 border-emerald-500/20 text-emerald-400'}`}>
+            {n.type === 'error' ? <LucideIcons.ShieldAlert className="shrink-0 mt-0.5" size={16} /> : <LucideIcons.Info className="shrink-0 mt-0.5" size={16} />}
+            <div className="flex-1 space-y-0.5"><h5 className="text-[9px] font-black uppercase tracking-widest">{n.title}</h5><p className="text-[9px] italic text-slate-300 leading-tight">{n.message}</p></div>
+            <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="text-slate-700 hover:text-white"><X size={12}/></button>
           </div>
         ))}
       </div>
