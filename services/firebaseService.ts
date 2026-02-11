@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
@@ -58,10 +57,12 @@ const firebaseConfig = {
 // 1. Initialize Firebase App Core
 const app = initializeApp(firebaseConfig);
 
-// 2. Initialize App Check immediately
+// 2. Initialize App Check with user-provided key
 if (typeof window !== "undefined") {
+  const RECAPTCHA_SITE_KEY = "6LeljyIsAAAAAKer8_fHinQBO5eO8WlqXPbpdAh5";
+  
   initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider('6LcCwGMsAAAAALc8yXn0sAByijpJrIr5ShgP23zs'),
+    provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
     isTokenAutoRefreshEnabled: true
   });
 }
@@ -95,7 +96,12 @@ const cleanObject = (obj: any): any => {
 export const onAuthStateChanged = (_: any, callback: (user: any) => void) => fbOnAuthStateChanged(auth, callback);
 export const signInWithEmailAndPassword = async (_: any, email: string, pass: string) => fbSignIn(auth, email, pass);
 export const createUserWithEmailAndPassword = async (_: any, email: string, pass: string) => fbCreateUser(auth, email, pass);
-export const signInWithGoogle = async () => signInWithPopup(auth, new GoogleAuthProvider());
+
+export const signInWithGoogle = async () => {
+  const provider = new GoogleAuthProvider();
+  return signInWithPopup(auth, provider);
+};
+
 export const signOutSteward = () => fbSignOut(auth);
 export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
@@ -116,16 +122,6 @@ export const refreshAuthUser = async () => {
   return null;
 };
 
-export const transmitRecoveryCode = async (email: string) => {
-  console.log(`Transmitting recovery code to ${email}`);
-  return true;
-};
-
-export const verifyRecoveryShard = async (email: string, code: string) => {
-  console.log(`Verifying shard ${code} for ${email}`);
-  return code.length === 6;
-};
-
 // --- PHONE AUTH ---
 export const setupRecaptcha = (containerId: string) => {
   if ((window as any).recaptchaVerifier) {
@@ -138,9 +134,6 @@ export const setupRecaptcha = (containerId: string) => {
     'size': 'invisible',
     'callback': () => {
       // reCAPTCHA solved
-    },
-    'expired-callback': () => {
-      // Response expired. Ask user to solve reCAPTCHA again.
     }
   });
   return (window as any).recaptchaVerifier;
@@ -164,13 +157,6 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): P
   if (signalData.priority === 'critical' || signalData.priority === 'high') {
     layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
     layers.push({ channel: 'EMAIL', status: 'SENT', timestamp });
-  } else if (signalData.type !== 'network') {
-    layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
-  }
-
-  let iconName = 'MessageSquare';
-  if (typeof signalData.actionIcon === 'string') {
-    iconName = signalData.actionIcon;
   }
 
   const rawSignal: any = {
@@ -184,8 +170,8 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): P
     priority: signalData.priority || 'low',
     dispatchLayers: layers,
     stewardId: userId,
-    actionIcon: iconName,
-    aiRemark: signalData.aiRemark || "Analyzing signal impact on node m-constant...",
+    actionIcon: signalData.actionIcon || 'MessageSquare',
+    aiRemark: signalData.aiRemark || "Analyzing signal impact...",
     meta: signalData.meta || {},
     actionLabel: signalData.actionLabel || ''
   };
@@ -213,7 +199,6 @@ export const updateSignalReadStatus = async (id: string, read: boolean) => {
     await updateDoc(doc(db, "signals", id), { read });
     return true;
   } catch (e) {
-    console.error("Failed to update signal read status", e);
     return false;
   }
 };
@@ -228,7 +213,6 @@ export const markAllSignalsAsReadInDb = async (signalIds: string[]) => {
     await batch.commit();
     return true;
   } catch (e) {
-    console.error("Failed to mark all signals as read", e);
     return false;
   }
 };

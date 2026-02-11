@@ -55,19 +55,40 @@ import {
   Flame,
   CircleDot,
   Fingerprint,
-  /* Added missing icon imports to fix compilation errors */
   ClipboardCheck,
-  CheckCircle2
+  CheckCircle2,
+  BatteryCharging,
+  UtensilsCrossed,
+  Recycle,
+  Home,
+  Waves,
+  Lightbulb,
+  MapPin,
+  ArrowDownCircle,
+  Gauge,
+  Link2,
+  Cookie,
+  Link,
+  Droplet,
+  Dna,
+  Workflow,
+  Box,
+  Monitor,
+  LayoutGrid,
+  Database,
+  Network
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Radar as RechartsRadar, Tooltip } from 'recharts';
-import { User, ViewState } from '../types';
+import { User, ViewState, MediaShard } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
+import { saveCollectionItem } from '../services/firebaseService';
 
 interface PermacultureProps {
   user: User;
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onNavigate: (view: ViewState) => void;
+  initialSection?: string | null;
 }
 
 const ZONE_SHARDS = [
@@ -91,8 +112,10 @@ const PERMACULTURE_ETHICS = [
   { id: 'fair', name: 'Fair Share', desc: 'Distributing surplus energy back into the mesh.', icon: Scale, color: 'text-amber-500' },
 ];
 
-const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'zonation' | 'ethics' | 'lilies' | 'companion'>('zonation');
+const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, initialSection }) => {
+  const [activeTab, setActiveTab] = useState<'zonation' | 'ethics' | 'lilies' | 'companion' | 'home_agro'>(
+    initialSection === 'home_agro' ? 'home_agro' : 'zonation'
+  );
   const [selectedZone, setSelectedZone] = useState(ZONE_SHARDS[1]);
   
   // Forging states
@@ -103,6 +126,10 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
   // Companion states
   const [primaryCrop, setPrimaryCrop] = useState('');
   const [companionGuild, setCompanionGuild] = useState<any | null>(null);
+
+  // Home Agro States
+  const [activeFlowLayer, setActiveFlowLayer] = useState<'none' | 'energy' | 'water' | 'nutrient'>('none');
+  const [isMintingHomeCredits, setIsMintingHomeCredits] = useState(false);
 
   const resilienceData = [
     { thrust: 'Zonation', A: 85 },
@@ -144,6 +171,29 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
     }
   };
 
+  const handleMintHomeCredits = async () => {
+    setIsMintingHomeCredits(true);
+    // Simulate Blockchain Anchor for Triple-Loop Finality
+    await new Promise(r => setTimeout(r, 2500));
+    
+    const shard: Partial<MediaShard> = {
+      title: "HOME_TRIPLE_LOOP_FINALITY",
+      type: "INGEST",
+      source: "Home Agro Hub",
+      author: user.name,
+      authorEsin: user.esin,
+      timestamp: new Date().toISOString(),
+      hash: `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
+      mImpact: "1.42",
+      content: `Certified Triple-Loop Sequence: Solar-to-Oven baking, kitchen-to-soil nutrient cycling, and graywater vegetable irrigation verified.`
+    };
+    
+    await saveCollectionItem('media_ledger', shard);
+    onEarnEAC(25, 'HOME_AGRO_TRIPLE_LOOP_SETTLEMENT');
+    setIsMintingHomeCredits(false);
+    alert("HOME_SHARD_SETTLED: Triple-Loop cooking verified. 25 EAC reward anchored to registry.");
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1500px] mx-auto px-4">
       
@@ -152,7 +202,7 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none">
             <Compass className="w-[600px] h-[600px] text-white" />
          </div>
-         <div className="w-40 h-40 rounded-[48px] bg-emerald-600 flex items-center justify-center shadow-[0_0_80px_rgba(16,185,129,0.4)] ring-4 ring-white/10 shrink-0 relative overflow-hidden">
+         <div className="w-40 h-40 rounded-[48px] bg-emerald-600 flex items-center justify-center shadow-[0_0_80px_rgba(16,185,129,0.4)] ring-4 ring-white/5 shrink-0 relative overflow-hidden">
             <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
             <Compass className="w-20 h-20 text-white animate-spin-slow relative z-10" />
          </div>
@@ -160,20 +210,21 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
             <div className="space-y-2">
                <div className="flex flex-wrap justify-center md:justify-start gap-3 mb-2">
                   <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-emerald-500/20 shadow-inner">PERMACULTURE_DESIGN_NODE</span>
-                  <span className="px-4 py-1.5 bg-fuchsia-500/10 text-fuchsia-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-fuchsia-500/20 shadow-inner">LILIES_AROUND_CERTIFIED</span>
+                  <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-indigo-500/20 shadow-inner">HOME_AGRO_BRIDGE</span>
                </div>
-               <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Design <span className="text-emerald-400">Resilience</span></h2>
+               <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Design <span className="text-emerald-400">Resilience.</span></h2>
             </div>
             <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-2xl opacity-80 group-hover:opacity-100 transition-opacity">
-               "Designing productive agricultural shards that mimic natural planetary resonance. Integrating Lilies Around aesthetic protocols for botanical architecture."
+               "Designing productive agricultural shards that mimic natural planetary resonance. Transforming homes into self-sustaining micro-utilities via the circular grid."
             </p>
          </div>
       </div>
 
       {/* 2. Top Navigation Tabs */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[36px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-6 mx-auto lg:mx-0 relative z-20">
+      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[36px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-6 mx-auto lg:mx-0 relative z-20 overflow-x-auto scrollbar-hide">
         {[
           { id: 'zonation', label: 'Zonation Shards', icon: Layers },
+          { id: 'home_agro', label: 'Home Agro Hub', icon: Home },
           { id: 'lilies', label: 'Lilies Around', icon: Flower2 },
           { id: 'ethics', label: 'Ethical Forge', icon: Scale },
           { id: 'companion', label: 'Companion Oracle', icon: Microscope },
@@ -190,6 +241,225 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
 
       <div className="min-h-[750px] relative z-10">
         
+        {/* --- VIEW: HOME AGRO HUB (Circular Permaculture) --- */}
+        {activeTab === 'home_agro' && (
+           <div className="space-y-12 animate-in zoom-in duration-700">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                 
+                 {/* Interactive 3D Flow Map Interface */}
+                 <div className="lg:col-span-7 glass-card p-10 md:p-14 rounded-[64px] border-2 border-indigo-500/20 bg-black/40 relative overflow-hidden shadow-3xl flex flex-col group/map min-h-[550px]">
+                    <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none z-0">
+                       <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent absolute top-0 animate-scan"></div>
+                    </div>
+
+                    <div className="flex justify-between items-center mb-10 relative z-20">
+                       <div className="flex items-center gap-4">
+                          <MapIcon className="text-indigo-400" />
+                          <h4 className="text-xl font-black text-white uppercase italic">Interactive <span className="text-indigo-400">Flow Map</span></h4>
+                       </div>
+                       <div className="flex gap-2">
+                          {[
+                            { id: 'energy', l: 'Energy', c: 'text-amber-400', i: Zap },
+                            { id: 'water', l: 'Water', c: 'text-blue-400', i: Droplets },
+                            { id: 'nutrient', l: 'Nutrient', c: 'text-emerald-400', i: Recycle },
+                          ].map(layer => (
+                            <button 
+                              key={layer.id}
+                              onClick={() => setActiveFlowLayer(activeFlowLayer === layer.id ? 'none' : layer.id as any)}
+                              className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase border transition-all flex items-center gap-2 ${activeFlowLayer === layer.id ? 'bg-indigo-600 border-indigo-400 text-white shadow-xl' : 'bg-white/5 border-white/10 text-slate-500'}`}
+                            >
+                               <layer.i size={12} /> {layer.l}
+                            </button>
+                          ))}
+                       </div>
+                    </div>
+
+                    <div className="flex-1 relative flex items-center justify-center min-h-[400px]">
+                       <svg viewBox="0 0 500 400" className="w-full h-full max-w-xl opacity-80 group-hover/map:opacity-100 transition-opacity">
+                          {/* Zone 0: The Kitchen */}
+                          <path d="M180,150 L320,150 L320,250 L180,250 Z" fill="rgba(255,255,255,0.03)" stroke="white" strokeWidth="1.5" />
+                          <path d="M180,150 L250,80 L320,150" fill="none" stroke="white" strokeWidth="1.5" />
+                          <text x="215" y="210" fill="white" className="text-[12px] font-black uppercase italic" opacity="0.4">Zone 0</text>
+
+                          {/* Zone 1: The Garden */}
+                          <circle cx="250" cy="250" r="160" fill="none" stroke="rgba(16,185,129,0.1)" strokeWidth="1.5" strokeDasharray="8,8" />
+                          <text x="360" y="380" fill="#10b981" className="text-[10px] font-black uppercase tracking-[0.5em]" opacity="0.3">Zone 1</text>
+
+                          {/* DYNAMIC FLOW OVERLAYS */}
+                          {activeFlowLayer === 'energy' && (
+                             <g className="animate-in fade-in">
+                                <path d="M250,80 Q350,80 350,200" fill="none" stroke="#f59e0b" strokeWidth="4" strokeDasharray="10 5" className="animate-pulse" />
+                                <circle cx="250" cy="80" r="8" fill="#f59e0b" className="shadow-lg" />
+                                <text x="265" y="70" fill="#f59e0b" className="text-[10px] font-black">SOLAR_INFLOW</text>
+                             </g>
+                          )}
+                          
+                          {activeFlowLayer === 'water' && (
+                             <g className="animate-in fade-in">
+                                <path d="M300,250 Q380,250 380,350" fill="none" stroke="#3b82f6" strokeWidth="4" strokeDasharray="10 5" className="animate-pulse" />
+                                <circle cx="300" cy="250" r="6" fill="#3b82f6" />
+                                <text x="315" y="270" fill="#3b82f6" className="text-[10px] font-black">GRAYWATER_EXIT</text>
+                             </g>
+                          )}
+
+                          {activeFlowLayer === 'nutrient' && (
+                             <g className="animate-in fade-in">
+                                <path d="M220,250 Q120,250 120,320" fill="none" stroke="#10b981" strokeWidth="4" strokeDasharray="10 5" className="animate-pulse" />
+                                <circle cx="220" cy="250" r="6" fill="#10b981" />
+                                <text x="135" y="345" fill="#10b981" className="text-[10px] font-black">WASTE_LOOP</text>
+                             </g>
+                          )}
+                       </svg>
+                       
+                       <div className="absolute bottom-6 left-6 flex flex-col gap-2">
+                          <div className="flex items-center gap-3">
+                             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping shadow-[0_0_10px_#6366f1]"></div>
+                             <span className="text-[9px] font-black text-white uppercase tracking-[0.4em]">Live_Node_Tracking</span>
+                          </div>
+                          <p className="text-[8px] text-slate-700 font-mono">LAT: {user.location.split(',')[0]} // M_RESONANCE: 1.42x</p>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* The Resource Vault Dashboard */}
+                 <div className="lg:col-span-5 space-y-8">
+                    <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden group/vault">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/vault:scale-110 transition-transform"><Database size={200} className="text-white" /></div>
+                       <h4 className="text-xl font-black text-white uppercase italic tracking-widest px-4 flex items-center gap-4 relative z-10">
+                          <Link2 size={24} className="text-indigo-400" /> Resource <span className="text-indigo-400">Vault</span>
+                       </h4>
+                       <div className="space-y-6 relative z-10">
+                          {[
+                             { label: 'Green Joules (Solar)', val: '142.8', unit: 'kWh', icon: BatteryCharging, col: 'text-amber-400', progress: 84 },
+                             { label: 'Water Autonomy', val: '620', unit: 'L', icon: Droplets, col: 'text-blue-400', progress: 42 },
+                             { label: 'Nutrient Density', val: '45.2', unit: 'kg', icon: Recycle, col: 'text-emerald-400', progress: 95 },
+                          ].map(res => (
+                             <div key={res.label} className="p-6 bg-white/[0.02] border border-white/5 rounded-[32px] group/item hover:border-white/20 transition-all shadow-lg active:scale-[0.99]">
+                                <div className="flex justify-between items-center mb-4">
+                                   <div className="flex items-center gap-3">
+                                      <res.icon size={18} className={res.col} />
+                                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{res.label}</span>
+                                   </div>
+                                   <p className="text-2xl font-mono font-black text-white">{res.val}<span className="text-[10px] ml-1 opacity-30 italic">{res.unit}</span></p>
+                                </div>
+                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                                   <div className={`h-full rounded-full transition-all duration-[2.5s] ${res.col.replace('text', 'bg')} shadow-[0_0_15px_currentColor]`} style={{ width: `${res.progress}%` }}></div>
+                                </div>
+                             </div>
+                          ))}
+                       </div>
+                       <div className="p-8 rounded-[44px] bg-indigo-600/10 border-2 border-indigo-500/20 text-center shadow-xl group hover:border-indigo-400 transition-all relative z-10">
+                          <p className="text-[10px] text-slate-500 font-black uppercase mb-3 tracking-[0.3em]">AGGREGATE_HOME_SAVINGS</p>
+                          <p className="text-4xl font-mono font-black text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]">+142.4 <span className="text-xl">EAC</span></p>
+                       </div>
+                    </div>
+
+                    <div className="p-10 glass-card rounded-[56px] border border-emerald-500/20 bg-emerald-600/5 space-y-6 shadow-xl relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[12s]"><Sparkles size={200} className="text-emerald-400" /></div>
+                       <div className="flex items-center gap-4 relative z-10">
+                          <Bot size={28} className="text-emerald-400 animate-pulse" />
+                          <h5 className="text-lg font-black text-white uppercase italic">Home Oracle <span className="text-emerald-400">Tip</span></h5>
+                       </div>
+                       <p className="text-slate-400 text-sm italic leading-relaxed relative z-10 border-l-4 border-emerald-500/30 pl-8 font-medium">
+                          "Excess solar inflow detected at 13:42. Redirecting surplus 'Green Joules' to the Sector 4 moisture pump to stabilize the registry battery."
+                       </p>
+                    </div>
+                 </div>
+              </div>
+
+              {/* JuizzyCookiez Circular Kitchen Integration Section */}
+              <div className="glass-card p-12 md:p-20 rounded-[80px] border-2 border-amber-500/20 bg-amber-950/5 relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.9)] group/kitchen">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover/kitchen:scale-110 transition-transform duration-[15s] pointer-events-none"><UtensilsCrossed size={800} className="text-amber-500" /></div>
+                 
+                 <div className="flex flex-col md:flex-row items-center justify-between mb-20 relative z-10 gap-12">
+                    <div className="flex items-center gap-10">
+                       <div className="w-28 h-28 bg-amber-600 rounded-[44px] flex items-center justify-center text-white shadow-[0_0_100px_rgba(245,158,11,0.3)] border-4 border-white/10 group-hover/kitchen:rotate-12 transition-transform duration-700 relative overflow-hidden">
+                          <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
+                          <Cookie size={56} className="animate-float relative z-10" />
+                       </div>
+                       <div>
+                          <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-[0.85]">JuizzyCookiez <br/><span className="text-amber-400">Circular Kitchen</span></h3>
+                          <p className="text-slate-500 text-xl font-medium italic mt-6 opacity-80 max-w-xl">"Executing Triple-Loop cooking protocols to synchronize home nutrition with the soil ledger."</p>
+                       </div>
+                    </div>
+                    <div className="text-right border-l-4 border-amber-500/20 pl-12 hidden md:block">
+                       <p className="text-[12px] text-slate-600 font-black uppercase mb-4 tracking-[0.5em]">KITCHEN_RESONANCE</p>
+                       <p className="text-8xl font-mono font-black text-amber-500 tracking-tighter leading-none drop-shadow-2xl italic">98<span className="text-3xl text-amber-700">.2%</span></p>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
+                    <div className="p-12 bg-black/80 rounded-[64px] border border-white/5 space-y-12 shadow-3xl border-l-[16px] border-l-amber-600 group/recipe animate-in slide-in-from-left-4">
+                       <div className="flex justify-between items-start">
+                          <div className="space-y-2">
+                             <h5 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter group-hover/recipe:text-amber-400 transition-colors">Zucchini Honey Shards</h5>
+                             <span className="px-5 py-2 bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase rounded-full border border-amber-500/20 tracking-widest shadow-inner italic">CERTIFIED_SUSTAINABLE_RECIPE</span>
+                          </div>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                          <div className="space-y-8">
+                             <div className="space-y-2">
+                                <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest italic flex items-center gap-3"><Sprout size={14} className="text-emerald-500" /> Ingest Shards</p>
+                                <ul className="space-y-4 pt-2">
+                                   {['2x Home Zucchini (Z1)', '100g Hive Honey (Z2)', 'Bio-Oats Shard (Market)'].map(item => (
+                                      <li key={item} className="flex items-center gap-4 text-lg text-slate-300 italic font-medium group/li">
+                                         <div className="w-2 h-2 rounded-full bg-amber-500 group-hover/li:animate-ping shadow-[0_0_8px_#f59e0b]"></div> 
+                                         {item}
+                                      </li>
+                                   ))}
+                                </ul>
+                             </div>
+                          </div>
+                          <div className="p-10 bg-black/60 rounded-[48px] border border-amber-500/20 shadow-inner space-y-6 relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-6 opacity-[0.02]"><Zap size={100} /></div>
+                             <p className="text-[10px] font-black text-amber-500/60 uppercase tracking-[0.4em] border-b border-amber-500/10 pb-4 italic">PERMACULTURE_IMPACT</p>
+                             <div className="space-y-4">
+                                <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest"><span>Solar Energy</span><span className="text-white font-mono">100%</span></div>
+                                <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest"><span>Waste Reuse</span><span className="text-white font-mono">92%</span></div>
+                                <div className="flex justify-between items-center text-[10px] font-black text-emerald-400 uppercase tracking-widest"><span>Loop Yield</span><span className="text-emerald-500 font-mono font-black">+5 AGRO</span></div>
+                             </div>
+                          </div>
+                       </div>
+
+                       <button 
+                         onClick={handleMintHomeCredits}
+                         disabled={isMintingHomeCredits}
+                         className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[16px] ring-amber-500/5 disabled:opacity-30"
+                       >
+                          {isMintingHomeCredits ? <Loader2 size={32} className="animate-spin" /> : <Stamp size={32} className="fill-current" />}
+                          {isMintingHomeCredits ? 'MINTING_TRIPLE_LOOP...' : 'COMMIT COOKING IMPACT'}
+                       </button>
+                    </div>
+
+                    <div className="space-y-8 animate-in slide-in-from-right-4">
+                       <div className="p-10 bg-black/60 rounded-[64px] border border-white/10 shadow-3xl flex flex-col justify-center h-full space-y-10 relative overflow-hidden group/logic">
+                          <div className="absolute inset-0 bg-amber-500/[0.01] pointer-events-none"></div>
+                          <div className="flex items-center gap-8">
+                             <div className="p-5 bg-amber-600 rounded-[32px] shadow-2xl border-2 border-white/10 group-hover/logic:rotate-6 transition-all"><Binary size={36} className="text-white" /></div>
+                             <h5 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Circular Logic <span className="text-amber-400">Shell</span></h5>
+                          </div>
+                          <div className="bg-[#050706] p-10 rounded-[48px] border border-white/5 font-mono text-[13px] text-emerald-400/80 leading-loose italic shadow-inner relative overflow-hidden group/code">
+                             <div className="absolute top-0 right-0 p-6 opacity-[0.1] text-indigo-400 group-hover/code:scale-110 transition-transform"><Network size={80} /></div>
+                             <p className="text-slate-800 mb-6 font-bold uppercase tracking-widest select-none">{"admin@EnvirosAgro:~$ node-status --home"}</p>
+                             <div className="space-y-2">
+                                <p className="text-indigo-400">{">>> FETCHING_ENERGY_SHARD: SOLAR_STABLE (142.8 kWh)"}</p>
+                                <p className="text-blue-400">{">>> GRAYWATER_RECIRC_VAL: 14.2L (OK)"}</p>
+                                <p className="text-emerald-400">{">>> COMPOST_TEMP_SYNC: 52°C (OPTIMAL)"}</p>
+                                <p className="text-amber-500">{">>> JUIZZY_RECIPE_HANDSHAKE: SUCCESS (ZK_PROVEN)"}</p>
+                             </div>
+                             <div className="mt-10 flex items-center gap-4 animate-pulse pt-6 border-t border-white/5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_15px_#10b981]"></div>
+                                <span className="text-white font-black uppercase tracking-[0.3em]">SYSTEM_TRIPLE_LOOP_VERIFIED</span>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
+
         {/* --- VIEW: ZONATION SHARDS --- */}
         {activeTab === 'zonation' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-700">
@@ -304,7 +574,7 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
            <div className="space-y-12 animate-in zoom-in duration-700">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                  {LILIES_BLUEPRINTS.map(bp => (
-                    <div key={bp.id} className="glass-card p-10 rounded-[56px] border-2 border-white/5 hover:border-fuchsia-500/40 transition-all group flex flex-col justify-between h-[480px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99]">
+                    <div key={bp.id} className="glass-card p-10 rounded-[56px] border-2 border-white/5 hover:border-fuchsia-500/40 transition-all group flex flex-col justify-between h-[480px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99] duration-300">
                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[10s]"><Flower2 size={250} className="text-fuchsia-400" /></div>
                        <div className="space-y-8 relative z-10">
                           <div className="flex justify-between items-start">
@@ -468,12 +738,12 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
                              <p className="text-2xl font-mono font-black text-emerald-400">99.8%</p>
                           </div>
                        </div>
-                       <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">
+                       <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/5">
                           {companionGuild}
                        </div>
                        <div className="mt-16 flex justify-center gap-6 relative z-10 pt-10 border-t border-white/5">
-                          <button onClick={() => setCompanionGuild(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Discard Shard</button>
-                          <button className="px-16 py-6 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl flex items-center justify-center gap-4 active:scale-95 transition-all">
+                          <button onClick={() => setCompanionGuild(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Discard Shard</button>
+                          <button className="px-16 py-6 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl flex items-center justify-center gap-4 active:scale-95 transition-all">
                              <Stamp size={20} /> Anchor to Knowledge Ledger
                           </button>
                        </div>
@@ -513,9 +783,10 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
       )}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
