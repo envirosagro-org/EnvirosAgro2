@@ -8,21 +8,17 @@ service cloud.firestore {
       return request.auth != null; 
     }
     
-    function isOwner(esin) { 
-      // Mapping Firebase UID to the ESIN signature in the document data
+    function isOwner() { 
       return isSignedIn() && (
         resource == null || 
-        resource.data.stewardEsin == esin || 
-        resource.data.authorEsin == esin || 
-        resource.data.supplierEsin == esin ||
-        resource.data.farmerEsin == esin ||
         resource.data.stewardId == request.auth.uid
       ); 
     }
 
     function isAuditor() { 
-      // Verify if email is present in the authorized auditor node shard
-      return exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)); 
+      // Allows checking if the user's UID or Email is registered as an auditor
+      return exists(/databases/$(database)/documents/auditors/$(request.auth.uid)) ||
+             (request.auth.token.email != null && exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)));
     }
 
     // --- COLLECTION PROTOCOLS ---
@@ -38,30 +34,37 @@ service cloud.firestore {
       allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow create: if isSignedIn();
       allow update: if isSignedIn() && resource.data.stewardId == request.auth.uid;
-      allow delete: if false; // Immutable audit trail
+      allow delete: if false; 
     }
 
-    // 3. Products & Industrial Assets (Market Cloud)
+    // 3. Products & Industrial Assets
     match /products/{productId} {
-      allow read: if true; // Public discovery feed
+      allow read: if true; 
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner(resource.data.supplierEsin) || isAuditor());
-      allow delete: if false; // Prevention of resource voiding
+      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow delete: if false;
     }
 
     // 4. Live Inflow (Industrial Shards in processing)
     match /live_products/{id} {
-      allow read: if true; // Public ledger monitoring
+      allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner(resource.data.stewardEsin) || isAuditor());
+      allow update: if isSignedIn() && (isOwner() || isAuditor());
       allow delete: if false;
     }
 
-    // 5. Media Ledger: Knowledge shards and AgroInPDF
+    // 5. Media Ledger & Knowledge Shards (AgroInPDF)
     match /media_ledger/{shardId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner(resource.data.authorEsin) || isAuditor());
+      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow delete: if false;
+    }
+    
+    match /books/{bookId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner() || isAuditor());
       allow delete: if false;
     }
 
@@ -69,35 +72,84 @@ service cloud.firestore {
     match /transactions/{txId} {
       allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow create: if isSignedIn();
-      allow update, delete: if false; // Ledger entries cannot be modified or purged
+      allow update, delete: if false; 
     }
 
-    // 7. Missions & Contracts (Contract Farming)
+    // 7. Missions & Contracts
     match /contracts/{contractId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn(); // Applications added by farmers, status by investors/auditors
+      allow update: if isSignedIn(); 
+      allow delete: if false;
+    }
+    
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner() || isAuditor());
       allow delete: if false;
     }
 
-    // 8. Collectives: Steward Guilds
+    // 8. Orders: Procurement Shards
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow delete: if false;
+    }
+
+    // 9. Collectives: Steward Guilds
     match /collectives/{id} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn(); // Membership sharding
+      allow update: if isSignedIn(); 
       allow delete: if false;
     }
 
-    // 9. Telemetry: Biometric node backups
-    match /telemetry/{esin} {
-      allow read: if isSignedIn() && (isOwner(esin) || isAuditor());
-      allow write: if isSignedIn() && (isOwner(esin) || isAuditor());
+    // 10. Social Hub: Posts & Connections
+    match /social_posts/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && isOwner();
+      allow delete: if isSignedIn() && isOwner();
     }
 
-    // 10. Auditors: Internal HQ Authority
-    match /auditors/{email} {
+    match /connections/{connectionId} {
+      allow read: if isSignedIn() && (
+        resource.data.stewardId == request.auth.uid || 
+        resource.data.fromEsin == request.auth.token.email || 
+        resource.data.toEsin == request.auth.token.email
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    // 11. Telemetry & Industrial Units
+    match /telemetry/{esin} {
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+    }
+    
+    match /industrial_units/{unitId} {
       allow read: if isSignedIn();
-      allow write: if false; // Immutable via client-side, managed by root nodes only
+      allow write: if isSignedIn() && (isOwner() || isAuditor());
+    }
+    
+    match /tasks/{taskId} {
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow write: if isSignedIn() && (isOwner() || isAuditor());
+    }
+    
+    match /patents/{patentId} {
+      allow read: if true;
+      allow write: if isSignedIn() && (isOwner() || isAuditor());
+    }
+
+    // 12. Auditors: Internal HQ Authority
+    match /auditors/{emailOrUid} {
+      allow read: if isSignedIn();
+      allow write: if false; 
     }
   }
 }
