@@ -3,5 +3,5 @@ pages_build_output_dir = "dist"
 compatibility_date = "2024-11-01"
 
 [vars]
-# Ensure API_KEY is set in the Cloudflare Pages Dashboard under 
-# Settings > Environment variables for production use.
+# API_KEY is managed via the Cloudflare Dashboard under 
+# Settings > Environment variables.
