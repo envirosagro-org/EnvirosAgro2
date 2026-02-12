@@ -1,0 +1,6 @@
+name = "envirosagro-blockchain"
+pages_build_output_dir = "dist"
+
+[vars]
+# Note: Ensure API_KEY is set in the Cloudflare Pages Dashboard
+# under Settings > Environment variables for production use.
