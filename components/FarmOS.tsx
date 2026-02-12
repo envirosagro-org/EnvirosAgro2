@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Binary, Cpu, Zap, Activity, Bot, Database, Terminal, 
@@ -17,7 +16,11 @@ import {
   Globe, Coins, Cookie, Users, Leaf, HeartPulse, ArrowRight,
   Code2, Link2, Share2, Gem, Landmark, ShieldX, ScanLine,
   MapPin, Dna,
-  Fan
+  Fan,
+  Cloud,
+  Globe2,
+  Link,
+  Factory
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { User, SignalShard } from '../types';
@@ -30,6 +33,7 @@ interface FarmOSProps {
   onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
   initialCode?: string | null;
   clearInitialCode?: () => void;
+  initialSection?: string | null;
 }
 
 const KERNEL_LAYERS = [
@@ -40,7 +44,7 @@ const KERNEL_LAYERS = [
   { level: 'HARDWARE', agro: 'Physical Assets', status: 'READY', desc: 'Soil, Water, Bots, Life', col: 'text-rose-400' },
 ];
 
-const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialCode, clearInitialCode }) => {
+const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialCode, clearInitialCode, initialSection }) => {
   const [activeTab, setActiveTab] = useState<'kernel' | 'hardware' | 'scheduler' | 'shell'>('kernel');
   const [bootStatus, setBootStatus] = useState<'OFF' | 'POST' | 'ON'>('ON');
   const [bootProgress, setBootProgress] = useState(100);
@@ -63,11 +67,10 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
   const [isExecutingLogic, setIsExecutingLogic] = useState(false);
 
   useEffect(() => {
-    if (initialCode) {
+    if (initialSection === 'shell' || initialCode) {
       setActiveTab('shell');
-      addLog("External Shard detected. Kernel handshake initialized.", 'info');
     }
-  }, [initialCode]);
+  }, [initialSection, initialCode]);
 
   useEffect(() => {
     if (bootStatus === 'ON') {
@@ -178,6 +181,32 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     
     if (cmd === 'agro-apply-logic' && initialCode) {
       executeOptimization(initialCode);
+    } else if (cmd === 'npx wrangler deploy' || cmd === 'npx wrangler pages deploy dist') {
+      setIsExecutingLogic(true);
+      addLog("Initializing Project Deployment Shard...", 'info');
+      await new Promise(r => setTimeout(r, 1200));
+      addLog("Building Optimized Industrial Bundle...", 'info');
+      await new Promise(r => setTimeout(r, 2000));
+      addLog("Build Success: 14.2MB compiled into 428 shards.", 'success');
+      addLog("Establishing Secure Tunnel to Cloudflare Edge...", 'info');
+      await new Promise(r => setTimeout(r, 1500));
+      addLog("Uploading Shards to Registry Quorum...", 'info');
+      await new Promise(r => setTimeout(r, 1800));
+      addLog("Validating ZK-Signatures for Global Distribution...", 'info');
+      await new Promise(r => setTimeout(r, 1000));
+      addLog("Deployment Finalized. Shard Anchored at 0x882A.", 'success');
+      addLog("Production URL: https://envirosagro.pages.dev", 'success');
+      
+      onEmitSignal({
+        type: 'network',
+        origin: 'ORACLE',
+        title: 'PROJECT_DEPLOYMENT_COMPLETE',
+        message: `App shard ${user.esin} successfully deployed to Cloudflare Global Mesh.`,
+        priority: 'high',
+        actionIcon: 'Cloud'
+      });
+      
+      setIsExecutingLogic(false);
     } else if (cmd.startsWith('npx ')) {
       const pkg = shellInput.substring(4);
       setIsExecutingLogic(true);
@@ -209,14 +238,14 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
       addLog("Executing global quorum check...", 'info');
       await new Promise(r => setTimeout(r, 1500));
       addLog("Finality reached at 0x882A. m-Constant updated.", 'success');
-    } else if (cmd.startsWith('ingest-status')) {
+    } else if (cmd === 'ingest-status') {
       addLog("Status of Pipeline L1: ACTIVE", 'info');
       addLog("Status of Relay L2: NOMINAL", 'info');
       addLog("Status of Consensus L3: 100%", 'success');
     } else if (cmd === 'clear') {
       setLogs([]);
     } else if (cmd === 'help') {
-      addLog("Syscalls: npx <shard>, net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
+      addLog("Syscalls: npx wrangler deploy, npx <shard>, net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
     } else {
       addLog(`Unknown syscall: ${cmd}`, 'error');
     }
@@ -389,9 +418,10 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                        </div>
                        <h5 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-xl">{m.name}</h5>
                        <div className="w-full space-y-6">
-                          <p className="text-7xl font-mono font-black text-white tracking-tighter italic">{m.val.toFixed(0)}%</p>
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Active load</p>
+                          <p className="text-5xl font-mono font-black text-white tracking-tighter">{m.val}%</p>
                           <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
-                             <div className={`h-full rounded-full transition-all duration-[3s]`} style={{ width: `${m.val}%`, backgroundColor: m.color, boxShadow: `0 0 25px ${m.color}` }}></div>
+                             <div className="h-full rounded-full transition-all duration-[2s]" style={{ width: `${m.val}%`, backgroundColor: m.color }}></div>
                           </div>
                        </div>
                     </div>
@@ -402,95 +432,54 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
 
         {/* VIEW: SYSTEM SHELL */}
         {activeTab === 'shell' && (
-           <div className="max-w-6xl mx-auto space-y-12 animate-in slide-in-from-bottom-6 duration-700">
-              <div className="glass-card rounded-[80px] border-2 border-white/10 bg-[#050706] flex flex-col h-[800px] relative overflow-hidden shadow-3xl group">
-                 <div className="absolute inset-0 bg-indigo-500/[0.02] pointer-events-none z-0">
-                    <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent absolute top-0 animate-scan opacity-20"></div>
-                 </div>
-
-                 <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20 px-14">
-                    <div className="flex items-center gap-10">
-                       <div className="w-20 h-20 bg-emerald-600 rounded-[32px] flex items-center justify-center text-white shadow-3xl border-4 border-white/10 relative overflow-hidden group/ico">
-                          <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-                          <Terminal size={44} className="relative z-10 group-hover/ico:scale-110 transition-transform" />
-                       </div>
-                       <div className="space-y-1">
-                          <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Kernel <span className="text-emerald-400">Shell</span></h3>
-                          <p className="text-emerald-400/60 font-mono text-[11px] uppercase tracking-[0.6em] mt-3 italic">SYSTEM_ADMIN_ACCESS_OK</p>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                       <div className="px-6 py-2 bg-emerald-600/10 border border-emerald-500/20 rounded-full text-emerald-400 font-mono text-[10px] font-black uppercase tracking-widest animate-pulse">
-                          TERMINAL_STABLE
-                       </div>
-                    </div>
-                 </div>
-
-                 <div className="flex-1 p-14 overflow-y-auto custom-scrollbar-terminal relative z-10 font-mono text-lg text-emerald-400/90 leading-loose bg-black/60 shadow-inner flex flex-col-reverse italic">
-                    <div className="space-y-4">
-                       {logs.map((log, i) => (
-                          <div key={i} className="flex gap-8 animate-in slide-in-from-left-2 duration-300 group/log">
-                             <span className="text-emerald-500/20 shrink-0 font-black tracking-tighter">{" >>>"}</span>
-                             <span className={`transition-all ${
-                                log.includes('success') ? 'text-blue-400 font-black' : 
-                                log.includes('error') ? 'text-rose-500 font-black' : 
-                                log.includes('INFO') ? 'text-indigo-400 font-bold' : ''
-                             }`}>{log}</span>
-                          </div>
-                       ))}
-                    </div>
-                 </div>
-
-                 <div className="p-12 border-t border-white/5 bg-black/95 relative z-20">
-                    {initialCode && !isExecutingLogic && (
-                       <div className="mb-10 p-10 bg-indigo-600/10 border-2 border-indigo-500/40 rounded-[56px] flex items-center justify-between shadow-3xl animate-in zoom-in">
-                          <div className="flex items-center gap-10">
-                             <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-2xl"><Code2 size={32} /></div>
-                             <div className="space-y-2">
-                                <p className="text-xl font-bold text-white uppercase italic">Logic Shard Buffered</p>
-                                <p className="text-slate-500 text-sm italic font-medium">"External optimization script detected. Ready for kernel ingest."</p>
-                             </div>
-                          </div>
-                          <div className="flex gap-6">
-                             <button onClick={clearInitialCode} className="p-5 text-slate-600 hover:text-rose-400 transition-colors bg-white/5 rounded-2xl border border-white/5 shadow-lg"><X size={24} /></button>
-                             <button 
-                               onClick={() => executeOptimization(initialCode)} 
-                               className="px-14 py-6 bg-indigo-600 text-white font-black rounded-[32px] text-[13px] uppercase tracking-[0.4em] shadow-[0_0_50px_#6366f166] hover:bg-indigo-500 transition-all active:scale-95 border-2 border-white/10 ring-8 ring-indigo-500/5"
-                             >
-                                RUN_OPTIMIZE
-                             </button>
-                          </div>
-                       </div>
-                    )}
-                    <form onSubmit={handleShellSubmit} className="max-w-6xl mx-auto relative group">
-                       <div className="absolute left-10 top-1/2 -translate-y-1/2 text-emerald-500/40 font-mono font-black text-xl">$</div>
-                       <input 
-                         type="text" 
-                         value={shellInput}
-                         onChange={e => setShellInput(e.target.value)}
-                         disabled={isExecutingLogic}
-                         placeholder="Enter syscall (e.g. 'npx <shard>', 'net-sync')..."
-                         className="w-full bg-black border-2 border-white/10 rounded-[48px] py-10 pl-16 pr-32 text-2xl text-white outline-none font-mono focus:ring-8 focus:ring-emerald-500/10 transition-all shadow-inner placeholder:text-emerald-950 italic" 
-                       />
-                       <button 
-                         type="submit" 
-                         className="absolute right-8 top-1/2 -translate-y-1/2 p-7 bg-emerald-600 rounded-[32px] text-white shadow-3xl active:scale-90 transition-all hover:bg-emerald-50 ring-4 ring-emerald-500/10 group-hover:scale-105"
-                       >
-                          <ArrowRight size={32} />
-                       </button>
-                    </form>
+           <div className="glass-card rounded-[64px] border-2 border-white/5 bg-[#050706] overflow-hidden shadow-3xl flex flex-col h-[700px] relative">
+              <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-4">
+                    <Terminal className="w-6 h-6 text-indigo-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Root Kernel Shell</span>
                  </div>
               </div>
+              <div className="flex-1 p-10 overflow-y-auto font-mono text-[14px] space-y-4 custom-scrollbar-terminal text-slate-400 italic bg-black/20">
+                 {logs.map((log, i) => (
+                    <div key={i} className="flex gap-6 animate-in slide-in-from-left-1">
+                       <span className="text-slate-800 shrink-0 select-none">{"$"}</span>
+                       <span className={log.includes('SUCCESS') ? 'text-emerald-400 font-bold' : log.includes('ERROR') ? 'text-rose-500 font-bold' : 'text-slate-500'}>{log}</span>
+                    </div>
+                 ))}
+                 {isExecutingLogic && (
+                    <div className="flex items-center gap-4 text-indigo-400 animate-pulse">
+                       <Loader2 className="w-4 h-4 animate-spin" />
+                       <span>KERNEL_EXECUTION_ACTIVE...</span>
+                    </div>
+                 )}
+              </div>
+              <form onSubmit={handleShellSubmit} className="p-8 border-t border-white/5 bg-black/90">
+                 <div className="flex items-center gap-6">
+                    <span className="text-indigo-500 font-mono font-bold select-none">admin@EnvirosAgro:~$</span>
+                    <input 
+                       type="text" 
+                       value={shellInput}
+                       onChange={e => setShellInput(e.target.value)}
+                       disabled={isExecutingLogic}
+                       placeholder="Enter syscall..."
+                       className="flex-1 bg-transparent border-none outline-none text-white font-mono placeholder:text-slate-800"
+                       autoFocus
+                    />
+                 </div>
+              </form>
            </div>
         )}
       </div>
 
       <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 10px; }
+        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 10px; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .shadow-3xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9); }
+        .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
