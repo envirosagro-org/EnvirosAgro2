@@ -1,7 +1,0 @@
-name = "envirosagro-blockchain"
-pages_build_output_dir = "dist"
-compatibility_date = "2024-11-01"
-
-[vars]
-# API_KEY is managed via the Cloudflare Dashboard under 
-# Settings > Environment variables.
