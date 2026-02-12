@@ -1,9 +1,5 @@
-#:schema node_modules/wrangler/config-schema.json
-name = "envirosagro-blockchain"
-compatibility_date = "2024-11-01"
-
-[assets]
-directory = "./dist"
-
-[vars]
-# Environment variables like API_KEY are typically managed in the Cloudflare Dashboard
+{
+	    "name": "envirosagro",
+	    "compatibility_date": "2026-02-12",
+	    "main": "src/index.ts"
+	  }
