@@ -178,6 +178,29 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     
     if (cmd === 'agro-apply-logic' && initialCode) {
       executeOptimization(initialCode);
+    } else if (cmd.startsWith('npx ')) {
+      const pkg = shellInput.substring(4);
+      setIsExecutingLogic(true);
+      addLog(`Need to install the following packages: ${pkg}`, 'info');
+      await new Promise(r => setTimeout(r, 1200));
+      addLog(`Resolving remote shard registry for ${pkg}...`, 'info');
+      await new Promise(r => setTimeout(r, 800));
+      addLog(`Downloading package: ${pkg}@latest...`, 'info');
+      await new Promise(r => setTimeout(r, 1500));
+      addLog(`Validating ZK-Signature for ${pkg}... [OK]`, 'success');
+      await new Promise(r => setTimeout(r, 600));
+      addLog(`Execution initialized for shard ${pkg}.`, 'success');
+      
+      onEmitSignal({
+        type: 'network',
+        origin: 'ORACLE',
+        title: 'REMOTE_SHARD_EXECUTION',
+        message: `Remote package '${pkg}' executed via NPX bridge on Cloudflare node.`,
+        priority: 'medium',
+        actionIcon: 'Cloud'
+      });
+      
+      setIsExecutingLogic(false);
     } else if (cmd === 'net-sync') {
       addLog("Probing all virtual ingest nodes...", 'info');
       await new Promise(r => setTimeout(r, 1000));
@@ -193,7 +216,7 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     } else if (cmd === 'clear') {
       setLogs([]);
     } else if (cmd === 'help') {
-      addLog("Syscalls: net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
+      addLog("Syscalls: npx <shard>, net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
     } else {
       addLog(`Unknown syscall: ${cmd}`, 'error');
     }
@@ -231,7 +254,7 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                  <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Enviros<span className="text-indigo-400">Agro OS</span></h2>
               </div>
               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-2xl opacity-80 group-hover:opacity-100 transition-opacity">
-                 "Orchestrating the quintuplicate SEHTI pillars. Lean integration of external networks via the Kernel Shell."
+                 "Orchestrating the quintuplicate SEHTI pillars. Lean integration of external networks via the Kernel Shell and NPX Shard Bridge."
               </p>
            </div>
         </div>
@@ -446,12 +469,12 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                          value={shellInput}
                          onChange={e => setShellInput(e.target.value)}
                          disabled={isExecutingLogic}
-                         placeholder="Enter syscall (e.g. 'net-sync', 'mesh-finality')..."
+                         placeholder="Enter syscall (e.g. 'npx <shard>', 'net-sync')..."
                          className="w-full bg-black border-2 border-white/10 rounded-[48px] py-10 pl-16 pr-32 text-2xl text-white outline-none font-mono focus:ring-8 focus:ring-emerald-500/10 transition-all shadow-inner placeholder:text-emerald-950 italic" 
                        />
                        <button 
                          type="submit" 
-                         className="absolute right-8 top-1/2 -translate-y-1/2 p-7 bg-emerald-600 rounded-[32px] text-white shadow-3xl active:scale-90 transition-all hover:bg-emerald-500 ring-4 ring-emerald-500/10 group-hover:scale-105"
+                         className="absolute right-8 top-1/2 -translate-y-1/2 p-7 bg-emerald-600 rounded-[32px] text-white shadow-3xl active:scale-90 transition-all hover:bg-emerald-50 ring-4 ring-emerald-500/10 group-hover:scale-105"
                        >
                           <ArrowRight size={32} />
                        </button>
