@@ -1,6 +1,6 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "envirosagro-blockchain"
-compatibility_date = "2024-11-01"
+name = "envirosagro"
+compatibility_date = "2026-02-12"
 pages_build_output_dir = "dist"
 
 [vars]
