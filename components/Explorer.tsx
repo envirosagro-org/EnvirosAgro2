@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, 
+  /* Added SearchCode to fix the "Cannot find name 'SearchCode'" error */
+  SearchCode,
   Hash, 
   Clock, 
   Shield, 
@@ -46,14 +48,14 @@ import {
   ArrowDownCircle,
   Link2,
   BoxSelect,
-  Monitor,
-  Workflow,
-  ChevronRight,
-  Bot,
+  Monitor, 
+  Workflow, 
+  ChevronRight, 
+  Bot, 
   Gavel
 } from 'lucide-react';
 import { AgroBlock, User, AgroTransaction } from '../types';
-import { settleRegistryBatch, AIResponse, auditMeshStability } from '../services/geminiService';
+import { settleRegistryBatch, AIResponse, auditMeshStability, probeValidatorNode } from '../services/geminiService';
 import { SycamoreLogo } from '../App';
 
 interface ExplorerProps {
@@ -65,10 +67,10 @@ interface ExplorerProps {
 }
 
 const VALIDATORS = [
-  { node: 'Environmental_Validator_04', reputation: 98.4, stake: '1.2M EAC', thrust: 'Technological', status: 'ACTIVE', resonance: 92 },
-  { node: 'Societal_Consensus_Node_82', reputation: 99.2, stake: '840K EAC', thrust: 'Societal', status: 'ACTIVE', resonance: 98 },
-  { node: 'Technological_Auth_Shard_12', reputation: 94.8, stake: '2.5M EAC', thrust: 'Environmental', status: 'ACTIVE', resonance: 88 },
-  { node: 'Industrial_Core_Finalizer', reputation: 99.9, stake: '4.8M EAC', thrust: 'Industry', status: 'SYNCING', resonance: 100 },
+  { node: 'Environmental_Validator_04', reputation: 98.4, stake: '1.2M EAC', thrust: 'Technological', status: 'ACTIVE', resonance: 92, esin: 'EA-VAL-04' },
+  { node: 'Societal_Consensus_Node_82', reputation: 99.2, stake: '840K EAC', thrust: 'Societal', status: 'ACTIVE', resonance: 98, esin: 'EA-VAL-82' },
+  { node: 'Technological_Auth_Shard_12', reputation: 94.8, stake: '2.5M EAC', thrust: 'Environmental', status: 'ACTIVE', resonance: 88, esin: 'EA-VAL-12' },
+  { node: 'Industrial_Core_Finalizer', reputation: 99.9, stake: '4.8M EAC', thrust: 'Industry', status: 'SYNCING', resonance: 100, esin: 'EA-VAL-HQ' },
 ];
 
 const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, globalEchoes = [], onPulse, user }) => {
@@ -83,6 +85,11 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
   const [pulseVerdict, setPulseVerdict] = useState<AIResponse | null>(null);
   
   const [hashRate, setHashRate] = useState(12.4);
+
+  // Probing States
+  const [probingNode, setProbingNode] = useState<string | null>(null);
+  const [isProbing, setIsProbing] = useState(false);
+  const [probeResult, setProbeResult] = useState<AIResponse | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -124,6 +131,20 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
     }
   };
 
+  const handleProbeNode = async (v: any) => {
+    setProbingNode(v.node);
+    setIsProbing(true);
+    setProbeResult(null);
+    try {
+      const res = await probeValidatorNode(v);
+      setProbeResult(res);
+    } catch (e) {
+      setProbeResult({ text: "Probe failed. Node encrypted." });
+    } finally {
+      setIsProbing(false);
+    }
+  };
+
   const filteredBlocks = blockchain.filter(b => 
     b.hash.toLowerCase().includes(searchTerm.toLowerCase()) || 
     b.validator.toLowerCase().includes(searchTerm.toLowerCase())
@@ -158,7 +179,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
             </div>
             <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none relative z-10">#{blockchain.length + 428812}</h4>
             <div className="flex items-center gap-3 text-[10px] font-black text-emerald-500/60 uppercase tracking-widest relative z-10">
-               <div className={`w-2.5 h-2.5 rounded-full ${isMining ? 'bg-amber-500 animate-ping shadow-[0_0_15px_#f59e0b]' : 'bg-emerald-500 animate-pulse shadow-[0_0_15px_#10b981]'}`}></div>
+               <div className={`w-2.5 h-2.5 rounded-full ${isMining ? 'bg-amber-500 animate-ping shadow-[0_0_15px_#f59e0b]' : 'bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]'}`}></div>
                {isMining ? 'FINALIZING_BLOCK...' : 'LIVE_SHARDING_OK'}
             </div>
          </div>
@@ -198,8 +219,8 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
         ].map(tab => (
           <button 
             key={tab.id} 
-            onClick={() => { setActiveTab(tab.id as any); setPulseVerdict(null); }}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            onClick={() => { setActiveTab(tab.id as any); setPulseVerdict(null); setProbeResult(null); setProbingNode(null); }}
+            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-5 h-5" /> {tab.label}
           </button>
@@ -210,7 +231,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
       <div className="min-h-[750px] px-4 md:px-0">
 
         {/* --- DYNAMIC PULSE ANALYSIS VIEW (INTEGRATED) --- */}
-        {pulseVerdict || isAnalyzingPulse ? (
+        {(pulseVerdict || isAnalyzingPulse) && (
            <div className="animate-in slide-in-from-bottom-10 duration-1000 max-w-5xl mx-auto space-y-12 mb-20">
               <div className="p-12 md:p-20 bg-black/90 rounded-[80px] border-2 border-amber-500/20 shadow-3xl border-l-[24px] border-l-amber-600 relative overflow-hidden group/pulse">
                  <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/pulse:scale-110 transition-transform duration-[15s]"><Sparkles size={800} className="text-amber-500" /></div>
@@ -222,7 +243,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                        <div>
                           <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Network Pulse Analysis</h4>
                           <p className="text-amber-400/60 text-[11px] font-black uppercase tracking-[0.5em] mt-3 italic">ORACLE_INTEGRITY_SHARD</p>
-                       </div>
+                    </div>
                     </div>
                     <button onClick={() => setPulseVerdict(null)} className="p-5 bg-white/5 border border-white/10 rounded-full text-slate-700 hover:text-white"><X size={28}/></button>
                  </div>
@@ -235,7 +256,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                              <TrendingUp size={48} className="text-amber-400 animate-pulse" />
                           </div>
                        </div>
-                       <p className="text-amber-500 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic">CRAWLING_LEDGER_CONSTANTS...</p>
+                       <p className="text-amber-500 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic m-0">CRAWLING_LEDGER_CONSTANTS...</p>
                     </div>
                  ) : (
                     <div className="space-y-12 relative z-10">
@@ -256,7 +277,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                  )}
               </div>
            </div>
-        ) : null}
+        )}
         
         {/* --- VIEW: INSTITUTIONAL FINALITY (SETTLEMENT) --- */}
         {activeTab === 'settlement' && !pulseVerdict && (
@@ -425,7 +446,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
               </div>
 
               <div className="glass-card rounded-[56px] overflow-hidden border border-white/5 bg-black/40 shadow-3xl">
-                 <div className="grid grid-cols-6 p-8 border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
+                 <div className="grid grid-cols-6 p-8 border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest italic px-10">
                     <span className="col-span-2">Tx Shard ID & Narrative</span>
                     <span>Action Type</span>
                     <span>Origin Node</span>
@@ -484,10 +505,10 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {VALIDATORS.map((v, i) => (
-                    <div key={i} className="glass-card p-8 rounded-[48px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between shadow-2xl relative overflow-hidden">
+                    <div key={i} className={`glass-card p-8 rounded-[48px] border-2 transition-all group flex flex-col justify-between shadow-2xl relative overflow-hidden cursor-pointer ${probingNode === v.node ? 'border-indigo-500 bg-indigo-900/10' : 'border-white/5 bg-black/40 hover:border-indigo-500/30'}`} onClick={() => handleProbeNode(v)}>
                       <div className="flex justify-between items-start mb-6">
                         <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 shadow-inner group-hover:rotate-6">
-                           <Monitor size={24} />
+                           {isProbing && probingNode === v.node ? <Loader2 className="animate-spin" /> : <Monitor size={24} />}
                         </div>
                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest ${v.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'}`}>{v.status}</span>
                       </div>
@@ -509,6 +530,34 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                   ))}
                 </div>
               </div>
+
+              {/* Node Probing Result Terminal */}
+              {probeResult && (
+                <div className="animate-in slide-in-from-bottom-10 duration-700 max-w-4xl mx-auto w-full">
+                  <div className="p-10 bg-black/80 rounded-[64px] border border-indigo-500/20 shadow-3xl border-l-[16px] border-l-indigo-600 relative overflow-hidden group/probe">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/probe:scale-110 transition-transform duration-[15s]"><Sparkles size={800} className="text-indigo-400" /></div>
+                    <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
+                       <div className="flex items-center gap-8">
+                          <div className="w-16 h-16 rounded-[24px] bg-indigo-600 flex items-center justify-center text-white shadow-3xl">
+                             <SearchCode className="w-8 h-8" />
+                          </div>
+                          <div>
+                             <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Node Diagnostic Shard</h4>
+                             <p className="text-indigo-400/60 text-[10px] font-black uppercase tracking-[0.5em] mt-3 italic">ORACLE_PROBE_v6.5 // {probingNode}</p>
+                          </div>
+                       </div>
+                       <button onClick={() => { setProbeResult(null); setProbingNode(null); }} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-700 hover:text-white"><X size={24}/></button>
+                    </div>
+                    <div className="text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">
+                       {probeResult.text}
+                    </div>
+                    <div className="mt-12 pt-8 border-t border-white/10 flex justify-between items-center relative z-10">
+                       <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Verification Node: Core_Oracle_v6</span>
+                       <button className="px-10 py-4 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5">Handshake Acknowledged</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
         )}
       </div>

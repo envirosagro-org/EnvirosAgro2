@@ -76,7 +76,6 @@ const handleAIError = (error: any): AIResponse => {
 /**
  * AI-powered Bid Analysis
  * Compares Investor Requirements against Farmer Ingested Assets.
- * Calculates Match Score and identifies resource gaps.
  */
 export const analyzeBidHandshake = async (investorReqs: string, farmerAssets: any[]): Promise<AIResponse> => {
   try {
@@ -400,9 +399,24 @@ export const auditMeshStability = async (topologyData: any): Promise<AIResponse>
       const ai = getAI();
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
-        contents: `Audit mesh stability.`,
+        contents: `Audit mesh stability: ${JSON.stringify(topologyData)}`,
       });
       return { text: response.text || "Stability verified." };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
+};
+
+export const probeValidatorNode = async (nodeData: any): Promise<AIResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const ai = getAI();
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-preview',
+        contents: `Perform high-fidelity probe on validator node: ${JSON.stringify(nodeData)}. Identify risks of SID contamination or m-constant drift.`,
+      });
+      return { text: response.text || "Probe successful." };
     });
   } catch (err) {
     return handleAIError(err);

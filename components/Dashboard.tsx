@@ -45,7 +45,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
            <div className="whitespace-nowrap animate-marquee text-[7px] text-emerald-400/80 font-mono font-black uppercase tracking-[0.3em]">
              {isMining ? 'NEURAL_FINALITY_SEQUENCE_ACTIVE • MINING_BLOCK_HASH_COMMIT • ' : ''}
              {blockchain.length > 0 ? `Latest Block: ${blockchain[0].hash.substring(0, 12)}... by ${blockchain[0].validator} • ` : ''}
-             REGISTRY SYNCHRONIZED. NO ANOMALIES DETECTED. • 2025-03-08 • NODE {user.esin} MULTIPLIER ACTIVE • SYCAMORE CONSENSUS ACHIEVED • 
+             REGISTRY SYNCHRONIZED. NO ANOMALIES DETECTED. • {new Date().toISOString().split('T')[0]} • NODE {user.esin} MULTIPLIER ACTIVE • SYCAMORE CONSENSUS ACHIEVED • 
            </div>
         </div>
       </div>
