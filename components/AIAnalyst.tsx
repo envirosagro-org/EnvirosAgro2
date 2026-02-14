@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  /* Fix: Aliased User as UserIcon to resolve missing name error on line 254 */
   Send, Bot, User as UserIcon, Sparkles, Loader2, BarChart2, ShieldCheck, Info, TrendingUp, 
   Globe, ExternalLink, Trash2, Terminal, Cable, Activity, Database, Zap, 
   ShieldPlus, Workflow, SmartphoneNfc, Radio, CheckCircle2, ChevronRight,
   Code2, Share2, Network, Binary, ArrowRight, ArrowUpRight, Cpu,
-  Settings, Play, Copy, Maximize2, Target, History
+  Settings, Play, Copy, Maximize2, Target, History,
+  LayoutGrid, ClipboardCheck, Briefcase, Landmark, Sprout,
+  // Added missing icons for blueprint evaluation
+  Coins, Microscope, Scan, Users, PawPrint, Leaf, Brain, ShoppingBag, Lightbulb, Trees, Layers, Stamp,
+  FileSearch, ClipboardList, ShieldAlert
 } from 'lucide-react';
 import { chatWithAgroExpert, analyzeSustainability, AIResponse } from '../services/geminiService';
 import { User as AgroUser, ViewState, SignalShard } from '../types';
@@ -21,6 +24,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   sources?: any[];
+  suggestedShards?: ViewState[];
 }
 
 const TUNNELLING_AGROLANG = `// Initiate Registry Handshake for Asset Verification
@@ -41,10 +45,37 @@ IF analysis.trend == "Soil_Nitrogen_Low" {
 // Real-time Evidence Ingest
 INGEST livestream.terminal() -> destination.audit_vault(tag: "Live_Verification")`;
 
+const SHARD_DIRECTORY: { id: ViewState; label: string; icon: any; keywords: string[] }[] = [
+  { id: 'wallet', label: 'Treasury Node', icon: Coins, keywords: ['money', 'eac', 'balance', 'swap', 'deposit', 'withdraw', 'earn', 'wallet', 'token'] },
+  { id: 'economy', label: 'Market Cloud', icon: Globe, keywords: ['buy', 'sell', 'seeds', 'marketplace', 'vendor', 'products', 'procurement', 'price', 'commerce'] },
+  { id: 'intelligence', label: 'Science Oracle', icon: Microscope, keywords: ['science', 'research', 'data', 'telemetry', 'iot', 'sensors', 'analysis', 'results', 'diagnose'] },
+  { id: 'impact', label: 'Network Impact', icon: TrendingUp, keywords: ['carbon', 'sustainability', 'footprint', 'mitigation', 'impact', 'credits', 'm-constant', 'sdg'] },
+  { id: 'digital_mrv', label: 'Digital MRV', icon: Scan, keywords: ['verify', 'proof', 'evidence', 'satellite', 'verification', 'audit', 'land', 'mrv'] },
+  { id: 'community', label: 'Steward Hub', icon: Users, keywords: ['people', 'chat', 'social', 'group', 'guild', 'community', 'learning', 'lms', 'forum'] },
+  { id: 'farm_os', label: 'Farm OS', icon: Binary, keywords: ['code', 'kernel', 'os', 'system', 'terminal', 'logic', 'automate', 'wrangler', 'npx'] },
+  { id: 'agrowild', label: 'Agrowild', icon: PawPrint, keywords: ['wild', 'animals', 'tourism', 'safari', 'nature', 'conservancy', 'biodiversity'] },
+  { id: 'sustainability', label: 'Sustainability Shard', icon: Leaf, keywords: ['carbon', 'footprint', 'equilibrium', 'omega'] },
+];
+
+const BLUEPRINT_AUDIT_GROUPS = [
+  { label: 'CORE AGRO', sync: 100, shards: 6, points: ['Farm Management', 'Crop Tracking', 'Supply Verification', 'Marketplace', 'Treasury', 'Sustainable Practices'], icon: Sprout, col: 'text-emerald-400' },
+  { label: 'INTELLIGENCE', sync: 100, shards: 4, points: ['Crop Analysis', 'Market Trends', 'Analytics Platform', 'Digital MRV'], icon: Brain, col: 'text-blue-400' },
+  { label: 'BLOCKCHAIN', sync: 98, shards: 4, points: ['Smart Contracts', 'Genetic NFTs', 'Handshake Protocol', 'Ledger Explorer'], icon: Database, col: 'text-indigo-400' },
+  { label: 'COMMUNITY', sync: 100, shards: 4, points: ['Farmer Forums', 'Network Ingest', 'Nexus CRM', 'Live Updates'], icon: Users, col: 'text-rose-400' },
+  { label: 'COMMERCE', sync: 94, shards: 4, points: ['Contract Farming', 'Vendor Portal', 'EnvirosAgro Store', 'Marketplace Sync'], icon: ShoppingBag, col: 'text-amber-500' },
+  { label: 'BUSINESS BI', sync: 100, shards: 3, points: ['Income Tracking', 'Investment Portal', 'Value Enhancement'], icon: Briefcase, col: 'text-teal-400' },
+  { label: 'INNOVATION', sync: 100, shards: 3, points: ['Biotech Integration', 'Innovation Hub', 'Genetic Decoder'], icon: Lightbulb, col: 'text-fuchsia-400' },
+  { label: 'SPECIALTY', sync: 100, shards: 4, points: ['Permaculture Design', 'CEA Greenhouse', 'Online Garden', 'Agrowild Cons.'], icon: Trees, col: 'text-emerald-600' },
+  { label: 'DATA', sync: 100, shards: 4, points: ['Media Hub', 'Media Ledger', 'Evidence Vault', 'Info Portal'], icon: Layers, col: 'text-sky-400' },
+  { label: 'SYSTEM MGMT', sync: 100, shards: 5, points: ['Dash Hub', 'Settings', 'Identity Card', 'UserProfile', 'Intranet'], icon: Settings, col: 'text-slate-400' },
+  { label: 'EMERGENCY', sync: 100, shards: 3, points: ['Emergency SOS', 'Floating Consultant', 'Voice Bridge'], icon: Radio, col: 'text-rose-600' },
+  { label: 'QUALITY', sync: 100, shards: 4, points: ['TQM Grid', 'Chroma System', 'Circular Grid', 'Code of Laws'], icon: ClipboardCheck, col: 'text-indigo-600' },
+];
+
 const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate }) => {
-  const [activeMode, setActiveMode] = useState<'neural' | 'tunnelling'>('neural');
+  const [activeMode, setActiveMode] = useState<'neural' | 'tunnelling' | 'status'>('neural');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: `Hello Steward ${user.name}! I am the EnvirosAgro AI Analyst. I can help you analyze farm telemetry, predict crop yields, or optimize your carbon credit strategy. How can I assist your node ${user.esin} today?` }
+    { role: 'assistant', content: `Greetings Steward ${user.name}. I am the primary AI Analyst for Node ${user.esin}. My systems are currently synchronized with the 60-shard architecture. How can I facilitate your agricultural finality today?` }
   ]);
   const [input, setInput] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -80,10 +111,17 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
 
     try {
       const response = await chatWithAgroExpert(userMessage, history, useSearch);
+      
+      const textToScan = (userMessage + " " + response.text).toLowerCase();
+      const suggested = SHARD_DIRECTORY.filter(shard => 
+        shard.keywords.some(k => textToScan.includes(k))
+      ).map(s => s.id);
+
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: response.text,
-        sources: response.sources
+        sources: response.sources,
+        suggestedShards: suggested.length > 0 ? suggested : undefined
       }]);
     } catch (e) {
       setMessages(prev => [...prev, { 
@@ -170,6 +208,13 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
             >
               <Cable className="w-4 h-4" />
               Tunnelling Hub
+            </button>
+            <button 
+              onClick={() => setActiveMode('status')}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeMode === 'status' ? 'bg-amber-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
+            >
+              <ClipboardCheck className="w-4 h-4" />
+              System Sync Audit
             </button>
             
             <div className="h-px bg-white/5 my-4"></div>
@@ -266,6 +311,24 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
                       </div>
                     </div>
                     
+                    {m.suggestedShards && m.suggestedShards.length > 0 && (
+                      <div className="flex flex-wrap gap-3 ml-16 mt-4 animate-in fade-in slide-in-from-left-2 duration-500">
+                         {m.suggestedShards.map(shardId => {
+                            const shard = SHARD_DIRECTORY.find(s => s.id === shardId);
+                            if (!shard) return null;
+                            return (
+                               <button 
+                                  key={shardId}
+                                  onClick={() => onNavigate(shardId)}
+                                  className="px-5 py-2.5 bg-indigo-900/20 border border-indigo-500/20 hover:bg-indigo-600 hover:text-white rounded-full text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-3 transition-all active:scale-95 shadow-xl"
+                               >
+                                  <shard.icon size={14} /> {shard.label} <ArrowUpRight size={12} />
+                               </button>
+                            );
+                         })}
+                      </div>
+                    )}
+
                     {m.sources && m.sources.length > 0 && (
                       <div className="flex flex-wrap gap-3 ml-16 mt-2">
                         {m.sources.map((source, sIdx) => (
@@ -320,7 +383,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
               </div>
             </div>
           </>
-        ) : (
+        ) : activeMode === 'tunnelling' ? (
           <div className="flex flex-col h-full animate-in zoom-in-95 duration-500">
             {/* Tunnelling Hub Header */}
             <div className="p-8 border-b border-indigo-500/20 bg-indigo-950/10 flex items-center justify-between">
@@ -377,7 +440,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
                           <h4 className="text-[9px] font-black text-white uppercase tracking-widest">Tunnel Health</h4>
                        </div>
                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5">
-                          <div className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] transition-all duration-1000" style={{ width: `${tunnelProgress}%` }}></div>
+                          <div className="h-full bg-indigo-500 shadow-[0_0_100px_rgba(99,102,241,0.5)] transition-all duration-1000" style={{ width: `${tunnelProgress}%` }}></div>
                        </div>
                        <p className="text-[8px] text-slate-600 font-mono uppercase text-center tracking-widest">{tunnelStatus}_MODE</p>
                     </div>
@@ -489,13 +552,80 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
               </div>
             </div>
           </div>
+        ) : (
+          <div className="flex flex-col h-full animate-in zoom-in-95 duration-500 p-8 md:p-12 overflow-y-auto custom-scrollbar">
+             <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
+                <div className="space-y-4">
+                   <h2 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">System <span className="text-emerald-400">Sync Status</span></h2>
+                   <p className="text-slate-500 text-xl font-medium italic">Evaluating the 60-shard industrial architecture synchronization.</p>
+                </div>
+                <div className="flex gap-4">
+                   <div className="p-8 glass-card rounded-[40px] border border-emerald-500/20 bg-emerald-500/5 text-center shadow-xl">
+                      <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest mb-2">SHARD_COVERAGE</p>
+                      <p className="text-6xl font-mono font-black text-white">60<span className="text-xl text-emerald-800 ml-1">/60</span></p>
+                   </div>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                {BLUEPRINT_AUDIT_GROUPS.map((shardGroup, i) => (
+                  <div key={i} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 hover:border-emerald-500/20 transition-all group flex flex-col justify-between h-[380px]">
+                     <div className="flex justify-between items-start">
+                        <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:rotate-6 transition-transform ${shardGroup.col}`}>
+                           <shardGroup.icon size={24} />
+                        </div>
+                        <div className="text-right">
+                           <p className="text-[10px] text-slate-700 font-black uppercase">Shard Count</p>
+                           <p className="text-xl font-mono font-black text-white">{shardGroup.shards}</p>
+                        </div>
+                     </div>
+                     <div className="space-y-4">
+                        <h4 className="text-xl font-black text-white uppercase italic tracking-widest">{shardGroup.label}</h4>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                           {shardGroup.points.map(pt => (
+                             <span key={pt} className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-[7px] font-black uppercase text-slate-500">{pt}</span>
+                           ))}
+                        </div>
+                        <div className="space-y-2">
+                           <div className="flex justify-between text-[8px] font-black uppercase text-slate-600">
+                              <span>Sync Fidelity</span>
+                              <span className={shardGroup.col}>{shardGroup.sync}%</span>
+                           </div>
+                           <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div className={`h-full ${shardGroup.col.replace('text', 'bg')} transition-all duration-1000`} style={{ width: `${shardGroup.sync}%` }}></div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                ))}
+             </div>
+
+             <div className="mt-16 p-12 glass-card rounded-[64px] border-emerald-500/20 bg-emerald-600/[0.03] flex flex-col md:flex-row items-center justify-between gap-12 shadow-3xl">
+                <div className="flex items-center gap-10">
+                   <div className="w-24 h-24 bg-emerald-600 rounded-[32px] flex items-center justify-center text-white shadow-3xl animate-pulse">
+                      <Stamp size={40} />
+                   </div>
+                   <div className="space-y-4 text-left">
+                      <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Evaluation Verified</h4>
+                      <p className="text-slate-400 text-lg italic leading-relaxed max-w-2xl font-medium">
+                        "The current system state is fully synchronized with the 60-shard blueprint. All core agricultural, intelligence, and blockchain protocols are live."
+                      </p>
+                   </div>
+                </div>
+                <button onClick={() => onNavigate('sitemap')} className="px-12 py-6 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 border-2 border-white/10">
+                   EXPLORE MATRIX <Maximize2 size={20} />
+                </button>
+             </div>
+          </div>
         )}
 
         <div className="p-8 border-t border-white/5 bg-black/95">
            <div className="flex justify-between items-center px-10">
               <div className="flex items-center gap-4">
-                 <div className={`w-2 h-2 rounded-full ${isSimulating ? 'bg-indigo-500 animate-pulse' : 'bg-emerald-500'} shadow-[0_0_10px_currentColor]`}></div>
-                 <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest italic">{activeMode === 'neural' ? 'NEURAL_LINK_STABLE' : 'TUNNEL_CONDUIT_STABLE'}</span>
+                 <div className={`w-2 h-2 rounded-full ${isSimulating ? 'bg-indigo-500 animate-pulse' : 'bg-emerald-500'} shadow-[0_0_100px_currentColor]`}></div>
+                 <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest italic">
+                   {activeMode === 'neural' ? 'NEURAL_LINK_STABLE' : activeMode === 'tunnelling' ? 'TUNNEL_CONDUIT_STABLE' : 'SYSTEM_EVALUATION_ACTIVE'}
+                 </span>
               </div>
               <p className="text-[9px] text-slate-800 font-mono italic">EOS_ANALYST_v6.5 // HANDSHAKE_#{(Math.random()*100).toFixed(0)}</p>
            </div>

@@ -3,13 +3,25 @@ import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclarati
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const FRAMEWORK_CONTEXT = `
-EnvirosAgro™ Sustainability Framework (EOS):
+EnvirosAgro™ Sustainability Framework (EOS) - System Architecture (v6.5):
+1. CORE AGRO: FarmOS, AgroCalendar (Crop Lifecycle), VerificationHUD (Supply Chain), Marketplace (Economy), AgroWallet (Treasury), Sustainability (Impact Metrics).
+2. INTELLIGENCE: AIAnalyst (Crop/Pest/Yield), Intelligence (Market Trends), DigitalMRV (Carbon Mining/Reporting).
+3. BLOCKCHAIN: Smart Contracts, Biotechnology (Genetic NFTs), RegistryHandshake (Settlement), Explorer (Ledger).
+4. COMMUNITY: Community (Steward Hub), NetworkIngest, NexusCRM, LiveFarming.
+5. COMMERCE: ContractFarming, VendorPortal, EnvirosAgroStore.
+6. BUSINESS BI: Economy Dashboard, InvestorPortal, ValueEnhancement.
+7. RESEARCH: Biotechnology, ResearchInnovation, GeneticDecoder.
+8. SPECIALTY: Permaculture, CEA (Greenhouse), OnlineGarden, Agrowild (Conservation).
+9. DATA: MediaHub, MediaLedger, EvidenceModal, InfoPortal.
+10. SYSTEM MGMT: Dashboard, SettingsPortal, IdentityCard, UserProfile, IntranetPortal.
+11. EMERGENCY: EmergencyPortal (SOS), FloatingConsultant, LiveVoiceBridge.
+12. QUALITY: TQMGrid, ChromaSystem (Grading), CircularGrid (Waste), CodeOfLaws.
+13. ADVANCED: Impact Measurement, Industrial Integration, ToolsSection, Simulator.
+
+CORE FORMULAS:
 - C(a)™ Agro Code: Formula: C(a) = x * ((r^n - 1) / (r - 1)) + 1
 - m™ Constant / Time Signature: Formula: m = sqrt((Dn * In * C(a)) / S)
 - Five Thrusts™ (SEHTI): Societal, Environmental, Human, Technological, Industry.
-- Code of Laws: Statutes governing Land Trusteeship, Sabbath cycles, and Bio-Signal Harmony.
-- Tokenz Institutional DeFi: RWA sharding, liquidity bridges, and risk-weighted capital deployment.
-- AgroMusika: Bio-electric sonic remediation (432Hz, 528Hz, etc.) for cellular soil repair.
 `;
 
 const activateLiveSequenceTool: FunctionDeclaration = {
@@ -296,7 +308,7 @@ export const chatWithAgroExpert = async (message: string, history: any[], useSea
       const chat = ai.chats.create({
         model: 'gemini-3-flash-preview',
         config: {
-          systemInstruction: `EnvirosAgro AI Expert. Use logic: ${FRAMEWORK_CONTEXT}`,
+          systemInstruction: `EnvirosAgro AI Expert. Core Mission: Drive users toward deep agricultural sustainability using the EnvirosAgro OS and 60-shard architecture. Use logic: ${FRAMEWORK_CONTEXT}`,
           tools: useSearch ? [{ googleSearch: {} }] : undefined,
         },
         history,

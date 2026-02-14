@@ -79,7 +79,7 @@ import {
   Network
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Radar as RechartsRadar, Tooltip } from 'recharts';
-import { User, ViewState, MediaShard } from '../types';
+import { User, ViewState, MediaShard, SignalShard } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
 
@@ -88,6 +88,8 @@ interface PermacultureProps {
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onNavigate: (view: ViewState) => void;
+  onEmitSignal?: (signal: Partial<SignalShard>) => Promise<void>;
+  notify?: any;
   initialSection?: string | null;
 }
 
@@ -112,7 +114,7 @@ const PERMACULTURE_ETHICS = [
   { id: 'fair', name: 'Fair Share', desc: 'Distributing surplus energy back into the mesh.', icon: Scale, color: 'text-amber-500' },
 ];
 
-const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, initialSection }) => {
+const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, onEmitSignal, notify, initialSection }) => {
   const [activeTab, setActiveTab] = useState<'zonation' | 'ethics' | 'lilies' | 'companion' | 'home_agro'>(
     initialSection === 'home_agro' ? 'home_agro' : 'zonation'
   );
@@ -130,6 +132,9 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
   // Home Agro States
   const [activeFlowLayer, setActiveFlowLayer] = useState<'none' | 'energy' | 'water' | 'nutrient'>('none');
   const [isMintingHomeCredits, setIsMintingHomeCredits] = useState(false);
+
+  // Screenshot Implementation: Geofence Sync state
+  const [isSyncingGeofence, setIsSyncingGeofence] = useState(false);
 
   const resilienceData = [
     { thrust: 'Zonation', A: 85 },
@@ -192,6 +197,33 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
     onEarnEAC(25, 'HOME_AGRO_TRIPLE_LOOP_SETTLEMENT');
     setIsMintingHomeCredits(false);
     alert("HOME_SHARD_SETTLED: Triple-Loop cooking verified. 25 EAC reward anchored to registry.");
+  };
+
+  const handleSyncGeofence = async () => {
+    setIsSyncingGeofence(true);
+    if (onEmitSignal) {
+      onEmitSignal({
+        type: 'system',
+        origin: 'MANUAL',
+        title: 'GEOFENCE_SYNC_INITIATED',
+        message: `Synchronizing geofence shards for node ${user.esin} in ${selectedZone.name}.`,
+        priority: 'medium',
+        actionIcon: 'MapPin'
+      });
+    }
+
+    // Simulate satellite link and m-constant calibration
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    setIsSyncingGeofence(false);
+    onEarnEAC(10, 'GEOFENCE_QUORUM_SYNC_SUCCESS');
+    if (notify) {
+      notify({ 
+        title: 'GEOFENCE_SYNCED', 
+        message: 'Registry geofence shards aligned with satellite telemetry.', 
+        type: 'success' 
+      });
+    }
   };
 
   return (
@@ -524,7 +556,7 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
                             </h5>
                             <div className="space-y-4">
                                {selectedZone.tasks.map((task, i) => (
-                                  <div key={i} className="flex items-center gap-4 p-5 bg-white/5 rounded-3xl border border-white/5 group-hover/tasks:bg-emerald-600/5 transition-all cursor-pointer">
+                                  <div key={i} className="flex items-center gap-4 p-5 bg-white/5 rounded-3xl border border-white/5 group/tasks:bg-emerald-600/5 transition-all cursor-pointer">
                                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
                                      <span className="text-sm font-black text-slate-300 uppercase italic tracking-tight">{task}</span>
                                   </div>
@@ -556,8 +588,13 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
                       </div>
 
                       <div className="pt-10 border-t border-white/5 flex flex-col sm:flex-row gap-6">
-                         <button className="flex-1 py-8 agro-gradient rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border border-white/10">
-                            <MapIcon size={20} /> SYNC GEOFENCE
+                         <button 
+                           onClick={handleSyncGeofence}
+                           disabled={isSyncingGeofence}
+                           className="flex-1 py-8 agro-gradient rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border border-white/10 ring-8 ring-emerald-500/5"
+                         >
+                            {isSyncingGeofence ? <Loader2 className="w-6 h-6 animate-spin" /> : <MapIcon size={20} />} 
+                            {isSyncingGeofence ? 'SYNCING_SHARDS...' : 'SYNC GEOFENCE'}
                          </button>
                          <button className="p-8 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 hover:text-white transition-all shadow-xl group/down">
                             <Download size={24} className="group-hover:translate-y-1 transition-transform" />
@@ -610,7 +647,7 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
                        <Flower2 size={56} className="text-white" />
                     </div>
                     <div className="space-y-4">
-                       <h3 className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">AESTHETIC <span className="text-fuchsia-400">FORGE</span></h3>
+                       <h3 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter m-0 leading-none drop-shadow-2xl">AESTHETIC <span className="text-fuchsia-400">FORGE</span></h3>
                        <p className="text-slate-400 text-2xl font-medium italic leading-relaxed max-w-3xl mx-auto opacity-80">
                           "Integrating Lilies Around botanical architecture with permaculture zonation. Forge designs that optimize for both beauty and bio-resonance."
                        </p>
