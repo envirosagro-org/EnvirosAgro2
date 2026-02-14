@@ -1,6 +1,5 @@
-import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
 
 const FRAMEWORK_CONTEXT = `
 EnvirosAgro™ Sustainability Framework (EOS) - System Architecture (v6.5):
@@ -67,7 +66,9 @@ const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise
       return await fn();
     } catch (err: any) {
       lastError = err;
-      if (err.status === 500 || (err.message && err.message.includes('500'))) {
+      // Added 429 (Rate Limit) and 503 (Service Unavailable) to retry logic to address "internal congestion" errors
+      const status = err.status || (err.message && parseInt(err.message.match(/\d{3}/)?.[0] || '0'));
+      if ([429, 500, 503].includes(status) || err.message?.includes('500') || err.message?.includes('429')) {
         await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
         continue;
       }
@@ -79,9 +80,15 @@ const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise
 
 const handleAIError = (error: any): AIResponse => {
   console.error("Gemini API Error:", error);
-  return { 
-    text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion." 
-  };
+  let errorText = "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion.";
+  
+  if (error.message?.includes('API_KEY')) {
+    errorText = "AUTH_ERROR: Registry API Key is missing or invalid. Please verify node credentials.";
+  } else if (error.status === 429 || error.message?.includes('429')) {
+    errorText = "QUOTA_EXCEEDED: High-frequency sharding limit reached. Quorum cooldown active.";
+  }
+  
+  return { text: errorText };
 };
 
 /**
@@ -91,9 +98,9 @@ const handleAIError = (error: any): AIResponse => {
 export const analyzeBidHandshake = async (investorReqs: string, farmerAssets: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview', // Upgraded to Pro for advanced reasoning
         contents: `Compare Investor Requirements: "${investorReqs}"
         Against Farmer Ingested Assets: ${JSON.stringify(farmerAssets)}
         Context: ${FRAMEWORK_CONTEXT}
@@ -122,9 +129,9 @@ export const analyzeBidHandshake = async (investorReqs: string, farmerAssets: an
 export const generateValueBlueprint = async (material: string, volume: number): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview', // Upgraded to Pro for complex blueprint synthesis
         contents: `Generate a Value Blueprint for: ${volume} tons of ${material}. 
         Apply SEHTI principles and EOS sustainability metrics.`,
         config: {
@@ -175,7 +182,7 @@ export const generateValueBlueprint = async (material: string, volume: number): 
 export const activateLiveSequence = async (blueprintId: string, assets: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Activate live sequence for blueprint ${blueprintId} using assets: ${JSON.stringify(assets)}.`,
@@ -198,9 +205,9 @@ export const activateLiveSequence = async (blueprintId: string, assets: any[]): 
 export const analyzeDemandForecast = async (inventory: any[], currentCycle: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview', // Pro for demand sharding
         contents: `Analyze inventory for Demand Forecasting: ${JSON.stringify(inventory)}. 
         Current Cycle: ${currentCycle}.
         Pillar Context: ${FRAMEWORK_CONTEXT}.`,
@@ -218,9 +225,9 @@ export const analyzeDemandForecast = async (inventory: any[], currentCycle: stri
 export const forecastMarketReadiness = async (product: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: `Forecast market readiness for asset: ${product.productType}.`,
         config: {
           systemInstruction: "You are the EnvirosAgro Market Strategist."
@@ -236,9 +243,9 @@ export const forecastMarketReadiness = async (product: any): Promise<AIResponse>
 export const consultFinancialOracle = async (query: string, context: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: `Process financial query: "${query}".`,
         config: {
           systemInstruction: "You are the EnvirosAgro Financial Oracle."
@@ -257,9 +264,9 @@ export const consultFinancialOracle = async (query: string, context: any): Promi
 export const runSpecialistDiagnostic = async (category: string, description: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: `Perform a Specialist Diagnostic Audit. Category: ${category}, Observation: ${description}`,
       });
       return { text: response.text || "" };
@@ -272,10 +279,10 @@ export const runSpecialistDiagnostic = async (category: string, description: str
 export const predictMarketSentiment = async (echoes: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Perform a Sentiment Audit.`,
+        model: 'gemini-3-pro-preview',
+        contents: `Perform a Sentiment Audit based on mesh echoes.`,
       });
       const text = response.text || "";
       return { text, sentiment_alpha: 0.82 };
@@ -288,7 +295,7 @@ export const predictMarketSentiment = async (echoes: any[]): Promise<AIResponse>
 export const auditAgroLangCode = async (code: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Audit AgroLang: ${code}`,
@@ -304,7 +311,7 @@ export const auditAgroLangCode = async (code: string): Promise<AIResponse> => {
 export const chatWithAgroExpert = async (message: string, history: any[], useSearch: boolean = false): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const chat = ai.chats.create({
         model: 'gemini-3-flash-preview',
         config: {
@@ -324,9 +331,9 @@ export const chatWithAgroExpert = async (message: string, history: any[], useSea
 export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview', // Pro for DNA sharding
         contents: `Decode: ${JSON.stringify(telemetry)}`,
         config: {
           responseMimeType: "application/json",
@@ -362,9 +369,9 @@ export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
 export const analyzeSustainability = async (farmData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview', // Pro for sustainability metrics
         contents: `Run sustainability audit: ${JSON.stringify(farmData)}`,
       });
       return { text: response.text || "" };
@@ -377,7 +384,7 @@ export const analyzeSustainability = async (farmData: any): Promise<AIResponse> 
 export const analyzeMedia = async (base64: string, mime: string, prompt: string): Promise<string> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: { parts: [{ inlineData: { data: base64, mimeType: mime } }, { text: prompt }] }
@@ -385,16 +392,16 @@ export const analyzeMedia = async (base64: string, mime: string, prompt: string)
       return response.text || "";
     });
   } catch (err) {
-    return "Error analyzing media.";
+    return handleAIError(err).text;
   }
 };
 
 export const settleRegistryBatch = async (transactions: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: `Settle batch: ${JSON.stringify(transactions)}`,
       });
       return { text: response.text || "Batch verified.", finality_hash: "0x882A_FINAL" };
@@ -407,7 +414,7 @@ export const settleRegistryBatch = async (transactions: any[]): Promise<AIRespon
 export const auditMeshStability = async (topologyData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Audit mesh stability: ${JSON.stringify(topologyData)}`,
@@ -422,7 +429,7 @@ export const auditMeshStability = async (topologyData: any): Promise<AIResponse>
 export const probeValidatorNode = async (nodeData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Perform high-fidelity probe on validator node: ${JSON.stringify(nodeData)}. Identify risks of SID contamination or m-constant drift.`,
@@ -437,7 +444,7 @@ export const probeValidatorNode = async (nodeData: any): Promise<AIResponse> => 
 export const searchAgroTrends = async (query: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: query,
@@ -453,7 +460,7 @@ export const searchAgroTrends = async (query: string): Promise<AIResponse> => {
 export const runSimulationAnalysis = async (simData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Run simulation: ${JSON.stringify(simData)}`,
@@ -468,7 +475,7 @@ export const runSimulationAnalysis = async (simData: any): Promise<AIResponse> =
 export const generateAgroExam = async (topic: string): Promise<any[]> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate exam for: ${topic}`,
@@ -497,7 +504,7 @@ export const generateAgroExam = async (topic: string): Promise<any[]> => {
 export const getGroundedAgroResources = async (query: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: query,
@@ -513,7 +520,7 @@ export const getGroundedAgroResources = async (query: string): Promise<AIRespons
 export const analyzeInstitutionalRisk = async (transactionData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Risk audit: ${JSON.stringify(transactionData)}`,
@@ -528,7 +535,7 @@ export const analyzeInstitutionalRisk = async (transactionData: any): Promise<AI
 export const diagnoseCropIssue = async (description: string, base64Image?: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const contents = base64Image 
         ? { parts: [{ inlineData: { data: base64Image, mimeType: 'image/jpeg' } }, { text: description }] }
         : { text: description };
@@ -546,7 +553,7 @@ export const diagnoseCropIssue = async (description: string, base64Image?: strin
 export const auditProductQuality = async (productId: string, logs: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Audit quality for ${productId}`,
@@ -561,7 +568,7 @@ export const auditProductQuality = async (productId: string, logs: any[]): Promi
 export const generateAgroResearch = async (title: string, thrust: string, iotData: any, context: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Generate research: ${title}`,
@@ -576,7 +583,7 @@ export const generateAgroResearch = async (title: string, thrust: string, iotDat
 export const getWeatherForecast = async (location: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Weather for ${location}`,
@@ -592,7 +599,7 @@ export const getWeatherForecast = async (location: string): Promise<AIResponse> 
 export const generateValueEnhancementStrategy = async (material: string, weight: string, context: string): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Value strategy for ${weight} of ${material}`,
@@ -618,7 +625,7 @@ export const generateValueEnhancementStrategy = async (material: string, weight:
 export const analyzeMRVEvidence = async (description: string, base64Image?: string): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const contents = base64Image 
         ? { parts: [{ inlineData: { data: base64Image, mimeType: 'image/jpeg' } }, { text: description }] }
         : { text: description };
@@ -654,7 +661,7 @@ export const analyzeMRVEvidence = async (description: string, base64Image?: stri
 export const analyzeMiningYield = async (miningData: any): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Analyze mining potential: ${JSON.stringify(miningData)}.`,
@@ -667,7 +674,7 @@ export const analyzeMiningYield = async (miningData: any): Promise<AIResponse> =
 };
 
 export const generateTemporalVideo = async (prompt: string) => {
-  const ai = getAI();
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   return ai.models.generateVideos({
     model: 'veo-3.1-fast-generate-preview',
     prompt,
@@ -680,7 +687,7 @@ export const generateTemporalVideo = async (prompt: string) => {
 };
 
 export const getTemporalVideoOperation = async (operation: any) => {
-  const ai = getAI();
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   return ai.operations.getVideosOperation({ operation });
 };
 

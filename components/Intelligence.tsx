@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, Cpu, Activity, Zap, ShieldCheck, Binary, Layers, Microscope, FlaskConical, Scan, 
@@ -38,7 +37,10 @@ interface IntelligenceProps {
   initialSection?: string | null;
 }
 
-type TabState = 'hub' | 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry' | 'trends';
+// Fix: Added missing TabState type definition for navigation control
+type TabState = 'hub' | 'twin' | 'simulator' | 'trends' | 'telemetry' | 'eos_ai' | 'sid' | 'evidence';
+
+// Fix: Added missing OracleMode type definition for diagnostic modes
 type OracleMode = 'BIO_DIAGNOSTIC' | 'SPECTRAL_AUDIT' | 'GENOMIC_INQUIRY' | 'SOIL_REMEDIATION';
 
 const ORACLE_QUERY_COST = 25;
@@ -191,8 +193,8 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       };
       const res = await runSimulationAnalysis(simData);
       setSimulationReport(res.text);
-    } catch (e) {
-      setSimulationReport("SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion.");
+    } catch (e: any) {
+      setSimulationReport(e.message || "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified.");
     } finally {
       setIsRunningSimulation(false);
     }
@@ -229,8 +231,8 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       const response = await chatWithAgroExpert(prompt, []);
       setSidResult(response);
       onEarnEAC(20, 'SID_DIAGNOSTIC_INGEST_OK');
-    } catch (e) {
-      setSidResult({ text: "SYSTEM_ERROR: SID buffer parity failed. Oracle link severed." });
+    } catch (e: any) {
+      setSidResult({ text: e.message || "SYSTEM_ERROR: SID buffer parity failed." });
     } finally {
       clearInterval(stepInterval);
       setIsSidScanning(false);
@@ -304,8 +306,8 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       const responseText = await analyzeMedia(fileBase64!, fileMime, technicalPrompt);
       setAiResult({ text: responseText });
       onEarnEAC(10, "ORACLE_DIAGNOSTIC_FINALIZED");
-    } catch (e) {
-      setAiResult({ text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion." });
+    } catch (e: any) {
+      setAiResult({ text: e.message || "SYSTEM_ERROR: Oracle link interrupted." });
     } finally {
       clearInterval(stepInterval);
       setAiThinking(false);
@@ -324,8 +326,8 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       const res = await searchAgroTrends(query);
       setTrendsResult(res);
       onEarnEAC(10, "GLOBAL_TREND_INGEST_OK");
-    } catch (e) {
-      setTrendsResult({ text: "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion." });
+    } catch (e: any) {
+      setTrendsResult({ text: e.message || "SYSTEM_ERROR: Oracle link interrupted." });
     } finally {
       setIsIngestingTrends(false);
     }
@@ -540,7 +542,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                     <button 
                       onClick={handleTwinRefresh}
                       disabled={isTwinSyncing}
-                      className="px-10 py-5 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 border-2 border-white/10"
+                      className="px-10 py-5 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-2 border-white/10"
                     >
                        {isTwinSyncing ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
                        CALIBRATE TWIN
@@ -568,7 +570,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                                 <span className="text-white font-mono">{s.v}</span>
                              </div>
                              <div className="h-1 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
-                                <div className={`h-full rounded-full transition-all duration-[2s] ${s.c} shadow-[0_0_10px_currentColor]`} style={{ width: `${s.p}%` }}></div>
+                                <div className={`h-full rounded-full transition-all duration-[2s] ${s.c} shadow-[0_0_100px_currentColor]`} style={{ width: `${s.p}%` }}></div>
                              </div>
                           </div>
                        ))}
@@ -818,7 +820,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                 </ResponsiveContainer>
               </div>
               {simulationReport && (
-                <div className={`p-10 glass-card border-l-8 transition-colors duration-500 animate-in slide-in-from-left-6 shadow-xl relative overflow-hidden ${simulationReport.includes('SYSTEM_ERROR') ? 'border-rose-600 bg-rose-950/20' : 'border-emerald-500 bg-emerald-500/[0.02]'}`}>
+                <div className={`p-10 glass-card border-l-8 transition-colors duration-500 animate-in slide-in-from-left-6 shadow-xl relative overflow-hidden ${simulationReport.includes('SYSTEM_ERROR') || simulationReport.includes('AUTH_ERROR') ? 'border-rose-600 bg-rose-950/20' : 'border-emerald-500 bg-emerald-500/[0.02]'}`}>
                   <p className="text-slate-300 text-lg italic leading-relaxed whitespace-pre-line font-medium">{simulationReport}</p>
                 </div>
               )}
@@ -871,7 +873,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                       <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Trend <span className="text-indigo-400">Ingest</span></h3>
                       <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto opacity-80 leading-relaxed">"Synchronizing global mesh search grounding."</p>
                    </div>
-                   <button onClick={handleIngestTrends} className="px-16 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-4 border-2 border-white/10">
+                   <button onClick={handleIngestTrends} className="px-16 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10">
                       <Globe2 size={24} /> INITIALIZE TREND SYNC
                    </button>
                 </div>
