@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { 
   Info, ShieldCheck, ChevronRight, Scale, BookOpen, Globe, Zap, Users, Lock, FileText,
@@ -8,14 +10,18 @@ import {
   MessagesSquare, Copy, Check, ShieldPlus, Leaf, HelpCircle as FaqIcon,
   ChevronDown, Code, Database, Gavel, Stamp, Signature, FileSignature, ScrollText,
   Cpu, Download, Target as TargetIcon, Activity, Binary, History, Scale as ScaleIcon,
-  ArrowUpRight, Building, Layers, Terminal as TerminalIcon
+  ArrowUpRight, Building, Layers, Terminal as TerminalIcon,
+  // Added missing icons
+  Gauge, Heart, Siren
 } from 'lucide-react';
-import { ViewState } from '../types';
+import { User, ViewState } from '../types';
 import { SycamoreLogo } from '../App';
 
 interface InfoPortalProps {
+  user: User;
   onNavigate: (view: ViewState) => void;
   onAcceptAll?: () => void;
+  onPermanentAction: (key: string, reward: number, reason: string) => Promise<boolean>;
 }
 
 const ENVIRONMENTS = [
@@ -78,6 +84,41 @@ const LEGAL_REGISTRY = [
   }
 ];
 
+const AGREEMENT_SHARDS = [
+  { 
+    id: 'ZK_DATA_ETHICS', 
+    title: 'Zero-Knowledge Data Ethics', 
+    reward: 20, 
+    icon: Binary, 
+    color: 'text-blue-400', 
+    desc: 'Agreement to only shard cryptographic hashes of sensitive field data, maintaining local node sovereignty.' 
+  },
+  { 
+    id: 'M_CONSTANT_STABILITY', 
+    title: 'Resilience Baseline Commitment', 
+    reward: 25, 
+    icon: Gauge, 
+    color: 'text-indigo-400', 
+    desc: 'Commitment to maintain a node m-constant above the 1.42x threshold for network stability.' 
+  },
+  { 
+    id: 'GLEANING_RIGHTS_SYNC', 
+    title: 'Industrial Gleaning Rights', 
+    reward: 15, 
+    icon: Heart, 
+    color: 'text-rose-400', 
+    desc: 'Agreement to source at least 10% of inputs from community-managed smallholder widows and orphans.' 
+  },
+  { 
+    id: 'EMERGENCY_QUORUM_PARTICIPATION', 
+    title: 'Emergency Signal Protocol', 
+    reward: 10, 
+    icon: Siren, 
+    color: 'text-amber-500', 
+    desc: 'Agreement to propagate critical regional hazard shards to neighboring nodes within the Githaka mesh.' 
+  },
+];
+
 const FAQ_ITEMS = [
   { q: "What is the m-Constant?", a: "The sustainable time constant (m) measures a node's resilience against external stress. It is calculated as the square root of (Density * Intensity * Cumulative Stewardship) divided by Stress." },
   { q: "How are Carbon Credits minted?", a: "Credits are minted via Digital MRV (Monitoring, Reporting, and Verification). Visual or IoT evidence is sharded and audited by the Oracle before EAC finality." },
@@ -86,9 +127,10 @@ const FAQ_ITEMS = [
   { q: "Can I delete my data?", a: "While you can stop active syncing, established blockchain shards are immutable to preserve the network's historical resonance and total truth baseline." }
 ];
 
-const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
+const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, onPermanentAction }) => {
   const [activeSection, setActiveSection] = useState<string>('about');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [isSigningIndividual, setIsSigningIndividual] = useState<string | null>(null);
 
   const shards = [
     { id: 'about', label: 'Institutional Bio', icon: Info, color: 'text-emerald-400' },
@@ -99,6 +141,15 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
     { id: 'faq', label: 'Registry FAQ', icon: FaqIcon, color: 'text-slate-400' },
     { id: 'contact', label: 'HQ Terminal', icon: Globe, color: 'text-emerald-400' },
   ];
+
+  const handleSignAgreement = async (shard: typeof AGREEMENT_SHARDS[0]) => {
+    setIsSigningIndividual(shard.id);
+    const success = await onPermanentAction(shard.id, shard.reward, `AGREEMENT_SHARD_${shard.id}`);
+    if (success) {
+      // Local feedback via notify is handled by App.tsx through onPermanentAction
+    }
+    setIsSigningIndividual(null);
+  };
 
   const renderSection = () => {
     switch (activeSection) {
@@ -206,7 +257,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
               {LEGAL_REGISTRY.map((law, i) => (
                 <div key={i} className="glass-card p-12 md:p-16 rounded-[80px] border-2 border-white/5 bg-black/40 shadow-3xl group hover:border-amber-500/30 transition-all relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-125 transition-transform duration-[15s]"><law.icon size={400} className="text-amber-500" /></div>
-                  <div className="flex flex-col md:flex-row justify-between items-start mb-12 relative z-10 gap-10 border-b border-white/5 pb-12">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center relative z-10 mb-12 gap-10 border-b border-white/5 pb-12">
                     <div className="flex items-center gap-10">
                       <div className={`w-28 h-28 rounded-[40px] bg-white/5 border border-white/10 ${law.color} shadow-inner group-hover:rotate-6 transition-all flex items-center justify-center`}>
                         <law.icon size={56} />
@@ -237,13 +288,57 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
         );
       case 'agreements':
         return (
-          <section className="space-y-12 animate-in fade-in slide-in-from-right-10 duration-700">
+          <section className="space-y-16 animate-in fade-in slide-in-from-right-10 duration-700">
             <div className="flex items-center gap-6 mb-10 px-4">
               <div className="w-16 h-16 rounded-[28px] bg-blue-600 flex items-center justify-center text-white shadow-3xl border-2 border-white/10">
                 <FileText size={32} />
               </div>
               <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0">STEWARD <span className="text-blue-400">COVENANT</span></h3>
             </div>
+
+            {/* Individual Agreement Shards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
+               {AGREEMENT_SHARDS.map((shard) => {
+                 const isSigned = user.completedActions?.includes(shard.id);
+                 return (
+                   <div key={shard.id} className={`p-10 glass-card rounded-[64px] border-2 transition-all group flex flex-col justify-between h-[420px] relative overflow-hidden ${isSigned ? 'border-emerald-500/30 bg-emerald-950/5' : 'border-white/5 bg-black/40 hover:border-blue-500/20'}`}>
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><shard.icon size={250} /></div>
+                      <div className="space-y-6 relative z-10">
+                         <div className="flex justify-between items-start">
+                            <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 ${shard.color} shadow-inner`}>
+                               <shard.icon size={32} />
+                            </div>
+                            {isSigned && (
+                               <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 shadow-xl">
+                                  <BadgeCheck size={14} />
+                                  <span className="text-[9px] font-black uppercase">ANCHORED</span>
+                               </div>
+                            )}
+                         </div>
+                         <h4 className="text-2xl font-black text-white uppercase italic tracking-tight m-0">{shard.title}</h4>
+                         <p className="text-slate-400 text-base leading-relaxed italic opacity-80">"{shard.desc}"</p>
+                      </div>
+                      <div className="mt-8 pt-8 border-t border-white/5 relative z-10 flex items-center justify-between">
+                         <div className="space-y-1">
+                            <p className="text-[9px] text-slate-700 font-black uppercase">Consensus Yield</p>
+                            <p className="text-2xl font-mono font-black text-white">+{shard.reward} <span className="text-xs text-blue-500">EAC</span></p>
+                         </div>
+                         <button 
+                           onClick={() => handleSignAgreement(shard)}
+                           disabled={isSigned || isSigningIndividual === shard.id}
+                           className={`px-10 py-5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 ${
+                             isSigned ? 'bg-black text-slate-700 cursor-default' : 'bg-blue-600 hover:bg-blue-500 text-white active:scale-95'
+                           }`}
+                         >
+                            {isSigningIndividual === shard.id ? <Loader2 size={16} className="animate-spin" /> : isSigned ? <CheckCircle2 size={16} /> : <Signature size={16} />}
+                            {isSigned ? 'SHARD_SYNCED' : 'AUTHORIZE SHARD'}
+                         </button>
+                      </div>
+                   </div>
+                 );
+               })}
+            </div>
+
             <div className="p-16 md:p-24 glass-card rounded-[80px] border-4 border-double border-indigo-500/30 bg-black/60 shadow-[0_60px_150px_rgba(0,0,0,0.95)] relative overflow-hidden flex flex-col items-center text-center space-y-20 group">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.05)_0%,_transparent_70%)] pointer-events-none"></div>
               <div className="relative z-10 space-y-12">
@@ -251,7 +346,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
                   <Fingerprint size={80} />
                 </div>
                 <div className="space-y-6">
-                  <h4 className="text-6xl md:text-9xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">NODE OPERATOR <br/><span className="text-indigo-400">SIGN-OFF.</span></h4>
+                  <h4 className="text-6xl md:text-9xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">MASTER <br/><span className="text-indigo-400">COVENANT.</span></h4>
                   <p className="text-slate-400 text-2xl md:text-3xl font-medium italic max-w-4xl mx-auto leading-relaxed px-10 opacity-80">
                     "Participation in the mesh constitutes acceptance of all active covenants. Informatic drift is monitored by the Quorum to ensure biological finality."
                   </p>
@@ -275,15 +370,25 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
                    </div>
                 </div>
               </div>
-              <button 
-                onClick={onAcceptAll}
-                className="w-full max-w-md py-14 bg-emerald-600 hover:bg-emerald-500 rounded-[56px] text-white font-black text-2xl uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(16,185,129,0.4)] hover:scale-[1.02] active:scale-95 transition-all border-4 border-white/10 ring-[32px] ring-white/5 relative z-10 group/commit"
-              >
-                <div className="flex items-center justify-center gap-6">
-                   <CheckCircle2 size={40} className="group-hover/commit:scale-110 transition-transform" />
-                   ACCEPT ALL SHARDS
+              
+              {!user.completedActions?.includes('ACCEPT_ALL_AGREEMENTS') ? (
+                <button 
+                  onClick={onAcceptAll}
+                  className="w-full max-w-md py-14 bg-emerald-600 hover:bg-emerald-500 rounded-[56px] text-white font-black text-2xl uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(16,185,129,0.4)] hover:scale-[1.02] active:scale-95 transition-all border-4 border-white/10 ring-[32px] ring-white/5 relative z-10 group/commit"
+                >
+                  <div className="flex items-center justify-center gap-6">
+                    <CheckCircle2 size={40} className="group-hover/commit:scale-110 transition-transform" />
+                    ACCEPT ALL SHARDS
+                  </div>
+                </button>
+              ) : (
+                <div className="flex flex-col items-center gap-6 animate-in zoom-in">
+                   <div className="p-8 bg-emerald-600 rounded-full shadow-[0_0_80px_rgba(16,185,129,0.5)] border-4 border-white">
+                      <BadgeCheck size={64} className="text-white" />
+                   </div>
+                   <p className="text-emerald-400 font-black text-2xl uppercase tracking-[0.6em]">QUORUM_MASTER_FINALIZED</p>
                 </div>
-              </button>
+              )}
             </div>
           </section>
         );
@@ -368,7 +473,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
                     <box.i size={56} className={`${box.cl}`} />
                   </div>
                   <div className="relative z-10 space-y-6">
-                    <h4 className="text-[14px] font-black text-slate-500 uppercase tracking-[0.6em] italic leading-none">{box.t}</h4>
+                    <h4 className="text-[14px] font-black text-slate-500 uppercase tracking-0.6em italic leading-none">{box.t}</h4>
                     <p className="text-slate-100 text-2xl md:text-3xl font-mono font-black truncate leading-tight group-hover:text-emerald-400 transition-colors">{box.c}</p>
                     <div className="pt-6">
                        <span className="px-6 py-2 bg-white/5 rounded-full text-[11px] font-black uppercase text-slate-700 tracking-[0.3em] border border-white/5 shadow-inner">{box.sub}</span>

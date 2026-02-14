@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
@@ -495,6 +497,7 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
               className="p-3 md:p-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl md:rounded-3xl transition-all shadow-xl group active:scale-95 disabled:opacity-30 flex items-center justify-center"
               title="Oracle deep query"
             >
+               {/* Fixed: use isAiSearching instead of isSearching */}
                {isAiSearching ? <Loader2 className="animate-spin text-white w-6 h-6" /> : <SycamoreLogo size={24} className="text-emerald-400 group-hover:text-white" />}
             </button>
             <button onClick={onClose} className="p-3 md:p-4 text-slate-500 hover:text-white transition-colors bg-white/5 rounded-2xl active:scale-95"><X size={24} /></button>
@@ -1030,7 +1033,7 @@ const App: React.FC = () => {
       case 'ai_analyst': return <AIAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
       case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} />;
       case 'ingest': return <NetworkIngest user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
-      case 'info': return <InfoPortal onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} />;
+      case 'info': return <InfoPortal user={currentUser} onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} onPermanentAction={handlePerformPermanentAction} />;
       case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;
       default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
@@ -1064,7 +1067,7 @@ const App: React.FC = () => {
              {(isSidebarOpen || isMobileMenuOpen) && (
                <div className="animate-in fade-in slide-in-from-left-2">
                  <h1 className="text-lg font-black text-white italic tracking-tighter leading-none uppercase">Enviros<span className="text-emerald-400">Agro</span></h1>
-                 <p className="text-[6px] text-slate-500 font-black uppercase tracking-[0.4em] mt-1 italic">Registry</p>
+                 <p className="text-[6px] text-slate-500 font-black uppercase tracking-0.4em mt-1 italic">Registry</p>
                </div>
              )}
            </div>
@@ -1171,7 +1174,7 @@ const App: React.FC = () => {
                               >
                                  <div className="flex items-center justify-between gap-3 mb-1">
                                     <div className="flex items-center gap-2">
-                                       <span className="text-[7px] font-mono text-slate-700">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                       <span className="text-7px font-mono text-slate-700">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                        <span className={`text-[6px] font-black uppercase px-1.5 py-0.5 rounded ${sig.priority === 'critical' ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-600'}`}>{sig.priority}</span>
                                     </div>
                                     <button 
@@ -1219,7 +1222,7 @@ const App: React.FC = () => {
                  <ChevronLeft size={16} className="group-hover/back:-translate-x-1 transition-transform" />
                  <div className="flex flex-col items-start text-left hidden md:block">
                     <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span>
-                    <span className="text-[6px] font-mono opacity-50 mt-1 uppercase">Prev_Vector</span>
+                    <span className="text-6px font-mono opacity-50 mt-1 uppercase">Prev_Vector</span>
                  </div>
               </button>
 
@@ -1256,7 +1259,7 @@ const App: React.FC = () => {
               >
                  <div className="flex flex-col items-end text-right hidden md:block">
                     <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Advance</span>
-                    <span className="text-[6px] font-mono opacity-50 mt-1 uppercase">Next_Vector</span>
+                    <span className="text-6px font-mono opacity-50 mt-1 uppercase">Next_Vector</span>
                  </div>
                  <ChevronRight size={16} className="group-hover/fwd:translate-x-1 transition-transform" />
               </button>
@@ -1267,7 +1270,7 @@ const App: React.FC = () => {
               <div className="flex items-center gap-4">
                  <SycamoreLogo size={20} className="text-emerald-500" />
                  <div className="text-left">
-                    <p className="text-[9px] font-black text-white uppercase italic tracking-widest leading-none">Enviros<span className="text-emerald-400">Agro</span></p>
+                    <p className="text-9px font-black text-white uppercase italic tracking-widest leading-none">Enviros<span className="text-emerald-400">Agro</span></p>
                     <p className="text-[6px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">Planetary_Regeneration_Grid</p>
                  </div>
               </div>
@@ -1275,10 +1278,10 @@ const App: React.FC = () => {
               <div className="flex items-center gap-8">
                  <div className="flex items-center gap-2">
                     <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-[7px] text-slate-700 font-mono uppercase font-black">MATRIX_SYNC_OK</span>
+                    <span className="text-7px text-slate-700 font-mono uppercase font-black">MATRIX_SYNC_OK</span>
                  </div>
-                 <p className="text-[7px] text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p>
-                 <button onClick={() => navigate('info')} className="text-[7px] font-black text-slate-600 hover:text-white uppercase tracking-[0.4em]">SAFETY_REGISTRY</button>
+                 <p className="text-7px text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p>
+                 <button onClick={() => navigate('info')} className="text-7px font-black text-slate-600 hover:text-white uppercase tracking-[0.4em]">SAFETY_REGISTRY</button>
               </div>
            </div>
         </footer>
