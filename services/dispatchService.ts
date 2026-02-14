@@ -1,4 +1,5 @@
 import { saveCollectionItem, dispatchNetworkSignal } from './firebaseService';
+import { calculateMConstant, calculateAgroCode, generateShardHash, mintCarbonShard } from '../systemFunctions';
 
 /**
  * The Universal Dispatcher for EnvirosAgro Blockchain
@@ -8,32 +9,27 @@ import { saveCollectionItem, dispatchNetworkSignal } from './firebaseService';
 export async function dispatchAgroProcess({ instruction, actor, payload }: { instruction: string, actor: string, payload: any }) {
     console.log(`[EnvirosAgro BC] Initializing instruction: ${instruction} for ${actor}`);
 
-    const generateUniqueNonce = () => `0x${Math.random().toString(16).slice(2, 18).toUpperCase()}`;
+    const nonce = await generateShardHash(actor + instruction + Date.now().toString());
 
-    // 1. Transaction Header (The Genesis of the Process)
     const txHeader = {
         timestamp: Date.now(),
         instruction,
         actor,
-        nonce: generateUniqueNonce(), // Prevents double-spending/replay
+        nonce, 
     };
 
     try {
         switch (instruction) {
             case 'MINT_CARBON':
-                // logic for carbon minting (integrating AI Studio data)
                 return await executeMinting(txHeader, payload);
 
             case 'PROCESS_PAYMENT':
-                // logic for EnvirosAgro Coin transfer (Tokenz)
                 return await executePayment(txHeader, payload);
 
             case 'LOG_SUSTAINABILITY':
-                // logic for recording Agikuyu tradition compliance or soil data
                 return await executeDataLog(txHeader, payload);
 
             case 'UPDATE_SUPPLY_CHAIN':
-                // logic for Agroboto/JuizzyCookiez logistics
                 return await executeSupplyUpdate(txHeader, payload);
 
             default:
@@ -45,33 +41,29 @@ export async function dispatchAgroProcess({ instruction, actor, payload }: { ins
     }
 }
 
-/**
- * Executes Carbon Minting shard based on verified MRV evidence.
- */
 async function executeMinting(header: any, payload: any) {
+    const { value, unit } = mintCarbonShard(payload.amount || 0, payload.confidence || 0.85);
+    
     const shardId = await saveCollectionItem('transactions', {
         type: 'TokenzMint',
         farmId: header.actor,
         details: `Carbon Mint: ${payload.amount || 0} tCO2e [Nonce: ${header.nonce}]`,
-        value: payload.value || 0,
-        unit: 'EAC'
+        value: value,
+        unit: unit
     });
     
     await dispatchNetworkSignal({
         type: 'ledger_anchor',
         origin: 'CARBON',
         title: 'MINT_FINALITY_REACHED',
-        message: `Carbon shard ${header.nonce} successfully minted to ledger.`,
+        message: `Carbon shard ${header.nonce} successfully minted to ledger. Yield: ${value} EAC.`,
         priority: 'high',
         actionIcon: 'Zap'
     });
     
-    return { status: 'SUCCESS', shardId, header };
+    return { status: 'SUCCESS', shardId, header, value };
 }
 
-/**
- * Executes transfer of EnvirosAgro Coins (Utility EAC).
- */
 async function executePayment(header: any, payload: any) {
     const shardId = await saveCollectionItem('transactions', {
         type: 'Transfer',
@@ -84,9 +76,6 @@ async function executePayment(header: any, payload: any) {
     return { status: 'SUCCESS', shardId, header };
 }
 
-/**
- * Logs biological or tradition-based compliance data shards.
- */
 async function executeDataLog(header: any, payload: any) {
     const shardId = await saveCollectionItem('media_ledger', {
         title: `LOG_${(payload.brand || 'GENERIC').toUpperCase()}_${header.nonce}`,
@@ -103,9 +92,6 @@ async function executeDataLog(header: any, payload: any) {
     return { status: 'SUCCESS', shardId, header };
 }
 
-/**
- * Updates logistics and supply chain shards for industrial finality.
- */
 async function executeSupplyUpdate(header: any, payload: any) {
     const shardId = await saveCollectionItem('orders', {
         ...payload,
@@ -116,9 +102,6 @@ async function executeSupplyUpdate(header: any, payload: any) {
     return { status: 'SUCCESS', shardId, header };
 }
 
-/**
- * Handles failed dispatch instructions and alerts the network oracle.
- */
 function handleProcessFailure(header: any, error: any) {
     console.error(`[EnvirosAgro BC] Process Failure: ${header.instruction}`, error);
     dispatchNetworkSignal({

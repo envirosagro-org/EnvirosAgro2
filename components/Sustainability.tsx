@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   User, ViewState, MediaShard 
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { analyzeSustainability, AIResponse } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import { calculateMConstant } from '../systemFunctions';
 
 interface SustainabilityProps {
   user: User;
@@ -68,8 +68,14 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
 
+  // Using system function for m-constant
+  const currentM = useMemo(() => 
+    calculateMConstant(0.92, 0.78, user.metrics.agriculturalCodeU, 0.12), 
+    [user.metrics.agriculturalCodeU]
+  );
+  
   const currentOmega = useMemo(() => (atmStatic * 0.75) / (soilResonance * 1.2), [atmStatic, soilResonance]);
-  const integrityStatus = currentOmega > 1.618 ? 'HIGH' : currentOmega > 1.4 ? 'NOMINAL' : 'FRACTURED';
+  const integrityStatus = currentM > 1.618 ? 'HIGH' : currentM > 1.4 ? 'NOMINAL' : 'FRACTURED';
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -89,7 +95,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
         status: integrityStatus,
         atm_static: atmStatic,
         soil_resonance: soilResonance,
-        m_constant: user.metrics.timeConstantTau
+        m_constant: currentM
       };
       const res = await analyzeSustainability(data);
       setOracleVerdict(res);
@@ -114,7 +120,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
         authorEsin: user.esin,
         timestamp: new Date().toISOString(),
         hash: shardHash,
-        mImpact: (currentOmega / 10).toFixed(2),
+        mImpact: (currentM / 10).toFixed(2),
         size: '1.4 KB',
         content: oracleVerdict.text
       };
@@ -138,7 +144,7 @@ ENVIROSAGRO™ SUSTAINABILITY AUDIT SHARD
 REGISTRY_ID: ${shardId}
 NODE_AUTH: ${user.esin}
 INTEGRITY_STATUS: ${integrityStatus}
-OMEGA_EQUILIBRIUM: ${currentOmega.toFixed(3)}
+M_CONSTANT_RESONANCE: ${currentM}
 TIMESTAMP: ${new Date().toISOString()}
 
 ORACLE VERDICT:
@@ -163,18 +169,23 @@ ${oracleVerdict.text}
       {/* Omega Equilibrium Card */}
       <div className="glass-card p-10 md:p-14 rounded-[64px] border border-white/5 bg-black/40 text-center space-y-8 shadow-3xl">
         <div className="space-y-2">
-          <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.6em] italic">Ω _ E Q U I L I B R I U M</p>
-          <h4 className="text-[100px] md:text-[140px] font-mono font-black tracking-tighter leading-none text-[#f43f5e] drop-shadow-[0_0_40px_rgba(244,63,94,0.3)]">
-            1.243
+          <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.6em] italic">m _ R E S O N A N C E</p>
+          <h4 className={`text-[100px] md:text-[140px] font-mono font-black tracking-tighter leading-none drop-shadow-[0_0_40px_rgba(244,63,94,0.3)] ${currentM < 1.42 ? 'text-[#f43f5e]' : 'text-emerald-400'}`}>
+            {currentM.toFixed(3)}
           </h4>
         </div>
         <div className="space-y-4 pt-10 border-t border-white/5">
           <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-            <span className="text-slate-600">System Permissions</span>
-            <span className="text-[#f43f5e] animate-pulse">RESTRICTED</span>
+            <span className="text-slate-600">Registry Alignment</span>
+            <span className={currentM < 1.42 ? 'text-[#f43f5e] animate-pulse' : 'text-emerald-400'}>
+              {integrityStatus}
+            </span>
           </div>
           <div className="h-2.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
-            <div className="h-full bg-[#f43f5e] rounded-full transition-all duration-[2s] shadow-[0_0_20px_#f43f5e]" style={{ width: '45%' }}></div>
+            <div 
+              className={`h-full rounded-full transition-all duration-[2s] shadow-[0_0_20px_currentColor] ${currentM < 1.42 ? 'bg-[#f43f5e]' : 'bg-emerald-500'}`} 
+              style={{ width: `${Math.min(100, (currentM / 2) * 100)}%` }}
+            ></div>
           </div>
         </div>
       </div>
@@ -214,7 +225,7 @@ ${oracleVerdict.text}
                   {oracleVerdict.text}
                 </div>
                 <div className="mt-10 flex gap-4 relative z-10">
-                  <button onClick={handleDownloadReport} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest">
+                  <button onClick={handleDownloadReport} className="p-3 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest">
                     <Download size={20} />
                   </button>
                   <button 
