@@ -8,15 +8,15 @@ service cloud.firestore {
       return request.auth != null; 
     }
     
-    function isOwner() { 
+    function isOwner(stewardId) { 
       return isSignedIn() && (
-        resource == null || 
-        resource.data.stewardId == request.auth.uid
+        request.auth.uid == stewardId
       ); 
     }
 
     function isAuditor() { 
       // Allows checking if the user's UID or Email is registered as an auditor
+      // Uses a safer exists check
       return exists(/databases/$(database)/documents/auditors/$(request.auth.uid)) ||
              (request.auth.token.email != null && exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)));
     }
@@ -26,7 +26,10 @@ service cloud.firestore {
     // 1. Stewards: Personal node dossier
     match /stewards/{stewardId} {
       allow read: if isSignedIn();
-      allow write: if request.auth.uid == stewardId;
+      // Explicitly allow both create and update for the user's own profile
+      allow create: if isSignedIn() && request.auth.uid == stewardId;
+      allow update: if isSignedIn() && request.auth.uid == stewardId;
+      allow delete: if false;
     }
 
     // 2. Signals: Encrypted engagement shards
@@ -41,7 +44,7 @@ service cloud.firestore {
     match /products/{productId} {
       allow read: if true; 
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow delete: if false;
     }
 
@@ -49,7 +52,7 @@ service cloud.firestore {
     match /live_products/{id} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow delete: if false;
     }
 
@@ -57,14 +60,14 @@ service cloud.firestore {
     match /media_ledger/{shardId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow delete: if false;
     }
     
     match /books/{bookId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow delete: if false;
     }
 
@@ -86,7 +89,7 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow delete: if false;
     }
 
@@ -94,7 +97,7 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner() || isAuditor());
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
       allow delete: if false;
     }
 
@@ -110,16 +113,12 @@ service cloud.firestore {
     match /social_posts/{postId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && isOwner();
-      allow delete: if isSignedIn() && isOwner();
+      allow update: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.stewardId == request.auth.uid;
     }
 
     match /connections/{connectionId} {
-      allow read: if isSignedIn() && (
-        resource.data.stewardId == request.auth.uid || 
-        resource.data.fromEsin == request.auth.token.email || 
-        resource.data.toEsin == request.auth.token.email
-      );
+      allow read: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn();
       allow delete: if false;
@@ -127,23 +126,23 @@ service cloud.firestore {
 
     // 11. Telemetry & Industrial Units
     match /telemetry/{esin} {
-      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
-      allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
     
     match /industrial_units/{unitId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isOwner() || isAuditor());
+      allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
     }
     
     match /tasks/{taskId} {
       allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
-      allow write: if isSignedIn() && (isOwner() || isAuditor());
+      allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
     }
     
     match /patents/{patentId} {
       allow read: if true;
-      allow write: if isSignedIn() && (isOwner() || isAuditor());
+      allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
     }
 
     // 12. Auditors: Internal HQ Authority

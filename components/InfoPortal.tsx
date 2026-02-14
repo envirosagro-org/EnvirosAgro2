@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Info, ShieldCheck, ChevronRight, Scale, BookOpen, Globe, Zap, Users, Lock, FileText,
@@ -7,12 +6,14 @@ import {
   Linkedin, AtSign, Pin, HelpCircle, Cloud, Wind, Facebook, MessageCircleQuestion, Eye,
   Target, Sparkles, Copyright, Shield, Award, CheckCircle2, BadgeCheck, Terminal,
   MessagesSquare, Copy, Check, ShieldPlus, Leaf, HelpCircle as FaqIcon,
-  ChevronDown, Code, Database, Gavel, Stamp, ShieldX, FileSignature
+  ChevronDown, Code, Database, Gavel, Stamp, ShieldX, FileSignature, ScrollText,
+  Cpu, Download
 } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface InfoPortalProps {
   onNavigate: (view: ViewState) => void;
+  onAcceptAll?: () => void;
 }
 
 const ENVIRONMENTS = [
@@ -89,41 +90,15 @@ const FAQ_ITEMS = [
   { q: "What is a Registry Handshake?", a: "A Handshake is a ZK-verified protocol to link physical assets (land or hardware) to your digital steward node ID (ESIN)." }
 ];
 
-const EnvirosAgroRocket: React.FC = () => {
-  return (
-    <div className="relative py-8 flex flex-col items-center bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent rounded-[56px] overflow-hidden">
-      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
-        <div className="relative w-48 md:w-64 flex flex-col items-center">
-          <div className="w-0 h-0 border-l-[80px] border-l-transparent border-r-[80px] border-r-transparent border-b-[100px] border-b-emerald-600 rounded-t-[60px] relative drop-shadow-[0_20px_40px_rgba(5,150,105,0.2)]">
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-full text-center">
-              <span className="text-[6px] font-black text-emerald-100 uppercase tracking-[0.2em]">EnvirosAgro™</span>
-            </div>
-          </div>
-          <div className="w-full bg-emerald-700/90 border-x border-emerald-500 py-6 px-6 flex flex-col items-center text-center space-y-4 -mt-1 shadow-2xl backdrop-blur-xl">
-            <div className="space-y-2">
-              <h4 className="text-sm font-black text-white uppercase tracking-widest italic leading-none">Vision</h4>
-              <p className="text-emerald-50 font-bold leading-relaxed max-w-xs text-[10px]">Socioeconomic and healthy future for agricultural community</p>
-            </div>
-            <div className="w-2/3 h-px bg-emerald-400/20"></div>
-            <div className="space-y-2">
-              <h4 className="text-sm font-black text-white uppercase tracking-widest italic leading-none">Mission</h4>
-              <p className="text-emerald-50 font-bold leading-relaxed max-w-xs text-[10px]">Smooth, reliable and safe agriculture and environ</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'about' | 'security' | 'environments' | 'faq' | 'contact' | 'legal'>('about');
+const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
+  const [activeTab, setActiveTab] = useState<'about' | 'security' | 'legal' | 'agreements' | 'environments' | 'faq' | 'contact'>('about');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const tabs = [
     { id: 'about', label: 'About', icon: Info },
     { id: 'security', label: 'Security Shards', icon: ShieldCheck },
     { id: 'legal', label: 'Legal Registry', icon: Gavel },
+    { id: 'agreements', label: 'Agreements', icon: FileText },
     { id: 'environments', label: 'Nodes', icon: Share2 },
     { id: 'faq', label: 'Registry FAQ', icon: FaqIcon },
     { id: 'contact', label: 'HQ Hub', icon: Globe },
@@ -179,8 +154,6 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
                   </div>
                ))}
             </div>
-
-            <EnvirosAgroRocket />
           </div>
         )}
 
@@ -215,18 +188,6 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
                 </div>
               ))}
             </div>
-
-            <div className="p-12 glass-card rounded-[80px] border border-white/5 bg-black/40 flex flex-col items-center text-center space-y-10 shadow-[0_50px_150px_rgba(0,0,0,0.8)] mt-12">
-               <div className="w-20 h-20 bg-indigo-600/10 rounded-[32px] flex items-center justify-center border border-indigo-500/20 shadow-2xl">
-                 <Database className="text-indigo-400 w-10 h-10" />
-               </div>
-               <div className="space-y-4 max-w-3xl">
-                  <h4 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter">DECENTRALIZED GOVERNANCE</h4>
-                  <p className="text-slate-500 text-lg md:text-xl italic leading-relaxed font-medium">
-                     These rules are anchored to the console and cannot be modified without a 3/5 multisig consensus from HQ Root Stewards.
-                  </p>
-               </div>
-            </div>
           </div>
         )}
 
@@ -256,17 +217,71 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
                  </div>
                ))}
             </div>
+          </div>
+        )}
 
-            <div className="p-12 glass-card rounded-[80px] border border-emerald-500/20 bg-emerald-600/5 flex flex-col md:flex-row items-center justify-between gap-12 shadow-3xl mt-12">
-               <div className="flex items-center gap-8 text-center md:text-left">
-                  <div className="w-20 h-20 bg-emerald-600 rounded-[32px] flex items-center justify-center shadow-3xl shrink-0"><Stamp size={36} className="text-white" /></div>
-                  <div className="space-y-2">
-                     <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Finality & Jurisdictional Sync</h4>
-                     <p className="text-slate-400 text-lg italic font-medium leading-relaxed">"Every registry handshake is legally binding under the SEHTI Code of Laws. Shard finality is peer-verified."</p>
-                  </div>
-               </div>
-               <button className="px-12 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all">DOWNLOAD FULL SCROLL</button>
-            </div>
+        {activeTab === 'agreements' && (
+          <div className="p-8 md:p-12 space-y-12 animate-in slide-in-from-top-4 duration-500">
+             <div className="glass-card p-10 md:p-14 rounded-[64px] border-2 border-white/5 bg-black/40 shadow-3xl relative overflow-hidden flex flex-col group/card">
+                {/* Header of Agreement Card */}
+                <div className="flex items-center justify-between mb-12 relative z-10">
+                   <div className="flex items-center gap-8">
+                      <div className="w-20 h-20 rounded-3xl bg-black/60 border-2 border-white/10 flex items-center justify-center text-blue-400 shadow-2xl group-hover/card:rotate-6 transition-transform">
+                         <Cpu size={40} />
+                      </div>
+                      <div className="text-left">
+                         <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 drop-shadow-2xl">NODE OPERATOR <br/> <span className="text-white">COVENANT</span></h3>
+                         <p className="text-slate-600 font-mono text-[10px] uppercase tracking-[0.4em] mt-3">VERSION 2.0.4 // NODE_ANCHOR</p>
+                      </div>
+                   </div>
+                   <div className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">
+                      <Download size={32} />
+                   </div>
+                </div>
+
+                <div className="space-y-10 relative z-10">
+                   <p className="text-[14px] font-black text-blue-500 uppercase tracking-[0.2em] px-4 italic">RIGHTS AND RESPONSIBILITIES OF A SOVEREIGN STEWARD.</p>
+                   
+                   <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 relative overflow-hidden shadow-inner group/text">
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover/text:scale-110 transition-transform"><Database size={400} /></div>
+                      <p className="text-slate-200 text-3xl leading-[2.1] italic font-medium relative z-10 font-sans">
+                         "As a Node Operator, you are responsible for the uptime of your paired hardware. You agree to submit your node to \"Periodic Quorum Audits.\" In exchange for maintaining mesh stability (m > 1.42), you are authorized to mint EAC shards. Failure to maintain a verified m-constant below the fallowing threshold may result in temporary registry suspension."
+                      </p>
+                   </div>
+                </div>
+
+                <div className="mt-16 flex justify-end items-center gap-6 relative z-10 px-6 opacity-40 group-hover/card:opacity-100 transition-opacity">
+                   <Stamp size={28} className="text-slate-500" />
+                   <span className="text-[12px] font-mono text-slate-500 font-black uppercase tracking-[0.5em] italic">COMMITTED_BY_ROOT_STEWARD_#0X882A</span>
+                </div>
+             </div>
+
+             <div className="p-12 md:p-20 glass-card rounded-[80px] border-2 border-indigo-500/20 bg-indigo-950/5 flex flex-col items-center justify-center text-center space-y-12 shadow-[0_50px_150px_rgba(0,0,0,0.8)] relative overflow-hidden group/consent">
+                <div className="absolute inset-0 bg-indigo-500/[0.02] pointer-events-none"></div>
+                <div className="relative">
+                   <div className="w-28 h-28 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-[0_0_100px_rgba(99,102,241,0.5)] border-4 border-white/10 animate-float">
+                      <Fingerprint size={56} />
+                   </div>
+                   <div className="absolute inset-[-20px] border-2 border-dashed border-indigo-500/20 rounded-full animate-spin-slow"></div>
+                </div>
+
+                <div className="space-y-6">
+                   <h4 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">MUTUAL <span className="text-white">CONSENT</span></h4>
+                   <p className="text-slate-400 text-xl md:text-2xl font-medium italic leading-relaxed max-w-2xl mx-auto opacity-80 group-hover/consent:opacity-100 transition-opacity">
+                      "Participation in the registry constitutes acceptance of all active covenants. Drift is monitored by the Quorum."
+                   </p>
+                </div>
+
+                <div className="w-full max-w-md p-3 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-[48px] relative group/btn">
+                   <button 
+                     onClick={onAcceptAll}
+                     className="w-full py-12 bg-emerald-600 hover:bg-emerald-500 rounded-[40px] text-white font-black text-lg uppercase tracking-[0.5em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-95 transition-all border-4 border-white/10 ring-[32px] ring-white/5 relative z-10"
+                   >
+                      ACCEPT ALL SHARDS
+                   </button>
+                   <div className="absolute inset-0 bg-emerald-400/20 blur-2xl group-hover/btn:blur-3xl transition-all opacity-40"></div>
+                </div>
+             </div>
           </div>
         )}
 
@@ -344,6 +359,10 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate }) => {
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .shadow-3xl { box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.7); }
+        .animate-spin-slow { animation: spin 12s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes scan { from { top: -10px; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );

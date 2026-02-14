@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, Cpu, Activity, Zap, ShieldCheck, Binary, Layers, Microscope, FlaskConical, Scan, 
@@ -16,8 +17,11 @@ import {
   Box, Database as Disk, ShieldCheck as VerifiedIcon,
   Globe2, ExternalLink,
   ScanLine,
-  // Added BadgeCheck to fix the "Cannot find name 'BadgeCheck'" error on line 830
-  BadgeCheck
+  BadgeCheck,
+  LayoutGrid,
+  ClipboardList,
+  Waves as WaveIcon,
+  HardDrive
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, Radar as RechartsRadar } from 'recharts';
 import { chatWithAgroExpert, AIResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/geminiService';
@@ -34,10 +38,11 @@ interface IntelligenceProps {
   initialSection?: string | null;
 }
 
-type TabState = 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry' | 'trends';
+type TabState = 'hub' | 'twin' | 'simulator' | 'sid' | 'evidence' | 'eos_ai' | 'telemetry' | 'trends';
 type OracleMode = 'BIO_DIAGNOSTIC' | 'SPECTRAL_AUDIT' | 'GENOMIC_INQUIRY' | 'SOIL_REMEDIATION';
 
 const ORACLE_QUERY_COST = 25;
+const SID_SCAN_COST = 40;
 
 const NEURAL_STEPS = [
   "Inflow Detected. Buffering Shard...",
@@ -48,12 +53,20 @@ const NEURAL_STEPS = [
   "Synthesizing Diagnostic Verdict..."
 ];
 
+const SID_STEPS = [
+  "Initializing Particle Filter...",
+  "Calibrating Bio-Aura Shards...",
+  "Detecting Dissonant Frequencies...",
+  "Mapping Viral Footprint...",
+  "Calculating SID Saturation..."
+];
+
 const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC, onOpenEvidence, onNavigate, initialSection }) => {
-  const [activeTab, setActiveTab] = useState<TabState>('simulator');
+  const [activeTab, setActiveTab] = useState<TabState>(initialSection as TabState || 'hub');
   
   // Vector Routing Logic
   useEffect(() => {
-    if (initialSection) {
+    if (initialSection && initialSection !== activeTab) {
       setActiveTab(initialSection as TabState);
     }
   }, [initialSection]);
@@ -92,33 +105,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     }
   };
 
-  const downloadShard = (content: string, mode: string, type: string) => {
-    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
-    const report = `
-ENVIROSAGRO™ ${type.toUpperCase()} SHARD
-=================================
-REGISTRY_ID: ${shardId}
-NODE_AUTH: ${user.esin}
-MODE: ${mode}
-TIMESTAMP: ${new Date().toISOString()}
-ZK_CONSENSUS: VERIFIED (99.9%)
-
-VERDICT:
--------------------
-${content}
-
--------------------
-(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
-    `;
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `EA_${type}_${mode}_${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   // --- IOT TELEMETRY STATES ---
   const hardwareNodes = useMemo(() => 
     (user.resources || []).filter(r => r.category === 'HARDWARE'),
@@ -138,7 +124,7 @@ ${content}
   }, [user, telemetryLogs.length]);
 
   useEffect(() => {
-    if (activeTab === 'telemetry' && selectedIotNode) {
+    if (activeTab === 'telemetry' || activeTab === 'hub' || activeTab === 'twin') {
       const interval = setInterval(() => {
         const metrics = ['Temperature', 'Soil Purity', 'm-Constant Drift', 'Photosynthetic Flux'];
         const metric = metrics[Math.floor(Math.random() * metrics.length)];
@@ -146,7 +132,7 @@ ${content}
         const newLog = { timestamp: new Date().toLocaleTimeString(), metric, value };
         setTelemetryLogs(prev => {
            const updated = [newLog, ...prev].slice(0, 8);
-           if (user) backupTelemetryShard(user.esin, { logs: updated, node: selectedIotNode.id });
+           if (user && selectedIotNode) backupTelemetryShard(user.esin, { logs: updated, node: selectedIotNode.id });
            return updated;
         });
       }, 5000);
@@ -157,6 +143,7 @@ ${content}
   // --- DIGITAL TWIN ---
   const [isTwinSyncing, setIsTwinSyncing] = useState(false);
   const [twinResonance, setTwinResonance] = useState(94.2);
+  const [activeModel, setActiveModel] = useState<'soil' | 'crop' | 'energy'>('soil');
 
   const handleTwinRefresh = () => {
     setIsTwinSyncing(true);
@@ -211,8 +198,44 @@ ${content}
     }
   };
 
-  // --- SID ---
-  const [sidLoad, setSidLoad] = useState(user.metrics.viralLoadSID);
+  // --- SID SCANNER ---
+  const [isSidScanning, setIsSidScanning] = useState(false);
+  const [sidResult, setSidResult] = useState<AIResponse | null>(null);
+  const [sidTargetNode, setSidTargetNode] = useState<AgroResource | null>(user.resources?.[0] || null);
+  const [sidStepIndex, setSidStepIndex] = useState(0);
+  const [sidStressFactor, setSidStressFactor] = useState(0.12);
+
+  const handleRunSidScan = async () => {
+    if (isSidScanning) return;
+    if (!await onSpendEAC(SID_SCAN_COST, 'SID_VIRAL_LOAD_SCAN')) return;
+
+    setIsSidScanning(true);
+    setSidResult(null);
+    setSidStepIndex(0);
+
+    const stepInterval = setInterval(() => {
+      setSidStepIndex(prev => (prev < SID_STEPS.length - 1 ? prev + 1 : prev));
+    }, 800);
+
+    try {
+      const prompt = `Act as an EnvirosAgro Bio-Security Auditor. Perform a SID (Social/Systemic Integrated Deficit) Scan for:
+      Target Node: ${sidTargetNode?.name || 'GENERIC'} (${sidTargetNode?.id || 'EXT'})
+      Environmental Stress (S): ${sidStressFactor}
+      m-Constant Baseline: ${user.metrics.timeConstantTau}
+      
+      Identify viral loads in the bio-signal (dissonance) and provide a technical remediation shard. 
+      Calculate a SID Saturation Index (0.0 to 1.0). Format as a technical report.`;
+      
+      const response = await chatWithAgroExpert(prompt, []);
+      setSidResult(response);
+      onEarnEAC(20, 'SID_DIAGNOSTIC_INGEST_OK');
+    } catch (e) {
+      setSidResult({ text: "SYSTEM_ERROR: SID buffer parity failed. Oracle link severed." });
+    } finally {
+      clearInterval(stepInterval);
+      setIsSidScanning(false);
+    }
+  };
 
   // --- SCIENCE ORACLE (EOS AI) MULTIMODAL ---
   const [aiQuery, setAiQuery] = useState('');
@@ -236,7 +259,7 @@ ${content}
         setUploadedFile(base64String);
         setFileMime(file.type);
         setFileBase64(base64String.split(',')[1]);
-        setAiResult(null); // Clear previous result
+        setAiResult(null); 
         onEarnEAC(5, 'ORACLE_DATA_BUFFERED');
       };
       reader.readAsDataURL(file);
@@ -308,6 +331,22 @@ ${content}
     }
   };
 
+  // --- EVIDENCE VAULT LOGIC ---
+  const [isSyncingEvidence, setIsSyncingEvidence] = useState(false);
+  const [evidenceLedger, setEvidenceLedger] = useState([
+    { id: 'EV-882-A', type: 'Spectral Shard', node: 'Node_Paris_04', date: '2d ago', status: 'VERIFIED', col: 'text-emerald-400' },
+    { id: 'EV-104-B', type: 'Biometric Log', node: 'Stwd_Nairobi', date: '5h ago', status: 'AUDITING', col: 'text-blue-400' },
+    { id: 'EV-042-C', type: 'IoT Telemetry', node: 'Global_Alpha', date: '1d ago', status: 'VERIFIED', col: 'text-indigo-400' },
+  ]);
+
+  const handleEvidenceSync = () => {
+    setIsSyncingEvidence(true);
+    setTimeout(() => {
+      setIsSyncingEvidence(false);
+      onEarnEAC(5, 'VAULT_LEDGER_SYNCHRONIZED');
+    }, 2000);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto px-4">
       
@@ -335,13 +374,14 @@ ${content}
            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-2 relative z-10">Node Ingest Status</p>
            <h4 className="text-6xl font-mono font-black text-white tracking-tighter relative z-10 leading-none">99<span className="text-xl text-emerald-500 italic">.9</span></h4>
            <div className="flex items-center justify-center gap-3 text-emerald-400 text-[10px] font-black uppercase relative z-10 tracking-widest border border-emerald-500/20 bg-emerald-500/5 py-2 px-4 rounded-full shadow-inner">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> ACTIVE_SYNC
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div> ACTIVE_SYNC
            </div>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-2xl w-fit border border-white/5 bg-black/40 shadow-xl mx-auto lg:mx-0">
         {[
+          { id: 'hub', name: 'Master Hub', icon: LayoutGrid },
           { id: 'twin', name: 'Digital Twin', icon: Box },
           { id: 'simulator', name: 'EOS Simulator', icon: Cpu },
           { id: 'trends', name: 'Trend Ingest', icon: TrendingUp },
@@ -357,151 +397,396 @@ ${content}
       </div>
 
       <div className="min-h-[750px]">
-        
-        {/* --- VIEW: TREND INGEST --- */}
-        {activeTab === 'trends' && (
-          <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
-             <div className="glass-card p-12 rounded-[64px] border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden flex flex-col items-center justify-center min-h-[600px] shadow-3xl">
-                <div className="absolute inset-0 bg-indigo-500/[0.02] pointer-events-none"></div>
-                
-                {!trendsResult && !isIngestingTrends ? (
-                  <div className="text-center space-y-10 relative z-10 py-20">
-                     <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-3xl border-4 border-white/10 mx-auto group-hover:scale-110 transition-transform">
-                        <TrendingUp size={64} className="text-white" />
-                     </div>
-                     <div className="space-y-4">
-                        <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Trend <span className="text-indigo-400">Ingest</span></h3>
-                        <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto leading-relaxed opacity-80">
-                           "Synchronizing latest innovations in regenerative farming and blockchain carbon tracking via global mesh search grounding."
-                        </p>
-                     </div>
-                     <button 
-                       onClick={handleIngestTrends}
-                       className="px-16 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10"
-                     >
-                        <Globe2 size={24} /> INITIALIZE TREND SYNC
-                     </button>
-                  </div>
-                ) : isIngestingTrends ? (
-                  <div className="flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in fade-in">
-                     <div className="relative">
-                        <Loader2 size={120} className="text-indigo-500 animate-spin" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                           <Activity size={40} className="text-indigo-400 animate-pulse" />
-                        </div>
-                     </div>
-                     <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic m-0">CRAWLING GLOBAL SHARDS...</p>
-                  </div>
-                ) : (
-                  <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-10 w-full px-6 py-10">
-                     <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 prose prose-invert max-w-none shadow-3xl border-l-[12px] border-l-indigo-600 relative overflow-hidden group/shard">
-                        <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
-                           <div className="flex items-center gap-6">
-                              <SycamoreLogo size={40} className="text-indigo-400" />
-                              <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Strategic Trend Shard</h4>
-                           </div>
-                           <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
-                              <span className="text-[10px] font-mono font-black text-indigo-400 uppercase tracking-widest">GROUNDED_SYNC_STABLE</span>
-                           </div>
-                        </div>
 
-                        <div className="text-slate-300 text-xl md:text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/5">
-                           {trendsResult?.text}
-                        </div>
-
-                        {trendsResult?.sources && trendsResult.sources.length > 0 && (
-                          <div className="mt-16 pt-10 border-t border-white/10 relative z-10 space-y-6">
-                             <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] italic">Grounding Sources / Verification Nodes:</p>
-                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {trendsResult.sources.map((s, i) => (
-                                   <a key={i} href={s.web?.uri || '#'} target="_blank" rel="noopener noreferrer" className="p-6 bg-white/[0.02] border border-white/5 rounded-[32px] flex items-center justify-between group/link hover:border-indigo-500/40 transition-all">
-                                      <div className="flex items-center gap-4">
-                                         <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400 group-hover/link:scale-110 transition-transform"><Globe size={18} /></div>
-                                         <div className="max-w-[150px]">
-                                            <p className="text-xs font-black text-slate-300 uppercase italic truncate leading-none">{s.web?.title || 'Registry Shard'}</p>
-                                            <p className="text-[8px] text-slate-600 font-mono mt-1 truncate">{s.web?.uri}</p>                                         </div>
-                                      </div>
-                                      <ExternalLink size={14} className="text-slate-700 group-hover/link:text-indigo-400 transition-all" />
-                                   </a>
-                                ))}
-                             </div>
-                          </div>
-                        )}
-                        
-                        <div className="mt-12 pt-10 border-t border-white/10 flex justify-center gap-6 relative z-10">
-                           <button onClick={() => downloadShard(trendsResult?.text || '', 'Trend_Sync', 'Report')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
-                              <Download size={18} /> Download Shard
-                           </button>
-                           <button 
-                             onClick={() => anchorToLedger(trendsResult?.text || '', 'Trend', 'Synthesis')}
-                             disabled={!!isArchiving || archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`)}
-                             className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
-                           >
-                              {isArchiving === `Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
-                              {archivedShards.has(`Trend_Synthesis_${trendsResult?.text?.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
-                           </button>
-                        </div>
-                     </div>
-                     <div className="flex justify-center">
-                        <button onClick={() => setTrendsResult(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl">DISCARD ANALYSIS</button>
-                     </div>
-                  </div>
-                )}
-             </div>
-          </div>
-        )}
-
-        {/* --- TAB: DIGITAL TWIN --- */}
-        {activeTab === 'twin' && (
-          <div className="max-w-5xl mx-auto space-y-12 animate-in zoom-in duration-500 text-center">
-             <div className="glass-card p-16 rounded-[80px] border-emerald-500/20 bg-emerald-950/5 relative overflow-hidden flex flex-col items-center justify-center min-h-[650px] shadow-3xl group">
-                <div className="absolute inset-0 bg-emerald-500/[0.02] pointer-events-none"></div>
-                <div className="w-64 h-64 relative flex items-center justify-center mb-12">
-                   <div className={`w-48 h-48 rounded-[64px] border-4 transition-all duration-[2s] shadow-[0_0_100px_rgba(16,185,129,0.3)] flex items-center justify-center ${isTwinSyncing ? 'scale-110 bg-emerald-500/20 border-emerald-400' : 'bg-black/60 border-emerald-500/40'}`}>
-                      <Box size={80} className="text-emerald-500 animate-pulse" />
-                   </div>
-                   <div className="absolute inset-[-30px] border-2 border-dashed border-white/10 rounded-full animate-spin-slow"></div>
-                   <div className="absolute inset-[-60px] border-2 border-dotted border-indigo-500/10 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse' }}></div>
+        {/* --- VIEW: MASTER HUB (Consolidated View) --- */}
+        {activeTab === 'hub' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-700">
+             {/* SIMULATOR MINI SHARD */}
+             <div onClick={() => setActiveTab('simulator')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
+                <div className="flex justify-between items-start">
+                   <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform"><Cpu size={32} /></div>
+                   <span className="text-[10px] font-black text-slate-700 uppercase">Physics Engine</span>
                 </div>
                 <div className="space-y-4">
-                   <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none italic">Universal <span className="text-emerald-400">Mirror Node</span></h3>
-                   <p className="text-slate-400 text-xl font-medium italic">"Real-time biological digital twin of node {user.esin}."</p>
-                </div>
-                <div className="grid grid-cols-3 gap-8 w-full max-w-2xl mt-12 py-10 border-y border-white/5">
-                   <div>
-                      <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Mirror Drift</p>
-                      <p className="text-3xl font-mono font-black text-emerald-400">0.02%</p>
-                   </div>
-                   <div>
-                      <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Resonance Score</p>
-                      <p className="text-3xl font-mono font-black text-indigo-400">{twinResonance.toFixed(1)}%</p>
-                   </div>
-                   <div>
-                      <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Last Calibration</p>
-                      <p className="text-3xl font-mono font-black text-white">Just now</p>
+                   <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">EOS Simulator</h4>
+                   <div className="h-24 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                         <AreaChart data={simProjectionData.slice(-10)}>
+                            <Area type="monotone" dataKey="score" stroke="#10b981" fill="#10b98110" />
+                         </AreaChart>
+                      </ResponsiveContainer>
                    </div>
                 </div>
-                <button 
-                  onClick={handleTwinRefresh}
-                  disabled={isTwinSyncing}
-                  className="mt-12 px-16 py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
-                >
-                   {isTwinSyncing ? <Loader2 size={24} className="animate-spin" /> : <RefreshCw size={16} />}
-                   {isTwinSyncing ? 'Recalibrating Mirror...' : 'RE-CALIBRATE TWIN'}
-                </button>
+                <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                   <span className="text-[9px] font-black text-emerald-400">SYNC_NOMINAL</span>
+                   <ChevronRight size={20} className="text-slate-800" />
+                </div>
+             </div>
+
+             {/* SID SCANNER MINI SHARD */}
+             <div onClick={() => setActiveTab('sid')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-rose-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
+                <div className="flex justify-between items-start">
+                   <div className="p-4 rounded-2xl bg-rose-500/10 text-rose-500 group-hover:rotate-12 transition-transform"><Radiation size={32} /></div>
+                   <span className="text-[10px] font-black text-slate-700 uppercase">Bio-Security</span>
+                </div>
+                <div className="space-y-4 text-center">
+                   <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">SID Scanner</h4>
+                   <p className="text-4xl font-mono font-black text-rose-500">0.42<span className="text-lg italic ml-1">μ</span></p>
+                   <p className="text-[9px] text-slate-500 uppercase tracking-widest">Viral Load Constant</p>
+                </div>
+                <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                   <span className="text-[9px] font-black text-rose-400 italic">DETECTING_ANOMALIES...</span>
+                   <ChevronRight size={20} className="text-slate-800" />
+                </div>
+             </div>
+
+             {/* TELEMETRY MINI SHARD */}
+             <div onClick={() => setActiveTab('telemetry')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-blue-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
+                <div className="flex justify-between items-start">
+                   <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform"><Wifi size={32} /></div>
+                   <span className="text-[10px] font-black text-slate-700 uppercase">IoT Ingest</span>
+                </div>
+                <div className="space-y-4 font-mono text-[10px] text-slate-500 overflow-hidden">
+                   {telemetryLogs.slice(0, 4).map((log, i) => (
+                      <div key={i} className="flex justify-between border-b border-white/5 pb-2">
+                         <span>[{log.metric}]</span>
+                         <span className="text-white">{log.value}</span>
+                      </div>
+                   ))}
+                </div>
+                <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                   <span className="text-[9px] font-black text-blue-400 uppercase">Pipeline_Active</span>
+                   <ChevronRight size={20} className="text-slate-800" />
+                </div>
              </div>
           </div>
         )}
 
-        {/* --- TAB: SIMULATOR --- */}
+        {/* --- VIEW: DIGITAL TWIN --- */}
+        {activeTab === 'twin' && (
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in zoom-in duration-500">
+              <div className="lg:col-span-8 flex flex-col space-y-8">
+                 <div className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black overflow-hidden relative group min-h-[550px] shadow-3xl flex flex-col items-center justify-center">
+                    <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(16,185,129,0.08)_0%,_transparent_70%)] pointer-events-none"></div>
+                    
+                    {isTwinSyncing ? (
+                       <div className="flex flex-col items-center justify-center space-y-10 py-20 text-center animate-in zoom-in">
+                          <div className="relative">
+                             <div className="w-48 h-48 rounded-full border-t-4 border-emerald-500 animate-spin"></div>
+                             <div className="absolute inset-0 flex items-center justify-center">
+                                <RefreshCw size={48} className="text-emerald-400 animate-pulse" />
+                             </div>
+                          </div>
+                          <p className="text-emerald-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic">RECALIBRATING_TWIN...</p>
+                       </div>
+                    ) : (
+                       <div className="relative z-10 w-full h-full flex flex-col items-center justify-center space-y-12 py-10">
+                          {/* 3D-ish CSS Grid Visualization */}
+                          <div className="relative w-full max-w-2xl aspect-video perspective-1000 perspective-origin-top group-hover:scale-105 transition-all duration-[3s]">
+                             <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-[64px] bg-emerald-500/[0.02] shadow-[0_0_80px_rgba(16,185,129,0.1)] transform rotateX(60deg) translateZ(0)">
+                                {/* Grid Lines */}
+                                <div className="absolute inset-0 grid grid-cols-12 grid-rows-12">
+                                   {[...Array(144)].map((_, i) => (
+                                      <div key={i} className="border-[0.5px] border-emerald-500/10 transition-colors hover:bg-emerald-500/20"></div>
+                                   ))}
+                                </div>
+                                {/* Shard Markers */}
+                                <div className="absolute top-1/4 left-1/3 w-4 h-4 bg-emerald-500 rounded-full animate-ping"></div>
+                                <div className="absolute bottom-1/3 right-1/4 w-3 h-3 bg-blue-500 rounded-full animate-ping delay-500"></div>
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-indigo-600/40 rounded-full animate-pulse border-2 border-indigo-400"></div>
+                             </div>
+                             {/* Floating Elements */}
+                             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 bg-black/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-3xl animate-float">
+                                <div className="flex items-center gap-4">
+                                   <Activity className="text-emerald-400 animate-pulse" />
+                                   <span className="text-xs font-mono font-black text-white uppercase italic">Twin_Stability: {twinResonance.toFixed(1)}%</span>
+                                </div>
+                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-6 w-full max-w-3xl">
+                             {[
+                                { id: 'soil', l: 'Substrate', icon: Mountain, color: 'text-orange-500' },
+                                { id: 'crop', l: 'Phyto-Resonance', icon: Sprout, color: 'text-emerald-400' },
+                                { id: 'energy', l: 'Thermodynamics', icon: Zap, color: 'text-blue-400' },
+                             ].map(m => (
+                                <button 
+                                   key={m.id}
+                                   onClick={() => setActiveModel(m.id as any)}
+                                   className={`p-6 rounded-[40px] border-2 transition-all flex flex-col items-center gap-4 group/btn ${activeModel === m.id ? 'bg-indigo-600/10 border-indigo-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-700 hover:border-white/10'}`}
+                                >
+                                   <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 ${m.color} group-hover/btn:rotate-12 transition-transform shadow-inner`}>
+                                      <m.icon size={24} />
+                                   </div>
+                                   <span className="text-[10px] font-black uppercase tracking-widest">{m.l}</span>
+                                </button>
+                             ))}
+                          </div>
+                       </div>
+                    )}
+                 </div>
+
+                 <div className="p-10 glass-card rounded-[64px] border border-emerald-500/10 bg-emerald-600/[0.03] flex flex-col md:flex-row items-center justify-between gap-10 shadow-xl group">
+                    <div className="flex items-center gap-8 text-center md:text-left">
+                       <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center shadow-3xl group-hover:rotate-6 transition-transform">
+                          <History size={28} className="text-white" />
+                       </div>
+                       <div className="space-y-1">
+                          <h4 className="text-xl font-black text-white uppercase italic">Calibration Shard</h4>
+                          <p className="text-slate-500 text-sm font-medium italic leading-relaxed">Update the digital twin logic based on the latest regional m-constant drift.</p>
+                       </div>
+                    </div>
+                    <button 
+                      onClick={handleTwinRefresh}
+                      disabled={isTwinSyncing}
+                      className="px-10 py-5 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 border-2 border-white/10"
+                    >
+                       {isTwinSyncing ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+                       CALIBRATE TWIN
+                    </button>
+                 </div>
+              </div>
+
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-black/40 space-y-8 shadow-2xl relative overflow-hidden group/stats">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/stats:scale-110 transition-transform duration-[10s]"><Activity size={200} /></div>
+                    <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                       <LineChart className="text-blue-400 w-6 h-6" />
+                       <h3 className="text-lg font-black text-white uppercase italic tracking-widest">Model <span className="text-blue-400">Resonance</span></h3>
+                    </div>
+                    
+                    <div className="space-y-8 relative z-10">
+                       {[
+                         { l: 'Fidelity', v: '0.998α', p: 98, c: 'bg-emerald-500' },
+                         { l: 'Latency', v: '14ms', p: 88, c: 'bg-blue-500' },
+                         { l: 'Compute Load', v: 'Low', p: 12, c: 'bg-indigo-500' },
+                       ].map(s => (
+                          <div key={s.l} className="space-y-3">
+                             <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500 px-2">
+                                <span>{s.l}</span>
+                                <span className="text-white font-mono">{s.v}</span>
+                             </div>
+                             <div className="h-1 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                                <div className={`h-full rounded-full transition-all duration-[2s] ${s.c} shadow-[0_0_10px_currentColor]`} style={{ width: `${s.p}%` }}></div>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+
+                    <div className="p-6 bg-blue-600/5 rounded-[32px] border border-blue-500/20">
+                       <p className="text-[10px] text-blue-300 italic leading-relaxed text-center font-medium uppercase tracking-tight">
+                          "Predictive twin modeling reduces operational stress (S) by 18.4%."
+                       </p>
+                    </div>
+                 </div>
+
+                 <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-6 shadow-xl">
+                    <h5 className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3 italic">
+                       <HardDrive size={14} className="text-indigo-400" /> Twin Artifacts
+                    </h5>
+                    <div className="space-y-3">
+                       {[1, 2, 3].map(i => (
+                          <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl group hover:border-white/20 transition-all cursor-pointer">
+                             <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center border border-white/5 text-slate-700 group-hover:text-indigo-400"><Database size={14} /></div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase italic">SHARD_REVISION_v{i}.0</span>
+                             </div>
+                             <Download size={14} className="text-slate-800 group-hover:text-white" />
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
+
+        {/* --- VIEW: SID SCANNER --- */}
+        {activeTab === 'sid' && (
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
+              {/* Left Column: Scanner Parameters */}
+              <div className="lg:col-span-4 space-y-8">
+                 <div className="glass-card p-10 rounded-[56px] border border-rose-500/20 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-rose-500/[0.01] pointer-events-none"></div>
+                    <div className="flex items-center gap-4 border-b border-white/5 pb-8 relative z-10">
+                       <div className="p-4 bg-rose-600 rounded-3xl shadow-xl flex items-center justify-center text-white border-2 border-white/10 group-hover:rotate-6 transition-transform">
+                          <Radiation size={32} className="animate-pulse" />
+                       </div>
+                       <div>
+                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">SID <span className="text-rose-500">Scanner</span></h3>
+                          <p className="text-rose-400/60 text-[10px] font-mono tracking-widest uppercase mt-2">VIRAL_LOAD_PROTOCOL</p>
+                       </div>
+                    </div>
+
+                    <div className="space-y-8 relative z-10">
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 italic">Target Ingest Shard</label>
+                          <div className="grid grid-cols-1 gap-3">
+                             {(user.resources || []).length > 0 ? (
+                               user.resources?.map(res => (
+                                 <button 
+                                   key={res.id}
+                                   onClick={() => setSidTargetNode(res)}
+                                   className={`p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${sidTargetNode?.id === res.id ? 'bg-rose-600/10 border-rose-500 shadow-xl' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}
+                                 >
+                                    <div className="flex items-center gap-4">
+                                       <div className={`p-2.5 rounded-xl transition-all ${sidTargetNode?.id === res.id ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-800'}`}>
+                                          {res.category === 'LAND' ? <Sprout size={16} /> : <Cpu size={16} />}
+                                       </div>
+                                       <span className={`text-[11px] font-black uppercase tracking-widest ${sidTargetNode?.id === res.id ? 'text-white' : ''}`}>{res.name}</span>
+                                    </div>
+                                    <ChevronRight size={14} className={sidTargetNode?.id === res.id ? 'text-rose-500' : 'text-slate-900'} />
+                                 </button>
+                               ))
+                             ) : (
+                               <div className="p-8 text-center bg-white/5 rounded-3xl border-2 border-dashed border-white/5 opacity-40">
+                                  <p className="text-[9px] font-black uppercase">No Active Nodes Found</p>
+                               </div>
+                             )}
+                          </div>
+                       </div>
+
+                       <div className="space-y-4 group">
+                          <div className="flex justify-between items-center px-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-rose-400 transition-colors italic">S (Stress) Constant</label>
+                             <span className="text-xl font-mono font-black text-white group-hover:text-rose-500 transition-all">{sidStressFactor}</span>
+                          </div>
+                          <input 
+                            type="range" min="0.01" max="1.0" step="0.01" value={sidStressFactor} 
+                            onChange={e => setSidStressFactor(parseFloat(e.target.value))}
+                            className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-600 shadow-inner group-hover:h-3 transition-all" 
+                          />
+                       </div>
+
+                       <button 
+                         onClick={handleRunSidScan}
+                         disabled={isSidScanning || !sidTargetNode}
+                         className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all disabled:opacity-30 border-2 border-white/10 ring-8 ring-rose-500/5 group/scan"
+                       >
+                          {isSidScanning ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : <Scan className="w-8 h-8 mx-auto group-hover/scan:rotate-12 transition-transform" />}
+                          <p className="mt-4">{isSidScanning ? 'ANALYZING VIRAL LOAD...' : 'INITIALIZE SID SCAN'}</p>
+                       </button>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Right Column: Diagnostic Output */}
+              <div className="lg:col-span-8">
+                 <div className="glass-card rounded-[64px] min-h-[850px] border-2 border-white/10 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
+                    <div className="absolute inset-0 pointer-events-none z-10 opacity-30">
+                       <div className="w-full h-[3px] bg-rose-500/40 absolute top-0 animate-scan"></div>
+                    </div>
+                    
+                    <div className="p-10 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-20 px-14">
+                       <div className="flex items-center gap-10">
+                          <div className="w-16 h-16 rounded-2xl bg-rose-600 flex items-center justify-center text-white shadow-xl relative overflow-hidden group/ico">
+                             <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
+                             <Bot size={32} className="group-hover/ico:scale-110 transition-transform relative z-10" />
+                          </div>
+                          <div>
+                             <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Diagnostic <span className="text-rose-500">Verdict Shard</span></h3>
+                             <p className="text-rose-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_VIRAL_SYNC // {sidTargetNode?.id || 'EXTERNAL_NODE'}</p>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-20">
+                       {!sidResult && !isSidScanning ? (
+                          <div className="h-full flex flex-col items-center justify-center text-center space-y-16 py-20 opacity-20 group">
+                             <div className="relative">
+                                <Radiation size={180} className="text-slate-500 group-hover:text-rose-500 transition-colors duration-1000" />
+                                <div className="absolute inset-[-40px] border-2 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
+                             </div>
+                             <div className="space-y-4">
+                                <p className="text-5xl font-black uppercase tracking-[0.6em] text-white italic">SCANNER_IDLE</p>
+                                <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest">Initialize a SID scan to map systemic deficits</p>
+                             </div>
+                          </div>
+                       ) : isSidScanning ? (
+                          <div className="h-full flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
+                             <div className="relative">
+                                <Loader2 size={120} className="text-rose-500 animate-spin mx-auto" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                   <Activity size={48} className="text-rose-400 animate-pulse" />
+                                </div>
+                             </div>
+                             <div className="space-y-6">
+                                <p className="text-rose-400 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic m-0">
+                                   {SID_STEPS[sidStepIndex]}
+                                </p>
+                             </div>
+                          </div>
+                       ) : (
+                          <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-1000 pb-10">
+                             <div className="p-12 md:p-16 bg-black/80 rounded-[80px] border-2 border-rose-500/20 prose prose-invert prose-rose max-w-none shadow-3xl border-l-[12px] border-l-rose-600 relative overflow-hidden group/shard">
+                                <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-8 border-l border-white/10">
+                                   {sidResult?.text}
+                                </div>
+                             </div>
+                          </div>
+                       )}
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
+
+        {/* --- VIEW: EVIDENCE VAULT (High Fidelity Ingest) --- */}
+        {activeTab === 'evidence' && (
+           <div className="space-y-10 animate-in zoom-in duration-700">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                 <div className="lg:col-span-1 space-y-8">
+                    <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-2xl">
+                       <div className="flex items-center gap-4 border-b border-white/5 pb-8">
+                          <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl text-white"><CloudUpload size={28} /></div>
+                          <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Vault <span className="text-emerald-400">Control</span></h3>
+                       </div>
+                       <div className="space-y-4">
+                          <button onClick={handleEvidenceSync} disabled={isSyncingEvidence} className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50">
+                             {isSyncingEvidence ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                             Sync Evidence Shards
+                          </button>
+                          <button onClick={onOpenEvidence} className="w-full py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest">New Field Proof</button>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="lg:col-span-3 glass-card rounded-[64px] overflow-hidden border-2 border-white/5 bg-black/40 shadow-3xl flex flex-col relative min-h-[600px]">
+                    <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                       <div className="flex items-center gap-6">
+                          <Database size={24} className="text-emerald-400" />
+                          <h4 className="text-xl font-black text-white uppercase italic tracking-widest m-0">Biological Evidence Ledger</h4>
+                       </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-white/5 bg-[#050706]">
+                       {evidenceLedger.map((ev, i) => (
+                          <div key={i} className="p-10 flex items-center justify-between group hover:bg-white/[0.01] transition-all">
+                             <div className="flex items-center gap-8">
+                                <div className={`w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center ${ev.col} shadow-inner group-hover:scale-110 transition-transform`}><ImageIcon size={24} /></div>
+                                <div>
+                                   <h5 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight leading-none group-hover:text-emerald-400 transition-colors">{ev.type}</h5>
+                                   <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase font-black italic">{ev.id} // {ev.node}</p>
+                                </div>
+                             </div>
+                             <div className="flex items-center gap-10">
+                                <span className="text-[10px] font-mono text-slate-600 uppercase italic">{ev.date}</span>
+                                <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase border tracking-widest shadow-xl ${ev.status === 'VERIFIED' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-600/10 text-blue-400 border-blue-500/20 animate-pulse'}`}>{ev.status}</span>
+                                <button className="p-4 bg-white/5 rounded-2xl text-slate-700 hover:text-white transition-all active:scale-90"><ChevronRight size={20} /></button>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
+
         {activeTab === 'simulator' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
             <div className="lg:col-span-4 space-y-6">
               <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-2xl">
                 <div className="flex items-center gap-3 border-b border-white/5 pb-6">
-                   <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-400 shadow-xl">
-                      <Cpu size={24} />
-                   </div>
+                   <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-400 shadow-xl"><Cpu size={24} /></div>
                    <h3 className="font-black text-white uppercase text-sm tracking-widest italic">EOS Physics Core</h3>
                 </div>
                 <div className="space-y-8">
@@ -518,383 +803,149 @@ ${content}
                     <input type="range" min="0.01" max="0.5" step="0.01" value={s_stress} onChange={e => setSStress(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-500 shadow-inner" />
                   </div>
                 </div>
-                <button 
-                  onClick={handleRunFullSimulation} 
-                  disabled={isRunningSimulation} 
-                  className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-                >
+                <button onClick={handleRunFullSimulation} disabled={isRunningSimulation} className="w-full py-8 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 border-4 border-white/10 ring-8 ring-white/5">
                   {isRunningSimulation ? <Loader2 className="animate-spin" /> : <Zap size={20} className="fill-current" />} RUN ENGINE
                 </button>
               </div>
             </div>
-
             <div className="lg:col-span-8 space-y-8">
               <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/20 h-[500px] shadow-3xl">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={simProjectionData}>
-                    <defs>
-                      <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="cycle" stroke="rgba(128,128,128,0.4)" fontSize={10} axisLine={false} tickLine={false} />
-                    <YAxis stroke="rgba(128,128,128,0.4)" fontSize={10} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '15px' }} />
-                    <Area type="monotone" name="Sustainability Index" dataKey="score" stroke="#10b981" strokeWidth={5} fillOpacity={1} fill="url(#colorScore)" strokeLinecap="round" />
+                    <Area type="monotone" name="Sustainability Index" dataKey="score" stroke="#10b981" strokeWidth={5} fill="#10b98110" />
                     <Area type="monotone" name="Resilience Factor (m)" dataKey="m" stroke="#3b82f6" strokeWidth={3} fill="#3b82f605" strokeDasharray="5 5" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
               {simulationReport && (
                 <div className={`p-10 glass-card border-l-8 transition-colors duration-500 animate-in slide-in-from-left-6 shadow-xl relative overflow-hidden ${simulationReport.includes('SYSTEM_ERROR') ? 'border-rose-600 bg-rose-950/20' : 'border-emerald-500 bg-emerald-500/[0.02]'}`}>
-                  <div className="absolute top-0 right-0 p-6 opacity-[0.03]"><SycamoreLogo size={120} className={simulationReport.includes('SYSTEM_ERROR') ? 'text-rose-500' : 'text-emerald-400'} /></div>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                      {simulationReport.includes('SYSTEM_ERROR') ? <ShieldAlert className="w-8 h-8 text-rose-500" /> : <SycamoreLogo size={32} className="text-emerald-400" />}
-                      <h4 className="text-xl font-black text-white uppercase italic">Simulator Oracle Verdict</h4>
-                    </div>
-                  </div>
-                  <p className="text-slate-300 text-lg italic leading-relaxed whitespace-pre-line border-l border-white/5 pl-8 font-medium">{simulationReport}</p>
-                  
-                  {!simulationReport.includes('SYSTEM_ERROR') && (
-                    <div className="mt-12 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
-                       <button onClick={() => downloadShard(simulationReport, 'Simulation_Report', 'Industrial')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
-                          <Download size={18} /> Download Shard
-                       </button>
-                       <button 
-                         onClick={() => anchorToLedger(simulationReport, 'Simulation', 'Physics_Audit')}
-                         disabled={!!isArchiving || archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`)}
-                         className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
-                       >
-                          {isArchiving === `Simulation_Physics_Audit_${simulationReport.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
-                          {archivedShards.has(`Simulation_Physics_Audit_${simulationReport.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
-                       </button>
-                    </div>
-                  )}
-
-                  {simulationReport.includes('SYSTEM_ERROR') && (
-                    <button 
-                      onClick={handleRunFullSimulation}
-                      className="mt-6 px-10 py-4 bg-rose-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 transition-all flex items-center gap-2 mx-auto"
-                    >
-                      <RefreshCw size={14} /> RE-SYNC ORACLE
-                    </button>
-                  )}
+                  <p className="text-slate-300 text-lg italic leading-relaxed whitespace-pre-line font-medium">{simulationReport}</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* --- TAB: IOT TELEMETRY (INGEST) --- */}
+        {/* --- VIEW: TELEMETRY (Ingest) --- */}
         {activeTab === 'telemetry' && (
            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in slide-in-from-right-4 duration-500">
               <div className="lg:col-span-1 space-y-8">
                  <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-blue-950/5 space-y-8 shadow-2xl">
-                    <h3 className="text-xl font-black text-white uppercase italic px-4 flex items-center gap-4">
-                       <Database size={20} className="text-blue-400" /> Active Nodes
-                    </h3>
+                    <h3 className="text-xl font-black text-white uppercase italic px-4 flex items-center gap-4"><Disk size={20} className="text-blue-400" /> Active Nodes</h3>
                     <div className="space-y-4">
                        {hardwareNodes.length === 0 ? (
-                         <div className="py-20 text-center opacity-20 flex flex-col items-center gap-4">
-                            <Smartphone size={48} className="text-slate-600" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">No Paired Hardware</p>
-                         </div>
+                         <div className="py-20 text-center opacity-20 flex flex-col items-center gap-4"><Smartphone size={48} className="text-slate-600" /><p className="text-[10px] font-black uppercase tracking-widest">No Paired Hardware</p></div>
                        ) : hardwareNodes.map(n => (
-                         <button 
-                           key={n.id} 
-                           onClick={() => setSelectedIotNode(n)} 
-                           className={`w-full p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${selectedIotNode?.id === n.id ? 'bg-blue-600 border-white text-white shadow-xl scale-105' : 'bg-black/60 border-white/5 text-slate-700 hover:border-blue-500/20 hover:bg-blue-500/5'}`}
-                         >
+                         <button key={n.id} onClick={() => setSelectedIotNode(n)} className={`w-full p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${selectedIotNode?.id === n.id ? 'bg-blue-600 border-white text-white shadow-xl scale-105' : 'bg-black border-white/5 text-slate-700 hover:border-blue-500/20 hover:bg-blue-500/5'}`}>
                             <div className="flex items-center gap-4">
-                               <div className={`p-3 rounded-xl transition-all ${selectedIotNode?.id === n.id ? 'bg-white/10' : 'bg-white/5 group-hover:rotate-6'}`}><Smartphone size={20} /></div>
-                               <div>
-                                  <p className="text-xs font-black uppercase tracking-widest">{n.name}</p>
-                                  <p className="text-[9px] font-mono opacity-60 mt-1">{n.id}</p>
-                               </div>
+                               <div className={`p-3 rounded-xl transition-all ${selectedIotNode?.id === n.id ? 'bg-white/10' : 'bg-white/5'}`}><Smartphone size={20} /></div>
+                               <div><p className="text-xs font-black uppercase tracking-widest">{n.name}</p><p className="text-[9px] font-mono opacity-60 mt-1">{n.id}</p></div>
                             </div>
                          </button>
                        ))}
                     </div>
-                    <button onClick={() => onNavigate('registry_handshake')} className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">PAIR NEW DEVICE</button>
                  </div>
               </div>
-
-              <div className="lg:col-span-3 glass-card p-12 rounded-[64px] bg-[#050706] border-2 border-white/5 flex flex-col shadow-3xl min-h-[650px] relative overflow-hidden group">
-                 <div className="absolute inset-0 bg-blue-500/[0.01] pointer-events-none animate-scan"></div>
-                 <div className="flex items-center justify-between mb-10 border-b border-white/10 pb-8 relative z-10">
-                    <div className="flex items-center gap-6">
-                       <div className="w-16 h-16 rounded-[24px] bg-blue-600 flex items-center justify-center text-white shadow-2xl group-hover:rotate-6 transition-transform">
-                          <Terminal size={32} />
-                       </div>
-                       <div>
-                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none italic">Local <span className="text-blue-400">Ingest Buffer</span></h3>
-                          <p className="text-[10px] text-blue-500/60 font-mono tracking-[0.4em] uppercase mt-3">TARGET_NODE: {selectedIotNode?.id || 'STANDBY'}</p>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                       <div className="px-6 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 font-mono text-[10px] font-black uppercase animate-pulse">
-                          STREAMING_OK
-                       </div>
-                    </div>
-                 </div>
-
+              <div className="lg:col-span-3 glass-card p-12 rounded-[64px] bg-[#050706] border-2 border-white/5 flex flex-col shadow-3xl min-h-[650px] relative overflow-hidden">
                  <div className="flex-1 space-y-4 font-mono text-[11px] overflow-y-auto custom-scrollbar relative z-10 bg-black/40 rounded-[48px] p-8 shadow-inner">
                     {telemetryLogs.map((log, i) => (
-                      <div key={i} className="flex gap-10 p-5 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group/log animate-in slide-in-from-right-2">
+                      <div key={i} className="flex gap-10 p-5 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group animate-in slide-in-from-right-2">
                         <span className="text-slate-700 w-24 shrink-0 font-bold">[{log.timestamp}]</span>
                         <span className="text-blue-400 w-40 shrink-0 font-bold uppercase italic tracking-widest">[{log.metric}]</span>
-                        <div className="flex-1 text-slate-300">
-                           PACKET_VAL: <span className="text-emerald-400 font-black">{log.value}</span> // ZK_SESSION: SYNC_A882
-                        </div>
-                        <CheckCircle2 size={16} className="text-emerald-500/40 group-hover/log:text-emerald-400 transition-colors" />
+                        <div className="flex-1 text-slate-300">PACKET_VAL: <span className="text-emerald-400 font-black">{log.value}</span> // ZK_SESSION: SYNC_A882</div>
+                        <CheckCircle2 size={16} className="text-emerald-500/40" />
                       </div>
                     ))}
-                    {telemetryLogs.length === 0 && (
-                       <div className="h-full flex flex-col items-center justify-center space-y-6 opacity-10">
-                          <Activity size={100} className="animate-pulse" />
-                          <p className="text-2xl font-black uppercase tracking-[0.5em]">Awaiting Ingest...</p>
-                       </div>
-                    )}
-                 </div>
-
-                 <div className="mt-8 pt-8 border-t border-white/5 flex justify-between items-center relative z-10 px-4">
-                    <p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.4em]">Proprietary Telemetry Protocol v5.2 // End-to-End Shard encryption Active</p>
-                    <button className="text-[10px] font-black text-blue-400 hover:text-white uppercase tracking-widest flex items-center gap-2 transition-all">
-                       Clear Local Buffer <Trash2 size={14} />
-                    </button>
                  </div>
               </div>
            </div>
         )}
 
-        {/* --- TAB: SCIENCE ORACLE (EOS AI) DATA-FIRST --- */}
+        {/* --- VIEW: TREND INGEST --- */}
+        {activeTab === 'trends' && (
+           <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
+             {!trendsResult && !isIngestingTrends ? (
+                <div className="text-center space-y-10 relative z-10 py-20">
+                   <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-3xl border-4 border-white/10 mx-auto group-hover:scale-110 transition-transform"><TrendingUp size={64} className="text-white" /></div>
+                   <div className="space-y-4">
+                      <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0">Trend <span className="text-indigo-400">Ingest</span></h3>
+                      <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto opacity-80 leading-relaxed">"Synchronizing global mesh search grounding."</p>
+                   </div>
+                   <button onClick={handleIngestTrends} className="px-16 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-4 border-2 border-white/10">
+                      <Globe2 size={24} /> INITIALIZE TREND SYNC
+                   </button>
+                </div>
+             ) : isIngestingTrends ? (
+                <div className="flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in fade-in"><Loader2 size={120} className="text-indigo-500 animate-spin" /><p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic">CRAWLING GLOBAL SHARDS...</p></div>
+             ) : (
+                <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-10 w-full px-6 py-10">
+                   <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 prose prose-invert max-w-none shadow-3xl border-l-[12px] border-l-indigo-600 relative overflow-hidden group/shard">
+                      <div className="text-slate-300 text-xl md:text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/5">{trendsResult?.text}</div>
+                      {trendsResult?.sources && (
+                        <div className="mt-16 pt-10 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                           {trendsResult.sources.map((s, i) => (
+                              <a key={i} href={s.web?.uri || '#'} target="_blank" rel="noopener noreferrer" className="p-6 bg-white/[0.02] border border-white/5 rounded-[32px] flex items-center justify-between group/link hover:border-indigo-500/40 transition-all">
+                                 <div className="flex items-center gap-4"><Globe size={18} className="text-indigo-400" /><span className="text-xs font-black text-slate-300 uppercase italic truncate">{s.web?.title || 'Registry Shard'}</span></div>
+                                 <ExternalLink size={14} className="text-slate-700 group-hover/link:text-indigo-400 transition-all" />
+                              </a>
+                           ))}
+                        </div>
+                      )}
+                   </div>
+                </div>
+             )}
+           </div>
+        )}
+
+        {/* --- VIEW: SCIENCE ORACLE (EOS AI) --- */}
         {activeTab === 'eos_ai' && (
-          <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                
-                {/* Left: Diagnostic Control Chamber */}
-                <div className="lg:col-span-4 space-y-8">
-                   <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:rotate-12 transition-transform duration-700"><Settings size={300} className="text-indigo-400" /></div>
-                      <div className="flex items-center gap-4 relative z-10">
-                         <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl"><SycamoreLogo size={32} className="text-white" /></div>
-                         <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Inquiry <span className="text-indigo-400">Control</span></h3>
-                      </div>
-
-                      <div className="space-y-6 relative z-10">
-                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Diagnostic Shard Type</label>
-                            <div className="grid grid-cols-1 gap-3">
-                               {[
-                                 { id: 'BIO_DIAGNOSTIC', label: 'Biological Diagnostic', icon: Radiation, col: 'text-rose-400' },
-                                 { id: 'SPECTRAL_AUDIT', label: 'Spectral Audit', icon: ShieldCheck, col: 'text-blue-400' },
-                                 { id: 'GENOMIC_INQUIRY', label: 'Genomic Inquiry', icon: Dna, col: 'text-indigo-400' },
-                                 { id: 'SOIL_REMEDIATION', label: 'Soil Remediation', icon: Mountain, col: 'text-amber-500' },
-                               ].map(mode => (
-                                 <button 
-                                   key={mode.id}
-                                   onClick={() => setOracleMode(mode.id as OracleMode)}
-                                   className={`flex items-center justify-between p-5 rounded-[28px] border-2 transition-all ${oracleMode === mode.id ? 'bg-indigo-600/10 border-indigo-500 shadow-xl' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}
-                                 >
-                                    <div className="flex items-center gap-4">
-                                       <mode.icon size={20} className={oracleMode === mode.id ? 'text-indigo-400' : 'text-slate-700'} />
-                                       <span className={`text-[11px] font-black uppercase tracking-widest ${oracleMode === mode.id ? 'text-white' : ''}`}>{mode.label}</span>
-                                    </div>
-                                    {oracleMode === mode.id && <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>}
-                                 </button>
-                               ))}
-                            </div>
-                         </div>
-                      </div>
-
-                      <div className="pt-8 border-t border-white/5 space-y-6 relative z-10">
-                         <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 flex justify-between items-center shadow-inner">
-                            <div className="flex items-center gap-3">
-                               <Coins size={16} className="text-emerald-500" />
-                               <span className="text-[10px] font-black text-slate-500 uppercase">Sharding Fee</span>
-                            </div>
-                            <span className="text-xl font-mono font-black text-white">{ORACLE_QUERY_COST} EAC</span>
-                         </div>
-                      </div>
-                   </div>
-
-                   <div className="p-10 glass-card rounded-[56px] border border-emerald-500/10 bg-emerald-500/5 space-y-6 shadow-xl group">
-                      <div className="flex items-center gap-4">
-                         <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><SycamoreLogo size={24} className="text-emerald-400" /></div>
-                         <h4 className="text-xl font-black text-white uppercase italic">Neural <span className="text-emerald-400">Integrity</span></h4>
-                      </div>
-                      <p className="text-sm text-slate-400 italic leading-relaxed font-medium">
-                         "The Science Oracle identifies biological anomalies from visual shards before recommending industrial remediation paths."
-                      </p>
-                   </div>
-                </div>
-
-                {/* Right: Diagnostic Ingest Chamber */}
-                <div className="lg:col-span-8">
-                   <div className="glass-card rounded-[64px] min-h-[850px] border-2 border-white/10 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
-                      
-                      <div className="absolute inset-0 pointer-events-none z-10">
-                        <div className="w-full h-[2px] bg-indigo-500/20 absolute top-0 animate-scan"></div>
-                      </div>
-
-                      <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20 px-14">
-                         <div className="flex items-center gap-10">
-                            <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-xl relative overflow-hidden group/ico">
-                               <SycamoreLogo size={40} className="relative z-10 group-hover/ico:scale-110 transition-transform" />
-                               <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-                            </div>
-                            <div>
-                               <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Diagnostic <span className="text-indigo-400">Chamber</span></h3>
-                               <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_DIAG_LINK // MODE: {oracleMode}</p>
-                            </div>
-                         </div>
-                         <div className="flex items-center gap-4">
-                            <div className="hidden sm:flex items-center gap-3 px-8 py-3 bg-white/5 border border-white/10 rounded-full">
-                               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div>
-                               <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">ORACLE_ACTIVE</span>
-                            </div>
-                         </div>
-                      </div>
-
-                      <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-20 flex flex-col">
-                         
-                         {/* DATA INGEST ZONE */}
-                         {!uploadedFile && !aiThinking && (
-                            <div 
-                              onClick={() => oracleFileInputRef.current?.click()}
-                              className="flex-1 flex flex-col items-center justify-center text-center space-y-12 border-4 border-dashed border-white/10 rounded-[64px] bg-black/40 group cursor-pointer hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all duration-700 mx-10 my-20 shadow-inner"
-                            >
-                               <input type="file" ref={oracleFileInputRef} onChange={handleOracleFileSelect} className="hidden" accept="image/*" />
-                               <div className="w-32 h-32 rounded-[48px] bg-indigo-600/10 border-2 border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-                                  <Camera size={48} />
-                               </div>
-                               <div className="space-y-4">
-                                  <p className="text-2xl font-black text-white uppercase italic">Ingest Diagnostic Shard</p>
-                                  <p className="text-slate-500 text-sm max-w-sm mx-auto">Upload a field image or spectral report for oracle synthesis.</p>
-                               </div>
-                            </div>
-                         )}
-
-                         {uploadedFile && !aiResult && !aiThinking && (
-                            <div className="flex-1 flex flex-col items-center justify-center space-y-10 animate-in zoom-in">
-                               <div className="relative w-full max-w-md aspect-square rounded-[48px] overflow-hidden shadow-3xl border-2 border-indigo-500/20">
-                                  <img src={uploadedFile} className="w-full h-full object-cover" alt="Uploaded Shard" />
-                                  <div className="absolute inset-0 bg-indigo-500/10 animate-pulse"></div>
-                                  <button onClick={clearOracleBuffer} className="absolute top-6 right-6 p-4 bg-black/60 rounded-full text-white hover:bg-rose-600 transition-colors shadow-2xl">
-                                     <X size={24} />
-                                  </button>
-                               </div>
-                               <div className="w-full max-w-md space-y-6">
-                                  <div className="relative group">
-                                     <input 
-                                       type="text" value={aiQuery} onChange={e => setAiQuery(e.target.value)}
-                                       onKeyDown={e => e.key === 'Enter' && handleDeepAIQuery()}
-                                       placeholder="Input inquiry for the Oracle..."
-                                       className="w-full bg-black border-2 border-white/10 rounded-full py-6 pl-8 pr-20 text-white outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all italic font-medium" 
-                                     />
-                                     <button 
-                                       onClick={handleDeepAIQuery}
-                                       className="absolute right-3 top-1/2 -translate-y-1/2 p-4 bg-indigo-600 rounded-full text-white shadow-xl hover:bg-indigo-500 transition-all active:scale-90"
-                                     >
-                                        <Send size={20} />
-                                     </button>
-                                  </div>
-                               </div>
-                            </div>
-                         )}
-
-                         {aiThinking && (
-                            <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in">
-                               <div className="relative">
-                                  <div className="w-48 h-48 rounded-full border-t-4 border-indigo-500 animate-spin"></div>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                     <Bot size={60} className="text-indigo-400 animate-pulse" />
-                                  </div>
-                               </div>
-                               <div className="space-y-4">
-                                  <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic m-0">
-                                     {NEURAL_STEPS[currentStepIndex]}
-                                  </p>
-                                  <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">ORACLE_INGEST_v6.5 // HANDSHAKE_ACTIVE</p>
-                               </div>
-                            </div>
-                         )}
-
-                         {aiResult && (
-                            <div className="animate-in slide-in-from-bottom-10 duration-700 space-y-12 pb-10">
-                               <div className="p-10 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 border border-indigo-500/20 shadow-3xl text-left relative overflow-hidden group/advice">
-                                  <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/advice:scale-110 transition-transform duration-[15s]"><Database size={400} /></div>
-                                  <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8 gap-8">
-                                     <div className="flex items-center gap-8">
-                                        <BadgeCheck size={32} className="text-indigo-400" />
-                                        <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Diagnostic Verdict</h4>
-                                     </div>
-                                     <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
-                                        <span className="text-[10px] font-mono font-black text-indigo-400 uppercase tracking-widest italic">DIAG_0xSYNC_OK</span>
-                                     </div>
-                                  </div>
-                                  <div className="prose prose-invert max-w-none text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-8 border-l border-white/5">
-                                     {aiResult.text}
-                                  </div>
-                                  <div className="mt-16 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
-                                     <div className="flex items-center gap-6">
-                                        <Fingerprint size={48} className="text-indigo-400" />
-                                        <div className="text-left">
-                                           <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Diagnostic Shard Hash</p>
-                                           <p className="text-xl font-mono text-white">0xHS_DIAG_#{(Math.random()*1000).toFixed(0)}</p>
-                                        </div>
-                                     </div>
-                                     <div className="flex gap-4">
-                                        <button onClick={() => downloadShard(aiResult.text, oracleMode, 'Diagnostic')} className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest">
-                                           <Download size={18} /> Download Shard
-                                        </button>
-                                        <button 
-                                           onClick={() => anchorToLedger(aiResult.text, 'Diagnostic', oracleMode)}
-                                           disabled={!!isArchiving || archivedShards.has(`Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}`)}
-                                           className={`px-12 py-4 rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
-                                        >
-                                           {isArchiving === `Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
-                                           {archivedShards.has(`Diagnostic_${oracleMode}_${aiResult.text.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
-                                        </button>
-                                     </div>
-                                  </div>
-                               </div>
-                               <div className="flex justify-center">
-                                  <button onClick={clearOracleBuffer} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl">New Inquiry</button>
-                               </div>
-                            </div>
-                         )}
-                      </div>
-                   </div>
-                </div>
-             </div>
-          </div>
-        )}
-
-        {/* --- TABS: SID & EVIDENCE (Placeholders for missing logic) --- */}
-        {activeTab === 'sid' && (
-           <div className="flex flex-col items-center justify-center h-[700px] space-y-12 animate-in zoom-in duration-500 text-center opacity-20">
-              <Radiation size={140} className="text-rose-500 animate-pulse" />
-              <div className="space-y-4">
-                 <p className="text-5xl font-black uppercase tracking-[0.6em] text-white italic">SID_SCANNER_OFFLINE</p>
-                 <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest">Connect Bio-Resonance Hardware to calibrate viral load</p>
+           <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                 <div className="lg:col-span-4 space-y-8">
+                    <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden group">
+                       <div className="flex items-center gap-6 relative z-10 border-b border-white/5 pb-8"><Bot size={32} className="text-indigo-400" /><h3 className="text-2xl font-black text-white uppercase italic">Inquiry <span className="text-indigo-400">Control</span></h3></div>
+                       <div className="space-y-4">
+                          {['BIO_DIAGNOSTIC', 'SPECTRAL_AUDIT', 'GENOMIC_INQUIRY', 'SOIL_REMEDIATION'].map(mode => (
+                             <button key={mode} onClick={() => setOracleMode(mode as OracleMode)} className={`flex items-center justify-between p-5 rounded-[28px] border-2 transition-all w-full ${oracleMode === mode ? 'bg-indigo-600/10 border-indigo-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}>
+                                <span className="text-[11px] font-black uppercase tracking-widest">{mode.replace('_', ' ')}</span>
+                                {oracleMode === mode && <CheckCircle2 size={16} className="text-indigo-400" />}
+                             </button>
+                          ))}
+                       </div>
+                    </div>
+                 </div>
+                 <div className="lg:col-span-8 flex flex-col">
+                    <div className="glass-card rounded-[64px] min-h-[650px] border-2 border-white/5 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
+                       <div className="flex-1 p-12 overflow-y-auto custom-scrollbar flex flex-col">
+                          {!uploadedFile && !aiThinking && (
+                             <div onClick={() => oracleFileInputRef.current?.click()} className="flex-1 flex flex-col items-center justify-center text-center space-y-12 border-4 border-dashed border-white/10 rounded-[64px] bg-black/40 group cursor-pointer hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all duration-700">
+                                <input type="file" ref={oracleFileInputRef} onChange={handleOracleFileSelect} className="hidden" accept="image/*" />
+                                <Camera size={48} className="text-indigo-400 group-hover:scale-110 transition-transform" />
+                                <p className="text-2xl font-black text-white uppercase italic">Ingest Diagnostic Shard</p>
+                             </div>
+                          )}
+                          {uploadedFile && !aiResult && !aiThinking && (
+                             <div className="flex-1 flex flex-col items-center justify-center space-y-10 animate-in zoom-in">
+                                <div className="relative w-full max-w-md aspect-square rounded-[48px] overflow-hidden border-2 border-indigo-500/20"><img src={uploadedFile} className="w-full h-full object-cover" alt="Upload" /><button onClick={clearOracleBuffer} className="absolute top-6 right-6 p-4 bg-black/60 rounded-full text-white hover:bg-rose-600 transition-colors"><X size={24} /></button></div>
+                                <div className="w-full max-w-md relative"><input type="text" value={aiQuery} onChange={e => setAiQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleDeepAIQuery()} placeholder="Input inquiry for the Oracle..." className="w-full bg-black border-2 border-white/10 rounded-full py-6 pl-8 pr-20 text-white outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all font-medium" /><button onClick={handleDeepAIQuery} className="absolute right-3 top-1/2 -translate-y-1/2 p-4 bg-indigo-600 rounded-full text-white shadow-xl hover:bg-indigo-500 transition-all"><Send size={20} /></button></div>
+                             </div>
+                          )}
+                          {aiThinking && (
+                             <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in"><div className="w-48 h-48 rounded-full border-t-4 border-indigo-500 animate-spin"></div><p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic m-0">{NEURAL_STEPS[currentStepIndex]}</p></div>
+                          )}
+                          {aiResult && (
+                             <div className="animate-in slide-in-from-bottom-10 duration-700 space-y-12 pb-10 flex-1">
+                                <div className="p-10 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 border border-indigo-500/20 shadow-3xl text-left relative overflow-hidden group/advice"><div className="prose prose-invert max-w-none text-slate-300 text-xl md:text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-8 border-l border-white/5">{aiResult.text}</div></div>
+                                <div className="flex justify-center"><button onClick={clearOracleBuffer} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl">New Inquiry</button></div>
+                             </div>
+                          )}
+                       </div>
+                    </div>
+                 </div>
               </div>
            </div>
         )}
 
-        {activeTab === 'evidence' && (
-           <div className="flex flex-col items-center justify-center h-[700px] space-y-12 animate-in zoom-in duration-500 text-center opacity-20">
-              <CloudUpload size={140} className="text-blue-400" />
-              <div className="space-y-4">
-                 <p className="text-5xl font-black uppercase tracking-[0.6em] text-white italic">VAULT_ENCRYPTED</p>
-                 <p className="text-xl font-bold italic text-slate-600 uppercase tracking-widest">Authorize Digital MRV Shards to access evidence buffer</p>
-              </div>
-              <button onClick={onOpenEvidence} className="px-12 py-6 bg-blue-600 text-white rounded-full font-black text-xs uppercase tracking-widest">Initialize Ingest</button>
-           </div>
-        )}
       </div>
 
       <style>{`
@@ -905,6 +956,8 @@ ${content}
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
+        .agro-gradient-rose { background: linear-gradient(135deg, #be123c 0%, #f43f5e 100%); }
+        .perspective-1000 { perspective: 1000px; }
       `}</style>
     </div>
   );

@@ -535,7 +535,7 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                      <p className="text-sm md:text-lg font-bold uppercase tracking-widest italic text-slate-500 max-w-md mx-auto leading-relaxed">
                        Query organizational ledgers, media shards, or industrial stewards
                      </p>
-                   </div>
+                </div>
                 </div>
 
                 {/* Search Recommendations / Chips */}
@@ -1030,7 +1030,7 @@ const App: React.FC = () => {
       case 'ai_analyst': return <AIAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
       case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} />;
       case 'ingest': return <NetworkIngest user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
-      case 'info': return <InfoPortal onNavigate={navigate} />;
+      case 'info': return <InfoPortal onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} />;
       case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;
       default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
@@ -1107,7 +1107,7 @@ const App: React.FC = () => {
               <button onClick={() => setIsGlobalSearchOpen(true)} className="w-full h-10 bg-white/5 border border-white/10 rounded-2xl px-6 flex items-center justify-between text-slate-500 hover:border-emerald-500/40 hover:bg-white/10 transition-all group shadow-inner">
                  <div className="flex items-center gap-3">
                     <Search size={14} className="group-hover:text-emerald-400 transition-colors" />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em]">Search Multi-Ledger Registry...</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest">Search Multi-Ledger Registry...</span>
                  </div>
                  <div className="flex items-center gap-1.5 opacity-30">
                     <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">⌘</span>
