@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Wallet, 
@@ -71,6 +70,7 @@ import {
 } from 'lucide-react';
 import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject } from '../types';
 import { analyzeInstitutionalRisk, consultFinancialOracle, AIResponse } from '../services/geminiService';
+import { initiatePayPalPayout } from '../services/paymentService';
 
 interface AgroWalletProps {
   user: User;
@@ -179,25 +179,37 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   const executeGatewayHandshake = async () => {
     if (!selectedProvider) return;
     const isMpesa = selectedProvider.name.toLowerCase().includes('mpesa') || selectedProvider.type === 'Mobile';
+    const isPaypal = selectedProvider.name.toLowerCase().includes('paypal') || selectedProvider.type === 'PayPal';
     
     if (isMpesa && showGatewayModal === 'deposit') {
       setIsMpesaFlow(true);
       setMpesaStatus('STK_PUSH');
       setGatewayStep('handoff');
       
-      // Phase 1: Trigger STK Push (Python Logic: initiate_stk_push)
       await new Promise(r => setTimeout(r, 2000));
       setMpesaStatus('AWAITING_PIN');
       
-      // Phase 2: User Inputs PIN on Mobile (Simulated)
       await new Promise(r => setTimeout(r, 4000));
       setMpesaStatus('VERIFIED');
       
-      // Phase 3: Webhook Callback Sync
       await new Promise(r => setTimeout(r, 1500));
       setGatewayStep('sign');
+    } else if (isPaypal && showGatewayModal === 'withdrawal') {
+      setGatewayStep('handoff');
+      await new Promise(r => setTimeout(r, 1500));
+      setGatewayStep('external_sync');
+      
+      try {
+        // Convert to USD if needed for the payout call
+        const usdValue = gatewayCurrency === 'USD' ? gatewayAmount : (Number(gatewayAmount) / FOREX_RATES.USD_KES).toFixed(2);
+        await initiatePayPalPayout(selectedProvider.accountFragment, usdValue);
+        setGatewayStep('sign');
+      } catch (err: any) {
+        alert(`PAYPAL ERROR: ${err.message}`);
+        setGatewayStep('config');
+      }
     } else {
-      // Standard PayPal (Node Logic: initiatePayPalPayout) or Bank Flow
+      // Standard Flow
       setGatewayStep('handoff');
       await new Promise(r => setTimeout(r, 1500));
       setGatewayStep('external_sync');
@@ -218,7 +230,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       if (showGatewayModal === 'deposit') {
         onEarnEAC(amt, `EXTERNAL_INGEST_${selectedProvider?.name.toUpperCase()}`);
       } else {
-        // Logic to subtract would go here
         onEarnEAC(-amt, `EXTERNAL_WITHDRAWAL_${selectedProvider?.name.toUpperCase()}`);
       }
       setIsProcessingGateway(false);
@@ -363,7 +374,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
         {/* --- VIEW: FINANCIAL BRIDGES --- */}
         {activeSubTab === 'gateway' && (
            <div className="space-y-12 animate-in slide-in-from-right-4 duration-700 px-4">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-10 px-4">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-10 px-4 gap-6">
                  <div className="space-y-2">
                     <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">External <span className="text-indigo-400">Bridges</span></h3>
                     <p className="text-slate-500 text-lg md:text-xl font-medium italic opacity-70">"Managing synchronization nodes between EnvirosAgro and legacy banking systems."</p>
@@ -472,7 +483,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                  </div>
                  <div className="p-8 glass-card rounded-[40px] bg-indigo-600/5 border border-indigo-500/20 text-center shadow-xl">
                     <p className="text-[10px] text-indigo-500 font-black uppercase tracking-[0.3em] mb-2">Total Staked</p>
-                    <p className="text-6xl font-mono font-black text-white">{(user.wallet.stakedEat || 0).toFixed(2)}<span className="text-sm italic ml-1">EAT</span></p>
+                    <p className="text-6xl font-mono font-black text-white">{(user.wallet.stakedEat || 0).toFixed(2)}<span className="text-sm italic font-sans text-blue-800 ml-1">EAT</span></p>
                  </div>
               </div>
 
@@ -635,7 +646,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
       </div>
 
-      {/* --- GATEWAY FLOW MODAL (M-PESA / PAYPAL Simulation) --- */}
+      {/* --- GATEWAY FLOW MODAL --- */}
       {showGatewayModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={closeGateway}></div>
@@ -828,7 +839,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
                  {gatewayStep === 'success' && (
                     <div className="flex-1 flex flex-col items-center justify-center space-y-20 py-10 animate-in zoom-in duration-1000 text-center relative">
-                       <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_200px_rgba(16,185,129,0.5)] scale-110 relative group">
+                       <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_200px_rgba(16,185,129,0.5)] scale-110 relative group">
                           <CheckCircle2 size={100} className="text-white group-hover:scale-110 transition-transform" />
                           <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
                           <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
