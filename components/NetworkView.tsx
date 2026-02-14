@@ -7,8 +7,12 @@ import {
   Stamp, Eye, Search, AlertTriangle, Atom, Share2, 
   Fingerprint, Circle, Key, Link2, MapPin, RadioReceiver,
   Settings, Wifi, RefreshCw, BadgeCheck, History,
-  TrendingUp, CheckCircle2, ArrowRight
+  TrendingUp, CheckCircle2, ArrowRight,
+  Monitor,
+  Siren,
+  LineChart
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { auditMeshStability, AIResponse } from '../services/geminiService';
 import { SycamoreLogo } from '../App';
 
@@ -52,6 +56,8 @@ const NetworkView: React.FC = () => {
   const [shardsInFlight, setShardsInFlight] = useState<{ id: string; from: string; to: string; progress: number }[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
+  const [propLogs, setPropLogs] = useState<{time: string, msg: string, col: string}[]>([]);
+
   // Initialize nodes and static data
   useEffect(() => {
     const initialNodes: NodeShard[] = [
@@ -83,12 +89,20 @@ const NetworkView: React.FC = () => {
         const toIdx = Math.floor(Math.random() * nodes.length);
         if (fromIdx !== toIdx) {
           const shardId = `SHD-${Math.random().toString(36).substring(7).toUpperCase()}`;
+          const fromName = nodes[fromIdx].id;
+          const toName = nodes[toIdx].id;
+          
           setShardsInFlight(prev => [...prev, { 
             id: shardId, 
-            from: nodes[fromIdx].id, 
-            to: nodes[toIdx].id, 
+            from: fromName, 
+            to: toName, 
             progress: 0 
           }]);
+
+          setPropLogs(prev => [
+            { time: new Date().toLocaleTimeString(), msg: `SHARD_PROPAGATION: ${fromName} -> ${toName}`, col: 'text-blue-400' },
+            ...prev
+          ].slice(0, 10));
         }
       }
 
@@ -148,6 +162,14 @@ const NetworkView: React.FC = () => {
   };
 
   const selectedNode = useMemo(() => nodes.find(n => n.id === selectedNodeId), [nodes, selectedNodeId]);
+
+  const throughputData = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => ({
+      time: `T-${11-i}`,
+      load: 40 + Math.random() * 40,
+      latency: 10 + Math.random() * 10
+    }));
+  }, []);
 
   return (
     <div className="space-y-8 md:space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1600px] mx-auto px-4 relative">
@@ -367,7 +389,7 @@ const NetworkView: React.FC = () => {
                        ) : isAuditing ? (
                           <div className="flex flex-col items-center justify-center space-y-12 py-32 text-center animate-in zoom-in duration-500">
                              <div className="relative">
-                                <Loader2 size={120} className="text-indigo-500 animate-spin mx-auto" />
+                                <div className="w-32 h-32 rounded-full border-t-4 border-indigo-500 animate-spin"></div>
                                 <div className="absolute inset-0 flex items-center justify-center"><Binary size={48} className="text-indigo-400 animate-pulse" /></div>
                              </div>
                              <div className="space-y-4">
@@ -378,7 +400,7 @@ const NetworkView: React.FC = () => {
                        ) : (
                           <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10">
                              <div className="p-10 md:p-14 bg-black/90 rounded-[64px] border border-indigo-500/20 shadow-3xl border-l-[24px] border-l-indigo-600 relative overflow-hidden group/advice text-left">
-                                <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-125 transition-transform duration-[15s]"><Sparkles size={600} className="text-indigo-400" /></div>
+                                <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={600} className="text-indigo-400" /></div>
                                 <div className="flex items-center gap-6 mb-12 border-b border-white/5 pb-8 relative z-10">
                                    <BadgeCheck size={44} className="text-indigo-400" />
                                    <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Audit Verdict</h4>
@@ -386,7 +408,7 @@ const NetworkView: React.FC = () => {
                                 <div className="text-slate-300 text-2xl leading-[2.1] italic whitespace-pre-line font-medium relative z-10 pl-10 border-l-2 border-white/5">
                                    {auditVerdict?.text}
                                 </div>
-                                <div className="mt-16 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
+                                <div className="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
                                    <div className="flex items-center gap-6">
                                       <Fingerprint size={48} className="text-indigo-400" />
                                       <div className="text-left">
@@ -418,62 +440,117 @@ const NetworkView: React.FC = () => {
 
         {/* --- VIEW: TOPOLOGY SHARDS --- */}
         {activeTab === 'topology' && (
-          <div className="animate-in slide-in-from-right-10 duration-700 space-y-10">
-             <div className="flex items-center gap-6 px-4">
-                <div className="w-16 h-16 rounded-[28px] bg-blue-600 flex items-center justify-center text-white shadow-2xl">
-                   <Network size={32} />
-                </div>
-                <div>
-                   <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Mesh <span className="text-blue-400">Topology</span></h3>
-                   <p className="text-slate-500 text-lg italic mt-1">Audit of active industrial relay nodes and peering latency.</p>
-                </div>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {relays.map(relay => (
-                   <div key={relay.id} className="p-10 glass-card rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-blue-500/30 transition-all group flex flex-col justify-between h-[500px] shadow-3xl relative overflow-hidden active:scale-[0.99]">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><RadioReceiver size={300} className="text-blue-400" /></div>
-                      <div className="flex justify-between items-start relative z-10">
-                         <div className="p-5 rounded-3xl bg-blue-600/10 border border-blue-500/20 text-blue-400 shadow-xl group-hover:rotate-12 transition-transform">
-                            <Signal size={32} />
+          <div className="animate-in slide-in-from-right-10 duration-700 space-y-12">
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                
+                {/* Left: Interactive Propagation Terminal */}
+                <div className="lg:col-span-8 glass-card p-12 rounded-[64px] border-2 border-white/5 bg-[#050706] shadow-3xl flex flex-col relative overflow-hidden h-[750px]">
+                   <div className="absolute inset-0 bg-blue-500/[0.01] pointer-events-none z-0">
+                      <div className="w-full h-full border-2 border-dashed border-blue-500/5 rounded-[64px] animate-pulse"></div>
+                   </div>
+                   
+                   <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-8 relative z-10 px-6">
+                      <div className="flex items-center gap-6">
+                         <div className="p-4 bg-blue-600 rounded-3xl shadow-xl flex items-center justify-center text-white border border-white/10 group-hover:rotate-12 transition-transform">
+                            <Activity size={32} className="animate-pulse" />
                          </div>
-                         <div className="text-right">
-                            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl ${
-                               relay.status === 'ONLINE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
-                            }`}>{relay.status}</span>
+                         <div>
+                            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Propagation <span className="text-blue-400">Monitor</span></h3>
+                            <p className="text-[10px] text-blue-500/60 font-mono tracking-widest uppercase mt-3 italic leading-none">SHARD_P2P_ROUTING_v6.5</p>
                          </div>
                       </div>
-                      <div className="space-y-4 relative z-10">
-                         <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-blue-400 transition-colors drop-shadow-2xl">{relay.location}</h4>
-                         <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">RELAY_ID: {relay.id}</p>
-                         <div className="pt-6 grid grid-cols-2 gap-4">
-                            <div className="p-4 bg-black/60 rounded-3xl border border-white/5 text-center space-y-1 shadow-inner">
-                               <p className="text-[8px] text-slate-700 font-black uppercase">Latency</p>
-                               <p className="text-2xl font-mono font-black text-blue-400">{relay.latency}ms</p>
-                            </div>
-                            <div className="p-4 bg-black/60 rounded-3xl border border-white/5 text-center space-y-1 shadow-inner">
-                               <p className="text-[8px] text-slate-700 font-black uppercase">Peers</p>
-                               <p className="text-2xl font-mono font-black text-white">{relay.peers}</p>
-                            </div>
-                         </div>
-                      </div>
-                      <div className="pt-8 border-t border-white/5 relative z-10 space-y-4">
-                         <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
-                            <span>Throughput</span>
-                            <span className="text-white font-mono">{relay.throughput}</span>
-                         </div>
-                         <div className="space-y-2">
-                            <div className="flex justify-between text-[9px] font-black uppercase text-slate-700">
-                               <span>Mesh Load</span>
-                               <span className="text-blue-400">{relay.load}%</span>
-                            </div>
-                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                               <div className="h-full bg-blue-500 transition-all duration-[3s]" style={{ width: `${relay.load}%` }}></div>
-                            </div>
+                      <div className="flex items-center gap-4">
+                         <div className="px-6 py-2 bg-black/60 border border-white/10 rounded-full">
+                            <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">THROUGHPUT: 1.2 GB/s</span>
                          </div>
                       </div>
                    </div>
-                ))}
+
+                   <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 px-6 font-mono text-[13px] bg-black/20 rounded-[40px] p-8 shadow-inner border border-white/5">
+                      {propLogs.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center space-y-10 opacity-20 group">
+                           <Loader2 size={120} className="text-slate-600 animate-spin" />
+                           <p className="text-2xl font-black uppercase tracking-[0.5em] text-white italic">AWAITING_SHARD_ACTIVITY</p>
+                        </div>
+                      ) : (
+                        propLogs.map((log, i) => (
+                          <div key={i} className={`flex items-center gap-8 p-5 rounded-2xl border border-white/[0.02] transition-all hover:bg-white/[0.02] animate-in slide-in-from-right-2 ${i === 0 ? 'bg-blue-600/5 border-blue-500/20' : ''}`}>
+                             <span className="text-slate-700 font-bold shrink-0">[{log.time}]</span>
+                             <span className={`flex-1 font-bold tracking-tight italic ${log.col}`}>{log.msg}</span>
+                             <div className="flex items-center gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></div>
+                                <span className="text-[9px] text-slate-800 font-black uppercase tracking-widest">ACK</span>
+                             </div>
+                          </div>
+                        ))
+                      )}
+                   </div>
+
+                   <div className="mt-10 pt-8 border-t border-white/5 grid grid-cols-3 gap-6 relative z-10 px-4">
+                      <div className="p-6 bg-black/40 rounded-3xl border border-white/5 text-center">
+                         <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Avg Hop Time</p>
+                         <p className="text-2xl font-mono font-black text-blue-400">1.2ms</p>
+                      </div>
+                      <div className="p-6 bg-black/40 rounded-3xl border border-white/5 text-center">
+                         <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Active Peers</p>
+                         <p className="text-2xl font-mono font-black text-white">{relays.length + 12}</p>
+                      </div>
+                      <div className="p-6 bg-black/40 rounded-3xl border border-white/5 text-center">
+                         <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Drift Level</p>
+                         <p className="text-2xl font-mono font-black text-emerald-400">Low</p>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Right: Metrics & Load Analyzer */}
+                <div className="lg:col-span-4 space-y-10">
+                   <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-blue-950/5 space-y-10 shadow-3xl relative overflow-hidden group/m">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/m:scale-110 transition-transform"><LineChart size={400} className="text-blue-400" /></div>
+                      <div className="flex items-center gap-5 relative z-10">
+                         <div className="p-4 bg-blue-600 rounded-2xl shadow-xl"><TrendingUp size={24} className="text-white" /></div>
+                         <h4 className="text-xl font-black text-white uppercase italic tracking-widest m-0 leading-none">Load <span className="text-blue-400">Analytics</span></h4>
+                      </div>
+                      
+                      <div className="h-64 w-full relative z-10 px-2 bg-black/40 rounded-[32px] border border-white/5 p-4">
+                         <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={throughputData}>
+                               <defs>
+                                  <linearGradient id="colorLoad" x1="0" y1="0" x2="0" y2="1">
+                                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                  </linearGradient>
+                               </defs>
+                               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={false} />
+                               <XAxis dataKey="time" hide />
+                               <YAxis hide />
+                               <Area type="monotone" dataKey="load" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorLoad)" />
+                            </AreaChart>
+                         </ResponsiveContainer>
+                      </div>
+
+                      <div className="space-y-4 relative z-10 pt-4 px-2">
+                         <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
+                            <span>Ingest Pressure</span>
+                            <span className="text-blue-400 font-mono">62%</span>
+                         </div>
+                         <div className="h-1 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                            <div className="h-full bg-blue-600 shadow-[0_0_10px_#3b82f6] transition-all duration-1000" style={{ width: '62%' }}></div>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="p-12 glass-card rounded-[64px] border-emerald-500/20 bg-emerald-600/5 text-center space-y-8 shadow-3xl">
+                      <div className="w-20 h-20 bg-emerald-600 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl border border-white/10 group-hover:rotate-12 transition-transform">
+                         <BadgeCheck size={40} className="text-white" />
+                      </div>
+                      <div className="space-y-3">
+                         <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Topology Finality</h4>
+                         <p className="text-slate-500 text-sm font-medium italic px-4 leading-relaxed">"The mesh ensures absolute informatic finality by sharding state data across independent relay clusters."</p>
+                      </div>
+                      <button className="w-full py-5 bg-white/5 border border-white/10 rounded-[32px] text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">ANALYZE TOPOLOGY SHARDS</button>
+                   </div>
+                </div>
+
              </div>
           </div>
         )}
@@ -545,14 +622,13 @@ const NetworkView: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
-        @keyframes dash { to { stroke-dashoffset: 20; } }
-        .animate-dash { stroke-dashoffset: 0; animation: dash 2s linear infinite; }
-        .animate-dash-reverse { stroke-dashoffset: 0; animation: dash 2s linear infinite reverse; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .animate-pulse-slow { animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
       `}</style>
     </div>
   );
