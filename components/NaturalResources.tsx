@@ -25,7 +25,6 @@ import {
   ShieldPlus,
   ArrowDownToLine,
   Send,
-  // Added Plus to fix "Cannot find name 'Plus'" error on line 583
   Plus
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -59,10 +58,10 @@ const NaturalResources: React.FC<NaturalResourcesProps> = ({ user, type, onEarnE
   const [p2, setP2] = useState(8.5); 
   const [p3, setP3] = useState(0.5); 
   const [isSyncingSim, setIsSyncingSim] = useState(false);
+  const [simAnchored, setSimAnchored] = useState(false);
 
   const [stream, setStream] = useState<any[]>([]);
 
-  // Added downloadReport helper to fix the "Cannot find name 'downloadReport'" error on line 566
   const downloadReport = (content: string, mode: string, typeName: string) => {
     const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
     const report = `
@@ -360,11 +359,13 @@ ${content}
       setIsSyncingSim(false);
       return;
     }
+    // Block-committing animation simulation
     setTimeout(() => {
       setIsSyncingSim(false);
+      setSimAnchored(true);
       onEarnEAC(20, 'SIMULATION_VALUATION_BONUS');
-      alert("SHARD_ANCHORED: Simulation state committed to the industrial archive.");
-    }, 2000);
+      setTimeout(() => setSimAnchored(false), 5000);
+    }, 2500);
   };
 
   return (
@@ -562,7 +563,7 @@ ${content}
                           value={oracleQuery} 
                           onChange={e => setOracleQuery(e.target.value)}
                           placeholder="Describe the resource anomaly or diagnostic requirement..."
-                          className="w-full bg-black/60 border-2 border-white/10 rounded-[40px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-indigo-500/5 transition-all outline-none h-48 resize-none shadow-inner placeholder:text-stone-800"
+                          className="w-full bg-black/60 border-2 border-white/10 rounded-[40px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-indigo-500/5 transition-all outline-none h-48 resize-none shadow-inner placeholder:text-stone-900"
                        />
                        <button 
                           onClick={handleRunOracleAudit}
@@ -589,7 +590,7 @@ ${content}
                             <p className="text-3xl font-mono font-black text-emerald-400">99.8%</p>
                          </div>
                       </div>
-                      <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/5">
+                      <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
                          {oracleReport}
                       </div>
                       <div className="mt-16 flex justify-center gap-8 relative z-10">
@@ -710,10 +711,19 @@ ${content}
                   <button 
                     onClick={handleAnchorSim}
                     disabled={isSyncingSim}
-                    className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
+                    className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5 overflow-hidden relative"
                   >
-                     {isSyncingSim ? <Loader2 size={24} className="animate-spin" /> : <Stamp size={24} />}
-                     {isSyncingSim ? 'ANCHORING SHARD...' : 'ANCHOR SIMULATION'}
+                     {isSyncingSim ? (
+                       <>
+                         <Loader2 size={24} className="animate-spin relative z-10" />
+                         <span className="relative z-10">ANCHORING SHARD...</span>
+                         <div className="absolute inset-0 bg-white/5 animate-pulse"></div>
+                       </>
+                     ) : (
+                       <>
+                         <Stamp size={24} /> ANCHOR SIMULATION
+                       </>
+                     )}
                   </button>
                </div>
 
@@ -732,6 +742,23 @@ ${content}
                <div className="glass-card p-12 rounded-[72px] border-2 border-white/5 bg-[#050706] relative overflow-hidden flex flex-col h-full shadow-3xl">
                   <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none"></div>
                   
+                  {/* Finality Handshake Overlay */}
+                  {simAnchored && (
+                    <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center text-center p-12 animate-in zoom-in duration-500">
+                       <div className="w-40 h-40 bg-indigo-600 rounded-[40px] flex items-center justify-center text-white shadow-[0_0_100px_rgba(99,102,241,0.4)] border-4 border-white/10 mb-10 animate-float">
+                          <BadgeCheck size={80} className="animate-pulse" />
+                       </div>
+                       <div className="space-y-4">
+                          <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">SHARD <span className="text-indigo-400">ANCHORED.</span></h3>
+                          <p className="text-indigo-400 font-mono text-sm tracking-[0.8em] uppercase opacity-60">BLOCK_COMMIT_0x882A_OK</p>
+                       </div>
+                       <div className="mt-12 flex items-center gap-4 text-emerald-500 font-black text-[10px] uppercase tracking-widest bg-emerald-500/5 px-8 py-3 rounded-full border border-emerald-500/20 shadow-inner">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+                          FINALITY_SYNCED_TO_REGISTRY
+                       </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-center mb-16 relative z-10 px-6">
                      <div className="flex items-center gap-6">
                         <div className={`w-16 h-16 rounded-2xl bg-black border-2 border-white/10 flex items-center justify-center ${meta.color} shadow-2xl`}>

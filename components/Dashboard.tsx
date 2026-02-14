@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+// Added missing icons for environmental thrust, human heart resonance, registry connectivity, system config and ledger layers
 import { 
   ShieldCheck, Zap, Globe, Activity, Cpu, Sparkles, Binary, 
   Coins, Users, ArrowRight, BrainCircuit, Bot, 
@@ -7,7 +7,7 @@ import {
   LayoutGrid, ArrowUpRight, ShoppingBag, Radio, Signal, Eye, ChevronRight,
   Gem, Landmark, PlayCircle, BookOpen, Lightbulb, CheckCircle2,
   AlertCircle, Target, Waves, ShieldAlert, UserPlus, AlertTriangle,
-  Loader2
+  Loader2, Atom, Network, Gauge, Leaf, Heart, Wifi, Settings, Layers
 } from 'lucide-react';
 import { ViewState, User, Order, AgroBlock } from '../types';
 import IdentityCard from './IdentityCard';
@@ -24,7 +24,15 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders = [], blockchain = [], isMining = false }) => {
   const [showIdentityCard, setShowIdentityCard] = useState(false);
+  const [networkDrift, setNetworkDrift] = useState(0.02);
   const totalBalance = user.wallet.balance + (user.wallet.bonusBalance || 0);
+
+  useEffect(() => {
+    const driftInterval = setInterval(() => {
+      setNetworkDrift(prev => Number((prev + (Math.random() * 0.01 - 0.005)).toFixed(3)));
+    }, 4000);
+    return () => clearInterval(driftInterval);
+  }, []);
 
   const RECOMMENDATIONS = [
     { id: 'rec-1', title: 'OPTIMIZE M-CONSTANT', priority: 'High', icon: TrendingUp, target: 'intelligence', col: 'text-blue-400', desc: 'Regional stability below 1.42x. Initiate remediation shard.' },
@@ -32,81 +40,104 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
     { id: 'rec-3', title: 'AUDIT FIELD PROOFS', priority: 'Critical', icon: ShieldAlert, target: 'tqm', col: 'text-rose-500', desc: '3 shipments awaiting digital GRN signature.' },
   ];
 
+  const THRUSTS = [
+    { id: 'S', label: 'Societal', val: 82, col: 'text-rose-400', icon: Users },
+    { id: 'E', label: 'Environmental', val: 94, col: 'text-emerald-400', icon: Leaf },
+    { id: 'H', label: 'Human', val: 76, col: 'text-teal-400', icon: Heart },
+    { id: 'T', label: 'Technological', val: 88, col: 'text-blue-400', icon: Cpu },
+    { id: 'I', label: 'Industry', val: 91, col: 'text-indigo-400', icon: Landmark },
+  ];
+
   return (
-    <div className="space-y-4 md:space-y-6 animate-in fade-in duration-700 w-full overflow-x-hidden pb-12 px-2">
+    <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700 w-full overflow-x-hidden pb-32 px-2 max-w-[1700px] mx-auto">
       
       {/* Network Pulse Ticker */}
-      <div className="glass-card p-1.5 rounded-lg border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shadow-sm shrink-0">
-        <div className="flex items-center gap-1.5 px-2 border-r border-white/10 shrink-0">
-           <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-           <span className="text-[7px] font-black uppercase tracking-[0.2em] text-emerald-400 whitespace-nowrap">NETWORK_PULSE</span>
+      <div className="glass-card p-2 rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shadow-xl shrink-0">
+        <div className="flex items-center gap-3 px-6 border-r border-white/10 shrink-0">
+           <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
+           <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400 whitespace-nowrap">NETWORK_QUORUM_SYNC</span>
         </div>
-        <div className="flex-1 px-3 overflow-hidden">
-           <div className="whitespace-nowrap animate-marquee text-[7px] text-emerald-400/80 font-mono font-black uppercase tracking-[0.3em]">
+        <div className="flex-1 px-6 overflow-hidden">
+           <div className="whitespace-nowrap animate-marquee text-[10px] text-emerald-400/80 font-mono font-black uppercase tracking-[0.4em]">
              {isMining ? 'NEURAL_FINALITY_SEQUENCE_ACTIVE • MINING_BLOCK_HASH_COMMIT • ' : ''}
-             {blockchain.length > 0 ? `Latest Block: ${blockchain[0].hash.substring(0, 12)}... by ${blockchain[0].validator} • ` : ''}
-             REGISTRY SYNCHRONIZED. NO ANOMALIES DETECTED. • {new Date().toISOString().split('T')[0]} • NODE {user.esin} MULTIPLIER ACTIVE • SYCAMORE CONSENSUS ACHIEVED • 
+             LATEST_FINALITY: {blockchain[0]?.hash.substring(0, 16) || '0x882A_GENESIS'} • NODE_RESONANCE: 1.42x • DRIFT: {networkDrift}μ • ALL PILLARS NOMINAL • SYCAMORE_OS_v6.5 • CONSENSUS_REACHED_@_12:42_UTC • 
            </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        {/* Main Identity & Metrics */}
-        <div className="xl:col-span-8">
-          <div className="glass-card p-6 md:p-10 rounded-[32px] md:rounded-[40px] relative overflow-hidden group h-full flex flex-col justify-between shadow-2xl bg-black/40 border border-white/5">
-             <div className="absolute inset-0 flex items-center justify-center opacity-[0.015] pointer-events-none group-hover:scale-105 transition-transform duration-[10s]">
-                <SycamoreLogo size={300} className="text-white" />
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        
+        {/* Main Identity & Dynamic Metrics */}
+        <div className="xl:col-span-8 space-y-8">
+          <div className="glass-card p-10 md:p-14 rounded-[64px] relative overflow-hidden group h-full flex flex-col justify-between shadow-3xl bg-black/40 border border-white/5 border-l-[20px] border-l-emerald-600">
+             <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
+                <Network size={600} className="text-white" />
              </div>
              
-             <div className="relative z-10 flex flex-col sm:flex-row justify-between gap-6 items-center pb-8 border-b border-white/5 mb-8">
-                <div className="flex flex-col sm:flex-row gap-6 items-center text-center sm:text-left w-full">
-                  <div className="w-16 h-16 rounded-full bg-white text-slate-900 flex items-center justify-center text-xl font-black shadow-2xl relative ring-4 ring-white/10 shrink-0">
+             <div className="relative z-10 flex flex-col sm:flex-row justify-between gap-10 items-center pb-12 border-b border-white/5 mb-12">
+                <div className="flex items-center justify-center sm:justify-start gap-10 w-full flex-col sm:flex-row">
+                  <div className="w-32 h-32 rounded-[40px] bg-white text-slate-900 flex items-center justify-center text-5xl font-black shadow-[0_0_50px_rgba(255,255,255,0.1)] relative ring-8 ring-white/5 shrink-0 transition-transform group-hover:rotate-3">
                     {user.name[0]}
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-emerald-500 flex items-center justify-center border-2 border-[#050706] shadow-2xl">
-                      <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                    <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center border-4 border-[#050706] shadow-3xl">
+                      <ShieldCheck className="w-6 h-6 text-white" />
                     </div>
                   </div>
-                  <div className="space-y-1.5 w-full overflow-hidden">
-                    <div className="flex items-center justify-center sm:justify-start gap-3">
-                       <h3 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic leading-none text-white break-words">
-                        {user.name.toUpperCase()}
+                  <div className="space-y-4 w-full overflow-hidden">
+                    <div className="flex items-center justify-center sm:justify-start gap-5">
+                       <h3 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic leading-none text-white break-words drop-shadow-2xl">
+                        {user.name.split(' ')[0]} <span className="text-emerald-400">{user.name.split(' ')[1] || 'STEWARD'}</span>
                       </h3>
-                      <div className="px-2 py-0.5 bg-emerald-500/20 rounded border border-emerald-500/30 text-[6px] font-black text-emerald-400 animate-pulse">ACTIVE</div>
+                      <div className="px-5 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/30 text-[10px] font-black text-emerald-400 animate-pulse tracking-widest">ANCHORED</div>
                     </div>
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em]">{user.role}</p>
-                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-1">
-                       <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[6px] font-black rounded border border-emerald-500/20 uppercase tracking-[0.3em] shadow-inner">{user.wallet.tier.toUpperCase()} TIER</span>
-                       <span className={`px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[6px] font-black rounded border border-blue-500/20 uppercase tracking-[0.3em] font-mono shadow-inner ${isMining ? 'animate-pulse' : ''}`}>{isMining ? 'SYNCING' : 'NODE_SYNCED'}</span>
+                    <p className="text-slate-500 text-sm font-black uppercase tracking-[0.4em] flex items-center gap-3 justify-center sm:justify-start">
+                       <Bot size={16} className="text-indigo-400" /> {user.role} // {user.esin}
+                    </p>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-4 pt-4">
+                       <span className="px-5 py-2 bg-white/5 text-slate-300 text-[9px] font-black rounded-xl border border-white/10 uppercase tracking-[0.3em] shadow-xl backdrop-blur-xl">TIER: {user.wallet.tier.toUpperCase()}</span>
+                       <span className="px-5 py-2 bg-blue-500/10 text-blue-400 text-[9px] font-black rounded-xl border border-blue-500/20 uppercase tracking-[0.3em] font-mono shadow-xl flex items-center gap-2">
+                          <Wifi size={14} className="animate-pulse" /> REGISTRY_SYNC: 100%
+                       </span>
                     </div>
                   </div>
                 </div>
                 
-                <button 
-                  onClick={() => onNavigate('profile', 'dossier')} 
-                  className="w-full sm:w-auto px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[7px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/10 transition-all shadow-xl flex items-center justify-center gap-2 shrink-0"
-                >
-                  <Fingerprint className="w-3 h-3 text-emerald-400" />
-                  STEWARD DOSSIER
-                </button>
+                <div className="flex flex-col gap-4 w-full sm:w-auto">
+                   <button 
+                     onClick={() => onNavigate('profile', 'card')} 
+                     className="px-8 py-5 agro-gradient rounded-[28px] text-[11px] font-black uppercase tracking-[0.3em] text-white hover:scale-105 active:scale-95 transition-all shadow-3xl flex items-center justify-center gap-3 shrink-0 border-2 border-white/10"
+                   >
+                     <Fingerprint className="w-5 h-5" /> IDENTITY_SHARD
+                   </button>
+                   <button 
+                     onClick={() => onNavigate('settings')} 
+                     className="px-8 py-4 bg-white/5 border border-white/10 rounded-[28px] text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 shrink-0"
+                   >
+                     <Settings className="w-5 h-5" /> SYSTEM_CONFIG
+                   </button>
+                </div>
              </div>
 
-             <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+             <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-6">
                 {[
-                  { label: 'TREASURY', val: totalBalance.toFixed(0), unit: 'SHRD', icon: Coins, col: 'text-emerald-400', progress: 85 },
-                  { label: 'GROWTH', val: user.metrics.agriculturalCodeU.toFixed(1), unit: 'C(a)', icon: Binary, col: 'text-blue-400', progress: 62 },
-                  { label: 'HEIGHT', val: blockchain.length + 4281, unit: 'BLCK', icon: Activity, col: 'text-amber-500', progress: 100 },
-                  { label: 'HEALTH', val: user.metrics.sustainabilityScore, unit: '%', icon: Sprout, col: 'text-emerald-500', progress: user.metrics.sustainabilityScore },
+                  { label: 'TREASURY', val: totalBalance.toFixed(0), unit: 'SHRD', icon: Coins, col: 'text-emerald-400', progress: 85, desc: 'Liquid Utility' },
+                  { label: 'RESONANCE', val: user.wallet.exchangeRate.toFixed(2), unit: 'μ', icon: Gauge, col: 'text-blue-400', progress: 78, desc: 'm-Constant Index' },
+                  { label: 'QUORUM', val: blockchain.length + 4281, unit: 'BLCK', icon: Layers, col: 'text-indigo-400', progress: 100, desc: 'Ledger Depth' },
+                  { label: 'VITALITY', val: user.metrics.sustainabilityScore, unit: '%', icon: Sprout, col: 'text-emerald-500', progress: user.metrics.sustainabilityScore, desc: 'C(a) Sustainability' },
                 ].map((stat, i) => (
-                  <div key={i} className="p-5 bg-black/60 rounded-[24px] border border-white/5 space-y-2 group/stat hover:border-white/20 transition-all shadow-inner overflow-hidden">
-                    <div className="flex items-center gap-2 mb-1">
-                       <stat.icon className={`w-2.5 h-2.5 ${stat.col} opacity-40`} />
-                       <p className="text-[7px] text-slate-700 font-black uppercase tracking-[0.3em] truncate">{stat.label}</p>
+                  <div key={i} className="p-8 bg-black/80 rounded-[48px] border-2 border-white/5 space-y-4 group/stat hover:border-white/20 transition-all shadow-3xl overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:scale-110 transition-transform"><stat.icon size={80} className={stat.col} /></div>
+                    <div className="flex items-center gap-3 mb-2 relative z-10">
+                       <div className={`p-2 rounded-xl bg-white/5 ${stat.col}`}><stat.icon size={14} /></div>
+                       <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.4em] truncate">{stat.label}</p>
                     </div>
-                    <p className={`text-2xl font-mono font-black text-white tracking-tighter ${stat.col} leading-none truncate`}>
-                      {stat.val}<span className="text-[8px] ml-1 opacity-20 font-sans font-medium uppercase">{stat.unit}</span>
-                    </p>
-                    <div className="h-1 bg-white/5 rounded-full overflow-hidden mt-3">
-                       <div className={`h-full ${stat.col.replace('text', 'bg')} transition-all duration-[2.5s]`} style={{ width: `${stat.progress}%` }}></div>
+                    <div className="relative z-10">
+                       <p className={`text-4xl font-mono font-black text-white tracking-tighter ${stat.col} leading-none truncate`}>
+                         {stat.val}<span className="text-sm ml-1 opacity-20 font-sans font-medium uppercase italic">{stat.unit}</span>
+                       </p>
+                       <p className="text-[9px] text-slate-700 font-bold uppercase mt-4 tracking-widest opacity-60">"{stat.desc}"</p>
+                    </div>
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden mt-6 relative z-10 shadow-inner">
+                       <div className={`h-full ${stat.col.replace('text', 'bg')} transition-all duration-[3s] shadow-[0_0_15px_currentColor]`} style={{ width: `${stat.progress}%` }}></div>
                     </div>
                   </div>
                 ))}
@@ -114,72 +145,119 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
           </div>
         </div>
 
-        {/* Oracle Hub */}
-        <div className="xl:col-span-4">
-          <div className="glass-card p-8 md:p-10 rounded-[32px] md:rounded-[40px] border border-white/5 bg-black/40 h-full flex flex-col justify-between group overflow-hidden relative shadow-2xl min-h-[250px]">
-             <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
-                <BrainCircuit className="w-32 h-32 text-white" />
+        {/* Oracle Hub Integration */}
+        <div className="xl:col-span-4 flex flex-col gap-8">
+          <div className="glass-card p-10 md:p-14 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/5 flex-1 flex flex-col justify-between group overflow-hidden relative shadow-3xl min-h-[400px]">
+             <div className="absolute top-0 right-0 p-10 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none">
+                <BrainCircuit size={400} className="text-indigo-400" />
              </div>
-             <div className="relative z-10 space-y-5">
-                <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 rounded-xl bg-indigo-600 shadow-2xl flex items-center justify-center border border-white/5 shrink-0">
-                      {isMining ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Bot className="w-5 h-5 text-white" />}
+             <div className="relative z-10 space-y-8">
+                <div className="flex items-center gap-6">
+                   <div className="w-16 h-16 rounded-[28px] bg-indigo-600 shadow-[0_0_50px_rgba(99,102,241,0.3)] flex items-center justify-center border-4 border-white/10 shrink-0 group-hover:scale-110 transition-transform">
+                      {isMining ? <Loader2 className="w-8 h-8 text-white animate-spin" /> : <Bot className="w-8 h-8 text-white animate-pulse" />}
                    </div>
                    <div>
-                      <h4 className="text-[11px] font-black text-white uppercase tracking-[0.2em] italic leading-none m-0">ORACLE <span className="text-indigo-400">HUB</span></h4>
-                      <p className="text-[7px] font-mono text-indigo-400/60 font-bold uppercase mt-1 tracking-widest leading-none">{isMining ? 'PROCESSING' : 'RELAY_ACTIVE'}</p>
+                      <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none m-0">Oracle <span className="text-indigo-400">Sync.</span></h4>
+                      <p className="text-[10px] font-mono text-indigo-400/60 font-bold uppercase mt-3 tracking-widest leading-none">ZK_HANDSHAKE_v6.5</p>
                    </div>
                 </div>
-                <div className="p-4 bg-black/80 rounded-2xl border border-white/5 shadow-inner border-l-4 border-l-indigo-600/50">
-                   <p className="text-slate-300 text-[11px] leading-relaxed italic font-medium">
-                     {isMining ? '"Finalizing ledger commit. Quorum confirmed."' : '"Regional m-Constant optimized by 14.2%. Strategic sharding recommended."'}
+                <div className="p-10 bg-black/90 rounded-[48px] border border-indigo-500/20 shadow-inner border-l-8 border-l-indigo-600 relative overflow-hidden group/text">
+                   <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover/text:scale-125 transition-transform"><Sparkles size={200} className="text-indigo-400" /></div>
+                   <p className="text-slate-300 text-xl leading-relaxed italic font-medium relative z-10">
+                     {isMining ? '"Finalizing ledger commit. Quorum consensus verified at 99.98%."' : '"Node resonance stabilized. m-Constant optimized by 14.2%. Recommend new genetic ingest shard."'}
                    </p>
                 </div>
              </div>
-             <button onClick={() => onNavigate('intelligence', 'eos_ai')} className="relative z-10 w-full py-4 agro-gradient rounded-2xl text-white font-black text-[9px] uppercase tracking-[0.3em] shadow-xl mt-4 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
-                <Zap className="w-3.5 h-3.5 fill-current" /> INITIALIZE INGEST
+             <button 
+               onClick={() => onNavigate('ai_analyst')} 
+               className="relative z-10 w-full py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl mt-8 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-4 border-white/10 ring-8 ring-white/5"
+             >
+                <Zap className="w-5 h-5 fill-current" /> INITIALIZE INGEST
              </button>
           </div>
         </div>
       </div>
 
-      {/* Strategic Path */}
-      <div className="space-y-4 pt-4">
-        <div className="flex items-center justify-between px-4">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] italic flex items-center gap-2 text-slate-500">
-             <Target className="w-4 h-4 text-emerald-400" /> STRATEGIC <span className="text-emerald-400">PATH</span>
+      {/* SEHTI Thrust Resonance Meters */}
+      <div className="space-y-8 pt-8">
+        <div className="flex items-center justify-between px-10">
+          <h3 className="text-sm font-black uppercase tracking-[0.6em] italic flex items-center gap-4 text-slate-500 border-b border-white/5 pb-4 w-full">
+             <Target className="w-5 h-5 text-emerald-400 animate-pulse" /> THE FIVE <span className="text-emerald-400">THRUSTS</span> (SEHTI)
           </h3>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 px-4">
+           {THRUSTS.map((t) => (
+             <div key={t.id} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/30 transition-all flex flex-col items-center text-center space-y-6 relative overflow-hidden active:scale-[0.98] duration-300">
+                <div className="absolute -bottom-8 -right-8 p-4 opacity-[0.02] group-hover:scale-125 transition-transform duration-[10s]"><t.icon size={180} className={t.col} /></div>
+                <div className={`p-6 rounded-3xl bg-white/5 border border-white/10 ${t.col} shadow-inner group-hover:rotate-12 transition-transform`}>
+                   <t.icon size={32} />
+                </div>
+                <div>
+                   <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{t.label}</h4>
+                   <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest mt-3 italic">Pillar_{t.id}</p>
+                </div>
+                <div className="w-full space-y-4 pt-4 border-t border-white/5">
+                   <div className="flex justify-between items-center text-[11px] font-black uppercase text-slate-600 px-2">
+                      <span>Resonance</span>
+                      <span className={`${t.col} font-mono`}>{t.val}%</span>
+                   </div>
+                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                      <div className={`h-full rounded-full transition-all duration-[2.5s] ${t.col.replace('text', 'bg')} shadow-[0_0_15px_currentColor]`} style={{ width: `${t.val}%` }}></div>
+                   </div>
+                </div>
+             </div>
+           ))}
+        </div>
+      </div>
+
+      {/* Strategic Path Execution */}
+      <div className="space-y-6 pt-10">
+        <div className="flex items-center gap-6 px-10 mb-6">
+           <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20"><AlertCircle className="text-amber-500" /></div>
+           <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">STRATEGIC <span className="text-amber-500">QUORUM</span></h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
            {RECOMMENDATIONS.map((rec) => (
-             <div key={rec.id} className="glass-card p-6 md:p-8 rounded-[32px] md:rounded-[40px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/20 transition-all flex flex-col justify-between min-h-[180px]">
-                <div className="space-y-4">
+             <div key={rec.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/60 shadow-3xl group hover:border-indigo-500/40 transition-all flex flex-col justify-between min-h-[320px] relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><rec.icon size={250} /></div>
+                <div className="space-y-6 relative z-10">
                    <div className="flex justify-between items-start">
-                      <div className={`p-2.5 rounded-xl bg-white/5 border border-white/10 ${rec.col} shadow-inner group-hover:scale-110 transition-transform`}>
-                         <rec.icon size={16} />
+                      <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${rec.col} shadow-inner group-hover:rotate-6 transition-all`}>
+                         <rec.icon size={32} />
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[6px] font-black uppercase border tracking-[0.2em] ${
+                      <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl transition-all ${
                          rec.priority === 'High' ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 
                          rec.priority === 'Critical' ? 'bg-rose-600/10 text-rose-500 border-rose-500/20 animate-pulse' : 
                          'bg-emerald-600/10 text-emerald-400 border-emerald-500/20'
                       }`}>
-                         {rec.priority}
+                         {rec.priority} PRIORITY
                       </span>
                    </div>
-                   <h4 className="text-sm font-black text-white uppercase italic tracking-widest leading-none m-0">{rec.title}</h4>
-                   <p className="text-[10px] text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">"{rec.desc}"</p>
+                   <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none m-0 drop-shadow-2xl">{rec.title}</h4>
+                   <p className="text-base text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity font-medium">"{rec.desc}"</p>
                 </div>
                 <button 
                   onClick={() => onNavigate(rec.target as ViewState)}
-                  className="w-full py-2.5 mt-4 bg-white/5 border border-white/10 rounded-xl text-[7px] font-black uppercase tracking-[0.3em] text-slate-500 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                  className="w-full py-6 mt-10 bg-white/5 border-2 border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white hover:bg-emerald-600 hover:border-emerald-400 transition-all flex items-center justify-center gap-4 active:scale-95 shadow-xl relative z-10"
                 >
-                   EXECUTE STRATEGY <ArrowRight size={10} />
+                   EXECUTE_STRATEGY <ArrowRight size={18} />
                 </button>
              </div>
            ))}
         </div>
       </div>
+
+      <style>{`
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
+      `}</style>
     </div>
   );
 };

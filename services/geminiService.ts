@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -337,7 +336,7 @@ export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
                 }
               },
               recommendation: { type: Type.STRING }
-            }
+           }
           }
         }
       });
@@ -653,6 +652,24 @@ export const analyzeMiningYield = async (miningData: any): Promise<AIResponse> =
   } catch (err) {
     return handleAIError(err);
   }
+};
+
+export const generateTemporalVideo = async (prompt: string) => {
+  const ai = getAI();
+  return ai.models.generateVideos({
+    model: 'veo-3.1-fast-generate-preview',
+    prompt,
+    config: {
+      numberOfVideos: 1,
+      resolution: '720p',
+      aspectRatio: '16:9'
+    }
+  });
+};
+
+export const getTemporalVideoOperation = async (operation: any) => {
+  const ai = getAI();
+  return ai.operations.getVideosOperation({ operation });
 };
 
 export function encode(bytes: Uint8Array) {
