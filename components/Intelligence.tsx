@@ -23,7 +23,7 @@ import {
   HardDrive
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, Radar as RechartsRadar } from 'recharts';
-import { chatWithAgroExpert, AIResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/geminiService';
+import { chatWithAgroExpert, analyzeSustainability, AIResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/geminiService';
 import { User, AgroResource, ViewState, MediaShard } from '../types';
 import { backupTelemetryShard, fetchTelemetryBackup, saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from '../App';
@@ -37,14 +37,12 @@ interface IntelligenceProps {
   initialSection?: string | null;
 }
 
-// Fix: Added missing TabState type definition for navigation control
 type TabState = 'hub' | 'twin' | 'simulator' | 'trends' | 'telemetry' | 'eos_ai' | 'sid' | 'evidence';
-
-// Fix: Added missing OracleMode type definition for diagnostic modes
 type OracleMode = 'BIO_DIAGNOSTIC' | 'SPECTRAL_AUDIT' | 'GENOMIC_INQUIRY' | 'SOIL_REMEDIATION';
 
 const ORACLE_QUERY_COST = 25;
 const SID_SCAN_COST = 40;
+const BATCH_AUDIT_COST = 100;
 
 const NEURAL_STEPS = [
   "Inflow Detected. Buffering Shard...",
@@ -98,12 +96,90 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       };
       
       await saveCollectionItem('media_ledger', newShard);
-      setArchivedShards(prev => new Set(prev).add(shardKey));
+      setArchivedShards(prev => {
+        const next = new Set(prev);
+        next.add(shardKey);
+        return next;
+      });
       onEarnEAC(20, `LEDGER_ANCHOR_${type.toUpperCase()}_SUCCESS`);
     } catch (e) {
       alert("LEDGER_FAILURE: Verification node timeout.");
     } finally {
       setIsArchiving(null);
+    }
+  };
+
+  // --- BATCH AUDIT STATES ---
+  const [isBatchAuditing, setIsBatchAuditing] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<Record<string, number>>({
+    twin: 0,
+    physics: 0,
+    trends: 0,
+    telemetry: 0,
+    sid: 0
+  });
+  const [masterVerdict, setMasterVerdict] = useState<string | null>(null);
+
+  // Added missing downloadReport helper function
+  /**
+   * Helper to download a technical report as a text file.
+   */
+  const downloadReport = (content: string, title: string, category: string) => {
+    const report = `ENVIROSAGRO™ ${category.toUpperCase()} REPORT\nTITLE: ${title}\nESIN: ${user.esin}\nDATE: ${new Date().toISOString()}\n\n${content}`;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/\s+/g, '_')}_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Fixed missing isArchived variable error by defining isMasterArchived memo
+  /**
+   * Tracks if the master verdict has been anchored to the ledger.
+   */
+  const isMasterArchived = useMemo(() => {
+    if (!masterVerdict) return false;
+    return archivedShards.has(`Master_Quorum_Intelligence_${masterVerdict.substring(0, 20)}`);
+  }, [masterVerdict, archivedShards]);
+
+  const handleStartBatchAudit = async () => {
+    if (!await onSpendEAC(BATCH_AUDIT_COST, 'MASTER_INTELLIGENCE_QUORUM_SYNC')) return;
+    
+    setIsBatchAuditing(true);
+    setMasterVerdict(null);
+    setBatchProgress({ twin: 0, physics: 0, trends: 0, telemetry: 0, sid: 0 });
+
+    const shardKeys = ['twin', 'physics', 'trends', 'telemetry', 'sid'];
+    
+    // Simulate parallel processing
+    for (const key of shardKeys) {
+      const interval = setInterval(() => {
+        setBatchProgress(prev => {
+          const newVal = Math.min(100, prev[key] + Math.random() * 15);
+          if (newVal === 100) clearInterval(interval);
+          return { ...prev, [key]: newVal };
+        });
+      }, 300 + Math.random() * 500);
+    }
+
+    // Wait for all to finish
+    await new Promise(resolve => setTimeout(resolve, 6000));
+
+    try {
+      const prompt = `Act as the EnvirosAgro Chief Science Officer. Perform a master synthesis of all intelligence shards for Node ${user.esin}. 
+      Context: Digital Twin calibrated, Physics Engine synchronized, Trend Ingest complete, Telemetry Pipeline active, and SID Scan verified. 
+      Analyze the current m-constant baseline (1.42x) and sustainability code Ca (1.20). 
+      Provide a high-level strategic industrial directive for the next 6 cycles. Format as an IMMUTABLE MASTER SHARD.`;
+      
+      const response = await chatWithAgroExpert(prompt, []);
+      setMasterVerdict(response.text);
+      onEarnEAC(100, 'MASTER_INTELLIGENCE_QUORUM_SYNC_YIELD');
+    } catch (e) {
+      setMasterVerdict("MASTER_SYNC_ERROR: Partial packet loss in Layer 2. Quorum not reached.");
+    } finally {
+      setIsBatchAuditing(false);
     }
   };
 
@@ -181,7 +257,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
   const handleRunFullSimulation = async () => {
     if (!await onSpendEAC(50, 'FULL_SUSTAINABILITY_SIMULATION_INGEST')) return;
-    setIsRunningSimulation(true);
+    isRunningSimulation && setIsRunningSimulation(true);
     setSimulationReport(null);
     try {
       const simData = {
@@ -376,7 +452,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-2 relative z-10">Node Ingest Status</p>
            <h4 className="text-6xl font-mono font-black text-white tracking-tighter relative z-10 leading-none">99<span className="text-xl text-emerald-500 italic">.9</span></h4>
            <div className="flex items-center justify-center gap-3 text-emerald-400 text-[10px] font-black uppercase relative z-10 tracking-widest border border-emerald-500/20 bg-emerald-500/5 py-2 px-4 rounded-full shadow-inner">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div> ACTIVE_SYNC
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div> ACTIVE_SYNC
            </div>
         </div>
       </div>
@@ -402,63 +478,175 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
         {/* --- VIEW: MASTER HUB (Consolidated View) --- */}
         {activeTab === 'hub' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-700">
-             {/* SIMULATOR MINI SHARD */}
-             <div onClick={() => setActiveTab('simulator')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
-                <div className="flex justify-between items-start">
-                   <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform"><Cpu size={32} /></div>
-                   <span className="text-[10px] font-black text-slate-700 uppercase">Physics Engine</span>
-                </div>
-                <div className="space-y-4">
-                   <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">EOS Simulator</h4>
-                   <div className="h-24 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                         <AreaChart data={simProjectionData.slice(-10)}>
-                            <Area type="monotone" dataKey="score" stroke="#10b981" fill="#10b98110" />
-                         </AreaChart>
-                      </ResponsiveContainer>
+          <div className="space-y-12 animate-in fade-in duration-700">
+             
+             {/* BATCH AUDIT TRIGGER CARD */}
+             <div className="p-10 md:p-14 glass-card rounded-[64px] border-indigo-500/20 bg-indigo-950/5 flex flex-col md:flex-row items-center justify-between gap-10 shadow-3xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[20s]"><Sparkles size={600} className="text-indigo-400" /></div>
+                <div className="flex items-center gap-10 relative z-10 text-center md:text-left flex-col md:flex-row">
+                   <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl animate-float border-4 border-white/10 shrink-0">
+                      <Zap className="w-10 h-10 text-white fill-current" />
+                   </div>
+                   <div className="space-y-2">
+                      <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Intelligence <span className="text-indigo-400">Quorum Sync.</span></h4>
+                      <p className="text-slate-400 text-lg font-medium italic max-w-2xl leading-relaxed">
+                        "Initialize a high-fidelity batch audit across all intelligence shards. Synchronize Twin, Simulator, and Oracle metrics in a single sequence."
+                      </p>
                    </div>
                 </div>
-                <div className="flex justify-between items-center pt-6 border-t border-white/5">
-                   <span className="text-[9px] font-black text-emerald-400">SYNC_NOMINAL</span>
-                   <ChevronRight size={20} className="text-slate-800" />
-                </div>
+                <button 
+                  onClick={handleStartBatchAudit}
+                  disabled={isBatchAuditing}
+                  className="px-16 py-8 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5 relative z-10 disabled:opacity-50"
+                >
+                   {isBatchAuditing ? <Loader2 className="animate-spin w-6 h-6" /> : <Play className="w-6 h-6 fill-current" />}
+                   <span className="ml-4">{isBatchAuditing ? 'PROCESSING_BATCH...' : 'RUN ALL SHARDS'}</span>
+                </button>
              </div>
 
-             {/* SID SCANNER MINI SHARD */}
-             <div onClick={() => setActiveTab('sid')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-rose-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
-                <div className="flex justify-between items-start">
-                   <div className="p-4 rounded-2xl bg-rose-500/10 text-rose-500 group-hover:rotate-12 transition-transform"><Radiation size={32} /></div>
-                   <span className="text-[10px] font-black text-slate-700 uppercase">Bio-Security</span>
-                </div>
-                <div className="space-y-4 text-center">
-                   <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">SID Scanner</h4>
-                   <p className="text-4xl font-mono font-black text-rose-500">0.42<span className="text-lg italic ml-1">μ</span></p>
-                   <p className="text-[9px] text-slate-500 uppercase tracking-widest">Viral Load Constant</p>
-                </div>
-                <div className="flex justify-between items-center pt-6 border-t border-white/5">
-                   <span className="text-[9px] font-black text-rose-400 italic">DETECTING_ANOMALIES...</span>
-                   <ChevronRight size={20} className="text-slate-800" />
-                </div>
-             </div>
+             {/* BATCH AUDIT MODAL/OVERLAY */}
+             { (isBatchAuditing || masterVerdict) && (
+               <div className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4">
+                  <div className="glass-card w-full max-w-5xl p-12 md:p-20 rounded-[80px] border-indigo-500/30 bg-[#050706] shadow-3xl overflow-hidden relative border-2 flex flex-col max-h-[90vh]">
+                     <div className="absolute inset-0 pointer-events-none opacity-20">
+                        <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/20 to-transparent absolute top-0 animate-scan"></div>
+                     </div>
+                     
+                     <div className="flex justify-between items-start mb-16 relative z-10 border-b border-white/5 pb-10 px-10">
+                        <div className="flex items-center gap-10">
+                           <div className="w-20 h-20 rounded-[32px] bg-indigo-600 flex items-center justify-center text-white shadow-3xl animate-float">
+                              <Bot size={44} className="text-white animate-pulse" />
+                           </div>
+                           <div>
+                              <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Master Intelligence <span className="text-indigo-400">Shard</span></h3>
+                              <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.6em] uppercase mt-4 italic">QUORUM_BATCH_INGEST // v6.5</p>
+                           </div>
+                        </div>
+                        <button onClick={() => { setIsBatchAuditing(false); setMasterVerdict(null); }} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all hover:rotate-90 active:scale-90 shadow-3xl"><X size={32} /></button>
+                     </div>
 
-             {/* TELEMETRY MINI SHARD */}
-             <div onClick={() => setActiveTab('telemetry')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-blue-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
-                <div className="flex justify-between items-start">
-                   <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform"><Wifi size={32} /></div>
-                   <span className="text-[10px] font-black text-slate-700 uppercase">IoT Ingest</span>
-                </div>
-                <div className="space-y-4 font-mono text-[10px] text-slate-500 overflow-hidden">
-                   {telemetryLogs.slice(0, 4).map((log, i) => (
-                      <div key={i} className="flex justify-between border-b border-white/5 pb-2">
-                         <span>[{log.metric}]</span>
-                         <span className="text-white">{log.value}</span>
+                     <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12 relative z-10 bg-black/40 rounded-[56px] border border-white/5 shadow-inner">
+                        {isBatchAuditing ? (
+                           <div className="space-y-12 py-10">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                 {/* Explicitly cast Object.entries results to fixed TypeScript unknown inferred type error */}
+                                 {(Object.entries(batchProgress) as [string, number][]).map(([shard, progress], i) => (
+                                    <div key={shard} className="space-y-4 animate-in slide-in-from-bottom-4" style={{ animationDelay: `${i * 100}ms` }}>
+                                       <div className="flex justify-between items-center px-4">
+                                          <div className="flex items-center gap-4">
+                                             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]"></div>
+                                             <span className="text-[11px] font-black uppercase text-slate-500 tracking-widest">{shard.toUpperCase()} SHARD</span>
+                                          </div>
+                                          <span className="text-sm font-mono font-black text-white">{progress.toFixed(0)}%</span>
+                                       </div>
+                                       <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5">
+                                          <div className="h-full bg-indigo-500 rounded-full shadow-[0_0_15px_#6366f1] transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                                       </div>
+                                    </div>
+                                 ))}
+                              </div>
+                              <div className="flex flex-col items-center justify-center pt-20 space-y-6">
+                                 <Loader2 size={100} className="text-indigo-500 animate-spin" />
+                                 <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.8em] animate-pulse italic m-0">SEQUENCING_MASTER_VERDICT...</p>
+                              </div>
+                           </div>
+                        ) : masterVerdict ? (
+                           <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10">
+                              <div className="p-10 md:p-16 bg-black/80 rounded-[64px] border-l-[20px] border-l-emerald-600 border-2 border-emerald-500/20 shadow-3xl">
+                                 <div className="prose prose-invert max-w-none text-slate-300 text-2xl leading-[2.1] italic whitespace-pre-line font-medium relative z-10 pl-10 border-l-2 border-white/5">
+                                    {masterVerdict}
+                                 </div>
+                                 <div className="mt-20 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-10">
+                                    <div className="flex items-center gap-6">
+                                       <Stamp size={56} className="text-emerald-400" />
+                                       <div className="text-left">
+                                          <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">MASTER_REGISTRY_HASH</p>
+                                          <p className="text-xl font-mono text-white italic">0xHS_MASTER_INTELLIGENCE_OK</p>
+                                       </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                       {/* Correctly invoke downloadReport added to component scope */}
+                                       <button onClick={() => downloadReport(masterVerdict || "", "Master_Quorum", "Intelligence")} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                                          <Download size={20} /> Download Shard
+                                       </button>
+                                       <button 
+                                          onClick={() => anchorToLedger(masterVerdict || "", "Master_Quorum", "Intelligence")}
+                                          /* Fixed missing isArchived variable error by using isMasterArchived memo */
+                                          disabled={isMasterArchived}
+                                          className={`px-16 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${isMasterArchived ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                       >
+                                          {/* Fixed missing isArchived variable error by using isMasterArchived memo */}
+                                          {isMasterArchived ? <CheckCircle2 size={24} /> : <Stamp size={24} />}
+                                          {isMasterArchived ? 'PERMANENTLY ANCHORED' : 'ANCHOR TO GLOBAL LEDGER'}
+                                       </button>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        ) : null}
+                     </div>
+                  </div>
+               </div>
+             )}
+
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* SIMULATOR MINI SHARD */}
+                <div onClick={() => setActiveTab('simulator')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
+                   <div className="flex justify-between items-start">
+                      <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform"><Cpu size={32} /></div>
+                      <span className="text-[10px] font-black text-slate-700 uppercase">Physics Engine</span>
+                   </div>
+                   <div className="space-y-4">
+                      <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">EOS Simulator</h4>
+                      <div className="h-24 w-full">
+                         <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={simProjectionData.slice(-10)}>
+                               <Area type="monotone" dataKey="score" stroke="#10b981" fill="#10b98110" />
+                            </AreaChart>
+                         </ResponsiveContainer>
                       </div>
-                   ))}
+                   </div>
+                   <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                      <span className="text-[9px] font-black text-emerald-400">SYNC_NOMINAL</span>
+                      <ChevronRight size={20} className="text-slate-800" />
+                   </div>
                 </div>
-                <div className="flex justify-between items-center pt-6 border-t border-white/5">
-                   <span className="text-[9px] font-black text-blue-400 uppercase">Pipeline_Active</span>
-                   <ChevronRight size={20} className="text-slate-800" />
+
+                {/* SID SCANNER MINI SHARD */}
+                <div onClick={() => setActiveTab('sid')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-rose-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
+                   <div className="flex justify-between items-start">
+                      <div className="p-4 rounded-2xl bg-rose-500/10 text-rose-500 group-hover:rotate-12 transition-transform"><Radiation size={32} /></div>
+                      <span className="text-[10px] font-black text-slate-700 uppercase">Bio-Security</span>
+                   </div>
+                   <div className="space-y-4 text-center">
+                      <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">SID Scanner</h4>
+                      <p className="text-4xl font-mono font-black text-rose-500">0.42<span className="text-lg italic ml-1">μ</span></p>
+                      <p className="text-[9px] text-slate-500 uppercase tracking-widest">Viral Load Constant</p>
+                   </div>
+                   <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                      <span className="text-[9px] font-black text-rose-400 italic">DETECTING_ANOMALIES...</span>
+                      <ChevronRight size={20} className="text-slate-800" />
+                   </div>
+                </div>
+
+                {/* TELEMETRY MINI SHARD */}
+                <div onClick={() => setActiveTab('telemetry')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 hover:border-blue-500/30 transition-all group flex flex-col h-[480px] justify-between shadow-xl">
+                   <div className="flex justify-between items-start">
+                      <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform"><Wifi size={32} /></div>
+                      <span className="text-[10px] font-black text-slate-700 uppercase">IoT Ingest</span>
+                   </div>
+                   <div className="space-y-4 font-mono text-[10px] text-slate-500 overflow-hidden">
+                      {telemetryLogs.slice(0, 4).map((log, i) => (
+                         <div key={i} className="flex justify-between border-b border-white/5 pb-2">
+                            <span>[{log.metric}]</span>
+                            <span className="text-white">{log.value}</span>
+                         </div>
+                      ))}
+                   </div>
+                   <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                      <span className="text-[9px] font-black text-blue-400 uppercase">Pipeline_Active</span>
+                      <ChevronRight size={20} className="text-slate-800" />
+                   </div>
                 </div>
              </div>
           </div>
@@ -721,7 +909,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                        ) : (
                           <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-1000 pb-10">
                              <div className="p-12 md:p-16 bg-black/80 rounded-[80px] border-2 border-rose-500/20 prose prose-invert prose-rose max-w-none shadow-3xl border-l-[12px] border-l-rose-600 relative overflow-hidden group/shard">
-                                <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-8 border-l border-white/10">
+                                <div className="text-slate-300 text-2xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
                                    {sidResult?.text}
                                 </div>
                              </div>
@@ -851,7 +1039,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
               <div className="lg:col-span-3 glass-card p-12 rounded-[64px] bg-[#050706] border-2 border-white/5 flex flex-col shadow-3xl min-h-[650px] relative overflow-hidden">
                  <div className="flex-1 space-y-4 font-mono text-[11px] overflow-y-auto custom-scrollbar relative z-10 bg-black/40 rounded-[48px] p-8 shadow-inner">
                     {telemetryLogs.map((log, i) => (
-                      <div key={i} className="flex gap-10 p-5 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group animate-in slide-in-from-right-2">
+                      <div key={i} className="flex gap-10 p-5 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group arrow-in slide-in-from-right-2">
                         <span className="text-slate-700 w-24 shrink-0 font-bold">[{log.timestamp}]</span>
                         <span className="text-blue-400 w-40 shrink-0 font-bold uppercase italic tracking-widest">[{log.metric}]</span>
                         <div className="flex-1 text-slate-300">PACKET_VAL: <span className="text-emerald-400 font-black">{log.value}</span> // ZK_SESSION: SYNC_A882</div>
