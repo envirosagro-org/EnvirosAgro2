@@ -72,7 +72,8 @@ import {
   Leaf,
   LayoutGrid
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   ComposedChart, Bar, Cell 
 } from 'recharts';
 import { User, MediaShard } from '../types';
@@ -293,7 +294,6 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     }, 3000);
   };
 
-  // Renamed downloadShard to downloadReport to match usage and fix error on line 764
   const downloadReport = (content: string, mode: string, typeName: string) => {
     const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
     const report = `
@@ -473,7 +473,7 @@ ${content}
                                <span className="text-[9px] text-slate-700 font-black uppercase">Local Node</span>
                             </div>
                             <div className="flex items-center gap-2">
-                               <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_10px_#6366f1]"></div>
+                               <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_100px_#6366f1]"></div>
                                <span className="text-[9px] text-slate-700 font-black uppercase">Target State</span>
                             </div>
                          </div>

@@ -465,7 +465,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                     <input 
                        type="text" required value={newAsset.name} onChange={e => setNewAsset({ ...newAsset, name: e.target.value })}
                        placeholder="e.g. High-Yield Maize Inflow..." 
-                       className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-stone-900 italic shadow-inner" 
+                       className="w-full bg-black border border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-stone-900 italic shadow-inner" 
                     />
                  </div>
                  <div className="space-y-3 px-4">

@@ -264,7 +264,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
       {/* 1. Mission HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10">
         <div className="lg:col-span-3 glass-card p-10 md:p-14 rounded-[64px] border-blue-500/20 bg-blue-500/[0.03] relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
-           <div className="absolute inset-0 bg-blue-500/[0.01] pointer-events-none">
+           <div className="absolute inset-0 bg-blue-500/[0.01] pointer-events-none overflow-hidden">
               <div className="w-full h-[1px] bg-blue-500/10 absolute top-0 animate-scan"></div>
            </div>
            
@@ -430,7 +430,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                              >
                                 <div className="flex items-center gap-4">
                                    <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 ${activeMission?.id === m.id ? 'text-white' : 'text-blue-400'}`}>
-                                      {CATEGORY_META[m.category].icon ? <div className="w-5 h-5 flex items-center justify-center"><Activity size={20} /></div> : <Briefcase size={20} />}
+                                      <Activity size={20} />
                                    </div>
                                    <div>
                                       <p className="text-sm font-black uppercase italic leading-none">{m.productType}</p>
@@ -492,7 +492,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                                        <button 
                                           key={i}
                                           onClick={() => onNavigate(tool.target as ViewState, tool.action)}
-                                          className="p-8 bg-white/[0.02] border border-white/5 hover:border-white/20 rounded-[40px] flex flex-col items-center text-center gap-5 transition-all group active:scale-95 shadow-xl relative overflow-hidden"
+                                          className="p-8 bg-white/[0.02] border border-white/20 rounded-[40px] flex flex-col items-center text-center gap-5 transition-all group active:scale-95 shadow-xl relative overflow-hidden"
                                        >
                                           <div className="absolute inset-0 bg-indigo-500/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                           <tool.icon size={32} className={`${tool.col} group-hover:scale-110 transition-transform relative z-10`} />
@@ -529,6 +529,15 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                    </div>
                 </div>
               )}
+           </div>
+        )}
+
+        {/* --- VIEW: RESOLUTION ARCHIVE --- */}
+        {activeTab === 'archive' && (
+           <div className="py-40 text-center opacity-10 space-y-8 flex flex-col items-center justify-center">
+              <History size={160} className="text-slate-600 animate-spin-slow" />
+              <p className="text-5xl font-black uppercase tracking-[0.6em] italic text-white leading-none">RESOLUTION_LEDGER_EMPTY</p>
+              <p className="text-xl font-bold italic text-slate-700 uppercase tracking-[0.3em]">Awaiting first industrial harvest cycle finality</p>
            </div>
         )}
       </div>
@@ -771,7 +780,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
 
                        <div className="p-10 glass-card rounded-[56px] border border-blue-500/10 bg-blue-500/5 flex items-center justify-between shadow-inner">
                           <div className="flex items-center gap-6">
-                             <div className="p-4 bg-blue-600 rounded-2xl shadow-xl"><Users2 size={24} className="text-white" /></div>
+                             <div className="p-4 bg-blue-600 rounded-2xl shadow-xl"><Users size={24} className="text-white" /></div>
                              <div className="text-left">
                                 <p className="text-xl font-bold text-white uppercase italic">Worker Cloud Sync</p>
                                 <p className="text-xs text-slate-500 italic">"Ingest verified labor shards to bolster bid match score."</p>
@@ -860,7 +869,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                  {applyStep === 'success' && (
                     <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-1000 text-center relative">
                        <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_200px_rgba(37,99,235,0.4)] relative group scale-110">
-                          <CheckCircle2 size={120} className="group-hover:scale-110 transition-transform" />
+                          <CheckCircle2 size={120} className="text-white group-hover:scale-110 transition-transform" />
                           <div className="absolute inset-[-15px] rounded-full border-4 border-blue-500/20 animate-ping opacity-30"></div>
                           <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
                        </div>
