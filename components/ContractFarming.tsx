@@ -50,6 +50,7 @@ import {
   Plus,
   Heart,
   Factory,
+  Target as TargetIcon,
   Truck,
   Monitor,
   Radio,
@@ -73,10 +74,8 @@ import {
   Settings,
   LineChart,
   Video,
-  // Added BadgeCheck and Smartphone to fix the "Cannot find name" errors
   BadgeCheck,
   Smartphone,
-  // Added Wifi to fix the "Wifi is not defined" ReferenceError
   Wifi
 } from 'lucide-react';
 import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone } from '../types';
@@ -339,7 +338,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                      value={searchTerm}
                      onChange={e => setSearchTerm(e.target.value)}
                      placeholder="Search missions by Category, Title or Node ID..." 
-                     className="w-full bg-black/80 border-2 border-white/10 rounded-full py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-8 focus:ring-blue-500/10 transition-all font-mono italic" 
+                     className="w-full bg-black/80 border-2 border-white/10 rounded-full py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-8 focus:ring-blue-500/10 transition-all font-mono italic shadow-inner" 
                    />
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
@@ -461,7 +460,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                                        <Target size={40} />
                                     </div>
                                     <div>
-                                       <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{activeMission.productType}</h3>
+                                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">{activeMission.productType}</h3>
                                        <p className="text-[10px] text-slate-500 font-mono tracking-widest mt-3 uppercase italic">COMMAND_ID: {activeMission.id} // INVESTOR: {activeMission.investorName}</p>
                                     </div>
                                  </div>
@@ -625,7 +624,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                        <Edit2 size={36} />
                     </div>
                     <div>
-                       <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic m-0">Edit <span className="text-indigo-400">Mission</span></h3>
+                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Edit <span className="text-indigo-400">Mission</span></h3>
                        <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">REGISTRY_MODIFICATION_v6.5</p>
                     </div>
                  </div>
@@ -646,7 +645,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                           <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">Budget Allocation (EAC)</label>
                           <input 
                             type="number" value={newMissionBudget} onChange={e => setNewMissionBudget(e.target.value)} 
-                            className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-4xl font-mono font-black text-white focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all" 
+                            className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-4xl font-mono font-black text-white focus:ring-8 focus:ring-blue-500/10 outline-none transition-all" 
                           />
                        </div>
                        <div className="space-y-3 px-4">
@@ -714,7 +713,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
 
               <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar flex flex-col bg-black/40 relative z-10">
                  {applyStep === 'selection' && (
-                    <div className="space-y-12 animate-in slide-in-from-right-10 duration-700">
+                    <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
                        <div className="text-center space-y-4">
                           <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter">Asset <span className="text-blue-400">Ingestion</span></h4>
                           <p className="text-slate-400 text-xl italic font-medium max-w-2xl mx-auto">"Select the physical nodes and geofence shards to pledge as collateral for this mission."</p>
@@ -824,7 +823,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                        ) : matchResult ? (
                           <div className="space-y-12">
                              <div className="p-12 bg-black/80 rounded-[64px] border border-blue-500/20 shadow-3xl border-l-[16px] border-l-blue-600 relative overflow-hidden group/advice">
-                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/advice:scale-125 transition-transform duration-[15s]"><Sparkles size={600} className="text-blue-400" /></div>
+                                <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={600} className="text-blue-400" /></div>
                                 <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
                                    <div className="flex items-center gap-8">
                                       <BadgeCheck size={44} className="text-blue-400" />
@@ -859,7 +858,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                  )}
 
                  {applyStep === 'success' && (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-1000 text-center">
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-1000 text-center relative">
                        <div className="w-56 h-56 agro-gradient rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_200px_rgba(37,99,235,0.4)] relative group scale-110">
                           <CheckCircle2 size={120} className="group-hover:scale-110 transition-transform" />
                           <div className="absolute inset-[-15px] rounded-full border-4 border-blue-500/20 animate-ping opacity-30"></div>

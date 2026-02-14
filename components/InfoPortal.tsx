@@ -231,7 +231,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
               <div className="w-full max-w-4xl p-12 md:p-16 bg-black/90 rounded-[64px] border-2 border-white/5 relative overflow-hidden shadow-inner group/text">
                 <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover/text:scale-110 transition-transform duration-[15s] pointer-events-none"><Database size={400} /></div>
                 <p className="text-slate-200 text-2xl md:text-4xl italic leading-[2.1] font-medium relative z-10 text-center font-sans">
-                  {"\"As a Node Operator, you are responsible for the uptime of your paired hardware. You agree to submit your node to 'Periodic Quorum Audits'. In exchange for maintaining mesh stability (m > 1.42), you are authorized to mint EAC shards. Failure to maintain a verified m-constant below the threshold may result in temporary registry suspension.\""}
+                  "As a Node Operator, you are responsible for the uptime of your paired hardware. You agree to submit your node to 'Periodic Quorum Audits'. In exchange for maintaining mesh stability (m &gt; 1.42), you are authorized to mint EAC shards. Failure to maintain a verified m-constant below the threshold may result in temporary registry suspension."
                 </p>
               </div>
               <button 
@@ -406,7 +406,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
         .animate-spin-slow { animation: spin 20s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 4s linear infinite; }
+        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );

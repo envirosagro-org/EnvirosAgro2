@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   Network, 
@@ -43,7 +42,6 @@ import {
   Maximize2,
   X,
   Code,
-  // Added Stamp to fix the "Cannot find name 'Stamp'" error on line 259
   Stamp
 } from 'lucide-react';
 import { ViewState, VectorAddress } from '../types';

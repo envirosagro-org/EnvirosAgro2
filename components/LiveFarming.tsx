@@ -4,7 +4,6 @@ import {
   PlusCircle, Monitor, Clock, TrendingUp, Eye, X, Upload, Bot, Factory, 
   Package, Cpu, Layers, ShieldCheck, ShieldAlert, Database, Terminal, 
   Wifi, Scan, Share2, Sparkles, Gauge, Smartphone, Wrench, 
-  /* Added ClipboardCheck to fix error on line 354 */
   SmartphoneNfc, ClipboardList, ClipboardCheck, Target, Plus, ArrowUpRight, Stamp, 
   Workflow, Radio, Fingerprint, Info, ChevronRight, LayoutGrid, 
   Trello, Boxes, LineChart, ShoppingCart, Video, Edit3, Briefcase, Users, FlaskConical,
@@ -207,7 +206,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                           <span>Processing Alpha</span>
                           <span className="text-white font-mono">{asset.progress}%</span>
                        </div>
-                       <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5">
+                       <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
                           <div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-1000" style={{ width: `${asset.progress}%` }}></div>
                        </div>
                     </div>
@@ -255,7 +254,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
             <div className="lg:col-span-4 space-y-6">
               <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
                 <div className="flex items-center justify-between px-2">
-                   <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Owned <span className="text-indigo-400">Assets</span></h4>
+                   <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Owned <span className="text-indigo-400">Assets</span></h4>
                    <button 
                     onClick={() => setShowAddModal(true)} 
                     className="p-2 bg-emerald-600 rounded-xl text-white shadow-xl hover:scale-110 transition-all"
@@ -328,7 +327,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                            </div>
                         </div>
                         <div className="flex flex-wrap gap-4">
-                           <div className={`px-5 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${selectedAsset.isPhysicallyVerified ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400' : 'bg-rose-600/10 border-rose-500/40 text-rose-500'}`}>
+                           <div className={`px-5 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${selectedAsset.isPhysicallyVerified ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500'}`}>
                               {selectedAsset.isPhysicallyVerified ? <ShieldCheck size={12}/> : <ShieldAlert size={12}/>}
                               PHYSICAL_VERIFIED
                            </div>
@@ -395,7 +394,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                                selectedAsset.isSystemAudited ? 'bg-emerald-600 text-white' : 'bg-black border border-white/10 text-slate-400 hover:text-white hover:border-indigo-400'
                              }`}
                            >
-                              {isProcessingAction === 'audit' ? <Loader2 size={14} className="animate-spin"/> : selectedAsset.isSystemAudited ? <CheckCircle2 size={14}/> : <ClipboardList size={14}/>}
+                              {isProcessingAction === 'audit' ? <Loader2 size={14} className="animate-spin"/> : selectedAsset.isSystemAudited ? <CheckCircle2 size={14}/> : <ClipboardCheck size={14}/>}
                               System Audit
                            </button>
                         </div>

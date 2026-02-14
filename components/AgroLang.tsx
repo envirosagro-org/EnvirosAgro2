@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-/* Added ArrowUpRight to lucide-react imports to fix error on line 339 */
 import { 
   Code2, Play, ShieldCheck, Scale, Terminal, Bot, Sparkles, 
   Loader2, CheckCircle2, AlertTriangle, History, FileCode, 

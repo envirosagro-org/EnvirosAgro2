@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   History, 
@@ -69,17 +68,15 @@ import {
   Tent,
   Building2,
   Rocket,
-  // Fix: Added missing icons Factory, Leaf, LayoutGrid
   Factory,
   Leaf,
   LayoutGrid
 } from 'lucide-react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   ComposedChart, Bar, Cell 
 } from 'recharts';
 import { User, MediaShard } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroExpert, AIResponse } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
 
 interface AgroRegencyProps {
@@ -296,10 +293,11 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     }, 3000);
   };
 
-  const downloadShard = (content: string, mode: string, type: string) => {
+  // Renamed downloadShard to downloadReport to match usage and fix error on line 764
+  const downloadReport = (content: string, mode: string, typeName: string) => {
     const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
     const report = `
-ENVIROSAGRO™ ${type.toUpperCase()} SHARD
+ENVIROSAGRO™ ${typeName.toUpperCase()} SHARD
 =================================
 REGISTRY_ID: ${shardId}
 NODE_AUTH: ${user.esin}
@@ -318,7 +316,7 @@ ${content}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `EA_${type}_${mode}_${Date.now()}.txt`;
+    a.download = `EA_${typeName}_${mode}_${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -530,7 +528,7 @@ ${content}
                            </div>
                          ) : travelForecast ? (
                            <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12">
-                              <div className="p-12 md:p-20 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 prose prose-invert prose-emerald max-w-none shadow-[0_40px_150px_rgba(0,0,0,0.9)] border-l-[20px] border-l-indigo-600 relative overflow-hidden group/shard">
+                              <div className="p-12 md:p-20 bg-black/80 rounded-[80px] border-2 border-indigo-500/20 prose prose-invert prose-emerald max-w-none shadow-[0_40px_150px_rgba(0,0,0,0.9)] border-l-[20px] border-l-indigo-600 relative overflow-hidden group/shard">
                                  <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/shard:scale-110 transition-transform duration-[12s] pointer-events-none"><Atom size={600} className="text-indigo-400" /></div>
                                  <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-8 border-l-2 border-white/10">
                                     {travelForecast}
@@ -544,7 +542,7 @@ ${content}
                                        </div>
                                     </div>
                                     <div className="flex gap-6">
-                                       <button onClick={() => downloadShard(travelForecast || "", selectedState.name, 'Futuring')} className="px-12 py-5 bg-white/5 border-2 border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-4 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                                       <button onClick={() => downloadReport(travelForecast || "", selectedState.name, 'Futuring')} className="px-12 py-5 bg-white/5 border-2 border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-4 text-[11px] font-black uppercase tracking-widest shadow-xl">
                                           <Download size={20} /> Download Shard
                                        </button>
                                        <button 
@@ -763,7 +761,8 @@ ${content}
                     <div className="mt-10 p-10 bg-black/60 rounded-[48px] border border-indigo-500/20 text-left animate-in fade-in space-y-10">
                        <p className="text-slate-300 text-xl leading-loose italic">{oracleReport}</p>
                        <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
-                          <button onClick={() => downloadShard(oracleReport || "", "Regency", "Audit")} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
+                          {/* Calling downloadReport here correctly now */}
+                          <button onClick={() => downloadReport(oracleReport || "", "Regency", "Audit")} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
                              <Download size={18} /> Download Shard
                           </button>
                           <button 
