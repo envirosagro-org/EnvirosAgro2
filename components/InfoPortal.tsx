@@ -245,7 +245,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ onNavigate, onAcceptAll }) => {
                    <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 relative overflow-hidden shadow-inner group/text">
                       <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover/text:scale-110 transition-transform"><Database size={400} /></div>
                       <p className="text-slate-200 text-3xl leading-[2.1] italic font-medium relative z-10 font-sans">
-                         "As a Node Operator, you are responsible for the uptime of your paired hardware. You agree to submit your node to \"Periodic Quorum Audits.\" In exchange for maintaining mesh stability (m > 1.42), you are authorized to mint EAC shards. Failure to maintain a verified m-constant below the fallowing threshold may result in temporary registry suspension."
+                         "As a Node Operator, you are responsible for the uptime of your paired hardware. You agree to submit your node to \"Periodic Quorum Audits.\" In exchange for maintaining mesh stability (m &gt; 1.42), you are authorized to mint EAC shards. Failure to maintain a verified m-constant below the fallowing threshold may result in temporary registry suspension."
                       </p>
                    </div>
                 </div>
