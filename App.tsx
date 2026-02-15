@@ -79,6 +79,7 @@ import AIAnalyst from './components/AIAnalyst';
 import VerificationHUD from './components/VerificationHUD';
 import SettingsPortal from './components/SettingsPortal';
 import TemporalVideo from './components/TemporalVideo';
+import Robot from './components/Robot';
 
 import { 
   syncUserToCloud, 
@@ -324,7 +325,8 @@ const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'tqm', name: 'TQM Trace Hub', icon: ClipboardCheck, sections: [{id: 'orders', label: 'Shipments'}, {id: 'trace', label: 'Traceability'}] },
       { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake, sections: [{id: 'directory', label: 'Directory'}, {id: 'support', label: 'Support'}] },
       { id: 'circular', name: 'Circular Grid', icon: Recycle, sections: [{id: 'market', label: 'Refurbished Store'}] },
-      { id: 'tools', name: 'Industrial Tools', icon: Wrench, sections: [{id: 'kanban', label: 'Kanban'}, {id: 'sigma', label: 'Six Sigma'}] }
+      { id: 'tools', name: 'Industrial Tools', icon: Wrench, sections: [{id: 'kanban', label: 'Kanban'}, {id: 'sigma', label: 'Six Sigma'}] },
+      { id: 'robot', name: 'Swarm Command', icon: Bot, sections: [{id: 'registry', label: 'Fleet Registry'}, {id: 'security', label: 'Intranet Security'}] }
     ]
   },
   {
@@ -1034,6 +1036,7 @@ const App: React.FC = () => {
       case 'info': return <InfoPortal user={currentUser} onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} onPermanentAction={handlePerformPermanentAction} />;
       case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;
+      case 'robot': return <Robot user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} />;
       default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }
   };

@@ -1,3 +1,4 @@
+
 export interface LinkedProvider {
   id: string;
   type: 'Mobile' | 'Bank' | 'Web3' | 'Card' | 'PayPal' | 'Visa' | 'Mastercard';
@@ -406,7 +407,7 @@ export type ViewState =
   | 'agro_regency' | 'code_of_laws' | 'agro_calendar' | 'chroma_system'
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv' | 'registry_handshake'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger' | 'agrolang'
-  | 'network' | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video';
+  | 'network' | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot';
 
 export interface VectorAddress {
   dimension: ViewState;
