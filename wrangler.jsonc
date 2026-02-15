@@ -1,12 +1,5 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "envirosagro",
-  "main": "src/index.js",
-  "compatibility_date": "2026-02-15",
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS"
-  }
-}
-
-
+	    "name": "envirosagro",
+	    "compatibility_date": "2026-02-15",
+	    "main": "src/index.ts"
+	  }
