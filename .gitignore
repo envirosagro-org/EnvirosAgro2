@@ -1,7 +1,6 @@
 # Local environment variables
 .env
 .env.local
-GEMINI_API_KEY=AIzaSyCHXoNC1lTf7PLCKc_Ic5RQV_qZdUbdBGA
 .env.development.local
 .env.test.local
 .env.production.local
