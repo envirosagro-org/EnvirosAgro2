@@ -104,7 +104,13 @@ const CircularGrid: React.FC<CircularGridProps> = ({
     setIsSyncing(true);
     setTimeout(() => {
       setIsSyncing(false);
-      notify('success', 'CIRCULAR_SYNC_OK', "Second-life registry aligned with global m-constant drift.");
+      notify({ 
+        title: 'CIRCULAR_SYNC_OK', 
+        message: "Second-life registry aligned with global m-constant drift.",
+        type: 'success',
+        priority: 'low',
+        actionIcon: 'RefreshCw'
+      });
     }, 2000);
   };
 
@@ -147,7 +153,13 @@ const CircularGrid: React.FC<CircularGridProps> = ({
         supplierEsin: item.supplierEsin,
         sourceTab: 'circular'
       });
-      notify('success', 'PROCUREMENT_INJECTED', `Shard ${item.id} registered via Circular Grid. Monitor finality in TQM.`);
+      notify({ 
+        title: 'PROCUREMENT_INJECTED', 
+        message: `Shard ${item.id} registered via Circular Grid. Monitor finality in TQM.`,
+        type: 'success',
+        priority: 'medium',
+        actionIcon: 'ShoppingCart'
+      });
     }
   };
 
@@ -234,7 +246,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({
                      value={searchTerm}
                      onChange={e => setSearchTerm(e.target.value)}
                      placeholder="Query second-life shards..." 
-                     className="w-full bg-black/80 border-2 border-white/10 rounded-full py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all font-mono italic" 
+                     className="w-full bg-black/80 border-2 border-white/10 rounded-full py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all font-mono italic shadow-inner" 
                    />
                 </div>
              </div>

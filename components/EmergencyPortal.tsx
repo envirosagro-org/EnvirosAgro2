@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   Siren, 
@@ -41,7 +40,9 @@ import {
   Search,
   FileText,
   Stamp,
-  ArrowRight
+  ArrowRight,
+  // Added BadgeCheck to fix the "Cannot find name 'BadgeCheck'" error on line 396
+  BadgeCheck
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { User, SignalShard } from '../types';
@@ -181,7 +182,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-rose-600 text-white shadow-xl shadow-rose-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-rose-600 text-white shadow-xl shadow-rose-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
           </button>

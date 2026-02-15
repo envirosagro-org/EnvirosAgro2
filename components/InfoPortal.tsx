@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { 
   Info, ShieldCheck, ChevronRight, Scale, BookOpen, Globe, Zap, Users, Lock, FileText,
@@ -11,7 +10,7 @@ import {
   ChevronDown, Code, Database, Gavel, Stamp, Signature, FileSignature, ScrollText,
   Cpu, Download, Target as TargetIcon, Activity, Binary, History, Scale as ScaleIcon,
   ArrowUpRight, Building, Layers, Terminal as TerminalIcon,
-  // Added missing icons
+  // Added missing icons to fix component crash
   Gauge, Heart, Siren
 } from 'lucide-react';
 import { User, ViewState } from '../types';
@@ -272,7 +271,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
                     </div>
                   </div>
                   <div className="relative z-10">
-                    <p className="text-slate-300 text-2xl md:text-4xl leading-[2.1] italic font-medium pl-14 border-l-[16px] border-white/5 group-hover:border-amber-500/40 transition-all font-sans">
+                    <p className="text-slate-300 text-2xl md:text-4xl leading-[2.1] italic font-medium border-l-[16px] border-white/5 group-hover:border-amber-500/40 transition-all font-sans">
                       "{law.content}"
                     </p>
                   </div>
@@ -537,7 +536,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
                     >
                        <div className="flex items-center gap-5">
                           <shard.icon size={20} className={activeSection === shard.id ? 'text-black' : shard.color} />
-                          <span className="text-[11px] font-black uppercase tracking-[0.3em]">{shard.label}</span>
+                          <span className="text-11px font-black uppercase tracking-[0.3em]">{shard.label}</span>
                        </div>
                        {activeSection === shard.id && <ChevronRight size={18} className="animate-pulse" />}
                     </button>

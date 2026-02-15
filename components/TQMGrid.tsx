@@ -271,7 +271,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                      value={searchTerm}
                      onChange={e => setSearchTerm(e.target.value)}
                      placeholder="Search SKU shards for initialization..." 
-                     className="w-full bg-black/80 border-2 border-white/10 rounded-full py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all font-mono italic" 
+                     className="w-full bg-black/80 border-2 border-white/10 rounded-full py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all font-mono italic shadow-inner" 
                    />
                 </div>
              </div>
@@ -298,7 +298,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                              </div>
                           </div>
                           <div className="space-y-2">
-                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors drop-shadow-2xl line-clamp-2">{order.itemName}</h4>
+                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-emerald-400 transition-colors drop-shadow-2xl line-clamp-2">{order.itemName}</h4>
                              <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">Supplier Node: {order.supplierEsin}</p>
                           </div>
                           <p className="text-sm text-slate-400 italic leading-relaxed">"Initializing this SKU into the TQM thread anchors its genesis hash to the registry."</p>
@@ -366,8 +366,8 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                               <span className="text-xl font-mono font-black text-emerald-400">0{i+1}</span>
                            </div>
                            
-                           <div className="flex-1 glass-card p-10 rounded-[56px] border-2 border-white/5 bg-black/40 shadow-3xl hover:border-emerald-500/20 transition-all relative overflow-hidden">
-                              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><Atom size={200} /></div>
+                           <div className="flex-1-glass-card p-10 rounded-[56px] border-2 border-white/5 bg-black/40 shadow-3xl hover:border-emerald-500/20 transition-all relative overflow-hidden">
+                              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform duration-1000"><Atom size={200} /></div>
                               <div className="flex justify-between items-start mb-8 relative z-10 border-b border-white/5 pb-6">
                                  <div className="space-y-1">
                                     <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tighter">{event.stage.replace(/_/g, ' ')}</h4>

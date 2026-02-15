@@ -702,7 +702,7 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                                      <res.icon size={28} className="text-slate-500 group-hover:text-white" />
                                   </div>
                                   <div>
-                                     <h4 className="text-lg md:text-2xl font-black text-white uppercase italic leading-none font-black text-indigo-400 transition-colors m-0 tracking-tighter">{res.name}</h4>
+                                     <h4 className="text-lg md:text-2xl font-black text-white uppercase italic leading-none text-indigo-400 transition-colors m-0 tracking-tighter">{res.name}</h4>
                                      <p className="text-[9px] text-slate-700 font-mono mt-2 uppercase tracking-widest font-black italic">{res.category}</p>
                                   </div>
                                </div>
@@ -1256,7 +1256,7 @@ const App: React.FC = () => {
                 title="Vector Advance"
               >
                  <div className="flex flex-col items-end text-right hidden md:block">
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] font-black text-indigo-400 transition-all">Advance</span>
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 transition-all">Advance</span>
                     <span className="text-6px font-mono opacity-50 mt-1 uppercase">Next_Vector</span>
                  </div>
                  <ChevronRight size={16} className="group-hover/fwd:translate-x-1 transition-transform" />
