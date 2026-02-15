@@ -141,7 +141,13 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
           supplierEsin: offer.supplierEsin,
           sourceTab: 'agrowild'
         });
-        notify('success', 'PROCUREMENT_SUCCESS', "Experience shard registered. Finality monitored in TQM.");
+        notify({ 
+          title: 'PROCUREMENT_SUCCESS', 
+          message: "Experience shard registered. Finality monitored in TQM.",
+          type: 'ledger_anchor',
+          priority: 'medium',
+          actionIcon: 'ShoppingCart'
+        });
       }
     }
   };
@@ -208,7 +214,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
         <div className="lg:col-span-2 glass-card p-8 md:p-10 rounded-[40px] border border-white/10 bg-black/40 flex items-center justify-between shadow-3xl min-h-[220px]">
            <div className="space-y-4 flex-1 px-2">
               <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight">Agrowild <span className="text-emerald-400">Finality</span> Console</h3>
-              <p className="text-slate-500 text-sm italic font-medium leading-relaxed max-w-sm hidden sm:block">"Monitoring and sharding biological assets across the planetary grid for SEHTI compliance."</p>
+              <p className="text-slate-500 text-sm italic font-medium leading-relaxed max-sm:text-sm max-w-sm hidden sm:block">"Monitoring and sharding biological assets across the planetary grid for SEHTI compliance."</p>
               <div className="flex gap-4">
                 <button 
                   onClick={() => scrollToSection('discovery')}
@@ -227,7 +233,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
 
       {/* 2. Unified Navigation */}
       <div className="px-4 shrink-0 flex justify-center">
-        <div className="flex flex-wrap gap-2 p-1.5 glass-card rounded-[32px] w-full sm:w-fit border border-white/5 bg-black/40 shadow-xl px-6 md:px-10 relative z-20 overflow-x-auto scrollbar-hide">
+        <div className="flex flex-wrap gap-2 p-1.5 glass-card rounded-[32px] w-full sm:w-fit border border-white/5 bg-black/40 shadow-xl px-6 md:px-10 relative z-20 overflow-x-auto scrollbar-hide snap-x w-full md:w-auto">
           {AGROWILD_TABS.map(tab => (
             <button 
               key={tab.id}
@@ -252,7 +258,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
            <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/5 pb-8 px-4 gap-6">
               <div className="space-y-2">
                  <h3 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Regional <span className="text-emerald-400">Node Clusters</span></h3>
-                 <p className="text-slate-500 text-lg font-medium italic opacity-70 max-w-2xl">"Verified biological clusters sharded for m-constant stability and genetic heritage."</p>
+                 <p className="text-slate-600 text-lg font-medium italic opacity-70 max-w-2xl">"Verified biological clusters sharded for m-constant stability and genetic heritage."</p>
               </div>
               <div className="flex items-center gap-4">
                  <div className="px-4 py-2 bg-emerald-500/10 border-2 border-emerald-500/20 rounded-full text-emerald-400 font-mono text-[9px] font-black uppercase tracking-widest shadow-inner hidden sm:block">GRID_PROTECTED_OK</div>
@@ -329,7 +335,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                        <div className="space-y-4">
                           <div className="flex justify-between items-start">
                              <div className="space-y-1">
-                                <h4 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-blue-400 transition-colors drop-shadow-2xl">{offer.title}</h4>
+                                <h4 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-blue-400 transition-colors drop-shadow-2xl">{offer.title}</h4>
                                 <p className="text-[9px] text-slate-700 font-mono font-black uppercase tracking-[0.2em] italic leading-none mt-1">ID: {offer.id}</p>
                              </div>
                              <div className="flex items-center gap-1.5 text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 shadow-xl">
@@ -482,7 +488,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                        </div>
                        <div className="text-[10px] text-slate-500 font-mono italic opacity-70 group-hover:opacity-100 transition-opacity uppercase tracking-widest">{shard.date}</div>
                        <div className="flex justify-end pr-8">
-                          <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-2xl text-emerald-400 shadow-xl group-hover:shadow-emerald-500/40 transition-all scale-90 group-hover:scale-100">
+                          <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-2xl text-emerald-400 shadow-xl group-hover:shadow-emerald-500/40 group-hover:scale-110 transition-all scale-90 group-hover:scale-100">
                              <ShieldCheck size={24} />
                           </div>
                        </div>

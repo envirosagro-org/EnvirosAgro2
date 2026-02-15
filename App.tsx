@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
@@ -497,7 +496,6 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
               className="p-3 md:p-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl md:rounded-3xl transition-all shadow-xl group active:scale-95 disabled:opacity-30 flex items-center justify-center"
               title="Oracle deep query"
             >
-               {/* Fixed: use isAiSearching instead of isSearching */}
                {isAiSearching ? <Loader2 className="animate-spin text-white w-6 h-6" /> : <SycamoreLogo size={24} className="text-emerald-400 group-hover:text-white" />}
             </button>
             <button onClick={onClose} className="p-3 md:p-4 text-slate-500 hover:text-white transition-colors bg-white/5 rounded-2xl active:scale-95"><X size={24} /></button>
@@ -704,7 +702,7 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                                      <res.icon size={28} className="text-slate-500 group-hover:text-white" />
                                   </div>
                                   <div>
-                                     <h4 className="text-lg md:text-2xl font-black text-white uppercase italic leading-none group-hover:text-indigo-400 transition-colors m-0 tracking-tighter">{res.name}</h4>
+                                     <h4 className="text-lg md:text-2xl font-black text-white uppercase italic leading-none font-black text-indigo-400 transition-colors m-0 tracking-tighter">{res.name}</h4>
                                      <p className="text-[9px] text-slate-700 font-mono mt-2 uppercase tracking-widest font-black italic">{res.category}</p>
                                   </div>
                                </div>
@@ -848,7 +846,7 @@ const App: React.FC = () => {
       if (popupLayer) {
         const id = Math.random().toString(36).substring(7);
         setNotifications(prev => [{
-          id, type: signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info',
+          id, type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info',
           title: signal.title, message: signal.message, duration: 6000,
           actionLabel: signal.actionLabel, actionIcon: signalData.actionIcon
         }, ...prev]);
@@ -1258,7 +1256,7 @@ const App: React.FC = () => {
                 title="Vector Advance"
               >
                  <div className="flex flex-col items-end text-right hidden md:block">
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Advance</span>
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] font-black text-indigo-400 transition-all">Advance</span>
                     <span className="text-6px font-mono opacity-50 mt-1 uppercase">Next_Vector</span>
                  </div>
                  <ChevronRight size={16} className="group-hover/fwd:translate-x-1 transition-transform" />

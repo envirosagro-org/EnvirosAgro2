@@ -40,7 +40,8 @@ import {
   Info,
   Search,
   FileText,
-  Stamp
+  Stamp,
+  ArrowRight
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { User, SignalShard } from '../types';
@@ -162,9 +163,9 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
          <div className="space-y-6 relative z-10 text-center md:text-left">
             <div className="space-y-2">
                <span className="px-4 py-1.5 bg-rose-500/10 text-rose-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-rose-500/20 shadow-inner">EMERGENCY_NODE_v5.0</span>
-               <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 m-0 leading-none">Crisis <span className="text-rose-500">Command</span></h2>
+               <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 m-0 leading-none drop-shadow-2xl">Crisis <span className="text-rose-500">Command</span></h2>
             </div>
-            <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl italic leading-relaxed">
+            <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl italic leading-relaxed">
                "Securing the registry against catastrophic agricultural anomalies. Broadcast SOS signals and synthesize remediation shards in real-time."
             </p>
          </div>
@@ -215,7 +216,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                            <button 
                              onClick={() => handleBroadcastAlert(h)}
                              disabled={broadcastedIds.has(h.id)}
-                             className={`px-8 py-4 border rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl ${broadcastedIds.has(h.id) ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-500 cursor-default' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+                             className={`px-8 py-4 border rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl ${broadcastedIds.has(h.id) ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 cursor-default' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
                            >
                              {broadcastedIds.has(h.id) ? 'BROADCASTED' : 'BROADCAST TO MESH'}
                            </button>
@@ -257,7 +258,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                      </div>
                      <div className="space-y-4">
                         <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0">Initialize <span className="text-rose-500">SOS Shard</span></h3>
-                        <p className="text-slate-400 text-xl font-medium max-w-xl mx-auto italic">Broadcast a critical threat signal to all nodes in your regional cluster.</p>
+                        <p className="text-slate-400 text-xl font-medium italic max-w-xl mx-auto italic">Broadcast a critical threat signal to all nodes in your regional cluster.</p>
                      </div>
                      <div className="space-y-8 max-w-xl mx-auto">
                         <div className="space-y-2 text-left">
@@ -271,56 +272,68 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                            </select>
                         </div>
                         <div className="space-y-2 text-left">
-                           <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Threat Narrative</label>
+                           <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Threat Description</label>
                            <textarea 
-                             value={sosDesc} onChange={e => setSosDesc(e.target.value)}
-                             placeholder="Provide technical details of the anomaly..."
-                             className="w-full bg-black/60 border border-white/10 rounded-3xl p-8 text-white text-lg font-medium italic focus:ring-4 focus:ring-rose-500/10 outline-none h-40 resize-none placeholder:text-slate-900 shadow-inner"
+                             value={sosDesc}
+                             onChange={e => setSosDesc(e.target.value)}
+                             placeholder="Provide precise biological or technical details..."
+                             className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-lg font-medium italic focus:ring-4 focus:ring-rose-500/10 outline-none transition-all h-40 resize-none placeholder:text-stone-900 shadow-inner"
                            />
                         </div>
                         <button 
                           onClick={() => setSosStep('sign')}
                           disabled={!sosDesc.trim()}
-                          className="w-full py-8 bg-rose-600 hover:bg-rose-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl active:scale-95 transition-all disabled:opacity-30"
+                          className="w-full py-8 bg-rose-600 hover:bg-rose-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl transition-all disabled:opacity-30"
                         >
-                           INITIALIZE BROADCAST SEQUENCE
+                           PROCEED TO SIGNATURE <ArrowRight className="w-5 h-5 ml-4" />
                         </button>
                      </div>
                   </div>
                 )}
+
                 {sosStep === 'sign' && (
-                  <div className="space-y-12 relative z-10 animate-in slide-in-from-right-4">
-                     <div className="text-center space-y-6">
-                        <div className="w-24 h-24 bg-rose-500/10 rounded-[32px] flex items-center justify-center mx-auto border border-rose-500/20 shadow-2xl group relative overflow-hidden">
-                           <Fingerprint className="w-12 h-12 text-rose-500 group-hover:scale-110 transition-transform" />
+                  <div className="space-y-12 relative z-10 animate-in slide-in-from-right-10 flex flex-col justify-center flex-1">
+                     <div className="text-center space-y-8">
+                        <div className="w-32 h-32 bg-rose-600/10 border-2 border-rose-500/20 rounded-[44px] flex items-center justify-center mx-auto text-rose-500 shadow-3xl group relative overflow-hidden">
+                           <div className="absolute inset-0 bg-rose-500/5 animate-pulse"></div>
+                           <Fingerprint size={48} className="relative z-10 group-hover:scale-110 transition-transform" />
                         </div>
-                        <h4 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">Steward <span className="text-rose-500">Auth Signature</span></h4>
+                        <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none m-0">Node <span className="text-rose-500">Signature</span></h4>
                      </div>
-                     <div className="space-y-4 max-w-xl mx-auto">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center block">Signature ESIN</label>
+                     <div className="space-y-4 max-w-xl mx-auto w-full">
+                        <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.6em] block text-center">Auth Signature (ESIN)</label>
                         <input 
                            type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
                            placeholder="EA-XXXX-XXXX-XXXX" 
-                           className="w-full bg-black border border-white/10 rounded-[40px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-4 focus:ring-rose-500/20 outline-none transition-all uppercase placeholder:text-slate-900 shadow-inner" 
+                           className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 text-center text-4xl font-mono text-white outline-none focus:ring-8 focus:ring-rose-500/10 transition-all uppercase placeholder:text-stone-900 shadow-inner" 
                         />
                      </div>
-                     <button 
-                       onClick={handleBroadcastSOS}
-                       disabled={isBroadcasting || !esinSign}
-                       className="w-full py-10 agro-gradient-rose rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
-                     >
-                        {isBroadcasting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Send size={24} fill="current" />}
-                        {isBroadcasting ? "BROADCASTING SHARD..." : "AUTHORIZE SOS SIGNAL"}
-                     </button>
+                     <div className="flex gap-4">
+                        <button onClick={() => setSosStep('form')} className="flex-1 py-10 bg-white/5 border border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-xl active:scale-95">Back</button>
+                        <button 
+                          onClick={handleBroadcastSOS}
+                          disabled={isBroadcasting || !esinSign}
+                          className="flex-[2] py-10 bg-rose-600 hover:bg-rose-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(225,29,72,0.3)] flex items-center justify-center gap-8 active:scale-95 disabled:opacity-30 transition-all border-4 border-white/10 ring-[16px] ring-white/5"
+                        >
+                           {isBroadcasting ? <Loader2 className="w-10 h-10 animate-spin" /> : <Stamp size={28} className="fill-current" />}
+                           {isBroadcasting ? "BROADCASTING..." : "AUTHORIZE SOS"}
+                        </button>
+                     </div>
                   </div>
                 )}
+
                 {sosStep === 'success' && (
-                  <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-10 animate-in zoom-in duration-700 text-center relative z-10">
-                     <div className="w-56 h-56 agro-gradient-rose rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_150px_rgba(244,63,94,0.3)] relative group">
-                        <CheckCircle2 size={24} h-24 text-white group-hover:scale-110 transition-transform />
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 animate-in zoom-in duration-1000 text-center relative z-10">
+                     <div className="w-64 h-64 bg-rose-600 rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_200px_rgba(225,29,72,0.5)] scale-110 relative group">
+                        <CheckCircle2 size={120} className="group-hover:scale-110 transition-transform" />
+                        <div className="absolute inset-[-15px] rounded-full border-4 border-rose-500/20 animate-ping opacity-30"></div>
+                        <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
                      </div>
-                     <h3 className="text-7xl font-black text-white uppercase tracking-tighter italic m-0">Signal <span className="text-rose-500">Sent</span></h3>
-                     <button onClick={() => setSosStep('form')} className="w-full max-w-md py-8 bg-white/5 border border-white/10 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Hub</button>
+                     <div className="space-y-6 text-center">
+                        <h3 className="text-8xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">SOS <span className="text-rose-500">Transmitted.</span></h3>
+                        <p className="text-rose-500 text-sm font-black uppercase tracking-[1em] font-mono mt-6">EMERGENCY_HASH_0x{(Math.random()*1000).toFixed(0)}_FINAL</p>
+                     </div>
+                     <button onClick={() => { setSosStep('form'); setSosDesc(''); setEsinSign(''); }} className="px-24 py-8 bg-white/5 border border-white/10 rounded-full text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command</button>
                   </div>
                 )}
              </div>
@@ -328,87 +341,105 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
         )}
 
         {activeTab === 'remediation' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-700">
-             <div className="lg:col-span-4 space-y-8">
-                <div className="glass-card p-10 rounded-[56px] border border-rose-500/20 bg-rose-500/5 space-y-10 shadow-2xl relative overflow-hidden group">
-                   <div className="flex items-center gap-6 relative z-10">
-                      <div className="p-4 bg-rose-600 rounded-[28px] shadow-3xl"><Bot size={32} className="text-white" /></div>
-                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none m-0">Crisis <span className="text-rose-500">Oracle</span></h3>
+          <div className="max-w-5xl mx-auto space-y-12 animate-in zoom-in duration-700">
+             <div className="glass-card p-16 md:p-24 rounded-[80px] border-2 border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden shadow-3xl text-center space-y-12 group">
+                <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Sparkles size={800} className="text-indigo-400" /></div>
+                
+                <div className="relative z-10 space-y-10">
+                   <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-[0_0_120px_rgba(99,102,241,0.4)] border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 animate-float">
+                      <Bot size={64} className="text-white animate-pulse" />
                    </div>
-                   <div className="space-y-8 relative z-10">
-                      <div className="space-y-4">
-                         <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Threat Subject</label>
-                         <input 
-                           type="text" value={threatSubject} onChange={e => setThreatSubject(e.target.value)}
-                           placeholder="e.g. Chemical contamination Sector 4"
-                           className="w-full bg-black/60 border border-white/10 rounded-2xl py-5 px-8 text-white font-bold outline-none focus:ring-4 focus:ring-rose-500/10 shadow-inner" 
-                         />
-                      </div>
-                      <button 
-                        onClick={runEmergencyDiagnostic}
-                        disabled={isAnalyzing || !threatSubject.trim()}
-                        className="w-full py-8 agro-gradient-rose rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30"
-                      >
-                         {isAnalyzing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Zap size={20} fill="current" />}
-                         {isAnalyzing ? "ANALYZING THREAT..." : "INITIALIZE REMEDIATION"}
-                      </button>
+                   <div className="space-y-4">
+                      <h3 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter m-0 leading-none italic">REMEDIATION <span className="text-indigo-400">ORACLE</span></h3>
+                      <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto opacity-80 leading-relaxed">
+                         "Synthesizing high-fidelity remediation shards for catastrophic node anomalies."
+                      </p>
                    </div>
-                </div>
-             </div>
-             <div className="lg:col-span-8">
-                <div className="glass-card rounded-[64px] min-h-[650px] border border-white/5 bg-black/20 flex flex-col relative overflow-hidden shadow-3xl text-white">
-                   <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-rose-500">
-                         <Terminal className="w-6 h-6" />
-                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Response Shard Terminal</span>
-                      </div>
-                   </div>
-                   <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative">
-                      {isAnalyzing ? (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-12 bg-black/80 backdrop-blur-md z-20">
-                             <Loader2 className="w-24 h-24 text-rose-500 animate-spin" />
-                             <p className="text-rose-500 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">MAPPING THREAT VECTOR...</p>
-                          </div>
-                       ) : remediationAdvice ? (
-                          <div className="animate-in slide-in-from-bottom-10 duration-700">
-                             <div className="p-12 md:p-16 bg-black/60 rounded-[64px] border border-rose-500/20 border-l-8 shadow-inner relative overflow-hidden">
-                                <div className="prose prose-invert prose-rose max-w-none text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-8">
-                                   {remediationAdvice}
-                                </div>
-                             </div>
-                             <div className="flex justify-center mt-12 gap-6">
-                                <button className="px-16 py-8 agro-gradient-rose rounded-3xl text-white font-black text-[11px] uppercase tracking-[0.5em] shadow-2xl hover:scale-105 active:scale-95 transition-all">COMMENCE CONTAINMENT</button>
-                                <button className="p-8 bg-white/5 border border-white/10 rounded-3xl text-slate-500 hover:text-white transition-all"><Download size={24} /></button>
-                             </div>
-                          </div>
-                       ) : (
-                          <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-20 group">
-                             <Sparkles size={120} className="text-slate-500 group-hover:text-rose-500 transition-colors" />
-                             <p className="text-3xl font-black uppercase tracking-[0.5em] text-white italic">ORACLE STANDBY</p>
-                          </div>
-                       )}
-                   </div>
+
+                   {!remediationAdvice && !isAnalyzing ? (
+                     <div className="space-y-10 py-10 max-w-xl mx-auto">
+                        <div className="p-8 bg-black/60 rounded-[48px] border border-white/10 shadow-inner group/form">
+                           <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] block text-center italic mb-6">THREAT_NARRATIVE_INGEST</label>
+                           <textarea 
+                             value={threatSubject} onChange={e => setThreatSubject(e.target.value)}
+                             placeholder="Input biological or technical threat data..." 
+                             className="w-full bg-transparent border-none text-center text-xl italic font-medium text-white outline-none focus:ring-0 placeholder:text-stone-950 transition-all h-32 resize-none" 
+                           />
+                        </div>
+                        <button 
+                          onClick={runEmergencyDiagnostic}
+                          disabled={!threatSubject.trim()}
+                          className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[20px] ring-white/5 disabled:opacity-20"
+                        >
+                           <Zap size={32} className="fill-current mr-4" /> BEGIN DIAGNOSTIC
+                        </button>
+                     </div>
+                   ) : isAnalyzing ? (
+                     <div className="flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
+                        <div className="relative">
+                           <Loader2 size={120} className="text-indigo-500 animate-spin mx-auto" />
+                           <div className="absolute inset-0 flex items-center justify-center">
+                              <Fingerprint size={48} className="text-indigo-400 animate-pulse" />
+                           </div>
+                        </div>
+                        <div className="space-y-4">
+                           <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">AUDITING_THREAT_VECTORS...</p>
+                           <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">INGESTING_EMERGENCY_PARAMETERS // SEQUENCING_REMEDIATION</p>
+                        </div>
+                     </div>
+                   ) : (
+                     <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12">
+                        <div className="p-12 md:p-20 bg-black/80 rounded-[80px] border-2 border-indigo-500/20 shadow-3xl border-l-[24px] border-l-indigo-600 text-left relative overflow-hidden group/advice">
+                           <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={800} className="text-indigo-400" /></div>
+                           <div className="flex justify-between items-center mb-16 relative z-10 border-b border-white/5 pb-10">
+                              <div className="flex items-center gap-8">
+                                 <BadgeCheck size={48} className="text-indigo-400" />
+                                 <h4 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Remediation Verdict</h4>
+                              </div>
+                              <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
+                                 <span className="text-[11px] font-mono font-black text-indigo-400 uppercase tracking-widest italic">EMERGENCY_0xSYNC_OK</span>
+                              </div>
+                           </div>
+                           <div className="prose prose-invert max-w-none text-slate-300 text-2xl leading-[2.1] italic whitespace-pre-line font-medium relative z-10 pl-10 border-l-2 border-white/10">
+                              {remediationAdvice}
+                           </div>
+                           <div className="mt-16 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
+                              <div className="flex items-center gap-8">
+                                 <Fingerprint size={48} className="text-indigo-400" />
+                                 <div className="text-left">
+                                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Remediation Shard ID</p>
+                                    <p className="text-xl font-mono text-white">0xHS_EM_FIX_#{(Math.random()*1000).toFixed(0)}</p>
+                                 </div>
+                              </div>
+                              <button onClick={() => setRemediationAdvice(null)} className="px-16 py-8 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border-2 border-white/10">ANCHOR TO LEDGER</button>
+                           </div>
+                        </div>
+                     </div>
+                   )}
                 </div>
              </div>
           </div>
         )}
 
         {activeTab === 'safety' && (
-           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 px-4">
+           <div className="space-y-12 animate-in zoom-in duration-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                  {SAFETY_SHARDS.map((shard, i) => (
-                    <div key={i} className="glass-card p-10 rounded-[56px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all shadow-3xl relative overflow-hidden group flex flex-col h-[400px] text-white">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform"><BookOpen size={160} /></div>
+                    <div key={i} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all group flex flex-col justify-between h-[450px] shadow-3xl relative overflow-hidden active:scale-[0.99]">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={300} /></div>
                        <div className="flex justify-between items-start mb-10 relative z-10">
-                          <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:bg-emerald-500/10 transition-all shadow-xl`}>
-                             <shard.icon size={28} className={shard.col} />
+                          <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${shard.col} shadow-2xl group-hover:rotate-6 transition-all`}>
+                             <shard.icon size={40} />
                           </div>
-                          <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black uppercase text-slate-500 tracking-widest">{shard.cat}</span>
+                          <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase text-slate-500 tracking-widest italic">{shard.cat}</span>
                        </div>
-                       <h4 className="text-3xl font-black text-white uppercase italic leading-tight group-hover:text-emerald-400 transition-colors m-0 flex-1">{shard.title}</h4>
-                       <button className="w-full mt-10 py-5 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-slate-500 hover:text-white hover:bg-emerald-600/20 transition-all flex items-center justify-center gap-3">
-                          <FileText size={16} /> READ SHARD
-                       </button>
+                       <div className="space-y-4 relative z-10">
+                          <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{shard.title}</h4>
+                          <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">VERSION_v6.5</p>
+                       </div>
+                       <div className="pt-10 border-t border-white/5 relative z-10 mt-auto">
+                          <button className="w-full py-5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all shadow-xl">DOWNLOAD_PROTOCOL</button>
+                       </div>
                     </div>
                  ))}
               </div>
@@ -417,15 +448,19 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       <style>{`
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.9); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(244, 63, 94, 0.2); border-radius: 10px; }
-        .agro-gradient-rose { background: linear-gradient(135deg, #be123c 0%, #f43f5e 100%); }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
     </div>
   );
 };
 
+/* Fix: Adding default export for EmergencyPortal */
 export default EmergencyPortal;

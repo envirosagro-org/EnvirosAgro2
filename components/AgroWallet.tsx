@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Wallet, 
@@ -173,7 +174,13 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
     });
     setShowLinkProvider(false);
     setNewProvFragment('');
-    notify('success', 'PROVIDER_SYNCED', `${newProvName} node anchored to wallet.`);
+    notify({ 
+      title: 'PROVIDER_SYNCED', 
+      message: `${newProvName} node anchored to wallet.`, 
+      type: 'network', 
+      priority: 'medium',
+      actionIcon: 'Link2'
+    });
   };
 
   const executeGatewayHandshake = async () => {
@@ -234,7 +241,13 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       }
       setIsProcessingGateway(false);
       setGatewayStep('success');
-      notify('success', 'SETTLEMENT_FINALIZED', "EASF protocol commitment successful.");
+      notify({ 
+        title: 'SETTLEMENT_FINALIZED', 
+        message: "EASF protocol commitment successful.", 
+        type: 'ledger_anchor', 
+        priority: 'high',
+        actionIcon: 'Stamp'
+      });
     }, 3000);
   };
 
@@ -252,7 +265,13 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
     setIsSwapping(true);
     const ok = await onSwap(amount);
     setIsSwapping(false);
-    if (ok) notify('success', 'SHARD_CONVERTED', `${amount} EAT converted to EAC utility.`);
+    if (ok) notify({ 
+      title: 'SHARD_CONVERTED', 
+      message: `${amount} EAT converted to EAC utility.`, 
+      type: 'commerce', 
+      priority: 'medium',
+      actionIcon: 'RefreshCw'
+    });
   };
 
   const handleExecuteStake = async () => {
@@ -261,7 +280,13 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       alert(`Minimum stake for ${selectedTier.label} is ${selectedTier.min} EAT.`);
       return;
     }
-    notify('success', 'STAKING_COMMITTED', `${amount} EAT locked into ${selectedTier.label}.`);
+    notify({ 
+      title: 'STAKING_COMMITTED', 
+      message: `${amount} EAT locked into ${selectedTier.label}.`, 
+      type: 'ledger_anchor', 
+      priority: 'medium',
+      actionIcon: 'Layers'
+    });
     setStakingAmount(selectedTier.min.toString());
   };
 
@@ -334,7 +359,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                       </button>
                       <button 
                         onClick={() => { setShowGatewayModal('withdrawal'); setGatewayStep('config'); }}
-                        className="flex-1 py-10 bg-black/80 border-2 border-white/10 rounded-[36px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95"
+                        className="flex-1 py-10 bg-black/80 border-2 border-white/10 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95"
                       >
                          <ArrowUpRight size={32} className="text-rose-500" /> WITHDRAW
                       </button>
@@ -840,7 +865,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                  {gatewayStep === 'success' && (
                     <div className="flex-1 flex flex-col items-center justify-center space-y-20 py-10 animate-in zoom-in duration-1000 text-center relative">
                        <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_200px_rgba(16,185,129,0.5)] scale-110 relative group">
-                          <CheckCircle2 size={100} className="text-white group-hover:scale-110 transition-transform" />
+                          <CheckCircle2 size={100} className="group-hover:scale-110 transition-transform" />
                           <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
                           <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
                        </div>
@@ -859,7 +884,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                                 <ShieldCheck size={28} />
                              </div>
                              <div className="space-y-1">
-                                <p className="text-xs font-black text-white uppercase leading-none">Sovereign Proof Locked</p>
+                                <p className="text-xs font-black text-white uppercase">Sovereign Proof Locked</p>
                                 <p className="text-[10px] text-slate-500 italic">"This commitment is immutably anchored to the Layer-3 industrial ledger."</p>
                              </div>
                           </div>
