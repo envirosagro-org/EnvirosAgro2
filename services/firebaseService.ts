@@ -1,4 +1,5 @@
-import { initializeApp } from "firebase/app";
+
+import { initializeApp, getApp } from "firebase/app";
 import { 
   getAuth, 
   onAuthStateChanged as fbOnAuthStateChanged, 
@@ -57,14 +58,27 @@ const firebaseConfig = {
 // 1. Initialize Firebase App Core
 const app = initializeApp(firebaseConfig);
 
-// 2. Initialize App Check with user-provided key
+// 2. Initialize App Check with safety flag to prevent re-initialization error
 if (typeof window !== "undefined") {
   const RECAPTCHA_SITE_KEY = "6LeljyIsAAAAAKer8_fHinQBO5eO8WlqXPbpdAh5";
   
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
-    isTokenAutoRefreshEnabled: true
-  });
+  // Use a global flag to check if App Check is already active
+  if (!(window as any).FIREBASE_APPCHECK_INITIALIZED) {
+    try {
+      // Enable debug token for local development environments if needed
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+      }
+
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+        isTokenAutoRefreshEnabled: true
+      });
+      (window as any).FIREBASE_APPCHECK_INITIALIZED = true;
+    } catch (err) {
+      console.warn("App Check initialization skipped or failed:", err);
+    }
+  }
 }
 
 // 3. Initialize services
@@ -124,19 +138,29 @@ export const refreshAuthUser = async () => {
 
 // --- PHONE AUTH ---
 export const setupRecaptcha = (containerId: string) => {
-  if ((window as any).recaptchaVerifier) {
-    try {
-      (window as any).recaptchaVerifier.clear();
-    } catch(e) {}
-  }
+  if (typeof window === "undefined") return null;
   
-  (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-    'size': 'invisible',
-    'callback': () => {
-      // reCAPTCHA solved
-    }
-  });
-  return (window as any).recaptchaVerifier;
+  // Clean up any existing instances associated with the container if possible
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.innerHTML = '';
+  }
+
+  try {
+    const verifier = new RecaptchaVerifier(auth, containerId, {
+      'size': 'invisible',
+      'callback': () => {
+        console.log("Recaptcha solved successfully.");
+      },
+      'expired-callback': () => {
+        console.warn("Recaptcha expired. Please refresh.");
+      }
+    });
+    return verifier;
+  } catch(e) {
+    console.error("Recaptcha setup error:", e);
+    return null;
+  }
 };
 
 export const requestPhoneCode = async (phone: string, appVerifier: any): Promise<ConfirmationResult> => {

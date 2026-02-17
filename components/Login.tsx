@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { 
   Leaf, 
@@ -64,6 +65,29 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   const [esin] = useState(`EA-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
   const [message, setMessage] = useState<{type: 'success' | 'error' | 'info', text: string} | null>(null);
 
+  // Persistence for reCAPTCHA verifier to prevent re-initialization errors
+  const recaptchaVerifierRef = useRef<any>(null);
+
+  // Clean up verifier on unmount
+  useEffect(() => {
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (e) {
+          console.warn("Recaptcha cleanup failed:", e);
+        }
+      }
+    };
+  }, []);
+
+  const getOrInitRecaptcha = () => {
+    if (recaptchaVerifierRef.current) return recaptchaVerifierRef.current;
+    const verifier = setupRecaptcha('recaptcha-container');
+    recaptchaVerifierRef.current = verifier;
+    return verifier;
+  };
+
   const createStewardProfile = async (uid: string, userEmail: string, userName: string, phone?: string) => {
     const newUser: User = {
       name: userName || 'Anonymous Steward',
@@ -98,7 +122,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
       if (profile) {
         onLogin(profile);
       } else {
-        // New user from Google
         const { profile: newProfile } = await createStewardProfile(
           result.user.uid, 
           result.user.email || '', 
@@ -119,13 +142,39 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     setLoading(true);
     setMessage(null);
     try {
-      const appVerifier = setupRecaptcha('recaptcha-container');
+      const appVerifier = getOrInitRecaptcha();
+      if (!appVerifier) throw new Error("Security handshake failed to initialize.");
+      
       const result = await requestPhoneCode(phoneNumber, appVerifier);
       setConfirmationResult(result);
       setMode('verify_phone');
       setMessage({ type: 'info', text: "SMS_TRANSMITTED: 6-digit access shard sent to your device." });
     } catch (error: any) {
       setMessage({ type: 'error', text: `PHONE_AUTH_ERROR: ${error.message}` });
+      // Reset verifier on failure to allow retry
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      // Ensuring container exists for consistency, though standard email reset 
+      // doesn't always strictly require it.
+      getOrInitRecaptcha();
+      
+      await resetPassword(email);
+      setMessage({ type: 'success', text: "RECOVERY_SIGNAL: Reset shard dispatched. Check your email to recalibrate signature." });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: `RECOVERY_ERROR: ${error.message}` });
     } finally {
       setLoading(false);
     }
@@ -138,6 +187,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     setLoading(true);
 
     try {
+      // Initialize reCAPTCHA gate for all actions
+      getOrInitRecaptcha();
+
       if (mode === 'register') {
         const userCredential = await createUserWithEmailAndPassword(null, email, password);
         await createStewardProfile(userCredential.user.uid, email, name);
@@ -159,19 +211,51 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     }
   };
 
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = otpCode.join('');
+    if (code.length !== 6 || !confirmationResult) return;
+    setLoading(true);
+    try {
+      const result = await confirmationResult.confirm(code);
+      const profile = await getStewardProfile(result.user.uid);
+      if (profile) {
+        onLogin(profile);
+      } else {
+        const { profile: newProfile } = await createStewardProfile(
+          result.user.uid, 
+          '', 
+          'Steward ' + phoneNumber.slice(-4), 
+          phoneNumber
+        );
+        onLogin(newProfile);
+      }
+    } catch (error: any) {
+      setMessage({ type: 'error', text: `OTP_VERIFICATION_FAILED: ${error.message}` });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={isEmbed ? 'w-full' : 'min-h-[80vh] flex items-center justify-center p-4 relative overflow-hidden'}>
-      <div id="recaptcha-container" className="fixed bottom-0 left-0"></div>
-
       <div className={`glass-card p-10 md:p-16 rounded-[64px] border-emerald-500/20 bg-black/60 shadow-3xl w-full text-center space-y-10 relative z-10 ${isEmbed ? '' : 'max-w-2xl'}`}>
+         
+         {/* reCAPTCHA Anchor */}
+         <div id="recaptcha-container" className="flex justify-center mb-4 min-h-[1px]"></div>
+
          <div className="flex flex-col items-center gap-6">
             <div className="w-20 h-20 md:w-28 md:h-28 agro-gradient rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 relative overflow-hidden group">
                <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-               <Fingerprint className="w-10 h-10 md:w-14 md:h-14 text-white relative z-10 group-hover:scale-110 transition-transform" />
+               {mode === 'forgot' ? (
+                 <Key className="w-10 h-10 md:w-14 md:h-14 text-white relative z-10 animate-float" />
+               ) : (
+                 <Fingerprint className="w-10 h-10 md:w-14 md:h-14 text-white relative z-10 group-hover:scale-110 transition-transform" />
+               )}
             </div>
             <div className="space-y-2">
                <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0">
-                  {mode === 'register' ? 'Node Ingest' : mode.includes('phone') ? 'Mobile Link' : 'Steward Connect'}
+                  {mode === 'register' ? 'Node Ingest' : mode === 'forgot' ? 'Protocol Recovery' : mode.includes('phone') ? 'Mobile Link' : 'Steward Connect'}
                </h1>
                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.6em]">Registry Synchronization Protocol</p>
             </div>
@@ -179,7 +263,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
 
          {message && (
            <div className={`p-6 rounded-3xl border text-xs font-black uppercase tracking-widest animate-in zoom-in ${
-             message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-500'
+             message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 
+             message.type === 'error' ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' :
+             'bg-blue-500/10 border-blue-500/30 text-blue-400'
            }`}>
              {message.text}
            </div>
@@ -187,52 +273,111 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
 
          {/* Mode Toggle */}
          <div className="flex justify-center p-2 glass-card rounded-full bg-white/5 border border-white/10 w-fit mx-auto overflow-hidden gap-1">
-            <button onClick={() => setMode('login')} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'login' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500'}`}>Email</button>
-            <button onClick={() => setMode('phone')} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'phone' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500'}`}>Phone</button>
+            <button onClick={() => setMode('login')} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'login' || mode === 'forgot' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500'}`}>Email</button>
+            <button onClick={() => setMode('phone')} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'phone' || mode === 'verify_phone' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500'}`}>Phone</button>
             <button onClick={() => setMode('register')} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500'}`}>New Node</button>
          </div>
 
-         {/* Social / fast-track Section */}
-         <div className="space-y-4">
-            <button 
-              onClick={handleGoogleLogin} 
-              disabled={loading}
-              className="w-full py-4 bg-white text-black font-black text-xs uppercase tracking-[0.2em] rounded-full flex items-center justify-center gap-3 shadow-xl hover:bg-slate-100 transition-all active:scale-95"
-            >
-               <Chrome size={18} />
-               {loading ? 'SYNCING...' : 'Sync via Google'}
-            </button>
-            <div className="flex items-center gap-4 py-2">
-               <div className="h-px bg-white/5 flex-1"></div>
-               <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">OR USE PROTOCOL</span>
-               <div className="h-px bg-white/5 flex-1"></div>
-            </div>
-         </div>
+         {mode !== 'forgot' && mode !== 'verify_phone' && mode !== 'waiting_verification' && (
+           <div className="space-y-4">
+              <button 
+                onClick={handleGoogleLogin} 
+                disabled={loading}
+                className="w-full py-4 bg-white text-black font-black text-xs uppercase tracking-[0.2em] rounded-full flex items-center justify-center gap-3 shadow-xl hover:bg-slate-100 transition-all active:scale-95"
+              >
+                 <Chrome size={18} />
+                 {loading ? 'SYNCING...' : 'Sync via Google'}
+              </button>
+              <div className="flex items-center gap-4 py-2">
+                 <div className="h-px bg-white/5 flex-1"></div>
+                 <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">OR USE PROTOCOL</span>
+                 <div className="h-px bg-white/5 flex-1"></div>
+              </div>
+           </div>
+         )}
 
          {mode === 'login' && (
            <form onSubmit={handleAuth} className="space-y-6">
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
-              <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Secret Signature" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
-              <button type="submit" disabled={loading} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
+              <div className="space-y-2 text-left">
+                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Node Identifier</label>
+                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none focus:border-indigo-500 transition-all" />
+              </div>
+              <div className="space-y-2 text-left">
+                <div className="flex justify-between items-center px-4">
+                  <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Secret Signature</label>
+                  <button type="button" onClick={() => setMode('forgot')} className="text-[9px] font-black text-indigo-400 hover:text-white transition-colors uppercase tracking-widest">Forgot Signature?</button>
+                </div>
+                <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none focus:border-indigo-500 transition-all" />
+              </div>
+              <button type="submit" disabled={loading} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
                  {loading ? <Loader2 className="animate-spin mx-auto" /> : 'ESTABLISH HANDSHAKE'}
               </button>
            </form>
          )}
 
+         {mode === 'forgot' && (
+            <form onSubmit={handleResetPassword} className="space-y-8 animate-in slide-in-from-right-4">
+               <div className="text-left space-y-2">
+                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Registered Email</label>
+                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none focus:border-indigo-500 transition-all" />
+               </div>
+               <button type="submit" disabled={loading} className="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
+                  {loading ? <Loader2 className="animate-spin mx-auto" /> : 'REQUEST RESET SHARD'}
+               </button>
+               <button type="button" onClick={() => setMode('login')} className="flex items-center justify-center gap-2 mx-auto text-[10px] font-black text-slate-600 hover:text-white transition-colors uppercase tracking-widest">
+                  <ArrowLeft size={14} /> Back to Sign In
+               </button>
+            </form>
+         )}
+
          {mode === 'phone' && (
             <form onSubmit={handlePhoneRequest} className="space-y-6">
-               <input type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+2547XXXXXXXX" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none font-mono" />
+               <div className="text-left space-y-2">
+                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Phone Number (intl)</label>
+                 <input type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+2547XXXXXXXX" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none font-mono" />
+               </div>
                <button type="submit" disabled={loading} className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
                   {loading ? <Loader2 className="animate-spin mx-auto" /> : 'REQUEST ACCESS CODE'}
                </button>
             </form>
          )}
 
+         {mode === 'verify_phone' && (
+            <form onSubmit={handleVerifyOtp} className="space-y-8 animate-in zoom-in">
+               <div className="flex justify-center gap-3">
+                  {otpCode.map((digit, i) => (
+                    <input 
+                      key={i} id={`otp-${i}`} type="text" maxLength={1} value={digit}
+                      onChange={(e) => {
+                        const newCode = [...otpCode];
+                        newCode[i] = e.target.value;
+                        setOtpCode(newCode);
+                        if (e.target.value && i < 5) document.getElementById(`otp-${i+1}`)?.focus();
+                      }}
+                      className="w-12 h-16 bg-white/5 border-2 border-white/10 rounded-xl text-center text-2xl font-black text-white outline-none focus:border-blue-500 transition-all"
+                    />
+                  ))}
+               </div>
+               <button type="submit" disabled={loading} className="w-full py-8 bg-emerald-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
+                  {loading ? <Loader2 className="animate-spin mx-auto" /> : 'VALIDATE ACCESS SHARD'}
+               </button>
+            </form>
+         )}
+
          {mode === 'register' && (
             <form onSubmit={handleAuth} className="space-y-6">
-               <input type="text" required value={name} onChange={e => setEditName(e.target.value)} placeholder="Steward Alias" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
-               <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Node Identifier (Email)" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
-               <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Secret Signature" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
+               <div className="text-left space-y-2">
+                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Steward Alias</label>
+                 <input type="text" required value={name} onChange={e => setEditName(e.target.value)} placeholder="Steward Alias" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
+               </div>
+               <div className="text-left space-y-2">
+                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Node Email</label>
+                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
+               </div>
+               <div className="text-left space-y-2">
+                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Secret Signature</label>
+                 <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
+               </div>
                <button type="submit" disabled={loading} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
                   {loading ? <Loader2 className="animate-spin mx-auto" /> : 'INITIALIZE NODE SYNC'}
                </button>
