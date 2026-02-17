@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-// Fix: Added missing icons Wand2, BadgeCheck, Binary, Send to resolve "Cannot find name" errors
 import { 
   Bot, 
   Shield, 
@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import { User, ViewState, SignalShard } from '../types';
 import { chatWithAgroExpert, forgeSwarmMission } from '../services/geminiService';
+import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from '../App';
 
 interface RobotProps {
@@ -478,13 +479,13 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
                               </div>
 
                               <div className="mt-20 space-y-8 relative z-10 pt-16 border-t border-white/5">
-                                 <div className="max-w-xl mx-auto space-y-8">
+                                 <div className="max-w-xl mx-auto w-full space-y-8">
                                     <div className="space-y-4">
                                        <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.8em] block text-center italic">NODE_SIGNATURE_AUTH (ESIN)</label>
                                        <input 
                                           type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
                                           placeholder="EA-XXXX-XXXX-XXXX" 
-                                          className="w-full bg-black border-2 border-white/10 rounded-[56px] py-12 text-center text-5xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-indigo-500/10 transition-all uppercase placeholder:text-stone-950 shadow-inner" 
+                                          className="w-full bg-black border-2 border-white/10 rounded-[56px] py-12 text-center text-5xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-indigo-500/10 transition-all uppercase placeholder:text-stone-900 shadow-inner" 
                                        />
                                     </div>
                                     <div className="flex gap-6">
@@ -533,10 +534,10 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
 
                  <div className="flex-1 overflow-y-auto p-12 md:p-16 space-y-8 font-mono text-lg text-slate-500 italic bg-black/40 relative z-10 custom-scrollbar">
                     <div className="space-y-6">
-                       <p className="text-emerald-400 font-black uppercase tracking-widest">>> Root Swarm Initialization Sequence [OK]</p>
-                       <p className="text-indigo-400">>> Ingesting current AgroLang mission shards...</p>
-                       <p className="text-slate-800">>> ZK-Handshake verified for all 42 local nodes.</p>
-                       <p className="text-white">>> Deploying pathfinding swarms to Sector 4 geofence.</p>
+                       <p className="text-emerald-400 font-black uppercase tracking-widest">{" >> Root Swarm Initialization Sequence [OK]"}</p>
+                       <p className="text-indigo-400">{" >> Ingesting current AgroLang mission shards..."}</p>
+                       <p className="text-slate-800">{" >> ZK-Handshake verified for all 42 local nodes."}</p>
+                       <p className="text-white">{" >> Deploying pathfinding swarms to Sector 4 geofence."}</p>
                        {packetLogs.slice(0, 15).map((pkt, i) => (
                           <div key={i} className="flex gap-10 p-4 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group animate-in slide-in-from-left-2">
                              <span className="text-slate-800 w-24 shrink-0 font-bold">[{pkt.time}]</span>
