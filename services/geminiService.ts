@@ -66,7 +66,6 @@ const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise
       return await fn();
     } catch (err: any) {
       lastError = err;
-      // Added 429 (Rate Limit) and 503 (Service Unavailable) to retry logic to address "internal congestion" errors
       const status = err.status || (err.message && parseInt(err.message.match(/\d{3}/)?.[0] || '0'));
       if ([429, 500, 503].includes(status) || err.message?.includes('500') || err.message?.includes('429')) {
         await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
@@ -81,26 +80,20 @@ const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise
 const handleAIError = (error: any): AIResponse => {
   console.error("Gemini API Error:", error);
   let errorText = "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion.";
-  
   if (error.message?.includes('API_KEY')) {
     errorText = "AUTH_ERROR: Registry API Key is missing or invalid. Please verify node credentials.";
   } else if (error.status === 429 || error.message?.includes('429')) {
     errorText = "QUOTA_EXCEEDED: High-frequency sharding limit reached. Quorum cooldown active.";
   }
-  
   return { text: errorText };
 };
 
-/**
- * AI-powered Bid Analysis
- * Compares Investor Requirements against Farmer Ingested Assets.
- */
 export const analyzeBidHandshake = async (investorReqs: string, farmerAssets: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview', // Upgraded to Pro for advanced reasoning
+        model: 'gemini-3-pro-preview',
         contents: `Compare Investor Requirements: "${investorReqs}"
         Against Farmer Ingested Assets: ${JSON.stringify(farmerAssets)}
         Context: ${FRAMEWORK_CONTEXT}
@@ -131,13 +124,11 @@ export const generateValueBlueprint = async (material: string, volume: number): 
     return await callOracleWithRetry(async () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview', // Upgraded to Pro for complex blueprint synthesis
+        model: 'gemini-3-pro-preview',
         contents: `Generate a Value Blueprint for: ${volume} tons of ${material}. 
         Apply SEHTI principles and EOS sustainability metrics.`,
         config: {
-          systemInstruction: `You are the EnvirosAgro System Architect. You design theoretical agricultural value blueprints.
-          CORE MISSION: Transform raw inputs into high-value digital shards.
-          Provide Sustainability Delta and Process Steps.`,
+          systemInstruction: `You are the EnvirosAgro System Architect. You design theoretical agricultural value blueprints.`,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -187,8 +178,7 @@ export const activateLiveSequence = async (blueprintId: string, assets: any[]): 
         model: 'gemini-3-flash-preview',
         contents: `Activate live sequence for blueprint ${blueprintId} using assets: ${JSON.stringify(assets)}.`,
         config: {
-          systemInstruction: `You are the EnvirosAgro System Architect. When a user provides verified assets, you MUST transition their Blueprint into a LIVE sequence. 
-          Constraint: Do not activate unless assets are verified.`,
+          systemInstruction: `You are the EnvirosAgro System Architect.`,
           tools: [{ functionDeclarations: [activateLiveSequenceTool] }]
         }
       });
@@ -202,18 +192,50 @@ export const activateLiveSequence = async (blueprintId: string, assets: any[]): 
   }
 };
 
+export const forgeSwarmMission = async (objective: string): Promise<AIResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Objective: "${objective}". Forge a valid AgroLang code shard for the robot swarm. Return JSON.`,
+        config: {
+          systemInstruction: `You are the EnvirosAgro Swarm Architect. Your goal is to translate agricultural mission objectives into valid AgroLang industrial logic. 
+          AgroLang Syntax:
+          - IMPORT EOS.Automation AS Bot;
+          - IMPORT EOS.Network AS Net;
+          - SEQUENCE [Title] { ... }
+          - Bot.swarm_deploy(units: [Int], mode: "[String]");
+          - Net.sync_node(id: "[String]", priority: "[String]");
+          - COMMIT_SHARD(registry: "[String]", finality: ZK_PROVEN);`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              mission_title: { type: Type.STRING },
+              agrolang_code: { type: Type.STRING },
+              impact_summary: { type: Type.STRING },
+              required_units: { type: Type.INTEGER }
+            },
+            required: ["mission_title", "agrolang_code", "impact_summary", "required_units"]
+          }
+        }
+      });
+      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
+};
+
 export const analyzeDemandForecast = async (inventory: any[], currentCycle: string): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview', // Pro for demand sharding
-        contents: `Analyze inventory for Demand Forecasting: ${JSON.stringify(inventory)}. 
-        Current Cycle: ${currentCycle}.
-        Pillar Context: ${FRAMEWORK_CONTEXT}.`,
-        config: {
-          systemInstruction: "You are the EnvirosAgro Demand Oracle."
-        }
+        model: 'gemini-3-pro-preview',
+        contents: `Analyze inventory for Demand Forecasting: ${JSON.stringify(inventory)}. Cycle: ${currentCycle}.`,
+        config: { systemInstruction: "You are the EnvirosAgro Demand Oracle." }
       });
       return { text: response.text || "" };
     });
@@ -229,9 +251,7 @@ export const forecastMarketReadiness = async (product: any): Promise<AIResponse>
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Forecast market readiness for asset: ${product.productType}.`,
-        config: {
-          systemInstruction: "You are the EnvirosAgro Market Strategist."
-        }
+        config: { systemInstruction: "You are the EnvirosAgro Market Strategist." }
       });
       return { text: response.text || "" };
     });
@@ -247,14 +267,9 @@ export const consultFinancialOracle = async (query: string, context: any): Promi
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Process financial query: "${query}".`,
-        config: {
-          systemInstruction: "You are the EnvirosAgro Financial Oracle."
-        }
+        config: { systemInstruction: "You are the EnvirosAgro Financial Oracle." }
       });
-      return { 
-        text: response.text || "Financial signal processed.",
-        functionCalls: response.functionCalls
-      };
+      return { text: response.text || "", functionCalls: response.functionCalls };
     });
   } catch (err) {
     return handleAIError(err);
@@ -284,8 +299,7 @@ export const predictMarketSentiment = async (echoes: any[]): Promise<AIResponse>
         model: 'gemini-3-pro-preview',
         contents: `Perform a Sentiment Audit based on mesh echoes.`,
       });
-      const text = response.text || "";
-      return { text, sentiment_alpha: 0.82 };
+      return { text: response.text || "", sentiment_alpha: 0.82 };
     });
   } catch (err) {
     return handleAIError(err);
@@ -300,8 +314,7 @@ export const auditAgroLangCode = async (code: string): Promise<AIResponse> => {
         model: 'gemini-3-pro-preview',
         contents: `Audit AgroLang: ${code}`,
       });
-      const text = response.text || "";
-      return { text, is_compliant: true };
+      return { text: response.text || "", is_compliant: true };
     });
   } catch (err) {
     return handleAIError(err);
@@ -315,7 +328,7 @@ export const chatWithAgroExpert = async (message: string, history: any[], useSea
       const chat = ai.chats.create({
         model: 'gemini-3-flash-preview',
         config: {
-          systemInstruction: `EnvirosAgro AI Expert. Core Mission: Drive users toward deep agricultural sustainability using the EnvirosAgro OS and 60-shard architecture. Use logic: ${FRAMEWORK_CONTEXT}`,
+          systemInstruction: `EnvirosAgro AI Expert. Use logic: ${FRAMEWORK_CONTEXT}`,
           tools: useSearch ? [{ googleSearch: {} }] : undefined,
         },
         history,
@@ -333,7 +346,7 @@ export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
     return await callOracleWithRetry(async () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview', // Pro for DNA sharding
+        model: 'gemini-3-pro-preview',
         contents: `Decode: ${JSON.stringify(telemetry)}`,
         config: {
           responseMimeType: "application/json",
@@ -371,7 +384,7 @@ export const analyzeSustainability = async (farmData: any): Promise<AIResponse> 
     return await callOracleWithRetry(async () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview', // Pro for sustainability metrics
+        model: 'gemini-3-pro-preview',
         contents: `Run sustainability audit: ${JSON.stringify(farmData)}`,
       });
       return { text: response.text || "" };
@@ -432,7 +445,7 @@ export const probeValidatorNode = async (nodeData: any): Promise<AIResponse> => 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
-        contents: `Perform high-fidelity probe on validator node: ${JSON.stringify(nodeData)}. Identify risks of SID contamination or m-constant drift.`,
+        contents: `Perform high-fidelity probe on validator node: ${JSON.stringify(nodeData)}.`,
       });
       return { text: response.text || "Probe successful." };
     });

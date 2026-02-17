@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Settings, Monitor, MapPin, ShieldCheck, Zap, Activity, Info, 
@@ -9,9 +8,7 @@ import {
   Layout, Eye, Sparkles, Binary, Heart, Search, 
   SmartphoneNfc, FileCode, BadgeCheck, Terminal, Bot, 
   ArrowRight, Key, Layers, Target, Scale, ZapOff, 
-  Contrast, Maximize2,
-  // Added missing Lucide icon imports
-  Sprout, Loader2, Link2, ShieldPlus, Fingerprint, Network
+  Contrast, Maximize2, Sprout, Loader2, Link2, ShieldPlus, Fingerprint, Network
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 
@@ -75,8 +72,6 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
 
   return (
     <div className={`space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1400px] mx-auto px-4 ${lumiScale ? 'font-black' : ''}`}>
-      
-      {/* 1. Terminal HUD */}
       <div className="glass-card p-10 md:p-14 rounded-[56px] border-indigo-500/20 bg-indigo-500/[0.03] relative overflow-hidden flex flex-col md:flex-row items-center gap-10 group shadow-3xl">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform duration-[15s] pointer-events-none">
             <Settings size={400} className="text-white" />
@@ -88,7 +83,7 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
          <div className="space-y-4 flex-1 text-center md:text-left relative z-10">
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
                <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full border border-indigo-500/20 shadow-inner italic tracking-widest">TERMINAL_CONFIG_v6.5</span>
-               <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 shadow-inner italic tracking-widest">NODE_#882A</span>
+               <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 shadow-inner italic tracking-widest">STAGING_MODE_ACTIVE</span>
             </div>
             <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">System <span className="text-indigo-400">Configuration.</span></h2>
             <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl">
@@ -97,7 +92,6 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
          </div>
       </div>
 
-      {/* 2. Configuration Shard Navigation */}
       <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[36px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
         {[
           { id: 'display', label: 'Display & UI', icon: Monitor },
@@ -116,11 +110,8 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10">
-        
-        {/* MAIN PANEL */}
         <div className="lg:col-span-8">
            <div className="glass-card rounded-[64px] border-2 border-white/5 bg-black/40 shadow-3xl overflow-hidden min-h-[700px] flex flex-col">
-              
               <div className="p-10 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 px-14">
                  <div className="flex items-center gap-6">
                     <div className="w-14 h-14 rounded-2xl bg-indigo-600/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20 shadow-xl">
@@ -143,8 +134,6 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
               </div>
 
               <div className="flex-1 p-12 overflow-y-auto custom-scrollbar space-y-12">
-                 
-                 {/* SHARD: DISPLAY & UI */}
                  {activeShard === 'display' && (
                     <div className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -236,7 +225,6 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
                     </div>
                  )}
 
-                 {/* SHARD: ACCESSIBILITY */}
                  {activeShard === 'accessibility' && (
                     <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -304,7 +292,6 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
                     </div>
                  )}
 
-                 {/* SHARD: ECOSYSTEM OPS */}
                  {activeShard === 'ecosystem' && (
                     <div className="space-y-10 animate-in zoom-in duration-500">
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -374,8 +361,6 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
                     </div>
                  )}
 
-                 {/* SHARD: PRIVACY & REGISTRY */}
-                 {/* Corrected incorrect state variable name 'activeTab' to 'activeShard' */}
                  {activeShard === 'privacy' && (
                     <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -432,7 +417,6 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
 
               </div>
 
-              {/* Dynamic Footer Status */}
               <div className="p-10 border-t border-white/5 bg-black/80 flex items-center justify-between shrink-0 relative z-20">
                  <div className="flex items-center gap-4 text-[10px] font-black text-slate-700 uppercase tracking-[0.4em] italic">
                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/20 animate-pulse"></div>
@@ -445,7 +429,6 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
            </div>
         </div>
 
-        {/* SIDEBAR: SYSTEM MAP & ROADMAP */}
         <div className="lg:col-span-4 space-y-8">
            <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-950/10 flex flex-col items-center text-center space-y-10 shadow-3xl relative overflow-hidden group/map">
               <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/map:scale-110 transition-transform duration-[12s]"><Network size={400} className="text-indigo-400" /></div>
@@ -496,7 +479,7 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
       </div>
 
       <style>{`
-        .shadow-3xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9); }
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.9); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
