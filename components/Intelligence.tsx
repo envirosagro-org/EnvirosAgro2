@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, Cpu, Activity, Zap, ShieldCheck, Binary, Layers, Microscope, FlaskConical, Scan, 
@@ -113,7 +112,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     URL.revokeObjectURL(url);
   };
 
-  // --- BATCH AUDIT STATES ---
+  // --- BATCH AUDIT STANDS ---
   const [isBatchAuditing, setIsBatchAuditing] = useState(false);
   const [batchProgress, setBatchProgress] = useState<Record<string, number>>({
     twin: 0, physics: 0, trends: 0, telemetry: 0, sid: 0
@@ -532,7 +531,19 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
               <div className="lg:col-span-4 space-y-8">
                  <div className="glass-card p-10 rounded-[56px] border border-rose-500/20 bg-black/40 space-y-10 shadow-3xl">
                     <div className="flex items-center gap-4 border-b border-white/5 pb-8 relative z-10"><div className="p-4 bg-rose-600 rounded-3xl shadow-xl animate-pulse"><Radiation size={32} className="text-white" /></div><h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">SID <span className="text-rose-500">Scanner</span></h3></div>
-                    <button onClick={handleRunSidScan} disabled={isSidScanning} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 transition-all border-2 border-white/10 ring-8 ring-rose-500/5 group/scan">{isSidScanning ? <Loader2 size={32} className="animate-spin mx-auto" /> : <Scan size={32} className="mx-auto group-hover/scan:rotate-12 transition-transform" /><p className="mt-4">{isSidScanning ? 'ANALYZING VIRAL LOAD...' : 'INITIALIZE SID SCAN'}</p></button>
+                    <button onClick={handleRunSidScan} disabled={isSidScanning} className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 transition-all border-2 border-white/10 ring-8 ring-rose-500/5 group/scan">
+                      {isSidScanning ? (
+                        <>
+                          <Loader2 size={32} className="animate-spin mx-auto" />
+                          <p className="mt-4">ANALYZING VIRAL LOAD...</p>
+                        </>
+                      ) : (
+                        <>
+                          <Scan size={32} className="mx-auto group-hover/scan:rotate-12 transition-transform" />
+                          <p className="mt-4">INITIALIZE SID SCAN</p>
+                        </>
+                      )}
+                    </button>
                  </div>
               </div>
               <div className="lg:col-span-8 glass-card rounded-[64px] min-h-[600px] border-2 border-white/10 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
