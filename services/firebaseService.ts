@@ -1,4 +1,3 @@
-
 import { initializeApp, getApp } from "firebase/app";
 import { 
   getAuth, 
@@ -47,7 +46,7 @@ import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2OCiMVOxaXWOBD3p4_mJp7TDJVwPpiNM",
-  authDomain: "information.envirosagro.org",
+  authDomain: "envirosagro.org",
   databaseURL: "https://envirosagro2git-41536716-7747d-default-rtdb.firebaseio.com",
   projectId: "envirosagro2git-41536716-7747d",
   storageBucket: "envirosagro2git-41536716-7747d.firebasestorage.app",
