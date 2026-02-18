@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
@@ -738,6 +739,7 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('dashboard');
   const [viewSection, setViewSection] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isUnverified, setIsUnverified] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
@@ -809,17 +811,19 @@ const App: React.FC = () => {
       if (fbUser) {
         const isVerified = fbUser.emailVerified || fbUser.providerData?.some(p => p.providerId === 'phone');
         if (isVerified) {
+          setIsUnverified(false);
           const profile = await getStewardProfile(fbUser.uid);
           if (profile) setUser(profile);
         } else {
+          setIsUnverified(true);
           setUser(null);
-          if (view !== 'auth') setView('auth');
         }
       } else {
+        setIsUnverified(false);
         setUser(null);
       }
     });
-  }, [view]);
+  }, []);
 
   useEffect(() => {
     const unsubProjects = listenToCollection('projects', setProjects, true);
@@ -993,6 +997,17 @@ const App: React.FC = () => {
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
     const isGuest = !user;
+
+    // Direct redirection for unverified users
+    if (isUnverified) {
+      return (
+        <VerificationHUD 
+          userEmail={auth.currentUser?.email || 'Unauthorized Node'} 
+          onVerified={() => { setIsUnverified(false); setView('dashboard'); }} 
+          onLogout={handleLogout}
+        />
+      );
+    }
 
     switch (view) {
       case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;

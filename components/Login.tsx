@@ -30,7 +30,13 @@ import {
   RotateCcw,
   UserPlus,
   UserCheck,
-  Chrome
+  Chrome,
+  Binary,
+  Database,
+  BadgeCheck,
+  ZapOff,
+  /* Added Stamp import to fix error on line 436 */
+  Stamp
 } from 'lucide-react';
 import { 
   syncUserToCloud,
@@ -62,13 +68,27 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
 
-  const [esin] = useState(`EA-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
-  const [message, setMessage] = useState<{type: 'success' | 'error' | 'info', text: string} | null>(null);
+  // Generate a random ESIN for registration visual feedback
+  const [esin, setEsin] = useState('');
+  const [isGeneratingEsin, setIsGeneratingEsin] = useState(false);
 
-  // Persistence for reCAPTCHA verifier to prevent re-initialization errors
+  useEffect(() => {
+    if (mode === 'register') {
+      generateEsin();
+    }
+  }, [mode]);
+
+  const generateEsin = () => {
+    setIsGeneratingEsin(true);
+    setTimeout(() => {
+      setEsin(`EA-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
+      setIsGeneratingEsin(false);
+    }, 1500);
+  };
+
+  const [message, setMessage] = useState<{type: 'success' | 'error' | 'info', text: string} | null>(null);
   const recaptchaVerifierRef = useRef<any>(null);
 
-  // Clean up verifier on unmount
   useEffect(() => {
     return () => {
       if (recaptchaVerifierRef.current) {
@@ -151,7 +171,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
       setMessage({ type: 'info', text: "SMS_TRANSMITTED: 6-digit access shard sent to your device." });
     } catch (error: any) {
       setMessage({ type: 'error', text: `PHONE_AUTH_ERROR: ${error.message}` });
-      // Reset verifier on failure to allow retry
       if (recaptchaVerifierRef.current) {
         recaptchaVerifierRef.current.clear();
         recaptchaVerifierRef.current = null;
@@ -167,10 +186,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     setLoading(true);
     setMessage(null);
     try {
-      // Ensuring container exists for consistency, though standard email reset 
-      // doesn't always strictly require it.
       getOrInitRecaptcha();
-      
       await resetPassword(email);
       setMessage({ type: 'success', text: "RECOVERY_SIGNAL: Reset shard dispatched. Check your email to recalibrate signature." });
     } catch (error: any) {
@@ -187,9 +203,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     setLoading(true);
 
     try {
-      // Initialize reCAPTCHA gate for all actions
       getOrInitRecaptcha();
-
       if (mode === 'register') {
         const userCredential = await createUserWithEmailAndPassword(null, email, password);
         await createStewardProfile(userCredential.user.uid, email, name);
@@ -238,113 +252,135 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   };
 
   return (
-    <div className={isEmbed ? 'w-full' : 'min-h-[80vh] flex items-center justify-center p-4 relative overflow-hidden'}>
-      <div className={`glass-card p-10 md:p-16 rounded-[64px] border-emerald-500/20 bg-black/60 shadow-3xl w-full text-center space-y-10 relative z-10 ${isEmbed ? '' : 'max-w-2xl'}`}>
+    <div className={isEmbed ? 'w-full' : 'min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#020403]'}>
+      {/* Background Decor */}
+      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(16,185,129,0.15)_0%,_transparent_70%)]"></div>
+        <div className="w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+      </div>
+
+      <div className={`glass-card p-10 md:p-16 rounded-[64px] border-emerald-500/20 bg-black/60 shadow-[0_40px_150px_rgba(0,0,0,0.9)] w-full text-center space-y-10 relative z-10 ${isEmbed ? '' : 'max-w-2xl animate-in fade-in zoom-in duration-500'}`}>
          
-         {/* reCAPTCHA Anchor */}
          <div id="recaptcha-container" className="flex justify-center mb-4 min-h-[1px]"></div>
 
          <div className="flex flex-col items-center gap-6">
-            <div className="w-20 h-20 md:w-28 md:h-28 agro-gradient rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 relative overflow-hidden group">
-               <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-               {mode === 'forgot' ? (
-                 <Key className="w-10 h-10 md:w-14 md:h-14 text-white relative z-10 animate-float" />
-               ) : (
-                 <Fingerprint className="w-10 h-10 md:w-14 md:h-14 text-white relative z-10 group-hover:scale-110 transition-transform" />
-               )}
+            <div className="relative group">
+               <div className="w-20 h-20 md:w-28 md:h-28 agro-gradient rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
+                  {mode === 'forgot' ? (
+                    <Key className="w-10 h-10 md:w-14 md:h-14 text-white relative z-10 animate-float" />
+                  ) : (
+                    <Fingerprint className="w-10 h-10 md:w-14 md:h-14 text-white relative z-10 group-hover:scale-110 transition-transform" />
+                  )}
+               </div>
+               <div className="absolute -inset-4 border-2 border-dashed border-emerald-500/20 rounded-[44px] animate-spin-slow pointer-events-none"></div>
             </div>
             <div className="space-y-2">
-               <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0">
+               <h1 className="text-3xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 drop-shadow-2xl">
                   {mode === 'register' ? 'Node Ingest' : mode === 'forgot' ? 'Protocol Recovery' : mode.includes('phone') ? 'Mobile Link' : 'Steward Connect'}
                </h1>
-               <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.6em]">Registry Synchronization Protocol</p>
+               <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.8em] font-mono">HANDSHAKE_PROTOCOL_v6.5</p>
             </div>
          </div>
 
          {message && (
-           <div className={`p-6 rounded-3xl border text-xs font-black uppercase tracking-widest animate-in zoom-in ${
+           <div className={`p-8 rounded-[40px] border text-xs font-black uppercase tracking-widest animate-in zoom-in flex items-center gap-4 text-left shadow-2xl ${
              message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 
              message.type === 'error' ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' :
-             'bg-blue-500/10 border-blue-500/30 text-blue-400'
+             'bg-indigo-500/10 border-indigo-500/30 text-indigo-400'
            }`}>
-             {message.text}
+             {message.type === 'error' ? <ShieldAlert className="shrink-0" /> : <Zap className="shrink-0 fill-current" />}
+             <span className="leading-relaxed">{message.text}</span>
            </div>
          )}
 
-         {/* Mode Toggle */}
-         <div className="flex justify-center p-2 glass-card rounded-full bg-white/5 border border-white/10 w-fit mx-auto overflow-hidden gap-1">
-            <button onClick={() => setMode('login')} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'login' || mode === 'forgot' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500'}`}>Email</button>
-            <button onClick={() => setMode('phone')} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'phone' || mode === 'verify_phone' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500'}`}>Phone</button>
-            <button onClick={() => setMode('register')} className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-500'}`}>New Node</button>
+         <div className="flex justify-center p-2 glass-card rounded-[32px] bg-black/80 border border-white/10 w-fit mx-auto overflow-hidden gap-2">
+            <button onClick={() => setMode('login')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'login' || mode === 'forgot' ? 'bg-white text-black shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>REGISTRY_AUTH</button>
+            <button onClick={() => setMode('phone')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'phone' || mode === 'verify_phone' ? 'bg-blue-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>MOBILE_LINK</button>
+            <button onClick={() => setMode('register')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>MINT_NODE</button>
          </div>
 
          {mode !== 'forgot' && mode !== 'verify_phone' && mode !== 'waiting_verification' && (
-           <div className="space-y-4">
+           <div className="space-y-6">
               <button 
                 onClick={handleGoogleLogin} 
                 disabled={loading}
-                className="w-full py-4 bg-white text-black font-black text-xs uppercase tracking-[0.2em] rounded-full flex items-center justify-center gap-3 shadow-xl hover:bg-slate-100 transition-all active:scale-95"
+                className="w-full py-6 bg-white text-black font-black text-xs uppercase tracking-[0.4em] rounded-[32px] flex items-center justify-center gap-4 shadow-3xl hover:bg-slate-100 transition-all active:scale-95 group/google"
               >
-                 <Chrome size={18} />
-                 {loading ? 'SYNCING...' : 'Sync via Google'}
+                 {loading ? <Loader2 className="animate-spin" /> : <Chrome size={20} className="group-hover/google:rotate-12 transition-transform" />}
+                 {loading ? 'SEQUENCING...' : 'SYNC GLOBAL SHARD'}
               </button>
-              <div className="flex items-center gap-4 py-2">
-                 <div className="h-px bg-white/5 flex-1"></div>
-                 <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">OR USE PROTOCOL</span>
-                 <div className="h-px bg-white/5 flex-1"></div>
+              <div className="flex items-center gap-6 py-2 opacity-30">
+                 <div className="h-px bg-white/20 flex-1"></div>
+                 <span className="text-[10px] font-mono font-black text-slate-500 uppercase tracking-widest">OR DIRECT_PROTOCOL</span>
+                 <div className="h-px bg-white/20 flex-1"></div>
               </div>
            </div>
          )}
 
          {mode === 'login' && (
-           <form onSubmit={handleAuth} className="space-y-6">
-              <div className="space-y-2 text-left">
-                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Node Identifier</label>
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none focus:border-indigo-500 transition-all" />
-              </div>
-              <div className="space-y-2 text-left">
-                <div className="flex justify-between items-center px-4">
-                  <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Secret Signature</label>
-                  <button type="button" onClick={() => setMode('forgot')} className="text-[9px] font-black text-indigo-400 hover:text-white transition-colors uppercase tracking-widest">Forgot Signature?</button>
+           <form onSubmit={handleAuth} className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="space-y-3 text-left">
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Node Identifier (Email)</label>
+                <div className="relative">
+                   <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-800" />
+                   <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 pl-14 pr-8 text-lg text-white outline-none focus:border-indigo-500 focus:ring-8 focus:ring-indigo-500/5 transition-all italic" />
                 </div>
-                <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none focus:border-indigo-500 transition-all" />
               </div>
-              <button type="submit" disabled={loading} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-                 {loading ? <Loader2 className="animate-spin mx-auto" /> : 'ESTABLISH HANDSHAKE'}
+              <div className="space-y-3 text-left">
+                <div className="flex justify-between items-center px-6">
+                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Secret Signature (Pass)</label>
+                  <button type="button" onClick={() => setMode('forgot')} className="text-[10px] font-black text-indigo-400 hover:text-white transition-colors uppercase tracking-widest">Recalibrate?</button>
+                </div>
+                <div className="relative">
+                   <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-800" />
+                   <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 pl-14 pr-8 text-lg text-white outline-none focus:border-indigo-500 focus:ring-8 focus:ring-indigo-500/5 transition-all" />
+                </div>
+              </div>
+              <button type="submit" disabled={loading} className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5 group/submit">
+                 {loading ? <Loader2 className="animate-spin mx-auto w-8 h-8" /> : (
+                    <div className="flex items-center justify-center gap-6">
+                       <ShieldCheck size={32} className="group-hover/submit:scale-110 transition-transform" />
+                       ESTABLISH HANDSHAKE
+                    </div>
+                 )}
               </button>
            </form>
          )}
 
          {mode === 'forgot' && (
-            <form onSubmit={handleResetPassword} className="space-y-8 animate-in slide-in-from-right-4">
-               <div className="text-left space-y-2">
-                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Registered Email</label>
-                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none focus:border-indigo-500 transition-all" />
+            <form onSubmit={handleResetPassword} className="space-y-10 animate-in slide-in-from-right-4">
+               <div className="text-left space-y-3">
+                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Target Email Node</label>
+                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[40px] py-8 px-10 text-xl text-white outline-none focus:border-indigo-500 transition-all font-medium italic" />
                </div>
-               <button type="submit" disabled={loading} className="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
-                  {loading ? <Loader2 className="animate-spin mx-auto" /> : 'REQUEST RESET SHARD'}
+               <button type="submit" disabled={loading} className="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-3xl border-2 border-white/10 ring-8 ring-indigo-500/5 active:scale-95 transition-all">
+                  {loading ? <Loader2 className="animate-spin mx-auto" /> : 'DISPATCH RECOVERY SHARD'}
                </button>
-               <button type="button" onClick={() => setMode('login')} className="flex items-center justify-center gap-2 mx-auto text-[10px] font-black text-slate-600 hover:text-white transition-colors uppercase tracking-widest">
-                  <ArrowLeft size={14} /> Back to Sign In
+               <button type="button" onClick={() => setMode('login')} className="flex items-center justify-center gap-3 mx-auto text-[11px] font-black text-slate-700 hover:text-white transition-colors uppercase tracking-widest">
+                  <ArrowLeft size={16} /> Back to Handshake
                </button>
             </form>
          )}
 
          {mode === 'phone' && (
-            <form onSubmit={handlePhoneRequest} className="space-y-6">
-               <div className="text-left space-y-2">
-                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Phone Number (intl)</label>
-                 <input type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+2547XXXXXXXX" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none font-mono" />
+            <form onSubmit={handlePhoneRequest} className="space-y-8 animate-in slide-in-from-right-4">
+               <div className="text-left space-y-3">
+                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Phone Relay Number (intl)</label>
+                 <div className="relative">
+                    <Smartphone className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-700" />
+                    <input type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+2547XXXXXXXX" className="w-full bg-black/80 border-2 border-white/5 rounded-[40px] py-8 pl-16 pr-8 text-3xl font-mono font-black text-white outline-none tracking-widest" />
+                 </div>
                </div>
-               <button type="submit" disabled={loading} className="w-full py-8 bg-blue-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
-                  {loading ? <Loader2 className="animate-spin mx-auto" /> : 'REQUEST ACCESS CODE'}
+               <button type="submit" disabled={loading} className="w-full py-10 bg-blue-600 rounded-[56px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-3xl border-4 border-white/10 ring-[16px] ring-blue-500/5 hover:bg-blue-500 active:scale-95 transition-all">
+                  {loading ? <Loader2 className="animate-spin mx-auto w-10 h-10" /> : 'REQUEST ACCESS SHARD'}
                </button>
             </form>
          )}
 
          {mode === 'verify_phone' && (
-            <form onSubmit={handleVerifyOtp} className="space-y-8 animate-in zoom-in">
-               <div className="flex justify-center gap-3">
+            <form onSubmit={handleVerifyOtp} className="space-y-12 animate-in zoom-in">
+               <div className="flex justify-center gap-3 md:gap-5">
                   {otpCode.map((digit, i) => (
                     <input 
                       key={i} id={`otp-${i}`} type="text" maxLength={1} value={digit}
@@ -354,46 +390,84 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
                         setOtpCode(newCode);
                         if (e.target.value && i < 5) document.getElementById(`otp-${i+1}`)?.focus();
                       }}
-                      className="w-12 h-16 bg-white/5 border-2 border-white/10 rounded-xl text-center text-2xl font-black text-white outline-none focus:border-blue-500 transition-all"
+                      className="w-14 h-20 md:w-16 md:h-24 bg-white/5 border-2 border-white/10 rounded-2xl text-center text-4xl font-mono font-black text-white outline-none focus:border-blue-500 focus:ring-8 focus:ring-blue-500/10 transition-all shadow-inner"
                     />
                   ))}
                </div>
-               <button type="submit" disabled={loading} className="w-full py-8 bg-emerald-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
-                  {loading ? <Loader2 className="animate-spin mx-auto" /> : 'VALIDATE ACCESS SHARD'}
+               <button type="submit" disabled={loading} className="w-full py-10 bg-emerald-600 rounded-[56px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-3xl border-4 border-white/10 ring-[20px] ring-emerald-500/5 active:scale-95 transition-all">
+                  {loading ? <Loader2 className="animate-spin mx-auto w-10 h-10" /> : 'VALIDATE SIGNATURE'}
+               </button>
+               <button type="button" onClick={() => setMode('phone')} className="text-[11px] font-black text-slate-700 hover:text-white uppercase tracking-widest flex items-center justify-center gap-3 mx-auto">
+                  <RotateCcw size={16} /> Re-Sync Relay
                </button>
             </form>
          )}
 
          {mode === 'register' && (
-            <form onSubmit={handleAuth} className="space-y-6">
-               <div className="text-left space-y-2">
-                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Steward Alias</label>
-                 <input type="text" required value={name} onChange={e => setEditName(e.target.value)} placeholder="Steward Alias" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
+            <form onSubmit={handleAuth} className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="text-left space-y-3">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Steward Alias</label>
+                    <input type="text" required value={name} onChange={e => setEditName(e.target.value)} placeholder="Steward Alias" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all italic placeholder:text-stone-900 shadow-inner" />
+                  </div>
+                  <div className="text-left space-y-3">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Node Email</label>
+                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all italic placeholder:text-stone-900 shadow-inner" />
+                  </div>
                </div>
-               <div className="text-left space-y-2">
-                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Node Email</label>
-                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
+               <div className="text-left space-y-3">
+                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Secret Signature</label>
+                 <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all shadow-inner" />
                </div>
-               <div className="text-left space-y-2">
-                 <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Secret Signature</label>
-                 <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-lg text-white outline-none" />
+
+               <div className="p-10 bg-emerald-950/10 rounded-[48px] border border-emerald-500/20 space-y-6 shadow-inner relative overflow-hidden group/esin">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/esin:scale-110 transition-transform"><Binary size={200} className="text-emerald-400" /></div>
+                  <div className="flex justify-between items-center px-4 relative z-10">
+                     <p className="text-[11px] font-black text-emerald-500/60 uppercase tracking-[0.4em]">SYSTEM_GENERATED_ESIN</p>
+                     <RefreshCw onClick={generateEsin} size={16} className={`text-emerald-500 cursor-pointer hover:rotate-180 transition-transform ${isGeneratingEsin ? 'animate-spin' : ''}`} />
+                  </div>
+                  {isGeneratingEsin ? (
+                    <div className="h-16 flex items-center justify-center"><Loader2 size={32} className="text-emerald-500 animate-spin" /></div>
+                  ) : (
+                    <p className="text-4xl md:text-5xl font-mono font-black text-white tracking-[0.3em] uppercase drop-shadow-[0_0_20px_#10b981] animate-in zoom-in duration-500">{esin}</p>
+                  )}
+                  <p className="text-[9px] text-slate-700 italic font-medium uppercase tracking-widest relative z-10">"Immutable Social Identification Shard for Node Ingest"</p>
                </div>
-               <button type="submit" disabled={loading} className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl">
-                  {loading ? <Loader2 className="animate-spin mx-auto" /> : 'INITIALIZE NODE SYNC'}
+
+               <button type="submit" disabled={loading || isGeneratingEsin} className="w-full py-10 agro-gradient rounded-[56px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-white/5 flex items-center justify-center gap-6">
+                  {loading ? <Loader2 className="animate-spin w-10 h-10" /> : <Stamp size={40} className="fill-current" />}
+                  {loading ? 'INITIALIZING SHARDS...' : 'ANCHOR NEW NODE'}
                </button>
             </form>
          )}
 
          {mode === 'waiting_verification' && (
-            <div className="space-y-8 animate-in zoom-in">
-               <div className="p-8 bg-black/80 rounded-[48px] border border-emerald-500/30">
-                  <Mail size={48} className="mx-auto text-emerald-400 mb-4 animate-pulse" />
-                  <p className="text-slate-300 italic">"Identity verification shard dispatched to your inbox. Anchor your node to proceed."</p>
+            <div className="space-y-12 animate-in zoom-in duration-700 flex flex-col items-center">
+               <div className="w-32 h-32 md:w-44 md:h-44 bg-indigo-600/10 border-4 border-indigo-500/20 rounded-[48px] flex items-center justify-center text-indigo-400 shadow-3xl animate-pulse relative overflow-hidden group">
+                  <Mail size={56} className="relative z-10 group-hover:scale-110 transition-transform" />
+                  <div className="absolute inset-0 bg-indigo-500/5 animate-scan"></div>
                </div>
-               <button onClick={() => window.location.reload()} className="w-full py-6 bg-white/5 rounded-full text-white font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all">SYNC STATUS</button>
+               <div className="space-y-6 text-center">
+                  <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Handshake <span className="text-indigo-400">Pending.</span></h3>
+                  <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-lg mx-auto">
+                    "A secure identity verification shard has been dispatched to your inbox. Anchor your node to finalize ingest."
+                  </p>
+               </div>
+               <button onClick={() => window.location.reload()} className="w-full max-w-sm py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all border-2 border-white/10 ring-8 ring-indigo-500/5">
+                  <RefreshCw size={24} className="mx-auto mb-2" />
+                  CHECK SYNC STATUS
+               </button>
             </div>
          )}
       </div>
+
+      <style>{`
+        .animate-spin-slow { animation: spin 15s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
+        @keyframes scan { from { top: -100%; } to { top: 100%; } }
+        .animate-scan { animation: scan 3s linear infinite; }
+      `}</style>
     </div>
   );
 };
