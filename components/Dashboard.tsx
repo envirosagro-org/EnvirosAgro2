@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 // Added missing icons for environmental thrust, human heart resonance, registry connectivity, system config and ledger layers
 import { 
@@ -7,7 +8,7 @@ import {
   LayoutGrid, ArrowUpRight, ShoppingBag, Radio, Signal, Eye, ChevronRight,
   Gem, Landmark, PlayCircle, BookOpen, Lightbulb, CheckCircle2,
   AlertCircle, Target, Waves, ShieldAlert, UserPlus, AlertTriangle,
-  Loader2, Atom, Network, Gauge, Leaf, Heart, Wifi, Settings, Layers
+  Loader2, Atom, Network, Gauge, Leaf, Heart, Wifi, Settings, Layers, Construction
 } from 'lucide-react';
 import { ViewState, User, Order, AgroBlock } from '../types';
 import IdentityCard from './IdentityCard';
@@ -36,7 +37,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
 
   const RECOMMENDATIONS = [
     { id: 'rec-1', title: 'OPTIMIZE M-CONSTANT', priority: 'High', icon: TrendingUp, target: 'intelligence', col: 'text-blue-400', desc: 'Regional stability below 1.42x. Initiate remediation shard.' },
-    { id: 'rec-2', title: 'DIVERSIFY CROP DNA', priority: 'Medium', icon: Binary, target: 'biotech_hub', col: 'text-emerald-400', desc: 'Market demand for Bantu Rice surging. Forge new genetic shard.' },
+    { id: 'rec-2', title: 'CONSTRUCT NETWORK', priority: 'Medium', icon: Construction, target: 'network_genesis', col: 'text-indigo-400', desc: 'New cluster shard requested in Zone 4. Initialize genesis sequence.' },
     { id: 'rec-3', title: 'AUDIT FIELD PROOFS', priority: 'Critical', icon: ShieldAlert, target: 'tqm', col: 'text-rose-500', desc: '3 shipments awaiting digital GRN signature.' },
   ];
 
@@ -84,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
                   </div>
                   <div className="space-y-4 w-full overflow-hidden">
                     <div className="flex items-center justify-center sm:justify-start gap-5">
-                       <h3 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic leading-none text-white break-words drop-shadow-2xl">
+                       <h3 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none text-white break-words drop-shadow-2xl">
                         {user.name.split(' ')[0]} <span className="text-emerald-400">{user.name.split(' ')[1] || 'STEWARD'}</span>
                       </h3>
                       <div className="px-5 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/30 text-[10px] font-black text-emerald-400 animate-pulse tracking-widest">ANCHORED</div>
