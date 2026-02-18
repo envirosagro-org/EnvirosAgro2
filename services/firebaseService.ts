@@ -47,12 +47,13 @@ import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2OCiMVOxaXWOBD3p4_mJp7TDJVwPpiNM",
-  authDomain: "envirosagro2git-41536716-7747d.firebaseapp.com",
-  databaseURL: "https://information.envirosagro.org",
+  authDomain: "information.envirosagro.org",
+  databaseURL: "https://envirosagro2git-41536716-7747d-default-rtdb.firebaseio.com",
   projectId: "envirosagro2git-41536716-7747d",
   storageBucket: "envirosagro2git-41536716-7747d.firebasestorage.app",
   messagingSenderId: "218810534057",
-  appId: "1:218810534057:web:2d32abbb459755499fc1b8"
+  appId: "1:218810534057:web:2d32abbb459755499fc1b8",
+  measurementId: "G-HRKN24CJQJ"
 };
 
 // 1. Initialize Firebase App Core
