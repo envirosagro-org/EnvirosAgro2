@@ -1,3 +1,4 @@
+
 import { initializeApp, getApp } from "firebase/app";
 import { 
   getAuth, 
@@ -46,7 +47,7 @@ import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2OCiMVOxaXWOBD3p4_mJp7TDJVwPpiNM",
-  authDomain: "envirosagro.org",
+  authDomain: "envirosagro2git-41536716-7747d.firebaseapp.com",
   databaseURL: "https://envirosagro2git-41536716-7747d-default-rtdb.firebaseio.com",
   projectId: "envirosagro2git-41536716-7747d",
   storageBucket: "envirosagro2git-41536716-7747d.firebasestorage.app",
@@ -112,6 +113,8 @@ export const createUserWithEmailAndPassword = async (_: any, email: string, pass
 
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
+  // Ensure the provider prompts for account selection to prevent "hanging" with a single silent account attempt
+  provider.setCustomParameters({ prompt: 'select_account' });
   return signInWithPopup(auth, provider);
 };
 
