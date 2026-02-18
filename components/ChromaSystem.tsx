@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { 
   Palette, 
@@ -68,12 +67,12 @@ import {
   Layers,
   Circle,
   FlaskConical,
-  Atom,
-  Key
+  Atom
 } from 'lucide-react';
 import { User, ViewState, MediaShard } from '../types';
-import { chatWithAgroExpert, generateAestheticAsset } from '../services/geminiService';
+import { chatWithAgroExpert, analyzeMedia } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import { GoogleGenAI } from "@google/genai";
 
 interface ChromaSystemProps {
   user: User;
@@ -90,9 +89,14 @@ const SEHTI_CHROMA_MAPPING = [
   { id: 'technological', thrust: 'Technological', variable: 'U_s', spectrum: 'UV/IR (Greyscale Mapping)', frequency: '639Hz', context: 'Server Rooms, Robotics', diagnosis: 'Early Detection: Pre-symptomatic', color: '#2F3E46', icon: Bot },
 ];
 
+const ARCHITECTURAL_PALETTES = [
+  { zone: 'Growth Zone', name: 'Photosynthetic Green', hex: '#4A7C59', albedo: 0.12, resilience: 'High', function: 'Blends with crops, maximizes psychological connection to nature.' },
+  { zone: 'Control Zone', name: 'Slate Tech Grey', hex: '#2F3E46', albedo: 0.08, resilience: 'Standard', function: 'High contrast for robot navigation, reduces screen glare.' },
+  { zone: 'Lilies Node', name: 'Celestial Fuchsia', hex: '#f472b6', albedo: 0.35, resilience: 'Ultra', function: 'High spectral albedo for pollinator sharding and aesthetic impact.' },
+];
+
 const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'mapping' | 'design' | 'paint' | 'macro' | 'micro'>('mapping');
-  const [hasKey, setHasKey] = useState<boolean | null>(null);
   
   // Paint with Nature States
   const [imagePrompt, setImagePrompt] = useState('');
@@ -102,7 +106,6 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
   const [isMintingGraphic, setIsMintingGraphic] = useState(false);
   const [graphicAnchored, setGraphicAnchored] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('1:1');
-  const [isHq, setIsHq] = useState(false);
 
   // Macro States
   const [albedo, setAlbedo] = useState(0.92);
@@ -128,48 +131,6 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
   const [archivedShards, setArchivedShards] = useState<Set<string>>(new Set());
   const [isArchiving, setIsArchiving] = useState<string | null>(null);
 
-  // Added helper function to download a technical report as a text file.
-  const downloadReport = (content: string, mode: string, typeName: string) => {
-    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
-    const report = `
-ENVIROSAGRO™ ${typeName.toUpperCase()} SHARD
-=================================
-REGISTRY_ID: ${shardId}
-NODE_AUTH: ${user.esin}
-MODE: ${mode}
-TIMESTAMP: ${new Date().toISOString()}
-ZK_CONSENSUS: VERIFIED (99.9%)
-
-VERDICT:
--------------------
-${content}
-
--------------------
-(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
-    `;
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `EA_${typeName}_${mode}_${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  useEffect(() => {
-    checkApiKey();
-  }, []);
-
-  const checkApiKey = async () => {
-    const selected = await (window as any).aistudio.hasSelectedApiKey();
-    setHasKey(selected);
-  };
-
-  const handleSelectKey = async () => {
-    await (window as any).aistudio.openSelectKey();
-    setHasKey(true);
-  };
-
   const anchorToLedger = async (content: string, type: string, mode: string) => {
     const shardKey = `${type}_${mode}_${content.substring(0, 20)}`;
     if (archivedShards.has(shardKey)) return;
@@ -191,11 +152,7 @@ ${content}
       };
       
       await saveCollectionItem('media_ledger', newShard);
-      setArchivedShards(prev => {
-        const next = new Set(prev);
-        next.add(shardKey);
-        return next;
-      });
+      setArchivedShards(prev => new Set(prev).add(shardKey));
       onEarnEAC(20, `LEDGER_ANCHOR_${type.toUpperCase()}_SUCCESS`);
     } catch (e) {
       alert("LEDGER_FAILURE: Registry handshake failed.");
@@ -204,15 +161,37 @@ ${content}
     }
   };
 
+  const downloadReport = (content: string, mode: string, type: string) => {
+    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const report = `
+ENVIROSAGRO™ ${type.toUpperCase()} SHARD
+=================================
+REGISTRY_ID: ${shardId}
+NODE_AUTH: ${user.esin}
+MODE: ${mode}
+TIMESTAMP: ${new Date().toISOString()}
+ZK_CONSENSUS: VERIFIED (99.8%)
+
+DIAGNOSTIC VERDICT:
+-------------------
+${content}
+
+-------------------
+(c) 2025 EA_ROOT_NODE. Secure Shard Finality.
+    `;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EA_${type}_${mode}_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim()) return;
-
-    if (isHq && hasKey === false) {
-       setActiveTab('paint'); // Ensure we are on the paint tab
-       return;
-    }
     
-    const COST = isHq ? 100 : 25;
+    const COST = 25;
     if (!await onSpendEAC(COST, `GRAPHIC_SYNTHESIS_${selectedThrust.thrust.toUpperCase()}`)) return;
 
     setIsGenerating(true);
@@ -220,24 +199,40 @@ ${content}
     setGraphicAnchored(false);
 
     try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const technicalPrompt = `Professional architectural and agricultural render of ${imagePrompt}. 
       Brand Influence: Lilies Around Aesthetic Revolution.
       Framework Context: ${selectedThrust.thrust} sustainability. 
       Spectral Focus: ${selectedThrust.spectrum}. 
       Style: High-fidelity cinematic 8k architectural visualization, botanical precision, fuchsia highlights, industrial EOS aesthetic.`;
 
-      const imageUrl = await generateAestheticAsset(technicalPrompt, isHq, aspectRatio);
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [{ text: technicalPrompt }] },
+        config: {
+          imageConfig: {
+            aspectRatio: aspectRatio
+          }
+        }
+      });
 
-      if (imageUrl) {
-        setGeneratedImageUrl(imageUrl);
+      let foundImage = false;
+      if (response.candidates && response.candidates[0].content.parts) {
+        for (const part of response.candidates[0].content.parts) {
+          if (part.inlineData) {
+            setGeneratedImageUrl(`data:image/png;base64,${part.inlineData.data}`);
+            foundImage = true;
+            break;
+          }
+        }
+      }
+
+      if (foundImage) {
         onEarnEAC(5, 'AESTHETIC_VITALITY_INGEST');
       } else {
         alert("Consensus Failure: No image shard returned.");
       }
-    } catch (err: any) {
-      if (err.message?.includes("Requested entity was not found")) {
-        setHasKey(false);
-      }
+    } catch (err) {
       console.error(err);
       alert("Oracle synthesis interrupted. Check node connectivity.");
     } finally {
@@ -429,86 +424,59 @@ ${content}
                           <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">AI_AESTHETIC_INGEST</p>
                        </div>
                     </div>
-
-                    {isHq && hasKey === false ? (
-                       <div className="space-y-6 text-center py-6 animate-in zoom-in">
-                          <div className="w-20 h-20 rounded-full bg-amber-600/10 border-2 border-amber-500/20 flex items-center justify-center text-amber-500 mx-auto shadow-xl">
-                             <Key size={32} />
+                    <div className="space-y-6">
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Aesthetic Intent Shard</label>
+                          <textarea 
+                            value={imagePrompt}
+                            onChange={e => setImagePrompt(e.target.value)}
+                            placeholder="Describe your botanical vision (e.g. Circular bantu garden at sunrise)..."
+                            className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-lg font-medium italic focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all h-40 resize-none placeholder:text-stone-900"
+                          />
+                       </div>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Pillar focus</label>
+                             <select 
+                                value={selectedThrust.id}
+                                onChange={e => setSelectedThrust(SEHTI_CHROMA_MAPPING.find(m => m.id === e.target.value)!)}
+                                className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
+                             >
+                                {SEHTI_CHROMA_MAPPING.map(m => <option key={m.id} value={m.id}>{m.thrust}</option>)}
+                             </select>
                           </div>
                           <div className="space-y-2">
-                             <h5 className="text-xl font-black text-white uppercase italic">Handshake Required</h5>
-                             <p className="text-[10px] text-slate-400 italic">"High-Resonance sharding (2K) requires institutional resource allocation via a paid API key."</p>
-                             <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-[9px] text-blue-400 underline uppercase font-black">View Billing Documentation</a>
-                          </div>
-                          <button 
-                            onClick={handleSelectKey}
-                            className="w-full py-4 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95"
-                          >
-                             SELECT API KEY
-                          </button>
-                       </div>
-                    ) : (
-                       <div className="space-y-6">
-                          <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Aesthetic Intent Shard</label>
-                             <textarea 
-                                value={imagePrompt}
-                                onChange={e => setImagePrompt(e.target.value)}
-                                placeholder="Describe your botanical vision (e.g. Circular bantu garden at sunrise)..."
-                                className="w-full bg-black/60 border border-white/10 rounded-[32px] p-8 text-white text-lg font-medium italic focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all h-40 resize-none placeholder:text-stone-900"
-                             />
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Pillar focus</label>
-                                <select 
-                                   value={selectedThrust.id}
-                                   onChange={e => setSelectedThrust(SEHTI_CHROMA_MAPPING.find(m => m.id === e.target.value)!)}
-                                   className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
-                                >
-                                   {SEHTI_CHROMA_MAPPING.map(m => <option key={m.id} value={m.id}>{m.thrust}</option>)}
-                                </select>
-                             </div>
-                             <div className="space-y-2">
-                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Aspect Ratio</label>
-                                <select 
-                                   value={aspectRatio}
-                                   onChange={e => setAspectRatio(e.target.value as any)}
-                                   className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
-                                >
-                                   <option value="1:1">1:1 Square</option>
-                                   <option value="3:4">3:4 Portrait</option>
-                                   <option value="4:3">4:3 Landscape</option>
-                                   <option value="9:16">9:16 Port</option>
-                                   <option value="16:9">16:9 Wide</option>
-                                </select>
-                             </div>
-                          </div>
-
-                          <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between group hover:border-indigo-500/40 transition-all">
-                             <div className="flex items-center gap-3">
-                                <Maximize2 className="w-4 h-4 text-indigo-400" />
-                                <span className="text-[10px] font-black text-white uppercase tracking-widest">High Resonance (2K)</span>
-                             </div>
-                             <button 
-                                onClick={() => setIsHq(!isHq)}
-                                className={`w-12 h-6 rounded-full relative transition-all shadow-inner ${isHq ? 'bg-indigo-600' : 'bg-slate-800'}`}
+                             <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Aspect Ratio</label>
+                             <select 
+                                value={aspectRatio}
+                                onChange={e => setAspectRatio(e.target.value as any)}
+                                className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold appearance-none outline-none focus:ring-2 focus:ring-emerald-500/20"
                              >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-xl ${isHq ? 'right-1' : 'left-1'}`}></div>
-                             </button>
+                                <option value="1:1">1:1 Square</option>
+                                <option value="16:9">16:9 Wide</option>
+                                <option value="9:16">9:16 Port</option>
+                             </select>
                           </div>
-
-                          <button 
-                             onClick={handleGenerateImage}
-                             disabled={isGenerating || !imagePrompt.trim()}
-                             className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
-                          >
-                             {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 fill-current" />}
-                             {isGenerating ? 'Synthesizing...' : 'GENERATE AESTHETIC SHARD'}
-                          </button>
                        </div>
-                    )}
+                    </div>
+                    <button 
+                       onClick={handleGenerateImage}
+                       disabled={isGenerating || !imagePrompt.trim()}
+                       className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
+                    >
+                       {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 fill-current" />}
+                       {isGenerating ? 'Synthesizing...' : 'GENERATE AESTHETIC SHARD'}
+                    </button>
+                 </div>
+
+                 <div className="p-10 glass-card rounded-[48px] border border-white/5 bg-black/40 space-y-6 group">
+                    <div className="flex items-center gap-4">
+                       <Info size={16} className="text-emerald-500" />
+                       <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Protocol Tip</h4>
+                    </div>
+                    <p className="text-xs text-slate-400 italic leading-relaxed">
+                       "Aesthetic shards increase regional social immunity (x) by 12.4% when anchored to the heritage hub."
+                    </p>
                  </div>
               </div>
 
@@ -535,8 +503,8 @@ ${content}
                              <img src={generatedImageUrl!} className="w-full h-full object-contain max-h-[700px] shadow-2xl" alt="Generated" />
                              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 group-hover/img:opacity-0 transition-opacity"></div>
                              <div className="absolute top-10 right-10 flex gap-4">
-                                <button className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all"><Maximize size={24}/></button>
-                                <button onClick={() => setGeneratedImageUrl(null)} className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all"><X size={24}/></button>
+                                <button className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-2xl hover:scale-110 active:scale-95 transition-all"><Maximize size={24}/></button>
+                                <button onClick={() => setGeneratedImageUrl(null)} className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-2xl hover:scale-110 active:scale-95 transition-all"><X size={24}/></button>
                              </div>
                           </div>
                           <div className="p-12 border-t border-white/5 bg-black/90 flex flex-col md:flex-row justify-between items-center gap-8">
@@ -627,7 +595,7 @@ ${content}
                       <button 
                         onClick={handleForgeDesign}
                         disabled={isForgingDesign || !designDescription.trim()}
-                        className="w-full py-10 bg-fuchsia-800 hover:bg-fuchsia-700 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(217,70,239,0.3)] flex items-center justify-center gap-8 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-[16px] ring-fuchsia-500/5"
+                        className="w-full py-10 bg-fuchsia-800 hover:bg-fuchsia-700 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(217,70,239,0.3)] flex items-center justify-center gap-8 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-[16px] ring-white/5"
                       >
                          {isForgingDesign ? <Loader2 className="w-10 h-10 animate-spin" /> : <Sparkles className="w-10 h-10 fill-current" />}
                          {isForgingDesign ? "SYNTHESIZING AESTHETIC..." : "FORGE LILIES SHARD"}
@@ -690,7 +658,7 @@ ${content}
                               </div>
                               <div className="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
                                  <button onClick={() => downloadReport(designShard || '', designCategory, 'Design')} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
-                                    <Download size={20} /> Download Shard
+                                    <Download size={18} /> Download Shard
                                  </button>
                                  <button 
                                    onClick={() => anchorToLedger(designShard || '', 'Design', designCategory)}
@@ -698,7 +666,7 @@ ${content}
                                    className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Design_${designCategory}_${designShard?.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
                                  >
                                     {isArchiving === `Design_${designCategory}_${designShard?.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Design_${designCategory}_${designShard?.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
-                                    {archivedShards.has(`Design_${designCategory}_${designShard?.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
+                                    {archivedShards.has(`Design_${designCategory}_${designShard?.substring(0, 20)}`) ? 'ANCHORED TO LEDGER' : 'ANCHOR TO LEDGER'}
                                  </button>
                               </div>
                            </div>
@@ -750,7 +718,7 @@ ${content}
                        disabled={isCalculatingSc}
                        className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
                     >
-                       {isCalculatingSc ? <Loader2 className="w-6 h-6 animate-spin" /> : <RefreshCw size={20} />}
+                       {isCalculatingSc ? <Loader2 className="w-6 h-6 animate-spin" /> : <RefreshCw className="w-6 h-6" />}
                        {isCalculatingSc ? 'CALIBRATING...' : 'COMPUTE COEFFICIENT'}
                     </button>
                  </div>
@@ -852,7 +820,7 @@ ${content}
                           <button 
                              onClick={runDigitalChromatography}
                              disabled={isScanning}
-                             className="w-full py-8 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-2 border-white/10 ring-8 ring-white/5"
+                             className="w-full py-8 agro-gradient rounded-[36px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-2 border-white/10 ring-8 ring-white/5"
                           >
                              {isScanning ? <Loader2 className="w-6 h-6 animate-spin" /> : <Scan className="w-6 h-6" />}
                              {isScanning ? 'SCANNING PIGMENTS...' : 'INITIALIZE CHROMA AUDIT'}
@@ -942,11 +910,11 @@ ${content}
                                     </div>
                                  </div>
                                  <div className="flex gap-4">
-                                     <button onClick={() => { if(chromaDiagnosis) downloadReport(chromaDiagnosis.report, 'Chromatography', 'Laboratory'); }} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-white font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 shadow-xl">
+                                     <button onClick={() => downloadReport(chromaDiagnosis!.report, 'Chromatography', 'Laboratory')} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-white font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 shadow-xl">
                                         <Download size={20} /> Download Report
                                      </button>
                                      <button 
-                                       onClick={() => { if(chromaDiagnosis) anchorToLedger(chromaDiagnosis.report, 'Chromatography', 'Diagnostic'); }}
+                                       onClick={() => anchorToLedger(chromaDiagnosis!.report, 'Chromatography', 'Diagnostic')}
                                        disabled={isArchiving === `Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}` || archivedShards.has(`Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}`)}
                                        className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Chromatography_Diagnostic_${chromaDiagnosis!.report.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
                                      >

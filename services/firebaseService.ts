@@ -1,5 +1,4 @@
-
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { 
   getAuth, 
   onAuthStateChanged as fbOnAuthStateChanged, 
@@ -16,14 +15,16 @@ import {
   reload
 } from "firebase/auth";
 import { 
-  getFirestore,
+  initializeFirestore,
   doc, 
   setDoc, 
   getDoc, 
   collection, 
+  addDoc, 
   query, 
   where, 
   getDocs, 
+  orderBy,
   onSnapshot,
   updateDoc,
   arrayUnion,
@@ -34,13 +35,13 @@ import {
   ref, 
   push, 
   onValue, 
+  set, 
   limitToLast, 
   query as rtdbQuery,
   serverTimestamp as rtdbTimestamp,
-  off,
-  set
+  off
 } from "firebase/database";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "firebase/app-check";
 import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
 
 const firebaseConfig = {
@@ -53,96 +54,221 @@ const firebaseConfig = {
   appId: "1:218810534057:web:2d32abbb459755499fc1b8"
 };
 
-const app = initializeApp(firebaseConfig);
+// --- APP CHECK DEBUG TOKEN INITIALIZATION ---
+// CRITICAL: Must be set globally before any Firebase SDK is initialized
+if (typeof window !== "undefined") {
+  const DEBUG_TOKEN = "92E1FB19-E493-4BCB-AF99-57F97E72A503";
+  (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = DEBUG_TOKEN;
+  (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = DEBUG_TOKEN;
+}
+
+// 1. Initialize Firebase App Core safely
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
+// 2. Initialize App Check
+let appCheckInstance: any = null;
 
 if (typeof window !== "undefined") {
-  // CRITICAL: Set the debug App Check token BEFORE initializeAppCheck for node-to-cloud finality
-  (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = "1DA3A297-5A57-424F-862E-3A9E2557F82F";
+  const RECAPTCHA_SITE_KEY = "6LcnzswqAAAAALQ_V2R_9Z_N7_I9_Y_V_P_N_W_L_R"; 
 
   if (!(window as any).FIREBASE_APPCHECK_INITIALIZED) {
     try {
-      initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider("6LeljyIsAAAAAKer8_fHinQBO5eO8WlqXPbpdAh5"),
+      appCheckInstance = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
         isTokenAutoRefreshEnabled: true
       });
       (window as any).FIREBASE_APPCHECK_INITIALIZED = true;
-      console.log("[EnvirosAgro] App Check Registry Initialized.");
     } catch (err) {
-      console.error("[EnvirosAgro] App Check Handshake Failed:", err);
+      console.warn("App Check initialization error:", err);
     }
   }
 }
 
+/**
+ * Verifies the app check handshake. 
+ * Proceeding even on error to prevent blocking UI boot during development.
+ */
+export const verifyAppCheckHandshake = async (): Promise<boolean> => {
+  if (typeof window === "undefined") return true;
+  try {
+    if (appCheckInstance) {
+      await getToken(appCheckInstance);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.warn("App Check Challenge Limited:", e);
+    return false;
+  }
+};
+
+// 3. Initialize services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+/**
+ * Optimized Firestore Initialization:
+ * experimentalForceLongPolling: Forces standard HTTP instead of WebSockets/gRPC which fail in some environments.
+ * useFetchHandler: Uses the Fetch API which is more resilient to network timeouts.
+ */
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  useFetchHandler: true
+} as any); 
+
 export const rtdb = getDatabase(app);
 
+// --- UTILITIES ---
 const cleanObject = (obj: any): any => {
   if (obj === null || obj === undefined) return null;
   if (Array.isArray(obj)) return obj.map(cleanObject);
   if (typeof obj !== 'object') return obj;
+  
   const newObj: any = {};
   Object.keys(obj).forEach((key) => {
     const val = obj[key];
     if (val !== undefined && val !== null) {
-      newObj[key] = (typeof val === 'object' && !Array.isArray(val)) ? cleanObject(val) : val;
+      if (typeof val === 'object' && !Array.isArray(val)) {
+        newObj[key] = cleanObject(val);
+      } else {
+        newObj[key] = val;
+      }
     }
   });
   return newObj;
 };
 
+// --- AUTHENTICATION ---
 export const onAuthStateChanged = (_: any, callback: (user: any) => void) => fbOnAuthStateChanged(auth, callback);
 export const signInWithEmailAndPassword = async (_: any, email: string, pass: string) => fbSignIn(auth, email, pass);
 export const createUserWithEmailAndPassword = async (_: any, email: string, pass: string) => fbCreateUser(auth, email, pass);
-export const signInWithGoogle = async () => signInWithPopup(auth, new GoogleAuthProvider());
-export const signOutSteward = () => fbSignOut(auth);
-export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
-export const sendVerificationShard = async () => auth.currentUser ? sendEmailVerification(auth.currentUser) : false;
-export const refreshAuthUser = async () => auth.currentUser ? (await reload(auth.currentUser), auth.currentUser) : null;
 
-export const setupRecaptcha = (containerId: string) => {
-  if (typeof window === "undefined") return null;
-  const container = document.getElementById(containerId);
-  if (container) container.innerHTML = '';
-  try {
-    return new RecaptchaVerifier(auth, containerId, { 'size': 'invisible' });
-  } catch(e) { return null; }
+export const signInWithGoogle = async () => {
+  const provider = new GoogleAuthProvider();
+  return signInWithPopup(auth, provider);
 };
 
-export const requestPhoneCode = async (phone: string, appVerifier: any): Promise<ConfirmationResult> => signInWithPhoneNumber(auth, phone, appVerifier);
+export const signOutSteward = () => fbSignOut(auth);
+export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
+// Email Verification
+export const sendVerificationShard = async () => {
+  if (auth.currentUser) {
+    await sendEmailVerification(auth.currentUser);
+    return true;
+  }
+  return false;
+};
+
+export const refreshAuthUser = async () => {
+  if (auth.currentUser) {
+    await reload(auth.currentUser);
+    return auth.currentUser;
+  }
+  return null;
+};
+
+// --- PHONE AUTH ---
+export const setupRecaptcha = (containerId: string) => {
+  if (typeof window === "undefined") return null;
+  
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.innerHTML = '';
+  }
+
+  try {
+    const verifier = new RecaptchaVerifier(auth, containerId, {
+      'size': 'invisible',
+      'callback': () => {
+        console.log("Recaptcha solved successfully.");
+      },
+      'expired-callback': () => {
+        console.warn("Recaptcha expired. Please refresh.");
+      }
+    });
+    return verifier;
+  } catch(e) {
+    console.error("Recaptcha setup error:", e);
+    return null;
+  }
+};
+
+export const requestPhoneCode = async (phone: string, appVerifier: any): Promise<ConfirmationResult> => {
+  return await signInWithPhoneNumber(auth, phone, appVerifier);
+};
+
+// --- SIGNAL TERMINAL CORE ---
 export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): Promise<SignalShard | null> => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
+
   const id = `SIG-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
   const timestamp = new Date().toISOString();
-  const cleanSignal = cleanObject({
-    ...signalData, id, timestamp, read: false, stewardId: userId,
-    dispatchLayers: [{ channel: 'INBOX', status: 'SENT', timestamp }]
-  });
+  
+  const layers: DispatchChannel[] = [];
+  layers.push({ channel: 'INBOX', status: 'SENT', timestamp });
+  
+  if (signalData.priority === 'critical' || signalData.priority === 'high') {
+    layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
+    layers.push({ channel: 'EMAIL', status: 'SENT', timestamp });
+  }
+
+  const rawSignal: any = {
+    id,
+    type: signalData.type || 'system',
+    origin: signalData.origin || 'MANUAL',
+    title: signalData.title || 'NETWORK_SIGNAL',
+    message: signalData.message || 'No message provided.',
+    timestamp,
+    read: false,
+    priority: signalData.priority || 'low',
+    dispatchLayers: layers,
+    stewardId: userId,
+    actionIcon: signalData.actionIcon || 'MessageSquare',
+    aiRemark: signalData.aiRemark || "Analyzing signal impact...",
+    meta: signalData.meta || {},
+    actionLabel: signalData.actionLabel || ''
+  };
+
+  const cleanSignal = cleanObject(rawSignal);
+
   try {
     await setDoc(doc(db, "signals", id), cleanSignal);
-    await push(ref(rtdb, 'network_pulse'), { message: `${cleanSignal.title}: ${cleanSignal.message}`, timestamp: rtdbTimestamp() });
+    
+    // Low-latency pulse broadcast
+    const pulseRef = ref(rtdb, 'network_pulse');
+    await push(pulseRef, {
+      message: `${rawSignal.title}: ${rawSignal.message}`,
+      timestamp: rtdbTimestamp()
+    });
+
     return cleanSignal as SignalShard;
-  } catch (e) { 
-    console.error("[EnvirosAgro] Signal Dispatch Failed:", e);
-    return null; 
+  } catch (e) {
+    return null;
   }
 };
 
 export const updateSignalReadStatus = async (id: string, read: boolean) => {
-  const docRef = doc(db, "signals", id);
-  await updateDoc(docRef, { read });
+  try {
+    await updateDoc(doc(db, "signals", id), { read });
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
-export const markAllSignalsAsReadInDb = async () => {
-  const userId = auth.currentUser?.uid;
-  if (!userId) return;
-  const q = query(collection(db, "signals"), where("stewardId", "==", userId), where("read", "==", false));
-  const snap = await getDocs(q);
-  const batch = writeBatch(db);
-  snap.docs.forEach(d => batch.update(d.ref, { read: true }));
-  await batch.commit();
+export const markAllSignalsAsReadInDb = async (signalIds: string[]) => {
+  if (signalIds.length === 0) return true;
+  try {
+    const batch = writeBatch(db);
+    signalIds.forEach(id => {
+      batch.update(doc(db, "signals", id), { read: true });
+    });
+    await batch.commit();
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 export const listenToPulse = (callback: (pulse: string) => void) => {
@@ -150,44 +276,20 @@ export const listenToPulse = (callback: (pulse: string) => void) => {
   onValue(pulseRef, (snapshot) => {
     if (snapshot.exists()) {
       const data = snapshot.val();
-      callback(data[Object.keys(data)[0]].message);
+      const latestKey = Object.keys(data)[0];
+      callback(data[latestKey].message);
     }
   });
   return () => off(pulseRef);
 };
 
-export const streamLiveTelemetry = (esin: string, callback: (data: any) => void) => {
-  const telemetryRef = ref(rtdb, `live_telemetry/${esin}`);
-  onValue(telemetryRef, (snapshot) => {
-    if (snapshot.exists()) callback(snapshot.val());
-  });
-  return () => off(telemetryRef);
-};
-
-export const updateLiveTelemetry = async (esin: string, data: any) => {
-  const telemetryRef = ref(rtdb, `live_telemetry/${esin}`);
-  return set(telemetryRef, { ...data, updatedAt: rtdbTimestamp() });
-};
-
-export const backupTelemetryShard = async (esin: string, data: any) => {
-  const telemetryRef = ref(rtdb, `telemetry_backups/${esin}`);
-  await set(telemetryRef, { ...cleanObject(data), timestamp: rtdbTimestamp() });
-};
-
-export const fetchTelemetryBackup = async (esin: string): Promise<any> => {
-  const telemetryRef = ref(rtdb, `telemetry_backups/${esin}`);
-  return new Promise((resolve) => {
-    onValue(telemetryRef, (snapshot) => {
-      resolve(snapshot.val());
-    }, { onlyOnce: true });
-  });
-};
-
+// --- REGISTRY SYNC (FIRESTORE) ---
 export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
   const userId = uid || auth.currentUser?.uid;
   if (!userId) return false;
   try {
-    await setDoc(doc(db, "stewards", userId), { ...cleanObject(userData), lastSync: Date.now(), stewardId: userId }, { merge: true });
+    const cleanUserData = cleanObject(userData);
+    await setDoc(doc(db, "stewards", userId), { ...cleanUserData, lastSync: Date.now(), stewardId: userId }, { merge: true });
     return true;
   } catch (e) { return false; }
 };
@@ -197,25 +299,12 @@ export const getStewardProfile = async (uid: string): Promise<AgroUser | null> =
   return snap.exists() ? snap.data() as AgroUser : null;
 };
 
-export const markPermanentAction = async (actionKey: string, reward: number, reason: string): Promise<boolean> => {
+export const markPermanentAction = async (actionKey: string) => {
   const userId = auth.currentUser?.uid;
   if (!userId) return false;
-  const userRef = doc(db, "stewards", userId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return false;
-  const userData = snap.data() as AgroUser;
-  if (userData.completedActions?.includes(actionKey)) return true;
-
   try {
-    await updateDoc(userRef, {
-      completedActions: arrayUnion(actionKey),
-      "wallet.balance": (userData.wallet.balance || 0) + reward
-    });
-    await dispatchNetworkSignal({
-      type: 'ledger_anchor',
-      title: 'PERMANENT_ACTION_FINALIZED',
-      message: `${reason}. Reward: ${reward} EAC sharded.`,
-      priority: 'high'
+    await updateDoc(doc(db, "stewards", userId), {
+      completedActions: arrayUnion(actionKey)
     });
     return true;
   } catch (e) { return false; }
@@ -224,16 +313,40 @@ export const markPermanentAction = async (actionKey: string, reward: number, rea
 export const saveCollectionItem = async (collectionName: string, item: any) => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
+  const cleanItem = cleanObject(item);
+  const data = { ...cleanItem, stewardId: userId, lastModified: Date.now() };
   const docRef = item.id ? doc(db, collectionName, item.id) : doc(collection(db, collectionName));
-  await setDoc(docRef, { ...cleanObject(item), stewardId: userId, lastModified: Date.now() }, { merge: true });
+  await setDoc(docRef, data, { merge: true });
   return docRef.id;
 };
 
 export const listenToCollection = (collectionName: string, callback: (items: any[]) => void, isGlobal: boolean = false) => {
   const userId = auth.currentUser?.uid;
   if (!userId && !isGlobal) return () => {};
-  const q = isGlobal ? query(collection(db, collectionName)) : query(collection(db, collectionName), where("stewardId", "==", userId));
-  return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.id }))));
+  
+  let q;
+  if (isGlobal) {
+    q = query(collection(db, collectionName));
+  } else {
+    q = query(collection(db, collectionName), where("stewardId", "==", userId));
+  }
+  
+  return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.id }))), (err) => {
+    console.warn(`Registry Sync Warning (${collectionName}):`, err.message);
+  });
 };
 
-export const verifyAuditorAccess = async (email: string) => !(await getDocs(query(collection(db, "auditors"), where("email", "==", email)))).empty;
+export const verifyAuditorAccess = async (email: string) => {
+  const q = query(collection(db, "auditors"), where("email", "==", email));
+  const snap = await getDocs(q);
+  return !snap.empty;
+};
+
+export const backupTelemetryShard = async (esin: string, telemetry: any) => {
+  const cleanTelem = cleanObject(telemetry);
+  return setDoc(doc(db, "telemetry", esin), { ...cleanTelem, updatedAt: Date.now() }, { merge: true });
+};
+export const fetchTelemetryBackup = async (esin: string) => {
+  const snap = await getDoc(doc(db, "telemetry", esin));
+  return snap.exists() ? snap.data() : null;
+};
