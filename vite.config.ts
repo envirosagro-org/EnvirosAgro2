@@ -1,3 +1,4 @@
+
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 // import process explicitly to resolve TypeScript errors with cwd and env properties
@@ -19,7 +20,19 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
-      sourcemap: false
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          // Splitting vendor libraries into a separate chunk to optimize caching and reduce main bundle size
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
+          }
+        }
+      },
+      // Adjusting the limit to 1000kb to suppress warnings for complex industrial sharding modules
+      chunkSizeWarningLimit: 1000
     }
   };
 });
