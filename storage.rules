@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
@@ -5,7 +6,11 @@ service firebase.storage {
     // --- CORE ENVIROSAGRO HELPER FUNCTIONS ---
     
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null && request.auth.token.app_check == true;
+    }
+    
+    function isAppVerified() {
+      return request.auth.token.app_check == true;
     }
 
     function isOwner(userId) {
@@ -43,7 +48,7 @@ service firebase.storage {
 
     // 2. Evidence Vault: Digital MRV and Field Proofs
     match /evidence/{userId}/{fileName} {
-      allow read: if isSignedIn(); // Auditable by the mesh
+      allow read: if isSignedIn() || isAppVerified(); // Auditable by verified apps
       allow create: if isOwner(userId)
                     && request.resource.size < 20 * 1024 * 1024 // 20MB Limit
                     && (isImage() || isDocument());
@@ -52,7 +57,7 @@ service firebase.storage {
 
     // 3. Media Ledger: Cinema, Audio Waveforms, and Knowledge Shards
     match /media_shards/{shardId} {
-      allow read: if true; // Publicly accessible to the Githaka quorum
+      allow read: if isSignedIn() || isAppVerified(); // Restrict to official app
       allow create: if isSignedIn()
                     && (
                       (isVideo() && request.resource.size < 100 * 1024 * 1024) || // 100MB Video
