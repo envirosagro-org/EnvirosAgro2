@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { 
   Scan, 
@@ -117,8 +116,9 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
       );
       setOracleResult(result);
       
-      const carbon = result.metrics?.carbon_sequestration_potential || 0;
-      const alpha = result.confidence_alpha || 0;
+      // Fix: Accessing metrics and confidence_alpha via the json property of AIResponse
+      const carbon = result.json?.metrics?.carbon_sequestration_potential || 0;
+      const alpha = result.json?.confidence_alpha || 0;
       setMintedValue(Math.floor(carbon * MINTING_FACTOR * alpha));
       
     } catch (e) {
@@ -144,7 +144,8 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
         type: 'ledger_anchor',
         origin: 'CARBON',
         title: 'CARBON_SHARD_MINTED',
-        message: `Node ${user.esin} minted ${mintedValue} EAC from ${oracleResult?.metrics?.carbon_sequestration_potential} tCO2e sequestration proof.`,
+        // Fix: Accessing metrics via the json property of oracleResult (AIResponse)
+        message: `Node ${user.esin} minted ${mintedValue} EAC from ${oracleResult?.json?.metrics?.carbon_sequestration_potential} tCO2e sequestration proof.`,
         priority: 'high',
         actionIcon: Wind,
         meta: { target: 'digital_mrv', ledgerContext: 'CARBON' }
@@ -207,7 +208,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                    <Landmark size={36} />
                 </div>
                 <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">LAND <span className="text-emerald-400">SELECTION</span></h3>
-                <p className="text-slate-400 text-lg font-medium italic max-w-lg mx-auto">Select a registered land shard to associate your carbon mining evidence.</p>
+                <p className="text-slate-400 text-lg font-medium italic max-lg:text-sm max-w-lg mx-auto">Select a registered land shard to associate your carbon mining evidence.</p>
              </div>
 
              {hasLandRegistered ? (
@@ -304,7 +305,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                    </div>
                  ) : (
                    <>
-                      <div className="w-16 h-16 rounded-[24px] bg-blue-500/10 flex items-center justify-center border border-blue-500/20 group-hover/upload:scale-110 transition-transform">
+                      <div className="w-16 h-16 rounded-[24px] bg-blue-500/10 flex items-center justify-center border border-white/20 group-hover/upload:scale-110 transition-transform">
                          <Scan size={32} className="text-blue-400" />
                       </div>
                       <div className="space-y-2">
@@ -378,7 +379,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                           <div className="lg:col-span-4 space-y-8">
                              <div className="p-8 bg-black/60 rounded-[48px] border border-white/10 space-y-6 shadow-inner text-center group">
                                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.5em]">Confidence Shard (α)</p>
-                                <h5 className="text-8xl font-mono font-black text-indigo-400 tracking-tighter group-hover:scale-110 transition-transform">{oracleResult.confidence_alpha}</h5>
+                                <h5 className="text-8xl font-mono font-black text-indigo-400 tracking-tighter group-hover:scale-110 transition-transform">{oracleResult.json?.confidence_alpha}</h5>
                                 <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest border border-emerald-500/20 bg-emerald-500/5 py-2 rounded-xl">L2_VERIFICATION_STABLE</p>
                              </div>
                           </div>
@@ -394,14 +395,14 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                                    </div>
                                 </div>
                                 <div className="text-slate-300 text-xl leading-loose italic whitespace-pre-line font-medium relative z-10">
-                                   {oracleResult.verification_narrative}
+                                   {oracleResult.json?.verification_narrative}
                                 </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 relative z-10">
                                    {[
-                                      { l: 'Est. DBH', v: `${oracleResult.metrics.estimated_dbh_cm}cm`, i: Target, c: 'text-indigo-400' },
-                                      { l: 'Biomass Mass', v: `${oracleResult.metrics.biomass_tonnes}t`, i: Activity, c: 'text-emerald-400' },
-                                      { l: 'C-Sequestration', v: `${oracleResult.metrics.carbon_sequestration_potential}tCO2e`, i: Waves, c: 'text-blue-400' },
+                                      { l: 'Est. DBH', v: `${oracleResult.json?.metrics?.estimated_dbh_cm}cm`, i: Target, c: 'text-indigo-400' },
+                                      { l: 'Biomass Mass', v: `${oracleResult.json?.metrics?.biomass_tonnes}t`, i: Activity, c: 'text-emerald-400' },
+                                      { l: 'C-Sequestration', v: `${oracleResult.json?.metrics?.carbon_sequestration_potential}tCO2e`, i: Waves, c: 'text-blue-400' },
                                    ].map((m, i) => (
                                       <div key={i} className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center group/metric hover:border-white/20 transition-all">
                                          <m.i className={`w-5 h-5 ${m.c} mx-auto mb-3 opacity-30 group-hover/metric:opacity-100 transition-opacity`} />
@@ -448,7 +449,8 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                        <div className="text-left space-y-1">
                           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Weighted Carbon</p>
                           <p className="text-3xl font-mono font-black text-white">
-                             {(oracleResult.metrics.carbon_sequestration_potential * oracleResult.confidence_alpha).toFixed(2)} <span className="text-xs text-slate-700">tCO2e</span>
+                             {/* Fix: Accessing metrics via the json property of oracleResult (AIResponse) */}
+                             {(oracleResult?.json?.metrics?.carbon_sequestration_potential * oracleResult?.json?.confidence_alpha).toFixed(2)} <span className="text-xs text-slate-700">tCO2e</span>
                           </p>
                        </div>
                        <div className="h-14 w-px bg-white/5"></div>
@@ -483,7 +485,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                     <button 
                       onClick={handleExecuteMint}
                       disabled={isProcessing || !esinSign}
-                      className="w-full py-10 agro-gradient rounded-[48px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all ring-8 ring-emerald-500/5"
+                      className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 disabled:opacity-30 transition-all ring-8 ring-emerald-500/5"
                     >
                        {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Stamp size={32} className="fill-current" />}
                        {isProcessing ? "ANCHORING ON-CHAIN..." : "EXECUTE BLOCKCHAIN MINT"}

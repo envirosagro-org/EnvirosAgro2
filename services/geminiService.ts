@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
+import { GoogleGenAI, Type, FunctionDeclaration, Modality } from "@google/genai";
 
 const FRAMEWORK_CONTEXT = `
 EnvirosAgro™ Sustainability Framework (EOS) - System Architecture (v6.5):
@@ -23,29 +23,21 @@ CORE FORMULAS:
 - Five Thrusts™ (SEHTI): Societal, Environmental, Human, Technological, Industry.
 `;
 
-const activateLiveSequenceTool: FunctionDeclaration = {
-  name: "activate_live_sequence",
-  description: "Triggers the transition from Blueprint to Live Processing. Requires asset registration.",
+const mintCarbonShardTool: FunctionDeclaration = {
+  name: "mint_carbon_shard",
+  description: "Anchors a new carbon sequestration shard to the ledger based on voice-reported ingest.",
   parameters: {
     type: Type.OBJECT,
     properties: {
-      blueprint_id: { type: Type.STRING, description: "The ID of the generated value blueprint." },
-      assets_registered: {
-        type: Type.ARRAY,
-        description: "List of physical or digital assets pledged as guarantee.",
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            asset_type: { type: Type.STRING, enum: ["RAW_MATERIAL_STOCK", "MACHINERY_IOT", "LAND_DEED", "TOKENIZED_ASSET"] },
-            asset_id: { type: Type.STRING },
-            verification_status: { type: Type.BOOLEAN }
-          }
-        }
-      }
+      amount: { type: Type.NUMBER, description: "Volume of material or carbon in tons." },
+      material: { type: Type.STRING, description: "Type of material (e.g., maize, soil, coffee)." },
+      notes: { type: Type.STRING, description: "Additional context for the registry." }
     },
-    required: ["blueprint_id", "assets_registered"]
+    required: ["amount", "material"]
   }
 };
+
+export const ORACLE_TOOLS = [{ functionDeclarations: [mintCarbonShardTool] }];
 
 export interface AIResponse {
   text: string;
@@ -79,246 +71,54 @@ const callOracleWithRetry = async (fn: () => Promise<any>, retries = 3): Promise
 
 const handleAIError = (error: any): AIResponse => {
   console.error("Gemini API Error:", error);
-  let errorText = "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified due to internal congestion.";
-  if (error.message?.includes('API_KEY')) {
-    errorText = "AUTH_ERROR: Registry API Key is missing or invalid. Please verify node credentials.";
-  } else if (error.status === 429 || error.message?.includes('429')) {
-    errorText = "QUOTA_EXCEEDED: High-frequency sharding limit reached. Quorum cooldown active.";
-  }
+  let errorText = "SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified.";
   return { text: errorText };
 };
 
-export const analyzeBidHandshake = async (investorReqs: string, farmerAssets: any[]): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Compare Investor Requirements: "${investorReqs}"
-        Against Farmer Ingested Assets: ${JSON.stringify(farmerAssets)}
-        Context: ${FRAMEWORK_CONTEXT}
-        Calculate Match Score (0.0 to 1.0) and identify resource gaps. Return JSON.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              match_score: { type: Type.NUMBER },
-              reasoning: { type: Type.STRING },
-              gap_analysis: { type: Type.ARRAY, items: { type: Type.STRING } },
-              steward_reputation_impact: { type: Type.NUMBER }
-            },
-            required: ["match_score", "reasoning", "gap_analysis"]
-          }
+export const detectAnomalousDrift = async (telemetry: any): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Analyze this L1 telemetry stream for anomalous drift: ${JSON.stringify(telemetry)}. 
+    Flag if values deviate from EOS norms. Return JSON.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          has_drift: { type: Type.BOOLEAN },
+          confidence: { type: Type.NUMBER },
+          remediation: { type: Type.STRING }
         }
-      });
-      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+      }
+    }
+  });
+  return { text: response.text || "", json: JSON.parse(response.text || "{}") };
 };
 
-export const generateValueBlueprint = async (material: string, volume: number): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Generate a Value Blueprint for: ${volume} tons of ${material}. 
-        Apply SEHTI principles and EOS sustainability metrics.`,
-        config: {
-          systemInstruction: `You are the EnvirosAgro System Architect. You design theoretical agricultural value blueprints.`,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              blueprint_id: { type: Type.STRING },
-              status: { type: Type.STRING, enum: ["DRAFT", "READY_FOR_ASSETS", "LIVE"] },
-              input_material: {
-                type: Type.OBJECT,
-                properties: {
-                  name: { type: Type.STRING },
-                  volume: { type: Type.NUMBER }
-                }
-              },
-              value_process_steps: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    step_order: { type: Type.INTEGER },
-                    operation: { type: Type.STRING },
-                    duration_hours: { type: Type.NUMBER }
-                  }
-                }
-              },
-              asset_requirements: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              },
-              projected_value_delta: { type: Type.NUMBER }
-            },
-            required: ["blueprint_id", "status", "input_material", "value_process_steps", "asset_requirements", "projected_value_delta"]
-          }
+export const validateProofOfSustainability = async (evidence: { description: string, image?: string }): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const contents = evidence.image 
+    ? { parts: [{ inlineData: { data: evidence.image, mimeType: 'image/jpeg' } }, { text: evidence.description }] }
+    : evidence.description;
+  
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents,
+    config: {
+      systemInstruction: "You are an EnvirosAgro Validator Node. Audit proof for L3 ledger finality.",
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          isValid: { type: Type.BOOLEAN },
+          justification_shard: { type: Type.STRING },
+          m_impact: { type: Type.NUMBER }
         }
-      });
-      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const activateLiveSequence = async (blueprintId: string, assets: any[]): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Activate live sequence for blueprint ${blueprintId} using assets: ${JSON.stringify(assets)}.`,
-        config: {
-          systemInstruction: `You are the EnvirosAgro System Architect.`,
-          tools: [{ functionDeclarations: [activateLiveSequenceTool] }]
-        }
-      });
-      return { 
-        text: response.text || "Handshake initiated.",
-        functionCalls: response.functionCalls
-      };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const forgeSwarmMission = async (objective: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Objective: "${objective}". Forge a valid AgroLang code shard for the robot swarm. Return JSON.`,
-        config: {
-          systemInstruction: `You are the EnvirosAgro Swarm Architect. Your goal is to translate agricultural mission objectives into valid AgroLang industrial logic. 
-          AgroLang Syntax:
-          - IMPORT EOS.Automation AS Bot;
-          - IMPORT EOS.Network AS Net;
-          - SEQUENCE [Title] { ... }
-          - Bot.swarm_deploy(units: [Int], mode: "[String]");
-          - Net.sync_node(id: "[String]", priority: "[String]");
-          - COMMIT_SHARD(registry: "[String]", finality: ZK_PROVEN);`,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              mission_title: { type: Type.STRING },
-              agrolang_code: { type: Type.STRING },
-              impact_summary: { type: Type.STRING },
-              required_units: { type: Type.INTEGER }
-            },
-            required: ["mission_title", "agrolang_code", "impact_summary", "required_units"]
-          }
-        }
-      });
-      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const analyzeDemandForecast = async (inventory: any[], currentCycle: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Analyze inventory for Demand Forecasting: ${JSON.stringify(inventory)}. Cycle: ${currentCycle}.`,
-        config: { systemInstruction: "You are the EnvirosAgro Demand Oracle." }
-      });
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const forecastMarketReadiness = async (product: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Forecast market readiness for asset: ${product.productType}.`,
-        config: { systemInstruction: "You are the EnvirosAgro Market Strategist." }
-      });
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const consultFinancialOracle = async (query: string, context: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Process financial query: "${query}".`,
-        config: { systemInstruction: "You are the EnvirosAgro Financial Oracle." }
-      });
-      return { text: response.text || "", functionCalls: response.functionCalls };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const runSpecialistDiagnostic = async (category: string, description: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Perform a Specialist Diagnostic Audit. Category: ${category}, Observation: ${description}`,
-      });
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const predictMarketSentiment = async (echoes: any[]): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Perform a Sentiment Audit based on mesh echoes.`,
-      });
-      return { text: response.text || "", sentiment_alpha: 0.82 };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const auditAgroLangCode = async (code: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Audit AgroLang: ${code}`,
-      });
-      return { text: response.text || "", is_compliant: true };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+      }
+    }
+  });
+  return { text: response.text || "", json: JSON.parse(response.text || "{}") };
 };
 
 export const chatWithAgroExpert = async (message: string, history: any[], useSearch: boolean = false): Promise<AIResponse> => {
@@ -341,349 +141,253 @@ export const chatWithAgroExpert = async (message: string, history: any[], useSea
   }
 };
 
-export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Decode: ${JSON.stringify(telemetry)}`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              helix_status: { type: Type.STRING },
-              backbone_integrity: { type: Type.NUMBER },
-              base_pairs: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    type: { type: Type.STRING },
-                    bond_strength: { type: Type.NUMBER },
-                    visual_cue: { type: Type.STRING },
-                    diagnosis: { type: Type.STRING }
-                  }
-                }
-              },
-              recommendation: { type: Type.STRING }
-           }
-          }
-        }
-      });
-      return JSON.parse(response.text || "{}");
-    });
-  } catch (err) {
-    throw err;
+export const generateAestheticAsset = async (prompt: string, hq: boolean = false, ratio: "1:1" | "16:9" | "9:16" | "4:3" | "3:4" = "1:1") => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: hq ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image',
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      imageConfig: {
+        aspectRatio: ratio,
+        imageSize: hq ? "2K" : undefined
+      }
+    }
+  });
+  
+  for (const part of response.candidates[0].content.parts) {
+    if (part.inlineData) {
+      return `data:image/png;base64,${part.inlineData.data}`;
+    }
   }
+  return null;
+};
+
+export const analyzeBidHandshake = async (investorReqs: string, farmerAssets: any[]): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Match Scores: ${investorReqs} vs ${JSON.stringify(farmerAssets)}`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          match_score: { type: Type.NUMBER },
+          reasoning: { type: Type.STRING },
+          gap_analysis: { type: Type.ARRAY, items: { type: Type.STRING } }
+        }
+      }
+    }
+  });
+  return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+};
+
+export const generateValueBlueprint = async (material: string, volume: number): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Blueprint for ${volume} tons of ${material}`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          blueprint_id: { type: Type.STRING },
+          status: { type: Type.STRING },
+          input_material: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, volume: { type: Type.NUMBER } } },
+          value_process_steps: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { step_order: { type: Type.INTEGER }, operation: { type: Type.STRING }, duration_hours: { type: Type.NUMBER } } } },
+          asset_requirements: { type: Type.ARRAY, items: { type: Type.STRING } },
+          projected_value_delta: { type: Type.NUMBER }
+        }
+      }
+    }
+  });
+  return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+};
+
+export const activateLiveSequence = async (blueprintId: string, assets: any[]): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Activate sequence for ${blueprintId}`,
+  });
+  return { text: response.text || "" };
+};
+
+export const forgeSwarmMission = async (objective: string): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Mission Forge: ${objective}`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          mission_title: { type: Type.STRING },
+          agrolang_code: { type: Type.STRING },
+          impact_summary: { type: Type.STRING },
+          required_units: { type: Type.INTEGER }
+        }
+      }
+    }
+  });
+  return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+};
+
+export const analyzeDemandForecast = async (inventory: any[], currentCycle: string): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Forecast for ${currentCycle}`,
+  });
+  return { text: response.text || "" };
+};
+
+export const runSpecialistDiagnostic = async (category: string, description: string): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Diagnostic for ${category}: ${description}`,
+  });
+  return { text: response.text || "" };
+};
+
+export const predictMarketSentiment = async (echoes: any[]): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Sentiment Analysis`,
+  });
+  return { text: response.text || "", sentiment_alpha: 0.82 };
+};
+
+export const auditAgroLangCode = async (code: string): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Audit AgroLang: ${code}`,
+  });
+  return { text: response.text || "", is_compliant: true };
+};
+
+export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Decode Genetics: ${JSON.stringify(telemetry)}`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          helix_status: { type: Type.STRING },
+          recommendation: { type: Type.STRING },
+          base_pairs: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { type: { type: Type.STRING }, bond_strength: { type: Type.NUMBER }, visual_cue: { type: Type.STRING }, diagnosis: { type: Type.STRING } } } }
+        }
+      }
+    }
+  });
+  return JSON.parse(response.text || "{}");
 };
 
 export const analyzeSustainability = async (farmData: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Run sustainability audit: ${JSON.stringify(farmData)}`,
-      });
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Sustainability Audit: ${JSON.stringify(farmData)}`,
+  });
+  return { text: response.text || "" };
 };
 
 export const analyzeMedia = async (base64: string, mime: string, prompt: string): Promise<string> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: { parts: [{ inlineData: { data: base64, mimeType: mime } }, { text: prompt }] }
-      });
-      return response.text || "";
-    });
-  } catch (err) {
-    return handleAIError(err).text;
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: { parts: [{ inlineData: { data: base64, mimeType: mime } }, { text: prompt }] }
+  });
+  return response.text || "";
 };
 
 export const settleRegistryBatch = async (transactions: any[]): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Settle batch: ${JSON.stringify(transactions)}`,
-      });
-      return { text: response.text || "Batch verified.", finality_hash: "0x882A_FINAL" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Settle Batch`,
+  });
+  return { text: response.text || "", finality_hash: "0x882A_FINAL" };
 };
 
 export const auditMeshStability = async (topologyData: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Audit mesh stability: ${JSON.stringify(topologyData)}`,
-      });
-      return { text: response.text || "Stability verified." };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Audit Mesh`,
+  });
+  return { text: response.text || "" };
 };
 
 export const probeValidatorNode = async (nodeData: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Perform high-fidelity probe on validator node: ${JSON.stringify(nodeData)}.`,
-      });
-      return { text: response.text || "Probe successful." };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Probe Node`,
+  });
+  return { text: response.text || "" };
 };
 
 export const searchAgroTrends = async (query: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: query,
-        config: { tools: [{ googleSearch: {} }] }
-      });
-      return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: query,
+    config: { tools: [{ googleSearch: {} }] }
+  });
+  return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
 };
 
 export const runSimulationAnalysis = async (simData: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Run simulation: ${JSON.stringify(simData)}`,
-      });
-      return { text: response.text || "Simulation finalized." };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Simulation Analysis`,
+  });
+  return { text: response.text || "" };
 };
 
 export const generateAgroExam = async (topic: string): Promise<any[]> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate exam for: ${topic}`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                question: { type: Type.STRING },
-                options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                correct: { type: Type.INTEGER }
-              }
-            }
-          }
-        }
-      });
-      return JSON.parse(response.text || "[]");
-    });
-  } catch (err) {
-    throw err;
-  }
-};
-
-export const getGroundedAgroResources = async (query: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: query,
-        config: { tools: [{ googleSearch: {} }] }
-      });
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const analyzeInstitutionalRisk = async (transactionData: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Risk audit: ${JSON.stringify(transactionData)}`,
-      });
-      return { text: response.text || "Risk assessment clear." };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const diagnoseCropIssue = async (description: string, base64Image?: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const contents = base64Image 
-        ? { parts: [{ inlineData: { data: base64Image, mimeType: 'image/jpeg' } }, { text: description }] }
-        : { text: description };
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents,
-      });
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const auditProductQuality = async (productId: string, logs: any[]): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Audit quality for ${productId}`,
-      });
-      return { text: response.text || "Quality audit passed." };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const generateAgroResearch = async (title: string, thrust: string, iotData: any, context: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Generate research: ${title}`,
-      });
-      return { text: response.text || "" };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Generate Exam: ${topic}`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: { type: Type.OBJECT, properties: { question: { type: Type.STRING }, options: { type: Type.ARRAY, items: { type: Type.STRING } }, correct: { type: Type.INTEGER } } }
+      }
+    }
+  });
+  return JSON.parse(response.text || "[]");
 };
 
 export const getWeatherForecast = async (location: string): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Weather for ${location}`,
-        config: { tools: [{ googleSearch: {} }] }
-      });
-      return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
-};
-
-export const generateValueEnhancementStrategy = async (material: string, weight: string, context: string): Promise<any> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Value strategy for ${weight} of ${material}`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              strategy_abstract: { type: Type.STRING },
-              stages: { type: Type.ARRAY, items: { type: Type.STRING } },
-              resilience_impact: { type: Type.NUMBER }
-            }
-          }
-        }
-      });
-      return JSON.parse(response.text || "{}");
-    });
-  } catch (err) {
-    throw err;
-  }
-};
-
-export const analyzeMRVEvidence = async (description: string, base64Image?: string): Promise<any> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const contents = base64Image 
-        ? { parts: [{ inlineData: { data: base64Image, mimeType: 'image/jpeg' } }, { text: description }] }
-        : { text: description };
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              verification_narrative: { type: Type.STRING },
-              confidence_alpha: { type: Type.NUMBER },
-              metrics: {
-                type: Type.OBJECT,
-                properties: {
-                  estimated_dbh_cm: { type: Type.NUMBER },
-                  biomass_tonnes: { type: Type.NUMBER },
-                  carbon_sequestration_potential: { type: Type.NUMBER }
-                }
-              }
-            }
-          }
-        }
-      });
-      return JSON.parse(response.text || "{}");
-    });
-  } catch (err) {
-    throw err;
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Weather for ${location}`,
+    config: { tools: [{ googleSearch: {} }] }
+  });
+  return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
 };
 
 export const analyzeMiningYield = async (miningData: any): Promise<AIResponse> => {
-  try {
-    return await callOracleWithRetry(async () => {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Analyze mining potential: ${JSON.stringify(miningData)}.`,
-      });
-      return { text: response.text || "Yield analysis finalized." };
-    });
-  } catch (err) {
-    return handleAIError(err);
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Analyze Mining`,
+  });
+  return { text: response.text || "" };
 };
 
 export const generateTemporalVideo = async (prompt: string) => {
@@ -691,17 +395,103 @@ export const generateTemporalVideo = async (prompt: string) => {
   return ai.models.generateVideos({
     model: 'veo-3.1-fast-generate-preview',
     prompt,
-    config: {
-      numberOfVideos: 1,
-      resolution: '720p',
-      aspectRatio: '16:9'
-    }
+    config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
   });
 };
 
 export const getTemporalVideoOperation = async (operation: any) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  return ai.operations.getVideosOperation({ operation });
+  return ai.operations.getVideosOperation({ operation: operation });
+};
+
+// Added missing getGroundedAgroResources export to fix Community.tsx error
+export const getGroundedAgroResources = async (query: string): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: query,
+    config: { tools: [{ googleSearch: {} }] }
+  });
+  return { text: response.text || "", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks as any };
+};
+
+// Added missing analyzeInstitutionalRisk export to fix AgroWallet.tsx error
+export const analyzeInstitutionalRisk = async (payload: { esin: string, type: string, amount: number }): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Analyze risk for node ${payload.esin}. Action: ${payload.type}, Amount: ${payload.amount} EAC.`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          risk_assessment: { type: Type.STRING },
+          is_cleared: { type: Type.BOOLEAN }
+        }
+      }
+    }
+  });
+  const text = response.text || "";
+  // Return matching format for component logic
+  try {
+    const result = JSON.parse(text);
+    return { text: result.is_cleared ? "assessment clear" : "risk too high", json: result };
+  } catch (e) {
+    return { text: "risk assessment failed" };
+  }
+};
+
+// Added missing diagnoseCropIssue export to fix EvidenceModal.tsx error
+export const diagnoseCropIssue = async (description: string): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: description,
+  });
+  return { text: response.text || "" };
+};
+
+// Added missing analyzeMRVEvidence export to fix DigitalMRV.tsx error
+export const analyzeMRVEvidence = async (description: string, imageBase64?: string): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const parts: any[] = [{ text: description }];
+  if (imageBase64) {
+    parts.unshift({ inlineData: { data: imageBase64, mimeType: 'image/jpeg' } });
+  }
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: { parts },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          confidence_alpha: { type: Type.NUMBER },
+          verification_narrative: { type: Type.STRING },
+          metrics: {
+            type: Type.OBJECT,
+            properties: {
+              estimated_dbh_cm: { type: Type.NUMBER },
+              biomass_tonnes: { type: Type.NUMBER },
+              carbon_sequestration_potential: { type: Type.NUMBER }
+            }
+          }
+        }
+      }
+    }
+  });
+  return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+};
+
+// Added missing generateAgroResearch export to fix ResearchInnovation.tsx error
+export const generateAgroResearch = async (title: string, thrust: string, iot: any, context: string): Promise<AIResponse> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Forge research paper: "${title}". Thrust: ${thrust}. IoT Data: ${JSON.stringify(iot)}. Context: ${context}.`,
+  });
+  return { text: response.text || "" };
 };
 
 export function encode(bytes: Uint8Array) {

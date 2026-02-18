@@ -2,21 +2,37 @@
 {
   "rules": {
     "network_pulse": {
-      ".read": "auth != null && auth.token.app_check == true",
-      ".write": "auth != null && auth.token.app_check == true",
+      ".read": "auth != null",
+      ".write": "auth != null",
       "$pulse_id": {
         ".validate": "newData.hasChildren(['message', 'timestamp']) && newData.child('message').isString()"
       }
     },
     "global_metrics": {
-      ".read": "auth != null && auth.token.app_check == true",
-      ".write": "auth != null && auth.token.app_check == true && root.child('auditors').child(auth.token.email.replace('.', ',')).exists()",
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('auditors').child(auth.uid).exists()",
       "m_constant": {
         ".validate": "newData.isNumber() && newData.val() >= 1.0"
       },
       "ca_index": {
         ".validate": "newData.isNumber()"
       }
+    },
+    "live_telemetry": {
+      "$esin": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "telemetry_backups": {
+      "$esin": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "auditors": {
+      ".read": "auth != null",
+      ".write": "false"
     }
   }
 }

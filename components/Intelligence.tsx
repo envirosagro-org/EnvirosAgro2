@@ -22,10 +22,11 @@ import {
   Waves as WaveIcon,
   HardDrive
 } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, Radar as RechartsRadar } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { chatWithAgroExpert, analyzeSustainability, AIResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/geminiService';
 import { User, AgroResource, ViewState, MediaShard } from '../types';
 import { backupTelemetryShard, fetchTelemetryBackup, saveCollectionItem } from '../services/firebaseService';
+import { calculateAgroCode, calculateMConstant, calculateSustainabilityScore } from '../systemFunctions';
 import { SycamoreLogo } from '../App';
 
 interface IntelligenceProps {
@@ -120,7 +121,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   });
   const [masterVerdict, setMasterVerdict] = useState<string | null>(null);
 
-  // Added missing downloadReport helper function
   /**
    * Helper to download a technical report as a text file.
    */
@@ -135,7 +135,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     URL.revokeObjectURL(url);
   };
 
-  // Fixed missing isArchived variable error by defining isMasterArchived memo
   /**
    * Tracks if the master verdict has been anchored to the ledger.
    */
@@ -242,22 +241,20 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   const [isRunningSimulation, setIsRunningSimulation] = useState(false);
   const [simulationReport, setSimulationReport] = useState<string | null>(null);
 
-  const calculateCa = (n: number) => r_resonance === 1 ? x_immunity * n + 1 : x_immunity * ((Math.pow(r_resonance, n) - 1) / (r_resonance - 1)) + 1;
-  const calculateM = (ca: number) => Math.sqrt((dn_density * in_intensity * ca) / Math.max(s_stress, 0.01));
-
   const simProjectionData = useMemo(() => {
     const data = [];
     for (let i = 0; i <= n_cycles; i++) {
-      const ca = calculateCa(i);
-      const m = calculateM(ca);
-      data.push({ cycle: i, ca: Number(ca.toFixed(2)), m: Number(m.toFixed(2)), score: Math.min(100, (m * 10)) });
+      const ca = calculateAgroCode(x_immunity, r_resonance, i);
+      const m = calculateMConstant(dn_density, in_intensity, ca, s_stress);
+      const score = calculateSustainabilityScore(m);
+      data.push({ cycle: i, ca: Number(ca.toFixed(2)), m: Number(m.toFixed(2)), score });
     }
     return data;
   }, [x_immunity, r_resonance, n_cycles, dn_density, in_intensity, s_stress]);
 
   const handleRunFullSimulation = async () => {
     if (!await onSpendEAC(50, 'FULL_SUSTAINABILITY_SIMULATION_INGEST')) return;
-    isRunningSimulation && setIsRunningSimulation(true);
+    setIsRunningSimulation(true);
     setSimulationReport(null);
     try {
       const simData = {
@@ -529,7 +526,6 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                         {isBatchAuditing ? (
                            <div className="space-y-12 py-10">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                 {/* Explicitly cast Object.entries results to fixed TypeScript unknown inferred type error */}
                                  {(Object.entries(batchProgress) as [string, number][]).map(([shard, progress], i) => (
                                     <div key={shard} className="space-y-4 animate-in slide-in-from-bottom-4" style={{ animationDelay: `${i * 100}ms` }}>
                                        <div className="flex justify-between items-center px-4">
@@ -565,17 +561,14 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                                        </div>
                                     </div>
                                     <div className="flex gap-4">
-                                       {/* Correctly invoke downloadReport added to component scope */}
                                        <button onClick={() => downloadReport(masterVerdict || "", "Master_Quorum", "Intelligence")} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
                                           <Download size={20} /> Download Shard
                                        </button>
                                        <button 
                                           onClick={() => anchorToLedger(masterVerdict || "", "Master_Quorum", "Intelligence")}
-                                          /* Fixed missing isArchived variable error by using isMasterArchived memo */
                                           disabled={isMasterArchived}
                                           className={`px-16 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${isMasterArchived ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
                                        >
-                                          {/* Fixed missing isArchived variable error by using isMasterArchived memo */}
                                           {isMasterArchived ? <CheckCircle2 size={24} /> : <Stamp size={24} />}
                                           {isMasterArchived ? 'PERMANENTLY ANCHORED' : 'ANCHOR TO GLOBAL LEDGER'}
                                        </button>
@@ -730,7 +723,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                     <button 
                       onClick={handleTwinRefresh}
                       disabled={isTwinSyncing}
-                      className="px-10 py-5 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-2 border-white/10"
+                      className="px-10 py-5 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-2 border-white/10 ring-8 ring-white/5"
                     >
                        {isTwinSyncing ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
                        CALIBRATE TWIN

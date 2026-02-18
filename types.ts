@@ -407,7 +407,8 @@ export type ViewState =
   | 'agro_regency' | 'code_of_laws' | 'agro_calendar' | 'chroma_system'
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv' | 'registry_handshake'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger' | 'agrolang'
-  | 'network' | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot';
+  | 'network' | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot'
+  | 'cost_accounting';
 
 export interface VectorAddress {
   dimension: ViewState;
@@ -492,4 +493,15 @@ export interface StewardConnection {
   toEsin: string;
   status: 'PENDING' | 'MUTUAL' | 'BLOCKED';
   timestamp: string;
+}
+
+export interface ShardCostCalibration {
+  shardId: string;
+  baseCost: number;
+  calibratedCost: number;
+  mConstant: number;
+  caFactor: number;
+  sehtiBonus: number;
+  stressPenalty: number;
+  finalYield: number;
 }
