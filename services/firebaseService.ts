@@ -52,8 +52,7 @@ const firebaseConfig = {
   projectId: "envirosagro2git-41536716-7747d",
   storageBucket: "envirosagro2git-41536716-7747d.firebasestorage.app",
   messagingSenderId: "218810534057",
-  appId: "1:218810534057:web:2d32abbb459755499fc1b8",
-  measurementId: "G-HRKN24CJQJ"
+  appId: "1:218810534057:web:2d32abbb459755499fc1b8"
 };
 
 // 1. Initialize Firebase App Core

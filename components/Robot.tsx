@@ -304,6 +304,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
                     {fleet.map((bot, i) => (
                        <div 
                          key={bot.id} 
+                         /* Corrected setSelectedNodeId to setSelectedBotId */
                          onClick={() => setSelectedBotId(bot.id)}
                          className={`absolute w-8 h-8 -ml-4 -mt-4 cursor-pointer transition-all duration-1000 ${selectedBotId === bot.id ? 'scale-150 z-50' : 'hover:scale-125 z-40'}`}
                          style={{ left: `${bot.pos.x}%`, top: `${bot.pos.y}%` }}
@@ -574,9 +575,10 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
