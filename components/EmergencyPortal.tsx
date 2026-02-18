@@ -41,6 +41,7 @@ import {
   FileText,
   Stamp,
   ArrowRight,
+  // Added BadgeCheck to fix the "Cannot find name 'BadgeCheck'" error on line 396
   BadgeCheck
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
@@ -106,7 +107,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
         message: sosDesc,
         priority: 'critical',
         actionIcon: 'Siren',
-        meta: { target: 'emergency_portal', payload: { context: 'EMERGENCY' } }
+        meta: { target: 'emergency_portal', ledgerContext: 'EMERGENCY' }
       });
     }, 2500);
   };
@@ -121,7 +122,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
       message: `Anomaly detected at ${hazard.node}. Verification pending. Level: ${hazard.risk}.`,
       priority: hazard.risk === 'Critical' ? 'critical' : 'high',
       actionIcon: 'AlertTriangle',
-      meta: { target: 'emergency_portal', payload: { context: 'EMERGENCY' } }
+      meta: { target: 'emergency_portal', ledgerContext: 'EMERGENCY' }
     });
     
     setBroadcastedIds(prev => new Set(prev).add(hazard.id));
@@ -133,8 +134,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
     setRemediationAdvice(null);
 
     const fee = 50;
-    const canAfford = await onSpendEAC(fee, `CRISIS_REMEDIATION_AUDIT_${threatSubject.toUpperCase()}`);
-    if (!canAfford) {
+    if (!await onSpendEAC(fee, `CRISIS_REMEDIATION_AUDIT_${threatSubject.toUpperCase()}`)) {
       setIsAnalyzing(false);
       return;
     }
@@ -142,7 +142,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
     try {
       const prompt = `Act as an EnvirosAgro Crisis Response Specialist. Analyze this immediate threat: "${threatSubject}". 
       Assess the impact on regional m-constant stability and C(a) constant. 
-      Provide a technical 4-stage remediation shard including containment, neutralisation, and registry reporting.`;
+      Provide a technical 4st-stage remediation shard including containment, neutralisation, and registry reporting.`;
       const response = await chatWithAgroExpert(prompt, []);
       setRemediationAdvice(response.text);
     } catch (e) {
@@ -166,7 +166,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                <span className="px-4 py-1.5 bg-rose-500/10 text-rose-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-rose-500/20 shadow-inner">EMERGENCY_NODE_v5.0</span>
                <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic mt-4 m-0 leading-none drop-shadow-2xl">Crisis <span className="text-rose-500">Command</span></h2>
             </div>
-            <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl">
+            <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl italic leading-relaxed">
                "Securing the registry against catastrophic agricultural anomalies. Broadcast SOS signals and synthesize remediation shards in real-time."
             </p>
          </div>
@@ -235,7 +235,6 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                             <PolarGrid stroke="rgba(255,255,255,0.05)" />
                             <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={10} fontStyle="italic" />
                             <Radar name="Threat" dataKey="A" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.4} />
-                            <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
                          </RadarChart>
                       </ResponsiveContainer>
                    </div>
@@ -335,7 +334,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                         <h3 className="text-8xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">SOS <span className="text-rose-500">Transmitted.</span></h3>
                         <p className="text-rose-500 text-sm font-black uppercase tracking-[1em] font-mono mt-6">EMERGENCY_HASH_0x{(Math.random()*1000).toFixed(0)}_FINAL</p>
                      </div>
-                     <button onClick={() => { setSosStep('form'); setSosDesc(''); setEsinSign(''); }} className="px-24 py-8 bg-white/5 border border-white/10 rounded-full text-white font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command</button>
+                     <button onClick={() => { setSosStep('form'); setSosDesc(''); setEsinSign(''); }} className="px-24 py-8 bg-white/5 border border-white/10 rounded-full text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Command</button>
                   </div>
                 )}
              </div>
@@ -354,102 +353,106 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                    <div className="space-y-4">
                       <h3 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter m-0 leading-none italic">REMEDIATION <span className="text-indigo-400">ORACLE</span></h3>
                       <p className="text-slate-400 text-2xl font-medium italic max-w-2xl mx-auto opacity-80 leading-relaxed">
-                         "Synthesizing high-frequency remediation shards for critical regional anomalies."
+                         "Synthesizing high-fidelity remediation shards for catastrophic node anomalies."
                       </p>
                    </div>
 
-                   <div className="max-w-2xl mx-auto space-y-8">
-                      <div className="relative group">
-                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-700 group-focus-within:text-indigo-400 transition-colors w-6 h-6" />
-                         <input 
-                            type="text" 
-                            value={threatSubject}
-                            onChange={e => setThreatSubject(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && runEmergencyDiagnostic()}
-                            placeholder="Describe immediate threat context..."
-                            className="w-full bg-black/80 border-2 border-white/10 rounded-full py-6 pl-16 pr-8 text-xl text-white font-medium italic focus:ring-8 focus:ring-indigo-500/5 transition-all outline-none shadow-inner placeholder:text-stone-900"
-                         />
-                      </div>
-                      <button 
-                         onClick={runEmergencyDiagnostic}
-                         disabled={isAnalyzing || !threatSubject.trim()}
-                         className="w-full py-6 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-indigo-500/5 disabled:opacity-20"
-                      >
-                         {isAnalyzing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Binary size={24} />}
-                         {isAnalyzing ? 'DECODING...' : 'INITIALIZE AUDIT'}
-                      </button>
-                   </div>
-
-                   {remediationAdvice && !isAnalyzing && (
-                      <div className="animate-in slide-in-from-bottom-6 duration-1000 space-y-10 text-left max-w-4xl mx-auto pt-10">
-                         <div className="p-8 md:p-12 bg-black/90 rounded-[48px] border border-indigo-500/20 shadow-3xl border-l-[12px] border-l-indigo-600 relative overflow-hidden group/advice">
-                            <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={400} className="text-indigo-400" /></div>
-                            <div className="flex justify-between items-center mb-8 relative z-10 border-b border-white/5 pb-6">
-                               <div className="flex items-center gap-6">
-                                  <Stamp size={32} className="text-indigo-400" />
-                                  <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tighter">Remediation Shard</h4>
-                               </div>
-                               <span className="text-[9px] font-mono font-black text-indigo-400 uppercase tracking-widest italic">VERDICT_ZK_SYNC_OK</span>
-                            </div>
-                            <div className="prose prose-invert max-w-none text-slate-300 text-lg md:text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/5">
-                               {remediationAdvice}
-                            </div>
-                            <div className="mt-10 pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-6 relative z-10">
-                               <div className="flex items-center gap-4">
-                                  <Fingerprint size={36} className="text-indigo-400" />
-                                  <div className="text-left">
-                                     <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-1">Finality Hash</p>
-                                     <p className="text-xs font-mono text-white tracking-widest">0xREMED_#{(Math.random()*1000).toFixed(0)}</p>
-                                  </div>
-                                </div>
-                                <button onClick={() => setRemediationAdvice(null)} className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all ring-4 ring-white/5 border border-white/10">ANCHOR TO REGISTRY</button>
-                             </div>
-                          </div>
-                       </div>
-                    )}
-                 </div>
-              </div>
-           </div>
+                   {!remediationAdvice && !isAnalyzing ? (
+                     <div className="space-y-10 py-10 max-w-xl mx-auto">
+                        <div className="p-8 bg-black/60 rounded-[48px] border border-white/10 shadow-inner group/form">
+                           <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] block text-center italic mb-6">THREAT_NARRATIVE_INGEST</label>
+                           <textarea 
+                             value={threatSubject} onChange={e => setThreatSubject(e.target.value)}
+                             placeholder="Input biological or technical threat data..." 
+                             className="w-full bg-transparent border-none text-center text-xl italic font-medium text-white outline-none focus:ring-0 placeholder:text-stone-950 transition-all h-32 resize-none" 
+                           />
+                        </div>
+                        <button 
+                          onClick={runEmergencyDiagnostic}
+                          disabled={!threatSubject.trim()}
+                          className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[20px] ring-white/5 disabled:opacity-20"
+                        >
+                           <Zap size={32} className="fill-current mr-4" /> BEGIN DIAGNOSTIC
+                        </button>
+                     </div>
+                   ) : isAnalyzing ? (
+                     <div className="flex flex-col items-center justify-center space-y-16 py-20 text-center animate-in zoom-in duration-500">
+                        <div className="relative">
+                           <Loader2 size={120} className="text-indigo-500 animate-spin mx-auto" />
+                           <div className="absolute inset-0 flex items-center justify-center">
+                              <Fingerprint size={48} className="text-indigo-400 animate-pulse" />
+                           </div>
+                        </div>
+                        <div className="space-y-4">
+                           <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">AUDITING_THREAT_VECTORS...</p>
+                           <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">INGESTING_EMERGENCY_PARAMETERS // SEQUENCING_REMEDIATION</p>
+                        </div>
+                     </div>
+                   ) : (
+                     <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12">
+                        <div className="p-12 md:p-20 bg-black/80 rounded-[80px] border-2 border-indigo-500/20 shadow-3xl border-l-[24px] border-l-indigo-600 text-left relative overflow-hidden group/advice">
+                           <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={800} className="text-indigo-400" /></div>
+                           <div className="flex justify-between items-center mb-16 relative z-10 border-b border-white/5 pb-10">
+                              <div className="flex items-center gap-8">
+                                 <BadgeCheck size={48} className="text-indigo-400" />
+                                 <h4 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Remediation Verdict</h4>
+                              </div>
+                              <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
+                                 <span className="text-[11px] font-mono font-black text-indigo-400 uppercase tracking-widest italic">EMERGENCY_0xSYNC_OK</span>
+                              </div>
+                           </div>
+                           <div className="prose prose-invert max-w-none text-slate-300 text-2xl leading-[2.1] italic whitespace-pre-line font-medium relative z-10 pl-10 border-l-2 border-white/10">
+                              {remediationAdvice}
+                           </div>
+                           <div className="mt-16 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
+                              <div className="flex items-center gap-8">
+                                 <Fingerprint size={48} className="text-indigo-400" />
+                                 <div className="text-left">
+                                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Remediation Shard ID</p>
+                                    <p className="text-xl font-mono text-white">0xHS_EM_FIX_#{(Math.random()*1000).toFixed(0)}</p>
+                                 </div>
+                              </div>
+                              <button onClick={() => setRemediationAdvice(null)} className="px-16 py-8 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all ring-8 ring-white/5 border-2 border-white/10">ANCHOR TO LEDGER</button>
+                           </div>
+                        </div>
+                     </div>
+                   )}
+                </div>
+             </div>
+          </div>
         )}
 
         {activeTab === 'safety' && (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in slide-in-from-right-4 duration-700">
-              {SAFETY_SHARDS.map((shard, i) => (
-                <div key={i} className="glass-card p-10 rounded-[56px] border-2 border-white/5 hover:border-rose-500/30 transition-all group flex flex-col justify-between h-[450px] shadow-3xl bg-black/40 relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform duration-[12s]"><Database size={300} /></div>
-                   <div className="flex justify-between items-start relative z-10">
-                      <div className={`p-4 md:p-6 rounded-3xl bg-white/5 border border-white/10 ${shard.col} shadow-inner group-hover:rotate-6 transition-all`}>
-                         <shard.icon size={32} />
-                      </div>
-                      <div className="text-right flex flex-col items-end gap-2">
-                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-lg bg-black/60 border-white/10 text-slate-500`}>
-                          {shard.cat}
-                        </span>
-                      </div>
-                   </div>
-                   <div className="space-y-4 relative z-10 mt-6 flex-1">
-                      <h4 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-rose-400 transition-colors drop-shadow-2xl">{shard.title}</h4>
-                      <p className="text-slate-400 text-sm italic leading-relaxed font-medium">"Authorized safety protocol shard for the regional cluster."</p>
-                   </div>
-                   <div className="pt-8 border-t border-white/5 relative z-10 flex justify-between items-center mt-6">
-                      <button className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:text-white transition-colors">
-                        <Download size={16} /> DOWNLOAD_PROTOCOL
-                      </button>
-                      <button className="p-4 bg-white/5 rounded-2xl text-slate-800 hover:text-rose-500 transition-all">
-                        <Activity size={20} />
-                      </button>
-                   </div>
-                </div>
-              ))}
+           <div className="space-y-12 animate-in zoom-in duration-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                 {SAFETY_SHARDS.map((shard, i) => (
+                    <div key={i} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all group flex flex-col justify-between h-[450px] shadow-3xl relative overflow-hidden active:scale-[0.99]">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={300} /></div>
+                       <div className="flex justify-between items-start mb-10 relative z-10">
+                          <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${shard.col} shadow-2xl group-hover:rotate-6 transition-all`}>
+                             <shard.icon size={40} />
+                          </div>
+                          <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase text-slate-500 tracking-widest italic">{shard.cat}</span>
+                       </div>
+                       <div className="space-y-4 relative z-10">
+                          <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{shard.title}</h4>
+                          <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">VERSION_v6.5</p>
+                       </div>
+                       <div className="pt-10 border-t border-white/5 relative z-10 mt-auto">
+                          <button className="w-full py-5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all shadow-xl">DOWNLOAD_PROTOCOL</button>
+                       </div>
+                    </div>
+                 ))}
+              </div>
            </div>
         )}
       </div>
 
       <style>{`
-        .shadow-3xl { box-shadow: 0 40px 150px -20px rgba(0, 0, 0, 0.9); }
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.9); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(225, 29, 72, 0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(244, 63, 94, 0.2); border-radius: 10px; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -460,4 +463,5 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
   );
 };
 
+/* Fix: Adding default export for EmergencyPortal */
 export default EmergencyPortal;

@@ -9,16 +9,11 @@ service cloud.firestore {
     }
     
     function isOwner(stewardId) { 
-      return isSignedIn() && (
-        request.auth.uid == stewardId
-      ); 
+      return isSignedIn() && request.auth.uid == stewardId; 
     }
 
     function isAuditor() { 
-      // Allows checking if the user's UID or Email is registered as an auditor
-      // Uses a safer exists check
-      return exists(/databases/$(database)/documents/auditors/$(request.auth.uid)) ||
-             (request.auth.token.email != null && exists(/databases/$(database)/documents/auditors/$(request.auth.token.email)));
+      return exists(/databases/$(database)/documents/auditors/$(request.auth.uid));
     }
 
     // --- COLLECTION PROTOCOLS ---
@@ -26,9 +21,7 @@ service cloud.firestore {
     // 1. Stewards: Personal node dossier
     match /stewards/{stewardId} {
       allow read: if isSignedIn();
-      // Explicitly allow both create and update for the user's own profile
-      allow create: if isSignedIn() && request.auth.uid == stewardId;
-      allow update: if isSignedIn() && request.auth.uid == stewardId;
+      allow create, update: if isOwner(stewardId);
       allow delete: if false;
     }
 
@@ -143,6 +136,12 @@ service cloud.firestore {
     match /patents/{patentId} {
       allow read: if true;
       allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+    }
+
+    match /blocks/{blockId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     // 12. Auditors: Internal HQ Authority

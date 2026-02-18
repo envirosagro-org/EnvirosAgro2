@@ -116,9 +116,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     setLoading(true);
     setMessage(null);
     try {
-      // Re-init recaptcha just in case it helps with cross-origin handshake
-      getOrInitRecaptcha();
-      
       const result = await signInWithGoogle();
       const profile = await getStewardProfile(result.user.uid);
       
@@ -133,13 +130,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
         onLogin(newProfile);
       }
     } catch (error: any) {
-      let errorMsg = error.message;
-      if (error.code === 'auth/popup-blocked') {
-        errorMsg = "AUTH_BLOCKED: Browser blocked the selection window. Please allow popups for this registry node.";
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        errorMsg = "AUTH_CANCELLED: Handshake aborted by steward.";
-      }
-      setMessage({ type: 'error', text: `GOOGLE_SYNC_ERROR: ${errorMsg}` });
+      setMessage({ type: 'error', text: `GOOGLE_SYNC_ERROR: ${error.message}` });
     } finally {
       setLoading(false);
     }

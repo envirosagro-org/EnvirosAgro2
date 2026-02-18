@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
@@ -22,10 +21,7 @@ import {
   Video,
   Clock,
   SearchCode,
-  LayoutGrid,
-  // Added Construction and Package icons to fix undefined errors
-  Construction,
-  Package
+  LayoutGrid
 } from 'lucide-react';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress } from './types';
 import Dashboard from './components/Dashboard';
@@ -83,7 +79,6 @@ import VerificationHUD from './components/VerificationHUD';
 import SettingsPortal from './components/SettingsPortal';
 import TemporalVideo from './components/TemporalVideo';
 import Robot from './components/Robot';
-import NetworkGenesis from './components/NetworkGenesis';
 
 import { 
   syncUserToCloud, 
@@ -109,27 +104,182 @@ export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ 
   </svg>
 );
 
-// Added GUEST_STWD constant to fix undefined error on line 250
-const GUEST_STWD: User = {
-  name: 'Guest Steward',
-  email: '',
-  esin: 'EA-GUEST-0000',
-  mnemonic: '',
-  regDate: '',
-  role: 'Observer',
-  location: 'Global Hub',
-  wallet: { balance: 0, eatBalance: 0, exchangeRate: 1, bonusBalance: 0, tier: 'Seed', lifetimeEarned: 0, linkedProviders: [] },
-  metrics: { agriculturalCodeU: 0, timeConstantTau: 0, sustainabilityScore: 0, socialImmunity: 0, viralLoadSID: 0, baselineM: 0 },
-  skills: {},
-  isReadyForHire: false
+const BOOT_LOGS = [
+  "INITIALIZING SYCAMORE_OS_v6.5...",
+  "MAPPING_GEOFENCE_SHARDS [OK]",
+  "CALIBRATING_M_CONSTANT_BASE [1.42]",
+  "SYNCING_L3_INDUSTRIAL_LEDGER...",
+  "ZK_PROOF_ENGINE_BOOT [SUCCESS]",
+  "ESTABLISHING_ORACLE_HANDSHAKE...",
+  "SEHTI_THRUST_ALIGNED",
+  "NODE_SYNC_FINALIZED"
+];
+
+const GLOBAL_STEWARD_REGISTRY = [
+  { esin: 'EA-ALPH-8821', name: 'Steward Alpha', role: 'Soil Expert', location: 'Nairobi, Kenya', res: 98, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150', online: true, skills: ['Bantu Soil Sharding', 'Drought Mitigation'] },
+  { esin: 'EA-GAIA-1104', name: 'Gaia Green', role: 'Genetics Analyst', location: 'Omaha, USA', res: 92, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150', online: false, skills: ['DNA Sequencing', 'Aura Ingest'] },
+  { esin: 'EA-ROBO-9214', name: 'Dr. Orion Bot', role: 'Automation Engineer', location: 'Tokyo Hub', res: 95, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150', online: true, skills: ['Agroboto Control', 'Mesh Stability'] },
+  { esin: 'EA-LILY-0042', name: 'Aesthetic Rose', role: 'Botanical Architect', location: 'Valencia Shard', res: 99, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150', online: true, skills: ['Lilies Design', 'Chroma Calibration'] },
+];
+
+const SEARCHABLE_MEDIA_LEDGER = [
+  { id: 'MED-COF-01', title: 'Coffee Soil Micronutrient Sharding', type: 'PAPER', source: 'AgroInPDF', desc: 'Technical PDF on high-altitude coffee soil remediation.', icon: FileDigit },
+  { id: 'MED-COF-02', title: 'Bantu Coffee Lineage Heritage', type: 'VIDEO', source: 'Cinema Shard', desc: 'Ingest log of ancestral coffee preservation.', icon: Clapperboard },
+  { id: 'MED-WAV-03', title: 'Sonic Soil Repair (432Hz)', type: 'AUDIO', source: 'Acoustic Registry', desc: 'Bio-electric frequency for cellular repair.', icon: Music },
+  { id: 'MED-RES-04', title: 'Carbon Sequestration Metrics v6', type: 'PAPER', source: 'Research Hub', desc: 'Whitepaper on EOS carbon minting logic.', icon: FileText },
+];
+
+const GLOBAL_PROJECTS_MISSIONS = [
+  { id: 'MIS-882', name: 'Nairobi Ingest Hub Expansion', budget: '1.2M EAC', thrust: 'Industry', desc: 'Expansion of regional logistics nodes.' },
+  { id: 'MIS-104', name: 'Carbon Vault Audit mission', budget: '450K EAC', thrust: 'Environmental', desc: 'Verified physical audit of bio-char plots.' },
+];
+
+const ITEM_CATEGORY_EXPERIENCES = [
+  { id: 'EXP-SAF-01', title: 'Spectral Birding Safari', cost: '150 EAC', node: 'Node_Nairobi_04', desc: 'Multi-spectral binocular tour of wetlands.' },
+  { id: 'EXP-WAL-02', title: 'Bantu Botanical Walk', cost: '50 EAC', node: 'Node_Paris_82', desc: 'Lineage forest walk with heritage stewards.' },
+];
+
+const LOGISTICS_SHARDS = [
+  { id: 'LOG-RAI-01', name: 'Eco-Rail Electric Shard', speed: '48h', cost: '120 EAC', status: 'Active' },
+  { id: 'LOG-DRO-02', name: 'Solar Drone Relay', speed: '6h', cost: '450 EAC', status: 'Active' },
+];
+
+const LMS_EXAMS_MODULES = [
+  { id: 'EXM-882', title: 'EOS Framework Master Exam', reward: '500 EAC', category: 'Vetting', icon: BadgeCheck },
+  { id: 'MOD-104', title: 'm-Constant Resilience Theory', reward: '150 EAC', category: 'Technical', icon: GraduationCap },
+];
+
+const RECOMMENDED_SEARCHES = [
+  { label: 'Market Cloud', icon: Globe, query: 'economy' },
+  { label: 'Carbon Credits', icon: Wind, query: 'carbon' },
+  { label: 'Steward Alpha', icon: UserIcon, query: 'Steward Alpha' },
+  { label: 'Soil Analysis', icon: Microscope, query: 'soil' },
+  { label: 'Agro OS Kernel', icon: Binary, query: 'farm_os' },
+  { label: 'Bantu Seeds', icon: Sprout, query: 'bantu' },
+  { label: 'Registry Map', icon: MapIcon, query: 'sitemap' },
+];
+
+const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [currentLog, setCurrentLog] = useState(0);
+
+  useEffect(() => {
+    const logInterval = setInterval(() => {
+      setCurrentLog(prev => (prev < BOOT_LOGS.length - 1 ? prev + 1 : prev));
+    }, 4000);
+
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(progressInterval);
+          setTimeout(onComplete, 500);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, 30);
+
+    return () => {
+      clearInterval(logInterval);
+      clearInterval(progressInterval);
+    };
+  }, [onComplete]);
+
+  return (
+    <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center space-y-12 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none z-10 opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
+      
+      <div className="relative group">
+        <div className="w-48 h-48 rounded-[48px] bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center shadow-[0_0_80px_rgba(16,185,129,0.2)] animate-pulse relative z-20">
+          <SycamoreLogo size={100} className="text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.8)]" />
+        </div>
+        <div className="absolute inset-[-20px] border-2 border-dashed border-emerald-500/20 rounded-[64px] animate-spin-slow"></div>
+      </div>
+
+      <div className="w-full max-md space-y-6 relative z-20 px-6">
+        <div className="h-1 bg-white/5 rounded-full overflow-hidden p-px">
+          <div 
+            className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+           <p className="text-[10px] font-mono font-black text-emerald-400/80 uppercase tracking-[0.3em] animate-pulse">
+              {BOOT_LOGS[currentLog]}
+           </p>
+           <p className="text-[8px] font-mono text-slate-700 font-bold uppercase tracking-widest">
+              SECURE_BOOT // KERNEL_SYNC: {progress}%
+           </p>
+        </div>
+      </div>
+
+      <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-30">
+        <h1 className="text-xl font-black text-white italic tracking-tighter">Enviros<span className="text-emerald-400">Agro</span></h1>
+        <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest text-center">Planetary Regeneration Grid</p>
+      </div>
+    </div>
+  );
 };
 
+const GUEST_STWD: User = {
+  name: 'GUEST STEWARD',
+  email: 'guest@envirosagro.org',
+  esin: 'EA-GUEST-VOID-NODE',
+  mnemonic: 'none',
+  regDate: new Date().toLocaleDateString(),
+  role: 'OBSERVER',
+  location: 'GLOBAL MESH NODE',
+  wallet: {
+    balance: 0,
+    eatBalance: 0,
+    exchangeRate: 1.0,
+    bonusBalance: 0,
+    tier: 'Seed',
+    lifetimeEarned: 0,
+    linkedProviders: [],
+    miningStreak: 0,
+    lastSyncDate: new Date().toISOString().split('T')[0],
+    pendingSocialHarvest: 0,
+    stakedEat: 0
+  },
+  metrics: {
+    agriculturalCodeU: 0,
+    timeConstantTau: 0,
+    sustainabilityScore: 0,
+    socialImmunity: 0,
+    viralLoadSID: 0,
+    baselineM: 0
+  },
+  skills: {},
+  isReadyForHire: false,
+  completedActions: [],
+  settings: {
+    notificationsEnabled: true,
+    privacyMode: 'Public',
+    autoSync: true,
+    biometricLogin: false,
+    theme: 'Dark'
+  }
+};
+
+export interface RegistryItem {
+  id: string;
+  name: string;
+  icon: any;
+  sections?: { id: string; label: string; desc?: string }[];
+}
+
+export interface RegistryGroup {
+  category: string;
+  items: RegistryItem[];
+}
+
+// SYNCHRONIZED REGISTRY NODES with SchemaMap.xml
 const REGISTRY_NODES: RegistryGroup[] = [
   { 
     category: 'Command & Strategy', 
     items: [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
-      { id: 'network_genesis', name: 'Network Genesis', icon: Construction },
       { id: 'ai_analyst', name: 'Neural Analyst', icon: Brain },
       { id: 'settings', name: 'System Settings', icon: Settings, sections: [{id: 'display', label: 'UI Display'}, {id: 'privacy', label: 'Security Shards'}] },
       { id: 'profile', name: 'Steward Profile', icon: UserIcon, sections: [{id: 'dossier', label: 'Personal Registry'}, {id: 'card', label: 'Identity Shard'}, {id: 'celestial', label: 'Birth Resonance'}] },
@@ -137,8 +287,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'network', name: 'Network Topology', icon: NetworkIcon },
       { id: 'farm_os', name: 'Farm OS', icon: Binary, sections: [{id: 'kernel', label: 'Kernel Stack'}, {id: 'hardware', label: 'Hardware Monitor'}, {id: 'shell', label: 'System Shell'}] },
       { id: 'impact', name: 'Network Impact', icon: TrendingUp, sections: [{id: 'whole', label: 'Vitality'}, {id: 'carbon', label: 'Carbon Ledger'}, {id: 'thrusts', label: 'Resonance'}] },
-      { id: 'sustainability', name: 'Sustainability Shard', icon: Leaf },
-      { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'temporal_video', label: 'Temporal Predictor'}, {id: 'telemetry', label: 'IoT Ingest'}, {id: 'trends', label: 'Trend Ingest'}, {id: 'eos_ai', label: 'Expert Oracle'}] },
+      { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'eos_ai', label: 'Expert Oracle'}] },
       { id: 'explorer', name: 'Registry Explorer', icon: Database, sections: [{id: 'blocks', label: 'Blocks'}, {id: 'ledger', label: 'Tx Ledger'}, {id: 'consensus', label: 'Quorum'}, {id: 'settlement', label: 'Finality'}] },
       { id: 'sitemap', name: 'Registry Matrix', icon: MapIcon },
       { id: 'info', name: 'Hub Info', icon: Info, sections: [{id: 'about', label: 'About'}, {id: 'security', label: 'Security'}, {id: 'legal', label: 'Legal'}, {id: 'faq', label: 'FAQ'}] }
@@ -211,17 +360,378 @@ const REGISTRY_NODES: RegistryGroup[] = [
   }
 ];
 
-export interface RegistryItem {
-  id: string;
-  name: string;
-  icon: any;
-  sections?: { id: string; label: string; desc?: string }[];
-}
+const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate: (v: ViewState, section?: string) => void; vendorProducts: VendorProduct[] }> = ({ isOpen, onClose, onNavigate, vendorProducts }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isAiSearching, setIsAiSearching] = useState(false);
+  const [aiDeepSuggestion, setAiDeepSuggestion] = useState<{ view: string; section?: string; explanation: string; stewardEsin?: string } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-export interface RegistryGroup {
-  category: string;
-  items: RegistryItem[];
-}
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+      setSearchTerm('');
+      setAiDeepSuggestion(null);
+    }
+  }, [isOpen]);
+
+  const handleAiDeepQuery = async () => {
+    if (!searchTerm.trim()) return;
+    setIsAiSearching(true);
+    setAiDeepSuggestion(null);
+    
+    try {
+      const sitemapContext = REGISTRY_NODES.map(g => 
+        `Group: ${g.category}\n${g.items.map(i => `- ${i.name} (id: ${i.id}): ${i.sections?.map(s => s.label).join(', ')}`).join('\n')}`
+      ).join('\n\n');
+
+      const socialContext = GLOBAL_STEWARD_REGISTRY.map(s => 
+        `- Steward: ${s.name} (ESIN: ${s.esin}), Role: ${s.role}, Skills: ${s.skills.join(', ')}`
+      ).join('\n');
+
+      const ledgerContext = `
+      - Media Shards: ${SEARCHABLE_MEDIA_LEDGER.map(m => m.title).join(', ')}
+      - Missions: ${GLOBAL_PROJECTS_MISSIONS.map(m => m.name).join(', ')}
+      - Experiences: ${ITEM_CATEGORY_EXPERIENCES.map(e => e.title).join(', ')}
+      - Logistics: ${LOGISTICS_SHARDS.map(l => l.name).join(', ')}
+      - Community Exams/Modules: ${LMS_EXAMS_MODULES.map(e => e.title).join(', ')}
+      - Market Products: ${vendorProducts.map(p => p.name).join(', ')}
+      `;
+
+      const prompt = `Act as the EnvirosAgro Navigation and Multi-Ledger Oracle. Based on the following sitemap, steward registry, and ledger indices, recommend EXACTLY ONE shard, section, or ledger entry that best answers the user's query.
+      
+      Registry Sitemap: ${sitemapContext}
+      Social Steward Registry: ${socialContext}
+      Industrial Ledgers Index: ${ledgerContext}
+      
+      User Query: "${searchTerm}"
+      
+      Return your answer in plain text with this EXACT format:
+      REASON: [Why this is relevant in the context of EnvirosAgro's multi-ledger architecture]
+      VIEW: [The shard id or portal name]
+      SECTION: [The section id if applicable, otherwise 'all']
+      STEWARD_ESIN: [If recommending a person, provide their ESIN here, otherwise omit]`;
+
+      const res = await chatWithAgroExpert(prompt, []);
+      const reason = res.text.match(/REASON:\s*(.*)/i)?.[1] || "Deep semantic match found in registry.";
+      const view = res.text.match(/VIEW:\s*([a-z_0-9]+)/i)?.[1] || "dashboard";
+      const section = res.text.match(/SECTION:\s*([a-z_0-9]+)/i)?.[1];
+      const stewardEsin = res.text.match(/STEWARD_ESIN:\s*(EA-[A-Z0-9-]+)/i)?.[1];
+      
+      setAiDeepSuggestion({ view, section: section === 'all' ? undefined : section, explanation: reason, stewardEsin });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsAiSearching(false);
+    }
+  };
+
+  const filteredResults = useMemo(() => {
+    if (!searchTerm.trim()) return { shards: [], stewards: [], assets: [], knowledge: [], infrastructure: [] };
+    const term = searchTerm.toLowerCase();
+    
+    // 1. Sitemap Shards
+    const shards: any[] = [];
+    REGISTRY_NODES.forEach(group => {
+      group.items.forEach(item => {
+        if (item.name.toLowerCase().includes(term) || item.id.toLowerCase().includes(term) || group.category.toLowerCase().includes(term)) {
+          shards.push({ ...item, category: group.category, matchedSections: item.sections?.filter(s => s.label.toLowerCase().includes(term)) });
+        }
+      });
+    });
+
+    // 2. Stewards & Workers
+    const stewards = GLOBAL_STEWARD_REGISTRY.filter(s => 
+      s.name.toLowerCase().includes(term) || s.esin.toLowerCase().includes(term) || s.role.toLowerCase().includes(term) || s.skills.some(sk => sk.toLowerCase().includes(term))
+    );
+
+    // 3. Industrial Assets (Market + Circular)
+    const assets = [
+      ...vendorProducts.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term)),
+      ...ITEM_CATEGORY_EXPERIENCES.filter(e => e.title.toLowerCase().includes(term) || e.desc.toLowerCase().includes(term))
+    ];
+
+    // 4. Knowledge & Media (PDFs, Exams, Reports)
+    const knowledge = [
+      ...SEARCHABLE_MEDIA_LEDGER.filter(m => m.title.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term) || m.source.toLowerCase().includes(term)),
+      ...LMS_EXAMS_MODULES.filter(e => e.title.toLowerCase().includes(term) || e.category.toLowerCase().includes(term))
+    ];
+
+    // 5. Infrastructure & Missions (Logistics + Projects)
+    const infrastructure = [
+      ...LOGISTICS_SHARDS.filter(l => l.name.toLowerCase().includes(term)),
+      ...GLOBAL_PROJECTS_MISSIONS.filter(m => m.name.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term))
+    ];
+
+    return { shards: shards.slice(0, 5), stewards: stewards.slice(0, 5), assets: assets.slice(0, 5), knowledge: knowledge.slice(0, 5), infrastructure: infrastructure.slice(0, 5) };
+  }, [searchTerm, vendorProducts]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-4xl glass-card rounded-3xl border border-white/10 overflow-hidden shadow-[0_0_150px_rgba(0,0,0,0.8)] flex flex-col h-[85vh] md:h-[80vh] animate-in zoom-in-95 duration-300">
+        
+        {/* Modern Integrated Header */}
+        <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-black/20 shrink-0">
+          <div className="flex items-center gap-4 md:gap-8 flex-1">
+             <Search className="w-6 h-6 md:w-8 md:h-8 text-emerald-400 shrink-0" />
+             <div className="flex-1 relative">
+               <input 
+                 ref={inputRef}
+                 type="text" 
+                 value={searchTerm} 
+                 onChange={e => { setSearchTerm(e.target.value); setAiDeepSuggestion(null); }}
+                 onKeyDown={e => e.key === 'Enter' && handleAiDeepQuery()}
+                 placeholder="Query ledgers, media, stewards..."
+                 className="w-full bg-transparent border-none outline-none text-xl md:text-3xl text-white placeholder:text-slate-700 font-bold italic"
+               />
+             </div>
+          </div>
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <button 
+              onClick={handleAiDeepQuery} 
+              disabled={isAiSearching || !searchTerm.trim()} 
+              className="p-3 md:p-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl md:rounded-3xl transition-all shadow-xl group active:scale-95 disabled:opacity-30 flex items-center justify-center"
+              title="Oracle deep query"
+            >
+               {isAiSearching ? <Loader2 className="animate-spin text-white w-6 h-6" /> : <SycamoreLogo size={24} className="text-emerald-400 group-hover:text-white" />}
+            </button>
+            <button onClick={onClose} className="p-3 md:p-4 text-slate-500 hover:text-white transition-colors bg-white/5 rounded-2xl active:scale-95"><X size={24} /></button>
+          </div>
+        </div>
+
+        {/* Dynamic Content Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 space-y-12 bg-[#050706]/40">
+           {aiDeepSuggestion && (
+             <div className="p-8 md:p-12 bg-indigo-900/10 border-2 border-indigo-500/30 rounded-[48px] animate-in slide-in-from-top-4 duration-500 space-y-8 relative overflow-hidden group/sugg">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.1] group-hover/sugg:rotate-12 transition-transform"><SycamoreLogo size={180} className="text-indigo-400" /></div>
+                <div className="flex items-center gap-4 relative z-10">
+                   <div className="p-3 bg-indigo-600 rounded-2xl shadow-2xl"><SycamoreLogo size={20} className="text-white" /></div>
+                   <h5 className="text-xs font-black text-indigo-400 uppercase tracking-widest italic">Oracle Logic Match</h5>
+                </div>
+                <div className="space-y-8 border-l-4 border-indigo-600/40 pl-8 md:pl-12 relative z-10">
+                   <p className="text-slate-300 italic text-xl md:text-2xl leading-relaxed max-w-3xl">{aiDeepSuggestion.explanation}</p>
+                   <button 
+                     onClick={() => { onNavigate(aiDeepSuggestion.view as ViewState, aiDeepSuggestion.section); onClose(); }}
+                     className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5"
+                   >
+                      Navigate Shard <ArrowRight size={18} />
+                   </button>
+                </div>
+             </div>
+           )}
+
+           {searchTerm.trim() === '' ? (
+             <div className="h-full flex flex-col space-y-16 py-8">
+                {/* Visual Splash */}
+                <div className="flex flex-col items-center justify-center text-center opacity-30 space-y-10">
+                   <div className="relative">
+                      <Command size={100} className="text-slate-600 animate-float" />
+                      <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+                   </div>
+                   <div className="space-y-4">
+                     <p className="text-4xl md:text-6xl font-black uppercase tracking-[0.5em] text-white italic drop-shadow-2xl">SEARCH_MATRIX</p>
+                     <p className="text-sm md:text-lg font-bold uppercase tracking-widest italic text-slate-500 max-w-md mx-auto leading-relaxed">
+                       Query organizational ledgers, media shards, or industrial stewards
+                     </p>
+                </div>
+                </div>
+
+                {/* Search Recommendations / Chips */}
+                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-1000">
+                   <div className="flex items-center gap-4 px-4">
+                      <SycamoreLogo size={16} className="text-emerald-400" />
+                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Recommended_Queries</p>
+                   </div>
+                   <div className="flex flex-wrap gap-4 px-4">
+                      {RECOMMENDED_SEARCHES.map((rec, i) => (
+                         <button
+                           key={i}
+                           onClick={() => setSearchTerm(rec.query)}
+                           className="flex items-center gap-4 px-8 py-5 bg-white/5 hover:bg-emerald-600/10 border-2 border-white/5 hover:border-emerald-500/40 rounded-[32px] transition-all group/chip active:scale-95 shadow-xl"
+                         >
+                            <rec.icon size={18} className="text-slate-500 group-hover/chip:text-emerald-400 transition-colors" />
+                            <span className="text-sm font-black text-slate-400 group-hover/chip:text-white uppercase tracking-widest italic">{rec.label}</span>
+                         </button>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="p-8 bg-indigo-900/10 border-2 border-indigo-500/20 rounded-[48px] flex items-center justify-between group/bot-hint shadow-2xl mx-4">
+                   <div className="flex items-center gap-8">
+                      <div className="p-5 bg-indigo-600 rounded-[28px] shadow-3xl border-2 border-white/10 group-hover/bot-hint:rotate-12 transition-transform">
+                         <SycamoreLogo size={32} className="text-white animate-pulse" />
+                      </div>
+                      <div className="text-left">
+                         <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0">Need more depth?</h4>
+                         <p className="text-[10px] text-slate-500 mt-2 font-medium italic opacity-80 group-hover/bot-hint:opacity-100 transition-opacity">
+                            "Initialize an Oracle Deep Query to perform a high-fidelity scan across all unindexed sharded data."
+                         </p>
+                      </div>
+                   </div>
+                   <div className="hidden md:flex gap-4">
+                      <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
+                         <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest italic">NEURAL_READY</span>
+                      </div>
+                   </div>
+                </div>
+             </div>
+           ) : (
+             <div className="space-y-20">
+                {/* RESULTS GROUPING */}
+                
+                {/* 1. STEWARDS */}
+                {filteredResults.stewards.length > 0 && (
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4">
+                        <Users size={16} className="text-indigo-400" />
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Social_Steward_Registry</p>
+                      </div>
+                      <div className="grid gap-4">
+                         {filteredResults.stewards.map(steward => (
+                            <div key={steward.esin} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] duration-300 group/card">
+                               <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
+                                  <div className="relative shrink-0">
+                                     <div className="w-16 h-16 md:w-24 md:h-24 rounded-[28px] md:rounded-[40px] overflow-hidden border-2 border-white/10 group-hover:card:border-indigo-500 transition-all shadow-xl">
+                                        <img src={steward.avatar} className="w-full h-full object-cover" alt="" />
+                                     </div>
+                                     <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-black ${steward.online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-800'}`}></div>
+                                  </div>
+                                  <div className="space-y-2">
+                                     <h4 className="text-2xl md:text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:card:text-indigo-400 transition-colors">{steward.name}</h4>
+                                     <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-2">{steward.role} // {steward.esin}</p>
+                                  </div>
+                               </div>
+                               <div className="flex gap-4 relative z-10 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-10 justify-center md:justify-end">
+                                  <button onClick={() => { onNavigate('profile'); onClose(); }} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl"><UserIcon size={20} /></button>
+                                  <button onClick={() => { onNavigate('contract_farming'); onClose(); }} className="px-8 py-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl text-indigo-400 hover:bg-indigo-600 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">Connect Shard</button>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                )}
+
+                {/* 2. KNOWLEDGE & MEDIA */}
+                {filteredResults.knowledge.length > 0 && (
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4">
+                        <FileStack size={16} className="text-blue-400" />
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Knowledge_&_Media_Archive</p>
+                      </div>
+                      <div className="grid gap-4">
+                         {filteredResults.knowledge.map((item: any) => (
+                            <div key={item.id} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-blue-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99]">
+                               <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
+                                  <div className="p-6 rounded-[28px] md:rounded-[36px] bg-blue-600/10 border border-blue-500/20 text-blue-400 group-hover:rotate-6 transition-all shadow-inner">
+                                     <item.icon size={40} />
+                                  </div>
+                                  <div className="space-y-2">
+                                     <h4 className="text-xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-blue-400 transition-colors leading-tight">{item.title}</h4>
+                                     <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-1">{item.source || item.category} // {item.id}</p>
+                                  </div>
+                               </div>
+                               <div className="flex gap-4 relative z-10 shrink-0">
+                                  <button 
+                                    onClick={() => { onNavigate(item.reward ? 'community' : 'media_ledger'); onClose(); }} 
+                                    className="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95"
+                                  >
+                                     {item.type === 'PAPER' ? <Download size={18} /> : <Zap size={18} />} 
+                                     Access Shard
+                                  </button>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                )}
+
+                {/* 3. INDUSTRIAL ASSETS */}
+                {filteredResults.assets.length > 0 && (
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4">
+                        <ShoppingBag size={16} className="text-emerald-400" />
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Industrial_Asset_Quorum</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                         {filteredResults.assets.map((item: any) => (
+                            <div key={item.id} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col justify-between h-[380px] shadow-3xl relative overflow-hidden active:scale-[0.99] group/asset">
+                               <div className="absolute top-0 right-0 p-8 opacity-[0.01] group-hover/asset:opacity-[0.05] group-hover/asset:scale-110 transition-all"><ShoppingCart size={200} /></div>
+                               <div className="flex items-start justify-between mb-6 relative z-10">
+                                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover/asset:border-emerald-500 transition-all shadow-xl">
+                                     <img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400'} className="w-full h-full object-cover" alt="" />
+                                  </div>
+                                  <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-inner">ASSET_MINTED</span>
+                               </div>
+                               <div className="space-y-2 relative z-10">
+                                  <h4 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter group-hover/asset:text-emerald-400 transition-colors m-0 drop-shadow-2xl">{item.name || item.title}</h4>
+                                  <p className="text-[9px] text-slate-700 font-mono font-black uppercase tracking-widest mt-2">{item.price || item.cost} EAC // {item.id}</p>
+                               </div>
+                               <div className="pt-6 border-t border-white/5 mt-auto flex justify-end relative z-10">
+                                  <button 
+                                    onClick={() => { onNavigate(item.node ? 'agrowild' : 'economy'); onClose(); }} 
+                                    className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95"
+                                  >
+                                     <ArrowUpRight size={14} /> Procure Shard
+                                  </button>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                )}
+
+                {/* 4. SITEMAP NODES */}
+                {filteredResults.shards.length > 0 && (
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4">
+                        <NetworkIcon size={16} className="text-indigo-400" />
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Registry_Nodes</p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {filteredResults.shards.map(res => (
+                          <div key={res.id} className="w-full">
+                            <button 
+                              onClick={() => { onNavigate(res.id as ViewState); onClose(); }} 
+                              className="w-full p-6 md:p-8 hover:bg-indigo-600/10 rounded-3xl border-2 border-transparent hover:border-indigo-500/30 bg-black/40 flex items-center justify-between group transition-all active:scale-[0.98] shadow-xl"
+                            >
+                               <div className="flex items-center gap-6 text-left">
+                                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-indigo-600 transition-all shadow-inner">
+                                     <res.icon size={28} className="text-slate-500 group-hover:text-white" />
+                                  </div>
+                                  <div>
+                                     <h4 className="text-lg md:text-2xl font-black text-white uppercase italic leading-none text-indigo-400 transition-colors m-0 tracking-tighter">{res.name}</h4>
+                                     <p className="text-[9px] text-slate-700 font-mono mt-2 uppercase tracking-widest font-black italic">{res.category}</p>
+                                  </div>
+                               </div>
+                               <ArrowUpRight size={20} className="text-slate-800 group-hover:text-indigo-400 transition-all" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                   </div>
+                )}
+             </div>
+           )}
+        </div>
+
+        {/* Dynamic Footer Status */}
+        <div className="p-6 md:p-8 border-t border-white/5 border-emerald-500/10 bg-black/80 flex items-center justify-between shrink-0 relative z-10">
+           <div className="flex items-center gap-4 text-[7px] font-black text-slate-700 uppercase tracking-[0.5em] italic">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/20 animate-pulse"></div>
+              MULTI_LEDGER_INDEXING_ACTIVE
+           </div>
+           <div className="flex items-center gap-3">
+              <span className="text-[7px] font-mono text-slate-800 uppercase tracking-widest">v6.5.2 // QUORUM_SYNC</span>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(true);
@@ -260,181 +770,225 @@ const App: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
 
-  // Added navigate function to fix undefined error on line 255
-  const navigate = (dimension: ViewState, element: string | null = null) => {
-    setHistory(prev => [...prev, { dimension: view, element: viewSection }]);
-    setForwardHistory([]);
-    setView(dimension);
-    setViewSection(element);
+  useEffect(() => {
     if (mainContentRef.current) mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    setIsMobileMenuOpen(false);
-  };
-
-  // Added goBack and goForward functions to fix undefined errors on lines 488, 526
-  const goBack = () => {
-    if (history.length === 0) return;
-    const prev = history[history.length - 1];
-    setForwardHistory(f => [{ dimension: view, element: viewSection }, ...f]);
-    setHistory(h => h.slice(0, -1));
-    setView(prev.dimension);
-    setViewSection(prev.element || null);
-  };
-
-  const goForward = () => {
-    if (forwardHistory.length === 0) return;
-    const next = forwardHistory[0];
-    setHistory(prev => [...prev, { dimension: view, element: viewSection }]);
-    setForwardHistory(f => f.slice(1));
-    setView(next.dimension);
-    setViewSection(next.element || null);
-  };
-
-  // Added handleScroll and scrollToTop functions to fix undefined errors on lines 365, 560
-  const handleScroll = (el: HTMLDivElement) => {
-    const progress = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
-    setScrollProgress(progress);
-    setShowZenithButton(el.scrollTop > 500);
-  };
-
-  const scrollToTop = () => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  // Added emitSignal to fix undefined error on line 257
-  const emitSignal = async (signal: Partial<SignalShard>) => {
-    const res = await dispatchNetworkSignal(signal);
-    if (res) {
-      setSignals(prev => [res, ...prev]);
-      if (res.priority === 'critical' || res.priority === 'high') {
-        const notif: NotificationShard = {
-          id: res.id,
-          type: res.priority === 'critical' ? 'error' : 'warning',
-          title: res.title,
-          message: res.message
-        };
-        setNotifications(prev => [notif, ...prev]);
-        setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== notif.id)), 5000);
-      }
-    }
-  };
-
-  // Added handleEarnEAC and handleSpendEAC to fix undefined errors on lines 256, 257
-  const handleEarnEAC = async (amount: number, reason: string) => {
-    if (!user) return;
-    const updated = {
-      ...user,
-      wallet: {
-        ...user.wallet,
-        balance: user.wallet.balance + amount,
-        lifetimeEarned: user.wallet.lifetimeEarned + (amount > 0 ? amount : 0)
-      }
-    };
-    setUser(updated);
-    await syncUserToCloud(updated);
-    emitSignal({
-      type: 'commerce',
-      origin: 'TREASURY',
-      title: 'CAPITAL_INGEST',
-      message: `Earned ${amount} EAC: ${reason}`,
-      priority: 'low',
-      actionIcon: 'Coins'
-    });
-  };
-
-  const handleSpendEAC = async (amount: number, reason: string): Promise<boolean> => {
-    if (!user || user.wallet.balance < amount) {
-      emitSignal({
-        type: 'commerce',
-        origin: 'TREASURY',
-        title: 'LIQUIDITY_FAILURE',
-        message: 'Insufficient EAC for this shard commitment.',
-        priority: 'high',
-        actionIcon: 'ShieldAlert'
-      });
-      return false;
-    }
-    const updated = {
-      ...user,
-      wallet: { ...user.wallet, balance: user.wallet.balance - amount }
-    };
-    setUser(updated);
-    await syncUserToCloud(updated);
-    emitSignal({
-      type: 'commerce',
-      origin: 'TREASURY',
-      title: 'CAPITAL_EXPENDITURE',
-      message: `Spent ${amount} EAC: ${reason}`,
-      priority: 'low',
-      actionIcon: 'CreditCard'
-    });
-    return true;
-  };
-
-  // Added handleLogout and handlePerformPermanentAction to fix undefined errors on line 265
-  const handleLogout = async () => {
-    await signOutSteward();
-    setUser(null);
-    setView('dashboard');
-  };
-
-  const handlePerformPermanentAction = async (key: string, reward: number, reason: string): Promise<boolean> => {
-    if (!user) return false;
-    if (user.completedActions?.includes(key)) return false;
-    const success = await markPermanentAction(key);
-    if (success) {
-      handleEarnEAC(reward, reason);
-      const updatedUser = { ...user, completedActions: [...(user.completedActions || []), key] };
-      setUser(updatedUser);
-      return true;
-    }
-    return false;
-  };
-
-  // Added signal read functions to fix line 429, 452 errors
-  const markSignalAsRead = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const ok = await updateSignalReadStatus(id, true);
-    if (ok) setSignals(prev => prev.map(s => s.id === id ? { ...s, read: true } : s));
-  };
-
-  const markAllSignalsAsRead = async () => {
-    const unreadIds = signals.filter(s => !s.read).map(s => s.id);
-    const ok = await markAllSignalsAsReadInDb(unreadIds);
-    if (ok) setSignals(prev => prev.map(s => ({ ...s, read: true })));
-  };
+  }, [view]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
-        const profile = await getStewardProfile(fbUser.uid);
-        if (profile) setUser(profile);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsGlobalSearchOpen(prev => !prev); }
+      if (e.key === 'Escape') {
+        setIsGlobalSearchOpen(false);
+        setIsConsultantOpen(false);
+        setIsInboxOpen(false);
       }
-      setIsBooting(false);
-    });
-    return () => unsubscribe();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleScroll = (target: HTMLDivElement) => {
+    setScrollProgress((target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100);
+    setShowZenithButton(target.scrollTop > 400);
+  };
+
+  const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isLg = window.innerWidth >= 1024;
+      setIsSidebarOpen(isLg);
+      if (isLg) setIsMobileMenuOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    const unsubProjects = listenToCollection('projects', setProjects);
-    const unsubContracts = listenToCollection('contracts', setContracts);
+    return onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        const isVerified = fbUser.emailVerified || fbUser.providerData?.some(p => p.providerId === 'phone');
+        if (isVerified) {
+          const profile = await getStewardProfile(fbUser.uid);
+          if (profile) setUser(profile);
+        } else {
+          setUser(null);
+          if (view !== 'auth') setView('auth');
+        }
+      } else {
+        setUser(null);
+      }
+    });
+  }, [view]);
+
+  useEffect(() => {
+    const unsubProjects = listenToCollection('projects', setProjects, true);
+    const unsubContracts = listenToCollection('contracts', setContracts, true);
     const unsubOrders = listenToCollection('orders', setOrders);
-    const unsubProducts = listenToCollection('products', setVendorProducts);
+    const unsubProducts = listenToCollection('products', setVendorProducts, true);
     const unsubUnits = listenToCollection('industrial_units', setIndustrialUnits);
-    const unsubLive = listenToCollection('live_products', setLiveProducts);
-    const unsubBlockchain = listenToCollection('blocks', setBlockchain);
-    const unsubMedia = listenToCollection('media_ledger', setMediaShards);
+    const unsubLive = listenToCollection('live_products', setLiveProducts, true);
+    const unsubTx = listenToCollection('transactions', setTransactions);
     const unsubSignals = listenToCollection('signals', setSignals);
+    const unsubMedia = listenToCollection('media_ledger', setMediaShards, true);
+    const unsubBlocks = listenToCollection('blocks', setBlockchain, true);
     const unsubPulse = listenToPulse(setPulseMessage);
 
     return () => {
       unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts();
-      unsubUnits(); unsubLive(); unsubBlockchain(); unsubMedia();
-      unsubSignals(); unsubPulse();
+      unsubUnits(); unsubLive(); unsubTx(); unsubSignals(); unsubPulse();
+      unsubMedia(); unsubBlocks();
     };
   }, [user]);
+
+  const emitSignal = useCallback(async (signalData: Partial<SignalShard>) => {
+    const signal = await dispatchNetworkSignal(signalData);
+    if (signal) {
+      const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP');
+      if (popupLayer) {
+        const id = Math.random().toString(36).substring(7);
+        setNotifications(prev => [{
+          id, type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info',
+          title: signal.title, message: signal.message, duration: 6000,
+          actionLabel: signal.actionLabel, actionIcon: signalData.actionIcon
+        }, ...prev]);
+      }
+    }
+  }, []);
+
+  const handleSpendEAC = async (amount: number, reason: string) => {
+    if (!user) { setView('auth'); return false; }
+    if (user.wallet.balance < amount) {
+      emitSignal({ title: 'INSUFFICIENT_FUNDS', message: `Need ${amount} EAC for ${reason}.`, priority: 'high', type: 'commerce', origin: 'MANUAL' });
+      return false;
+    }
+    const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } };
+    const syncOk = await syncUserToCloud(updatedUser);
+    if (!syncOk) return false;
+    setUser(updatedUser);
+    const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Transfer', farmId: user.esin, details: reason, value: -amount, unit: 'EAC' };
+    await saveCollectionItem('transactions', newTx);
+    emitSignal({ title: 'TREASURY_SETTLEMENT', message: `Node sharded ${amount} EAC for ${reason}.`, priority: 'medium', type: 'ledger_anchor', origin: 'TREASURY', actionIcon: 'Coins' });
+    return true;
+  };
+
+  const handleEarnEAC = async (amount: number, reason: string) => {
+    if (!user) return;
+    const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount, lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount } };
+    const syncOk = await syncUserToCloud(updatedUser);
+    if (!syncOk) return;
+    setUser(updatedUser);
+    const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Reward', farmId: user.esin, details: reason, value: amount, unit: 'EAC' };
+    await saveCollectionItem('transactions', newTx);
+  };
+
+  const handlePerformPermanentAction = async (actionKey: string, reward?: number, reason?: string) => {
+    if (!user || user.completedActions?.includes(actionKey)) return false;
+    const ok = await markPermanentAction(actionKey);
+    if (ok && reward && reason) await handleEarnEAC(reward, reason);
+    return ok;
+  };
+
+  const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
+
+  const markSignalAsRead = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    // Optimistic update
+    setSignals(prev => prev.map(s => s.id === id ? { ...s, read: true } : s));
+    // Persist to Firestore
+    await updateSignalReadStatus(id, true);
+  };
+
+  const markAllSignalsAsRead = async () => {
+    const unreadIds = signals.filter(s => !s.read).map(s => s.id);
+    if (unreadIds.length === 0) return;
+
+    // Optimistic update
+    setSignals(prev => prev.map(s => ({ ...s, read: true })));
+    
+    // Persist to Firestore
+    await markAllSignalsAsReadInDb(unreadIds);
+
+    emitSignal({
+      title: 'INBOX_SYNCHRONIZED',
+      message: 'All unread network signals have been cleared and archived.',
+      priority: 'low',
+      type: 'system',
+      origin: 'MANUAL',
+      actionIcon: 'CheckCircle2'
+    });
+  };
+  
+  // VECTOR ROUTING OPTIMIZATION
+  const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => {
+    let index: string | undefined;
+    REGISTRY_NODES.forEach((group, dIdx) => {
+      group.items.forEach((item, eIdx) => {
+        if (item.id === v) {
+          if (!section) {
+            index = `[${dIdx + 1}.${eIdx + 1}]`;
+          } else {
+            const sIdx = item.sections?.findIndex(s => s.id === section);
+            if (sIdx !== undefined && sIdx !== -1) {
+              index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`;
+            }
+          }
+        }
+      });
+    });
+    return index;
+  };
+
+  const navigate = useCallback((v: ViewState, section?: string, pushToHistory = true) => {
+    const index = findMatrixIndex(v, section || null);
+    
+    if (pushToHistory) {
+      const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) };
+      setHistory(prev => [...prev, currentAddress]);
+      setForwardHistory([]); // Clear forward vector on new action
+    }
+    
+    setView(v);
+    setViewSection(section || null);
+    setIsMobileMenuOpen(false);
+    setIsConsultantOpen(false);
+    setIsInboxOpen(false);
+    
+    emitSignal({
+      title: 'VECTOR_SHIFT',
+      message: `Resolved route to ${index || v.toUpperCase()}.`,
+      priority: 'low',
+      type: 'system',
+      origin: 'ORACLE',
+      actionIcon: 'ChevronRight'
+    });
+  }, [view, viewSection, emitSignal]);
+
+  const goBack = useCallback(() => {
+    if (history.length > 0) {
+      const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) };
+      const lastVector = history[history.length - 1];
+      
+      setForwardHistory(prev => [...prev, currentAddress]);
+      setHistory(prev => prev.slice(0, -1));
+      
+      navigate(lastVector.dimension, lastVector.element || undefined, false);
+    } else if (view !== 'dashboard') {
+      navigate('dashboard', undefined, true);
+    }
+  }, [history, view, viewSection, navigate]);
+
+  const goForward = useCallback(() => {
+    if (forwardHistory.length > 0) {
+      const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) };
+      const nextVector = forwardHistory[forwardHistory.length - 1];
+      
+      setHistory(prev => [...prev, currentAddress]);
+      setForwardHistory(prev => prev.slice(0, -1));
+      
+      navigate(nextVector.dimension, nextVector.element || undefined, false);
+    }
+  }, [forwardHistory, view, viewSection, navigate]);
 
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
@@ -496,7 +1050,6 @@ const App: React.FC = () => {
       case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;
       case 'robot': return <Robot user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} />;
-      case 'network_genesis': return <NetworkGenesis user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
       default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }
   };
@@ -683,7 +1236,7 @@ const App: React.FC = () => {
                  <ChevronLeft size={16} className="group-hover/back:-translate-x-1 transition-transform" />
                  <div className="flex flex-col items-start text-left hidden md:block">
                     <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span>
-                    <span className="text-6px font-mono opacity-50 mt-1 uppercase">Prev_Vector</span>
+                    <span className="text-6px font-mono opacity-50 mt-1 uppercase">{history.length > 0 ? history[history.length - 1].matrixIndex : 'Prev_Vector'}</span>
                  </div>
               </button>
 
@@ -720,7 +1273,7 @@ const App: React.FC = () => {
               >
                  <div className="flex flex-col items-end text-right hidden md:block">
                     <span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 transition-all">Advance</span>
-                    <span className="text-6px font-mono opacity-50 mt-1 uppercase">Next_Vector</span>
+                    <span className="text-6px font-mono opacity-50 mt-1 uppercase">{forwardHistory.length > 0 ? forwardHistory[forwardHistory.length - 1].matrixIndex : 'Next_Vector'}</span>
                  </div>
                  <ChevronRight size={16} className="group-hover/fwd:translate-x-1 transition-transform" />
               </button>
@@ -761,108 +1314,9 @@ const App: React.FC = () => {
       </div>
 
       <GlobalSearch isOpen={isGlobalSearchOpen} onClose={() => setIsGlobalSearchOpen(false)} onNavigate={navigate} vendorProducts={vendorProducts} />
-      <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={(val) => handleEarnEAC(val, 'FIELD_EVIDENCE_INGEST')} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
+      <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={handleEarnEAC} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
       <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />
       <FloatingConsultant isOpen={isConsultantOpen} onClose={() => setIsConsultantOpen(false)} user={user || GUEST_STWD} onNavigate={navigate} />
-    </div>
-  );
-};
-
-/**
- * Added InitializationScreen component to fix line 316 error.
- * Provides an industrial-style loading sequence for the OS boot phase.
- */
-const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('Initializing Sycamore OS...');
-
-  useEffect(() => {
-    const steps = [
-      { p: 10, s: 'Loading Kernel Shards...' },
-      { p: 30, s: 'Establishing Mesh Handshake...' },
-      { p: 50, s: 'Syncing Registry Consensus...' },
-      { p: 70, s: 'Mounting Industrial Matrix...' },
-      { p: 90, s: 'Finalizing m-Constant Calibration...' },
-      { p: 100, s: 'Registry Synchronized.' },
-    ];
-
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      if (currentStep < steps.length) {
-        setProgress(steps[currentStep].p);
-        setStatus(steps[currentStep].s);
-        currentStep++;
-      } else {
-        clearInterval(interval);
-        setTimeout(onComplete, 500);
-      }
-    }, 400);
-    return () => clearInterval(interval);
-  }, [onComplete]);
-
-  return (
-    <div className="fixed inset-0 z-[2000] bg-[#050706] flex flex-col items-center justify-center space-y-12">
-      <div className="relative">
-        <SycamoreLogo size={120} className="text-emerald-500 animate-pulse" />
-        <div className="absolute inset-0 border-4 border-dashed border-emerald-500/20 rounded-full animate-spin-slow scale-150"></div>
-      </div>
-      <div className="w-64 space-y-4">
-        <div className="flex justify-between items-center text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-           <span>{status}</span>
-           <span>{progress}%</span>
-        </div>
-        <div className="h-1 bg-white/5 rounded-full overflow-hidden p-0.5">
-           <div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300" style={{ width: `${progress}%` }}></div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/**
- * Added GlobalSearch component to fix line 573 error.
- * Implements a registry-wide search interface for industrial assets.
- */
-const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate: (v: ViewState, s?: string) => void; vendorProducts: VendorProduct[] }> = ({ isOpen, onClose, onNavigate, vendorProducts }) => {
-  const [query, setQuery] = useState('');
-  if (!isOpen) return null;
-
-  const results = query.trim() ? vendorProducts.filter(p => p.name.toLowerCase().includes(query.toLowerCase())).slice(0, 5) : [];
-
-  return (
-    <div className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-xl flex items-start justify-center pt-32 px-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-2xl glass-card rounded-[40px] border-2 border-emerald-500/20 bg-black/60 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden">
-        <div className="p-8 flex items-center gap-6 border-b border-white/5">
-           <Search size={24} className="text-emerald-400" />
-           <input 
-             autoFocus
-             type="text" 
-             value={query}
-             onChange={e => setQuery(e.target.value)}
-             placeholder="Search Multi-Ledger Registry..."
-             className="flex-1 bg-transparent border-none text-2xl font-black text-white outline-none italic placeholder:text-stone-900"
-           />
-           <button onClick={onClose} className="p-3 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X size={24}/></button>
-        </div>
-        <div className="p-8 space-y-6 max-h-[400px] overflow-y-auto custom-scrollbar">
-           {results.length > 0 ? (
-             results.map(r => (
-               <div key={r.id} onClick={() => { onNavigate('economy'); onClose(); }} className="p-6 bg-white/5 border border-white/5 rounded-3xl hover:border-emerald-500/30 cursor-pointer transition-all flex items-center justify-between group">
-                  <div className="flex items-center gap-6">
-                     <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center"><Package size={24} className="text-slate-500 group-hover:text-emerald-400" /></div>
-                     <div>
-                        <h4 className="text-lg font-black text-white uppercase italic">{r.name}</h4>
-                        <p className="text-[10px] text-slate-600 font-mono">{r.id}</p>
-                     </div>
-                  </div>
-                  <ArrowRight size={20} className="text-slate-800 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
-               </div>
-             ))
-           ) : (
-             <div className="py-20 text-center opacity-20 italic uppercase tracking-[0.4em] font-black">Awaiting Ingest...</div>
-           )}
-        </div>
-      </div>
     </div>
   );
 };

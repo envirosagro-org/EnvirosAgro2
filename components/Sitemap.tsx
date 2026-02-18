@@ -44,7 +44,7 @@ import {
   Code,
   Stamp
 } from 'lucide-react';
-import { ViewState, VectorAddress } from '../types';
+import { ViewState } from '../types';
 import { RegistryGroup } from '../App';
 
 interface SitemapProps {
@@ -94,7 +94,7 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
       m.name.toLowerCase().includes(term) || 
       m.id.toLowerCase().includes(term) || 
       m.address.includes(term)
-    ).slice(0, 8);
+    ).slice(0, 10);
   }, [globalManifest, resolverInput]);
 
   const handleResolve = (m: any) => {
@@ -137,7 +137,7 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
                type="text" 
                value={resolverInput}
                onChange={e => setResolverInput(e.target.value)}
-               placeholder="Input Vector Address (e.g. [1.2.1]) or Shard ID..."
+               placeholder="Input Vector Address (e.g. [1.1.2]) or Shard ID..."
                className="flex-1 bg-transparent border-none text-2xl font-mono text-emerald-400 placeholder:text-emerald-950 font-black tracking-widest focus:ring-0 outline-none italic"
             />
             {resolverInput && (
@@ -181,7 +181,7 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
          )}
       </div>
 
-      {/* 3. The Dimension Grid (Registry Map) */}
+      {/* 3. The 6-Dimensional Registry Map */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-12 pt-10">
         {nodes.map((group, dIdx) => (
           <div 
@@ -192,7 +192,7 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
             onClick={() => setActiveDimension(activeDimension === dIdx ? null : dIdx)}
           >
             <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/dim:scale-125 transition-transform duration-[15s] pointer-events-none">
-              <Code size={400} className="text-emerald-400" />
+              <Network size={400} className="text-emerald-400" />
             </div>
 
             <div className="flex items-center justify-between border-b border-white/5 pb-10 mb-10 relative z-10">
@@ -220,7 +220,6 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
                           >
                              <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover/link:text-emerald-400 transition-colors drop-shadow-lg">{item.name}</h4>
                              <span className="text-[11px] font-mono text-emerald-500/20 bg-emerald-500/5 px-3 py-1 rounded-lg border border-emerald-500/10 shadow-inner">[{dIdx+1}.{eIdx+1}]</span>
-                             <ArrowUpRight size={20} className="text-slate-800 opacity-0 group-hover/link:opacity-100 group-hover/link:translate-x-1 group-hover/link:-translate-y-1 transition-all" />
                           </div>
                           
                           {/* Vector Shards (Sections) */}
@@ -230,10 +229,9 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
                                   key={section.id}
                                   onClick={(e) => { e.stopPropagation(); onNavigate(item.id as ViewState, section.id); }}
                                   className="px-6 py-3 bg-white/5 hover:bg-indigo-600 border border-white/10 hover:border-indigo-400 rounded-full text-[11px] font-black uppercase text-slate-500 hover:text-white transition-all flex items-center gap-3 group/shard shadow-lg active:scale-95"
-                                  title={section.desc}
                                 >
                                    <span className="text-[9px] font-mono text-indigo-500/40 group-hover/shard:text-white/50">[{dIdx+1}.{eIdx+1}.{sIdx+1}]</span>
-                                   <div className="w-1.5 h-1.5 rounded-full bg-slate-800 group-hover/shard:bg-white transition-colors shadow-[0_0_8px_currentColor]"></div>
+                                   <div className="w-1.5 h-1.5 rounded-full bg-slate-800 group-hover/shard:bg-white transition-colors"></div>
                                    {section.label}
                                 </button>
                              ))}
@@ -248,7 +246,7 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
         ))}
       </div>
 
-      {/* 4. Registry Integration Footer */}
+      {/* 4. Matrix Legend / Bottom Branding */}
       <div className="p-16 md:p-24 glass-card rounded-[80px] border-emerald-500/20 bg-emerald-600/[0.03] flex flex-col xl:flex-row items-center justify-between gap-16 relative overflow-hidden shadow-3xl mx-4 mt-20 backdrop-blur-3xl">
          <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none rotate-12 transition-transform duration-[20s] group-hover:rotate-45">
             <ShieldCheck size={1000} className="text-emerald-400" />
@@ -259,15 +257,15 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
                <Stamp size={80} className="text-white relative z-20 group-hover:scale-110 transition-transform" />
             </div>
             <div className="space-y-6">
-               <h4 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">TOTAL <span className="text-emerald-400">TRUTH</span></h4>
+               <h4 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none">REGISTRY <span className="text-emerald-400">SYNC.</span></h4>
                <p className="text-slate-400 text-2xl md:text-3xl font-medium italic leading-relaxed max-w-3xl opacity-80">
-                 "Direct sharding of every dimension and element. The registry matrix ensures zero-latency discovery for authorized stewards."
+                 "Every dimension, element, and shard within the EnvirosAgro ecosystem is uniquely addressable via the Vector Resolution Protocol."
                </p>
             </div>
          </div>
          <div className="text-center md:text-right relative z-10 shrink-0 border-l-2 border-white/5 pl-24 hidden xl:block">
-            <p className="text-[16px] text-slate-600 font-black uppercase mb-8 tracking-[0.8em] border-b border-white/10 pb-6">ADDRESSABLE_SHARDS</p>
-            <p className="text-[140px] font-mono font-black text-white tracking-tighter leading-none m-0">{globalManifest.length}</p>
+            <p className="text-[16px] text-slate-600 font-black uppercase mb-8 tracking-[0.8em] border-b border-white/10 pb-6">NETWORK_DEPTH</p>
+            <p className="text-[140px] font-mono font-black text-white tracking-tighter leading-none m-0">60</p>
          </div>
       </div>
 

@@ -112,8 +112,6 @@ export const createUserWithEmailAndPassword = async (_: any, email: string, pass
 
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
-  // Ensure the provider prompts for account selection to prevent "hanging" with a single silent account attempt
-  provider.setCustomParameters({ prompt: 'select_account' });
   return signInWithPopup(auth, provider);
 };
 
@@ -291,10 +289,17 @@ export const saveCollectionItem = async (collectionName: string, item: any) => {
   return docRef.id;
 };
 
-export const listenToCollection = (collectionName: string, callback: (items: any[]) => void) => {
+export const listenToCollection = (collectionName: string, callback: (items: any[]) => void, isGlobal: boolean = false) => {
   const userId = auth.currentUser?.uid;
-  if (!userId) return () => {};
-  const q = query(collection(db, collectionName), where("stewardId", "==", userId));
+  if (!userId && !isGlobal) return () => {};
+  
+  let q;
+  if (isGlobal) {
+    q = query(collection(db, collectionName));
+  } else {
+    q = query(collection(db, collectionName), where("stewardId", "==", userId));
+  }
+  
   return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.id }))), (err) => {
     console.warn(`Registry Sync Warning (${collectionName}):`, err.message);
   });
