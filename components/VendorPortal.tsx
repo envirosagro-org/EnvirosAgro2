@@ -58,7 +58,10 @@ import {
   Layers,
   Radio,
   AudioWaveform,
-  Zap as ZapIcon
+  Zap as ZapIcon,
+  SearchCode,
+  // Added missing Workflow icon import
+  Workflow
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -69,7 +72,7 @@ import {
   Tooltip, 
   ResponsiveContainer
 } from 'recharts';
-import { User, Order, LogisticProvider, VendorProduct, ViewState, SignalShard } from '../types';
+import { User, Order, LogisticProvider, VendorProduct, ViewState, SignalShard, LiveAgroProduct } from '../types';
 import { runSpecialistDiagnostic, analyzeDemandForecast } from '../services/geminiService';
 
 interface VendorPortalProps {
@@ -83,6 +86,8 @@ interface VendorPortalProps {
   initialSection?: string | null;
   onUpdateProduct?: (product: VendorProduct) => void;
   onEmitSignal?: (signal: Partial<SignalShard>) => Promise<void>;
+  liveProducts?: LiveAgroProduct[];
+  onSaveLiveProduct?: (product: LiveAgroProduct) => void;
 }
 
 const FORECAST_DATA = [
@@ -98,12 +103,16 @@ const ASSET_CATEGORIES = [
 ];
 
 const VendorPortal: React.FC<VendorPortalProps> = ({ 
-  user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct, onNavigate, initialSection, onUpdateProduct, onEmitSignal
+  user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct, onNavigate, initialSection, onUpdateProduct, onEmitSignal, liveProducts = [], onSaveLiveProduct
 }) => {
   const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'live_terminal' | 'ledger'>('inventory');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [regStep, setRegStep] = useState<'identification' | 'ingest' | 'audit' | 'branding' | 'success'>('identification');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Shard Linking State
+  const [linkingProduct, setLinkingProduct] = useState<VendorProduct | null>(null);
+  const [showLinkerModal, setShowLinkerModal] = useState(false);
 
   // Registration Form State
   const [itemName, setItemName] = useState('');
@@ -246,8 +255,52 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
     }
   };
 
+  const handleManageShard = (product: VendorProduct) => {
+    setLinkingProduct(product);
+    setShowLinkerModal(true);
+  };
+
+  const handleAssociateLiveProduct = (liveAssetId: string) => {
+    setShowLinkerModal(false);
+    onNavigate('live_farming', liveAssetId);
+  };
+
+  const handleCreateAndAssociateLive = () => {
+    if (!linkingProduct || !onSaveLiveProduct) return;
+    
+    const newLiveAssetId = `LIVE-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const newLiveAsset: LiveAgroProduct = {
+      id: newLiveAssetId,
+      stewardEsin: user.esin,
+      stewardName: user.name,
+      productType: linkingProduct.name,
+      category: 'Produce',
+      stage: 'Inception',
+      progress: 0,
+      votes: 0,
+      location: user.location,
+      timestamp: new Date().toISOString(),
+      lastUpdate: 'Just now',
+      isAuthentic: true,
+      auditStatus: 'Linked to ' + linkingProduct.id,
+      tasks: ['Biometric Handshake', 'Moisture Sync'],
+      telemetryNodes: [],
+      marketStatus: 'Forecasting',
+      vouchYieldMultiplier: 1.0,
+      evidenceCount: 0,
+      isBroadcasting: false,
+      isPhysicallyVerified: false,
+      isSystemAudited: false
+    };
+
+    onSaveLiveProduct(newLiveAsset);
+    setShowLinkerModal(false);
+    onNavigate('live_farming', newLiveAssetId);
+  };
+
   const myProducts = vendorProducts.filter(p => p.supplierEsin === user.esin);
   const myRevenue = orders.filter(o => o.supplierEsin === user.esin).reduce((acc, o) => acc + o.cost, 0);
+  const myLiveAssets = liveProducts.filter(p => p.stewardEsin === user.esin);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
@@ -287,7 +340,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
         <div className="lg:col-span-2 glass-card p-10 rounded-[48px] border border-white/10 bg-black/40 flex items-center justify-between shadow-3xl">
            <div className="space-y-6 flex-1">
               <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Register <span className="text-amber-500">Agricultural Asset</span></h3>
-              <p className="text-slate-500 text-sm italic font-medium max-w-sm">"Bridge your physical assets to the digital Market Cloud via SEHTI-vetted sharding."</p>
+              <p className="text-slate-500 text-sm italic font-medium max-sm:hidden">"Bridge your physical assets to the digital Market Cloud via SEHTI-vetted sharding."</p>
               <button 
                 onClick={handleStartRegistration}
                 className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 border-2 border-white/10"
@@ -313,7 +366,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-amber-600 text-white shadow-2xl scale-105 border-b-4 border-amber-400 ring-8 ring-amber-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-amber-600 text-white shadow-2xl scale-105 border-b-4 border-amber-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon size={18} /> {tab.label}
           </button>
@@ -388,8 +441,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                                 {product.isLiveProcessing ? 'DEACTIVATE JIT FLOW' : 'ACTIVATE JIT FLOW'}
                              </button>
                              <button 
-                               onClick={() => onNavigate('live_farming', product.id)}
-                               className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all shadow-md"
+                               onClick={() => handleManageShard(product)}
+                               className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all shadow-md active:scale-95"
                              >
                                 MANAGE SHARD
                              </button>
@@ -539,7 +592,87 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
       </div>
 
-      {/* --- REGISTRATION MODAL: ASSET LIFECYCLE --- */}
+      {/* SHARD LINKER MODAL: ASSOCIATE VENDOR ASSET WITH LIVE FARMING */}
+      {showLinkerModal && linkingProduct && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowLinkerModal(false)}></div>
+           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[80px] border-indigo-500/30 bg-[#050706] shadow-[0_0_200px_rgba(99,102,241,0.2)] animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+              <div className="p-12 md:p-16 border-b border-white/5 bg-indigo-500/[0.01] flex justify-between items-center shrink-0">
+                 <div className="flex items-center gap-10">
+                    <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-3xl">
+                       {/* Fixed: Added missing Workflow icon import to lucide-react */}
+                       <Workflow size={40} />
+                    </div>
+                    <div>
+                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Shard <span className="text-indigo-400">Linker</span></h3>
+                       <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">ASSOCIATE_VENDOR_WITH_LIVE_INGEST</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowLinkerModal(false)} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar bg-black/40 space-y-12">
+                 <div className="p-10 bg-indigo-600/5 rounded-[56px] border border-indigo-500/20 flex flex-col md:flex-row items-center justify-between gap-10 shadow-inner">
+                    <div className="text-left space-y-2">
+                       <h4 className="text-2xl font-black text-white uppercase tracking-tighter m-0">Target: {linkingProduct.name}</h4>
+                       <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">{linkingProduct.sku}</p>
+                    </div>
+                    <button 
+                      onClick={handleCreateAndAssociateLive}
+                      className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3 border-2 border-white/10 ring-8 ring-white/5"
+                    >
+                       <PlusCircle size={20} /> Register New Thread
+                    </button>
+                 </div>
+
+                 <div className="space-y-8">
+                    <div className="flex items-center gap-4 px-6 border-b border-white/5 pb-4">
+                       <Monitor size={20} className="text-blue-400" />
+                       <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Existing Live Threads</h4>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       {myLiveAssets.length === 0 ? (
+                          <div className="col-span-full py-20 text-center opacity-20 border-4 border-dashed border-white/5 rounded-[64px] flex flex-col items-center gap-6">
+                             <SearchCode size={64} className="text-slate-700 animate-pulse" />
+                             <p className="text-xl font-black uppercase tracking-widest">No active live threads found</p>
+                          </div>
+                       ) : (
+                          myLiveAssets.map(liveAsset => (
+                             <div 
+                                key={liveAsset.id} 
+                                onClick={() => handleAssociateLiveProduct(liveAsset.id)}
+                                className="glass-card p-8 rounded-[48px] border-2 border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group/asset cursor-pointer flex flex-col justify-between h-[300px] shadow-xl relative overflow-hidden"
+                             >
+                                <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover/asset:scale-110 transition-transform"><Monitor size={200} /></div>
+                                <div className="flex justify-between items-start relative z-10">
+                                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-blue-400 group-hover/asset:scale-110 transition-transform">
+                                      <ZapIcon size={24} />
+                                   </div>
+                                   <span className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[8px] font-black uppercase">{liveAsset.stage}</span>
+                                </div>
+                                <div className="relative z-10">
+                                   <h5 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight group-hover/asset:text-indigo-400 transition-colors">{liveAsset.productType}</h5>
+                                   <p className="text-[10px] text-slate-700 font-mono mt-2 uppercase tracking-widest">{liveAsset.id} // {liveAsset.progress}% SYNC</p>
+                                </div>
+                                <div className="pt-6 border-t border-white/5 flex items-center justify-between text-indigo-400 text-[9px] font-black uppercase tracking-widest relative z-10">
+                                   SOURCE_SHARD <ArrowRight size={14} />
+                                </div>
+                             </div>
+                          ))
+                       )}
+                    </div>
+                 </div>
+              </div>
+
+              <div className="p-12 border-t border-white/5 bg-black/95 text-center shrink-0 z-20">
+                 <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.8em] italic">INDUSTRIAL_LINKING_PROTOCOL v6.5 // secured shard</p>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* REGISTRATION MODAL: ASSET LIFECYCLE */}
       {showRegisterModal && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={resetPortal}></div>
@@ -694,7 +827,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                           <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
                              {oracleVerdict || '"Analyzing supplier involvement history and asset development ethics against the SEHTI framework..."'}
                           </div>
-                          <div className="mt-12 pt-10 border-t border-white/10 relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                          <div className="mt-12 pt-10 border-t border-white/5 relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                              <div className="flex items-center gap-6">
                                 <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400">
                                    <BadgeCheck size={32} />
@@ -755,7 +888,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                           <button 
                              onClick={handleFinalizeRegistry}
                              disabled={isProcessing || !esinSign}
-                             className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_150px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[16px] ring-white/5"
+                             className="w-full py-12 md:py-14 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_150px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-8 border-4 border-white/10 ring-[24px] ring-white/5"
                           >
                              {isProcessing ? <Loader2 className="w-10 h-10 animate-spin" /> : <Stamp size={40} className="fill-current" />}
                              {isProcessing ? "ANCHORING ASSET..." : "FINALIZE & PUBLISH"}
@@ -768,7 +901,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                  {regStep === 'success' && (
                     <div className="flex-1 flex flex-col items-center justify-center space-y-20 py-20 animate-in zoom-in duration-1000 text-center relative">
                        <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_200px_rgba(16,185,129,0.5)] scale-110 relative group">
-                          <CheckCircle2 className="w-32 h-32 text-white group-hover:scale-110 transition-transform" />
+                          <CheckCircle2 size={100} className="group-hover:scale-110 transition-transform" />
                           <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>
                           <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
                        </div>
@@ -785,9 +918,6 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       )}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.2); border-radius: 10px; }
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

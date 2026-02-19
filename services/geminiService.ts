@@ -88,6 +88,39 @@ const handleAIError = (error: any): AIResponse => {
   return { text: errorText };
 };
 
+export const generateHandshakeAgroLang = async (category: 'HARDWARE' | 'LAND', metadata: any): Promise<AIResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const prompt = category === 'HARDWARE' 
+        ? `Generate an AgroLang execution shard for total network synchronization of an IOT device: ${JSON.stringify(metadata)}. 
+           Include syscalls for IOT_HANDSHAKE, ASSET_LINK, and KERNEL_SYNC.`
+        : `Generate an AgroLang document shard for a LAND handshake: ${JSON.stringify(metadata)}. 
+           Include geofence coordinates, geo-lock parameters, and ownership finality logic.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          systemInstruction: `You are the EnvirosAgro System Architect. Generate valid AgroLang code shards.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              code: { type: Type.STRING },
+              explanation: { type: Type.STRING },
+              hash: { type: Type.STRING }
+            }
+          }
+        }
+      });
+      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
+};
+
 export const analyzeBidHandshake = async (investorReqs: string, farmerAssets: any[]): Promise<AIResponse> => {
   try {
     return await callOracleWithRetry(async () => {

@@ -74,8 +74,11 @@ import {
   Maximize2,
   Send,
   Download,
-  // Added Radio to fix error on line 427
-  Radio
+  Radio,
+  Paperclip,
+  Link2,
+  /* Added missing icon import */
+  Box
 } from 'lucide-react';
 import { 
   LineChart as RechartsLineChart, 
@@ -96,14 +99,14 @@ import {
 } from 'recharts';
 import { chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
-import { MediaShard } from '../types';
+import { MediaShard, Task } from '../types';
 
 interface ToolsSectionProps {
   user: any; 
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC?: (amount: number, reason: string) => void;
   onOpenEvidence: (task: any) => void;
-  tasks: any[];
+  tasks: Task[];
   onSaveTask: (task: any) => void;
   notify: any;
   initialSection?: string | null;
@@ -139,13 +142,6 @@ const KANBAN_STAGES: KanbanStage[] = [
   { id: 'Quality_Audit', label: 'TQM VERIFICATION', color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
 ];
 
-const INDUSTRIAL_ASSETS = [
-  { id: 'AST-Drone-01', name: 'SkyScout Spectral Drone', type: 'Aerial Machinery', health: 94, stability: 1.42, lastAudit: '2d ago', status: 'ACTIVE', col: 'text-blue-400' },
-  { id: 'AST-Rover-42', name: 'TerraForge Soil Rover', type: 'Ground Unit', health: 62, stability: 0.85, lastAudit: '5h ago', status: 'MAINTENANCE', col: 'text-amber-500' },
-  { id: 'AST-Node-88', name: 'Bio-Sync Sensor Array', type: 'IoT Infrastructure', health: 99, stability: 1.68, lastAudit: '12m ago', status: 'ACTIVE', col: 'text-emerald-400' },
-  { id: 'AST-Pump-12', name: 'HydraFlow Ingester', type: 'Liquid Logistics', health: 88, stability: 1.15, lastAudit: '1w ago', status: 'STANDBY', col: 'text-indigo-400' },
-];
-
 const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC, onOpenEvidence, tasks = [], onSaveTask, notify, initialSection }) => {
   const [activeTool, setActiveTool] = useState<'kanban' | 'resources' | 'sigma' | 'kpis'>('kanban');
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -159,10 +155,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
     }
   }, [initialSection]);
 
-  // Archiving States
-  const [isArchiving, setIsArchiving] = useState(false);
-  const [isArchived, setIsArchived] = useState(false);
-
+  // Task Initialization States
   const [showInitTask, setShowInitTask] = useState(false);
   const [initStep, setInitStep] = useState<'form' | 'sign' | 'minting' | 'success'>('form');
   const [taskTitle, setTaskTitle] = useState('');
@@ -210,13 +203,14 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
     if (await onSpendEAC(TASK_INGEST_FEE, `TASK_INITIALIZATION_${taskTitle}`)) {
       setIsMinting(true);
       setTimeout(() => {
-        const newTask = {
+        const newTask: Partial<Task> = {
           id: `TSK-${Math.floor(Math.random() * 9000 + 1000)}`,
           title: taskTitle,
           thrust: taskThrust,
           priority: taskPriority,
           status: 'Inception',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          stewardEsin: user.esin
         };
         onSaveTask(newTask);
         setIsMinting(false);
@@ -244,8 +238,8 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
            <div className="space-y-8 relative z-10 text-center md:text-left flex-1">
               <div className="space-y-4">
-                 <h2 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Industrial <span className="text-emerald-400">Tools.</span></h2>
-                 <p className="text-slate-400 text-2xl font-medium italic leading-relaxed max-w-3xl opacity-80 group-hover:opacity-100 transition-opacity">
+                 <h2 className="text-6xl md:text-8xl font-black text-white uppercase italic m-0 leading-none drop-shadow-2xl">Industrial <span className="text-emerald-400">Tools.</span></h2>
+                 <p className="text-slate-400 text-2xl font-medium italic leading-relaxed max-w-4xl opacity-80 group-hover:opacity-100 transition-opacity">
                    "Leveraging Lean and Six Sigma methodologies to minimize defect entropy (S) and maximize stewardship output (Ca)."
                  </p>
               </div>
@@ -262,7 +256,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
         <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 flex flex-col justify-between text-center relative overflow-hidden shadow-3xl group">
            <div className="space-y-4 relative z-10">
-              <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.6em] mb-4 italic">SIGMA_LEVEL</p>
+              <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.6em] mb-4 italic opacity-60">SIGMA_LEVEL</p>
               <h4 className="text-8xl font-mono font-black text-white tracking-tighter drop-shadow-2xl italic">{sigmaLevel.toFixed(1)}</h4>
               <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4">STABLE_FLOW_OK</p>
            </div>
@@ -288,7 +282,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
           <button 
             key={t.id} 
             onClick={() => setActiveTool(t.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTool === t.id ? 'bg-indigo-600 text-white shadow-xl scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-4 px-10 py-5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTool === t.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <t.icon className="w-4 h-4" /> {t.label}
           </button>
@@ -312,9 +306,34 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                               <div className={`p-2 rounded-lg bg-white/5 ${task.priority === 'High' ? 'text-rose-500' : 'text-emerald-400'}`}><AlertCircle size={14} /></div>
                            </div>
                            <h5 className="text-xl font-black text-white uppercase italic leading-tight">{task.title}</h5>
+                           
+                           {/* Enhanced Task Metadata */}
+                           <div className="flex flex-wrap gap-2 pt-2">
+                              {task.allocatedResources?.map((resId: string) => (
+                                 <span key={resId} className="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[7px] font-black uppercase rounded border border-indigo-500/20">
+                                    <SmartphoneNfc size={8} /> {resId}
+                                 </span>
+                              ))}
+                              {task.evidenceShards?.length > 0 && (
+                                 <span className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 text-emerald-400 text-[7px] font-black uppercase rounded border border-emerald-500/20">
+                                    <Paperclip size={8} /> {task.evidenceShards.length} SHARDS
+                                 </span>
+                              )}
+                              {task.assetId && (
+                                 <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-500/10 text-blue-400 text-[7px] font-black uppercase rounded border border-blue-500/20">
+                                    <Box size={8} /> {task.assetId}
+                                 </span>
+                              )}
+                           </div>
+
                            <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                              <span className="text-[9px] text-slate-700 font-mono">ID: {task.id}</span>
-                              <button onClick={() => onOpenEvidence(task)} className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg hover:bg-indigo-500 transition-all"><Upload size={14}/></button>
+                              <div className="flex items-center gap-3">
+                                 <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-600 overflow-hidden border border-white/10">
+                                    <User size={12} />
+                                 </div>
+                                 <span className="text-[9px] text-slate-700 font-mono">NODE_{task.stewardEsin?.split('-')[1] || 'ROOT'}</span>
+                              </div>
+                              <button onClick={() => onOpenEvidence(task)} className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg hover:bg-indigo-500 transition-all" title="Attach Evidence Shard"><Upload size={14}/></button>
                            </div>
                         </div>
                       ))}
@@ -330,6 +349,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
           </div>
         )}
 
+        {/* Other tools follow original logic... */}
         {activeTool === 'sigma' && (
            <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -404,7 +424,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                                    </div>
                                 </div>
                                 <div className="flex justify-center gap-6">
-                                   <button onClick={() => setSigmaAdvice(null)} className="px-12 py-6 bg-white/5 border-2 border-white/10 rounded-full text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
+                                   <button onClick={() => setSigmaAdvice(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all shadow-xl active:scale-95">Discard Shard</button>
                                    <button className="px-20 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-2 border-white/10 ring-8 ring-white/5">
                                       <Stamp size={24} /> ANCHOR TO LEDGER
                                    </button>
@@ -418,10 +438,9 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
            </div>
         )}
         
-        {/* VIEW: ASSET MONITOR */}
         {activeTool === 'resources' && (
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in slide-in-from-right-4 duration-700">
-              {INDUSTRIAL_ASSETS.map(asset => (
+              {[].map((asset: any) => (
                  <div key={asset.id} className="p-10 glass-card rounded-[64px] border-2 border-white/5 hover:border-white/20 transition-all flex flex-col justify-between h-[450px] shadow-3xl bg-black/40 group relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={200} /></div>
                     <div className="flex justify-between items-start mb-10 relative z-10">
@@ -476,7 +495,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                              <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{kpi.name}</h4>
                              <div className="space-y-4">
                                 <div className="flex justify-between text-[11px] font-black uppercase text-slate-500 px-2"><span>Target Sync</span><span className="text-white font-mono">{kpi.value}%</span></div>
-                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner"><div className="h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-[2.5s]" style={{ width: `${kpi.value}%`, backgroundColor: kpi.color }}></div></div>
+                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner"><div className={`h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-[2.5s]`} style={{ width: `${kpi.value}%`, backgroundColor: kpi.color }}></div></div>
                              </div>
                           </div>
                        </div>
@@ -552,8 +571,8 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                        <div className="text-center space-y-8">
                           <div className="w-32 h-32 bg-emerald-600/10 border-2 border-emerald-500/20 rounded-[44px] flex items-center justify-center mx-auto text-emerald-400 shadow-3xl group relative overflow-hidden">
                              <div className="absolute inset-0 bg-emerald-500/5 animate-pulse"></div>
-                             <Fingerprint size={48} className="relative z-10 group-hover:scale-110 transition-transform" />
-                          </div>
+                             <FingerprintIcon size={48} className="relative z-10 group-hover:scale-110 transition-transform" />
+                       </div>
                           <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter italic leading-none m-0">Node <span className="text-emerald-400">Signature</span></h4>
                        </div>
 
@@ -566,11 +585,11 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                        </div>
 
                        <div className="space-y-4 max-w-xl mx-auto w-full">
-                          <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.5em] block text-center">Auth Signature (ESIN)</label>
+                          <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.5em] block text-center italic">Auth Signature (ESIN)</label>
                           <input 
                              type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
                              placeholder="EA-XXXX-XXXX-XXXX" 
-                             className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 text-center text-5xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all uppercase placeholder:text-stone-900 shadow-inner" 
+                             className="w-full bg-black border-2 border-white/10 rounded-[40px] py-10 text-center text-4xl font-mono text-white tracking-[0.2em] focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all uppercase placeholder:text-stone-900 shadow-inner" 
                           />
                        </div>
 
@@ -589,7 +608,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                  )}
 
                  {initStep === 'success' && (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-20 py-20 animate-in zoom-in duration-1000 text-center relative">
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-16 py-20 animate-in zoom-in duration-1000 text-center relative">
                        <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_200px_rgba(16,185,129,0.5)] scale-110 relative group">
                           <CheckCircle2 size={32} className="text-white group-hover:scale-110 transition-transform" />
                           <div className="absolute inset-[-20px] rounded-full border-4 border-emerald-500/20 animate-ping opacity-30"></div>

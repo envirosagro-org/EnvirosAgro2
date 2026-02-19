@@ -8,6 +8,14 @@ export interface LinkedProvider {
   lastSync: string;
 }
 
+export interface HandshakeStep {
+  id: string;
+  label: string;
+  status: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'FAILED';
+  timestamp?: string;
+  hash?: string;
+}
+
 export interface VerificationMeta {
   method: 'QR_SCAN' | 'NFC_TAP' | 'GEO_LOCK' | 'DOC_INGEST' | 'IOT_HANDSHAKE';
   verifiedAt: string;
@@ -16,6 +24,7 @@ export interface VerificationMeta {
   coordinates?: { lat: number; lng: number };
   proofDocumentUrl?: string;
   confidenceScore?: number;
+  steps?: HandshakeStep[];
 }
 
 export interface AgroResource {
@@ -23,7 +32,7 @@ export interface AgroResource {
   category: 'HARDWARE' | 'LAND' | 'INFRASTRUCTURE';
   type: string;
   name: string;
-  status: 'PROVISIONAL' | 'VERIFIED' | 'REVOKED';
+  status: 'PROVISIONAL' | 'VERIFIED' | 'REVOKED' | 'AUDITING' | 'LINKED';
   capabilities: string[];
   verificationMeta: VerificationMeta;
 }
@@ -396,6 +405,21 @@ export interface MediaShard {
   downloadUrl?: string;
 }
 
+export interface Task {
+  id: string;
+  title: string;
+  thrust: string;
+  priority: string;
+  status: 'Inception' | 'Processing' | 'Quality_Audit' | 'Completed';
+  timestamp: string;
+  stewardEsin: string;
+  assetId?: string; // Links to LiveAgroProduct or FarmingContract
+  blueprintId?: string;
+  evidenceShards?: string[]; // IDs of MediaShards/Evidence
+  allocatedResources?: string[]; // IDs of AgroResources
+  description?: string;
+}
+
 export type ViewState = 
   | 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' 
   | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' 
@@ -408,7 +432,7 @@ export type ViewState =
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
   | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot'
-  | 'mesh_protocol';
+  | 'mesh_protocol' | 'registry_handshake';
 
 export interface VectorAddress {
   dimension: ViewState;
@@ -480,7 +504,6 @@ export interface SocialPost {
 }
 
 export interface PostComment {
-  id: string;
   authorEsin: string;
   authorName: string;
   text: string;
