@@ -66,10 +66,15 @@ import {
   Receipt,
   Smartphone as PhoneIcon,
   Mail,
-  ChevronDown
+  ChevronDown,
+  Scale,
+  Calculator,
+  Award,
+  PieChart as PieIcon
 } from 'lucide-react';
-import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject } from '../types';
-import { analyzeInstitutionalRisk, consultFinancialOracle, AIResponse } from '../services/geminiService';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, ShardCostCalibration } from '../types';
+import { analyzeInstitutionalRisk, consultFinancialOracle, AIResponse, chatWithAgroExpert } from '../services/geminiService';
 import { initiatePayPalPayout } from '../services/paymentService';
 
 interface AgroWalletProps {
@@ -84,6 +89,7 @@ interface AgroWalletProps {
   transactions?: AgroTransaction[];
   notify: any;
   initialSection?: string | null;
+  costAudit: ShardCostCalibration | null;
 }
 
 const FOREX_RATES = {
@@ -94,9 +100,16 @@ const FOREX_RATES = {
 };
 
 const STAKING_TIERS = [
-  { id: 'bronze', label: 'ECOLOGY_STAKE', min: 100, yield: 4.5, period: '30 Cycles', icon: Sprout, col: 'text-emerald-400', bg: 'bg-emerald-500/5', border: 'border-emerald-500/20', accent: 'emerald' },
-  { id: 'silver', label: 'INDUSTRIAL_STAKE', min: 1000, yield: 12.2, period: '90 Cycles', icon: Factory, col: 'text-indigo-400', bg: 'bg-indigo-500/5', border: 'border-indigo-500/20', accent: 'indigo' },
-  { id: 'gold', label: 'SOVEREIGN_STAKE', min: 5000, yield: 24.8, period: '360 Cycles', icon: Trophy, col: 'text-amber-500', bg: 'bg-amber-500/5', border: 'border-amber-500/20', accent: 'amber' },
+  { id: 'bronze', label: 'ECOLOGY_STAKE', min: 100, yield: 4.5, period: '30 Cycles', icon: Sprout, col: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', accent: 'emerald' },
+  { id: 'silver', label: 'INDUSTRIAL_STAKE', min: 1000, yield: 12.2, period: '90 Cycles', icon: Factory, col: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', accent: 'indigo' },
+  { id: 'gold', label: 'SOVEREIGN_STAKE', min: 5000, yield: 24.8, period: '360 Cycles', icon: Trophy, col: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', accent: 'amber' },
+];
+
+const COST_DISTRIBUTION = [
+  { name: 'Environmental_Sync', value: 40, color: '#10b981' },
+  { name: 'Registry_Handshake', value: 25, color: '#3b82f6' },
+  { name: 'Oracle_Consult', value: 20, color: '#6366f1' },
+  { name: 'Mesh_Propagate', value: 15, color: '#f59e0b' },
 ];
 
 const AgroWallet: React.FC<AgroWalletProps> = ({ 
@@ -109,9 +122,10 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   onClaimSocialHarvest, 
   transactions = [],
   notify,
-  initialSection
+  initialSection,
+  costAudit
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'treasury' | 'staking' | 'swap' | 'gateway' | 'ledger'>('treasury');
+  const [activeSubTab, setActiveSubTab] = useState<'treasury' | 'staking' | 'swap' | 'gateway' | 'ledger' | 'calibrations'>('treasury');
   const [showGatewayModal, setShowGatewayModal] = useState<'deposit' | 'withdrawal' | null>(null);
   const [showLinkProvider, setShowLinkProvider] = useState(false);
   const [gatewayStep, setGatewayStep] = useState<'config' | 'handoff' | 'external_sync' | 'sign' | 'success'>('config');
@@ -125,9 +139,11 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   const [esinSign, setEsinSign] = useState('');
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
 
+  // Oracle States
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [oracleAdvice, setOracleAdvice] = useState<string | null>(null);
+
   // New Provider State
-  const [newProvType] = useState<LinkedProvider['type']>('PayPal');
-  const [newProvName] = useState('PayPal');
   const [newProvFragment, setNewProvFragment] = useState('');
 
   // Swap State
@@ -140,7 +156,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   // Routing Sync
   useEffect(() => {
-    if (initialSection && ['treasury', 'staking', 'swap', 'gateway', 'ledger'].includes(initialSection)) {
+    if (initialSection && ['treasury', 'staking', 'swap', 'gateway', 'ledger', 'calibrations'].includes(initialSection)) {
       setActiveSubTab(initialSection as any);
     }
   }, [initialSection]);
@@ -181,6 +197,28 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
     });
   };
 
+  const handleRunAudit = async () => {
+    if (!costAudit) return;
+    setIsAuditing(true);
+    setOracleAdvice(null);
+    try {
+      const prompt = `Act as the EnvirosAgro Cost Accounting Oracle. Analyze node ${user.esin} metrics:
+      m-constant: ${costAudit.mConstant}
+      Ca-AgroCode: ${user.metrics.agriculturalCodeU}
+      Sustainability Score: ${user.metrics.sustainabilityScore}
+      
+      Calculate the "Economic Resistance Shard". Identify cost centers that are leaking energy. 
+      Propose a 3-stage sharding strategy to reduce procurement overhead by 15%.`;
+      
+      const res = await chatWithAgroExpert(prompt, []);
+      setOracleAdvice(res.text);
+    } catch (e) {
+      setOracleAdvice("Handshake Interrupted. Registry drift detected in Cost Center Alpha.");
+    } finally {
+      setIsAuditing(false);
+    }
+  };
+
   const executeGatewayHandshake = async () => {
     if (!selectedProvider) return;
     
@@ -198,7 +236,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
         setGatewayStep('config');
       }
     } else {
-      // Deposit Flow
       setGatewayStep('handoff');
       await new Promise(r => setTimeout(r, 1500));
       setGatewayStep('external_sync');
@@ -284,9 +321,9 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
           { label: 'LIQUID UTILITY (EAC)', val: user.wallet.balance.toLocaleString(), color: 'text-emerald-500', icon: Coins },
           { label: 'EQUITY ASSETS (EAT)', val: (user.wallet.eatBalance + (user.wallet.stakedEat || 0)).toFixed(4), color: 'text-amber-500', icon: Gem },
           { label: 'RESONANCE FACTOR (m)', val: `x${user.wallet.exchangeRate.toFixed(2)}`, color: 'text-indigo-400', icon: Activity },
-          { label: 'PAYMENT_GATEWAY', val: 'PAYPAL_ONLY', color: 'text-blue-400', icon: ShieldCheck },
+          { label: 'CALIBRATED_PRICE', val: `${costAudit?.calibratedCost || 100} EAC`, color: 'text-rose-400', icon: Scale },
         ].map((m, i) => (
-          <div key={i} className="p-8 glass-card rounded-[48px] bg-black/40 border border-white/5 space-y-6 group hover:border-white/10 transition-all shadow-2xl relative overflow-hidden">
+          <div key={i} className="p-8 glass-card rounded-[48px] bg-black/40 border border-white/5 space-y-6 group hover:border-white/10 transition-all shadow-3xl relative overflow-hidden h-[220px] flex flex-col justify-between">
              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><m.icon size={120} className={m.color} /></div>
              <div className="flex justify-between items-center relative z-10">
                 <p className={`text-[10px] ${m.color} font-black uppercase tracking-[0.4em] text-nowrap`}>{m.label}</p>
@@ -303,6 +340,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 mx-auto lg:mx-0 relative z-20">
         {[
           { id: 'treasury', label: 'Treasury Hub', icon: Wallet },
+          { id: 'calibrations', label: 'Cost Calibration', icon: Calculator },
           { id: 'gateway', label: 'PayPal Bridge', icon: Link2 },
           { id: 'staking', label: 'Staking', icon: Layers },
           { id: 'swap', label: 'Sharding', icon: ArrowRightLeft },
@@ -311,7 +349,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
           <button 
             key={tab.id} 
             onClick={() => setActiveSubTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             <tab.icon size={16} /> {tab.label}
           </button>
@@ -353,29 +391,156 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
              </div>
 
              <div className="lg:col-span-4 space-y-8">
-                <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-blue-500/5 space-y-6 shadow-xl relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Mail size={180} className="text-blue-500" /></div>
+                {/* CALIBRATION OVERLAY IN TREASURY */}
+                <div className="glass-card p-10 rounded-[56px] border border-rose-500/20 bg-rose-500/5 space-y-6 shadow-xl relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Scale size={180} className="text-rose-500" /></div>
                    <div className="flex items-center justify-between relative z-10">
                       <div className="flex items-center gap-4">
-                         <div className="p-4 bg-blue-600 rounded-2xl shadow-xl"><ExternalLink size={24} className="text-white" /></div>
-                         <h4 className="text-xl font-black text-white uppercase italic">Active Nodes</h4>
+                         <div className="p-4 bg-rose-600 rounded-2xl shadow-xl"><Calculator size={24} className="text-white" /></div>
+                         <h4 className="text-xl font-black text-white uppercase italic">Calibration</h4>
                       </div>
                       <span className="text-[10px] font-mono text-slate-700">v6.5</span>
                    </div>
                    <div className="relative z-10 py-4">
-                      <p className="text-5xl font-mono font-black text-white tracking-tighter italic">{paypalProviders.length}<span className="text-xl text-blue-500 ml-1">Bridges</span></p>
-                      <p className="text-[10px] text-slate-600 font-bold uppercase mt-2 tracking-widest italic">Secured PayPal Shards</p>
+                      <p className="text-5xl font-mono font-black text-white tracking-tighter italic">{costAudit?.calibratedCost || '...'}<span className="text-xl text-rose-500 ml-1">EAC</span></p>
+                      <p className="text-[10px] text-slate-600 font-bold uppercase mt-2 tracking-widest italic">"Should Be" Shard Price</p>
                    </div>
                 </div>
 
                 <div className="p-10 glass-card rounded-[48px] border border-white/10 bg-black/40 space-y-4 shadow-xl">
                    <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                      <ShieldPlus className="text-blue-400 w-5 h-5" />
-                      <h4 className="text-sm font-black text-white uppercase tracking-widest">PayPal Policy</h4>
+                      <Info className="text-blue-400 w-5 h-5" />
+                      <h4 className="text-sm font-black text-white uppercase tracking-widest">Protocol Notice</h4>
                    </div>
                    <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                      "Registry capital ingestion is restricted to authorized PayPal bridges to ensure global compliance and ZK-verified financial finality."
+                      "Real-time cost accounting processes run in the background, continuously analyzing m-constant drift to optimize your node overhead."
                    </p>
+                </div>
+             </div>
+          </div>
+        )}
+
+        {/* --- VIEW: COST CALIBRATIONS --- */}
+        {activeSubTab === 'calibrations' && costAudit && (
+          <div className="space-y-12 animate-in zoom-in duration-700">
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div className="lg:col-span-8 glass-card p-12 rounded-[64px] border-2 border-indigo-500/20 bg-[#050706] relative overflow-hidden shadow-3xl group">
+                   <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none"></div>
+                   <div className="flex items-center justify-between mb-16 border-b border-white/5 pb-10 px-4">
+                      <div className="flex items-center gap-8">
+                         <div className="w-20 h-20 rounded-[32px] bg-indigo-600 flex items-center justify-center text-white shadow-3xl animate-float">
+                            <Scale size={40} />
+                         </div>
+                         <div>
+                            <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Economic <span className="text-indigo-400">Calibrator</span></h3>
+                            <p className="text-indigo-400/60 text-[11px] font-mono tracking-[0.6em] uppercase mt-4 italic">C_s = (C_b / m) * (1 + S_load)</p>
+                         </div>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Background Sync</p>
+                         <p className="text-4xl font-mono font-black text-emerald-400 leading-none mt-2">ACTIVE</p>
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10 px-4">
+                      <div className="space-y-8">
+                         <h4 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-4">
+                            <Calculator size={24} className="text-indigo-500" /> Price Optimization
+                         </h4>
+                         <div className="space-y-6">
+                            {[
+                               { l: 'Genesis Shard Cost', v: '100 EAC', b: 'bg-slate-800' },
+                               { l: 'Current Resonance Filter', v: `-${( (1 - (1/costAudit.mConstant)) * 100).toFixed(1)}%`, b: 'bg-emerald-600/20 text-emerald-400' },
+                               { l: 'Network Entropy Load', v: '+5%', b: 'bg-rose-600/10 text-rose-500' },
+                            ].map((item, i) => (
+                               <div key={i} className={`p-6 rounded-3xl flex justify-between items-center border border-white/5 ${item.b}`}>
+                                  <span className="text-xs font-black uppercase text-slate-400">{item.l}</span>
+                                  <span className="text-lg font-mono font-black">{item.v}</span>
+                               </div>
+                            ))}
+                            <div className="p-10 bg-indigo-600 rounded-[44px] shadow-[0_0_100px_rgba(99,102,241,0.3)] text-center space-y-2 border-4 border-white/10">
+                               <p className="text-[11px] font-black text-white/60 uppercase tracking-widest">SHARD_SHOULD_BE_VAL</p>
+                               <p className="text-7xl font-mono font-black text-white tracking-tighter">{costAudit.calibratedCost} <span className="text-xl">EAC</span></p>
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="space-y-8 h-full flex flex-col">
+                         <h4 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-4">
+                            <PieIcon size={24} className="text-emerald-500" /> System Allocation
+                         </h4>
+                         <div className="flex-1 bg-black/40 rounded-[48px] border border-white/5 p-6 shadow-inner">
+                            <ResponsiveContainer width="100%" height="100%">
+                               <PieChart>
+                                  <Pie
+                                     data={COST_DISTRIBUTION}
+                                     innerRadius={60}
+                                     outerRadius={100}
+                                     paddingAngle={8}
+                                     dataKey="value"
+                                  >
+                                     {COST_DISTRIBUTION.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                                     ))}
+                                  </Pie>
+                                  <RechartsTooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
+                               </PieChart>
+                            </ResponsiveContainer>
+                         </div>
+                         <div className="grid grid-cols-2 gap-4">
+                            {COST_DISTRIBUTION.map(c => (
+                               <div key={c.name} className="flex items-center gap-3">
+                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }}></div>
+                                  <span className="text-[8px] font-black uppercase text-slate-600 truncate">{c.name}</span>
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 relative z-10 px-4">
+                      <div className="flex items-center gap-6">
+                         <Stamp size={40} className="text-indigo-400" />
+                         <div className="text-left">
+                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Live Audit Shard</p>
+                            <p className="text-lg font-mono text-white">0xAUDIT_#{(Math.random()*1000).toFixed(0)}</p>
+                         </div>
+                      </div>
+                      <button onClick={handleRunAudit} disabled={isAuditing} className="px-16 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-2 border-white/10 ring-8 ring-white/5">
+                        {isAuditing ? <Loader2 className="animate-spin" size={16} /> : <Bot size={16} />} 
+                        {isAuditing ? 'CONSULTING ORACLE...' : 'REQUEST STRATEGIC VERDICT'}
+                      </button>
+                   </div>
+                </div>
+
+                <div className="lg:col-span-4 space-y-8">
+                   <div className="glass-card p-10 rounded-[56px] border-2 border-indigo-500/20 bg-indigo-950/10 relative overflow-hidden shadow-3xl flex flex-col flex-1 group">
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Bot size={400} /></div>
+                      <div className="relative z-10 space-y-10">
+                         <div className="flex items-center gap-6 border-b border-indigo-500/20 pb-8">
+                            <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl flex items-center justify-center text-white border-2 border-white/10">
+                               <Bot size={32} className="animate-pulse" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Advisor</h3>
+                         </div>
+                         <div className="flex-1 min-h-[300px] overflow-y-auto custom-scrollbar pr-4">
+                            {!oracleAdvice ? (
+                               <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-20">
+                                  <Database size={80} className="text-slate-600" />
+                                  <p className="text-xl font-black uppercase tracking-[0.4em] text-white italic">ORACLE_STANDBY</p>
+                               </div>
+                            ) : (
+                               <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-10">
+                                  <div className="p-8 bg-black/80 rounded-[48px] border border-indigo-500/20 shadow-inner border-l-8 border-l-indigo-600">
+                                     <p className="text-slate-300 text-lg leading-relaxed italic whitespace-pre-line font-medium">
+                                        {oracleAdvice}
+                                     </p>
+                                  </div>
+                               </div>
+                            )}
+                         </div>
+                      </div>
+                   </div>
                 </div>
              </div>
           </div>
@@ -386,7 +551,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
            <div className="space-y-12 animate-in slide-in-from-right-4 duration-700 px-4">
               <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-10 px-4">
                  <div className="space-y-2">
-                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">PayPal <span className="text-indigo-400">Bridges</span></h3>
+                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">PayPal <span className="text-indigo-400">Bridges</span></h3>
                     <p className="text-slate-500 text-lg md:text-xl font-medium italic opacity-70">"Synchronizing your steward identity with global financial shards."</p>
                  </div>
                  <button 
@@ -405,7 +570,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                           <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl animate-float"><Mail size={32} /></div>
                           <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">Authorize PayPal Bridge</h4>
                        </div>
-                       <button onClick={() => setShowLinkProvider(false)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white"><X size={24}/></button>
+                       <button onClick={() => setShowLinkProvider(false)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X size={24}/></button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
@@ -514,7 +679,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                     <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Stake <span className="text-indigo-400">Finality</span></h4>
                     <div className="flex gap-4 items-end max-w-md">
                        <div className="flex-1 space-y-2">
-                          <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Amount to Lock (EAT)</label>
+                          <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Allocation (EAT)</label>
                           <input 
                             type="number" value={stakingAmount} onChange={e => setStakingAmount(e.target.value)}
                             className="w-full bg-black border-2 border-white/10 rounded-2xl py-4 px-6 text-2xl font-mono font-black text-white outline-none focus:ring-4 focus:ring-indigo-500/20" 
@@ -604,7 +769,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                     <span>Time Shard</span>
                     <span className="text-right">Settlement</span>
                  </div>
-                 <div className="divide-y divide-white/5 bg-[#050706] relative z-10 min-h-[600px]">
+                 <div className="divide-y divide-white/5 bg-[#050706] relative z-10 min-h-[500px]">
                     {transactions.length === 0 ? (
                        <div className="h-full flex flex-col items-center justify-center py-40 opacity-10 space-y-8">
                           <History size={120} />
@@ -671,7 +836,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                     return (
                       <div key={s} className="flex-1 flex flex-col gap-3">
                          <div className={`h-2 rounded-full transition-all duration-700 ${i <= actualIdx ? 'bg-indigo-500 shadow-[0_0_20px_#6366f1]' : 'bg-white/10'}`}></div>
-                         <span className={`text-[8px] font-black uppercase text-center tracking-widest ${i === actualIdx ? 'text-indigo-400' : 'text-slate-800'}`}>{s}</span>
+                         <span className={`text-[8px] font-black uppercase text-center tracking-widest ${i === actualIdx ? 'text-indigo-400' : 'text-slate-700'}`}>{s}</span>
                       </div>
                     );
                  })}
@@ -834,7 +999,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                              </div>
                           </div>
                        </div>
-                       <button onClick={closeGateway} className="px-24 py-8 bg-white/5 border-2 border-white/10 rounded-full text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Hub</button>
+                       <button onClick={closeGateway} className="px-24 py-8 bg-white/5 border border-white/10 rounded-full text-white font-black text-xs uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl active:scale-95">Return to Hub</button>
                     </div>
                  )}
               </div>
@@ -847,7 +1012,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
+        .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }

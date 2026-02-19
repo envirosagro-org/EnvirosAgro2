@@ -56,9 +56,13 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // Fix: Direct instantiation from window to avoid "Illegal constructor" error in Safari and other strict environments
-      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) throw new Error("AudioContext not supported");
+      // Safeguard against non-constructor or missing AudioContext
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (typeof AudioContextClass !== 'function') {
+        console.error("AudioContext is not a valid constructor in this environment.");
+        setIsConnecting(false);
+        return;
+      }
       
       outputAudioContextRef.current = new AudioContextClass({ sampleRate: 24000 });
       inputAudioContextRef.current = new AudioContextClass({ sampleRate: 16000 });

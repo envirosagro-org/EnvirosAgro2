@@ -405,10 +405,10 @@ export type ViewState =
   | 'animal_world' | 'plants_world' | 'aqua_portal' | 'soil_portal' | 'air_portal'
   | 'intranet' | 'cea_portal' | 'biotech_hub' | 'permaculture_hub' | 'emergency_portal'
   | 'agro_regency' | 'code_of_laws' | 'agro_calendar' | 'chroma_system'
-  | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv' | 'registry_handshake'
-  | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger' | 'agrolang'
-  | 'network' | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot'
-  | 'cost_accounting';
+  | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv'
+  | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
+  | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot'
+  | 'mesh_protocol';
 
 export interface VectorAddress {
   dimension: ViewState;
@@ -504,4 +504,15 @@ export interface ShardCostCalibration {
   sehtiBonus: number;
   stressPenalty: number;
   finalYield: number;
+}
+
+export interface MeshNode {
+  id: string;
+  esin: string;
+  label: string;
+  status: 'UP' | 'DOWN' | 'SYNCING';
+  lastBlock: string;
+  peers: string[];
+  latency: number;
+  load: number;
 }

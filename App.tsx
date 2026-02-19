@@ -23,9 +23,10 @@ import {
   SearchCode,
   LayoutGrid,
   Calculator,
-  Lock
+  Lock,
+  Network
 } from 'lucide-react';
-import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress } from './types';
+import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration } from './types';
 import Dashboard from './components/Dashboard';
 import Sustainability from './components/Sustainability';
 import Economy from './components/Economy';
@@ -68,20 +69,16 @@ import AgroCalendar from './components/AgroCalendar';
 import ChromaSystem from './components/ChromaSystem';
 import AgroValueEnhancement from './components/AgroValueEnhancement';
 import DigitalMRV from './components/DigitalMRV';
-import RegistryHandshake from './components/RegistryHandshake';
 import OnlineGarden from './components/OnlineGarden';
 import FarmOS from './components/FarmOS';
-import NetworkView from './components/NetworkView';
 import MediaLedger from './components/MediaLedger';
-import AgroLang from './components/AgroLang';
-import SignalCenter from './components/SignalCenter';
 import Sitemap from './components/Sitemap';
 import AIAnalyst from './components/AIAnalyst';
 import VerificationHUD from './components/VerificationHUD';
 import SettingsPortal from './components/SettingsPortal';
 import TemporalVideo from './components/TemporalVideo';
 import Robot from './components/Robot';
-import CostAccounting from './components/CostAccounting';
+import MeshProtocol from './components/MeshProtocol';
 
 import { 
   syncUserToCloud, 
@@ -97,9 +94,11 @@ import {
   refreshAuthUser,
   updateSignalReadStatus,
   markAllSignalsAsReadInDb,
-  verifyAppCheckHandshake
+  verifyAppCheckHandshake,
+  startBackgroundDataSync
 } from './services/firebaseService';
 import { chatWithAgroExpert } from './services/geminiService';
+import { getFullCostAudit } from './services/costAccountingService';
 
 export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => (
   <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className}`}>
@@ -117,6 +116,7 @@ const BOOT_LOGS = [
   "ZK_PROOF_ENGINE_BOOT [SUCCESS]",
   "ESTABLISHING_ORACLE_HANDSHAKE...",
   "SEHTI_THRUST_ALIGNED",
+  "DATA_CONNECT_L3_SYNC_ACTIVE",
   "NODE_SYNC_FINALIZED"
 ];
 
@@ -172,17 +172,13 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
 
   useEffect(() => {
     const runHandshake = async () => {
-      // Allow logo to be seen for a moment before starting verification
       await new Promise(r => setTimeout(r, 1000));
-      
       const success = await verifyAppCheckHandshake();
       if (success) {
         setVerifStatus('SECURITY_VERIFIED');
       } else {
         setVerifStatus('OFFLINE_RECOVERY_MODE');
       }
-      
-      // Delay proceeding to ensure the user sees the "verification" result
       await new Promise(r => setTimeout(r, 1000));
       setIsVerifying(false);
     };
@@ -191,11 +187,9 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
 
   useEffect(() => {
     if (isVerifying) return;
-
     const logInterval = setInterval(() => {
       setCurrentLog(prev => (prev < BOOT_LOGS.length - 1 ? prev + 1 : prev));
     }, 1200);
-
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
@@ -205,8 +199,7 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
         }
         return prev + 1;
       });
-    }, 55); // Slower for the requested logo/dashboard impact
-
+    }, 55);
     return () => {
       clearInterval(logInterval);
       clearInterval(progressInterval);
@@ -216,15 +209,12 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
   return (
     <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center space-y-12 overflow-hidden px-6">
       <div className="absolute inset-0 pointer-events-none z-10 opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
-      
       <div className="relative group">
-        {/* Sycamore Leaf Logo Section */}
         <div className="w-48 h-48 md:w-64 md:h-64 rounded-[48px] bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-pulse relative z-20 overflow-hidden">
           <SycamoreLogo size={120} className="text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]" />
           <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent animate-pulse"></div>
         </div>
         <div className="absolute inset-[-30px] border-2 border-dashed border-emerald-500/20 rounded-[64px] animate-spin-slow"></div>
-        
         {isVerifying && (
            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-4 animate-in fade-in duration-500">
              <div className="p-4 bg-black/80 rounded-2xl border border-white/10 backdrop-blur-xl flex flex-col items-center gap-2">
@@ -234,13 +224,9 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
            </div>
         )}
       </div>
-
       <div className="w-full max-w-md space-y-8 relative z-20">
         <div className="h-1 bg-white/5 rounded-full overflow-hidden p-px shadow-inner">
-          <div 
-            className="h-full bg-emerald-500 shadow-[0_0_20px_#10b981] transition-all duration-300 ease-out" 
-            style={{ width: `${progress}%` }}
-          ></div>
+          <div className="h-full bg-emerald-500 shadow-[0_0_20px_#10b981] transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
         </div>
         <div className="flex flex-col items-center gap-6">
            <p className="text-[11px] font-mono font-black text-emerald-400/80 uppercase tracking-[0.4em] animate-pulse h-4 text-center">
@@ -254,7 +240,6 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
            </div>
         </div>
       </div>
-
       <div className="absolute bottom-12 flex flex-col items-center gap-3 opacity-40">
         <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">Enviros<span className="text-emerald-400">Agro</span></h1>
         <p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.5em] text-center">Decentralized Regenerative Grid</p>
@@ -316,22 +301,20 @@ export interface RegistryGroup {
   items: RegistryItem[];
 }
 
-// SYNCHRONIZED REGISTRY NODES with SchemaMap.xml
 const REGISTRY_NODES: RegistryGroup[] = [
   { 
     category: 'Command & Strategy', 
     items: [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
+      { id: 'mesh_protocol', name: 'Mesh Protocol', icon: Network, sections: [{id: 'topology', label: 'Network Topology'}, {id: 'commits', label: 'Block Shards'}, {id: 'mempool', label: 'Inbound Mempool'}] },
       { id: 'sustainability', name: 'Sustainability Shard', icon: Leaf },
       { id: 'ai_analyst', name: 'Neural Analyst', icon: Brain },
       { id: 'settings', name: 'System Settings', icon: Settings, sections: [{id: 'display', label: 'UI Display'}, {id: 'privacy', label: 'Security Shards'}] },
       { id: 'profile', name: 'Steward Profile', icon: UserIcon, sections: [{id: 'dossier', label: 'Personal Registry'}, {id: 'card', label: 'Identity Shard'}, {id: 'celestial', label: 'Birth Resonance'}] },
-      { id: 'network_signals', name: 'Signal Terminal', icon: SignalIcon, sections: [{id: 'terminal', label: 'Inbound Feed'}, {id: 'ledger', label: 'Signal History'}] },
-      { id: 'network', name: 'Network Topology', icon: NetworkIcon },
-      { id: 'farm_os', name: 'Farm OS', icon: Binary, sections: [{id: 'kernel', label: 'Kernel Stack'}, {id: 'hardware', label: 'Hardware Monitor'}, {id: 'shell', label: 'System Shell'}] },
+      { id: 'explorer', name: 'Monitoring Hub', icon: Database, sections: [{id: 'terminal', label: 'Signal Terminal'}, {id: 'blocks', label: 'Blocks'}, {id: 'ledger', label: 'Tx Ledger'}, {id: 'consensus', label: 'Quorum'}, {id: 'settlement', label: 'Finality'}] },
+      { id: 'farm_os', name: 'Farm OS', icon: Binary, sections: [{id: 'kernel', label: 'Kernel Stack'}, {id: 'ide', label: 'AgroLang IDE'}, {id: 'shell', label: 'System Shell'}] },
       { id: 'impact', name: 'Network Impact', icon: TrendingUp, sections: [{id: 'whole', label: 'Vitality'}, {id: 'carbon', label: 'Carbon Ledger'}, {id: 'thrusts', label: 'Resonance'}] },
       { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'eos_ai', label: 'Expert Oracle'}] },
-      { id: 'explorer', name: 'Registry Explorer', icon: Database, sections: [{id: 'blocks', label: 'Blocks'}, {id: 'ledger', label: 'Tx Ledger'}, {id: 'consensus', label: 'Quorum'}, {id: 'settlement', label: 'Finality'}] },
       { id: 'sitemap', name: 'Registry Matrix', icon: MapIcon },
       { id: 'info', name: 'Hub Info', icon: Info, sections: [{id: 'about', label: 'About'}, {id: 'security', label: 'Security'}, {id: 'legal', label: 'Legal'}, {id: 'faq', label: 'FAQ'}] }
     ]
@@ -350,8 +333,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
     items: [
       { id: 'industrial', name: 'Industrial Cloud', icon: Factory, sections: [{id: 'bridge', label: 'Registry Bridge'}, {id: 'sync', label: 'Process Sync'}, {id: 'path', label: 'Analyzer'}] },
       { id: 'agro_value_enhancement', name: 'Value Forge', icon: FlaskConical, sections: [{id: 'synthesis', label: 'Asset Synthesis'}, {id: 'optimization', label: 'Process Tuning'}] },
-      { id: 'cost_accounting', name: 'Cost Accounting', icon: Calculator },
-      { id: 'wallet', name: 'Treasury Node', icon: Wallet, sections: [{id: 'treasury', label: 'Utility'}, {id: 'staking', label: 'Staking'}, {id: 'swap', label: 'Swap'}] },
+      { id: 'wallet', name: 'Agro Wallet Hub', icon: Wallet, sections: [{id: 'treasury', label: 'Utility'}, {id: 'calibrations', label: 'Cost Calibration'}, {id: 'staking', label: 'Staking'}, {id: 'swap', label: 'Swap'}] },
       { id: 'economy', name: 'Market Center', icon: Globe, sections: [{id: 'catalogue', label: 'Registry Assets'}, {id: 'infrastructure', label: 'Industrial Nodes'}, {id: 'forecasting', label: 'Demand Matrix'}] },
       { id: 'vendor', name: 'Vendor Command', icon: Warehouse },
       { id: 'ecosystem', name: 'Brand Multiverse', icon: Layers },
@@ -363,7 +345,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
     items: [
       { id: 'online_garden', name: 'Online Garden', icon: Flower, sections: [{id: 'bridge', label: 'Telemetry Bridge'}, {id: 'shards', label: 'Shard Manager'}, {id: 'mining', label: 'Extraction'}] },
       { id: 'digital_mrv', name: 'Digital MRV', icon: Scan, sections: [{id: 'land_select', label: 'Geofence'}, {id: 'ingest', label: 'Evidence Ingest'}] },
-      { id: 'ingest', name: 'Data Ingest', icon: Cable },
+      { id: 'ingest', name: 'Data Inflow Hub', icon: Cable, sections: [{id: 'handshake', label: 'Node Pairing'}, {id: 'streams', label: 'Registry Keys'}, {id: 'vault', label: 'Evidence Vault'}] },
       { id: 'live_farming', name: 'Inflow Control', icon: Monitor, sections: [{id: 'lifecycle', label: 'Pipeline'}] },
       { id: 'tqm', name: 'TQM Trace Hub', icon: ClipboardCheck, sections: [{id: 'orders', label: 'Shipments'}, {id: 'trace', label: 'Traceability'}] },
       { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake, sections: [{id: 'directory', label: 'Directory'}, {id: 'support', label: 'Support'}] },
@@ -391,9 +373,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'code_of_laws', name: 'Code of Laws', icon: Scale },
       { id: 'agro_calendar', name: 'Liturgical Calendar', icon: CalendarDays },
       { id: 'chroma_system', name: 'Chroma-SEHTI', icon: Palette },
-      { id: 'agrolang', name: 'AgroLang IDE', icon: Code2 },
       { id: 'research', name: 'Invention Ledger', icon: Zap },
-      { id: 'registry_handshake', name: 'Node Handshake', icon: QrCode },
       { id: 'biotech_hub', name: 'Biotech Hub', icon: Dna },
       { id: 'permaculture_hub', name: 'Permaculture Hub', icon: Compass },
       { id: 'cea_portal', name: 'CEA Portal', icon: BoxSelect },
@@ -422,45 +402,16 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
     if (!searchTerm.trim()) return;
     setIsAiSearching(true);
     setAiDeepSuggestion(null);
-    
     try {
-      const sitemapContext = REGISTRY_NODES.map(g => 
-        `Group: ${g.category}\n${g.items.map(i => `- ${i.name} (id: ${i.id}): ${i.sections?.map(s => s.label).join(', ')}`).join('\n')}`
-      ).join('\n\n');
-
-      const socialContext = GLOBAL_STEWARD_REGISTRY.map(s => 
-        `- Steward: ${s.name} (ESIN: ${s.esin}), Role: ${s.role}, Skills: ${s.skills.join(', ')}`
-      ).join('\n');
-
-      const ledgerContext = `
-      - Media Shards: ${SEARCHABLE_MEDIA_LEDGER.map(m => m.title).join(', ')}
-      - Missions: ${GLOBAL_PROJECTS_MISSIONS.map(m => m.name).join(', ')}
-      - Experiences: ${ITEM_CATEGORY_EXPERIENCES.map(e => e.title).join(', ')}
-      - Logistics: ${LOGISTICS_SHARDS.map(l => l.name).join(', ')}
-      - Community Exams/Modules: ${LMS_EXAMS_MODULES.map(e => e.title).join(', ')}
-      - Market Products: ${vendorProducts.map(p => p.name).join(', ')}
-      `;
-
-      const prompt = `Act as the EnvirosAgro Navigation and Multi-Ledger Oracle. Based on the following sitemap, steward registry, and ledger indices, recommend EXACTLY ONE shard, section, or ledger entry that best answers the user's query.
-      
-      Registry Sitemap: ${sitemapContext}
-      Social Steward Registry: ${socialContext}
-      Industrial Ledgers Index: ${ledgerContext}
-      
-      User Query: "${searchTerm}"
-      
-      Return your answer in plain text with this EXACT format:
-      REASON: [Why this is relevant in the context of EnvirosAgro's multi-ledger architecture]
-      VIEW: [The shard id or portal name]
-      SECTION: [The section id if applicable, otherwise 'all']
-      STEWARD_ESIN: [If recommending a person, provide their ESIN here, otherwise omit]`;
-
+      const sitemapContext = REGISTRY_NODES.map(g => `Group: ${g.category}\n${g.items.map(i => `- ${i.name} (id: ${i.id}): ${i.sections?.map(s => s.label).join(', ')}`).join('\n')}`).join('\n\n');
+      const socialContext = GLOBAL_STEWARD_REGISTRY.map(s => `- Steward: ${s.name} (ESIN: ${s.esin}), Role: ${s.role}, Skills: ${s.skills.join(', ')}`).join('\n');
+      const ledgerContext = `- Media Shards: ${SEARCHABLE_MEDIA_LEDGER.map(m => m.title).join(', ')}\n- Missions: ${GLOBAL_PROJECTS_MISSIONS.map(m => m.name).join(', ')}\n- Experiences: ${ITEM_CATEGORY_EXPERIENCES.map(e => e.title).join(', ')}\n- Logistics: ${LOGISTICS_SHARDS.map(l => l.name).join(', ')}\n- Community Exams/Modules: ${LMS_EXAMS_MODULES.map(e => e.title).join(', ')}\n- Market Products: ${vendorProducts.map(p => p.name).join(', ')}`;
+      const prompt = `Act as the EnvirosAgro Navigation and Multi-Ledger Oracle. Based on the sitemap, steward registry, and ledger archives, recommend EXACTLY ONE shard, section, or ledger entry that best answers the user's query.\n\nRegistry Sitemap: ${sitemapContext}\nSocial Steward Registry: ${socialContext}\nIndustrial Ledgers Index: ${ledgerContext}\n\nUser Query: "${searchTerm}"\n\nReturn format:\nREASON: [Why relevant]\nVIEW: [shard id]\nSECTION: [section id or all]\nSTEWARD_ESIN: [optional esin]`;
       const res = await chatWithAgroExpert(prompt, []);
       const reason = res.text.match(/REASON:\s*(.*)/i)?.[1] || "Deep semantic match found in registry.";
       const view = res.text.match(/VIEW:\s*([a-z_0-9]+)/i)?.[1] || "dashboard";
       const section = res.text.match(/SECTION:\s*([a-z_0-9]+)/i)?.[1];
       const stewardEsin = res.text.match(/STEWARD_ESIN:\s*(EA-[A-Z0-9-]+)/i)?.[1];
-      
       setAiDeepSuggestion({ view, section: section === 'all' ? undefined : section, explanation: reason, stewardEsin });
     } catch (e) {
       console.error(e);
@@ -472,82 +423,34 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
   const filteredResults = useMemo(() => {
     if (!searchTerm.trim()) return { shards: [], stewards: [], assets: [], knowledge: [], infrastructure: [] };
     const term = searchTerm.toLowerCase();
-    
-    // 1. Sitemap Shards
     const shards: any[] = [];
-    REGISTRY_NODES.forEach(group => {
-      group.items.forEach(item => {
-        if (item.name.toLowerCase().includes(term) || item.id.toLowerCase().includes(term) || group.category.toLowerCase().includes(term)) {
-          shards.push({ ...item, category: group.category, matchedSections: item.sections?.filter(s => s.label.toLowerCase().includes(term)) });
-        }
-      });
-    });
-
-    // 2. Stewards & Workers
-    const stewards = GLOBAL_STEWARD_REGISTRY.filter(s => 
-      s.name.toLowerCase().includes(term) || s.esin.toLowerCase().includes(term) || s.role.toLowerCase().includes(term) || s.skills.some(sk => sk.toLowerCase().includes(term))
-    );
-
-    // 3. Industrial Assets (Market + Circular)
-    const assets = [
-      ...vendorProducts.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term)),
-      ...ITEM_CATEGORY_EXPERIENCES.filter(e => e.title.toLowerCase().includes(term) || e.desc.toLowerCase().includes(term))
-    ];
-
-    // 4. Knowledge & Media (PDFs, Exams, Reports)
-    const knowledge = [
-      ...SEARCHABLE_MEDIA_LEDGER.filter(m => m.title.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term) || m.source.toLowerCase().includes(term)),
-      ...LMS_EXAMS_MODULES.filter(e => e.title.toLowerCase().includes(term) || e.category.toLowerCase().includes(term))
-    ];
-
-    // 5. Infrastructure & Missions (Logistics + Projects)
-    const infrastructure = [
-      ...LOGISTICS_SHARDS.filter(l => l.name.toLowerCase().includes(term)),
-      ...GLOBAL_PROJECTS_MISSIONS.filter(m => m.name.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term))
-    ];
-
+    REGISTRY_NODES.forEach(group => group.items.forEach(item => { if (item.name.toLowerCase().includes(term) || item.id.toLowerCase().includes(term) || group.category.toLowerCase().includes(term)) shards.push({ ...item, category: group.category, matchedSections: item.sections?.filter(s => s.label.toLowerCase().includes(term)) }); }));
+    const stewards = GLOBAL_STEWARD_REGISTRY.filter(s => s.name.toLowerCase().includes(term) || s.esin.toLowerCase().includes(term) || s.role.toLowerCase().includes(term) || s.skills.some(sk => sk.toLowerCase().includes(term)));
+    const assets = [...vendorProducts.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term)), ...ITEM_CATEGORY_EXPERIENCES.filter(e => e.title.toLowerCase().includes(term) || e.desc.toLowerCase().includes(term))];
+    const knowledge = [...SEARCHABLE_MEDIA_LEDGER.filter(m => m.title.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term) || m.source.toLowerCase().includes(term)), ...LMS_EXAMS_MODULES.filter(e => e.title.toLowerCase().includes(term) || e.category.toLowerCase().includes(term))];
+    const infrastructure = [...LOGISTICS_SHARDS.filter(l => l.name.toLowerCase().includes(term)), ...GLOBAL_PROJECTS_MISSIONS.filter(m => m.name.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term))];
     return { shards: shards.slice(0, 5), stewards: stewards.slice(0, 5), assets: assets.slice(0, 5), knowledge: knowledge.slice(0, 5), infrastructure: infrastructure.slice(0, 5) };
   }, [searchTerm, vendorProducts]);
 
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <div className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="w-full max-w-4xl glass-card rounded-3xl border border-white/10 overflow-hidden shadow-[0_0_150px_rgba(0,0,0,0.8)] flex flex-col h-[85vh] md:h-[80vh] animate-in zoom-in-95 duration-300">
-        
-        {/* Modern Integrated Header */}
         <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-black/20 shrink-0">
           <div className="flex items-center gap-4 md:gap-8 flex-1">
              <Search className="w-6 h-6 md:w-8 md:h-8 text-emerald-400 shrink-0" />
              <div className="flex-1 relative">
-               <input 
-                 ref={inputRef}
-                 type="text" 
-                 value={searchTerm} 
-                 onChange={e => setSearchTerm(e.target.value)} 
-                 onKeyDown={e => e.key === 'Enter' && handleAiDeepQuery()}
-                 placeholder="Query ledgers, media, stewards..."
-                 className="w-full bg-transparent border-none outline-none text-xl md:text-3xl text-white placeholder:text-slate-700 font-bold italic"
-               />
+               <input ref={inputRef} type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAiDeepQuery()} placeholder="Query ledgers, media, stewards..." className="w-full bg-transparent border-none outline-none text-xl md:text-3xl text-white placeholder:text-slate-700 font-bold italic" />
              </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            <button 
-              onClick={handleAiDeepQuery} 
-              disabled={isAiSearching || !searchTerm.trim()} 
-              className="p-3 md:p-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl md:rounded-3xl transition-all shadow-xl group active:scale-95 disabled:opacity-30 flex items-center justify-center"
-              title="Oracle deep query"
-            >
+            <button onClick={handleAiDeepQuery} disabled={isAiSearching || !searchTerm.trim()} className="p-3 md:p-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl md:rounded-3xl transition-all shadow-xl group active:scale-95 disabled:opacity-30 flex items-center justify-center" title="Oracle deep query">
                {isAiSearching ? <Loader2 className="animate-spin text-white w-6 h-6" /> : <SycamoreLogo size={24} className="text-emerald-400 group-hover:text-white" />}
             </button>
             <button onClick={onClose} className="p-3 md:p-4 text-slate-500 hover:text-white transition-colors bg-white/5 rounded-2xl active:scale-95"><X size={24} /></button>
           </div>
         </div>
-
-        {/* Dynamic Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 space-y-12 bg-[#050706]/40">
            {aiDeepSuggestion && (
              <div className="p-8 md:p-12 bg-indigo-900/10 border-2 border-indigo-500/30 rounded-[48px] animate-in slide-in-from-top-4 duration-500 space-y-8 relative overflow-hidden group/sugg">
@@ -558,82 +461,49 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                 </div>
                 <div className="space-y-8 border-l-4 border-indigo-600/40 pl-8 md:pl-12 relative z-10">
                    <p className="text-slate-300 italic text-xl md:text-2xl leading-relaxed max-w-3xl">{aiDeepSuggestion.explanation}</p>
-                   <button 
-                     onClick={() => { onNavigate(aiDeepSuggestion.view as ViewState, aiDeepSuggestion.section); onClose(); }}
-                     className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5"
-                   >
-                      Navigate Shard <ArrowRight size={18} />
-                   </button>
+                   <button onClick={() => { onNavigate(aiDeepSuggestion.view as ViewState, aiDeepSuggestion.section); onClose(); }} className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5">Navigate Shard <ArrowRight size={18} /></button>
                 </div>
              </div>
            )}
-
            {searchTerm.trim() === '' ? (
              <div className="h-full flex flex-col space-y-16 py-8">
-                {/* Visual Splash */}
                 <div className="flex flex-col items-center justify-center text-center opacity-30 space-y-10">
                    <div className="relative">
                       <Command size={100} className="text-slate-600 animate-float" />
                       <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
                    </div>
                    <div className="space-y-4">
-                     <p className="text-4xl md:text-6xl font-black uppercase tracking-[0.5em] text-white italic drop-shadow-2xl">SEARCH_MATRIX</p>
-                     <p className="text-sm md:text-lg font-bold uppercase tracking-widest italic text-slate-500 max-w-md mx-auto leading-relaxed">
-                       Query organizational ledgers, media shards, or industrial stewards
-                     </p>
-                </div>
-                </div>
-
-                {/* Search Recommendations / Chips */}
-                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-1000">
-                   <div className="flex items-center gap-4 px-4">
-                      <SycamoreLogo size={16} className="text-emerald-400" />
-                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Recommended_Queries</p>
+                     <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic drop-shadow-2xl">SEARCH_MATRIX</p>
+                     <p className="text-sm md:text-lg font-bold uppercase tracking-widest italic text-slate-500 max-w-md mx-auto leading-relaxed">Query organizational ledgers, media shards, or industrial stewards</p>
                    </div>
+                </div>
+                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-1000">
+                   <div className="flex items-center gap-4 px-4"><SycamoreLogo size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Recommended_Queries</p></div>
                    <div className="flex flex-wrap gap-4 px-4">
                       {RECOMMENDED_SEARCHES.map((rec, i) => (
-                         <button
-                           key={i}
-                           onClick={() => setSearchTerm(rec.query)}
-                           className="flex items-center gap-4 px-8 py-5 bg-white/5 hover:bg-emerald-600/10 border-2 border-white/5 hover:border-emerald-500/40 rounded-[32px] transition-all group/chip active:scale-95 shadow-xl"
-                         >
+                         <button key={i} onClick={() => setSearchTerm(rec.query)} className="flex items-center gap-4 px-8 py-5 bg-white/5 hover:bg-emerald-600/10 border-2 border-white/5 hover:border-emerald-500/40 rounded-[32px] transition-all group/chip active:scale-95 shadow-xl">
                             <rec.icon size={18} className="text-slate-500 group-hover/chip:text-emerald-400 transition-colors" />
                             <span className="text-sm font-black text-slate-400 group-hover/chip:text-white uppercase tracking-widest italic">{rec.label}</span>
                          </button>
                       ))}
                    </div>
                 </div>
-
                 <div className="p-8 bg-indigo-900/10 border-2 border-indigo-500/20 rounded-[48px] flex items-center justify-between group/bot-hint shadow-2xl mx-4">
                    <div className="flex items-center gap-8">
-                      <div className="p-5 bg-indigo-600 rounded-[28px] shadow-3xl border-2 border-white/10 group-hover/bot-hint:rotate-12 transition-transform">
-                         <SycamoreLogo size={32} className="text-white animate-pulse" />
-                      </div>
+                      <div className="p-5 bg-indigo-600 rounded-[28px] shadow-3xl border-2 border-white/10 group-hover/bot-hint:rotate-12 transition-transform"><SycamoreLogo size={32} className="text-white animate-pulse" /></div>
                       <div className="text-left">
                          <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0">Need more depth?</h4>
-                         <p className="text-[10px] text-slate-500 mt-2 font-medium italic opacity-80 group-hover/bot-hint:opacity-100 transition-opacity">
-                            "Initialize an Oracle Deep Query to perform a high-fidelity scan across all unindexed sharded data."
-                         </p>
+                         <p className="text-[10px] text-slate-500 mt-2 font-medium italic opacity-80 group-hover/bot-hint:opacity-100 transition-opacity">"Initialize an Oracle Deep Query to perform a high-fidelity scan across all unindexed sharded data."</p>
                       </div>
                    </div>
-                   <div className="hidden md:flex gap-4">
-                      <div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
-                         <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest italic">NEURAL_READY</span>
-                      </div>
-                   </div>
+                   <div className="hidden md:flex gap-4"><div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full"><span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest italic">NEURAL_READY</span></div></div>
                 </div>
              </div>
            ) : (
              <div className="space-y-20">
-                {/* RESULTS GROUPING */}
-                
-                {/* 1. STEWARDS */}
                 {filteredResults.stewards.length > 0 && (
                    <div className="space-y-8">
-                      <div className="flex items-center gap-4 px-4">
-                        <Users size={16} className="text-indigo-400" />
-                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Social_Steward_Registry</p>
-                      </div>
+                      <div className="flex items-center gap-4 px-4"><Users size={16} className="text-indigo-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Social_Steward_Registry</p></div>
                       <div className="grid gap-4">
                          {filteredResults.stewards.map(steward => (
                             <div key={steward.esin} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] duration-300 group/card">
@@ -658,14 +528,9 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                       </div>
                    </div>
                 )}
-
-                {/* 2. KNOWLEDGE & MEDIA */}
                 {filteredResults.knowledge.length > 0 && (
                    <div className="space-y-8">
-                      <div className="flex items-center gap-4 px-4">
-                        <FileStack size={16} className="text-blue-400" />
-                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Knowledge_&_Media_Archive</p>
-                      </div>
+                      <div className="flex items-center gap-4 px-4"><FileStack size={16} className="text-blue-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Knowledge_&_Media_Archive</p></div>
                       <div className="grid gap-4">
                          {filteredResults.knowledge.map((item: any) => (
                             <div key={item.id} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-blue-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99]">
@@ -674,40 +539,27 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                                      <item.icon size={40} />
                                   </div>
                                   <div className="space-y-2">
-                                     <h4 className="text-xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-blue-400 transition-colors leading-tight">{item.title}</h4>
+                                     <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-blue-400 transition-colors leading-tight">{item.title}</h4>
                                      <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-1">{item.source || item.category} // {item.id}</p>
                                   </div>
                                </div>
                                <div className="flex gap-4 relative z-10 shrink-0">
-                                  <button 
-                                    onClick={() => { onNavigate(item.reward ? 'community' : 'media_ledger'); onClose(); }} 
-                                    className="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95"
-                                  >
-                                     {item.type === 'PAPER' ? <Download size={18} /> : <Zap size={18} />} 
-                                     Access Shard
-                                  </button>
+                                  <button onClick={() => { onNavigate(item.reward ? 'community' : 'media_ledger'); onClose(); }} className="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">{item.type === 'PAPER' ? <Download size={18} /> : <Zap size={18} />} Access Shard</button>
                                </div>
                             </div>
                          ))}
                       </div>
                    </div>
                 )}
-
-                {/* 3. INDUSTRIAL ASSETS */}
                 {filteredResults.assets.length > 0 && (
                    <div className="space-y-8">
-                      <div className="flex items-center gap-4 px-4">
-                        <ShoppingBag size={16} className="text-emerald-400" />
-                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Industrial_Asset_Quorum</p>
-                      </div>
+                      <div className="flex items-center gap-4 px-4"><ShoppingBag size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Industrial_Asset_Quorum</p></div>
                       <div className="grid grid-cols-2 gap-6">
                          {filteredResults.assets.map((item: any) => (
                             <div key={item.id} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col justify-between h-[380px] shadow-3xl relative overflow-hidden active:scale-[0.99] group/asset">
                                <div className="absolute top-0 right-0 p-8 opacity-[0.01] group-hover/asset:opacity-[0.05] group-hover/asset:scale-110 transition-all"><ShoppingCart size={200} /></div>
                                <div className="flex items-start justify-between mb-6 relative z-10">
-                                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover/asset:border-emerald-500 transition-all shadow-xl">
-                                     <img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400'} className="w-full h-full object-cover" alt="" />
-                                  </div>
+                                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover/asset:border-emerald-500 transition-all shadow-xl"><img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400'} className="w-full h-full object-cover" alt="" /></div>
                                   <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-inner">ASSET_MINTED</span>
                                </div>
                                <div className="space-y-2 relative z-10">
@@ -715,62 +567,19 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
                                   <p className="text-[9px] text-slate-700 font-mono font-black uppercase tracking-widest mt-2">{item.price || item.cost} EAC // {item.id}</p>
                                </div>
                                <div className="pt-6 border-t border-white/5 mt-auto flex justify-end relative z-10">
-                                  <button 
-                                    onClick={() => { onNavigate(item.node ? 'agrowild' : 'economy'); onClose(); }} 
-                                    className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95"
-                                  >
-                                     <ArrowUpRight size={14} /> Procure Shard
-                                  </button>
+                                  <button onClick={() => { onNavigate(item.node ? 'agrowild' : 'economy'); onClose(); }} className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95"><ArrowUpRight size={14} /> Procure Shard</button>
                                </div>
                             </div>
                          ))}
                       </div>
                    </div>
                 )}
-
-                {/* 4. SITEMAP NODES */}
-                {filteredResults.shards.length > 0 && (
-                   <div className="space-y-8">
-                      <div className="flex items-center gap-4 px-4">
-                        <NetworkIcon size={16} className="text-indigo-400" />
-                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Registry_Nodes</p>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {filteredResults.shards.map(res => (
-                          <div key={res.id} className="w-full">
-                            <button 
-                              onClick={() => { onNavigate(res.id as ViewState); onClose(); }} 
-                              className="w-full p-6 md:p-8 hover:bg-indigo-600/10 rounded-3xl border-2 border-transparent hover:border-indigo-500/30 bg-black/40 flex items-center justify-between group transition-all active:scale-[0.98] shadow-xl"
-                            >
-                               <div className="flex items-center gap-6 text-left">
-                                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-indigo-600 transition-all shadow-inner">
-                                     <res.icon size={28} className="text-slate-500 group-hover:text-white" />
-                                  </div>
-                                  <div>
-                                     <h4 className="text-lg md:text-2xl font-black text-white uppercase italic leading-none text-indigo-400 transition-colors m-0 tracking-tighter">{res.name}</h4>
-                                     <p className="text-[9px] text-slate-700 font-mono mt-2 uppercase tracking-widest font-black italic">{res.category}</p>
-                                  </div>
-                               </div>
-                               <ArrowUpRight size={20} className="text-slate-800 group-hover:text-indigo-400 transition-all" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                   </div>
-                )}
              </div>
            )}
         </div>
-
-        {/* Dynamic Footer Status */}
         <div className="p-6 md:p-8 border-t border-white/5 border-emerald-500/10 bg-black/80 flex items-center justify-between shrink-0 relative z-10">
-           <div className="flex items-center gap-4 text-[7px] font-black text-slate-700 uppercase tracking-widest italic">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/20 animate-pulse"></div>
-              MULTI_LEDGER_INDEXING_ACTIVE
-           </div>
-           <div className="flex items-center gap-3">
-              <span className="text-[7px] font-mono text-slate-800 uppercase tracking-widest">v6.5.2 // QUORUM_SYNC</span>
-           </div>
+           <div className="flex items-center gap-4 text-[7px] font-black text-slate-700 uppercase tracking-widest italic"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500/20 animate-pulse"></div>MULTI_LEDGER_INDEXING_ACTIVE</div>
+           <div className="flex items-center gap-3"><span className="text-[7px] font-mono text-slate-800 uppercase tracking-widest">v6.5.2 // QUORUM_SYNC</span></div>
         </div>
       </div>
     </div>
@@ -788,17 +597,13 @@ const App: React.FC = () => {
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isConsultantOpen, setIsConsultantOpen] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
-  
-  // Vector History Tracking for Retrograde/Advance
   const [history, setHistory] = useState<VectorAddress[]>([]);
   const [forwardHistory, setForwardHistory] = useState<VectorAddress[]>([]);
-
   const [projects, setProjects] = useState<AgroProject[]>([]);
   const [contracts, setContracts] = useState<FarmingContract[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
   const [industrialUnits, setIndustrialUnits] = useState<RegisteredUnit[]>([]);
-  const [bitrate, setBitrate] = useState(4500);
   const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
   const [blockchain, setBlockchain] = useState<AgroBlock[]>([]);
   const [transactions, setTransactions] = useState<AgroTransaction[]>([]);
@@ -806,261 +611,66 @@ const App: React.FC = () => {
   const [mediaShards, setMediaShards] = useState<MediaShard[]>([]);
   const [signals, setSignals] = useState<SignalShard[]>([]);
   const [pulseMessage, setPulseMessage] = useState('Registry synchronized. No anomalies detected.');
-  
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
   const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<any | null>(null);
   const [osInitialCode, setOsInitialCode] = useState<string | null>(null);
-
+  const [costAudit, setCostAudit] = useState<ShardCostCalibration | null>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
 
+  // Initialize Background Sync & Cost Calibration
   useEffect(() => {
-    if (mainContentRef.current) mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [view]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsGlobalSearchOpen(prev => !prev); }
-      if (e.key === 'Escape') {
-        setIsGlobalSearchOpen(false);
-        setIsConsultantOpen(false);
-        setIsInboxOpen(false);
+    const unsubSync = startBackgroundDataSync();
+    
+    // Background Cost Calibration Loop
+    const costInterval = setInterval(() => {
+      if (user) {
+        const auditResult = getFullCostAudit(100, user.metrics);
+        setCostAudit(auditResult);
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleScroll = (target: HTMLDivElement) => {
-    setScrollProgress((target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100);
-    setShowZenithButton(target.scrollTop > 400);
-  };
-
-  const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-
-  useEffect(() => {
-    const handleResize = () => {
-      const isLg = window.innerWidth >= 1024;
-      setIsSidebarOpen(isLg);
-      if (isLg) setIsMobileMenuOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    return onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
-        const isVerified = fbUser.emailVerified || fbUser.providerData?.some(p => p.providerId === 'phone');
-        if (isVerified) {
-          setIsUnverified(false);
-          const profile = await getStewardProfile(fbUser.uid);
-          if (profile) setUser(profile);
-        } else {
-          setIsUnverified(true);
-          setUser(null);
-        }
-      } else {
-        setIsUnverified(false);
-        setUser(null);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    const unsubProjects = listenToCollection('projects', setProjects, true);
-    const unsubContracts = listenToCollection('contracts', setContracts, true);
-    const unsubOrders = listenToCollection('orders', setOrders);
-    const unsubProducts = listenToCollection('products', setVendorProducts, true);
-    const unsubUnits = listenToCollection('industrial_units', setIndustrialUnits);
-    const unsubLive = listenToCollection('live_products', setLiveProducts, true);
-    const unsubTx = listenToCollection('transactions', setTransactions);
-    const unsubSignals = listenToCollection('signals', setSignals);
-    const unsubMedia = listenToCollection('media_ledger', setMediaShards, true);
-    const unsubBlocks = listenToCollection('blocks', setBlockchain, true);
-    const unsubPulse = listenToPulse(setPulseMessage);
+    }, 15000); // Calibrate every 15s
 
     return () => {
-      unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts();
-      unsubUnits(); unsubLive(); unsubTx(); unsubSignals(); unsubPulse();
-      unsubMedia(); unsubBlocks();
+      unsubSync();
+      clearInterval(costInterval);
     };
   }, [user]);
 
-  const emitSignal = useCallback(async (signalData: Partial<SignalShard>) => {
-    const signal = await dispatchNetworkSignal(signalData);
-    if (signal) {
-      const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP');
-      if (popupLayer) {
-        const id = Math.random().toString(36).substring(7);
-        setNotifications(prev => [{
-          id, type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info',
-          title: signal.title, message: signal.message, duration: 6000,
-          actionLabel: signal.actionLabel, actionIcon: signalData.actionIcon
-        }, ...prev]);
-      }
-    }
-  }, []);
-
-  const handleSpendEAC = async (amount: number, reason: string) => {
-    if (!user) { setView('auth'); return false; }
-    if (user.wallet.balance < amount) {
-      emitSignal({ title: 'INSUFFICIENT_FUNDS', message: `Need ${amount} EAC for ${reason}.`, priority: 'high', type: 'commerce', origin: 'MANUAL' });
-      return false;
-    }
-    const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } };
-    const syncOk = await syncUserToCloud(updatedUser);
-    if (!syncOk) return false;
-    setUser(updatedUser);
-    const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Transfer', farmId: user.esin, details: reason, value: -amount, unit: 'EAC' };
-    await saveCollectionItem('transactions', newTx);
-    emitSignal({ title: 'TREASURY_SETTLEMENT', message: `Node sharded ${amount} EAC for ${reason}.`, priority: 'medium', type: 'ledger_anchor', origin: 'TREASURY', actionIcon: 'Coins' });
-    return true;
-  };
-
-  const handleEarnEAC = async (amount: number, reason: string) => {
-    if (!user) return;
-    const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount, lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount } };
-    const syncOk = await syncUserToCloud(updatedUser);
-    if (!syncOk) return;
-    setUser(updatedUser);
-    const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Reward', farmId: user.esin, details: reason, value: amount, unit: 'EAC' };
-    await saveCollectionItem('transactions', newTx);
-  };
-
-  const handlePerformPermanentAction = async (actionKey: string, reward?: number, reason?: string) => {
-    if (!user || user.completedActions?.includes(actionKey)) return false;
-    const ok = await markPermanentAction(actionKey);
-    if (ok && reward && reason) await handleEarnEAC(reward, reason);
-    return ok;
-  };
-
+  useEffect(() => { if (mainContentRef.current) mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' }); }, [view]);
+  useEffect(() => { const handleKeyDown = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsGlobalSearchOpen(prev => !prev); } if (e.key === 'Escape') { setIsGlobalSearchOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); } }; window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown); }, []);
+  const handleScroll = (target: HTMLDivElement) => { setScrollProgress((target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100); setShowZenithButton(target.scrollTop > 400); };
+  const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  useEffect(() => { const handleResize = () => { const isLg = window.innerWidth >= 1024; setIsSidebarOpen(isLg); if (isLg) setIsMobileMenuOpen(false); }; window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
+  useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { if (fbUser) { const isVerified = fbUser.emailVerified || fbUser.providerData?.some(p => p.providerId === 'phone'); if (isVerified) { setIsUnverified(false); const profile = await getStewardProfile(fbUser.uid); if (profile) setUser(profile); } else { setIsUnverified(true); setUser(null); } } else { setIsUnverified(false); setUser(null); } }); }, []);
+  useEffect(() => { const unsubProjects = listenToCollection('projects', setProjects, true); const unsubContracts = listenToCollection('contracts', setContracts, true); const unsubOrders = listenToCollection('orders', setOrders); const unsubProducts = listenToCollection('products', setVendorProducts, true); const unsubUnits = listenToCollection('industrial_units', setIndustrialUnits); const unsubLive = listenToCollection('live_products', setLiveProducts, true); const unsubTx = listenToCollection('transactions', setTransactions); const unsubSignals = listenToCollection('signals', setSignals); const unsubMedia = listenToCollection('media_ledger', setMediaShards, true); const unsubBlocks = listenToCollection('blocks', setBlockchain, true); const unsubPulse = listenToPulse(setPulseMessage); return () => { unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts(); unsubUnits(); unsubLive(); unsubTx(); unsubSignals(); unsubPulse(); unsubMedia(); unsubBlocks(); }; }, [user]);
+  const emitSignal = useCallback(async (signalData: Partial<SignalShard>) => { const signal = await dispatchNetworkSignal(signalData); if (signal) { const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP'); if (popupLayer) { const id = Math.random().toString(36).substring(7); setNotifications(prev => [{ id, type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info', title: signal.title, message: signal.message, duration: 6000, actionLabel: signal.actionLabel, actionIcon: signalData.actionIcon }, ...prev]); } } }, []);
+  const handleSpendEAC = async (amount: number, reason: string) => { if (!user) { setView('auth'); return false; } if (user.wallet.balance < amount) { emitSignal({ title: 'INSUFFICIENT_FUNDS', message: `Need ${amount} EAC for ${reason}.`, priority: 'high', type: 'commerce', origin: 'MANUAL' }); return false; } const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } }; const syncOk = await syncUserToCloud(updatedUser); if (!syncOk) return false; setUser(updatedUser); const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Transfer', farmId: user.esin, details: reason, value: -amount, unit: 'EAC' }; await saveCollectionItem('transactions', newTx); emitSignal({ title: 'TREASURY_SETTLEMENT', message: `Node sharded ${amount} EAC for ${reason}.`, priority: 'medium', type: 'ledger_anchor', origin: 'TREASURY', actionIcon: 'Coins' }); return true; };
+  const handleEarnEAC = async (amount: number, reason: string) => { if (!user) return; const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount, lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount } }; const syncOk = await syncUserToCloud(updatedUser); if (!syncOk) return; setUser(updatedUser); const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Reward', farmId: user.esin, details: reason, value: amount, unit: 'EAC' }; await saveCollectionItem('transactions', newTx); };
+  const handlePerformPermanentAction = async (actionKey: string, reward?: number, reason?: string) => { if (!user || user.completedActions?.includes(actionKey)) return false; const ok = await markPermanentAction(actionKey); if (ok && reward && reason) await handleEarnEAC(reward, reason); return ok; };
   const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
-
-  const markSignalAsRead = async (id: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    // Optimistic update
-    setSignals(prev => prev.map(s => s.id === id ? { ...s, read: true } : s));
-    // Persist to Firestore
-    await updateSignalReadStatus(id, true);
-  };
-
-  const markAllSignalsAsRead = async () => {
-    const unreadIds = signals.filter(s => !s.read).map(s => s.id);
-    if (unreadIds.length === 0) return;
-
-    // Optimistic update
-    setSignals(prev => prev.map(s => ({ ...s, read: true })));
-    
-    // Persist to Firestore
-    await markAllSignalsAsReadInDb(unreadIds);
-
-    emitSignal({
-      title: 'INBOX_SYNCHRONIZED',
-      message: 'All unread network signals have been cleared and archived.',
-      priority: 'low',
-      type: 'system',
-      origin: 'MANUAL',
-      actionIcon: 'CheckCircle2'
-    });
-  };
-  
-  // VECTOR ROUTING OPTIMIZATION
-  const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => {
-    let index: string | undefined;
-    REGISTRY_NODES.forEach((group, dIdx) => {
-      group.items.forEach((item, eIdx) => {
-        if (item.id === v) {
-          if (!section) {
-            index = `[${dIdx + 1}.${eIdx + 1}]`;
-          } else {
-            const sIdx = item.sections?.findIndex(s => s.id === section);
-            if (sIdx !== undefined && sIdx !== -1) {
-              index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`;
-            }
-          }
-        }
-      });
-    });
-    return index;
-  };
-
-  const navigate = useCallback((v: ViewState, section?: string, pushToHistory = true) => {
-    const index = findMatrixIndex(v, section || null);
-    
-    if (pushToHistory) {
-      const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) };
-      setHistory(prev => [...prev, currentAddress]);
-      setForwardHistory([]); // Clear forward vector on new action
-    }
-    
-    setView(v);
-    setViewSection(section || null);
-    setIsMobileMenuOpen(false);
-    setIsConsultantOpen(false);
-    setIsInboxOpen(false);
-    
-    emitSignal({
-      title: 'VECTOR_SHIFT',
-      message: `Resolved route to ${index || v.toUpperCase()}.`,
-      priority: 'low',
-      type: 'system',
-      origin: 'ORACLE',
-      actionIcon: 'ChevronRight'
-    });
-  }, [view, viewSection, emitSignal]);
-
-  const goBack = useCallback(() => {
-    if (history.length > 0) {
-      const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) };
-      const lastVector = history[history.length - 1];
-      
-      setForwardHistory(prev => [...prev, currentAddress]);
-      setHistory(prev => prev.slice(0, -1));
-      
-      navigate(lastVector.dimension, lastVector.element || undefined, false);
-    } else if (view !== 'dashboard') {
-      navigate('dashboard', undefined, true);
-    }
-  }, [history, view, viewSection, navigate]);
-
-  const goForward = useCallback(() => {
-    if (forwardHistory.length > 0) {
-      const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) };
-      const nextVector = forwardHistory[forwardHistory.length - 1];
-      
-      setHistory(prev => [...prev, currentAddress]);
-      setForwardHistory(prev => prev.slice(0, -1));
-      
-      navigate(nextVector.dimension, nextVector.element || undefined, false);
-    }
-  }, [forwardHistory, view, viewSection, navigate]);
+  const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(prev => prev.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
+  const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(prev => prev.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
+  const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => { let index: string | undefined; REGISTRY_NODES.forEach((group, dIdx) => { group.items.forEach((item, eIdx) => { if (item.id === v) { if (!section) { index = `[${dIdx + 1}.${eIdx + 1}]`; } else { const sIdx = item.sections?.findIndex(s => s.id === section); if (sIdx !== undefined && sIdx !== -1) { index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`; } } } }); }); return index; };
+  const navigate = useCallback((v: ViewState, section?: string, pushToHistory = true) => { const index = findMatrixIndex(v, section || null); if (pushToHistory) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; setHistory(prev => [...prev, currentAddress]); setForwardHistory([]); } setView(v); setViewSection(section || null); setIsMobileMenuOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); emitSignal({ title: 'VECTOR_SHIFT', message: `Resolved route to ${index || v.toUpperCase()}.`, priority: 'low', type: 'system', origin: 'ORACLE', actionIcon: 'ChevronRight' }); }, [view, viewSection, emitSignal]);
+  const goBack = useCallback(() => { if (history.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const lastVector = history[history.length - 1]; setForwardHistory(prev => [...prev, currentAddress]); setHistory(prev => prev.slice(0, -1)); navigate(lastVector.dimension, lastVector.element || undefined, false); } else if (view !== 'dashboard') { navigate('dashboard', undefined, true); } }, [history, view, viewSection, navigate]);
+  const goForward = useCallback(() => { if (forwardHistory.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const nextVector = forwardHistory[forwardHistory.length - 1]; setHistory(prev => [...prev, currentAddress]); setForwardHistory(prev => prev.slice(0, -1)); navigate(nextVector.dimension, nextVector.element || undefined, false); } }, [forwardHistory, view, viewSection, navigate]);
 
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
     const isGuest = !user;
-
-    // Direct redirection for unverified users
-    if (isUnverified) {
-      return (
-        <VerificationHUD 
-          userEmail={auth.currentUser?.email || 'Unauthorized Node'} 
-          onVerified={() => { setIsUnverified(false); setView('dashboard'); }} 
-          onLogout={handleLogout}
-        />
-      );
-    }
-
+    if (isUnverified) return <VerificationHUD userEmail={auth.currentUser?.email || 'Unauthorized Node'} onVerified={() => { setIsUnverified(false); setView('dashboard'); }} onLogout={handleLogout} />;
     switch (view) {
       case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;
       case 'dashboard': return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
+      case 'mesh_protocol': return <MeshProtocol user={currentUser} blockchain={blockchain} />;
       case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
       case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={setUser!} initialSection={viewSection} />;
-      case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={setUser!} onSwap={async () => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={emitSignal} transactions={transactions} initialSection={viewSection} />;
+      case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={setUser!} onSwap={async () => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={emitSignal} transactions={transactions} initialSection={viewSection} costAudit={costAudit} />;
       case 'intelligence': return <Intelligence user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onOpenEvidence={() => setIsEvidenceOpen(true)} initialSection={viewSection} />;
       case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} />;
-      case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} />;
+      case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection={viewSection} onNavigate={navigate} />;
+      case 'network_signals': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection="terminal" onNavigate={navigate} />;
       case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} vendorProducts={vendorProducts} orders={orders} notify={emitSignal} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} initialSection={viewSection} />;
       case 'investor': return <InvestorPortal user={currentUser} onUpdate={setUser!} onSpendEAC={handleSpendEAC} projects={projects} onNavigate={navigate} />;
@@ -1093,22 +703,17 @@ const App: React.FC = () => {
       case 'envirosagro_store': return <EnvirosAgroStore user={currentUser} onSpendEAC={handleSpendEAC} onPlaceOrder={(o) => saveCollectionItem('orders', o)} />;
       case 'agro_value_enhancement': return <AgroValueEnhancement user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} />;
       case 'digital_mrv': return <DigitalMRV user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={setUser!} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
-      case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'online_garden': return <OnlineGarden user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} notify={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} initialSection={viewSection} />;
       case 'farm_os': return <FarmOS user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialCode={osInitialCode} clearInitialCode={() => setOsInitialCode(null)} initialSection={viewSection} />;
-      case 'network_signals': return <SignalCenter user={currentUser} signals={signals} setSignals={setSignals} onNavigate={navigate} initialSection={viewSection} />;
-      case 'network': return <NetworkView />;
       case 'media_ledger': return <MediaLedger user={currentUser} shards={mediaShards} />;
-      case 'agrolang': return <AgroLang user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onEmitSignal={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} initialSection={viewSection} />;
       case 'sitemap': return <Sitemap nodes={REGISTRY_NODES} onNavigate={navigate} />;
       case 'ai_analyst': return <AIAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
       case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} />;
-      case 'ingest': return <NetworkIngest user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
+      case 'ingest': return <NetworkIngest user={currentUser} onUpdateUser={setUser!} onSpendEAC={handleSpendEAC} onNavigate={navigate} onExecuteToShell={(c) => { setOsInitialCode(c); setView('farm_os'); }} initialSection={viewSection} />;
       case 'info': return <InfoPortal user={currentUser} onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} onPermanentAction={handlePerformPermanentAction} />;
       case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={setUser!} onNavigate={navigate} />;
       case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;
       case 'robot': return <Robot user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} />;
-      case 'cost_accounting': return <CostAccounting user={currentUser} onNavigate={navigate} notify={emitSignal} />;
       default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }
   };
@@ -1153,7 +758,7 @@ const App: React.FC = () => {
                 {(isSidebarOpen || isMobileMenuOpen) && <p className={`px-4 text-[7px] font-black uppercase tracking-[0.3em] text-slate-700 italic`}>{group.category}</p>}
                 <div className="space-y-1">
                   {group.items.map(item => (
-                    <button key={item.id} onClick={() => navigate(item.id as ViewState)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+                    <button key={item.id} onClick={() => navigate(item.id as ViewState)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id || (view === 'network_signals' && item.id === 'explorer') ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
                       <item.icon size={16} className={view === item.id ? 'text-white' : 'text-slate-500'} />
                       {(isSidebarOpen || isMobileMenuOpen) && <span className="text-[8px] font-black uppercase tracking-[0.2em] text-left leading-none">{item.name}</span>}
                     </button>
@@ -1193,7 +798,6 @@ const App: React.FC = () => {
            </div>
 
            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {/* Integrated AI Assistant Toggle (SycamoreLeaf Branding) */}
               <button 
                 onClick={() => { setIsConsultantOpen(!isConsultantOpen); setIsGlobalSearchOpen(false); setIsInboxOpen(false); }}
                 className={`p-2.5 rounded-xl border transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
@@ -1203,7 +807,6 @@ const App: React.FC = () => {
                  <div className={`absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-black ${isConsultantOpen ? 'animate-none' : 'animate-pulse'}`}></div>
               </button>
 
-              {/* User Inbox Trigger */}
               {user && (
                 <div className="relative">
                   <button 
@@ -1219,7 +822,6 @@ const App: React.FC = () => {
                     )}
                   </button>
 
-                  {/* Compact Signal Inbox Dropdown */}
                   {isInboxOpen && (
                     <div className="absolute top-14 right-0 w-80 md:w-96 glass-card rounded-3xl border border-white/10 bg-[#050706] shadow-3xl overflow-hidden animate-in slide-in-from-top-4 z-[500]">
                        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5">
@@ -1242,7 +844,7 @@ const App: React.FC = () => {
                             signals.filter(s => !s.read).slice(0, 5).map(sig => (
                               <div 
                                 key={sig.id} 
-                                onClick={() => { navigate(sig.id as ViewState || 'network_signals'); setIsInboxOpen(false); }}
+                                onClick={() => { navigate('explorer', 'terminal'); setIsInboxOpen(false); }}
                                 className={`p-4 md:p-5 hover:bg-white/5 cursor-pointer transition-all border-l-4 group/msg ${sig.priority === 'critical' ? 'border-rose-600' : sig.priority === 'high' ? 'border-amber-500' : 'border-indigo-500'}`}
                               >
                                  <div className="flex items-center justify-between gap-3 mb-1">
@@ -1263,7 +865,7 @@ const App: React.FC = () => {
                             ))
                           )}
                        </div>
-                       <button onClick={() => navigate('profile', 'signals')} className="w-full py-3 bg-indigo-600/10 text-indigo-400 text-[8px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">Go to Steward Dossier</button>
+                       <button onClick={() => navigate('explorer', 'terminal')} className="w-full py-3 bg-indigo-600/10 text-indigo-400 text-[8px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">Go to Signal Terminal</button>
                     </div>
                   )}
                 </div>
@@ -1281,84 +883,29 @@ const App: React.FC = () => {
           {renderView()}
         </div>
 
-        {/* --- VECTOR RETROGRADE & ADVANCE CONTROLS --- */}
         <footer className="mt-20 pt-8 border-t border-white/5 pb-12 flex flex-col items-center gap-10 opacity-60 hover:opacity-100 transition-opacity duration-500 px-4">
-           {/* Primary Control Row */}
            <div className="flex w-full items-center justify-between gap-4">
-              {/* VECTOR RETROGRADE (BACK) */}
-              <button 
-                onClick={goBack} 
-                disabled={history.length === 0}
-                className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all active:scale-95 group/back ${history.length > 0 ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
-                title="Vector Retrograde"
-              >
+              <button onClick={goBack} disabled={history.length === 0} className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all active:scale-95 group/back ${history.length > 0 ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`} title="Vector Retrograde">
                  <ChevronLeft size={16} className="group-hover/back:-translate-x-1 transition-transform" />
-                 <div className="flex flex-col items-start text-left hidden md:block">
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span>
-                    <span className="text-6px font-mono opacity-50 mt-1 uppercase">{history.length > 0 ? history[history.length - 1].matrixIndex : 'Prev_Vector'}</span>
-                 </div>
+                 <div className="flex flex-col items-start text-left hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">{history.length > 0 ? history[history.length - 1].matrixIndex : 'Prev_Vector'}</span></div>
               </button>
-
-              {/* STRATEGIC SHARD DOCK - Quick Navigation Hub */}
               <div className="flex p-1 glass-card rounded-[24px] bg-black/40 border border-white/5 shadow-3xl">
-                 {[
-                   { id: 'dashboard', label: 'Command', icon: LayoutGrid },
-                   { id: 'economy', label: 'Market', icon: Globe },
-                   { id: 'wallet', label: 'Treasury', icon: Coins },
-                   { id: 'intelligence', label: 'Science', icon: Microscope },
-                   { id: 'impact', label: 'Resonance', icon: TrendingUp },
-                   { id: 'sitemap', label: 'Matrix', icon: MapIcon }
-                 ].map(shard => (
-                   <button 
-                     key={shard.id}
-                     onClick={() => navigate(shard.id as ViewState)}
-                     className={`p-3 rounded-xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-600 hover:text-white hover:bg-white/5'}`}
-                     title={shard.label}
-                   >
-                      <shard.icon size={16} />
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[7px] font-black uppercase tracking-widest rounded border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                         {shard.label}
-                      </div>
+                 {[ { id: 'dashboard', label: 'Command', icon: LayoutGrid }, { id: 'mesh_protocol', label: 'Mesh', icon: NetworkIcon }, { id: 'economy', label: 'Market', icon: Globe }, { id: 'wallet', label: 'Treasury', icon: Coins }, { id: 'intelligence', label: 'Science', icon: Microscope }, { id: 'sitemap', label: 'Matrix', icon: MapIcon } ].map(shard => (
+                   <button key={shard.id} onClick={() => navigate(shard.id as ViewState)} className={`p-3 rounded-xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-600 hover:text-white hover:bg-white/5'}`} title={shard.label}>
+                      <shard.icon size={16} /><div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[7px] font-black uppercase tracking-widest rounded border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">{shard.label}</div>
                    </button>
                  ))}
               </div>
-
-              {/* VECTOR ADVANCE (FORWARD) */}
-              <button 
-                onClick={goForward} 
-                disabled={forwardHistory.length === 0}
-                className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all active:scale-95 group/fwd ${forwardHistory.length > 0 ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`}
-                title="Vector Advance"
-              >
-                 <div className="flex flex-col items-end text-right hidden md:block">
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 transition-all">Advance</span>
-                    <span className="text-6px font-mono opacity-50 mt-1 uppercase">{forwardHistory.length > 0 ? forwardHistory[forwardHistory.length - 1].matrixIndex : 'Next_Vector'}</span>
-                 </div>
+              <button onClick={goForward} disabled={forwardHistory.length === 0} className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all active:scale-95 group/fwd ${forwardHistory.length > 0 ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`} title="Vector Advance">
+                 <div className="flex flex-col items-end text-right hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 transition-all">Advance</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">{forwardHistory.length > 0 ? forwardHistory[forwardHistory.length - 1].matrixIndex : 'Next_Vector'}</span></div>
                  <ChevronRight size={16} className="group-hover/fwd:translate-x-1 transition-transform" />
               </button>
            </div>
-
-           {/* Secondary Branding Row */}
            <div className="flex flex-col md:flex-row items-center justify-between w-full gap-8 border-t border-white/5 pt-8 px-4 opacity-40">
-              <div className="flex items-center gap-4">
-                 <SycamoreLogo size={20} className="text-emerald-500" />
-                 <div className="text-left">
-                    <p className="text-9px font-black text-white uppercase italic tracking-widest leading-none">Enviros<span className="text-emerald-400">Agro</span></p>
-                    <p className="text-[6px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">Planetary_Regeneration_Grid</p>
-                 </div>
-              </div>
-
-              <div className="flex items-center gap-8">
-                 <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-7px text-slate-700 font-mono uppercase font-black">MATRIX_SYNC_OK</span>
-                 </div>
-                 <p className="text-7px text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p>
-                 <button onClick={() => navigate('info')} className="text-7px font-black text-slate-600 hover:text-white uppercase tracking-[0.4em]">SAFETY_REGISTRY</button>
-              </div>
+              <div className="flex items-center gap-4"><SycamoreLogo size={20} className="text-emerald-500" /><div className="text-left"><p className="text-9px font-black text-white uppercase italic tracking-widest leading-none">Enviros<span className="text-emerald-400">Agro</span></p><p className="text-[6px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">Planetary_Regeneration_Grid</p></div></div>
+              <div className="flex items-center gap-8"><div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div><span className="text-7px text-slate-700 font-mono uppercase font-black">MATRIX_SYNC_OK</span></div><p className="text-7px text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p><button onClick={() => navigate('info')} className="text-7px font-black text-slate-600 hover:text-white uppercase tracking-[0.4em]">SAFETY_REGISTRY</button></div>
            </div>
         </footer>
-
         {showZenithButton && <button onClick={scrollToTop} className="fixed bottom-32 right-6 sm:right-10 p-3.5 sm:p-4 agro-gradient rounded-xl sm:rounded-2xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border border-white/20 animate-in fade-in zoom-in duration-300"><LucideIcons.ArrowUp size={20} /></button>}
       </main>
 
@@ -1371,7 +918,6 @@ const App: React.FC = () => {
           </div>
         ))}
       </div>
-
       <GlobalSearch isOpen={isGlobalSearchOpen} onClose={() => setIsGlobalSearchOpen(false)} onNavigate={navigate} vendorProducts={vendorProducts} />
       <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={handleEarnEAC} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
       <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />

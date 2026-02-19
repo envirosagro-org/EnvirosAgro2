@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Binary, Cpu, Zap, Activity, Bot, Database, Terminal, 
@@ -20,10 +21,15 @@ import {
   Cloud,
   Globe2,
   Link,
-  Factory
+  Factory,
+  Code,
+  Library,
+  Languages,
+  Braces
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { User, SignalShard } from '../types';
+import { auditAgroLangCode, chatWithAgroExpert } from '../services/geminiService';
 
 interface FarmOSProps {
   user: User;
@@ -44,8 +50,46 @@ const KERNEL_LAYERS = [
   { level: 'HARDWARE', agro: 'Physical Assets', status: 'READY', desc: 'Soil, Water, Bots, Life', col: 'text-rose-400' },
 ];
 
+const SNIPPETS = [
+  { 
+    id: 'NET-1', 
+    title: 'NET_BRIDGE_CORE', 
+    desc: 'Establish lean external network sync.', 
+    icon: Globe,
+    code: `IMPORT EOS.Network AS Net;\nNet.bridge_external(id: "EA-EXT-01", protocol: "ZK_HANDSHAKE");`
+  },
+  { 
+    id: 'NET-2', 
+    title: 'TELEMETRY_CALIBRATE', 
+    desc: 'Recalibrate spectral ingest loads.', 
+    icon: Activity,
+    code: `IMPORT EOS.Kernel AS Kernel;\nKernel.calibrate_ingest(source: "SATELLITE", weight: 0.85);`
+  },
+  { 
+    id: 'S1', 
+    title: 'MOISTURE_SYNC', 
+    desc: 'Auto-calibrate soil humidity shards.', 
+    icon: WavesIcon,
+    code: `Bio.sync_moisture(zone: "SECTOR_4", target: "OPTIMAL");`
+  },
+  { 
+    id: 'S2', 
+    title: 'SWARM_DEFEND', 
+    desc: 'Deploy robotic pest containment shards.', 
+    icon: Bot,
+    code: `Bot.swarm_deploy(units: 12, mode: "MIN_STRESS");`
+  },
+  { 
+    id: 'S3', 
+    title: 'LEDGER_SETTLE', 
+    desc: 'Anchor commercial finality to L3.', 
+    icon: Database,
+    code: `COMMIT_SHARD(registry: "GLOBAL_L3", finality: ZK_PROVEN);`
+  },
+];
+
 const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialCode, clearInitialCode, initialSection }) => {
-  const [activeTab, setActiveTab] = useState<'kernel' | 'hardware' | 'scheduler' | 'shell'>('kernel');
+  const [activeTab, setActiveTab] = useState<'kernel' | 'ide' | 'hardware' | 'scheduler' | 'shell'>('kernel');
   const [bootStatus, setBootStatus] = useState<'OFF' | 'POST' | 'ON'>('ON');
   const [bootProgress, setBootProgress] = useState(100);
   const [shellInput, setShellInput] = useState('');
@@ -66,8 +110,43 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
 
   const [isExecutingLogic, setIsExecutingLogic] = useState(false);
 
+  // IDE Local States
+  const [activeShard, setActiveShard] = useState('Production_Init.al');
+  const [codeMap, setCodeMap] = useState<Record<string, string>>({
+    'Production_Init.al': `// AGROLANG_ENVIRONMENT: EnvirosAgro OS v6.5
+// NODE_DESIGNATION: ${user.esin}
+IMPORT AgroLaw.Kenya.NairobiCounty AS Law;
+IMPORT EOS.Automation AS Bot;
+IMPORT MedicAg.Aura AS Bio;
+
+AUTHENTICATE node_signature(id: "${user.esin}");
+
+SEQUENCE Optimize_Cycle_882 {
+    // 1. Constrain process within Legal Thresholds
+    CONSTRAIN moisture_delta < Law.WATER_ACT.quota_shard;
+    
+    // 2. Adjust m-Resilience via Sonic Remediation
+    Bio.apply_freq(target: 432Hz, gain: 0.82v);
+    
+    // 3. Deploy Swarm for precision sharding
+    Bot.swarm_deploy(units: 12, mode: "MIN_STRESS");
+    
+    // 4. Anchor value to ledger
+    COMMIT_SHARD(registry: "GLOBAL_L3", finality: ZK_PROVEN);
+}`
+  });
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [complianceStatus, setComplianceStatus] = useState<'IDLE' | 'COMPLIANT' | 'VIOLATION'>('IDLE');
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+
   useEffect(() => {
-    if (initialSection === 'shell' || initialCode) {
+    if (initialSection === 'ide' || initialCode) {
+      setActiveTab('ide');
+      if (initialCode) {
+        setCodeMap(prev => ({ ...prev, 'External_Inflow.al': initialCode }));
+        setActiveShard('External_Inflow.al');
+      }
+    } else if (initialSection === 'shell') {
       setActiveTab('shell');
     }
   }, [initialSection, initialCode]);
@@ -114,24 +193,75 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     }, 40);
   };
 
-  const executeOptimization = async (code: string) => {
-    setIsExecutingLogic(true);
+  const handleCompile = async () => {
+    const fee = 25;
+    if (!await onSpendEAC(fee, 'AGROLANG_INDUSTRIAL_AUDIT')) return;
+    setIsCompiling(true);
+    setComplianceStatus('IDLE');
     addLog("MOUNTING AGROLANG LOGIC SHARD...", 'info');
     
     onEmitSignal({
       type: 'task',
       origin: 'ORACLE',
-      title: 'OS_LOGIC_EXECUTION',
-      message: `Kernel executing industrial optimization shard for ${user.esin}.`,
-      priority: 'high',
-      actionIcon: 'Cpu'
+      title: 'AGROLANG_AUDIT_STARTED',
+      message: `Auditing code shard ${activeShard} for EOS Framework compliance.`,
+      priority: 'low',
+      actionIcon: 'SearchCode'
     });
 
+    try {
+      const res = await auditAgroLangCode(codeMap[activeShard]);
+      await new Promise(r => setTimeout(r, 1000));
+      addLog("Mapping Pillar Weights...", 'info');
+      await new Promise(r => setTimeout(r, 600));
+      addLog(`Handshake with Node ${user.esin} verified.`, 'success');
+      
+      if (res.is_compliant) {
+        setComplianceStatus('COMPLIANT');
+        addLog(`Shard integrity index 0.98a.`, 'success');
+        onEmitSignal({
+          type: 'ledger_anchor',
+          origin: 'ORACLE',
+          title: 'AUDIT_COMPLIANT',
+          message: `Code shard ${activeShard} verified as compliant with SEHTI standards.`,
+          priority: 'medium',
+          actionIcon: 'ShieldCheck',
+          meta: { target: 'farm_os', ledgerContext: 'INVENTION' }
+        });
+      } else {
+        setComplianceStatus('VIOLATION');
+        addLog("Resource constraint overflow detected at line 14.", 'error');
+        onEmitSignal({
+          type: 'system',
+          origin: 'ORACLE',
+          title: 'AUDIT_VIOLATION',
+          message: `Code shard ${activeShard} failed compliance check. m-constant drift risk detected.`,
+          priority: 'high',
+          actionIcon: 'ShieldAlert'
+        });
+      }
+    } catch (e) {
+      addLog("ERROR: Oracle connection timeout.", 'error');
+    } finally {
+      setIsCompiling(false);
+    }
+  };
+
+  const executeToShell = () => {
+    setActiveTab('shell');
+    addLog(`INITIALIZING DEPLOYMENT: ${activeShard}`, 'info');
+    executeOptimization(codeMap[activeShard]);
+  };
+
+  const executeOptimization = async (code: string) => {
+    setIsExecutingLogic(true);
+    addLog("EXECUTING KERNEL BINDINGS...", 'info');
+    
     const lines = code.split('\n').filter(l => l.trim() && !l.startsWith('//'));
     
     for (const line of lines) {
       await new Promise(r => setTimeout(r, 600));
-      addLog(`Kernel Execution: ${line.trim().substring(0, 40)}...`, 'info');
+      addLog(`Kernel syscall: ${line.trim().substring(0, 40)}...`, 'info');
       
       if (line.includes('CONSTRAIN')) {
         addLog("Resource boundary enforced.", 'success');
@@ -145,32 +275,15 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
         addLog("Robot swarm signal transmitted.", 'success');
         setResourceLoad(prev => ({ ...prev, T: Math.min(100, prev.T + 12) }));
       }
-      if (line.includes('Net.bridge_external')) {
-        addLog("External Ingest Bridge Synchronized.", 'success');
-        setResourceLoad(prev => ({ ...prev, I: Math.min(100, prev.I + 15) }));
-      }
       if (line.includes('COMMIT_SHARD')) {
         addLog("Finality reached. Shard anchored.", 'success');
-        setResourceLoad(prev => ({ ...prev, I: Math.min(100, prev.I + 4) }));
       }
     }
 
     await new Promise(r => setTimeout(r, 800));
     addLog("OS OPTIMIZATION FINALIZED.", 'success');
-    
-    onEmitSignal({
-      type: 'ledger_anchor',
-      origin: 'ORACLE',
-      title: 'KERNEL_STATE_SYNC',
-      message: `Optimization cycle successful. Regional m-constant boosted.`,
-      priority: 'high',
-      actionIcon: 'BadgeCheck',
-      meta: { target: 'farm_os', ledgerContext: 'INVENTION' }
-    });
-
     setIsExecutingLogic(false);
-    if (clearInitialCode) clearInitialCode();
-    onEarnEAC(100, 'OS_RESONANCE_TUNING');
+    onEarnEAC(100, 'OS_LOGIC_EXECUTION_REWARD');
   };
 
   const handleShellSubmit = async (e: React.FormEvent) => {
@@ -179,73 +292,18 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
     const cmd = shellInput.toLowerCase().trim();
     setLogs(prev => [`admin@EnvirosAgro:~$ ${shellInput}`, ...prev]);
     
-    if (cmd === 'agro-apply-logic' && initialCode) {
-      executeOptimization(initialCode);
-    } else if (cmd === 'npx wrangler deploy' || cmd === 'npx wrangler pages deploy dist') {
+    if (cmd === 'agro-apply-logic' && activeShard) {
+      executeOptimization(codeMap[activeShard]);
+    } else if (cmd === 'npx wrangler deploy') {
       setIsExecutingLogic(true);
       addLog("Initializing Project Deployment Shard...", 'info');
-      await new Promise(r => setTimeout(r, 1200));
-      addLog("Building Optimized Industrial Bundle...", 'info');
-      await new Promise(r => setTimeout(r, 2000));
-      addLog("Build Success: 14.2MB compiled into 428 shards.", 'success');
-      addLog("Establishing Secure Tunnel to Cloudflare Edge...", 'info');
-      await new Promise(r => setTimeout(r, 1500));
-      addLog("Uploading Shards to Registry Quorum...", 'info');
-      await new Promise(r => setTimeout(r, 1800));
-      addLog("Validating ZK-Signatures for Global Distribution...", 'info');
       await new Promise(r => setTimeout(r, 1000));
-      addLog("Deployment Finalized. Shard Anchored at 0x882A.", 'success');
-      addLog("Production URL: https://envirosagro.pages.dev", 'success');
-      
-      onEmitSignal({
-        type: 'network',
-        origin: 'ORACLE',
-        title: 'PROJECT_DEPLOYMENT_COMPLETE',
-        message: `App shard ${user.esin} successfully deployed to Cloudflare Global Mesh.`,
-        priority: 'high',
-        actionIcon: 'Cloud'
-      });
-      
+      addLog("Deployment Finalized at 0x882A.", 'success');
       setIsExecutingLogic(false);
-    } else if (cmd.startsWith('npx ')) {
-      const pkg = shellInput.substring(4);
-      setIsExecutingLogic(true);
-      addLog(`Need to install the following packages: ${pkg}`, 'info');
-      await new Promise(r => setTimeout(r, 1200));
-      addLog(`Resolving remote shard registry for ${pkg}...`, 'info');
-      await new Promise(r => setTimeout(r, 800));
-      addLog(`Downloading package: ${pkg}@latest...`, 'info');
-      await new Promise(r => setTimeout(r, 1500));
-      addLog(`Validating ZK-Signature for ${pkg}... [OK]`, 'success');
-      await new Promise(r => setTimeout(r, 600));
-      addLog(`Execution initialized for shard ${pkg}.`, 'success');
-      
-      onEmitSignal({
-        type: 'network',
-        origin: 'ORACLE',
-        title: 'REMOTE_SHARD_EXECUTION',
-        message: `Remote package '${pkg}' executed via NPX bridge on Cloudflare node.`,
-        priority: 'medium',
-        actionIcon: 'Cloud'
-      });
-      
-      setIsExecutingLogic(false);
-    } else if (cmd === 'net-sync') {
-      addLog("Probing all virtual ingest nodes...", 'info');
-      await new Promise(r => setTimeout(r, 1000));
-      addLog("Mesh synchronization agile. All packets aligned.", 'success');
-    } else if (cmd === 'mesh-finality') {
-      addLog("Executing global quorum check...", 'info');
-      await new Promise(r => setTimeout(r, 1500));
-      addLog("Finality reached at 0x882A. m-Constant updated.", 'success');
-    } else if (cmd === 'ingest-status') {
-      addLog("Status of Pipeline L1: ACTIVE", 'info');
-      addLog("Status of Relay L2: NOMINAL", 'info');
-      addLog("Status of Consensus L3: 100%", 'success');
+    } else if (cmd === 'help') {
+      addLog("Syscalls: npx wrangler deploy, net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
     } else if (cmd === 'clear') {
       setLogs([]);
-    } else if (cmd === 'help') {
-      addLog("Syscalls: npx wrangler deploy, npx <shard>, net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
     } else {
       addLog(`Unknown syscall: ${cmd}`, 'error');
     }
@@ -277,13 +335,13 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
            <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
               <div className="space-y-2">
                  <div className="flex flex-wrap justify-center md:justify-start gap-3 mb-2">
-                    <span className="px-4 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-white/10 shadow-inner italic">EOS_KERNEL_v6.5</span>
+                    <span className="px-4 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-white/10 shadow-inner italic">EOS_ENGINE_v6.5</span>
                     <span className="px-4 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-emerald-500/20 shadow-inner italic">MESH_STABLE</span>
                  </div>
-                 <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Enviros<span className="text-indigo-400">Agro OS</span></h2>
+                 <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Unified <span className="text-indigo-400">Agro OS</span></h2>
               </div>
               <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-2xl opacity-80 group-hover:opacity-100 transition-opacity">
-                 "Orchestrating the quintuplicate SEHTI pillars. Lean integration of external networks via the Kernel Shell and NPX Shard Bridge."
+                 "Orchestrating the industrial mesh. A complete environment for kernel sharding, biological logic forging, and real-time execution."
               </p>
            </div>
         </div>
@@ -291,41 +349,37 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
         <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 flex flex-col justify-between text-center relative overflow-hidden shadow-3xl group">
            <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none group-hover:bg-indigo-500/[0.03] transition-colors"></div>
            <div className="space-y-4 relative z-10">
-              <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.6em] mb-4 italic">QUORUM_SYNC</p>
-              {bootStatus === 'ON' ? (
-                <>
-                  <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none drop-shadow-2xl italic">100%</h4>
-                  <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
-                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div> FINALIZED
-                  </p>
-                </>
-              ) : (
-                <button onClick={handleBoot} className="w-full py-8 bg-indigo-800 rounded-3xl text-white font-black text-sm uppercase tracking-widest shadow-2xl active:scale-95">BOOT KERNEL</button>
-              )}
+              <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.6em] mb-4 italic">KERNEL_STATUS</p>
+              <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none drop-shadow-2xl italic">ONLINE</h4>
+              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div> SYNCED
+              </p>
            </div>
         </div>
       </div>
 
-      {/* Primary Management Navigation */}
+      {/* Primary Navigation */}
       <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 relative z-20 mx-auto lg:mx-0">
         {[
-          { id: 'kernel', label: 'Kernel Layers', icon: Layers },
-          { id: 'hardware', label: 'Resource Monitor', icon: CpuIcon },
-          { id: 'scheduler', label: 'Thrust Load', icon: Gauge },
+          { id: 'kernel', label: 'Kernel Hub', icon: Layers },
+          { id: 'ide', label: 'Logic Forge', icon: Code2 },
           { id: 'shell', label: 'System Shell', icon: Terminal },
+          { id: 'hardware', label: 'Asset Monitor', icon: CpuIcon },
+          { id: 'scheduler', label: 'Thrust Load', icon: Gauge },
         ].map(tab => (
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
-            <tab.icon size={14} /> {tab.label}
+            <tab.icon size={16} /> {tab.label}
           </button>
         ))}
       </div>
 
       <div className="min-h-[850px] relative z-10">
-        {/* VIEW: KERNEL LAYERS */}
+        
+        {/* VIEW: KERNEL HUB */}
         {activeTab === 'kernel' && (
           <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700">
              <div className="grid grid-cols-1 gap-6 max-w-6xl mx-auto">
@@ -333,12 +387,11 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                    <div className="p-4 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 shadow-xl">
                       <Layers className="w-8 h-8 text-indigo-400" />
                    </div>
-                   <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Architecture <span className="text-indigo-400">Stack</span></h3>
+                   <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Kernel <span className="text-indigo-400">Stack</span></h3>
                 </div>
                 <div className="space-y-4">
                    {KERNEL_LAYERS.map((layer, i) => (
                       <div key={i} className="glass-card p-10 rounded-[56px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group relative overflow-hidden flex items-center justify-between shadow-3xl border-l-[12px] border-l-indigo-600">
-                         <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none group-hover:bg-indigo-500/[0.03] transition-colors"></div>
                          <div className="flex items-center gap-8 relative z-10">
                             <span className="text-6xl font-black text-slate-800 font-mono italic group-hover:text-indigo-950 transition-colors">0{5-i}</span>
                             <div>
@@ -360,9 +413,110 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
           </div>
         )}
 
+        {/* VIEW: LOGIC FORGE (IDE) */}
+        {activeTab === 'ide' && (
+           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch animate-in zoom-in duration-700">
+              <div className="xl:col-span-3 space-y-6">
+                 <div className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 space-y-10 shadow-xl">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                       <h4 className="text-sm font-black text-white uppercase italic tracking-widest">Snippet <span className="text-indigo-400">Ledger</span></h4>
+                    </div>
+                    <div className="space-y-4">
+                       {SNIPPETS.map(s => (
+                          <div 
+                             key={s.id} 
+                             onClick={() => setCodeMap({ ...codeMap, [activeShard]: codeMap[activeShard] + "\n" + s.code })}
+                             className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/[0.05] hover:border-indigo-500/30 transition-all cursor-pointer group"
+                          >
+                             <div className="flex items-center gap-4 mb-2">
+                                <s.icon size={16} className="text-indigo-400" />
+                                <span className="text-[10px] font-black text-white uppercase">{s.title}</span>
+                             </div>
+                             <p className="text-[8px] text-slate-500 font-medium italic">"{s.desc}"</p>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+
+              <div className="xl:col-span-9 space-y-8 flex flex-col">
+                 <div className="glass-card rounded-[64px] border-2 border-white/5 bg-[#050706] overflow-hidden shadow-3xl flex flex-col h-[700px] relative">
+                    <div className="p-8 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 px-12">
+                       <div className="flex items-center gap-6">
+                          <Code size={24} className="text-indigo-400" />
+                          <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 italic">AgroLang Shard Editor</span>
+                       </div>
+                       <div className="flex gap-4">
+                          <button onClick={handleCompile} disabled={isCompiling} className="px-10 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 transition-all">
+                             {isCompiling ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} fill="white" />}
+                             AUDIT_CODE
+                          </button>
+                          {complianceStatus === 'COMPLIANT' && (
+                             <button onClick={executeToShell} className="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl border-2 border-white/20 animate-pulse">
+                                DEPLOY_TO_KERNEL
+                             </button>
+                          )}
+                       </div>
+                    </div>
+                    <div className="flex-1 flex gap-10 p-12 bg-black relative overflow-hidden">
+                       <div className="w-12 text-right font-mono text-base text-slate-800 pt-2 border-r border-white/5 pr-8 select-none leading-[2.5]">
+                          {[...Array(24)].map((_, i) => <div key={i}>{(i + 1).toString().padStart(2, '0')}</div>)}
+                       </div>
+                       <textarea 
+                          value={codeMap[activeShard]}
+                          onChange={(e) => setCodeMap({ ...codeMap, [activeShard]: e.target.value })}
+                          spellCheck={false}
+                          className="flex-1 bg-transparent border-none outline-none font-mono text-xl text-emerald-400/90 leading-[2.5] resize-none selection:bg-indigo-500/40 overflow-y-auto italic custom-scrollbar-editor"
+                       />
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
+
+        {/* VIEW: SYSTEM SHELL */}
+        {activeTab === 'shell' && (
+           <div className="glass-card rounded-[64px] border-2 border-white/5 bg-[#050706] overflow-hidden shadow-3xl flex flex-col h-[700px] relative animate-in slide-in-from-right-10 duration-700">
+              <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 px-12">
+                 <div className="flex items-center gap-4">
+                    <Terminal className="w-6 h-6 text-indigo-400" />
+                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 italic">Root Kernel Shell</span>
+                 </div>
+              </div>
+              <div className="flex-1 p-10 overflow-y-auto font-mono text-[14px] space-y-4 custom-scrollbar-terminal text-slate-400 italic bg-black/20">
+                 {logs.map((log, i) => (
+                    <div key={i} className="flex gap-6 animate-in slide-in-from-left-1">
+                       <span className="text-slate-800 shrink-0 select-none">{"$"}</span>
+                       <span className={log.includes('SUCCESS') || log.includes('COMPLIANT') ? 'text-emerald-400 font-bold' : log.includes('ERROR') || log.includes('VIOLATION') ? 'text-rose-500 font-bold' : 'text-slate-500'}>{log}</span>
+                    </div>
+                 ))}
+                 {isExecutingLogic && (
+                    <div className="flex items-center gap-4 text-indigo-400 animate-pulse">
+                       <Loader2 className="w-4 h-4 animate-spin" />
+                       <span>KERNEL_EXECUTION_ACTIVE...</span>
+                    </div>
+                 )}
+              </div>
+              <form onSubmit={handleShellSubmit} className="p-8 border-t border-white/5 bg-black/90">
+                 <div className="flex items-center gap-6">
+                    <span className="text-indigo-500 font-mono font-bold select-none">admin@EnvirosAgro:~$</span>
+                    <input 
+                       type="text" 
+                       value={shellInput}
+                       onChange={e => setShellInput(e.target.value)}
+                       disabled={isExecutingLogic}
+                       placeholder="Enter syscall..."
+                       className="flex-1 bg-transparent border-none outline-none text-white font-mono placeholder:text-stone-900"
+                       autoFocus
+                    />
+                 </div>
+              </form>
+           </div>
+        )}
+
         {/* VIEW: HARDWARE MONITOR */}
         {activeTab === 'hardware' && (
-           <div className="space-y-12 animate-in slide-in-from-right-10 duration-1000">
+           <div className="space-y-12 animate-in zoom-in duration-1000">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                  {[
                     { l: 'CPU_RESONANCE', v: hardwareHealth.cpu, i: CpuIcon, c: 'text-blue-400', u: '%' },
@@ -385,21 +539,10 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                     </div>
                  ))}
               </div>
-
-              <div className="glass-card p-12 rounded-[72px] border border-white/5 bg-black/60 shadow-3xl flex flex-col items-center justify-center space-y-12 relative overflow-hidden group">
-                 <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none group-hover:bg-indigo-500/[0.03] transition-colors"></div>
-                 <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl animate-float group-hover:rotate-12 transition-transform">
-                    <History size={40} className="text-white" />
-                 </div>
-                 <div className="space-y-4 text-center">
-                    <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 drop-shadow-2xl">Hardware <span className="text-indigo-400">Finality</span></h4>
-                    <p className="text-slate-500 text-xl font-medium italic max-w-2xl mx-auto leading-relaxed">"Observing physical node stability to prevent biological packet loss during industrial ingest."</p>
-                 </div>
-              </div>
            </div>
         )}
 
-        {/* VIEW: THRUST LOAD */}
+        {/* VIEW: THRUST LOAD (SCHEDULER) */}
         {activeTab === 'scheduler' && (
            <div className="space-y-16 animate-in slide-in-from-right-10 duration-1000">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 px-6">
@@ -429,46 +572,6 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
               </div>
            </div>
         )}
-
-        {/* VIEW: SYSTEM SHELL */}
-        {activeTab === 'shell' && (
-           <div className="glass-card rounded-[64px] border-2 border-white/5 bg-[#050706] overflow-hidden shadow-3xl flex flex-col h-[700px] relative">
-              <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
-                 <div className="flex items-center gap-4">
-                    <Terminal className="w-6 h-6 text-indigo-400" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Root Kernel Shell</span>
-                 </div>
-              </div>
-              <div className="flex-1 p-10 overflow-y-auto font-mono text-[14px] space-y-4 custom-scrollbar-terminal text-slate-400 italic bg-black/20">
-                 {logs.map((log, i) => (
-                    <div key={i} className="flex gap-6 animate-in slide-in-from-left-1">
-                       <span className="text-slate-800 shrink-0 select-none">{"$"}</span>
-                       <span className={log.includes('SUCCESS') ? 'text-emerald-400 font-bold' : log.includes('ERROR') ? 'text-rose-500 font-bold' : 'text-slate-500'}>{log}</span>
-                    </div>
-                 ))}
-                 {isExecutingLogic && (
-                    <div className="flex items-center gap-4 text-indigo-400 animate-pulse">
-                       <Loader2 className="w-4 h-4 animate-spin" />
-                       <span>KERNEL_EXECUTION_ACTIVE...</span>
-                    </div>
-                 )}
-              </div>
-              <form onSubmit={handleShellSubmit} className="p-8 border-t border-white/5 bg-black/90">
-                 <div className="flex items-center gap-6">
-                    <span className="text-indigo-500 font-mono font-bold select-none">admin@EnvirosAgro:~$</span>
-                    <input 
-                       type="text" 
-                       value={shellInput}
-                       onChange={e => setShellInput(e.target.value)}
-                       disabled={isExecutingLogic}
-                       placeholder="Enter syscall..."
-                       className="flex-1 bg-transparent border-none outline-none text-white font-mono placeholder:text-slate-800"
-                       autoFocus
-                    />
-                 </div>
-              </form>
-           </div>
-        )}
       </div>
 
       <style>{`
@@ -477,6 +580,8 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
         .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 10px; }
+        .custom-scrollbar-editor::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar-editor::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 10px; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }

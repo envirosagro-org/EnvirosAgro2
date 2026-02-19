@@ -19,7 +19,8 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { chatWithAgroExpert, analyzeSustainability, AIResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/geminiService';
 import { User, AgroResource, ViewState, MediaShard } from '../types';
-import { backupTelemetryShard, fetchTelemetryBackup, saveCollectionItem } from '../services/firebaseService';
+// Fixed: Removed non-existent exports backupTelemetryShard and fetchTelemetryBackup
+import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from '../App';
 
 interface IntelligenceProps {
@@ -400,7 +401,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
         {activeTab === 'simulator' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
             <div className="lg:col-span-4 space-y-6">
-              <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-2xl">
+              <div className="glass-card p-10 md:p-14 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-2xl">
                 <div className="flex items-center gap-3 border-b border-white/5 pb-6">
                    <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-400 shadow-xl"><Cpu size={24} /></div>
                    <h3 className="font-black text-white uppercase text-sm tracking-widest italic">EOS Physics Core</h3>
