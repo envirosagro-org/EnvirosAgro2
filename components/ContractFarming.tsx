@@ -27,6 +27,7 @@ interface ContractFarmingProps {
   blueprints: ValueBlueprint[];
   onSaveTask: (task: Partial<Task>) => void;
   industrialUnits: RegisteredUnit[];
+  initialMission?: string | null;
 }
 
 const CATEGORY_META: Record<MissionCategory, { label: string, icon: any, color: string, bg: string }> = {
@@ -37,11 +38,12 @@ const CATEGORY_META: Record<MissionCategory, { label: string, icon: any, color: 
   INDUSTRIAL_LOGISTICS: { label: 'Industrial/Logistics', icon: Factory, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
 };
 
-const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate, contracts, setContracts, onSaveContract, blueprints, onSaveTask, industrialUnits }) => {
+const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate, contracts, setContracts, onSaveContract, blueprints, onSaveTask, industrialUnits, initialMission }) => {
   const [activeTab, setActiveTab] = useState<'manifest' | 'terminal' | 'archive'>('manifest');
   const [activeMission, setActiveMission] = useState<FarmingContract | null>(null);
   const [isLinkingResource, setIsLinkingResource] = useState<string | null>(null);
   const [isSourcing, setIsSourcing] = useState(false);
+  const [proposedResearch, setProposedResearch] = useState<string | null>(null);
 
   // New Task Form
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -50,6 +52,13 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   // Shard Linker State
   const [showShardLinker, setShowShardLinker] = useState(false);
   const [linkerContext, setLinkerContext] = useState<{label: string, icon: any, target: string, sourceLedger: string} | null>(null);
+
+  useEffect(() => {
+    if (initialMission) {
+      setProposedResearch(initialMission);
+      setActiveTab('manifest');
+    }
+  }, [initialMission]);
 
   const myMissions = useMemo(() => contracts.filter(c => c.investorEsin === user.esin || c.status === 'In_Progress'), [contracts, user.esin]);
 
@@ -327,6 +336,25 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
         )}
         {activeTab === 'manifest' && (
           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+             {proposedResearch && (
+                <div className="glass-card p-10 rounded-[56px] border-amber-500/20 bg-amber-500/5 space-y-6 shadow-xl animate-in zoom-in border-2 relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] pointer-events-none rotate-12"><FlaskConical size={200} className="text-amber-500" /></div>
+                   <div className="flex items-center gap-6 relative z-10">
+                      <div className="p-4 bg-amber-600 rounded-3xl text-white shadow-2xl animate-pulse"><Handshake size={32} /></div>
+                      <div>
+                         <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Research Mission <span className="text-amber-500">Proposed</span></h4>
+                         <p className="text-amber-500/60 font-mono text-[10px] uppercase tracking-widest mt-2">SOURCE_INVENTION_LEDGER // PENDING_VETTING</p>
+                      </div>
+                   </div>
+                   <p className="text-slate-300 italic text-xl leading-relaxed max-w-4xl relative z-10">
+                      "I wish to initialize a large-scale industrial farming contract based on the following breakthrough: <span className="text-amber-400 font-bold">"{proposedResearch}"</span>. Require capital ingestion and steward pairing."
+                   </p>
+                   <div className="flex gap-4 pt-4 relative z-10">
+                      <button onClick={() => setProposedResearch(null)} className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase text-slate-500 hover:text-white transition-all">Dismiss Shard</button>
+                      <button className="px-12 py-5 bg-amber-600 hover:bg-amber-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl active:scale-95 transition-all border-2 border-white/10 ring-8 ring-amber-500/5">PROVISION_MISSION_SHARD</button>
+                   </div>
+                </div>
+             )}
              <div className="col-span-full py-32 text-center opacity-20 flex flex-col items-center gap-10">
                 <Boxes size={120} className="text-slate-600" />
                 <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic">NO_RESOURCES_SHARDED</p>

@@ -35,7 +35,6 @@ import {
   Database,
   BadgeCheck,
   ZapOff,
-  /* Added Stamp import to fix error on line 436 */
   Stamp
 } from 'lucide-react';
 import { 
@@ -49,8 +48,12 @@ import {
   setupRecaptcha,
   requestPhoneCode,
   sendVerificationShard,
-  refreshAuthUser
+  refreshAuthUser,
+  verifyRecaptcha,
+  onAuthStateChanged
 } from '../services/firebaseService';
+
+declare const grecaptcha: any;
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -67,6 +70,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+
+  // State to manage the post-registration profile creation
+  const [pendingRegistration, setPendingRegistration] = useState<{name: string, email: string} | null>(null);
 
   // Generate a random ESIN for registration visual feedback
   const [esin, setEsin] = useState('');
@@ -100,6 +106,38 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
       }
     };
   }, []);
+  
+  // This new useEffect handles profile creation after auth state is confirmed.
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && pendingRegistration) {
+        setLoading(true);
+        setMessage({ type: 'info', text: 'Authentication successful. Creating steward profile...' });
+        
+        const { name: regName, email: regEmail } = pendingRegistration;
+        setPendingRegistration(null);
+
+        try {
+          const { success } = await createStewardProfile(user.uid, regEmail, regName);
+          if (success) {
+            setMessage({ type: 'info', text: 'Profile anchored. Dispatching verification shard...' });
+            await sendVerificationShard();
+            setMode('waiting_verification');
+          } else {
+            throw new Error('Failed to synchronize steward profile with the cloud registry.');
+          }
+        } catch (error: any) {
+          console.error("Error during profile creation:", error);
+          setMessage({ type: 'error', text: `CRITICAL_ERROR: ${error.message}` });
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [pendingRegistration]);
+
 
   const getOrInitRecaptcha = () => {
     if (recaptchaVerifierRef.current) return recaptchaVerifierRef.current;
@@ -203,27 +241,53 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     setLoading(true);
 
     try {
-      getOrInitRecaptcha();
-      if (mode === 'register') {
-        const userCredential = await createUserWithEmailAndPassword(null, email, password);
-        await createStewardProfile(userCredential.user.uid, email, name);
-        await sendVerificationShard();
-        setMode('waiting_verification');
-      } else if (mode === 'login') {
-        const userCredential = await signInWithEmailAndPassword(null, email, password);
-        if (!userCredential.user.emailVerified) {
-          setMode('waiting_verification');
-          return;
+        if (mode === 'register') {
+            if (typeof grecaptcha === 'undefined' || !grecaptcha.enterprise) {
+                throw new Error("Security module not loaded. Please refresh.");
+            }
+            
+            const recaptchaToken = await grecaptcha.enterprise.execute('6LcCwGMsAAAAALThFiF4KGCslL0jqhQdr7sqoVlI', { action: 'signup' });
+            
+            if (!recaptchaToken) {
+                throw new Error("Could not verify reCAPTCHA. Please try again.");
+            }
+
+            const assessmentResult: any = await verifyRecaptcha(recaptchaToken, 'signup');
+            const assessment = assessmentResult.data;
+
+            if (!assessment.riskAnalysis || assessment.riskAnalysis.score < 0.7) {
+                console.warn("reCAPTCHA assessment indicates high risk:", assessment);
+                let reason = "High-risk activity detected.";
+                if (assessment.riskAnalysis) {
+                    reason += ` Reasons: ${assessment.riskAnalysis.reasons.join(', ') || 'N/A'}. Score: ${assessment.riskAnalysis.score.toFixed(2)}`;
+                }
+                throw new Error(reason);
+            }
+
+            setMessage({ type: 'info', text: `Security check passed. Score: ${assessment.riskAnalysis.score.toFixed(2)}. Anchoring node...` });
+            
+            // Set pending state. The useEffect will handle profile creation.
+            setPendingRegistration({ name, email });
+            // This will trigger the onAuthStateChanged listener.
+            await createUserWithEmailAndPassword(auth, email, password);
+
+        } else if (mode === 'login') {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            if (!userCredential.user.emailVerified) {
+                setMode('waiting_verification');
+                setLoading(false);
+                return;
+            }
+            const profile = await getStewardProfile(userCredential.user.uid);
+            if (profile) onLogin(profile);
+            setLoading(false);
         }
-        const profile = await getStewardProfile(userCredential.user.uid);
-        if (profile) onLogin(profile);
-      }
     } catch (error: any) {
-      setMessage({ type: 'error', text: `REGISTRY_ERROR: ${error.message}` });
-    } finally {
-      setLoading(false);
+        setPendingRegistration(null); // Clear pending state on any auth error
+        setMessage({ type: 'error', text: `REGISTRY_ERROR: ${error.message}` });
+        setLoading(false);
     }
-  };
+};
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();

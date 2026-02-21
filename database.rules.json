@@ -1,22 +1,6 @@
-
 {
   "rules": {
-    "network_pulse": {
-      ".read": "auth != null && auth.token.app_check == true",
-      ".write": "auth != null && auth.token.app_check == true",
-      "$pulse_id": {
-        ".validate": "newData.hasChildren(['message', 'timestamp']) && newData.child('message').isString()"
-      }
-    },
-    "global_metrics": {
-      ".read": "auth != null && auth.token.app_check == true",
-      ".write": "auth != null && auth.token.app_check == true && root.child('auditors').child(auth.token.email.replace('.', ',')).exists()",
-      "m_constant": {
-        ".validate": "newData.isNumber() && newData.val() >= 1.0"
-      },
-      "ca_index": {
-        ".validate": "newData.isNumber()"
-      }
-    }
+    ".read": "auth != null",
+    ".write": "auth != null"
   }
 }

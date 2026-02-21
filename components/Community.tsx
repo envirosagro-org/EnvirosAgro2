@@ -31,9 +31,10 @@ import {
   Play,
   Cpu,
   FileCode,
-  CheckCircle
+  CheckCircle,
+  FlaskConical
 } from 'lucide-react';
-import { User, ViewState, Collective, SocialPost, PostComment, StewardConnection } from '../types';
+import { User, ViewState, Collective, SocialPost, PostComment, StewardConnection, ResearchPaper } from '../types';
 import { generateAgroExam, getGroundedAgroResources, chatWithAgroExpert, AIResponse } from '../services/geminiService';
 import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '../services/firebaseService';
 
@@ -76,6 +77,24 @@ const MOCK_STEWARDS = [
   { esin: 'EA-ROBO-9214', name: 'Dr. Orion Bot', role: 'Automation Engineer', location: 'Tokyo Hub', res: 95, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150', online: true, skills: ['Swarm Control', 'Mesh Ingest'] },
 ];
 
+const RESEARCH_SPONSORSHIP_TOPICS = [
+  { id: 'res-1', title: 'Sonic Nutrient Uplift', goal: 2500, current: 1240, desc: 'Sponsoring AgroMusika research for high-frequency root stimulation.' },
+  { id: 'res-2', title: 'Bantu Seed Genetics', goal: 5000, current: 4200, desc: 'Preserving drought-resistant lineage shards in the global genetic vault.' }
+];
+
+const INITIAL_PATENTS: ResearchPaper[] = [
+  { 
+    id: 'PAT-8821', title: 'Plant Wave Bio-Electric Modulation v1.2', author: 'Dr. Sarah Chen', authorEsin: 'EA-2024-X821', 
+    abstract: 'Standardizing 432Hz ultrasonic sharding...', content: '', thrust: 'Technological', status: 'Invention', 
+    impactScore: 94, rating: 4.8, vouchCount: 142, eacRewards: 1250, timestamp: '2d ago', iotDataUsed: true
+  },
+  { 
+    id: 'PAT-9104', title: 'Bantu Soil Biome Heritage Mapping', author: 'Steward Nairobi', authorEsin: 'EA-2023-P991', 
+    abstract: 'Cross-analyzing ancestral lineages...', content: '', thrust: 'Societal', status: 'Registered', 
+    impactScore: 88, rating: 4.5, vouchCount: 88, eacRewards: 450, timestamp: '5d ago', iotDataUsed: true
+  },
+];
+
 const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpendEAC, onContribution, onNavigate, initialSection }) => {
   const [activeTab, setActiveTab] = useState<'social' | 'shards' | 'lms' | 'network'>('social');
   const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams' | 'forge'>('modules');
@@ -83,6 +102,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
   const [collectives, setCollectives] = useState<Collective[]>(INITIAL_COLLECTIVES);
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [connections, setConnections] = useState<StewardConnection[]>([]);
+  const [topPatents, setTopPatents] = useState<ResearchPaper[]>([]);
   
   const [showCreateCollective, setShowCreateCollective] = useState(false);
   const [showProfileView, setShowProfileView] = useState<string | null>(null); 
@@ -116,7 +136,11 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
     const unsubPosts = listenToCollection('social_posts', (data) => setPosts(data.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())));
     const unsubColl = listenToCollection('collectives', (data) => setCollectives([...INITIAL_COLLECTIVES, ...data]));
     const unsubConn = listenToCollection('connections', setConnections);
-    return () => { unsubPosts(); unsubColl(); unsubConn(); };
+    const unsubPatents = listenToCollection('patents', (data: ResearchPaper[]) => {
+      const sorted = [...INITIAL_PATENTS, ...data].sort((a, b) => (b.vouchCount || 0) - (a.vouchCount || 0)).slice(0, 5);
+      setTopPatents(sorted);
+    });
+    return () => { unsubPosts(); unsubColl(); unsubConn(); unsubPatents(); };
   }, []);
 
   const isAgroWorker = user.role.toLowerCase().includes('worker') || user.role.toLowerCase().includes('expert') || user.role.toLowerCase().includes('engineer');
@@ -237,6 +261,13 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
       priority: 'low',
       actionIcon: 'Send'
     });
+  };
+
+  const handleSponsorResearch = async (title: string) => {
+    const amount = 50;
+    if (await onSpendEAC(amount, `RESEARCH_SPONSORSHIP_${title}`)) {
+      onEarnEAC(10, 'RESEARCH_VOUCH_REWARD');
+    }
   };
 
   const selectedStewardDossier = useMemo(() => {
@@ -401,8 +432,36 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                  </div>
               </div>
 
-              {/* Sidebar: Social Discovery */}
+              {/* Sidebar: Social Discovery & Leaderboard */}
               <div className="lg:col-span-4 space-y-10">
+                 {/* Top Research Leaderboard */}
+                 <div className="glass-card p-10 rounded-[56px] border border-amber-500/20 bg-amber-500/5 space-y-8 shadow-3xl group">
+                    <div className="flex items-center gap-5">
+                       <div className="p-4 bg-amber-600 rounded-2xl shadow-xl group-hover:rotate-12 transition-transform"><Trophy size={28} className="text-white" /></div>
+                       <h4 className="text-2xl font-black text-white uppercase italic m-0">Top <span className="text-amber-400">Shards</span></h4>
+                    </div>
+                    <div className="space-y-4">
+                       {topPatents.length === 0 ? (
+                          <p className="text-[10px] text-slate-600 text-center italic py-4">No vouches indexed yet.</p>
+                       ) : topPatents.map((p, i) => (
+                          <div key={p.id} className="flex items-center justify-between p-5 bg-black/40 rounded-3xl border border-white/5 group/item hover:border-amber-500/30 transition-all cursor-pointer active:scale-95" onClick={() => onNavigate('research')}>
+                             <div className="flex items-center gap-5">
+                                <span className="text-2xl font-mono font-black text-slate-800 group-hover/item:text-amber-500/40 transition-colors">#{i+1}</span>
+                                <div className="space-y-1">
+                                   <p className="text-xs font-black text-white uppercase italic truncate max-w-[150px] leading-tight">{p.title}</p>
+                                   <p className="text-[8px] text-slate-500 uppercase font-mono tracking-widest">{p.author}</p>
+                                </div>
+                             </div>
+                             <div className="flex items-center gap-2 text-rose-500 bg-rose-500/5 px-3 py-1.5 rounded-full border border-rose-500/10">
+                                <Heart size={12} fill="currentColor" />
+                                <span className="text-xs font-mono font-black">{p.vouchCount || 0}</span>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                    <button onClick={() => onNavigate('research')} className="w-full py-5 bg-amber-600/10 border border-amber-500/20 text-amber-400 hover:bg-amber-600 hover:text-white rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all">VISIT_INVENTION_LEDGER</button>
+                 </div>
+
                  <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-10 shadow-3xl">
                     <div className="flex items-center justify-between px-4">
                        <h3 className="text-xl font-black text-white uppercase italic tracking-widest">Discover <span className="text-indigo-400">Stewards</span></h3>
@@ -499,58 +558,99 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
         {/* --- VIEW: COLLECTIVE SHARDS --- */}
         {activeTab === 'shards' && (
            <div className="space-y-16 animate-in slide-in-from-right-10 duration-700 max-w-[1600px] mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
-                 {collectives.map(shard => (
-                    <div key={shard.id} className="glass-card p-14 rounded-[80px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/40 transition-all group shadow-3xl relative overflow-hidden active:scale-[0.99] duration-300 flex flex-col min-h-[700px] justify-between">
-                       <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s] pointer-events-none"><Users2 size={500} /></div>
-                       <div className="space-y-10 relative z-10">
-                          <div className="flex justify-between items-start">
-                             <div className="w-24 h-24 rounded-[40px] bg-emerald-600 shadow-3xl border-4 border-white/10 flex items-center justify-center text-white group-hover:rotate-6 transition-transform"><Users2 size={48} /></div>
-                             <div className="text-right flex flex-col items-end gap-3">
-                                <span className={`px-5 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 shadow-xl tracking-widest`}>{shard.type.replace('_', ' ')}</span>
-                                <p className="text-[11px] text-slate-700 font-mono font-black italic tracking-widest uppercase">{shard.id} // ADMIN: {shard.adminName}</p>
-                             </div>
-                          </div>
-                          <div className="space-y-6">
-                             <h4 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter m-0 leading-none drop-shadow-2xl">{shard.name}</h4>
-                             <p className="text-2xl text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">"{shard.mission}"</p>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-8 py-10 border-y border-white/5">
-                             <div className="text-center group/met">
-                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-3">Node Treasury</p>
-                                <p className="text-5xl font-mono font-black text-white group-hover/met:text-emerald-400 transition-colors">{shard.treasuryBalance.toLocaleString()}<span className="text-sm ml-1 text-emerald-500">EAC</span></p>
-                             </div>
-                             <div className="text-center group/met">
-                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-3">Steward Quorum</p>
-                                <p className="text-5xl font-mono font-black text-white group-hover/met:text-blue-400 transition-colors">{shard.memberCount}</p>
-                             </div>
-                          </div>
-                       </div>
-
-                       <div className="space-y-6 relative z-10 mt-10">
-                          {shard.adminEsin === user.esin && (
-                             <div className="p-8 bg-indigo-600/10 border border-indigo-500/20 rounded-[44px] flex items-center justify-between shadow-inner">
-                                <div>
-                                   <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mb-1">Administrative Privileges</p>
-                                   <p className="text-sm font-bold text-white uppercase italic">Disburse Yield Shards</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-12">
+                    {collectives.map(shard => (
+                       <div key={shard.id} className="glass-card p-14 rounded-[80px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/40 transition-all group shadow-3xl relative overflow-hidden active:scale-[0.99] duration-300 flex flex-col min-h-[700px] justify-between">
+                          <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s] pointer-events-none"><Users2 size={500} /></div>
+                          <div className="space-y-10 relative z-10">
+                             <div className="flex justify-between items-start">
+                                <div className="w-24 h-24 rounded-[40px] bg-emerald-600 shadow-3xl border-4 border-white/10 flex items-center justify-center text-white group-hover:rotate-6 transition-transform"><Users2 size={48} /></div>
+                                <div className="text-right flex flex-col items-end gap-3">
+                                   <span className={`px-5 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 shadow-xl tracking-widest`}>{shard.type.replace('_', ' ')}</span>
+                                   <p className="text-[11px] text-slate-700 font-mono font-black italic tracking-widest uppercase">{shard.id} // ADMIN: {shard.adminName}</p>
                                 </div>
-                                <button className="p-5 bg-indigo-600 rounded-3xl text-white shadow-2xl hover:scale-110 active:scale-95 transition-all"><Gavel size={24}/></button>
                              </div>
-                          )}
-                          <div className="flex gap-4">
-                             <button className="flex-1 py-8 bg-white/5 border-2 border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-4">
-                                <FileText size={20} /> VIEW_MANIFEST
-                             </button>
-                             <button 
-                               className={`flex-1 py-8 rounded-full font-black text-sm uppercase tracking-[0.5em] shadow-3xl transition-all flex items-center justify-center gap-5 border-4 border-white/10 ring-[12px] ring-white/5 active:scale-95 ${shard.members.includes(user.esin) ? 'bg-rose-950/40 text-rose-500 border-rose-500/30' : 'bg-emerald-600 text-white'}`}
-                             >
-                                {shard.members.includes(user.esin) ? 'EXIT_SHARD' : 'JOIN_GUILD'}
-                             </button>
+                             <div className="space-y-6">
+                                <h4 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter m-0 leading-none drop-shadow-2xl">{shard.name}</h4>
+                                <p className="text-2xl text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">"{shard.mission}"</p>
+                             </div>
+                             
+                             <div className="grid grid-cols-2 gap-8 py-10 border-y border-white/5">
+                                <div className="text-center group/met">
+                                   <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-3">Node Treasury</p>
+                                   <p className="text-5xl font-mono font-black text-white group-hover/met:text-emerald-400 transition-colors">{shard.treasuryBalance.toLocaleString()}<span className="text-sm ml-1 text-emerald-500">EAC</span></p>
+                                </div>
+                                <div className="text-center group/met">
+                                   <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-3">Steward Quorum</p>
+                                   <p className="text-5xl font-mono font-black text-white group-hover/met:text-blue-400 transition-colors">{shard.memberCount}</p>
+                                </div>
+                             </div>
+                          </div>
+
+                          <div className="space-y-6 relative z-10 mt-10">
+                             {shard.adminEsin === user.esin && (
+                                <div className="p-8 bg-indigo-600/10 border border-indigo-500/20 rounded-[44px] flex items-center justify-between shadow-inner">
+                                   <div>
+                                      <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mb-1">Administrative Privileges</p>
+                                      <p className="text-sm font-bold text-white uppercase italic">Disburse Yield Shards</p>
+                                   </div>
+                                   <button className="p-5 bg-indigo-600 rounded-3xl text-white shadow-2xl hover:scale-110 active:scale-95 transition-all"><Gavel size={24}/></button>
+                                </div>
+                             )}
+                             <div className="flex gap-4">
+                                <button className="flex-1 py-8 bg-white/5 border-2 border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-4">
+                                   <FileText size={20} /> VIEW_MANIFEST
+                                </button>
+                                <button 
+                                  className={`flex-1 py-8 rounded-full font-black text-sm uppercase tracking-[0.5em] shadow-3xl transition-all flex items-center justify-center gap-5 border-4 border-white/10 ring-[12px] ring-white/5 active:scale-95 ${shard.members.includes(user.esin) ? 'bg-rose-950/40 text-rose-500 border-rose-500/30' : 'bg-emerald-600 text-white'}`}
+                                >
+                                   {shard.members.includes(user.esin) ? 'EXIT_SHARD' : 'JOIN_GUILD'}
+                                </button>
+                             </div>
                           </div>
                        </div>
+                    ))}
+                 </div>
+
+                 {/* Research Sponsorship Sidebar */}
+                 <div className="space-y-8">
+                    <div className="glass-card p-10 rounded-[64px] border border-blue-500/20 bg-blue-900/5 space-y-8 shadow-3xl group">
+                       <div className="flex items-center gap-5">
+                          <div className="p-4 bg-blue-600 rounded-2xl shadow-xl group-hover:rotate-12 transition-transform"><FlaskConical size={28} className="text-white" /></div>
+                          <h4 className="text-2xl font-black text-white uppercase italic m-0">Research <span className="text-blue-400">Sponsorship</span></h4>
+                       </div>
+                       <p className="text-slate-400 italic text-sm leading-relaxed px-2">"Collectives can pool EAC to sponsor high-depth technical research. Sponsoring stewards earn exclusive data access."</p>
+                       
+                       <div className="space-y-6">
+                          {RESEARCH_SPONSORSHIP_TOPICS.map(topic => (
+                             <div key={topic.id} className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-6 shadow-inner group/topic hover:border-blue-500/30 transition-all">
+                                <div>
+                                   <h5 className="text-lg font-black text-white uppercase italic tracking-widest group-hover/topic:text-blue-400 transition-colors">{topic.title}</h5>
+                                   <p className="text-[10px] text-slate-500 mt-2 italic">"{topic.desc}"</p>
+                                </div>
+                                <div className="space-y-3">
+                                   <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                                      <span className="text-slate-700">Funding Depth</span>
+                                      <span className="text-blue-400 font-mono">{topic.current} / {topic.goal} EAC</span>
+                                   </div>
+                                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                                      <div className="h-full bg-blue-500 rounded-full shadow-[0_0_15px_#3b82f6]" style={{ width: `${(topic.current/topic.goal)*100}%` }}></div>
+                                   </div>
+                                </div>
+                                <button 
+                                   onClick={() => handleSponsorResearch(topic.title)}
+                                   className="w-full py-4 bg-blue-600/10 border border-blue-500/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                                >
+                                   VOUCH_50_EAC
+                                </button>
+                             </div>
+                          ))}
+                       </div>
+                       <button onClick={() => onNavigate('research')} className="w-full py-5 bg-white/5 border border-white/10 text-slate-500 hover:text-white rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all">BROWSE_INVENTION_LEDGER</button>
                     </div>
-                 ))}
+                 </div>
               </div>
            </div>
         )}

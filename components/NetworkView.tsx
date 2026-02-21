@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Globe, Server, Activity, ShieldCheck, Network, Zap, 
@@ -10,7 +11,15 @@ import {
   TrendingUp, CheckCircle2, ArrowRight,
   Monitor,
   Siren,
-  LineChart
+  LineChart,
+  HeartPulse,
+  Crown,
+  Trophy,
+  User as UserIcon,
+  MessageSquare,
+  Music,
+  Map as MapIcon,
+  ThermometerSun
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { auditMeshStability, AIResponse } from '../services/geminiService';
@@ -44,8 +53,31 @@ interface MempoolTx {
   thrust: string;
 }
 
+interface PulseRipple {
+  id: string;
+  originX: number;
+  originY: number;
+  startTime: number;
+}
+
+const STEWARD_REGISTRY = [
+  { esin: 'EA-ALPH-8821', name: 'Steward Alpha', role: 'Soil Expert', x: 25, y: 30, res: 98 },
+  { esin: 'EA-GAIA-1104', name: 'Gaia Green', role: 'Genetics Analyst', x: 75, y: 25, res: 92 },
+  { esin: 'EA-ROBO-9214', name: 'Dr. Orion Bot', role: 'Automation Engineer', x: 30, y: 75, res: 95 },
+  { esin: 'EA-LILY-0042', name: 'Aesthetic Rose', role: 'Botanical Architect', x: 70, y: 70, res: 99 },
+  { esin: 'EA-ROOT-NODE', name: 'Root Quorum', role: 'Central Authority', x: 50, y: 50, res: 100 },
+];
+
+const REGIONAL_ALPHA = [
+  { id: 'NAI', name: 'Nairobi Hub', region: 'Africa', alpha: 1.82, x: 45, y: 55, color: 'text-emerald-400', glow: 'rgba(16, 185, 129, 0.4)' },
+  { id: 'TYO', name: 'Tokyo Node', region: 'Asia', alpha: 1.65, x: 85, y: 35, color: 'text-blue-400', glow: 'rgba(59, 130, 246, 0.4)' },
+  { id: 'VAL', name: 'Valencia Shard', region: 'Europe', alpha: 1.48, x: 48, y: 30, color: 'text-rose-400', glow: 'rgba(244, 63, 94, 0.4)' },
+  { id: 'OMA', name: 'Omaha Hub', region: 'America', alpha: 1.52, x: 20, y: 35, color: 'text-amber-400', glow: 'rgba(245, 158, 11, 0.4)' },
+  { id: 'SYD', name: 'Sydney Sync', region: 'Oceania', alpha: 1.24, x: 88, y: 80, color: 'text-indigo-400', glow: 'rgba(99, 102, 241, 0.4)' },
+];
+
 const NetworkView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'map' | 'topology' | 'mempool'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'aura' | 'spectral' | 'topology' | 'mempool'>('map');
   const [nodes, setNodes] = useState<NodeShard[]>([]);
   const [relays, setRelays] = useState<RelayShard[]>([]);
   const [mempool, setMempool] = useState<MempoolTx[]>([]);
@@ -55,6 +87,7 @@ const NetworkView: React.FC = () => {
   const [auditVerdict, setAuditVerdict] = useState<AIResponse | null>(null);
   const [shardsInFlight, setShardsInFlight] = useState<{ id: string; from: string; to: string; progress: number }[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [activePulses, setActivePulses] = useState<PulseRipple[]>([]);
 
   const [propLogs, setPropLogs] = useState<{time: string, msg: string, col: string}[]>([]);
 
@@ -137,6 +170,7 @@ const NetworkView: React.FC = () => {
     let frame: number;
     const loop = () => {
       setShardsInFlight(prev => prev.map(s => ({ ...s, progress: s.progress + 1.5 })).filter(s => s.progress < 100));
+      setActivePulses(prev => prev.filter(p => Date.now() - p.startTime < 3000));
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
@@ -159,6 +193,21 @@ const NetworkView: React.FC = () => {
     } finally {
       setIsAuditing(false);
     }
+  };
+
+  const handleBroadcastPulse = (originX: number, originY: number) => {
+    const newPulse: PulseRipple = {
+      id: `PULSE-${Date.now()}`,
+      originX,
+      originY,
+      startTime: Date.now()
+    };
+    setActivePulses(prev => [...prev, newPulse]);
+    
+    setPropLogs(prev => [
+      { time: new Date().toLocaleTimeString(), msg: `RESONANCE_PULSE: Broad-spectrum harmony sync initiated.`, col: 'text-rose-400' },
+      ...prev
+    ].slice(0, 10));
   };
 
   const selectedNode = useMemo(() => nodes.find(n => n.id === selectedNodeId), [nodes, selectedNodeId]);
@@ -204,6 +253,8 @@ const NetworkView: React.FC = () => {
          <div className="flex p-1.5 glass-card rounded-[32px] border border-white/10 bg-black/80 backdrop-blur-3xl shadow-3xl px-8 overflow-x-auto scrollbar-hide w-full lg:w-auto">
            {[
              { id: 'map', label: 'Industrial Map', icon: Globe },
+             { id: 'aura', label: 'Aura Map', icon: HeartPulse },
+             { id: 'spectral', label: 'Spectral Heatmap', icon: ThermometerSun },
              { id: 'topology', label: 'Topology Shards', icon: Network },
              { id: 'mempool', label: 'Inbound Mempool', icon: Terminal },
            ].map(tab => (
@@ -438,6 +489,269 @@ const NetworkView: React.FC = () => {
            </div>
         )}
 
+        {/* --- VIEW: AURA MAP (Steward Resonance) --- */}
+        {activeTab === 'aura' && (
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-700">
+              <div className="lg:col-span-8 glass-card rounded-[80px] border-2 border-rose-500/20 bg-[#050706] relative overflow-hidden flex items-center justify-center min-h-[750px] shadow-3xl group/aura">
+                 <div className="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(circle_at_center,_#f43f5e_0%,_transparent_70%)] pointer-events-none"></div>
+                 
+                 <svg className="absolute inset-0 w-full h-full z-10 overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                       <filter id="aura-glow">
+                          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                       </filter>
+                    </defs>
+
+                    {/* Resonance Connections */}
+                    {STEWARD_REGISTRY.map((s1, i) => 
+                       STEWARD_REGISTRY.slice(i+1).map((s2, j) => (
+                          <g key={`${s1.esin}-${s2.esin}`}>
+                             <line x1={s1.x} y1={s1.y} x2={s2.x} y2={s2.y} stroke="rgba(244, 63, 94, 0.05)" strokeWidth="0.3" />
+                             <line x1={s1.x} y1={s1.y} x2={s2.x} y2={s2.y} stroke="rgba(244, 63, 94, 0.2)" strokeWidth="0.1" strokeDasharray="1,2">
+                                <animate attributeName="stroke-dashoffset" from="0" to="20" dur="3s" repeatCount="indefinite" />
+                             </line>
+                          </g>
+                       ))
+                    )}
+
+                    {/* Active Pulses */}
+                    {activePulses.map(pulse => {
+                       const elapsed = (Date.now() - pulse.startTime) / 1000;
+                       const radius = elapsed * 40; // Expand over time
+                       const opacity = 1 - (elapsed / 3);
+                       return (
+                          <circle 
+                             key={pulse.id}
+                             cx={pulse.originX} cy={pulse.originY}
+                             r={radius}
+                             fill="none"
+                             stroke="#f43f5e"
+                             strokeWidth="0.5"
+                             opacity={opacity}
+                          />
+                       );
+                    })}
+
+                    {/* Steward Aura Nodes */}
+                    {STEWARD_REGISTRY.map(steward => (
+                       <g key={steward.esin} className="cursor-pointer group/steward" onClick={() => setSelectedNodeId(steward.esin)}>
+                          <circle cx={steward.x} cy={steward.y} r="2.5" className="fill-rose-500/20 group-hover/steward:fill-rose-500/40 transition-all" filter="url(#aura-glow)" />
+                          <circle cx={steward.x} cy={steward.y} r="0.8" className="fill-white" />
+                          <circle cx={steward.x} cy={steward.y} r="5" className="stroke-rose-500/10 fill-transparent animate-pulse-slow" />
+                       </g>
+                    ))}
+                 </svg>
+
+                 <div className="absolute top-12 left-12 p-8 glass-card rounded-[40px] border border-rose-500/20 bg-black/80 backdrop-blur-3xl shadow-2xl w-[320px] space-y-6">
+                    <div className="flex items-center gap-5 border-b border-white/5 pb-6">
+                       <div className="w-14 h-14 rounded-2xl bg-rose-600 flex items-center justify-center text-white shadow-3xl">
+                          <HeartPulse size={32} className="animate-pulse" />
+                       </div>
+                       <div>
+                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Aura <span className="text-rose-500">Resonance</span></h4>
+                          <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">STEWARD_CONSTELLATION</p>
+                       </div>
+                    </div>
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                          <span>Collective Resonance</span>
+                          <span className="text-rose-500 font-mono">1.84α</span>
+                       </div>
+                       <div className="h-1 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                          <div className="h-full bg-rose-500 shadow-[0_0_15px_#f43f5e]" style={{ width: '84%' }}></div>
+                       </div>
+                    </div>
+                 </div>
+
+                 {selectedNodeId && STEWARD_REGISTRY.find(s => s.esin === selectedNodeId) && (
+                    <div className="absolute bottom-12 left-12 right-12 z-20 animate-in slide-in-from-bottom-8 duration-700">
+                       {(() => {
+                          const s = STEWARD_REGISTRY.find(st => st.esin === selectedNodeId)!;
+                          return (
+                             <div className="p-10 glass-card rounded-[56px] border-2 border-rose-500/20 bg-black/90 shadow-3xl flex flex-col md:flex-row items-center justify-between gap-12 group/st-detail">
+                                <div className="flex items-center gap-10">
+                                   <div className={`w-20 h-20 rounded-[32px] bg-rose-600/10 border-2 border-rose-500 flex items-center justify-center text-rose-500 transition-transform ${activePulses.some(p => p.originX === s.x) ? 'scale-110' : ''}`}>
+                                      <UserIcon size={40} />
+                                   </div>
+                                   <div className="text-left space-y-2">
+                                      <h5 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">{s.name}</h5>
+                                      <div className="flex items-center gap-6">
+                                         <span className="px-4 py-1 bg-white/5 rounded-lg border border-white/10 text-[9px] font-black uppercase text-slate-500 tracking-widest">{s.role}</span>
+                                         <p className="text-[10px] text-rose-400 font-mono font-black uppercase flex items-center gap-2">
+                                            <HeartPulse size={14} /> Resonance: {s.res}%
+                                         </p>
+                                      </div>
+                                   </div>
+                                </div>
+                                <div className="flex gap-4">
+                                   <button 
+                                      onClick={() => handleBroadcastPulse(s.x, s.y)}
+                                      className="px-12 py-8 bg-rose-600 hover:bg-rose-500 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl active:scale-95 transition-all flex items-center gap-4 border-2 border-white/10 ring-8 ring-rose-500/5"
+                                   >
+                                      <Music size={24} /> HARMONY_PULSE
+                                   </button>
+                                   <button className="p-8 bg-white/5 border border-white/10 rounded-[32px] text-slate-500 hover:text-white transition-all shadow-xl active:scale-90"><MessageSquare size={32} /></button>
+                                </div>
+                             </div>
+                          );
+                       })()}
+                    </div>
+                 )}
+              </div>
+
+              <div className="lg:col-span-4 space-y-10">
+                 <div className="glass-card p-10 rounded-[56px] border border-rose-500/20 bg-rose-950/5 space-y-10 shadow-3xl relative overflow-hidden group/auras">
+                    <h4 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-5">
+                       <Crown size={24} className="text-rose-500" /> Resonance <span className="text-rose-500">Nodes</span>
+                    </h4>
+                    <div className="space-y-6">
+                       {STEWARD_REGISTRY.sort((a,b) => b.res - a.res).map((st, i) => (
+                          <div key={st.esin} className="flex items-center justify-between p-5 bg-black/40 rounded-3xl border border-white/5 hover:border-rose-500/30 transition-all group/node-item cursor-pointer" onClick={() => setSelectedNodeId(st.esin)}>
+                             <div className="flex items-center gap-5">
+                                <span className="text-xl font-mono font-black text-slate-800">0{i+1}</span>
+                                <div>
+                                   <p className="text-sm font-black text-white uppercase italic">{st.name}</p>
+                                   <p className="text-[8px] text-slate-500 uppercase tracking-widest">{st.esin}</p>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <p className="text-lg font-mono font-black text-rose-500">{st.res}%</p>
+                                <p className="text-[7px] text-slate-700 font-black uppercase">α-Sync</p>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="p-12 glass-card rounded-[64px] border-indigo-500/20 bg-indigo-600/5 text-center space-y-8 shadow-3xl">
+                    <div className="w-20 h-20 bg-indigo-600 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl border border-white/10">
+                       <Share2 size={40} className="text-white" />
+                    </div>
+                    <div className="space-y-3">
+                       <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Social Finality</h4>
+                       <p className="text-slate-500 text-sm font-medium italic px-4 leading-relaxed">"The Aura Map visualizes the biological trust network that anchors the industrial registry."</p>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
+
+        {/* --- VIEW: SPECTRAL HEATMAP (Alpha Density) --- */}
+        {activeTab === 'spectral' && (
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-700">
+              <div className="lg:col-span-8 glass-card rounded-[80px] border-2 border-white/5 bg-[#020403] relative overflow-hidden flex items-center justify-center min-h-[750px] shadow-4xl group/spectral">
+                 <div className="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(circle_at_center,_#3b82f6_0%,_transparent_70%)] pointer-events-none"></div>
+                 
+                 <svg className="absolute inset-0 w-full h-full z-10 overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                       {REGIONAL_ALPHA.map(region => (
+                          <radialGradient key={region.id} id={`grad-${region.id}`} cx="50%" cy="50%" r="50%">
+                             <stop offset="0%" stopColor={region.glow.split('(')[0].replace('rgba', 'rgb').replace('0.4', '')} stopOpacity="0.8" />
+                             <stop offset="100%" stopColor={region.glow.split('(')[0].replace('rgba', 'rgb').replace('0.4', '')} stopOpacity="0" />
+                          </radialGradient>
+                       ))}
+                    </defs>
+
+                    {/* Regional Heat Blobs */}
+                    {REGIONAL_ALPHA.map(region => (
+                       <g key={region.id}>
+                          <circle 
+                             cx={region.x} cy={region.y} 
+                             r={region.alpha * 8} 
+                             fill={`url(#grad-${region.id})`} 
+                             className="animate-pulse-slow"
+                          />
+                          <circle cx={region.x} cy={region.y} r="0.5" fill="white" opacity="0.5" />
+                       </g>
+                    ))}
+                 </svg>
+
+                 <div className="absolute top-12 left-12 space-y-6 z-20">
+                    <div className="p-8 glass-card rounded-[40px] border border-blue-500/20 bg-black/80 backdrop-blur-3xl shadow-2xl w-[320px] space-y-6">
+                       <div className="flex items-center gap-5 border-b border-white/5 pb-6">
+                          <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-3xl">
+                             <ThermometerSun size={32} className="animate-pulse" />
+                          </div>
+                          <div>
+                             <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Alpha <span className="text-blue-400">Density</span></h4>
+                             <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">SPECTRAL_INDEX_v6.5</p>
+                          </div>
+                       </div>
+                       <div className="space-y-4">
+                          <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                             <span>Peak Global Alpha</span>
+                             <span className="text-emerald-400 font-mono">1.82α (NAIROBI)</span>
+                          </div>
+                          <div className="h-1 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                             <div className="h-full bg-blue-500 shadow-[0_0_15px_#3b82f6]" style={{ width: '88%' }}></div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end z-20 pointer-events-none">
+                    <div className="p-8 glass-card rounded-[40px] border border-white/10 bg-black/60 backdrop-blur-md">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Sensor Legend</p>
+                       <div className="flex gap-6">
+                          <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
+                             <span className="text-[8px] font-black text-white uppercase tracking-widest">High Resonance</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
+                             <span className="text-[8px] font-black text-white uppercase tracking-widest">Active Ingest</span>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="lg:col-span-4 space-y-10">
+                 <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-blue-950/5 space-y-10 shadow-3xl relative overflow-hidden group/spectral-list">
+                    <h4 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-5">
+                       <Globe2 size={24} className="text-blue-400" /> Regional <span className="text-blue-400">Yields</span>
+                    </h4>
+                    <div className="space-y-6">
+                       {REGIONAL_ALPHA.sort((a,b) => b.alpha - a.alpha).map((reg, i) => (
+                          <div key={reg.id} className="p-6 bg-black/40 rounded-[40px] border border-white/5 hover:border-blue-500/30 transition-all group/reg-item">
+                             <div className="flex justify-between items-center mb-4">
+                                <div className="flex items-center gap-4">
+                                   <div className={`p-3 rounded-2xl bg-white/5 ${reg.color}`}>
+                                      <MapPin size={16} />
+                                   </div>
+                                   <div>
+                                      <p className="text-sm font-black text-white uppercase italic leading-none">{reg.name}</p>
+                                      <p className="text-[8px] text-slate-700 font-bold uppercase mt-1.5">{reg.region}</p>
+                                   </div>
+                                </div>
+                                <div className="text-right">
+                                   <p className="text-2xl font-mono font-black text-white leading-none">{reg.alpha}α</p>
+                                   <p className="text-[7px] text-blue-500 font-black uppercase mt-1">Density Index</p>
+                                </div>
+                             </div>
+                             <div className="h-1 bg-white/5 rounded-full overflow-hidden p-px">
+                                <div className={`h-full bg-blue-500 transition-all duration-[3s]`} style={{ width: `${(reg.alpha/2)*100}%` }}></div>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="p-12 glass-card rounded-[64px] border-amber-500/20 bg-amber-500/[0.03] text-center space-y-8 shadow-3xl">
+                    <div className="w-20 h-20 bg-amber-600 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl border border-white/10">
+                       <Zap size={40} className="text-white" />
+                    </div>
+                    <div className="space-y-3">
+                       <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Power Distribution</h4>
+                       <p className="text-slate-500 text-sm font-medium italic px-4 leading-relaxed">"The Spectral Heatmap enables the Quorum to rebalance mesh energy toward low-density regions."</p>
+                    </div>
+                    <button className="w-full py-5 bg-amber-600/10 border border-amber-500/20 text-amber-500 hover:bg-amber-600 hover:text-white rounded-[32px] text-[10px] font-black uppercase tracking-widest transition-all">REBALANCE_ENERGY_SHARDS</button>
+                 </div>
+              </div>
+           </div>
+        )}
+
         {/* --- VIEW: TOPOLOGY SHARDS --- */}
         {activeTab === 'topology' && (
           <div className="animate-in slide-in-from-right-10 duration-700 space-y-12">
@@ -619,6 +933,7 @@ const NetworkView: React.FC = () => {
 
       <style>{`
         .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
+        .shadow-4xl { box-shadow: 0 100px 250px -50px rgba(0, 0, 0, 0.98); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }

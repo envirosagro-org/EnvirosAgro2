@@ -99,6 +99,8 @@ export interface SustainabilityMetrics {
   socialImmunity: number;
   viralLoadSID: number;
   baselineM: number;
+  reputationAlpha?: number;
+  totalVouchesReceived?: number;
 }
 
 export type SupplierType = 
@@ -299,9 +301,9 @@ export interface ContractApplication {
   landResources: string;
   labourCapacity: string;
   auditStatus: 'Pending' | 'Verified' | 'Rejected';
-  paymentEscrowed: number;
   matchScore: number;
   ingestedAssets: string[];
+  paymentEscrowed?: number;
 }
 
 export interface RegisteredUnit {
@@ -384,6 +386,7 @@ export interface ResearchPaper {
   status: string;
   impactScore: number;
   rating: number;
+  vouchCount: number;
   eacRewards: number;
   timestamp: string;
   iotDataUsed: boolean;

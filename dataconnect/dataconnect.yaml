@@ -1,0 +1,13 @@
+
+specVersion: "v1alpha"
+serviceId: "envirosagro-service"
+location: "us-central1"
+schema:
+  source: "."
+  datasource:
+    postgresql:
+      database: "envirosagro-db"
+      cloudSql:
+        instanceId: "envirosagro-instance"
+connectorDirs:
+  - "connector"

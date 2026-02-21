@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { 
+  Auth,
   getAuth, 
   onAuthStateChanged as fbOnAuthStateChanged, 
   signInWithEmailAndPassword as fbSignIn, 
@@ -39,7 +40,8 @@ import {
   serverTimestamp as rtdbTimestamp,
   off
 } from "firebase/database";
-import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, getToken } from "firebase/app-check";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { getDataConnect, connectDataConnectEmulator } from 'firebase/data-connect';
 import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
 
@@ -53,29 +55,26 @@ const firebaseConfig = {
   appId: "1:218810534057:web:2d32abbb459755499fc1b8"
 };
 
-// --- APP CHECK DEBUG TOKEN INITIALIZATION ---
 if (typeof window !== "undefined") {
   const DEBUG_TOKEN = "92E1FB19-E493-4BCB-AF99-57F97E72A503";
   (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = DEBUG_TOKEN;
   (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = DEBUG_TOKEN;
 }
 
-// 1. Initialize Firebase App Core safely
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// 2. Initialize App Check
 let appCheckInstance: any = null;
 if (typeof window !== "undefined") {
-  const RECAPTCHA_SITE_KEY = "6LcnzswqAAAAALQ_V2R_9Z_N7_I9_Y_V_P_N_W_L_R"; 
+  const RECAPTCHA_ENTERPRISE_SITE_KEY = "6LcnzswqAAAAALQ_V2R_9Z_N7_I9_Y_V_P_N_W_L_R";
   if (!(window as any).FIREBASE_APPCHECK_INITIALIZED) {
     try {
       appCheckInstance = initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+        provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
         isTokenAutoRefreshEnabled: true
       });
       (window as any).FIREBASE_APPCHECK_INITIALIZED = true;
     } catch (err) {
-      console.warn("App Check initialization error:", err);
+      console.warn("App Check (Enterprise) initialization error:", err);
     }
   }
 }
@@ -94,18 +93,11 @@ export const verifyAppCheckHandshake = async (): Promise<boolean> => {
   }
 };
 
-// 3. Initialize services
 export const auth = getAuth(app);
-
-// FORCED RESILIENCE CONFIG: Using auto-detect long polling for maximum cross-environment compatibility
-// Removed useFetchHandler to prevent potential "Illegal constructor" issues in specific browser sandboxes
-export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true
-}); 
-
+export const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 export const rtdb = getDatabase(app);
+export const functions = getFunctions(app);
 
-// 4. Data Connect Initialization
 export const dataConnect = getDataConnect(app, {
   location: 'us-central1',
   connector: 'envirosagro-connector',
@@ -116,36 +108,22 @@ if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' |
   connectDataConnectEmulator(dataConnect, 'localhost', 9399);
 }
 
-/**
- * DATA CONNECT BACKGROUND SYNC
- * Synchronizes relational shards silently across all system networks.
- */
 export const startBackgroundDataSync = (onSyncUpdate?: (status: string) => void) => {
   console.log("[DataConnect] Background Relational Sync Initialized.");
-  
   const interval = setInterval(async () => {
-    const statuses = [
-      "RELATIONAL_SHARD_OPTIMIZED",
-      "POSTGRES_INGEST_ALIGNED",
-      "MESH_GRAPHQL_VALIDATED",
-      "SCHEMA_CONSENSUS_REACHED"
-    ];
+    const statuses = ["RELATIONAL_SHARD_OPTIMIZED", "POSTGRES_INGEST_ALIGNED", "MESH_GRAPHQL_VALIDATED", "SCHEMA_CONSENSUS_REACHED"];
     const status = statuses[Math.floor(Math.random() * statuses.length)];
     if (onSyncUpdate) onSyncUpdate(status);
-    
     const pulseRef = ref(rtdb, 'system_heartbeat/dataconnect');
     set(pulseRef, { status, timestamp: rtdbTimestamp() });
   }, 10000);
-
   return () => clearInterval(interval);
 };
 
-// --- UTILITIES ---
 const cleanObject = (obj: any): any => {
   if (obj === null || obj === undefined) return null;
   if (Array.isArray(obj)) return obj.map(cleanObject);
   if (typeof obj !== 'object') return obj;
-  
   const newObj: any = {};
   Object.keys(obj).forEach((key) => {
     const val = obj[key];
@@ -160,10 +138,9 @@ const cleanObject = (obj: any): any => {
   return newObj;
 };
 
-// --- AUTHENTICATION ---
-export const onAuthStateChanged = (_: any, callback: (user: any) => void) => fbOnAuthStateChanged(auth, callback);
-export const signInWithEmailAndPassword = async (_: any, email: string, pass: string) => fbSignIn(auth, email, pass);
-export const createUserWithEmailAndPassword = async (_: any, email: string, pass: string) => fbCreateUser(auth, email, pass);
+export const onAuthStateChanged = (auth: Auth, callback: (user: any) => void) => fbOnAuthStateChanged(auth, callback);
+export const signInWithEmailAndPassword = async (auth: Auth, email: string, pass: string) => fbSignIn(auth, email, pass);
+export const createUserWithEmailAndPassword = async (auth: Auth, email: string, pass: string) => fbCreateUser(auth, email, pass);
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
   return signInWithPopup(auth, provider);
@@ -185,16 +162,17 @@ export const refreshAuthUser = async () => {
   return null;
 };
 
-// --- PHONE AUTH ---
+export const verifyRecaptcha = async (token: string, recaptchaAction: string) => {
+  const verifyRecaptcha = httpsCallable(functions, 'verifyRecaptcha');
+  return await verifyRecaptcha({ token, recaptchaAction });
+};
+
 export const setupRecaptcha = (containerId: string) => {
   if (typeof window === "undefined") return null;
   const container = document.getElementById(containerId);
   if (container) container.innerHTML = '';
   try {
-    // Ensuring RecaptchaVerifier is used correctly as a constructor
-    return new RecaptchaVerifier(auth, containerId, {
-      'size': 'invisible'
-    });
+    return new RecaptchaVerifier(auth, containerId, { 'size': 'invisible' });
   } catch(e) {
     console.error("Recaptcha setup error:", e);
     return null;
@@ -205,7 +183,6 @@ export const requestPhoneCode = async (phone: string, appVerifier: any): Promise
   return await signInWithPhoneNumber(auth, phone, appVerifier);
 };
 
-// --- SIGNAL TERMINAL CORE ---
 export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): Promise<SignalShard | null> => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
@@ -217,22 +194,7 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): P
     layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
     layers.push({ channel: 'EMAIL', status: 'SENT', timestamp });
   }
-  const rawSignal: any = {
-    id,
-    type: signalData.type || 'system',
-    origin: signalData.origin || 'MANUAL',
-    title: signalData.title || 'NETWORK_SIGNAL',
-    message: signalData.message || 'No message provided.',
-    timestamp,
-    read: false,
-    priority: signalData.priority || 'low',
-    dispatchLayers: layers,
-    stewardId: userId,
-    actionIcon: signalData.actionIcon || 'MessageSquare',
-    aiRemark: signalData.aiRemark || "Analyzing signal impact...",
-    meta: signalData.meta || {},
-    actionLabel: signalData.actionLabel || ''
-  };
+  const rawSignal: any = { id, type: signalData.type || 'system', origin: signalData.origin || 'MANUAL', title: signalData.title || 'NETWORK_SIGNAL', message: signalData.message || 'No message provided.', timestamp, read: false, priority: signalData.priority || 'low', dispatchLayers: layers, stewardId: userId, actionIcon: signalData.actionIcon || 'MessageSquare', aiRemark: signalData.aiRemark || "Analyzing signal impact...", meta: signalData.meta || {}, actionLabel: signalData.actionLabel || '' };
   const cleanSignal = cleanObject(rawSignal);
   try {
     await setDoc(doc(db, "signals", id), cleanSignal);
@@ -271,7 +233,6 @@ export const listenToPulse = (callback: (pulse: string) => void) => {
   return () => off(pulseRef);
 };
 
-// --- REGISTRY SYNC (FIRESTORE) ---
 export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
   const userId = uid || auth.currentUser?.uid;
   if (!userId) return false;

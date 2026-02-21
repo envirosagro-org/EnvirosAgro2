@@ -1,0 +1,6 @@
+
+connectorId: "envirosagro-connector"
+generate:
+  javascriptSdk:
+    outputDir: "../sdk"
+    package: "@envirosagro/sdk"

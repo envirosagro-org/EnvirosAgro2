@@ -17,8 +17,10 @@ import {
   Eye,
   ToggleLeft,
   ToggleRight,
-  /* Added RefreshCw to fix the 'Cannot find name' error on line 410 */
-  RefreshCw
+  RefreshCw,
+  Trophy,
+  Heart,
+  Crown
 } from 'lucide-react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
@@ -56,6 +58,13 @@ const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string
   'DEC': { flower: 'Narcissus', trait: 'Respect', color: 'text-blue-100', hex: '#f0f9ff', resonance: '528Hz' },
 };
 
+const REPUTATION_TIERS = [
+  { id: 'novice', label: 'Inception Steward', minVouches: 0, alpha: 1.00, color: 'text-slate-400', bg: 'bg-slate-400/10' },
+  { id: 'adept', label: 'Resonance Adept', minVouches: 50, alpha: 1.05, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+  { id: 'expert', label: 'Oracle Shardmaster', minVouches: 250, alpha: 1.15, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+  { id: 'master', label: 'Githaka Master', minVouches: 1000, alpha: 1.30, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+];
+
 const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onNavigate, onLogout, onPermanentAction, notify, signals }) => {
   const [activeTab, setActiveTab] = useState<'dossier' | 'card' | 'celestial' | 'edit' | 'settings' | 'sharing' | 'signals'>('dossier');
   const [isMintingCert, setIsMintingCert] = useState(false);
@@ -68,6 +77,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
   const [editBio, setEditBio] = useState(user.bio || '');
   const [editLocation, setEditLocation] = useState(user.location);
   const [isSaving, setIsSaving] = useState(false);
+
+  const currentReputation = user.metrics.totalVouchesReceived || 0;
+  const currentTier = useMemo(() => {
+    return [...REPUTATION_TIERS].reverse().find(t => currentReputation >= t.minVouches) || REPUTATION_TIERS[0];
+  }, [currentReputation]);
 
   const skillsData = useMemo(() => [
     { subject: 'Soil Science', A: (user.metrics.sustainabilityScore || 0) + 10 },
@@ -217,6 +231,50 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
       <div className="min-h-[600px] relative">
          {activeTab === 'dossier' && (
            <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-12">
+              {/* Reputation Tier Section */}
+              <div className="glass-card p-12 rounded-[64px] border-2 border-amber-500/20 bg-amber-500/5 space-y-12 shadow-4xl relative overflow-hidden group/rep">
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover/rep:scale-110 transition-transform duration-[10s]"><Trophy size={600} className="text-amber-500" /></div>
+                 
+                 <div className="flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
+                    <div className="flex items-center gap-8">
+                       <div className="w-24 h-24 bg-amber-600 rounded-[32px] flex items-center justify-center text-white shadow-3xl group-hover/rep:rotate-12 transition-transform">
+                          <Crown size={48} />
+                       </div>
+                       <div className="text-left space-y-2">
+                          <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0">{currentTier.label}</h3>
+                          <div className="flex items-center gap-4">
+                             <span className="px-4 py-1.5 bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase rounded-full border border-amber-500/20 tracking-widest italic">RANK_ID: {currentTier.id.toUpperCase()}</span>
+                             <div className="flex items-center gap-2 text-rose-500">
+                                <Heart size={16} fill="currentColor" />
+                                <span className="text-sm font-mono font-black">{currentReputation} Received Vouches</span>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="p-8 bg-black/60 rounded-[44px] border-2 border-amber-500/30 text-center space-y-2 shadow-inner min-w-[200px]">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest italic">Alpha Multiplier</p>
+                       <p className="text-6xl font-mono font-black text-amber-400">{currentTier.alpha.toFixed(2)}<span className="text-xl ml-1 italic text-white">α</span></p>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10 pt-10 border-t border-white/5">
+                    {REPUTATION_TIERS.map(tier => {
+                       const isAchieved = currentReputation >= tier.minVouches;
+                       const isActive = currentTier.id === tier.id;
+                       return (
+                          <div key={tier.id} className={`p-6 rounded-[32px] border-2 transition-all flex flex-col items-center text-center gap-3 ${isActive ? 'bg-amber-600/10 border-amber-500 text-white shadow-xl' : isAchieved ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-500' : 'bg-white/5 border-transparent text-slate-800 opacity-40'}`}>
+                             <div className="flex items-center justify-center gap-2">
+                                <Trophy size={14} />
+                                <span className="text-[9px] font-black uppercase tracking-widest">{tier.label}</span>
+                             </div>
+                             <p className="text-[8px] font-bold uppercase">{tier.minVouches}+ Vouches</p>
+                             {isActive && <div className="px-3 py-0.5 bg-amber-500 text-black text-[7px] font-black uppercase rounded-full mt-1">Active Rank</div>}
+                          </div>
+                       );
+                    })}
+                 </div>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                  <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/20 space-y-10 shadow-3xl flex flex-col justify-between overflow-hidden relative group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Coins size={300} className="text-emerald-500" /></div>
@@ -228,7 +286,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                           <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest">UTILITY EAC</p>
                           <p className="text-6xl font-mono font-black text-white tracking-tighter">{user.wallet.balance.toLocaleString()}</p>
                           <div className="flex items-center justify-center gap-2 text-emerald-500 font-black text-[9px] uppercase">
-                             <TrendingUp size={12} /> +12.4% Δ
+                             <TrendingUp size={12} /> +{(currentTier.alpha - 1 * 100).toFixed(1)}% Reputation Bonus
                           </div>
                        </div>
                        <div className="p-10 bg-black/60 rounded-[44px] border border-white/5 shadow-inner text-center space-y-4 group/equity hover:border-amber-500/20 transition-all">
@@ -356,7 +414,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                         <div className="space-y-2">
                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Steward Alias</label>
                            <input 
-                              type="text" value={editName} onChange={e => setEditName(e.target.value)}
+                              type="text" value={editName} onChange={e => setEditName(editName)}
                               className="w-full bg-black border border-white/10 rounded-2xl py-4 px-6 text-white font-bold outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all" 
                            />
                         </div>
@@ -527,6 +585,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
 
       <style>{`
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
+        .shadow-4xl { box-shadow: 0 80px 200px -40px rgba(0, 0, 0, 0.98); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }

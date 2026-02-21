@@ -43,7 +43,7 @@ import {
   Network,
   Waves,
   ArrowRightLeft,
-  Key,
+  Key, 
   ShieldPlus,
   ArrowDownCircle,
   Link2,
@@ -61,7 +61,13 @@ import {
   ClipboardCheck,
   History,
   AlertTriangle,
-  Zap as ZapIcon
+  Zap as ZapIcon,
+  Route,
+  Timer,
+  Flame,
+  Trophy,
+  Medal,
+  Users
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { 
@@ -71,6 +77,7 @@ import {
 import { AgroBlock, User, AgroTransaction, SignalShard, ViewState } from '../types';
 import { settleRegistryBatch, AIResponse, auditMeshStability, probeValidatorNode } from '../services/geminiService';
 import { SycamoreLogo } from '../App';
+import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
 
 interface ExplorerProps {
   blockchain?: AgroBlock[];
@@ -78,6 +85,8 @@ interface ExplorerProps {
   globalEchoes?: any[];
   onPulse?: (msg: string) => void;
   user?: User;
+  onEarnEAC: (amount: number, reason: string) => void;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   signals?: SignalShard[];
   setSignals?: React.Dispatch<React.SetStateAction<SignalShard[]>>;
   initialSection?: string | null;
@@ -85,10 +94,10 @@ interface ExplorerProps {
 }
 
 const VALIDATORS = [
-  { node: 'Environmental_Validator_04', reputation: 98.4, stake: '1.2M EAC', thrust: 'Technological', status: 'ACTIVE', resonance: 92, esin: 'EA-VAL-04' },
-  { node: 'Societal_Consensus_Node_82', reputation: 99.2, stake: '840K EAC', thrust: 'Societal', status: 'ACTIVE', resonance: 98, esin: 'EA-VAL-82' },
-  { node: 'Technological_Auth_Shard_12', reputation: 94.8, stake: '2.5M EAC', thrust: 'Environmental', status: 'ACTIVE', resonance: 88, esin: 'EA-VAL-12' },
-  { node: 'Industrial_Core_Finalizer', reputation: 99.9, stake: '4.8M EAC', thrust: 'Industry', status: 'SYNCING', resonance: 100, esin: 'EA-VAL-HQ' },
+  { id: 'VAL-04', node: 'Environmental_Validator_04', reputation: 98.4, stake: '1.2M EAC', thrust: 'Technological', status: 'ACTIVE', resonance: 92, esin: 'EA-VAL-04' },
+  { id: 'VAL-82', node: 'Societal_Consensus_Node_82', reputation: 99.2, stake: '840K EAC', thrust: 'Societal', status: 'ACTIVE', resonance: 98, esin: 'EA-VAL-82' },
+  { id: 'VAL-12', node: 'Technological_Auth_Shard_12', reputation: 94.8, stake: '2.5M EAC', thrust: 'Environmental', status: 'ACTIVE', resonance: 88, esin: 'EA-VAL-12' },
+  { id: 'VAL-HQ', node: 'Industrial_Core_Finalizer', reputation: 99.9, stake: '4.8M EAC', thrust: 'Industry', status: 'SYNCING', resonance: 100, esin: 'EA-VAL-HQ' },
 ];
 
 const DynamicIcon: React.FC<{ name: string; size?: number; className?: string }> = ({ name, size = 18, className = "" }) => {
@@ -106,8 +115,16 @@ const CHART_DATA = [
   { time: 'NOW', blocks: 84, load: 72 },
 ];
 
-const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, user, signals = [], setSignals, initialSection, onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'terminal' | 'blocks' | 'ledger' | 'consensus' | 'settlement'>('overview');
+interface RaceScore {
+  id: string;
+  name: string;
+  esin: string;
+  score: number;
+  timestamp: string;
+}
+
+const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, user, onEarnEAC, onSpendEAC, signals = [], setSignals, initialSection, onNavigate }) => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'terminal' | 'blocks' | 'ledger' | 'consensus' | 'relay' | 'settlement'>('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<string>('all');
   const [expandedShardId, setExpandedShardId] = useState<string | null>(null);
@@ -121,18 +138,89 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
   const [isProbing, setIsProbing] = useState(false);
   const [probeResult, setProbeResult] = useState<AIResponse | null>(null);
 
+  // Relay Game State
+  const [relayQueue, setRelayQueue] = useState<{id: string, thrust: string, val: number}[]>([]);
+  const [activeRelayShard, setActiveRelayShard] = useState<any | null>(null);
+  
+  // Finality Racing Mode State
+  const [isRacingMode, setIsRacingMode] = useState(false);
+  const [raceTimeRemaining, setRaceTimeRemaining] = useState(0);
+  const [raceScore, setRaceScore] = useState(0);
+  const [globalHighScores, setGlobalHighScores] = useState<RaceScore[]>([]);
+
   useEffect(() => {
-    if (initialSection && ['overview', 'terminal', 'blocks', 'ledger', 'consensus', 'settlement'].includes(initialSection)) {
+    if (initialSection && ['overview', 'terminal', 'blocks', 'ledger', 'consensus', 'relay', 'settlement'].includes(initialSection)) {
       setActiveTab(initialSection as any);
     }
   }, [initialSection]);
 
   useEffect(() => {
+    const unsub = listenToCollection('race_scores', (data: RaceScore[]) => {
+      setGlobalHighScores(data.sort((a, b) => b.score - a.score).slice(0, 10));
+    });
+    return () => unsub();
+  }, []);
+
+  // Main Simulation Loop
+  useEffect(() => {
     const interval = setInterval(() => {
       setHashRate(prev => Number((prev + (Math.random() * 0.4 - 0.2)).toFixed(2)));
-    }, 2000);
+      
+      // Relay Game Spawner
+      const spawnProbability = isRacingMode ? 0.9 : 0.6;
+      const maxQueue = isRacingMode ? 10 : 5;
+      
+      if (Math.random() > (1 - spawnProbability) && relayQueue.length < maxQueue) {
+        const newShard = {
+          id: `TX-${Math.random().toString(36).substring(7).toUpperCase()}`,
+          thrust: ['Technological', 'Societal', 'Environmental', 'Industry'][Math.floor(Math.random() * 4)],
+          val: Math.floor(Math.random() * 50 + 10)
+        };
+        setRelayQueue(prev => [...prev, newShard]);
+      }
+    }, isRacingMode ? 800 : 2000);
+    
     return () => clearInterval(interval);
-  }, []);
+  }, [relayQueue, isRacingMode]);
+
+  // Race Timer Effect
+  useEffect(() => {
+    let timer: number;
+    if (isRacingMode && raceTimeRemaining > 0) {
+      timer = setInterval(() => {
+        setRaceTimeRemaining(prev => {
+          if (prev <= 1) {
+            handleRaceEnd();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isRacingMode, raceTimeRemaining]);
+
+  const handleRaceEnd = async () => {
+    setIsRacingMode(false);
+    if (user && raceScore > 0) {
+      const finalScore: RaceScore = {
+        id: `SCORE-${Date.now()}`,
+        name: user.name,
+        esin: user.esin,
+        score: raceScore,
+        timestamp: new Date().toISOString()
+      };
+      await saveCollectionItem('race_scores', finalScore);
+    }
+  };
+
+  const handleStartRace = () => {
+    setIsRacingMode(true);
+    setRaceTimeRemaining(30);
+    setRaceScore(0);
+    setRelayQueue([]);
+    setActiveRelayShard(null);
+  };
 
   const handleRunSettlementAudit = async () => {
     setIsSettling(true);
@@ -181,6 +269,28 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
     }
   };
 
+  const handleRelayShard = (validator: any) => {
+    if (!activeRelayShard) return;
+    
+    if (validator.thrust === activeRelayShard.thrust) {
+      const baseReward = 2;
+      const finalReward = isRacingMode ? baseReward * 3 : baseReward;
+      
+      onEarnEAC(finalReward, isRacingMode ? 'FINALITY_RACING_YIELD' : 'NETWORK_RELAY_YIELD');
+      setRelayQueue(prev => prev.filter(s => s.id !== activeRelayShard.id));
+      setActiveRelayShard(null);
+      
+      if (isRacingMode) {
+        setRaceScore(prev => prev + 1);
+      }
+    } else {
+      alert("ROUTING_ERROR: Shard thrust mismatch. Drift detected.");
+      if (isRacingMode) {
+        setRaceTimeRemaining(prev => Math.max(0, prev - 3)); // Penalty
+      }
+    }
+  };
+
   const filteredBlocks = blockchain.filter(b => 
     b.hash.toLowerCase().includes(searchTerm.toLowerCase()) || 
     b.validator.toLowerCase().includes(searchTerm.toLowerCase())
@@ -200,10 +310,17 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
   }, [signals, filter, searchTerm]);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1600px] mx-auto px-4">
+    <div className={`space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1600px] mx-auto px-4 ${isRacingMode ? 'relative overflow-hidden' : ''}`}>
       
+      {isRacingMode && (
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute inset-0 bg-rose-500/5 animate-pulse"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rose-500/50 to-transparent animate-scan"></div>
+        </div>
+      )}
+
       {/* 1. Monitoring HUD */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
          <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-blue-500/[0.03] space-y-6 shadow-3xl group relative overflow-hidden h-[240px] flex flex-col justify-between">
             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[10s]"><Activity size={120} /></div>
             <div className="flex justify-between items-center relative z-10">
@@ -259,6 +376,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
         {[
           { id: 'overview', label: 'Master Overview', icon: LayoutGrid },
           { id: 'terminal', label: 'Signal Terminal', icon: Terminal },
+          { id: 'relay', label: 'Network Relay', icon: Route },
           { id: 'blocks', label: 'Block Shards', icon: Box },
           { id: 'ledger', label: 'Tx Shards', icon: Binary },
           { id: 'settlement', label: 'Institutional Finality', icon: Gavel },
@@ -275,7 +393,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
       </div>
 
       {/* 3. Main Viewport */}
-      <div className="min-h-[750px]">
+      <div className="min-h-[750px] relative z-10">
         
         {/* --- VIEW: MASTER OVERVIEW --- */}
         {activeTab === 'overview' && (
@@ -517,6 +635,192 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
            </div>
         )}
 
+        {/* --- VIEW: NETWORK RELAY (GAME) --- */}
+        {activeTab === 'relay' && (
+           <div className="animate-in zoom-in duration-500 space-y-12">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                 <div className="lg:col-span-5 space-y-8">
+                    <div className={`glass-card p-10 rounded-[56px] border-2 space-y-10 shadow-3xl relative overflow-hidden group/relay transition-all duration-500 ${isRacingMode ? 'border-rose-500 bg-rose-950/10' : 'border-indigo-500/20 bg-indigo-950/5'}`}>
+                       {isRacingMode ? (
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.1] group-hover/relay:scale-110 transition-transform duration-[15s]"><Flame size={400} className="text-rose-500" /></div>
+                       ) : (
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/relay:scale-110 transition-transform duration-[15s]"><Route size={400} className="text-indigo-400" /></div>
+                       )}
+                       
+                       <div className="relative z-10 space-y-8">
+                          <div className="flex items-center justify-between border-b border-white/5 pb-8">
+                             <div className="flex items-center gap-6">
+                                <div className={`w-20 h-20 rounded-[32px] flex items-center justify-center text-white shadow-3xl group-hover:rotate-12 transition-transform ${isRacingMode ? 'bg-rose-600' : 'bg-indigo-600'}`}>
+                                   {isRacingMode ? <Flame size={40} className="animate-pulse" /> : <Route size={40} className="animate-pulse" />}
+                                </div>
+                                <div>
+                                   <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">{isRacingMode ? 'Finality' : 'Inbound'} <span className={isRacingMode ? 'text-rose-500' : 'text-indigo-400'}>{isRacingMode ? 'Racing' : 'Queue'}</span></h3>
+                                   <p className={`${isRacingMode ? 'text-rose-400/60' : 'text-indigo-400/60'} text-[10px] font-mono tracking-widest uppercase mt-3 italic`}>{isRacingMode ? 'MANUAL_THROTTLE_ACTIVE' : 'MEMPOOL_ORCHESTRATION_v6.5'}</p>
+                                </div>
+                             </div>
+                             {isRacingMode && (
+                                <div className="text-right">
+                                   <div className="flex items-center gap-3 text-rose-500 mb-2">
+                                      <Timer size={24} className="animate-spin-slow" />
+                                      <span className="text-4xl font-mono font-black">{raceTimeRemaining}s</span>
+                                   </div>
+                                   <p className="text-[10px] font-black text-white uppercase tracking-widest">Score: {raceScore}</p>
+                                </div>
+                             )}
+                          </div>
+                          
+                          {!isRacingMode && (
+                             <button 
+                                onClick={handleStartRace}
+                                className="w-full py-8 bg-rose-600 hover:bg-rose-500 rounded-3xl text-white font-black text-xs uppercase tracking-[0.6em] shadow-[0_0_80px_rgba(244,63,94,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-rose-500/5 mb-8"
+                             >
+                                <Flame size={20} className="fill-current mr-4 inline" /> START FINALITY RACE (3x Yield)
+                             </button>
+                          )}
+
+                          <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                             {relayQueue.length === 0 ? (
+                                <div className="py-20 text-center opacity-20 italic text-[10px] uppercase font-black">Awaiting incoming shards...</div>
+                             ) : (
+                                relayQueue.map(shard => (
+                                   <button 
+                                      key={shard.id}
+                                      onClick={() => setActiveRelayShard(shard)}
+                                      className={`w-full p-6 rounded-[32px] border-2 transition-all flex items-center justify-between group/shard ${activeRelayShard?.id === shard.id ? (isRacingMode ? 'bg-rose-600 border-white text-white' : 'bg-indigo-600 border-white text-white shadow-xl scale-105') : 'bg-black/60 border-white/5 text-slate-500 hover:border-indigo-500/40'}`}
+                                   >
+                                      <div className="flex items-center gap-5">
+                                         <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 ${activeRelayShard?.id === shard.id ? 'text-white' : (isRacingMode ? 'text-rose-400' : 'text-indigo-400')}`}>
+                                            <Binary size={24} />
+                                         </div>
+                                         <div className="text-left">
+                                            <p className="text-lg font-black uppercase italic leading-none">{shard.id}</p>
+                                            <p className="text-[9px] font-mono mt-1.5 uppercase font-bold opacity-60">{shard.thrust} Thrust // {shard.val} EAC</p>
+                                         </div>
+                                      </div>
+                                      <ChevronRight size={20} className={`transition-transform duration-500 ${activeRelayShard?.id === shard.id ? 'translate-x-2' : ''}`} />
+                                   </button>
+                                ))
+                             )}
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* GLOBAL HIGH SCORES SHARD */}
+                    {!isRacingMode && (
+                       <div className="glass-card p-10 rounded-[56px] border border-amber-500/20 bg-amber-500/5 space-y-8 shadow-3xl group/scores">
+                          <div className="flex items-center gap-5">
+                             <div className="p-4 bg-amber-600 rounded-2xl shadow-xl group-hover/scores:rotate-12 transition-transform"><Trophy size={28} className="text-white" /></div>
+                             <h4 className="text-2xl font-black text-white uppercase italic m-0">Finality <span className="text-amber-500">Racers</span></h4>
+                          </div>
+                          <div className="space-y-4">
+                             {globalHighScores.length === 0 ? (
+                                <div className="py-10 text-center opacity-10 flex flex-col items-center gap-4">
+                                   <Medal size={48} />
+                                   <p className="text-[10px] uppercase font-black">No scores sharded yet</p>
+                                </div>
+                             ) : (
+                                globalHighScores.map((score, i) => (
+                                   <div key={score.id} className="flex items-center justify-between p-5 bg-black/40 rounded-[32px] border border-white/5 hover:border-amber-500/30 transition-all group/score">
+                                      <div className="flex items-center gap-6">
+                                         <span className={`text-2xl font-mono font-black ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-700' : 'text-slate-800'}`}>0{i+1}</span>
+                                         <div>
+                                            <p className="text-sm font-black text-white uppercase italic">{score.name}</p>
+                                            <p className="text-[8px] text-slate-500 uppercase tracking-widest font-mono">{score.esin}</p>
+                                         </div>
+                                      </div>
+                                      <div className="text-right">
+                                         <p className="text-2xl font-mono font-black text-white">{score.score}</p>
+                                         <p className="text-[7px] text-slate-700 font-black uppercase">Shards Routed</p>
+                                      </div>
+                                   </div>
+                                ))
+                             )}
+                          </div>
+                          <div className="pt-4 border-t border-white/5 flex items-center justify-between px-4">
+                             <span className="text-[10px] font-black text-slate-700 uppercase italic flex items-center gap-2"><Users size={12}/> Global Registry</span>
+                             <button className="text-[10px] font-black text-amber-500 hover:text-white uppercase tracking-widest transition-all">VIEW ALL RACERS</button>
+                          </div>
+                       </div>
+                    )}
+                 </div>
+
+                 <div className="lg:col-span-7" style={{ display: isRacingMode ? 'block' : 'none' }}>
+                    <div className={`glass-card rounded-[80px] min-h-[750px] border-2 bg-[#050706] flex flex-col relative overflow-hidden shadow-4xl group/final transition-colors duration-1000 ${isRacingMode ? 'border-rose-500/40' : 'border-white/5'}`}>
+                       <div className="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.05)_0%,_transparent_70%)] pointer-events-none"></div>
+                       
+                       <div className="p-10 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-20 px-16">
+                          <div className="flex items-center gap-6">
+                             <Monitor size={24} className={isRacingMode ? 'text-rose-500' : 'text-indigo-400'} />
+                             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500 italic">Target_Consensus_Matrix</span>
+                          </div>
+                          {isRacingMode && (
+                             <div className="flex items-center gap-4 px-6 py-2 bg-rose-600 rounded-full text-white shadow-xl animate-bounce">
+                                <Trophy size={14} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Racing Active</span>
+                             </div>
+                          )}
+                       </div>
+
+                       <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-10 flex flex-col items-center justify-center space-y-12">
+                          {!activeRelayShard ? (
+                             <div className="text-center space-y-10 opacity-10 group/idle">
+                                <div className="relative">
+                                   <Binary size={140} className="text-slate-600 group-hover/idle:text-indigo-400 transition-colors duration-1000" />
+                                   <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-150 animate-spin-slow"></div>
+                                </div>
+                                <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic">SELECT_SHARD</p>
+                                <p className="text-sm font-bold uppercase tracking-widest text-slate-700 italic">"Manual routing stabilizes network entropy"</p>
+                             </div>
+                          ) : (
+                             <div className="animate-in zoom-in duration-500 w-full space-y-12 max-w-2xl text-center">
+                                <div className="space-y-4">
+                                   <h4 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Relay <span className={isRacingMode ? 'text-rose-500' : 'text-indigo-400'}>Shard</span></h4>
+                                   <p className="text-slate-500 font-mono text-[11px] tracking-[0.8em] uppercase">ROUTING_LOCKED: {activeRelayShard.id}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6 pt-10">
+                                   {VALIDATORS.map(v => (
+                                      <button 
+                                         key={v.id}
+                                         onClick={() => handleRelayShard(v)}
+                                         className={`p-10 bg-black/60 rounded-[56px] border-2 hover:scale-105 transition-all group/v-btn flex flex-col items-center gap-6 shadow-xl relative overflow-hidden ${isRacingMode ? 'border-rose-500/20 hover:border-rose-500/60' : 'border-white/5 hover:border-indigo-500/40'}`}
+                                      >
+                                         <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover/v-btn:scale-110 transition-transform"><Network size={120} /></div>
+                                         <div className={`p-5 rounded-[24px] shadow-inner group-hover/v-btn:rotate-12 transition-all ${isRacingMode ? 'bg-rose-600/10 text-rose-500' : 'bg-white/5 text-indigo-400'}`}>
+                                            <Database size={32} />
+                                         </div>
+                                         <div className="space-y-1">
+                                            <h5 className="text-lg font-black text-white uppercase italic leading-tight">{v.node.split('_')[0]}</h5>
+                                            <p className={`text-[9px] font-black uppercase tracking-widest transition-colors ${isRacingMode ? 'text-rose-700 group-hover/v-btn:text-rose-400' : 'text-slate-700 group-hover/v-btn:text-blue-500'}`}>{v.thrust} Pillar</p>
+                                         </div>
+                                         <div className="mt-4 pt-4 border-t border-white/5 w-full flex justify-between items-center px-4">
+                                            <span className="text-[8px] font-mono text-slate-800 uppercase tracking-widest">{v.reputation}%</span>
+                                            <ArrowUpRight size={14} className={isRacingMode ? 'text-rose-500' : 'text-indigo-400'} />
+                                         </div>
+                                      </button>
+                                   ))}
+                                </div>
+
+                                <div className={`p-8 rounded-[40px] border italic text-sm leading-relaxed transition-colors duration-500 ${isRacingMode ? 'bg-rose-600/5 border-rose-500/30 text-rose-300' : 'bg-indigo-600/5 border-indigo-500/20 text-slate-400'}`}>
+                                   {isRacingMode ? (
+                                      <span className="flex items-center justify-center gap-3"><Flame size={16} /> RACING MODE: 3x EAC MULTIPLIER ACTIVE. SPEED IS CRITICAL. <Flame size={16} /></span>
+                                   ) : (
+                                      `"Select the correct validator node based on the shard's **${activeRelayShard.thrust}** thrust pillar to earn EAC and reduce network entropy."`
+                                   )}
+                                </div>
+                             </div>
+                          )}
+                       </div>
+
+                       <div className="p-12 border-t border-white/5 bg-black text-center shrink-0 z-20">
+                          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.8em] italic">Official Relay Terminal v6.5 // MANUAL_OVERRIDE_ENABLED</p>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
+
         {/* --- VIEW: BLOCK SHARDS --- */}
         {activeTab === 'blocks' && (
            <div className="space-y-10 animate-in slide-in-from-left-4 duration-500">
@@ -669,7 +973,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                    <div className="w-32 h-32 rounded-[44px] bg-emerald-600 flex items-center justify-center shadow-[0_0_120px_rgba(16,185,129,0.3)] border-4 border-white/10 shrink-0 relative z-10 animate-float"><Stamp className="w-16 h-16 text-white" /></div>
                    <div className="space-y-6 relative z-10">
                       <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">REGISTRY <span className="text-emerald-400">SETTLEMENT</span></h3>
-                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-w-lg mx-auto">"Anchoring industrial batches into the global m-constant equilibrium."</p>
+                      <p className="text-slate-400 text-xl font-medium italic leading-relaxed max-lg mx-auto">"Anchoring industrial batches into the global m-constant equilibrium."</p>
                    </div>
                    <button onClick={handleRunSettlementAudit} disabled={isSettling} className="w-full max-w-sm py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-emerald-500/5 relative z-10">
                       {isSettling ? <Loader2 className="animate-spin" /> : <Zap size={24} className="fill-current" />}

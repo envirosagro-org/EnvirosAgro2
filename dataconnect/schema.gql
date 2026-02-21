@@ -1,0 +1,21 @@
+
+# EnvirosAgro Data Connect Schema
+
+type Steward @table {
+  id: String!
+  name: String!
+  esin: String! @unique
+  email: String! @unique
+  bio: String
+  reputation: Int
+}
+
+type Signal @table {
+  id: UUID!
+  steward: Steward!
+  title: String!
+  message: String!
+  type: String!
+  priority: String!
+  timestamp: Timestamp! @default(expr: "request.time")
+}

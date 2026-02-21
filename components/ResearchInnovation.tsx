@@ -62,10 +62,12 @@ import {
   User as UserIcon, 
   ChevronDown, 
   ShoppingBag, 
-  // Added PencilRuler to fix "Cannot find name 'PencilRuler'" error on line 720
-  PencilRuler
+  PencilRuler,
+  Share2,
+  Handshake,
+  ThumbsUp
 } from 'lucide-react';
-import { User, ResearchPaper, AgroBook, ChapterShard, VendorProduct } from '../types';
+import { User, ResearchPaper, AgroBook, ChapterShard, VendorProduct, SignalShard } from '../types';
 import { generateAgroResearch, analyzeMedia, chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
 
@@ -74,6 +76,7 @@ interface ResearchInnovationProps {
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onNavigate: (view: any, section?: string) => void;
+  onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
   pendingAction?: string | null;
   clearAction?: () => void;
 }
@@ -90,6 +93,7 @@ const INITIAL_PATENTS: ResearchPaper[] = [
     status: 'Invention', 
     impactScore: 94, 
     rating: 4.8, 
+    vouchCount: 142,
     eacRewards: 1250, 
     timestamp: '2d ago',
     iotDataUsed: true
@@ -105,13 +109,14 @@ const INITIAL_PATENTS: ResearchPaper[] = [
     status: 'Registered', 
     impactScore: 88, 
     rating: 4.5, 
+    vouchCount: 88,
     eacRewards: 450, 
     timestamp: '5d ago',
     iotDataUsed: true
   },
 ];
 
-const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, pendingAction, clearAction }) => {
+const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, onEmitSignal, pendingAction, clearAction }) => {
   const [activeTab, setActiveTab] = useState<'forge' | 'archive' | 'book_forge'>('archive');
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [isExtractingIot, setIsExtractingIot] = useState(false);
@@ -130,6 +135,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
   const [archive, setArchive] = useState<ResearchPaper[]>(INITIAL_PATENTS);
   const [publishedBooks, setPublishedBooks] = useState<AgroBook[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [vouchedItems, setVouchedItems] = useState<string[]>([]);
 
   // --- BOOK FORGE (AgroInPDF) STATES ---
   const [bookTitle, setBookTitle] = useState('');
@@ -140,7 +146,8 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
 
   useEffect(() => {
     const unsubBooks = listenToCollection('books', setPublishedBooks);
-    return () => unsubBooks();
+    const unsubPatents = listenToCollection('patents', (data) => setArchive([...INITIAL_PATENTS, ...data]));
+    return () => { unsubBooks(); unsubPatents(); };
   }, []);
 
   useEffect(() => {
@@ -228,6 +235,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       status: 'Registered',
       impactScore: 0,
       rating: 0,
+      vouchCount: 0,
       eacRewards: 100,
       timestamp: new Date().toISOString(),
       iotDataUsed: !!iotTelemetry
@@ -239,6 +247,79 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
     setSelectedFile(null);
     setFileBase64(null);
     setActiveTab('archive');
+  };
+
+  const handleShareToCommunity = async (title: string, abstract: string, type: 'PATENT' | 'BOOK') => {
+    const confirmShare = confirm(`Share ${type} "${title}" to the community mesh?`);
+    if (!confirmShare) return;
+
+    const newPost = {
+      id: `PST-RES-${Date.now()}`,
+      authorEsin: user.esin,
+      authorName: user.name,
+      authorAvatar: user.avatar,
+      text: `[RESEARCH_SHARD: ${type}] I have just anchored a new ${type.toLowerCase()} to the registry: "${title}".\n\nAbstract: ${abstract}`,
+      timestamp: new Date().toISOString(),
+      likes: 0,
+      vouchCount: 0,
+      shares: 0,
+      comments: []
+    };
+
+    try {
+      await saveCollectionItem('social_posts', newPost);
+      onEmitSignal({
+        title: 'MESH_BROADCAST_SUCCESS',
+        message: `Research shard "${title}" has been shared with the steward community.`,
+        priority: 'medium',
+        type: 'engagement',
+        origin: 'MANUAL',
+        actionIcon: 'Share2'
+      });
+    } catch (e) {
+      alert("Broadcast failed. Check registry link.");
+    }
+  };
+
+  const handleForgeRobotMission = (title: string) => {
+    onNavigate('robot', title);
+    onEmitSignal({
+      title: 'ROBOT_MISSION_INITIALIZED',
+      message: `Navigating to Swarm Command to forge mission for "${title}".`,
+      priority: 'low',
+      type: 'task',
+      origin: 'ORACLE',
+      actionIcon: 'Bot'
+    });
+  };
+
+  const handleInitializeContract = (title: string) => {
+    onNavigate('contract_farming', title);
+    onEmitSignal({
+      title: 'CONTRACT_INITIALIZATION_TRIGGERED',
+      message: `Redirecting to Contract Farming to provision mission for "${title}".`,
+      priority: 'medium',
+      type: 'commerce',
+      origin: 'ORACLE',
+      actionIcon: 'Handshake'
+    });
+  };
+
+  const handleVouchResearch = async (id: string, authorEsin: string, title: string) => {
+    if (authorEsin === user.esin) return alert("AUTH_ERROR: Self-vouching prohibited.");
+    if (vouchedItems.includes(id)) return;
+
+    onEarnEAC(5, 'RESEARCH_VOUCH_REWARD');
+    setVouchedItems(prev => [...prev, id]);
+    
+    onEmitSignal({
+      title: 'RESEARCH_VOUCH_FINALIZED',
+      message: `You have vouched for "${title}". Reputation multiplier applied.`,
+      priority: 'low',
+      type: 'engagement',
+      origin: 'MANUAL',
+      actionIcon: 'Heart'
+    });
   };
 
   // --- AGROINPDF BOOK FORGING LOGIC ---
@@ -445,9 +526,9 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                                    <p className="text-[8px] text-slate-600 font-black uppercase">Views</p>
                                    <p className="text-lg font-mono font-black text-white">{book.views + 42}</p>
                                 </div>
-                                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
+                                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5" onClick={() => handleVouchResearch(book.id, book.authorEsin, book.title)}>
                                    <p className="text-[8px] text-slate-600 font-black uppercase">Vouches</p>
-                                   <p className="text-lg font-mono font-black text-emerald-400">{book.vouches + 12}</p>
+                                   <p className={`text-lg font-mono font-black transition-colors ${vouchedItems.includes(book.id) ? 'text-rose-500' : 'text-emerald-400'}`}>{book.vouches + (vouchedItems.includes(book.id) ? 13 : 12)}</p>
                                 </div>
                                 <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                                    <p className="text-[8px] text-slate-600 font-black uppercase">Shard Value</p>
@@ -456,6 +537,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                              </div>
                           </div>
                           <div className="mt-10 pt-8 border-t border-white/5 flex gap-4 relative z-10">
+                             <button onClick={() => handleShareToCommunity(book.title, book.abstract, 'BOOK')} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-fuchsia-400 transition-all shadow-xl" title="Share to Mesh"><Share2 size={14}/></button>
                              <button onClick={() => downloadBook(book)} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2">
                                 <Download size={14} /> MD_EXPORT
                              </button>
@@ -492,11 +574,23 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                         <p className="text-sm text-slate-400 leading-relaxed italic mt-6 opacity-80 font-medium">"{paper.abstract}"</p>
                      </div>
                      <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                        <div className="flex items-center gap-2 text-amber-500">
-                          <Star size={16} fill="currentColor" />
-                          <span className="text-xs font-mono font-black text-white">{paper.rating}</span>
+                        <div className="flex items-center gap-6">
+                           <div className="flex items-center gap-2 text-amber-500">
+                             <Star size={16} fill="currentColor" />
+                             <span className="text-xs font-mono font-black text-white">{paper.rating}</span>
+                           </div>
+                           <div className="flex items-center gap-2 text-rose-500">
+                             <Heart size={16} fill={vouchedItems.includes(paper.id) ? "currentColor" : "none"} />
+                             <span className="text-xs font-mono font-black text-white">{paper.vouchCount + (vouchedItems.includes(paper.id) ? 1 : 0)}</span>
+                           </div>
                         </div>
-                        <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all shadow-xl active:scale-90"><Download size={20} /></button>
+                        <div className="flex gap-4">
+                           <button onClick={() => handleVouchResearch(paper.id, paper.authorEsin, paper.title)} className={`p-4 border rounded-2xl transition-all shadow-xl active:scale-90 ${vouchedItems.includes(paper.id) ? 'bg-rose-600 text-white border-rose-400' : 'bg-white/5 border-white/10 text-slate-600 hover:text-rose-400'}`} title="Vouch for Research"><ThumbsUp size={20} /></button>
+                           <button onClick={() => handleShareToCommunity(paper.title, paper.abstract, 'PATENT')} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-emerald-400 transition-all shadow-xl active:scale-90" title="Share to Mesh"><Share2 size={20} /></button>
+                           <button onClick={() => handleInitializeContract(paper.title)} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-amber-500 transition-all shadow-xl active:scale-90" title="Initialize Farming Contract"><Handshake size={20} /></button>
+                           <button onClick={() => handleForgeRobotMission(paper.title)} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-blue-400 transition-all shadow-xl active:scale-90" title="Forge Robot Mission"><Bot size={20} /></button>
+                           <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all shadow-xl active:scale-90"><Download size={20} /></button>
+                        </div>
                      </div>
                   </div>
                 ))}
