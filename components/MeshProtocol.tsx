@@ -173,9 +173,10 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain }) => {
            <div className="space-y-6 relative z-10 w-full flex flex-col items-center">
               <p className="text-[14px] text-slate-500 font-black uppercase tracking-[0.8em] mb-4 italic opacity-60">C O N S E N S U S _ S Y N C</p>
               <h4 className="text-[120px] md:text-[140px] font-mono font-black text-white tracking-tighter leading-none drop-shadow-2xl italic">99<span className="text-4xl text-indigo-500 font-sans italic ml-1">.98%</span></h4>
-              <p className="text-[12px] text-emerald-400 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-3">
-                 <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_20px_#10b981]"></div> QUORUM_REACHED
-              </p>
+              <div className="text-[12px] text-emerald-400 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-3">
+                 <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_20px_#10b981]"></div>
+                 <span>QUORUM_REACHED</span>
+              </div>
               <div className="w-full h-24 bg-white rounded-[32px] mt-10 shadow-2xl flex items-center justify-center group-hover:scale-105 transition-transform cursor-pointer" onClick={handleRunMeshAudit}>
                  {isAuditing ? <Loader2 className="animate-spin text-indigo-600" size={32} /> : <div className="text-indigo-900 font-black uppercase text-xs tracking-widest">Perform Audit</div>}
               </div>

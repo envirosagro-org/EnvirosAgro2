@@ -1,33 +1,20 @@
 {
+  "functions": {
+    "source": "src",
+    "runtime": "nodejs20",
+    "codebase": "default",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log"
+    ],
+    "gen": 1
+  },
   "firestore": {
     "rules": "firestore.rules"
   },
   "database": {
     "rules": "database.rules.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
-  "hosting": {
-    "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  },
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs20"
-  },
-  "dataconnect": {
-    "serviceId": "envirosagro-service",
-    "source": "dataconnect"
   }
 }

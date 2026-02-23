@@ -1,93 +1,49 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- CORE ENVIROSAGRO HELPER FUNCTIONS ---
-
-    // Verifies the user is authenticated AND the app is verified via App Check
-    function isSignedIn() {
-      return request.auth != null && request.auth.token.app_check == true;
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Enforces App Check even for public (non-auth) reads if necessary
-    function isAppVerified() {
-      return request.auth.token.app_check == true;
+    match /nodes/{nodeId} {
+      allow read, write: if isAuthenticated();
     }
 
-    function isOwner(stewardId) {
-      return isSignedIn() && request.auth.uid == stewardId;
+    match /sourced_assets/{assetId} {
+      allow create, read, update, delete: if isAuthenticated();
     }
 
-    function isAuditor() {
-      return isSignedIn() && exists(/databases/$(database)/documents/auditors/$(request.auth.uid));
+    match /carbon_credits/{creditId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
     }
 
-    // --- COLLECTION PROTOCOLS ---
+    match /media_ledger/{mediaId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.authorEsin == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.authorEsin == request.auth.uid;
+    }
+    
+    match /books/{bookId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.authorEsin == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.authorEsin == request.auth.uid;
+    }
 
-    // 1. Stewards: Personal node dossier
+    match /signals/{signalId} {
+      allow read, write: if isAuthenticated();
+    }
+
     match /stewards/{stewardId} {
-      allow read: if isSignedIn();
-      // Enforce App Check for user profile creation.
-      allow create: if isSignedIn() && request.auth.uid == stewardId;
-      allow update: if isOwner(stewardId);
+      allow read: if isAuthenticated() && stewardId == request.auth.uid;
+      allow create: if isAuthenticated() && stewardId == request.auth.uid;
+      allow update: if isAuthenticated() && stewardId == request.auth.uid;
       allow delete: if false;
     }
 
-    // 2. Auditors: Special access role
-    match /auditors/{auditorId} {
-      allow read: if isAuditor();
+    match /{document=**} {
+      allow read, write: if false;
     }
-
-    // 3. Social Feed
-    match /social_posts/{postId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.authorEsin == request.auth.uid;
-      allow update: if isSignedIn(); // For likes, comments, etc.
-      allow delete: if isOwner(resource.data.authorEsin);
-    }
-
-    // 4. Collectives (Guilds/Shards)
-    match /collectives/{collectiveId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn(); // Creation logic is handled in the app
-      allow update: if isSignedIn(); // Joining/leaving is an update
-    }
-
-    // 5. Steward Connections (Hoods)
-    match /connections/{connectionId} {
-        allow read: if isSignedIn() && (request.auth.uid == resource.data.fromEsin || request.auth.uid == resource.data.toEsin);
-        allow create: if isOwner(request.resource.data.fromEsin);
-        allow update: if isOwner(resource.data.toEsin); // For accepting requests
-        allow delete: if isOwner(resource.data.fromEsin) || isOwner(resource.data.toEsin);
-    }
-
-    // 6. Research & Patents
-    match /patents/{patentId} {
-      allow read, create: if isSignedIn();
-      allow update: if isSignedIn(); // For vouching, etc.
-    }
-
-    // 7. Finality Racing High Scores
-    match /race_scores/{scoreId} {
-      allow read, create: if isSignedIn();
-    }
-
-    // 8. User-Generated Knowledge Modules & Books
-    match /knowledge_modules/{moduleId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn(); // Creation is gated in-app
-    }
-    match /books/{bookId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn(); // Creation is gated in-app
-    }
-
-    // 9. Orders from the marketplace
-    match /orders/{orderId} {
-      allow read: if isOwner(resource.data.customerEsin) || isOwner(resource.data.supplierEsin);
-      allow create: if isOwner(request.resource.data.customerEsin);
-    }
-
   }
 }

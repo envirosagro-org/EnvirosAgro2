@@ -385,13 +385,12 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
 
       await saveCollectionItem('books', newBook);
       
-      // Auto-list to Market Cloud as a Vendor Product
       const marketProduct: VendorProduct = {
         id: newBook.id,
         name: `BOOK: ${newBook.title}`,
         description: newBook.abstract,
         price: newBook.price,
-        stock: 9999, // Digital asset
+        stock: 9999,
         category: 'Book',
         supplierEsin: user.esin,
         supplierName: user.name,
@@ -403,11 +402,27 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       await saveCollectionItem('products', marketProduct);
 
       onEarnEAC(200, 'AGRO_IN_PDF_PUBLICATION_BONUS');
+      await onEmitSignal({
+        title: 'BOOK_PUBLISHED_SUCCESS',
+        message: `"${bookTitle}" has been published and listed on the Market Cloud.`,
+        priority: 'high',
+        type: 'commerce',
+        origin: 'MANUAL',
+        actionIcon: 'BookMarked',
+      });
+
       setBookTitle('');
       setChapterPile([]);
       setActiveTab('archive');
-    } catch (e) {
-      alert("Publishing handshake failed.");
+    } catch (e: any) {
+      await onEmitSignal({
+        title: 'PUBLISHING_HANDSHAKE_FAILED',
+        message: `Could not anchor book to the registry. Reason: ${e.message}`,
+        priority: 'high',
+        type: 'error',
+        origin: 'SYSTEM',
+        actionIcon: 'X',
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -438,7 +453,6 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
       
-      {/* Header Section */}
       <div className="glass-card p-12 rounded-[56px] border-emerald-500/10 bg-black/40 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-2xl">
         <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform">
            <Microscope className="w-96 h-96 text-white" />
@@ -599,7 +613,6 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
         </div>
       )}
 
-      {/* --- TAB: RESEARCH SHARD FORGE --- */}
       {activeTab === 'forge' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in slide-in-from-right-4 duration-500">
            <div className="lg:col-span-1 space-y-6">
@@ -681,11 +694,9 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
         </div>
       )}
 
-      {/* --- TAB: BOOK FORGE (AgroInPDF) --- */}
       {activeTab === 'book_forge' && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 animate-in zoom-in duration-500">
            
-           {/* Left Control Column */}
            <div className="xl:col-span-4 space-y-8">
               <div className="glass-card p-10 rounded-[56px] border-fuchsia-500/20 bg-fuchsia-950/5 space-y-10 shadow-3xl relative overflow-hidden group">
                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s]"><BookOpen size={400} className="text-fuchsia-500" /></div>
@@ -734,7 +745,6 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                  </div>
               </div>
 
-              {/* Matrix Metadata Card */}
               <div className="p-10 glass-card rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl group">
                  <h4 className="text-xl font-black text-white uppercase italic tracking-widest px-4 flex items-center gap-4">
                     <Target size={24} className="text-blue-400" /> Impact <span className="text-blue-400">Matrix</span>
@@ -759,7 +769,6 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
               </div>
            </div>
 
-           {/* Right Sequence Matrix Area */}
            <div className="xl:col-span-8 flex flex-col space-y-8">
               <div className="glass-card rounded-[80px] min-h-[850px] border-2 border-white/5 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
                  <div className="p-12 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-20 px-16">

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { analyzeSustainability, AIResponse } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
-import { calculateMConstant } from '../systemFunctions';
+import { calculateMConstant } from '../utils/formulas';
 
 interface SustainabilityProps {
   user: User;

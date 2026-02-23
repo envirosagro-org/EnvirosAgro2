@@ -1,66 +1,36 @@
+
+import { httpsCallable } from "firebase/functions";
+import { functions } from "./services/firebaseService"; 
+
 /**
- * ENVIROSAGRO™ SYSTEM FUNCTIONS v6.5
+ * ENVIROSAGRO™ SYSTEM FUNCTIONS v7.1
  * ---------------------------------
- * Standardized industrial logic for deployment in Firebase Functions, 
- * Cloudflare Workers, or Node.js edge environments.
+ * This file now acts as the client-side SDK for interacting with the centralized
+ * backend logic. The core calculations have been moved to the cloud function.
  */
-
-import { 
-  SignalShard,
-  User,
-  AgroTransaction,
-  Order
-} from './types';
-
-// --- CORE FORMULAS ---
 
 /**
- * Calculates C(a)™ (Agro Code)
- * Formula: C(a) = x * ((r^n - 1) / (r - 1)) + 1
+ * Synchronizes Farm OS telemetry data with the central database.
+ * This function calls the `processFarmOSUpdate` cloud function.
+ * The actual calculation logic now resides in the backend.
  */
-export const calculateAgroCode = (x: number, r: number, n: number): number => {
-  if (r === 1) return x * n + 1;
-  return x * ((Math.pow(r, n) - 1) / (r - 1)) + 1;
-};
-
-/**
- * Calculates m™ (Sustainable Time Constant)
- * Formula: m = sqrt((Dn * In * Ca) / S)
- */
-export const calculateMConstant = (dn: number, in_val: number, ca: number, s: number): number => {
-  const stress = Math.max(s, 0.001);
-  return Math.sqrt((dn * in_val * ca) / stress);
-};
-
-// --- DEPLOYABLE HANDLERS ---
-
-/**
- * Synchronizes local geofence shards with the global registry.
- * Used for triggering from industrial edge devices.
- */
-export const syncGeofenceShard = async (esin: string, coords: { lat: number; lng: number }) => {
-  // 1. ZK-Handshake verification
-  const signature = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}_GEO`;
+export const syncFarmOSTelemetry = async (nodeId: string, telemetry: any) => {
+  const processFarmOSUpdate = httpsCallable(functions, 'processFarmOSUpdate');
   
-  // 2. Metadata payload for registry ingest
-  const payload = {
-    esin,
-    coords,
-    timestamp: new Date().toISOString(),
-    status: 'SYNCED',
-    hash: signature
-  };
-
-  return {
-    success: true,
-    finality_hash: signature,
-    m_constant_impact: 0.02,
-    payload
-  };
+  try {
+    // The cloud function now handles all calculations and database updates.
+    const result = await processFarmOSUpdate({ nodeId, telemetry });
+    console.log('Backend processing successful:', result.data);
+    return result.data; // The backend returns the processed data.
+  } catch (error) { 
+    console.error("Error calling processFarmOSUpdate function:", error);
+    throw new Error("Failed to sync with the EnvirosAgro backend.");
+  }
 };
 
 /**
  * Validates industrial inflow for TQM Traceability.
+ * This is a local validation check before sending data to the backend.
  */
 export const validateIndustrialInflow = (payload: any) => {
   const required = ['sku', 'origin', 'batch_id'];
@@ -73,9 +43,9 @@ export const validateIndustrialInflow = (payload: any) => {
   };
 };
 
-// Fix: Added missing generateShardHash export used by dispatchService.ts for generating nonces
 /**
- * Generates a cryptographic shard hash.
+ * Generates a cryptographic shard hash for client-side nonce generation.
+ * Used by services like dispatchService.ts.
  */
 export const generateShardHash = async (data: string): Promise<string> => {
   const msgUint8 = new TextEncoder().encode(data + Date.now().toString());
@@ -84,9 +54,10 @@ export const generateShardHash = async (data: string): Promise<string> => {
   return '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16).toUpperCase();
 };
 
-// Fix: Updated mintCarbonShard to return an object instead of a number to satisfy the destructuring pattern in dispatchService.ts
 /**
  * Mints EAC Shards from Biomass proof.
+ * This is a client-side simulation/calculation helper.
+ * The authoritative minting process should be handled by the backend to prevent tampering.
  */
 export const mintCarbonShard = (biomass: number, confidence: number) => {
   const MINT_RATE = 100;
@@ -95,23 +66,3 @@ export const mintCarbonShard = (biomass: number, confidence: number) => {
     unit: 'EAC'
   };
 };
-
-// --- FIREBASE FUNCTIONS EXPORT TEMPLATE ---
-/*
-import { onCall, onRequest } from "firebase-functions/v2/https";
-
-export const agroSync = onCall(async (request) => {
-    return await syncGeofenceShard(request.data.esin, request.data.coords);
-});
-*/
-
-// --- CLOUDFLARE WORKER EXPORT TEMPLATE ---
-/*
-export default {
-  async fetch(request, env) {
-    const data = await request.json();
-    const result = await syncGeofenceShard(data.esin, data.coords);
-    return new Response(JSON.stringify(result));
-  },
-};
-*/

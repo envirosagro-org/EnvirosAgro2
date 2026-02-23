@@ -79,6 +79,7 @@ import {
 import { User, MediaShard } from '../types';
 import { chatWithAgroExpert, AIResponse } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import { calculateMConstant } from '../utils/formulas';
 
 interface AgroRegencyProps {
   user: User;
@@ -170,8 +171,8 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     const localDensity = 0.35;
     const localS = 0.12;
 
-    const localM = Math.sqrt((localDensity * localIntensity * userCa) / localS);
-    const targetM = Math.sqrt((selectedState.density * selectedState.intensity * userCa) / localS);
+    const localM = calculateMConstant(localDensity, localIntensity, userCa, localS);
+    const targetM = calculateMConstant(selectedState.density, selectedState.intensity, userCa, localS);
 
     return [
       { name: 'LOCAL_NODE', m: Number(localM.toFixed(2)), color: '#10b981' },
@@ -733,7 +734,7 @@ ${content}
                       className="w-full py-10 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30"
                     >
                        {isRetrieving ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <History className="w-8 h-8" />}
-                       {isRetrieving ? 'QUERYING LEDGER...' : 'INITIALIZE RETRIEVAL'}
+                       {isRetrieriving ? 'QUERYING LEDGER...' : 'INITIALIZE RETRIEVAL'}
                     </button>
                  </div>
               </div>

@@ -463,7 +463,6 @@ export interface SignalShard {
   actionLabel?: string;
   actionIcon?: string; 
   aiRemark?: string;
-  dispatchLayers: DispatchChannel[];
   meta?: {
     target?: ViewState;
     payload?: any;
@@ -527,7 +526,7 @@ export interface ShardCostCalibration {
   calibratedCost: number;
   mConstant: number;
   caFactor: number;
-  sehtiBonus: number;
+  sehtiBonus:.number;
   stressPenalty: number;
   finalYield: number;
 }
@@ -541,4 +540,26 @@ export interface MeshNode {
   peers: string[];
   latency: number;
   load: number;
+}
+
+export interface Node {
+  id: string;
+  stewardId: string;
+  hardware_type: string;
+  status: 'ONLINE' | 'SYNCING' | 'STRESSED' | 'OFFLINE';
+  location: { latitude: number; longitude: number };
+  last_heartbeat: string; // ISO string
+  telemetry_summary: {
+    [key: string]: any;
+  };
+}
+
+export interface TelemetryShard {
+  id: string;
+  nodeId: string;
+  timestamp: string; // ISO string
+  data: {
+    [key: string]: any;
+  };
+  zk_proof: string;
 }

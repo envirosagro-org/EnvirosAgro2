@@ -27,7 +27,9 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
-  writeBatch
+  writeBatch,
+  addDoc,
+  serverTimestamp
 } from "firebase/firestore";
 import { 
   getDatabase, 
@@ -43,7 +45,7 @@ import {
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, getToken } from "firebase/app-check";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getDataConnect, connectDataConnectEmulator } from 'firebase/data-connect';
-import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
+import { User as AgroUser, SignalShard, DispatchChannel, Node, TelemetryShard } from "../types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2OCiMVOxaXWOBD3p4_mJp7TDJVwPpiNM",
@@ -248,6 +250,17 @@ export const getStewardProfile = async (uid: string): Promise<AgroUser | null> =
   return snap.exists() ? snap.data() as AgroUser : null;
 };
 
+export const listenToStewardProfile = (uid: string, callback: (user: AgroUser | null) => void) => {
+  const docRef = doc(db, "stewards", uid);
+  return onSnapshot(docRef, (doc) => {
+    if (doc.exists()) {
+      callback(doc.data() as AgroUser);
+    } else {
+      callback(null);
+    }
+  });
+};
+
 export const markPermanentAction = async (actionKey: string) => {
   const userId = auth.currentUser?.uid;
   if (!userId) return false;
@@ -280,4 +293,65 @@ export const verifyAuditorAccess = async (email: string) => {
   const q = query(collection(db, "auditors"), where("email", "==", email));
   const snap = await getDocs(q);
   return !snap.empty;
+};
+
+// --- Node Management ---
+
+export const createNode = async (nodeData: Omit<Node, 'id'>): Promise<string | null> => {
+  const userId = auth.currentUser?.uid;
+  if (!userId) return null;
+  try {
+    const docRef = await addDoc(collection(db, "nodes"), {
+      ...nodeData,
+      stewardId: userId,
+      last_heartbeat: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (e) {
+    console.error("Error creating node: ", e);
+    return null;
+  }
+};
+
+export const getNode = async (nodeId: string): Promise<Node | null> => {
+  const docRef = doc(db, "nodes", nodeId);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() } as Node;
+  }
+  return null;
+};
+
+export const updateNodeStatus = async (nodeId: string, status: Node['status']) => {
+  const docRef = doc(db, "nodes", nodeId);
+  try {
+    await updateDoc(docRef, { 
+      status: status,
+      last_heartbeat: serverTimestamp(),
+    });
+    return true;
+  } catch (e) {
+    console.error("Error updating node status: ", e);
+    return false;
+  }
+};
+
+export const addTelemetryShard = async (telemetryData: Omit<TelemetryShard, 'id'>): Promise<string | null> => {
+  try {
+    const docRef = await addDoc(collection(db, `nodes/${telemetryData.nodeId}/telemetry_shards`), {
+      ...telemetryData,
+      timestamp: serverTimestamp(),
+    });
+    // Also update the parent node's summary and heartbeat
+    const nodeDocRef = doc(db, "nodes", telemetryData.nodeId);
+    await updateDoc(nodeDocRef, {
+      telemetry_summary: telemetryData.data, // This could be more sophisticated (e.g., averaging)
+      last_heartbeat: serverTimestamp(),
+      status: 'ONLINE'
+    });
+    return docRef.id;
+  } catch (e) {
+    console.error("Error adding telemetry shard: ", e);
+    return null;
+  }
 };
