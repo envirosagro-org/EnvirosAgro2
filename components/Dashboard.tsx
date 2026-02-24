@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// Added missing icons for environmental thrust, human heart resonance, registry connectivity, system config and ledger layers
 import { 
   ShieldCheck, Zap, Globe, Activity, Cpu, Sparkles, Binary, 
   Coins, Users, ArrowRight, BrainCircuit, Bot, 
@@ -6,11 +7,11 @@ import {
   LayoutGrid, ArrowUpRight, ShoppingBag, Radio, Signal, Eye, ChevronRight,
   Gem, Landmark, PlayCircle, BookOpen, Lightbulb, CheckCircle2,
   AlertCircle, Target, Waves, ShieldAlert, UserPlus, AlertTriangle,
-  Loader2, Atom, Network, Gauge, Leaf, Heart, Wifi, Settings, Layers, Box, Info, Scale, Rocket, Factory, Microscope, Scan
+  Loader2, Atom, Network, Gauge, Leaf, Heart, Wifi, Settings, Layers
 } from 'lucide-react';
 import { ViewState, User, Order, AgroBlock } from '../types';
 import IdentityCard from './IdentityCard';
-import { SycamoreLogo } from './SycamoreLogo';
+import { SycamoreLogo } from '../App';
 
 interface DashboardProps {
   onNavigate: (view: ViewState, action?: string | null) => void;
@@ -47,142 +48,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
     { id: 'I', label: 'Industry', val: 91, col: 'text-indigo-400', icon: Landmark },
   ];
 
-  if (isGuest) {
-    return (
-      <div className="space-y-20 animate-in fade-in duration-700 pb-32">
-        {/* Guest Hero Section */}
-        <section className="relative glass-card p-10 md:p-24 rounded-[80px] border-emerald-500/20 bg-emerald-900/5 overflow-hidden flex flex-col items-center text-center space-y-12 shadow-3xl border-l-[24px] border-l-emerald-600">
-           <div className="absolute inset-0 z-0 opacity-10">
-              <div className="absolute top-0 right-0 p-12 animate-float"><SycamoreLogo size={600} className="text-emerald-400/20" /></div>
-              <div className="w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30"></div>
-           </div>
-           
-           <div className="relative z-10 space-y-8 max-w-4xl">
-              <div className="flex flex-col items-center gap-6">
-                 <div className="w-32 h-32 md:w-44 md:h-44 rounded-[48px] bg-white shadow-[0_0_100px_rgba(255,255,255,0.15)] flex items-center justify-center ring-[12px] ring-white/5 animate-in zoom-in duration-1000">
-                    <SycamoreLogo size={100} className="text-black" />
-                 </div>
-                 <div className="space-y-4">
-                    <span className="px-6 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.6em] border border-emerald-500/30 shadow-inner italic">ENVIROSAGRO_BLOCKCHAIN_v6.5</span>
-                    <h1 className="text-6xl md:text-9xl font-black text-white uppercase italic tracking-tighter leading-none m-0 drop-shadow-2xl">Forge the <span className="text-emerald-400 underline decoration-emerald-500/20 underline-offset-8">Future.</span></h1>
-                 </div>
-              </div>
-              <p className="text-slate-400 text-2xl md:text-3xl font-medium italic leading-relaxed opacity-80 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-                 "The world's first industrial-grade regenerative grid. A unified mesh protocol orchestrating planetary restoration through verifiable blockchain shards."
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10">
-                 <button 
-                   onClick={() => onNavigate('auth')} 
-                   className="px-14 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_80px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-6 border-4 border-white/10 ring-[16px] ring-white/5 group"
-                 >
-                    <Rocket size={32} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" />
-                    ENTER BLOCKCHAIN
-                 </button>
-                 <button 
-                   onClick={() => onNavigate('info')} 
-                   className="px-12 py-7 bg-white/5 border-2 border-white/10 rounded-full text-slate-300 font-black text-xs uppercase tracking-[0.4em] hover:bg-white/10 transition-all flex items-center gap-4 active:scale-95"
-                 >
-                    <BookOpen size={20} /> EXPLORE REGISTRY
-                 </button>
-              </div>
-           </div>
-        </section>
-
-        {/* Global Impact Grid */}
-        <section className="space-y-12 px-6">
-           <div className="flex items-center gap-6 border-b border-white/5 pb-8">
-              <div className="p-4 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 shadow-xl"><Activity className="text-indigo-400" /></div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Real-Time <span className="text-indigo-400">Impact Shards</span></h2>
-           </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                { label: 'NETWORK_RESONANCE', val: '1.42x', unit: 'μ', icon: Gauge, col: 'text-blue-400', desc: 'm-Constant aggregate' },
-                { label: 'CARBON_SEQUESTERED', val: '882.4', unit: 'TONS', icon: Sprout, col: 'text-emerald-400', desc: 'Verified digital proof' },
-                { label: 'INDUSTRIAL_NODES', val: '4,281', unit: 'NODES', icon: Factory, col: 'text-indigo-400', desc: 'Active mesh elements' },
-                { label: 'GLOBAL_CONSENSUS', val: '99.98', unit: '%', icon: ShieldCheck, col: 'text-rose-400', desc: 'Ledger finality index' },
-              ].map((shard, i) => (
-                <div key={i} className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-6 shadow-xl group hover:border-white/20 transition-all relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[12s]"><shard.icon size={150} /></div>
-                   <div className="flex justify-between items-center relative z-10">
-                      <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${shard.col}`}>{shard.label}</p>
-                      <shard.icon size={20} className={shard.col} />
-                   </div>
-                   <div className="relative z-10">
-                      <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none italic">{shard.val}<span className="text-xl opacity-20 ml-1 uppercase">{shard.unit}</span></h4>
-                      <p className="text-[10px] text-slate-700 font-bold uppercase mt-6 tracking-widest opacity-60 italic">"{shard.desc}"</p>
-                   </div>
-                </div>
-              ))}
-           </div>
-        </section>
-
-        {/* Feature Multiverse */}
-        <section className="space-y-12 px-6">
-           <div className="flex items-center gap-6 border-b border-white/5 pb-8">
-              <div className="p-4 bg-emerald-600/10 rounded-2xl border border-emerald-500/20 shadow-xl"><LayoutGrid className="text-emerald-400" /></div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Blockchain <span className="text-emerald-400">Multiverse</span></h2>
-           </div>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { title: 'The Marketplace', icon: ShoppingBag, view: 'economy', col: 'text-emerald-400', desc: 'Trade industrial-grade regenerative assets with instant L3 settlement.' },
-                { title: 'Science Oracle', icon: Microscope, view: 'intelligence', col: 'text-blue-400', desc: 'Access high-fidelity digital twins and real-time environmental simulations.' },
-                { title: 'Community Mesh', icon: Users, view: 'community', col: 'text-rose-400', desc: 'Collaborate with a global registry of vetted stewards and industrial experts.' },
-                { title: 'Impact Ledger', icon: TrendingUp, view: 'impact', col: 'text-indigo-400', desc: 'Visualize the collective resonance of planetary regeneration in real-time.' },
-                { title: 'Digital MRV', icon: Scan, view: 'digital_mrv', col: 'text-amber-400', desc: 'Verifiable proof of restoration through automated telemetry and AI sharding.' },
-                { title: 'Code of Laws', icon: Scale, view: 'code_of_laws', col: 'text-slate-400', desc: 'The immutable governance framework ensuring network integrity and ethical alignment.' },
-              ].map((feature, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => onNavigate(feature.view as ViewState)}
-                  className="glass-card p-12 rounded-[64px] border-2 border-white/5 bg-black/60 shadow-3xl text-left space-y-8 group hover:border-emerald-500/40 transition-all relative overflow-hidden active:scale-[0.98] duration-300"
-                >
-                   <div className="absolute top-0 right-0 p-10 opacity-[0.01] group-hover:opacity-[0.05] group-hover:scale-110 transition-all"><feature.icon size={250} /></div>
-                   <div className={`p-6 rounded-[32px] bg-white/5 border border-white/10 ${feature.col} shadow-inner w-fit group-hover:rotate-6 transition-all`}>
-                      <feature.icon size={32} />
-                   </div>
-                   <div className="space-y-4 relative z-10">
-                      <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-emerald-400 transition-colors">{feature.title}</h4>
-                      <p className="text-lg text-slate-500 leading-relaxed italic font-medium opacity-80 group-hover:opacity-100 transition-opacity">"{feature.desc}"</p>
-                   </div>
-                   <div className="pt-8 border-t border-white/5 flex items-center gap-4 text-[10px] font-black text-slate-700 uppercase tracking-widest italic group-hover:text-white transition-colors">
-                      VIEW_SHARD <ArrowRight size={14} />
-                   </div>
-                </button>
-              ))}
-           </div>
-        </section>
-
-        {/* Guest Footer Call-To-Action */}
-        <section className="px-6">
-           <div className="glass-card p-12 md:p-24 rounded-[80px] border border-white/10 bg-white/[0.02] flex flex-col items-center text-center space-y-12 relative overflow-hidden shadow-3xl group">
-              <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[15s]"><Box size={500} className="text-white" /></div>
-              <div className="space-y-6 relative z-10 max-w-2xl">
-                 <h2 className="text-4xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Ready to <span className="text-emerald-400">Anchor?</span></h2>
-                 <p className="text-xl md:text-2xl text-slate-400 italic font-medium leading-relaxed">
-                    "Join the planetary quorum. Mint your identity shard and start orchestrating the regenerative industrial revolution."
-                 </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-6 relative z-10 w-full max-w-xl">
-                 <button 
-                   onClick={() => onNavigate('auth')} 
-                   className="flex-1 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-4 border-white/10 ring-8 ring-white/5 group/mint"
-                 >
-                    <UserPlus size={24} className="group-hover/mint:rotate-12 transition-transform" /> MINT_ACCOUNT
-                 </button>
-                 <button 
-                   onClick={() => onNavigate('auth')} 
-                   className="flex-1 py-8 bg-white/5 border-2 border-white/10 rounded-full text-slate-300 font-black text-sm uppercase tracking-[0.5em] hover:bg-white/10 transition-all flex items-center justify-center gap-4 active:scale-95 group/login"
-                 >
-                    <Lock size={20} className="group-hover/login:scale-110 transition-transform" /> STEWARD_LOGIN
-                 </button>
-              </div>
-           </div>
-        </section>
-      </div>
-    );
-  }
-
-  // Personalized Steward Dashboard (Logged In)
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700 w-full overflow-x-hidden pb-32 px-2 max-w-[1700px] mx-auto">
       
@@ -212,7 +77,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
              <div className="relative z-10 flex flex-col sm:flex-row justify-between gap-10 items-center pb-12 border-b border-white/5 mb-12">
                 <div className="flex items-center justify-center sm:justify-start gap-10 w-full flex-col sm:flex-row">
                   <div className="w-32 h-32 rounded-[40px] bg-white text-slate-900 flex items-center justify-center text-5xl font-black shadow-[0_0_50px_rgba(255,255,255,0.1)] relative ring-8 ring-white/5 shrink-0 transition-transform group-hover:rotate-3">
-                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover rounded-[32px]" alt="" /> : user.name[0]}
+                    {user.name[0]}
                     <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center border-4 border-[#050706] shadow-3xl">
                       <ShieldCheck className="w-6 h-6 text-white" />
                     </div>

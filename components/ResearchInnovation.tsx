@@ -62,12 +62,10 @@ import {
   User as UserIcon, 
   ChevronDown, 
   ShoppingBag, 
-  PencilRuler,
-  Share2,
-  Handshake,
-  ThumbsUp
+  // Added PencilRuler to fix "Cannot find name 'PencilRuler'" error on line 720
+  PencilRuler
 } from 'lucide-react';
-import { User, ResearchPaper, AgroBook, ChapterShard, VendorProduct, SignalShard } from '../types';
+import { User, ResearchPaper, AgroBook, ChapterShard, VendorProduct } from '../types';
 import { generateAgroResearch, analyzeMedia, chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
 
@@ -76,7 +74,6 @@ interface ResearchInnovationProps {
   onEarnEAC: (amount: number, reason: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onNavigate: (view: any, section?: string) => void;
-  onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
   pendingAction?: string | null;
   clearAction?: () => void;
 }
@@ -93,7 +90,6 @@ const INITIAL_PATENTS: ResearchPaper[] = [
     status: 'Invention', 
     impactScore: 94, 
     rating: 4.8, 
-    vouchCount: 142,
     eacRewards: 1250, 
     timestamp: '2d ago',
     iotDataUsed: true
@@ -109,14 +105,13 @@ const INITIAL_PATENTS: ResearchPaper[] = [
     status: 'Registered', 
     impactScore: 88, 
     rating: 4.5, 
-    vouchCount: 88,
     eacRewards: 450, 
     timestamp: '5d ago',
     iotDataUsed: true
   },
 ];
 
-const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, onEmitSignal, pendingAction, clearAction }) => {
+const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, pendingAction, clearAction }) => {
   const [activeTab, setActiveTab] = useState<'forge' | 'archive' | 'book_forge'>('archive');
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [isExtractingIot, setIsExtractingIot] = useState(false);
@@ -135,7 +130,6 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
   const [archive, setArchive] = useState<ResearchPaper[]>(INITIAL_PATENTS);
   const [publishedBooks, setPublishedBooks] = useState<AgroBook[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [vouchedItems, setVouchedItems] = useState<string[]>([]);
 
   // --- BOOK FORGE (AgroInPDF) STATES ---
   const [bookTitle, setBookTitle] = useState('');
@@ -146,8 +140,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
 
   useEffect(() => {
     const unsubBooks = listenToCollection('books', setPublishedBooks);
-    const unsubPatents = listenToCollection('patents', (data) => setArchive([...INITIAL_PATENTS, ...data]));
-    return () => { unsubBooks(); unsubPatents(); };
+    return () => unsubBooks();
   }, []);
 
   useEffect(() => {
@@ -235,7 +228,6 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       status: 'Registered',
       impactScore: 0,
       rating: 0,
-      vouchCount: 0,
       eacRewards: 100,
       timestamp: new Date().toISOString(),
       iotDataUsed: !!iotTelemetry
@@ -247,79 +239,6 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
     setSelectedFile(null);
     setFileBase64(null);
     setActiveTab('archive');
-  };
-
-  const handleShareToCommunity = async (title: string, abstract: string, type: 'PATENT' | 'BOOK') => {
-    const confirmShare = confirm(`Share ${type} "${title}" to the community mesh?`);
-    if (!confirmShare) return;
-
-    const newPost = {
-      id: `PST-RES-${Date.now()}`,
-      authorEsin: user.esin,
-      authorName: user.name,
-      authorAvatar: user.avatar,
-      text: `[RESEARCH_SHARD: ${type}] I have just anchored a new ${type.toLowerCase()} to the registry: "${title}".\n\nAbstract: ${abstract}`,
-      timestamp: new Date().toISOString(),
-      likes: 0,
-      vouchCount: 0,
-      shares: 0,
-      comments: []
-    };
-
-    try {
-      await saveCollectionItem('social_posts', newPost);
-      onEmitSignal({
-        title: 'MESH_BROADCAST_SUCCESS',
-        message: `Research shard "${title}" has been shared with the steward community.`,
-        priority: 'medium',
-        type: 'engagement',
-        origin: 'MANUAL',
-        actionIcon: 'Share2'
-      });
-    } catch (e) {
-      alert("Broadcast failed. Check registry link.");
-    }
-  };
-
-  const handleForgeRobotMission = (title: string) => {
-    onNavigate('robot', title);
-    onEmitSignal({
-      title: 'ROBOT_MISSION_INITIALIZED',
-      message: `Navigating to Swarm Command to forge mission for "${title}".`,
-      priority: 'low',
-      type: 'task',
-      origin: 'ORACLE',
-      actionIcon: 'Bot'
-    });
-  };
-
-  const handleInitializeContract = (title: string) => {
-    onNavigate('contract_farming', title);
-    onEmitSignal({
-      title: 'CONTRACT_INITIALIZATION_TRIGGERED',
-      message: `Redirecting to Contract Farming to provision mission for "${title}".`,
-      priority: 'medium',
-      type: 'commerce',
-      origin: 'ORACLE',
-      actionIcon: 'Handshake'
-    });
-  };
-
-  const handleVouchResearch = async (id: string, authorEsin: string, title: string) => {
-    if (authorEsin === user.esin) return alert("AUTH_ERROR: Self-vouching prohibited.");
-    if (vouchedItems.includes(id)) return;
-
-    onEarnEAC(5, 'RESEARCH_VOUCH_REWARD');
-    setVouchedItems(prev => [...prev, id]);
-    
-    onEmitSignal({
-      title: 'RESEARCH_VOUCH_FINALIZED',
-      message: `You have vouched for "${title}". Reputation multiplier applied.`,
-      priority: 'low',
-      type: 'engagement',
-      origin: 'MANUAL',
-      actionIcon: 'Heart'
-    });
   };
 
   // --- AGROINPDF BOOK FORGING LOGIC ---
@@ -385,12 +304,13 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
 
       await saveCollectionItem('books', newBook);
       
+      // Auto-list to Market Cloud as a Vendor Product
       const marketProduct: VendorProduct = {
         id: newBook.id,
         name: `BOOK: ${newBook.title}`,
         description: newBook.abstract,
         price: newBook.price,
-        stock: 9999,
+        stock: 9999, // Digital asset
         category: 'Book',
         supplierEsin: user.esin,
         supplierName: user.name,
@@ -402,27 +322,11 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       await saveCollectionItem('products', marketProduct);
 
       onEarnEAC(200, 'AGRO_IN_PDF_PUBLICATION_BONUS');
-      await onEmitSignal({
-        title: 'BOOK_PUBLISHED_SUCCESS',
-        message: `"${bookTitle}" has been published and listed on the Market Cloud.`,
-        priority: 'high',
-        type: 'commerce',
-        origin: 'MANUAL',
-        actionIcon: 'BookMarked',
-      });
-
       setBookTitle('');
       setChapterPile([]);
       setActiveTab('archive');
-    } catch (e: any) {
-      await onEmitSignal({
-        title: 'PUBLISHING_HANDSHAKE_FAILED',
-        message: `Could not anchor book to the registry. Reason: ${e.message}`,
-        priority: 'high',
-        type: 'error',
-        origin: 'SYSTEM',
-        actionIcon: 'X',
-      });
+    } catch (e) {
+      alert("Publishing handshake failed.");
     } finally {
       setIsPublishing(false);
     }
@@ -453,6 +357,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
       
+      {/* Header Section */}
       <div className="glass-card p-12 rounded-[56px] border-emerald-500/10 bg-black/40 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-2xl">
         <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform">
            <Microscope className="w-96 h-96 text-white" />
@@ -540,9 +445,9 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                                    <p className="text-[8px] text-slate-600 font-black uppercase">Views</p>
                                    <p className="text-lg font-mono font-black text-white">{book.views + 42}</p>
                                 </div>
-                                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5" onClick={() => handleVouchResearch(book.id, book.authorEsin, book.title)}>
+                                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                                    <p className="text-[8px] text-slate-600 font-black uppercase">Vouches</p>
-                                   <p className={`text-lg font-mono font-black transition-colors ${vouchedItems.includes(book.id) ? 'text-rose-500' : 'text-emerald-400'}`}>{book.vouches + (vouchedItems.includes(book.id) ? 13 : 12)}</p>
+                                   <p className="text-lg font-mono font-black text-emerald-400">{book.vouches + 12}</p>
                                 </div>
                                 <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                                    <p className="text-[8px] text-slate-600 font-black uppercase">Shard Value</p>
@@ -551,7 +456,6 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                              </div>
                           </div>
                           <div className="mt-10 pt-8 border-t border-white/5 flex gap-4 relative z-10">
-                             <button onClick={() => handleShareToCommunity(book.title, book.abstract, 'BOOK')} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-fuchsia-400 transition-all shadow-xl" title="Share to Mesh"><Share2 size={14}/></button>
                              <button onClick={() => downloadBook(book)} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2">
                                 <Download size={14} /> MD_EXPORT
                              </button>
@@ -588,23 +492,11 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                         <p className="text-sm text-slate-400 leading-relaxed italic mt-6 opacity-80 font-medium">"{paper.abstract}"</p>
                      </div>
                      <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                        <div className="flex items-center gap-6">
-                           <div className="flex items-center gap-2 text-amber-500">
-                             <Star size={16} fill="currentColor" />
-                             <span className="text-xs font-mono font-black text-white">{paper.rating}</span>
-                           </div>
-                           <div className="flex items-center gap-2 text-rose-500">
-                             <Heart size={16} fill={vouchedItems.includes(paper.id) ? "currentColor" : "none"} />
-                             <span className="text-xs font-mono font-black text-white">{paper.vouchCount + (vouchedItems.includes(paper.id) ? 1 : 0)}</span>
-                           </div>
+                        <div className="flex items-center gap-2 text-amber-500">
+                          <Star size={16} fill="currentColor" />
+                          <span className="text-xs font-mono font-black text-white">{paper.rating}</span>
                         </div>
-                        <div className="flex gap-4">
-                           <button onClick={() => handleVouchResearch(paper.id, paper.authorEsin, paper.title)} className={`p-4 border rounded-2xl transition-all shadow-xl active:scale-90 ${vouchedItems.includes(paper.id) ? 'bg-rose-600 text-white border-rose-400' : 'bg-white/5 border-white/10 text-slate-600 hover:text-rose-400'}`} title="Vouch for Research"><ThumbsUp size={20} /></button>
-                           <button onClick={() => handleShareToCommunity(paper.title, paper.abstract, 'PATENT')} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-emerald-400 transition-all shadow-xl active:scale-90" title="Share to Mesh"><Share2 size={20} /></button>
-                           <button onClick={() => handleInitializeContract(paper.title)} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-amber-500 transition-all shadow-xl active:scale-90" title="Initialize Farming Contract"><Handshake size={20} /></button>
-                           <button onClick={() => handleForgeRobotMission(paper.title)} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-blue-400 transition-all shadow-xl active:scale-90" title="Forge Robot Mission"><Bot size={20} /></button>
-                           <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all shadow-xl active:scale-90"><Download size={20} /></button>
-                        </div>
+                        <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all shadow-xl active:scale-90"><Download size={20} /></button>
                      </div>
                   </div>
                 ))}
@@ -613,6 +505,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
         </div>
       )}
 
+      {/* --- TAB: RESEARCH SHARD FORGE --- */}
       {activeTab === 'forge' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in slide-in-from-right-4 duration-500">
            <div className="lg:col-span-1 space-y-6">
@@ -694,9 +587,11 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
         </div>
       )}
 
+      {/* --- TAB: BOOK FORGE (AgroInPDF) --- */}
       {activeTab === 'book_forge' && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 animate-in zoom-in duration-500">
            
+           {/* Left Control Column */}
            <div className="xl:col-span-4 space-y-8">
               <div className="glass-card p-10 rounded-[56px] border-fuchsia-500/20 bg-fuchsia-950/5 space-y-10 shadow-3xl relative overflow-hidden group">
                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s]"><BookOpen size={400} className="text-fuchsia-500" /></div>
@@ -745,6 +640,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                  </div>
               </div>
 
+              {/* Matrix Metadata Card */}
               <div className="p-10 glass-card rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-xl group">
                  <h4 className="text-xl font-black text-white uppercase italic tracking-widest px-4 flex items-center gap-4">
                     <Target size={24} className="text-blue-400" /> Impact <span className="text-blue-400">Matrix</span>
@@ -769,6 +665,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
               </div>
            </div>
 
+           {/* Right Sequence Matrix Area */}
            <div className="xl:col-span-8 flex flex-col space-y-8">
               <div className="glass-card rounded-[80px] min-h-[850px] border-2 border-white/5 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
                  <div className="p-12 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-20 px-16">

@@ -14,7 +14,7 @@ import {
   Gauge, Heart, Siren
 } from 'lucide-react';
 import { User, ViewState } from '../types';
-import SycamoreLogo from './SycamoreLogo';
+import { SycamoreLogo } from '../App';
 
 interface InfoPortalProps {
   user: User;

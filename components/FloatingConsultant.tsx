@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { chatWithAgroExpert } from '../services/geminiService';
 import { User, ViewState } from '../types';
-import { SycamoreLogo } from './SycamoreLogo';
+import { SycamoreLogo } from '../App';
 
 interface FloatingConsultantProps {
   isOpen: boolean;

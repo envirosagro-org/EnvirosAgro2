@@ -59,7 +59,6 @@ interface RobotProps {
   onEarnEAC: (amount: number, reason: string) => void;
   onNavigate: (view: ViewState) => void;
   onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
-  initialObjective?: string | null;
 }
 
 interface Crawler {
@@ -80,7 +79,7 @@ const INITIAL_FLEET: Crawler[] = [
   { id: 'BOT-4420', name: 'Harvester Core', type: 'HarvesterBot', status: 'MAINTENANCE', handshake: 'PENDING', load: 0, battery: 12, threatLevel: 0, pos: { x: 50, y: 75 } },
 ];
 
-const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialObjective }) => {
+const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal }) => {
   const [activeTab, setActiveTab] = useState<'registry' | 'forge' | 'terminal' | 'radar'>('registry');
   const [fleet, setFleet] = useState<Crawler[]>(INITIAL_FLEET);
   const [packetLogs, setPacketLogs] = useState<any[]>([]);
@@ -93,13 +92,6 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
   const [missionObjective, setMissionObjective] = useState('');
   const [isForging, setIsForging] = useState(false);
   const [forgeResult, setForgeResult] = useState<any | null>(null);
-
-  useEffect(() => {
-    if (initialObjective) {
-      setMissionObjective(`Optimize swarm behavior based on research: "${initialObjective}"`);
-      setActiveTab('forge');
-    }
-  }, [initialObjective]);
 
   // Packet Stream Simulation
   useEffect(() => {

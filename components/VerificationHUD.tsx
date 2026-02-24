@@ -26,7 +26,7 @@ import {
   Globe2
 } from 'lucide-react';
 import { refreshAuthUser, sendVerificationShard, signOutSteward } from '../services/firebaseService';
-import { SycamoreLogo } from './SycamoreLogo';
+import { SycamoreLogo } from '../App';
 
 interface VerificationHUDProps {
   userEmail: string;

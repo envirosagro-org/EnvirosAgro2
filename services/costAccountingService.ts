@@ -1,6 +1,6 @@
 
 import { SustainabilityMetrics, ShardCostCalibration } from '../types';
-import { calculateMConstant } from '../utils/formulas';
+import { calculateMConstant } from '../systemFunctions';
 
 /**
  * ENVIROSAGRO COST ACCOUNTING ORACLE

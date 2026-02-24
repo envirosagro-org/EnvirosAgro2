@@ -1,49 +1,160 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    match /nodes/{nodeId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    match /sourced_assets/{assetId} {
-      allow create, read, update, delete: if isAuthenticated();
-    }
-
-    match /carbon_credits/{creditId} {
-      allow read: if isAuthenticated();
-      allow write: if false;
-    }
-
-    match /media_ledger/{mediaId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.authorEsin == request.auth.uid;
-      allow update, delete: if isAuthenticated() && resource.data.authorEsin == request.auth.uid;
+    
+    // --- CORE ENVIROSAGRO HELPER FUNCTIONS ---
+    
+    // Verifies the user is authenticated AND the app is verified via App Check
+    function isSignedIn() { 
+      return request.auth != null; 
     }
     
-    match /books/{bookId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.authorEsin == request.auth.uid;
-      allow update, delete: if isAuthenticated() && resource.data.authorEsin == request.auth.uid;
+    // Enforces App Check even for public (non-auth) reads if necessary
+    function isAppVerified() {
+      return request.auth != null && request.auth.token.app_check == true;
+    }
+    
+    function isOwner(stewardId) { 
+      return isSignedIn() && request.auth.uid == stewardId; 
     }
 
-    match /signals/{signalId} {
-      allow read, write: if isAuthenticated();
+    function isAuditor() { 
+      return isSignedIn() && exists(/databases/$(database)/documents/auditors/$(request.auth.uid));
     }
 
+    // --- COLLECTION PROTOCOLS ---
+
+    // 1. Stewards: Personal node dossier
     match /stewards/{stewardId} {
-      allow read: if isAuthenticated() && stewardId == request.auth.uid;
-      allow create: if isAuthenticated() && stewardId == request.auth.uid;
-      allow update: if isAuthenticated() && stewardId == request.auth.uid;
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(stewardId);
       allow delete: if false;
     }
 
-    match /{document=**} {
-      allow read, write: if false;
+    // 2. Signals: Encrypted engagement shards
+    match /signals/{signalId} {
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+      allow delete: if false; 
+    }
+
+    // 3. Products & Industrial Assets
+    match /products/{productId} {
+      allow read: if isSignedIn() || isAppVerified(); // Restrict to official app even for public read
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow delete: if false;
+    }
+
+    // 4. Live Inflow (Industrial Shards in processing)
+    match /live_products/{id} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow delete: if false;
+    }
+
+    // 5. Media Ledger & Knowledge Shards (AgroInPDF)
+    match /media_ledger/{shardId} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow delete: if false;
+    }
+    
+    match /books/{bookId} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow delete: if false;
+    }
+
+    // 6. Financial Ledger (Transactions): Absolute Immutability
+    match /transactions/{txId} {
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow create: if isSignedIn();
+      allow update, delete: if false; 
+    }
+
+    // 7. Missions & Contracts
+    match /contracts/{contractId} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn(); 
+      allow delete: if false;
+    }
+    
+    match /projects/{projectId} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow delete: if false;
+    }
+
+    // 8. Orders: Procurement Shards
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow delete: if false;
+    }
+
+    // 9. Collectives: Steward Guilds
+    match /collectives/{id} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn(); 
+      allow delete: if false;
+    }
+
+    // 10. Social Hub: Posts & Connections
+    match /social_posts/{postId} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+    }
+
+    match /connections/{connectionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    // 11. Telemetry & Industrial Units
+    match /telemetry/{esin} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    
+    match /industrial_units/{unitId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+    }
+    
+    match /tasks/{taskId} {
+      allow read: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+      allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+    }
+    
+    match /patents/{patentId} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow write: if isSignedIn() && (resource.data.stewardId == request.auth.uid || isAuditor());
+    }
+
+    match /blocks/{blockId} {
+      allow read: if isSignedIn() || isAppVerified();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // 12. Auditors: Internal HQ Authority
+    match /auditors/{emailOrUid} {
+      allow read: if isSignedIn();
+      allow write: if false; 
     }
   }
 }

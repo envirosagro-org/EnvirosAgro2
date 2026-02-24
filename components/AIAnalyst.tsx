@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { chatWithAgroExpert, analyzeSustainability, AIResponse } from '../services/geminiService';
 import { User as AgroUser, ViewState, SignalShard } from '../types';
-import { SycamoreLogo } from './SycamoreLogo';
+import { SycamoreLogo } from '../App';
 
 interface AIAnalystProps {
   user: AgroUser;
