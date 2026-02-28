@@ -199,7 +199,7 @@ ${content}
     setGraphicAnchored(false);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const technicalPrompt = `Professional architectural and agricultural render of ${imagePrompt}. 
       Brand Influence: Lilies Around Aesthetic Revolution.
       Framework Context: ${selectedThrust.thrust} sustainability. 

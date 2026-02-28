@@ -61,7 +61,7 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
 
       const downloadLink = (operation as any).response?.generatedVideos?.[0]?.video?.uri;
       if (downloadLink) {
-        const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+        const response = await fetch(`${downloadLink}&key=${process.env.GEMINI_API_KEY}`);
         const blob = await response.blob();
         setVideoUrl(URL.createObjectURL(blob));
       }

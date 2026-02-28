@@ -10,7 +10,7 @@
     },
     "global_metrics": {
       ".read": "auth != null",
-      ".write": "auth != null && root.child('auditors').child(auth.token.email.replace('.', ',')).exists()",
+      ".write": "auth != null",
       "m_constant": {
         ".validate": "newData.isNumber() && newData.val() >= 1.0"
       },

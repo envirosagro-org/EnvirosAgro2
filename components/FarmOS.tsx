@@ -351,9 +351,9 @@ SEQUENCE Optimize_Cycle_882 {
            <div className="space-y-4 relative z-10">
               <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.6em] mb-4 italic">KERNEL_STATUS</p>
               <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none drop-shadow-2xl italic">ONLINE</h4>
-              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
+              <div className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div> SYNCED
-              </p>
+              </div>
            </div>
         </div>
       </div>

@@ -175,9 +175,9 @@ const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({
                 {selectedBlueprint ? `+${selectedBlueprint.projected_value_delta}` : '0'}
                 <span className="text-3xl text-emerald-500 font-sans italic ml-1">%</span>
               </h4>
-              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
+              <div className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_100px_#10b981]"></div> TARGET_YIELD_LOCK
-              </p>
+              </div>
            </div>
            <div className="space-y-6 relative z-10 pt-10 border-t border-white/5 mt-10">
               <div className="flex justify-between items-center text-[11px] font-black uppercase text-slate-600 tracking-widest">

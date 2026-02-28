@@ -296,7 +296,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
 
          <div className="flex justify-center p-2 glass-card rounded-[32px] bg-black/80 border border-white/10 w-fit mx-auto overflow-hidden gap-2">
             <button onClick={() => setMode('login')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'login' || mode === 'forgot' ? 'bg-white text-black shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>REGISTRY_AUTH</button>
-            <button onClick={() => setMode('phone')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'phone' || mode === 'verify_phone' ? 'bg-blue-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>MOBILE_LINK</button>
+            <button onClick={() => setMode('phone')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'phone' || mode === 'verify_phone' ? 'bg-blue-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>2FACTOR_VERIFICATION</button>
             <button onClick={() => setMode('register')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>MINT_NODE</button>
          </div>
 

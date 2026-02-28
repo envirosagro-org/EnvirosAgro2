@@ -16,6 +16,7 @@ import {
 } from "firebase/auth";
 import { 
   initializeFirestore,
+  memoryLocalCache,
   doc, 
   setDoc, 
   getDoc, 
@@ -100,7 +101,7 @@ export const auth = getAuth(app);
 // FORCED RESILIENCE CONFIG: Using auto-detect long polling for maximum cross-environment compatibility
 // Removed useFetchHandler to prevent potential "Illegal constructor" issues in specific browser sandboxes
 export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true
+  localCache: memoryLocalCache()
 }); 
 
 export const rtdb = getDatabase(app);
