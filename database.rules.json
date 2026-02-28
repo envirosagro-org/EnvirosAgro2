@@ -17,6 +17,10 @@
       "ca_index": {
         ".validate": "newData.isNumber()"
       }
+    },
+    "system_heartbeat": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }
