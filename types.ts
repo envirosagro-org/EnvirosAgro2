@@ -432,7 +432,7 @@ export type ViewState =
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
   | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot'
-  | 'mesh_protocol' | 'registry_handshake';
+  | 'mesh_protocol' | 'registry_handshake' | 'educational_resources';
 
 export interface VectorAddress {
   dimension: ViewState;

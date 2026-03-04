@@ -80,7 +80,7 @@ const Economy: React.FC<EconomyProps> = ({
 
   // Real-time sync of Knowledge Shards
   useEffect(() => {
-    const unsub = listenToCollection('books', setBooks);
+    const unsub = listenToCollection('books', setBooks, true);
     return () => unsub();
   }, []);
 
@@ -120,6 +120,8 @@ const Economy: React.FC<EconomyProps> = ({
     
     // 1. EnvirosAgro Official Store & Vendor Portal Assets
     vendorProducts.forEach(p => {
+      if (books.some(b => b.id === p.id)) return; // Prevent duplicate keys for AgroInPDF books
+      
       const source = p.supplierEsin === 'EA-ORG-CORE' ? 'Official Store' : 'Vendor Portal';
       const dist = p.coords ? calculateDistance(userLat, userLon, p.coords.lat, p.coords.lng) : 0;
       

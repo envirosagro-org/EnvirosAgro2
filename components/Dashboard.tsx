@@ -188,7 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 px-4">
            {THRUSTS.map((t) => (
-             <div key={t.id} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/30 transition-all flex flex-col items-center text-center space-y-6 relative overflow-hidden active:scale-[0.98] duration-300">
+             <div key={t.id} onClick={() => onNavigate('impact')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/30 transition-all flex flex-col items-center text-center space-y-6 relative overflow-hidden active:scale-[0.98] duration-300 cursor-pointer">
                 <div className="absolute -bottom-8 -right-8 p-4 opacity-[0.02] group-hover:scale-125 transition-transform duration-[10s]"><t.icon size={180} className={t.col} /></div>
                 <div className={`p-6 rounded-3xl bg-white/5 border border-white/10 ${t.col} shadow-inner group-hover:rotate-12 transition-transform`}>
                    <t.icon size={32} />

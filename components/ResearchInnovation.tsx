@@ -284,7 +284,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
     setIsPublishing(true);
     try {
       const newBook: AgroBook = {
-        id: `BOOK-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        id: `BOOK-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`,
         title: bookTitle,
         authorEsin: user.esin,
         authorName: user.name,

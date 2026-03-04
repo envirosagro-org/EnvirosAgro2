@@ -28,6 +28,22 @@ import {
   Braces
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import Editor from 'react-simple-code-editor';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-javascript';
+
+// Define AgroLang grammar
+Prism.languages.agrolang = {
+  'comment': /\/\/.*/,
+  'string': /(["'])(?:(?=(\\?))\2.)*?\1/,
+  'keyword': /\b(IMPORT|AS|AUTHENTICATE|SEQUENCE|CONSTRAIN|COMMIT_SHARD|target|gain|units|mode|registry|finality|source|weight|zone)\b/,
+  'function': /\b[a-z_]\w*(?=\s*\()/i,
+  'number': /\b\d+(?:\.\d+)?(?:Hz|v)?\b/i,
+  'operator': /[=<>!]+/,
+  'punctuation': /[{}[\];(),.:]/
+};
+
 import { User, SignalShard } from '../types';
 import { auditAgroLangCode, chatWithAgroExpert } from '../services/geminiService';
 
@@ -138,6 +154,23 @@ SEQUENCE Optimize_Cycle_882 {
   const [isCompiling, setIsCompiling] = useState(false);
   const [complianceStatus, setComplianceStatus] = useState<'IDLE' | 'COMPLIANT' | 'VIOLATION'>('IDLE');
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [lintErrors, setLintErrors] = useState<{line: number, msg: string}[]>([]);
+
+  useEffect(() => {
+    const code = codeMap[activeShard] || '';
+    const lines = code.split('\n');
+    const errors: {line: number, msg: string}[] = [];
+    lines.forEach((line, i) => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('//') && !trimmed.endsWith(';') && !trimmed.endsWith('{') && !trimmed.endsWith('}')) {
+        errors.push({ line: i + 1, msg: 'Missing semicolon at end of statement.' });
+      }
+      if (trimmed.includes('IMPORT') && !trimmed.includes('AS')) {
+        errors.push({ line: i + 1, msg: 'IMPORT statement missing AS clause.' });
+      }
+    });
+    setLintErrors(errors);
+  }, [codeMap, activeShard]);
 
   useEffect(() => {
     if (initialSection === 'ide' || initialCode) {
@@ -458,16 +491,39 @@ SEQUENCE Optimize_Cycle_882 {
                           )}
                        </div>
                     </div>
-                    <div className="flex-1 flex gap-10 p-12 bg-black relative overflow-hidden">
-                       <div className="w-12 text-right font-mono text-base text-slate-800 pt-2 border-r border-white/5 pr-8 select-none leading-[2.5]">
-                          {[...Array(24)].map((_, i) => <div key={i}>{(i + 1).toString().padStart(2, '0')}</div>)}
+                    <div className="flex-1 flex gap-10 p-12 bg-black relative overflow-y-auto custom-scrollbar-editor">
+                       <div className="w-12 text-right font-mono text-[20px] text-slate-800 pt-[8px] border-r border-white/5 pr-8 select-none leading-[50px]">
+                          {codeMap[activeShard].split('\n').map((_, i) => (
+                            <div key={i} className="relative">
+                              {(i + 1).toString().padStart(2, '0')}
+                              {lintErrors.find(e => e.line === i + 1) && (
+                                <div className="absolute top-1/2 -translate-y-1/2 -right-6 text-rose-500 cursor-help" title={lintErrors.find(e => e.line === i + 1)?.msg}>
+                                  <AlertCircle size={14} />
+                                </div>
+                              )}
+                            </div>
+                          ))}
                        </div>
-                       <textarea 
-                          value={codeMap[activeShard]}
-                          onChange={(e) => setCodeMap({ ...codeMap, [activeShard]: e.target.value })}
-                          spellCheck={false}
-                          className="flex-1 bg-transparent border-none outline-none font-mono text-xl text-emerald-400/90 leading-[2.5] resize-none selection:bg-indigo-500/40 overflow-y-auto italic custom-scrollbar-editor"
-                       />
+                       <div className="flex-1">
+                          <Editor
+                             value={codeMap[activeShard]}
+                             onValueChange={(code) => setCodeMap({ ...codeMap, [activeShard]: code })}
+                             highlight={code => Prism.highlight(code, Prism.languages.agrolang, 'agrolang')}
+                             padding={8}
+                             style={{
+                               fontFamily: 'monospace',
+                               fontSize: 20,
+                               lineHeight: '50px',
+                               backgroundColor: 'transparent',
+                               color: 'rgba(52, 211, 153, 0.9)',
+                               fontStyle: 'italic',
+                               minHeight: '100%',
+                               outline: 'none',
+                               border: 'none'
+                             }}
+                             className="outline-none"
+                          />
+                       </div>
                     </div>
                  </div>
               </div>
@@ -587,6 +643,13 @@ SEQUENCE Optimize_Cycle_882 {
         .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
+        .token.comment { color: #6b7280; font-style: italic; }
+        .token.string { color: #f59e0b; }
+        .token.keyword { color: #c084fc; font-weight: bold; }
+        .token.function { color: #60a5fa; }
+        .token.number { color: #34d399; }
+        .token.operator { color: #f472b6; }
+        .token.punctuation { color: #94a3b8; }
       `}</style>
     </div>
   );
