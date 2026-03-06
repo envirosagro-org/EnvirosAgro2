@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, Factory, Monitor, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
@@ -27,61 +27,66 @@ import {
   Network,
   SmartphoneNfc
 } from 'lucide-react';
+import { Toaster } from 'sonner';
+import { useAppStore } from './store';
 import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint } from './types';
-import Dashboard from './components/Dashboard';
-import Sustainability from './components/Sustainability';
-import Economy from './components/Economy';
-import Industrial from './components/Industrial';
-import Intelligence from './components/Intelligence';
-import Community from './components/Community';
-import Explorer from './components/Explorer';
-import Ecosystem from './components/Ecosystem';
-import MediaHub from './components/MediaHub';
-import InfoPortal from './components/InfoPortal';
-import Login from './components/Login';
-import AgroWallet from './components/AgroWallet';
-import UserProfile from './components/UserProfile';
-import InvestorPortal from './components/InvestorPortal';
-import VendorPortal from './components/VendorPortal';
-import NetworkIngest from './components/NetworkIngest';
-import ToolsSection from './components/ToolsSection';
-import LiveVoiceBridge from './components/LiveVoiceBridge';
-import Channelling from './components/Channelling';
-import EvidenceModal from './components/EvidenceModal';
-import CircularGrid from './components/CircularGrid';
-import NexusCRM from './components/NexusCRM';
-import TQMGrid from './components/TQMGrid';
-import ResearchInnovation from './components/ResearchInnovation';
-import LiveFarming from './components/LiveFarming';
-import ContractFarming from './components/ContractFarming';
-import Agrowild from './components/Agrowild';
-import FloatingConsultant from './components/FloatingConsultant';
-import Impact from './components/Impact';
-import NaturalResources from './components/NaturalResources';
-import IntranetPortal from './components/IntranetPortal';
-import EnvirosAgroStore from './components/EnvirosAgroStore';
-import CEA from './components/CEA';
-import Biotechnology from './components/Biotechnology';
-import Permaculture from './components/Permaculture';
-import EmergencyPortal from './components/EmergencyPortal';
-import AgroRegency from './components/AgroRegency';
-import CodeOfLaws from './components/CodeOfLaws';
-import AgroCalendar from './components/AgroCalendar';
-import ChromaSystem from './components/ChromaSystem';
-import AgroValueEnhancement from './components/AgroValueEnhancement';
-import DigitalMRV from './components/DigitalMRV';
-import OnlineGarden from './components/OnlineGarden';
-import FarmOS from './components/FarmOS';
-import MediaLedger from './components/MediaLedger';
-import Sitemap from './components/Sitemap';
-import AIAnalyst from './components/AIAnalyst';
-import VerificationHUD from './components/VerificationHUD';
-import SettingsPortal from './components/SettingsPortal';
-import TemporalVideo from './components/TemporalVideo';
-import Robot from './components/Robot';
-import MeshProtocol from './components/MeshProtocol';
-import RegistryHandshake from './components/RegistryHandshake';
-import EducationalResources from './components/EducationalResources';
+
+import { RegistrationResumePopup } from './components/RegistrationResumePopup';
+
+const Dashboard = React.lazy(() => import('./components/Dashboard'));
+const Sustainability = React.lazy(() => import('./components/Sustainability'));
+const Economy = React.lazy(() => import('./components/Economy'));
+const Industrial = React.lazy(() => import('./components/Industrial'));
+const Intelligence = React.lazy(() => import('./components/Intelligence'));
+const Community = React.lazy(() => import('./components/Community'));
+const Explorer = React.lazy(() => import('./components/Explorer'));
+const Ecosystem = React.lazy(() => import('./components/Ecosystem'));
+const MediaHub = React.lazy(() => import('./components/MediaHub'));
+const InfoPortal = React.lazy(() => import('./components/InfoPortal'));
+const Login = React.lazy(() => import('./components/Login'));
+const AgroWallet = React.lazy(() => import('./components/AgroWallet'));
+const UserProfile = React.lazy(() => import('./components/UserProfile'));
+const InvestorPortal = React.lazy(() => import('./components/InvestorPortal'));
+const VendorPortal = React.lazy(() => import('./components/VendorPortal'));
+const NetworkIngest = React.lazy(() => import('./components/NetworkIngest'));
+const ToolsSection = React.lazy(() => import('./components/ToolsSection'));
+const LiveVoiceBridge = React.lazy(() => import('./components/LiveVoiceBridge'));
+const Channelling = React.lazy(() => import('./components/Channelling'));
+const EvidenceModal = React.lazy(() => import('./components/EvidenceModal'));
+const CircularGrid = React.lazy(() => import('./components/CircularGrid'));
+const NexusCRM = React.lazy(() => import('./components/NexusCRM'));
+const TQMGrid = React.lazy(() => import('./components/TQMGrid'));
+const ResearchInnovation = React.lazy(() => import('./components/ResearchInnovation'));
+const LiveFarming = React.lazy(() => import('./components/LiveFarming'));
+const ContractFarming = React.lazy(() => import('./components/ContractFarming'));
+const Agrowild = React.lazy(() => import('./components/Agrowild'));
+const FloatingConsultant = React.lazy(() => import('./components/FloatingConsultant'));
+const Impact = React.lazy(() => import('./components/Impact'));
+const NaturalResources = React.lazy(() => import('./components/NaturalResources'));
+const IntranetPortal = React.lazy(() => import('./components/IntranetPortal'));
+const EnvirosAgroStore = React.lazy(() => import('./components/EnvirosAgroStore'));
+const CEA = React.lazy(() => import('./components/CEA'));
+const Biotechnology = React.lazy(() => import('./components/Biotechnology'));
+const Permaculture = React.lazy(() => import('./components/Permaculture'));
+const EmergencyPortal = React.lazy(() => import('./components/EmergencyPortal'));
+const AgroRegency = React.lazy(() => import('./components/AgroRegency'));
+const CodeOfLaws = React.lazy(() => import('./components/CodeOfLaws'));
+const AgroCalendar = React.lazy(() => import('./components/AgroCalendar'));
+const ChromaSystem = React.lazy(() => import('./components/ChromaSystem'));
+const AgroValueEnhancement = React.lazy(() => import('./components/AgroValueEnhancement'));
+const DigitalMRV = React.lazy(() => import('./components/DigitalMRV'));
+const OnlineGarden = React.lazy(() => import('./components/OnlineGarden'));
+const FarmOS = React.lazy(() => import('./components/FarmOS'));
+const MediaLedger = React.lazy(() => import('./components/MediaLedger'));
+const Sitemap = React.lazy(() => import('./components/Sitemap'));
+const AIAnalyst = React.lazy(() => import('./components/AIAnalyst'));
+const VerificationHUD = React.lazy(() => import('./components/VerificationHUD'));
+const SettingsPortal = React.lazy(() => import('./components/SettingsPortal'));
+const TemporalVideo = React.lazy(() => import('./components/TemporalVideo'));
+const Robot = React.lazy(() => import('./components/Robot'));
+const MeshProtocol = React.lazy(() => import('./components/MeshProtocol'));
+const RegistryHandshake = React.lazy(() => import('./components/RegistryHandshake'));
+const EducationalResources = React.lazy(() => import('./components/EducationalResources'));
 
 import { 
   syncUserToCloud, 
@@ -592,36 +597,40 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
 };
 
 const App: React.FC = () => {
+  const {
+    user, setUser,
+    view, setView,
+    viewSection, setViewSection,
+    isSidebarOpen, setIsSidebarOpen,
+    isMobileMenuOpen, setIsMobileMenuOpen,
+    isGlobalSearchOpen, setIsGlobalSearchOpen,
+    isInboxOpen, setIsInboxOpen,
+    projects, setProjects,
+    transactions, setTransactions,
+    signals, setSignals,
+    costAudit, setCostAudit,
+    registrationState
+  } = useAppStore();
+
   const [isBooting, setIsBooting] = useState(true);
-  const [view, setView] = useState<ViewState>('dashboard');
-  const [viewSection, setViewSection] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [isUnverified, setIsUnverified] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isConsultantOpen, setIsConsultantOpen] = useState(false);
-  const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [history, setHistory] = useState<VectorAddress[]>([]);
   const [forwardHistory, setForwardHistory] = useState<VectorAddress[]>([]);
-  const [projects, setProjects] = useState<AgroProject[]>([]);
   const [contracts, setContracts] = useState<FarmingContract[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
   const [industrialUnits, setIndustrialUnits] = useState<RegisteredUnit[]>([]);
   const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
   const [blockchain, setBlockchain] = useState<AgroBlock[]>([]);
-  const [transactions, setTransactions] = useState<AgroTransaction[]>([]);
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
   const [mediaShards, setMediaShards] = useState<MediaShard[]>([]);
-  const [signals, setSignals] = useState<SignalShard[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [blueprints, setBlueprints] = useState<ValueBlueprint[]>([]);
   const [pulseMessage, setPulseMessage] = useState('Registry synchronized. No anomalies detected.');
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
   const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<any | null>(null);
   const [osInitialCode, setOsInitialCode] = useState<string | null>(null);
-  const [costAudit, setCostAudit] = useState<ShardCostCalibration | null>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
@@ -656,8 +665,8 @@ const App: React.FC = () => {
   const handleEarnEAC = async (amount: number, reason: string) => { if (!user) return; const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount, lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount } }; const syncOk = await syncUserToCloud(updatedUser); if (!syncOk) return; setUser(updatedUser); const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Reward', farmId: user.esin, details: reason, value: amount, unit: 'EAC' }; await saveCollectionItem('transactions', newTx); };
   const handlePerformPermanentAction = async (actionKey: string, reward?: number, reason?: string) => { if (!user || user.completedActions?.includes(actionKey)) return false; const ok = await markPermanentAction(actionKey); if (ok && reward && reason) await handleEarnEAC(reward, reason); return ok; };
   const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
-  const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(prev => prev.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
-  const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(prev => prev.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
+  const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(signals.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
+  const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
   const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => { let index: string | undefined; REGISTRY_NODES.forEach((group, dIdx) => { group.items.forEach((item, eIdx) => { if (item.id === v) { if (!section) { index = `[${dIdx + 1}.${eIdx + 1}]`; } else { const sIdx = item.sections?.findIndex(s => s.id === section); if (sIdx !== undefined && sIdx !== -1) { index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`; } } } }); }); return index; };
   const navigate = useCallback((v: ViewState, section?: string, pushToHistory = true) => { const index = findMatrixIndex(v, section || null); if (pushToHistory) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; setHistory(prev => [...prev, currentAddress]); setForwardHistory([]); } setView(v); setViewSection(section || null); setIsMobileMenuOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); emitSignal({ title: 'VECTOR_SHIFT', message: `Resolved route to ${index || v.toUpperCase()}.`, priority: 'low', type: 'system', origin: 'ORACLE', actionIcon: 'ChevronRight' }); }, [view, viewSection, emitSignal]);
   const goBack = useCallback(() => { if (history.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const lastVector = history[history.length - 1]; setForwardHistory(prev => [...prev, currentAddress]); setHistory(prev => prev.slice(0, -1)); navigate(lastVector.dimension, lastVector.element || undefined, false); } else if (view !== 'dashboard') { navigate('dashboard', undefined, true); } }, [history, view, viewSection, navigate]);
@@ -669,7 +678,7 @@ const App: React.FC = () => {
     if (isUnverified) return <VerificationHUD userEmail={auth.currentUser?.email || 'Unauthorized Node'} onVerified={() => { setIsUnverified(false); setView('dashboard'); }} onLogout={handleLogout} />;
     switch (view) {
       case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;
-      case 'dashboard': return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
+      case 'dashboard': return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
       case 'mesh_protocol': return <MeshProtocol user={currentUser} blockchain={blockchain} />;
       case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
       case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={(u) => setUser(u)} initialSection={viewSection} />;
@@ -724,7 +733,7 @@ const App: React.FC = () => {
       case 'robot': return <Robot user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} />;
       case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onEmitSignal={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} />;
       case 'educational_resources': return <EducationalResources onNavigate={navigate} />;
-      default: return <Dashboard onNavigate={navigate} user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
+      default: return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }
   };
 
@@ -734,6 +743,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000">
+      <Toaster theme="dark" position="top-center" toastOptions={{ className: 'bg-black border border-white/10 text-white font-mono text-[10px] uppercase tracking-widest' }} />
       <div className="fixed top-0 left-0 right-0 z-[1000] h-8 bg-black/60 backdrop-blur-xl border-b border-white/5 flex items-center overflow-hidden">
         <div className="flex items-center gap-2 px-4 border-r border-white/10 h-full shrink-0">
           <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
@@ -890,7 +900,9 @@ const App: React.FC = () => {
         </header>
 
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-          {renderView()}
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 text-emerald-500 animate-spin" /></div>}>
+            {renderView()}
+          </Suspense>
         </div>
 
         <footer className="mt-20 pt-8 border-t border-white/5 pb-12 flex flex-col items-center gap-10 opacity-60 hover:opacity-100 transition-opacity duration-500 px-4">
@@ -932,6 +944,7 @@ const App: React.FC = () => {
       <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={handleEarnEAC} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
       <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />
       <FloatingConsultant isOpen={isConsultantOpen} onClose={() => setIsConsultantOpen(false)} user={user || GUEST_STWD} onNavigate={navigate} />
+      <RegistrationResumePopup />
     </div>
   );
 };

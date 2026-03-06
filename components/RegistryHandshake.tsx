@@ -19,6 +19,8 @@ interface RegistryHandshakeProps {
   onExecuteToShell?: (code: string) => void;
 }
 
+import { useAppStore } from '../store';
+
 const HARDWARE_PROTOCOL_STEPS: Partial<HandshakeStep>[] = [
   { id: 'NET_PAIR', label: 'Network Pairing' },
   { id: 'PROOF_INGEST', label: 'Ownership Proof' },
@@ -38,6 +40,8 @@ const LAND_PROTOCOL_STEPS: Partial<HandshakeStep>[] = [
 const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ 
   user, onUpdateUser, onSpendEAC, onNavigate, onEmitSignal, onExecuteToShell 
 }) => {
+  const { handshakeRegistrationState, setHandshakeRegistrationState } = useAppStore();
+  const [showResumePrompt, setShowResumePrompt] = useState(!!handshakeRegistrationState);
   const [mode, setMode] = useState<'HARDWARE' | 'LAND' | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -49,6 +53,32 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
   const [evidenceFile, setEvidenceFile] = useState<string | null>(null);
   const [esinSign, setEsinSign] = useState('');
   const [agroLangShard, setAgroLangShard] = useState<any>(null);
+
+  const isSuccessRef = useRef(false);
+
+  // Sync local state with handshakeRegistrationState
+  useEffect(() => {
+    if (handshakeRegistrationState && !showResumePrompt) {
+      if (handshakeRegistrationState.mode) setMode(handshakeRegistrationState.mode);
+      if (handshakeRegistrationState.currentStep) setCurrentStep(handshakeRegistrationState.currentStep);
+      if (handshakeRegistrationState.assetName) setAssetName(handshakeRegistrationState.assetName);
+      if (handshakeRegistrationState.assetType) setAssetType(handshakeRegistrationState.assetType);
+      if (handshakeRegistrationState.evidenceFile) setEvidenceFile(handshakeRegistrationState.evidenceFile);
+      if (handshakeRegistrationState.esinSign) setEsinSign(handshakeRegistrationState.esinSign);
+      if (handshakeRegistrationState.agroLangShard) setAgroLangShard(handshakeRegistrationState.agroLangShard);
+    }
+  }, [handshakeRegistrationState, showResumePrompt]);
+
+  // Save progress on unmount
+  useEffect(() => {
+    return () => {
+      if (mode && !isSuccessRef.current) {
+        setHandshakeRegistrationState({
+          mode, currentStep, assetName, assetType, evidenceFile, esinSign, agroLangShard
+        });
+      }
+    };
+  }, [mode, currentStep, assetName, assetType, evidenceFile, esinSign, agroLangShard, setHandshakeRegistrationState]);
 
   const steps = mode === 'HARDWARE' ? HARDWARE_PROTOCOL_STEPS : LAND_PROTOCOL_STEPS;
   const isLastStep = currentStep === steps.length - 1;
@@ -168,6 +198,8 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
         actionIcon: 'ShieldCheck'
       });
 
+      isSuccessRef.current = true;
+      setHandshakeRegistrationState(null);
       setIsProcessing(false);
       setCurrentStep(steps.length + 1); // Success state
     }, 2500);
@@ -398,6 +430,23 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
            </div>
         )}
       </div>
+
+      {showResumePrompt && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="max-w-md w-full bg-black border border-emerald-500/30 rounded-3xl p-8 shadow-2xl animate-in zoom-in duration-300">
+            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
+            <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
+            <div className="flex flex-col gap-4">
+              <button onClick={() => { setShowResumePrompt(false); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Resume Registration
+              </button>
+              <button onClick={() => { setHandshakeRegistrationState(null); setShowResumePrompt(false); setMode(null); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Start Fresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }

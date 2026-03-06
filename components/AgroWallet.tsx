@@ -76,6 +76,9 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } 
 import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, ShardCostCalibration } from '../types';
 import { analyzeInstitutionalRisk, consultFinancialOracle, AIResponse, chatWithAgroExpert } from '../services/geminiService';
 import { initiatePayPalPayout } from '../services/paymentService';
+import { toast } from 'sonner';
+
+import { TriggerButton } from './TriggerButton';
 
 interface AgroWalletProps {
   user: User;
@@ -140,7 +143,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
 
   // Oracle States
-  const [isAuditing, setIsAuditing] = useState(false);
   const [oracleAdvice, setOracleAdvice] = useState<string | null>(null);
 
   // New Provider State
@@ -198,8 +200,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   };
 
   const handleRunAudit = async () => {
-    if (!costAudit) return;
-    setIsAuditing(true);
+    if (!costAudit) throw new Error("No cost audit available");
     setOracleAdvice(null);
     try {
       const prompt = `Act as the EnvirosAgro Cost Accounting Oracle. Analyze node ${user.esin} metrics:
@@ -212,10 +213,11 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       
       const res = await chatWithAgroExpert(prompt, []);
       setOracleAdvice(res.text);
+      return res.text;
     } catch (e) {
-      setOracleAdvice("Handshake Interrupted. Registry drift detected in Cost Center Alpha.");
-    } finally {
-      setIsAuditing(false);
+      const errorMsg = "Handshake Interrupted. Registry drift detected in Cost Center Alpha.";
+      setOracleAdvice(errorMsg);
+      throw new Error(errorMsg);
     }
   };
 
@@ -506,10 +508,15 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                             <p className="text-lg font-mono text-white">0xAUDIT_#{(Math.random()*1000).toFixed(0)}</p>
                          </div>
                       </div>
-                      <button onClick={handleRunAudit} disabled={isAuditing} className="px-16 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-2 border-white/10 ring-8 ring-white/5">
-                        {isAuditing ? <Loader2 className="animate-spin" size={16} /> : <Bot size={16} />} 
-                        {isAuditing ? 'CONSULTING ORACLE...' : 'REQUEST STRATEGIC VERDICT'}
-                      </button>
+                      <TriggerButton 
+                        action={handleRunAudit} 
+                        idleText="REQUEST STRATEGIC VERDICT"
+                        loadingText="CONSULTING ORACLE..."
+                        successText="VERDICT RECEIVED"
+                        errorText="HANDSHAKE FAILED"
+                        icon={<Bot size={16} />}
+                        className="px-16 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-2 border-white/10 ring-8 ring-white/5"
+                      />
                    </div>
                 </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Landmark, Briefcase, ShieldCheck, ChevronRight, Loader2, CheckCircle2, X, 
   Coins, Zap, PlusCircle, Search, Globe, Clock, Activity, MapPin, Users2, 
@@ -29,6 +29,8 @@ interface ContractFarmingProps {
   industrialUnits: RegisteredUnit[];
 }
 
+import { useAppStore } from '../store';
+
 const CATEGORY_META: Record<MissionCategory, { label: string, icon: any, color: string, bg: string }> = {
   FUND_ACQUISITION: { label: 'Fund Acquisition', icon: Landmark, color: 'text-amber-500', bg: 'bg-amber-500/10' },
   INVESTMENT: { label: 'Investment', icon: Briefcase, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -38,6 +40,7 @@ const CATEGORY_META: Record<MissionCategory, { label: string, icon: any, color: 
 };
 
 const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate, contracts, setContracts, onSaveContract, blueprints, onSaveTask, industrialUnits }) => {
+  const { missionRegistrationState, setMissionRegistrationState } = useAppStore();
   const [activeTab, setActiveTab] = useState<'manifest' | 'terminal' | 'archive'>('manifest');
   const [activeMission, setActiveMission] = useState<FarmingContract | null>(null);
   const [isLinkingResource, setIsLinkingResource] = useState<string | null>(null);
@@ -45,7 +48,36 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
 
   // New Task Form
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', priority: 'Standard', thrust: 'Industry' });
+
+  const isSuccessRef = useRef(false);
+
+  // Sync local state with missionRegistrationState
+  useEffect(() => {
+    if (showTaskModal && missionRegistrationState) {
+      if (missionRegistrationState.title) setNewTask(prev => ({ ...prev, title: missionRegistrationState.title }));
+      if (missionRegistrationState.priority) setNewTask(prev => ({ ...prev, priority: missionRegistrationState.priority }));
+      if (missionRegistrationState.thrust) setNewTask(prev => ({ ...prev, thrust: missionRegistrationState.thrust }));
+    }
+  }, [showTaskModal]);
+
+  // Save progress on unmount or modal close
+  useEffect(() => {
+    return () => {
+      if (showTaskModal && !isSuccessRef.current) {
+        setMissionRegistrationState(newTask);
+      }
+    };
+  }, [showTaskModal, newTask, setMissionRegistrationState]);
+
+  const handleStartTaskRegistration = () => {
+    if (missionRegistrationState) {
+      setShowResumePrompt(true);
+    } else {
+      setShowTaskModal(true);
+    }
+  };
 
   // Shard Linker State
   const [showShardLinker, setShowShardLinker] = useState(false);
@@ -100,6 +132,8 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
     };
 
     onSaveTask(task);
+    isSuccessRef.current = true;
+    setMissionRegistrationState(null);
     setShowTaskModal(false);
     setNewTask({ title: '', priority: 'Standard', thrust: 'Industry' });
     notify({ title: 'TASK_REGISTERED', message: `Mission shard ${task.id} added to Kanban.`, type: 'success' });
@@ -258,7 +292,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                                 </div>
                              </div>
                              <div className="flex gap-4">
-                                <button onClick={() => setShowTaskModal(true)} className="px-6 py-2.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl hover:bg-emerald-500 active:scale-95 transition-all">
+                                <button onClick={handleStartTaskRegistration} className="px-6 py-2.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl hover:bg-emerald-500 active:scale-95 transition-all">
                                    <PlusCircle size={16} /> New Kanban Task
                                 </button>
                                 <button className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 transition-all active:scale-95 border-2 border-white/10 ring-4 ring-indigo-500/5">
@@ -524,6 +558,23 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                  </button>
               </form>
            </div>
+        </div>
+      )}
+
+      {showResumePrompt && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="max-w-md w-full bg-black border border-emerald-500/30 rounded-3xl p-8 shadow-2xl animate-in zoom-in duration-300">
+            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
+            <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
+            <div className="flex flex-col gap-4">
+              <button onClick={() => { setShowResumePrompt(false); setShowTaskModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Resume Registration
+              </button>
+              <button onClick={() => { setMissionRegistrationState(null); setShowResumePrompt(false); setNewTask({ title: '', priority: 'Standard', thrust: 'Industry' }); setShowTaskModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Start Fresh
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

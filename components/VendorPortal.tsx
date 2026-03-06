@@ -97,6 +97,8 @@ const FORECAST_DATA = [
   { cycle: 'C13', demand: 84, supply: 62 },
 ];
 
+import { useAppStore } from '../store';
+
 const ASSET_CATEGORIES = [
   "Input", "Manufacturing", "Consultation", "Logistics", 
   "Warehousing", "Distribution", "Veterinary", "Tour Guide"
@@ -105,8 +107,10 @@ const ASSET_CATEGORIES = [
 const VendorPortal: React.FC<VendorPortalProps> = ({ 
   user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct, onNavigate, initialSection, onUpdateProduct, onEmitSignal, liveProducts = [], onSaveLiveProduct
 }) => {
+  const { vendorRegistrationState, setVendorRegistrationState } = useAppStore();
   const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'live_terminal' | 'ledger'>('inventory');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [regStep, setRegStep] = useState<'identification' | 'ingest' | 'audit' | 'branding' | 'success'>('identification');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -132,6 +136,34 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   // JIT Logic States
   const [isActivatingJit, setIsActivatingJit] = useState<string | null>(null);
 
+  const isSuccessRef = useRef(false);
+
+  // Sync local state with vendorRegistrationState
+  useEffect(() => {
+    if (showRegisterModal && vendorRegistrationState) {
+      if (vendorRegistrationState.itemName) setItemName(vendorRegistrationState.itemName);
+      if (vendorRegistrationState.itemCategory) setItemCategory(vendorRegistrationState.itemCategory);
+      if (vendorRegistrationState.itemValue) setItemValue(vendorRegistrationState.itemValue);
+      if (vendorRegistrationState.itemDesc) setItemDesc(vendorRegistrationState.itemDesc);
+      if (vendorRegistrationState.ingestMethod) setIngestMethod(vendorRegistrationState.ingestMethod);
+      if (vendorRegistrationState.regStep) setRegStep(vendorRegistrationState.regStep);
+      if (vendorRegistrationState.oracleVerdict) setOracleVerdict(vendorRegistrationState.oracleVerdict);
+      if (vendorRegistrationState.generatedSku) setGeneratedSku(vendorRegistrationState.generatedSku);
+      if (vendorRegistrationState.sonicSignature) setSonicSignature(vendorRegistrationState.sonicSignature);
+    }
+  }, [showRegisterModal]);
+
+  // Save progress on unmount or modal close
+  useEffect(() => {
+    return () => {
+      if (showRegisterModal && !isSuccessRef.current) {
+        setVendorRegistrationState({
+          itemName, itemCategory, itemValue, itemDesc, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
+        });
+      }
+    };
+  }, [showRegisterModal, itemName, itemCategory, itemValue, itemDesc, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature, setVendorRegistrationState]);
+
   // Routing synchronization
   useEffect(() => {
     if (initialSection && ['inventory', 'shipments', 'live_terminal', 'ledger'].includes(initialSection)) {
@@ -143,11 +175,20 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const regFee = useMemo(() => (Number(itemValue) || 0) * 0.01, [itemValue]);
 
   const handleStartRegistration = () => {
-    setRegStep('identification');
-    setShowRegisterModal(true);
+    if (vendorRegistrationState) {
+      setShowResumePrompt(true);
+    } else {
+      setRegStep('identification');
+      setShowRegisterModal(true);
+    }
   };
 
   const resetPortal = () => {
+    if (!isSuccessRef.current) {
+      setVendorRegistrationState({
+        itemName, itemCategory, itemValue, itemDesc, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
+      });
+    }
     setShowRegisterModal(false);
     setRegStep('identification');
     setItemName('');
@@ -212,6 +253,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
           isLiveProcessing: false
         };
         onRegisterProduct(newProduct);
+        isSuccessRef.current = true;
+        setVendorRegistrationState(null);
         setIsProcessing(false);
         setRegStep('success');
       }, 2500);
@@ -914,6 +957,23 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                  )}
               </div>
            </div>
+        </div>
+      )}
+
+      {showResumePrompt && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="max-w-md w-full bg-black border border-emerald-500/30 rounded-3xl p-8 shadow-2xl animate-in zoom-in duration-300">
+            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
+            <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
+            <div className="flex flex-col gap-4">
+              <button onClick={() => { setShowResumePrompt(false); setShowRegisterModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Resume Registration
+              </button>
+              <button onClick={() => { setVendorRegistrationState(null); setShowResumePrompt(false); setRegStep('identification'); setShowRegisterModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Start Fresh
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

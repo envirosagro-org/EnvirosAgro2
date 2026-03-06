@@ -13,8 +13,9 @@ import { ViewState, User, Order, AgroBlock } from '../types';
 import IdentityCard from './IdentityCard';
 import { SycamoreLogo } from '../App';
 
+import { useAppNavigation } from '../hooks/useAppNavigation';
+
 interface DashboardProps {
-  onNavigate: (view: ViewState, action?: string | null) => void;
   user: User;
   isGuest: boolean;
   orders?: Order[];
@@ -22,7 +23,9 @@ interface DashboardProps {
   isMining?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, isGuest, orders = [], blockchain = [], isMining = false }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], blockchain = [], isMining = false }) => {
+  const { navigate } = useAppNavigation();
+  const onNavigate = navigate;
   const [showIdentityCard, setShowIdentityCard] = useState(false);
   const [networkDrift, setNetworkDrift] = useState(0.02);
   const totalBalance = user.wallet.balance + (user.wallet.bonusBalance || 0);

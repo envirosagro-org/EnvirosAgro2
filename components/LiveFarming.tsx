@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Sprout, Activity, CheckCircle2, ArrowRight, Loader2, MapPin, Zap, ThumbsUp, 
   PlusCircle, Monitor, Clock, TrendingUp, Eye, X, Upload, Bot, Factory, 
@@ -27,7 +27,10 @@ interface LiveFarmingProps {
   industrialUnits: RegisteredUnit[];
 }
 
+import { useAppStore } from '../store';
+
 const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct, onNavigate, notify, initialSection, onSaveTask, blueprints, industrialUnits }) => {
+  const { liveFarmingRegistrationState, setLiveFarmingRegistrationState } = useAppStore();
   const [activeTab, setActiveTab] = useState<'ledger' | 'terminal'>('ledger');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState<string | null>(null);
@@ -36,6 +39,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
 
   // New Asset Form
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [newAsset, setNewAsset] = useState({ name: '', category: 'Produce' as const });
 
   // New Task Form
@@ -45,6 +49,33 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
   // Shard Linker State
   const [showShardLinker, setShowShardLinker] = useState(false);
   const [linkerContext, setLinkerContext] = useState<{label: string, icon: any, target: string, action?: string, sourceLedger: string} | null>(null);
+
+  const isSuccessRef = useRef(false);
+
+  // Sync local state with liveFarmingRegistrationState
+  useEffect(() => {
+    if (showAddModal && liveFarmingRegistrationState) {
+      if (liveFarmingRegistrationState.name) setNewAsset(prev => ({ ...prev, name: liveFarmingRegistrationState.name }));
+      if (liveFarmingRegistrationState.category) setNewAsset(prev => ({ ...prev, category: liveFarmingRegistrationState.category }));
+    }
+  }, [showAddModal]);
+
+  // Save progress on unmount or modal close
+  useEffect(() => {
+    return () => {
+      if (showAddModal && !isSuccessRef.current) {
+        setLiveFarmingRegistrationState(newAsset);
+      }
+    };
+  }, [showAddModal, newAsset, setLiveFarmingRegistrationState]);
+
+  const handleStartAssetRegistration = () => {
+    if (liveFarmingRegistrationState) {
+      setShowResumePrompt(true);
+    } else {
+      setShowAddModal(true);
+    }
+  };
 
   // Filter products where the user is the owner
   const myAssets = useMemo(() => products.filter(p => p.stewardEsin === user.esin), [products, user.esin]);
@@ -97,6 +128,8 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
 
     setTimeout(() => {
       onSaveProduct(product);
+      isSuccessRef.current = true;
+      setLiveFarmingRegistrationState(null);
       setIsProcessingAction(null);
       setShowAddModal(false);
       setNewAsset({ name: '', category: 'Produce' });
@@ -296,7 +329,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
               <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
                 <div className="flex items-center justify-between px-2">
                    <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Owned <span className="text-indigo-400">Assets</span></h4>
-                   <button onClick={() => setShowAddModal(true)} className="p-2 bg-emerald-600 rounded-xl text-white shadow-xl hover:scale-110 transition-all" title="Register New Asset"><Plus size={18}/></button>
+                   <button onClick={handleStartAssetRegistration} className="p-2 bg-emerald-600 rounded-xl text-white shadow-xl hover:scale-110 transition-all" title="Register New Asset"><Plus size={18}/></button>
                 </div>
                 <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
                   {myAssets.map(asset => (
@@ -721,6 +754,23 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                  </button>
               </form>
            </div>
+        </div>
+      )}
+
+      {showResumePrompt && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="max-w-md w-full bg-black border border-emerald-500/30 rounded-3xl p-8 shadow-2xl animate-in zoom-in duration-300">
+            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
+            <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
+            <div className="flex flex-col gap-4">
+              <button onClick={() => { setShowResumePrompt(false); setShowAddModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Resume Registration
+              </button>
+              <button onClick={() => { setLiveFarmingRegistrationState(null); setShowResumePrompt(false); setNewAsset({ name: '', category: 'Produce' }); setShowAddModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Start Fresh
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

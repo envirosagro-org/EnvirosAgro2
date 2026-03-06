@@ -38,6 +38,7 @@ import {
   /* Added Stamp import to fix error on line 436 */
   Stamp
 } from 'lucide-react';
+import { useAppStore } from '../store';
 import { 
   syncUserToCloud,
   createUserWithEmailAndPassword,
@@ -58,15 +59,66 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
+  const { 
+    registrationState, 
+    setRegistrationState, 
+    updateRegistrationData, 
+    nextRegistrationStep, 
+    prevRegistrationStep 
+  } = useAppStore();
+
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'register' | 'login' | 'forgot' | 'verify_shard' | 'phone' | 'verify_phone' | 'waiting_verification'>('login');
+  const [showResumePrompt, setShowResumePrompt] = useState(!!registrationState);
+  const [mode, setMode] = useState<'register' | 'login' | 'forgot' | 'verify_shard' | 'phone' | 'verify_phone' | 'waiting_verification'>(
+    registrationState ? 'register' : 'login'
+  );
   
   const [name, setEditName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [farmName, setFarmName] = useState('');
+  const [farmSize, setFarmSize] = useState('');
+  const [mainCrop, setMainCrop] = useState('');
+  const [location, setLocation] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+
+  const isSuccessRef = useRef(false);
+
+  const handleRegisterClick = () => {
+    if (registrationState) {
+      setShowResumePrompt(true);
+    } else {
+      setMode('register');
+    }
+  };
+
+  // Sync local state with registrationState when mode becomes 'register'
+  useEffect(() => {
+    if (mode === 'register' && registrationState?.data) {
+      if (registrationState.data.name) setEditName(registrationState.data.name);
+      if (registrationState.data.email) setEmail(registrationState.data.email);
+      if (registrationState.data.password) setPassword(registrationState.data.password);
+      if (registrationState.data.farmName) setFarmName(registrationState.data.farmName);
+      if (registrationState.data.farmSize) setFarmSize(registrationState.data.farmSize);
+      if (registrationState.data.mainCrop) setMainCrop(registrationState.data.mainCrop);
+      if (registrationState.data.location) setLocation(registrationState.data.location);
+    } else if (mode === 'register' && !registrationState) {
+      setRegistrationState({ step: 1, data: {} });
+    }
+  }, [mode]); // Only run when mode changes to avoid overwriting user input
+
+  // Save progress on unmount if in register mode
+  useEffect(() => {
+    return () => {
+      if (mode === 'register' && !isSuccessRef.current) {
+        updateRegistrationData({
+          name, email, password, farmName, farmSize, mainCrop, location
+        });
+      }
+    };
+  }, [mode, name, email, password, farmName, farmSize, mainCrop, location, updateRegistrationData]);
 
   // Generate a random ESIN for registration visual feedback
   const [esin, setEsin] = useState('');
@@ -116,7 +168,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
       mnemonic: "seed plant grow harvest sun rain soil root leaf flower fruit seed",
       regDate: new Date().toLocaleDateString(),
       role: 'REGENERATIVE FARMER',
-      location: `Global Node`,
+      location: location || `Global Node`,
       wallet: { 
         balance: 100, eatBalance: 0, exchangeRate: 600, bonusBalance: 100, 
         tier: 'Seed', lifetimeEarned: 100, linkedProviders: [], miningStreak: 1,
@@ -200,16 +252,36 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     e.preventDefault();
     setMessage(null);
     if (!email || (mode === 'login' && !password)) return;
-    setLoading(true);
 
+    if (mode === 'register') {
+      if (registrationState?.step === 1) {
+        updateRegistrationData({ name, email, password });
+        nextRegistrationStep();
+        return;
+      } else if (registrationState?.step === 2) {
+        // Proceed to finalize registration
+        setLoading(true);
+        try {
+          getOrInitRecaptcha();
+          const userCredential = await createUserWithEmailAndPassword(null, email, password);
+          await createStewardProfile(userCredential.user.uid, email, name);
+          await sendVerificationShard();
+          isSuccessRef.current = true;
+          setRegistrationState(null); // Clear state upon successful registration
+          setMode('waiting_verification');
+        } catch (error: any) {
+          setMessage({ type: 'error', text: `REGISTRY_ERROR: ${error.message}` });
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+    }
+
+    setLoading(true);
     try {
       getOrInitRecaptcha();
-      if (mode === 'register') {
-        const userCredential = await createUserWithEmailAndPassword(null, email, password);
-        await createStewardProfile(userCredential.user.uid, email, name);
-        await sendVerificationShard();
-        setMode('waiting_verification');
-      } else if (mode === 'login') {
+      if (mode === 'login') {
         const userCredential = await signInWithEmailAndPassword(null, email, password);
         if (!userCredential.user.emailVerified) {
           setMode('waiting_verification');
@@ -297,7 +369,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
          <div className="flex justify-center p-2 glass-card rounded-[32px] bg-black/80 border border-white/10 w-fit mx-auto overflow-hidden gap-2">
             <button onClick={() => setMode('login')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'login' || mode === 'forgot' ? 'bg-white text-black shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>REGISTRY_AUTH</button>
             <button onClick={() => setMode('phone')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'phone' || mode === 'verify_phone' ? 'bg-blue-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>2FACTOR_VERIFICATION</button>
-            <button onClick={() => setMode('register')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>MINT_NODE</button>
+            <button onClick={handleRegisterClick} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>MINT_NODE</button>
          </div>
 
          {mode !== 'forgot' && mode !== 'verify_phone' && mode !== 'waiting_verification' && (
@@ -405,39 +477,66 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
 
          {mode === 'register' && (
             <form onSubmit={handleAuth} className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="text-left space-y-3">
-                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Steward Alias</label>
-                    <input type="text" required value={name} onChange={e => setEditName(e.target.value)} placeholder="Steward Alias" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all italic placeholder:text-stone-900 shadow-inner" />
-                  </div>
-                  <div className="text-left space-y-3">
-                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Node Email</label>
-                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all italic placeholder:text-stone-900 shadow-inner" />
-                  </div>
-               </div>
-               <div className="text-left space-y-3">
-                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Secret Signature</label>
-                 <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all shadow-inner" />
-               </div>
+               {registrationState?.step === 1 && (
+                 <>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="text-left space-y-3">
+                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Steward Alias</label>
+                        <input type="text" required value={name} onChange={e => setEditName(e.target.value)} placeholder="Steward Alias" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all italic placeholder:text-stone-900 shadow-inner" />
+                      </div>
+                      <div className="text-left space-y-3">
+                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Node Email</label>
+                        <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="steward@envirosagro.org" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all italic placeholder:text-stone-900 shadow-inner" />
+                      </div>
+                   </div>
+                   <div className="text-left space-y-3">
+                     <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Secret Signature</label>
+                     <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all shadow-inner" />
+                   </div>
+                   <button type="submit" className="w-full py-10 bg-emerald-600 rounded-[56px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-white/5 flex items-center justify-center gap-6">
+                      CONTINUE TO METADATA <ArrowRight size={24} />
+                   </button>
+                 </>
+               )}
 
-               <div className="p-10 bg-emerald-950/10 rounded-[48px] border border-emerald-500/20 space-y-6 shadow-inner relative overflow-hidden group/esin">
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/esin:scale-110 transition-transform"><Binary size={200} className="text-emerald-400" /></div>
-                  <div className="flex justify-between items-center px-4 relative z-10">
-                     <p className="text-[11px] font-black text-emerald-500/60 uppercase tracking-[0.4em]">SYSTEM_GENERATED_ESIN</p>
-                     <RefreshCw onClick={generateEsin} size={16} className={`text-emerald-500 cursor-pointer hover:rotate-180 transition-transform ${isGeneratingEsin ? 'animate-spin' : ''}`} />
-                  </div>
-                  {isGeneratingEsin ? (
-                    <div className="h-16 flex items-center justify-center"><Loader2 size={32} className="text-emerald-500 animate-spin" /></div>
-                  ) : (
-                    <p className="text-4xl md:text-5xl font-mono font-black text-white tracking-[0.3em] uppercase drop-shadow-[0_0_20px_#10b981] animate-in zoom-in duration-500">{esin}</p>
-                  )}
-                  <p className="text-[9px] text-slate-700 italic font-medium uppercase tracking-widest relative z-10">"Immutable Social Identification Shard for Node Ingest"</p>
-               </div>
+               {registrationState?.step === 2 && (
+                 <>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="text-left space-y-3">
+                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Farm Name</label>
+                        <input type="text" value={farmName} onChange={e => setFarmName(e.target.value)} placeholder="Farm Name" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all italic placeholder:text-stone-900 shadow-inner" />
+                      </div>
+                      <div className="text-left space-y-3">
+                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-6">Location</label>
+                        <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Global Node" className="w-full bg-black/80 border-2 border-white/5 rounded-[32px] py-6 px-10 text-xl font-bold text-white outline-none focus:border-emerald-500 transition-all italic placeholder:text-stone-900 shadow-inner" />
+                      </div>
+                   </div>
 
-               <button type="submit" disabled={loading || isGeneratingEsin} className="w-full py-10 agro-gradient rounded-[56px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-white/5 flex items-center justify-center gap-6">
-                  {loading ? <Loader2 className="animate-spin w-10 h-10" /> : <Stamp size={40} className="fill-current" />}
-                  {loading ? 'INITIALIZING SHARDS...' : 'ANCHOR NEW NODE'}
-               </button>
+                   <div className="p-10 bg-emerald-950/10 rounded-[48px] border border-emerald-500/20 space-y-6 shadow-inner relative overflow-hidden group/esin">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/esin:scale-110 transition-transform"><Binary size={200} className="text-emerald-400" /></div>
+                      <div className="flex justify-between items-center px-4 relative z-10">
+                         <p className="text-[11px] font-black text-emerald-500/60 uppercase tracking-[0.4em]">SYSTEM_GENERATED_ESIN</p>
+                         <RefreshCw onClick={generateEsin} size={16} className={`text-emerald-500 cursor-pointer hover:rotate-180 transition-transform ${isGeneratingEsin ? 'animate-spin' : ''}`} />
+                      </div>
+                      {isGeneratingEsin ? (
+                        <div className="h-16 flex items-center justify-center"><Loader2 size={32} className="text-emerald-500 animate-spin" /></div>
+                      ) : (
+                        <p className="text-4xl md:text-5xl font-mono font-black text-white tracking-[0.3em] uppercase drop-shadow-[0_0_20px_#10b981] animate-in zoom-in duration-500">{esin}</p>
+                      )}
+                      <p className="text-[9px] text-slate-700 italic font-medium uppercase tracking-widest relative z-10">"Immutable Social Identification Shard for Node Ingest"</p>
+                   </div>
+
+                   <div className="flex gap-4">
+                     <button type="button" onClick={prevRegistrationStep} className="py-10 px-8 bg-white/5 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] hover:bg-white/10 active:scale-95 transition-all border border-white/10 flex items-center justify-center">
+                        <ArrowLeft size={24} />
+                     </button>
+                     <button type="submit" disabled={loading || isGeneratingEsin} className="flex-1 py-10 agro-gradient rounded-[56px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_120px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-white/5 flex items-center justify-center gap-6">
+                        {loading ? <Loader2 className="animate-spin w-10 h-10" /> : <Stamp size={40} className="fill-current" />}
+                        {loading ? 'INITIALIZING SHARDS...' : 'ANCHOR NEW NODE'}
+                     </button>
+                   </div>
+                 </>
+               )}
             </form>
          )}
 
@@ -460,6 +559,23 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
             </div>
          )}
       </div>
+
+      {showResumePrompt && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="max-w-md w-full bg-black border border-emerald-500/30 rounded-3xl p-8 shadow-2xl animate-in zoom-in duration-300">
+            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
+            <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
+            <div className="flex flex-col gap-4">
+              <button onClick={() => { setShowResumePrompt(false); setMode('register'); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Resume Registration
+              </button>
+              <button onClick={() => { setRegistrationState(null); setShowResumePrompt(false); setMode('register'); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+                Start Fresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .animate-spin-slow { animation: spin 15s linear infinite; }
