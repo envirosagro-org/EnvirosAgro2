@@ -217,6 +217,10 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): P
   if (signalData.priority === 'critical' || signalData.priority === 'high') {
     layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
     layers.push({ channel: 'EMAIL', status: 'SENT', timestamp });
+    layers.push({ channel: 'CALENDAR', status: 'SENT', timestamp });
+    if (signalData.priority === 'critical') {
+      layers.push({ channel: 'PHONE', status: 'SENT', timestamp });
+    }
   }
   const rawSignal: any = {
     id,

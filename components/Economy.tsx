@@ -18,7 +18,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, 
   Area, BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
-import { User, ViewState, Order, VendorProduct, RegisteredUnit, AgroBook } from '../types';
+import { User, ViewState, Order, VendorProduct, RegisteredUnit, AgroBook, LiveAgroProduct } from '../types';
 import { predictMarketSentiment, AIResponse, chatWithAgroExpert } from '../services/geminiService';
 import { listenToCollection } from '../services/firebaseService';
 
@@ -29,6 +29,7 @@ interface EconomyProps {
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onNavigate: (view: ViewState, action?: string | null) => void;
   vendorProducts: VendorProduct[];
+  liveProducts: LiveAgroProduct[];
   onPlaceOrder: (order: Partial<Order>) => void;
   projects: any[];
   contracts: any[];
@@ -67,7 +68,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 const Economy: React.FC<EconomyProps> = ({ 
-  user, isGuest, onSpendEAC, onNavigate, vendorProducts = [], onPlaceOrder, industrialUnits = [], notify, initialSection 
+  user, isGuest, onSpendEAC, onNavigate, vendorProducts = [], liveProducts = [], onPlaceOrder, industrialUnits = [], notify, initialSection 
 }) => {
   const [activeTab, setActiveTab] = useState<'catalogue' | 'infrastructure' | 'forecasting' | 'checkout'>('catalogue');
   const [searchTerm, setSearchTerm] = useState('');
@@ -170,6 +171,29 @@ const Economy: React.FC<EconomyProps> = ({
       isUserGenerated: true,
       icon: Music,
       distance: 0
+    });
+
+    // 4. Live Processing Threads (JIT Assets)
+    liveProducts.forEach(p => {
+      if (p.marketStatus === 'Ready' || p.marketStatus === 'Processing') {
+        list.push({
+          id: p.id,
+          name: p.productType,
+          description: `Live processing asset from ${p.stewardName}. Current stage: ${p.stage}.`,
+          category: p.category,
+          price: 1500,
+          finalPrice: Math.ceil(1500 * sentimentAlpha),
+          stock: 1,
+          status: 'QUALIFIED',
+          supplierName: p.stewardName,
+          supplierEsin: p.stewardEsin,
+          sourceLabel: 'Live Thread',
+          isLiveProcessing: true,
+          progress: p.progress,
+          distance: 10, // Mock distance
+          icon: Zap
+        });
+      }
     });
 
     // Filtering & Sorting

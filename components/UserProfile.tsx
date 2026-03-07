@@ -37,7 +37,7 @@ interface UserProfileProps {
   onDeleteAccount?: () => void;
   onPermanentAction: (key: string, reward: number, reason: string) => Promise<boolean>;
   signals: SignalShard[];
-  setSignals: React.Dispatch<React.SetStateAction<SignalShard[]>>;
+  setSignals: (signals: SignalShard[]) => void;
   notify: any;
 }
 

@@ -79,7 +79,7 @@ interface ExplorerProps {
   onPulse?: (msg: string) => void;
   user?: User;
   signals?: SignalShard[];
-  setSignals?: React.Dispatch<React.SetStateAction<SignalShard[]>>;
+  setSignals?: (signals: SignalShard[]) => void;
   initialSection?: string | null;
   onNavigate: (view: ViewState) => void;
 }

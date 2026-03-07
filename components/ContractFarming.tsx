@@ -12,9 +12,9 @@ import {
   Send, Cpu, SmartphoneNfc, Edit2, BrainCircuit, FlaskConical, Upload, 
   Cable, Settings, LineChart, Video, BadgeCheck, Smartphone, Wifi, Link2, Boxes,
   ClipboardList, ArrowDownCircle, CheckCircle as CheckCircleIcon,
-  TableProperties, SearchCode, Workflow, RegisteredUnit
+  TableProperties, SearchCode, Workflow
 } from 'lucide-react';
-import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone, ValueBlueprint, Task } from '../types';
+import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone, ValueBlueprint, Task, RegisteredUnit } from '../types';
 import { analyzeBidHandshake, AIResponse } from '../services/geminiService';
 
 interface ContractFarmingProps {

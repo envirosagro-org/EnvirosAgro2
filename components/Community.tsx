@@ -45,6 +45,8 @@ interface CommunityProps {
   onEarnEAC: (amount: number, reason: string) => void;
   onNavigate: (view: ViewState, action?: string | null) => void;
   initialSection?: string | null;
+  hoodConnections?: any[];
+  onHookHood?: (targetEsin: string, type?: any) => void;
 }
 
 const LMS_MODULES = [
@@ -76,7 +78,7 @@ const MOCK_STEWARDS = [
   { esin: 'EA-ROBO-9214', name: 'Dr. Orion Bot', role: 'Automation Engineer', location: 'Tokyo Hub', res: 95, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150', online: true, skills: ['Swarm Control', 'Mesh Ingest'] },
 ];
 
-const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpendEAC, onContribution, onNavigate, initialSection }) => {
+const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpendEAC, onContribution, onNavigate, initialSection, hoodConnections = [], onHookHood }) => {
   const [activeTab, setActiveTab] = useState<'social' | 'shards' | 'lms' | 'network'>('social');
   const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams' | 'forge'>('modules');
   

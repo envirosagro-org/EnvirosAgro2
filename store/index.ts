@@ -1,16 +1,16 @@
 import { create } from 'zustand';
-import { User, ViewState, AgroTransaction, AgroProject, ShardCostCalibration, SignalShard, VectorAddress } from '../types';
+import { User, ViewState, AgroTransaction, AgroProject, ShardCostCalibration, SignalShard, VectorAddress, RegistryGroup, RegistryItem } from '../types';
 import { REGISTRY_NODES } from '../constants/registry';
 
 const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => {
   let index: string | undefined;
-  REGISTRY_NODES.forEach((group, dIdx) => {
-    group.items.forEach((item, eIdx) => {
+  REGISTRY_NODES.forEach((group: RegistryGroup, dIdx: number) => {
+    group.items.forEach((item: RegistryItem, eIdx: number) => {
       if (item.id === v) {
         if (!section) {
           index = `[${dIdx + 1}.${eIdx + 1}]`;
         } else {
-          const sIdx = item.sections?.findIndex(s => s.id === section);
+          const sIdx = item.sections?.findIndex((s: {id: string}) => s.id === section);
           if (sIdx !== undefined && sIdx !== -1) {
             index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`;
           }
@@ -173,7 +173,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       priority: 'low',
       type: 'system',
       origin: 'ORACLE',
-      actionIcon: 'ChevronRight'
+      actionIcon: 'ChevronRight',
+      dispatchLayers: [{ channel: 'POPUP', status: 'PENDING' }]
     });
   },
   
@@ -238,7 +239,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const newSig: SignalShard = {
       ...sig,
       id: `SIG-${Date.now()}`,
-      timestamp: Date.now(),
+      timestamp: new Date().toISOString(),
       read: false
     };
     set((state) => ({

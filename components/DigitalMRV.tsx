@@ -146,7 +146,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
         title: 'CARBON_SHARD_MINTED',
         message: `Node ${user.esin} minted ${mintedValue} EAC from ${oracleResult?.metrics?.carbon_sequestration_potential} tCO2e sequestration proof.`,
         priority: 'high',
-        actionIcon: Wind,
+        actionIcon: 'Wind',
         meta: { target: 'digital_mrv', ledgerContext: 'CARBON' }
       });
 

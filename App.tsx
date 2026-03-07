@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, Factory, Monitor, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, CloudCheck, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, Factory, Monitor, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
   Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, Signal as SignalIcon, Target,
   Truck, Layers, Map as MapIcon, Compass as CompassIcon, Server, Workflow, ShieldPlus, ChevronLeftCircle, ArrowLeft,
   ChevronRight, ArrowUp, UserCheck, BookOpen, Stamp, Binoculars, Command, Bot, Wand2, Brain, ArrowRight, Home,
@@ -25,11 +25,12 @@ import {
   Calculator,
   Lock,
   Network,
-  SmartphoneNfc
+  SmartphoneNfc,
+  Cloud
 } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { useAppStore } from './store';
-import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint } from './types';
+import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
 
@@ -624,6 +625,7 @@ const App: React.FC = () => {
   const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
   const [industrialUnits, setIndustrialUnits] = useState<RegisteredUnit[]>([]);
   const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
+  const [hoodConnections, setHoodConnections] = useState<HoodConnection[]>([]);
   const [blockchain, setBlockchain] = useState<AgroBlock[]>([]);
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
   const [mediaShards, setMediaShards] = useState<MediaShard[]>([]);
@@ -656,13 +658,71 @@ const App: React.FC = () => {
   }, [user]);
 
   useEffect(() => { if (mainContentRef.current) mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' }); }, [view]);
-  useEffect(() => { const handleKeyDown = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsGlobalSearchOpen(prev => !prev); } if (e.key === 'Escape') { setIsGlobalSearchOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); } }; window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown); }, []);
-  const handleScroll = (target: HTMLDivElement) => { setScrollProgress((target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100); setShowZenithButton(target.scrollTop > 400); };
+  useEffect(() => { const handleKeyDown = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsGlobalSearchOpen(!isGlobalSearchOpen); } if (e.key === 'Escape') { setIsGlobalSearchOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); } }; window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown); }, [isGlobalSearchOpen, setIsGlobalSearchOpen]);
+  const handleScroll = (target: HTMLElement) => { setScrollProgress((target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100); setShowZenithButton(target.scrollTop > 400); };
   const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   useEffect(() => { const handleResize = () => { const isLg = window.innerWidth >= 1024; setIsSidebarOpen(isLg); if (isLg) setIsMobileMenuOpen(false); }; handleResize(); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
-  useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { if (fbUser) { const isVerified = fbUser.emailVerified || fbUser.providerData?.some(p => p.providerId === 'phone'); if (isVerified) { setIsUnverified(false); const profile = await getStewardProfile(fbUser.uid); if (profile) setUser(profile); } else { setIsUnverified(true); setUser(null); } } else { setIsUnverified(false); setUser(null); } }); }, []);
+  useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { if (fbUser) { const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); if (isVerified) { setIsUnverified(false); const profile = await getStewardProfile(fbUser.uid); if (profile) setUser(profile); } else { setIsUnverified(true); setUser(null); } } else { setIsUnverified(false); setUser(null); } }); }, []);
   useEffect(() => { const unsubProjects = listenToCollection('projects', setProjects, true); const unsubContracts = listenToCollection('contracts', setContracts, true); const unsubOrders = listenToCollection('orders', setOrders); const unsubProducts = listenToCollection('products', setVendorProducts, true); const unsubUnits = listenToCollection('industrial_units', setIndustrialUnits); const unsubLive = listenToCollection('live_products', setLiveProducts, true); const unsubTx = listenToCollection('transactions', setTransactions); const unsubSignals = listenToCollection('signals', setSignals); const unsubMedia = listenToCollection('media_ledger', setMediaShards, true); const unsubBlocks = listenToCollection('blocks', setBlockchain, true); const unsubTasks = listenToCollection('tasks', setTasks); const unsubBlueprints = listenToCollection('blueprints', setBlueprints); const unsubPulse = listenToPulse(setPulseMessage); return () => { unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts(); unsubUnits(); unsubLive(); unsubTx(); unsubSignals(); unsubPulse(); unsubMedia(); unsubBlocks(); unsubTasks(); unsubBlueprints(); }; }, [user]);
-  const emitSignal = useCallback(async (signalData: Partial<SignalShard>) => { const signal = await dispatchNetworkSignal(signalData); if (signal) { const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP'); if (popupLayer) { const id = Math.random().toString(36).substring(7); setNotifications(prev => [{ id, type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info', title: signal.title, message: signal.message, duration: 6000, actionLabel: signal.actionLabel, actionIcon: signalData.actionIcon }, ...prev]); } } }, []);
+  const hookHood = useCallback(async (targetEsin: string, type: HoodConnection['type'] = 'SOCIAL') => {
+    if (!user || user.esin === targetEsin) return;
+    const existing = hoodConnections.find(c => c.targetEsin === targetEsin && c.status === 'ACTIVE');
+    if (existing) return;
+
+    const newConn: HoodConnection = {
+      id: `HOOD-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      stewardEsin: user.esin,
+      targetEsin,
+      type,
+      status: 'ACTIVE',
+      timestamp: new Date().toISOString()
+    };
+
+    setHoodConnections(prev => [newConn, ...prev]);
+    await saveCollectionItem('hood_connections', newConn);
+    
+    emitSignal({
+      title: 'HOOD_HOOKED',
+      message: `Direct link established with node ${targetEsin}. Efficiency synchronized.`,
+      priority: 'medium',
+      type: 'engagement',
+      origin: 'ORACLE',
+      actionIcon: 'Link2'
+    });
+  }, [user, hoodConnections]);
+
+  const emitSignal = useCallback(async (signalData: Partial<SignalShard>) => { 
+    const signal = await dispatchNetworkSignal(signalData); 
+    if (signal) { 
+      // Multi-channel routing
+      const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP'); 
+      if (popupLayer) { 
+        const id = Math.random().toString(36).substring(7); 
+        setNotifications(prev => [{ 
+          id, 
+          type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info', 
+          title: signal.title, 
+          message: signal.message, 
+          duration: 6000, 
+          actionLabel: signal.actionLabel, 
+          actionIcon: signalData.actionIcon 
+        }, ...prev]); 
+      }
+
+      // Auto-connection logic for Stewards
+      if (signal.meta?.payload?.senderEsin && user && signal.meta.payload.senderEsin !== user.esin) {
+        const senderRole = signal.meta.payload.senderRole;
+        if (senderRole === 'STEWARD' || senderRole === 'INVESTOR' || senderRole === 'AUDITOR') {
+          hookHood(signal.meta.payload.senderEsin, signal.type === 'task' ? 'AUDIT' : 'DEAL');
+        }
+      }
+
+      // Email Simulation (Log to console for now)
+      if (signal.dispatchLayers.some(l => l.channel === 'EMAIL')) {
+        console.log(`[EMAIL_ROUTING] To: ${user?.email || 'Node'}, Subject: ${signal.title}, Body: ${signal.message}`);
+      }
+    } 
+  }, [user, hookHood]);
   const handleSpendEAC = async (amount: number, reason: string) => { if (!user) { setView('auth'); return false; } if (user.wallet.balance < amount) { emitSignal({ title: 'INSUFFICIENT_FUNDS', message: `Need ${amount} EAC for ${reason}.`, priority: 'high', type: 'commerce', origin: 'MANUAL' }); return false; } const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } }; const syncOk = await syncUserToCloud(updatedUser); if (!syncOk) return false; setUser(updatedUser); const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Transfer', farmId: user.esin, details: reason, value: -amount, unit: 'EAC' }; await saveCollectionItem('transactions', newTx); emitSignal({ title: 'TREASURY_SETTLEMENT', message: `Node sharded ${amount} EAC for ${reason}.`, priority: 'medium', type: 'ledger_anchor', origin: 'TREASURY', actionIcon: 'Coins' }); return true; };
   const handleEarnEAC = async (amount: number, reason: string) => { if (!user) return; const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount, lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount } }; const syncOk = await syncUserToCloud(updatedUser); if (!syncOk) return; setUser(updatedUser); const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Reward', farmId: user.esin, details: reason, value: amount, unit: 'EAC' }; await saveCollectionItem('transactions', newTx); };
   const handlePerformPermanentAction = async (actionKey: string, reward?: number, reason?: string) => { if (!user || user.completedActions?.includes(actionKey)) return false; const ok = await markPermanentAction(actionKey); if (ok && reward && reason) await handleEarnEAC(reward, reason); return ok; };
@@ -670,7 +730,7 @@ const App: React.FC = () => {
   const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(signals.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
   const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
   const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => { let index: string | undefined; REGISTRY_NODES.forEach((group, dIdx) => { group.items.forEach((item, eIdx) => { if (item.id === v) { if (!section) { index = `[${dIdx + 1}.${eIdx + 1}]`; } else { const sIdx = item.sections?.findIndex(s => s.id === section); if (sIdx !== undefined && sIdx !== -1) { index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`; } } } }); }); return index; };
-  const navigate = useCallback((v: ViewState, section?: string, pushToHistory = true) => { const index = findMatrixIndex(v, section || null); if (pushToHistory) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; setHistory(prev => [...prev, currentAddress]); setForwardHistory([]); } setView(v); setViewSection(section || null); setIsMobileMenuOpen(false); if (window.innerWidth < 1024) setIsSidebarOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); emitSignal({ title: 'VECTOR_SHIFT', message: `Resolved route to ${index || v.toUpperCase()}.`, priority: 'low', type: 'system', origin: 'ORACLE', actionIcon: 'ChevronRight' }); }, [view, viewSection, emitSignal, setIsSidebarOpen, setIsMobileMenuOpen]);
+  const navigate = useCallback((v: ViewState, section?: string | null, pushToHistory = true) => { const index = findMatrixIndex(v, section || null); if (pushToHistory) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; setHistory(prev => [...prev, currentAddress]); setForwardHistory([]); } setView(v); setViewSection(section || null); setIsMobileMenuOpen(false); if (window.innerWidth < 1024) setIsSidebarOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); emitSignal({ title: 'VECTOR_SHIFT', message: `Resolved route to ${index || v.toUpperCase()}.`, priority: 'low', type: 'system', origin: 'ORACLE', actionIcon: 'ChevronRight' }); }, [view, viewSection, emitSignal, setIsSidebarOpen, setIsMobileMenuOpen]);
   const goBack = useCallback(() => { if (history.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const lastVector = history[history.length - 1]; setForwardHistory(prev => [...prev, currentAddress]); setHistory(prev => prev.slice(0, -1)); navigate(lastVector.dimension, lastVector.element || undefined, false); } else if (view !== 'dashboard') { navigate('dashboard', undefined, true); } }, [history, view, viewSection, navigate]);
   const goForward = useCallback(() => { if (forwardHistory.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const nextVector = forwardHistory[forwardHistory.length - 1]; setHistory(prev => [...prev, currentAddress]); setForwardHistory(prev => prev.slice(0, -1)); navigate(nextVector.dimension, nextVector.element || undefined, false); } }, [forwardHistory, view, viewSection, navigate]);
 
@@ -683,27 +743,27 @@ const App: React.FC = () => {
       case 'dashboard': return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
       case 'mesh_protocol': return <MeshProtocol user={currentUser} blockchain={blockchain} />;
       case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
-      case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={(u) => setUser(u)} initialSection={viewSection} />;
+      case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} liveProducts={liveProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={(u) => setUser(u)} initialSection={viewSection} />;
       case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={(u) => setUser(u)} onSwap={async () => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={emitSignal} transactions={transactions} initialSection={viewSection} costAudit={costAudit} />;
       case 'intelligence': return <Intelligence user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onOpenEvidence={() => setIsEvidenceOpen(true)} initialSection={viewSection} />;
-      case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} />;
+      case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} hoodConnections={hoodConnections} onHookHood={hookHood} />;
       case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection={viewSection} onNavigate={navigate} />;
       case 'network_signals': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection="terminal" onNavigate={navigate} />;
       case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} />;
       case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} vendorProducts={vendorProducts} orders={orders} notify={emitSignal} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} initialSection={viewSection} />;
       case 'investor': return <InvestorPortal user={currentUser} onUpdate={(u) => setUser(u)} onSpendEAC={handleSpendEAC} projects={projects} onNavigate={navigate} />;
-      case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => setView('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} initialSection={viewSection} />;
+      case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => setView('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} />;
       case 'channelling': return <Channelling user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
       case 'media': return <MediaHub user={currentUser} userBalance={currentUser.wallet.balance} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} initialAction={viewSection} />;
       case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} initialSection={viewSection} />;
-      case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} initialSection={viewSection} />;
+      case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} />;
       case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} liveProducts={liveProducts} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
       case 'tools': return <ToolsSection user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onOpenEvidence={(t) => { setActiveTaskForEvidence(t); setIsEvidenceOpen(true); }} tasks={tasks} onSaveTask={(t) => saveCollectionItem('tasks', t)} notify={emitSignal} initialSection={viewSection} />;
       case 'research': return <ResearchInnovation user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
       case 'live_farming': return <LiveFarming user={currentUser} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={handleEarnEAC} onSaveProduct={(p) => saveCollectionItem('live_products', p)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} onSaveTask={(t) => saveCollectionItem('tasks', t)} blueprints={blueprints} industrialUnits={industrialUnits} />;
       case 'contract_farming': return <ContractFarming user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} contracts={contracts} setContracts={setContracts} onSaveContract={(c) => saveCollectionItem('contracts', c)} blueprints={blueprints} onSaveTask={(t) => saveCollectionItem('tasks', t)} industrialUnits={industrialUnits} />;
       case 'agrowild': return <Agrowild user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onPlaceOrder={(o) => saveCollectionItem('orders', o)} vendorProducts={vendorProducts} notify={emitSignal} />;
-      case 'impact': return <Impact user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} />;
+      case 'impact': return <Impact user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
       case 'animal_world': return <NaturalResources user={currentUser} type="animal_world" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
       case 'plants_world': return <NaturalResources user={currentUser} type="plants_world" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
       case 'aqua_portal': return <NaturalResources user={currentUser} type="aqua_portal" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
@@ -711,17 +771,17 @@ const App: React.FC = () => {
       case 'air_portal': return <NaturalResources user={currentUser} type="air_portal" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
       case 'intranet': return <IntranetPortal user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
       case 'cea_portal': return <CEA user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
-      case 'biotech_hub': return <Biotechnology user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
+      case 'biotech_hub': return <Biotechnology user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
       case 'permaculture_hub': return <Permaculture user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onEmitSignal={emitSignal} notify={emitSignal} initialSection={viewSection} />;
       case 'emergency_portal': return <EmergencyPortal user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onEmitSignal={emitSignal} />;
       /* Corrected component name to resolve 'Agro' reference error */
       case 'agro_regency': return <AgroRegency user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
       case 'code_of_laws': return <CodeOfLaws user={currentUser} />;
-      case 'agro_calendar': return <AgroCalendar user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onEmitSignal={emitSignal} onNavigate={navigate} />;
+      case 'agro_calendar': return <AgroCalendar user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onEmitSignal={emitSignal} onNavigate={navigate} signals={signals} />;
       case 'chroma_system': return <ChromaSystem user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
       case 'envirosagro_store': return <EnvirosAgroStore user={currentUser} onSpendEAC={handleSpendEAC} onPlaceOrder={(o) => saveCollectionItem('orders', o)} />;
       case 'agro_value_enhancement': return <AgroValueEnhancement user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} />;
-      case 'digital_mrv': return <DigitalMRV user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
+      case 'digital_mrv': return <DigitalMRV user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} onEmitSignal={emitSignal} />;
       case 'online_garden': return <OnlineGarden user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} notify={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} />;
       case 'farm_os': return <FarmOS user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialCode={osInitialCode} clearInitialCode={() => setOsInitialCode(null)} initialSection={viewSection} />;
       case 'media_ledger': return <MediaLedger user={currentUser} shards={mediaShards} />;
@@ -958,7 +1018,7 @@ const App: React.FC = () => {
         ))}
       </div>
       <GlobalSearch isOpen={isGlobalSearchOpen} onClose={() => setIsGlobalSearchOpen(false)} onNavigate={navigate} vendorProducts={vendorProducts} />
-      <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={handleEarnEAC} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
+      <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={(v) => handleEarnEAC(v, 'Evidence Minted')} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
       <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />
       <FloatingConsultant isOpen={isConsultantOpen} onClose={() => setIsConsultantOpen(false)} user={user || GUEST_STWD} onNavigate={navigate} />
       <RegistrationResumePopup />

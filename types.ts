@@ -37,6 +37,18 @@ export interface AgroResource {
   verificationMeta: VerificationMeta;
 }
 
+export interface RegistryItem {
+  id: ViewState;
+  name: string;
+  icon: any;
+  sections?: { id: string; label: string }[];
+}
+
+export interface RegistryGroup {
+  category: string;
+  items: RegistryItem[];
+}
+
 export interface User {
   name: string;
   email: string;
@@ -124,7 +136,7 @@ export interface VendorProduct {
   initialValue?: number;
   registrationFee?: number;
   stock: number;
-  category: 'Seed' | 'Input' | 'Tool' | 'Technology' | 'Logistics' | 'Produce' | 'Service' | 'Book' | 'Manufacturing' | 'Consultation' | 'Warehousing' | 'Distribution' | 'VETERINARY' | 'Tour Guide';
+  category: 'Seed' | 'Input' | 'Tool' | 'Technology' | 'Logistics' | 'Produce' | 'Service' | 'Book' | 'Manufacturing' | 'Consultation' | 'Warehousing' | 'Distribution' | 'VETERINARY' | 'Tour Guide' | 'Acoustic' | 'Circular' | 'Raw' | 'Tour' | 'Ready' | 'Facility' | 'Organization Service';
   supplierEsin: string;
   supplierName: string;
   supplierType: SupplierType;
@@ -137,6 +149,12 @@ export interface VendorProduct {
   sku?: string;
   sonicSignature?: string;
   isQualified?: boolean;
+  locationAddress?: string;
+  gpsCoords?: { lat: number; lng: number };
+  isOrganizationService?: boolean;
+  liveFarmingStage?: string;
+  inboundSignals?: any[];
+  financialLedger?: any[];
   isLiveProcessing?: boolean;
 }
 
@@ -337,6 +355,8 @@ export interface LiveAgroProduct {
   isSystemAudited?: boolean;
   evidenceCount?: number;
   isBroadcasting?: boolean;
+  sourceAssetId?: string;
+  sourceAssetType?: string;
 }
 
 export interface NotificationShard {
@@ -443,9 +463,19 @@ export interface VectorAddress {
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 export interface DispatchChannel {
-  channel: 'EMAIL' | 'PHONE' | 'INBOX' | 'POPUP';
+  channel: 'EMAIL' | 'PHONE' | 'INBOX' | 'POPUP' | 'CALENDAR';
   status: 'PENDING' | 'SENT' | 'FAILED' | 'READ';
   timestamp?: string;
+}
+
+export interface HoodConnection {
+  id: string;
+  stewardEsin: string;
+  targetEsin: string;
+  type: 'DEAL' | 'CONTRACT' | 'SOCIAL' | 'AUDIT';
+  status: 'ACTIVE' | 'TERMINATED';
+  timestamp: string;
+  metadata?: any;
 }
 
 export interface SignalShard {

@@ -461,7 +461,7 @@ ${auditResult.text}
                                      <h4 className="text-xl font-black text-white uppercase italic m-0 tracking-tighter">Vetting Verdict</h4>
                                   </div>
                                   <div className="text-slate-400 text-lg leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/5">
-                                     {auditResult.text}
+                                     {auditResult?.text}
                                   </div>
                                </div>
                                <div className="flex justify-center gap-6">

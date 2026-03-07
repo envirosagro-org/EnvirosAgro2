@@ -94,7 +94,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
 
   const tourismOffers = useMemo(() => {
     const dynamicTours = vendorProducts
-      .filter(p => p.category === 'Service' && (p.name.toLowerCase().includes('tour') || p.name.toLowerCase().includes('safari')))
+      .filter(p => p.category === 'Tour' || p.category === 'Consultation' || (p.category === 'Service' && (p.name.toLowerCase().includes('tour') || p.name.toLowerCase().includes('safari'))))
       .map(p => ({
         id: p.id,
         title: p.name.toUpperCase(),

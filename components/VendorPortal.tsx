@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Warehouse, 
   Package, 
@@ -100,8 +100,7 @@ const FORECAST_DATA = [
 import { useAppStore } from '../store';
 
 const ASSET_CATEGORIES = [
-  "Input", "Manufacturing", "Consultation", "Logistics", 
-  "Warehousing", "Distribution", "Veterinary", "Tour Guide"
+  "Circular", "Raw", "Tour", "Consultation", "Ready", "Service", "Logistics", "Facility", "Organization Service", "Input", "Manufacturing", "Warehousing", "Distribution", "Veterinary"
 ];
 
 const VendorPortal: React.FC<VendorPortalProps> = ({ 
@@ -111,18 +110,21 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'live_terminal' | 'ledger'>('inventory');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
-  const [regStep, setRegStep] = useState<'identification' | 'ingest' | 'audit' | 'branding' | 'success'>('identification');
+  const [regStep, setRegStep] = useState<'metadata' | 'location' | 'payment' | 'verification' | 'anchoring' | 'success'>('metadata');
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Shard Linking State
   const [linkingProduct, setLinkingProduct] = useState<VendorProduct | null>(null);
   const [showLinkerModal, setShowLinkerModal] = useState(false);
+  const [linkerTab, setLinkerTab] = useState<'metadata' | 'live_farming' | 'inbound_signals' | 'financial_ledger'>('live_farming');
 
   // Registration Form State
   const [itemName, setItemName] = useState('');
   const [itemCategory, setItemCategory] = useState(ASSET_CATEGORIES[0]);
   const [itemValue, setItemValue] = useState<string>('5000');
   const [itemDesc, setItemDesc] = useState('');
+  const [locationAddress, setLocationAddress] = useState('');
+  const [gpsCoords, setGpsCoords] = useState<{lat: number, lng: number} | null>(null);
   const [ingestMethod, setIngestMethod] = useState<'hardware' | 'network'>('network');
   const [esinSign, setEsinSign] = useState('');
   const [oracleVerdict, setOracleVerdict] = useState<string | null>(null);
@@ -145,8 +147,12 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       if (vendorRegistrationState.itemCategory) setItemCategory(vendorRegistrationState.itemCategory);
       if (vendorRegistrationState.itemValue) setItemValue(vendorRegistrationState.itemValue);
       if (vendorRegistrationState.itemDesc) setItemDesc(vendorRegistrationState.itemDesc);
+      if (vendorRegistrationState.locationAddress) setLocationAddress(vendorRegistrationState.locationAddress);
+      if (vendorRegistrationState.gpsCoords) setGpsCoords(vendorRegistrationState.gpsCoords);
       if (vendorRegistrationState.ingestMethod) setIngestMethod(vendorRegistrationState.ingestMethod);
-      if (vendorRegistrationState.regStep) setRegStep(vendorRegistrationState.regStep);
+      if (vendorRegistrationState.regStep) {
+        setRegStep(vendorRegistrationState.regStep === 'identification' as any ? 'metadata' : vendorRegistrationState.regStep);
+      }
       if (vendorRegistrationState.oracleVerdict) setOracleVerdict(vendorRegistrationState.oracleVerdict);
       if (vendorRegistrationState.generatedSku) setGeneratedSku(vendorRegistrationState.generatedSku);
       if (vendorRegistrationState.sonicSignature) setSonicSignature(vendorRegistrationState.sonicSignature);
@@ -158,11 +164,11 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
     return () => {
       if (showRegisterModal && !isSuccessRef.current) {
         setVendorRegistrationState({
-          itemName, itemCategory, itemValue, itemDesc, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
+          itemName, itemCategory, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
         });
       }
     };
-  }, [showRegisterModal, itemName, itemCategory, itemValue, itemDesc, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature, setVendorRegistrationState]);
+  }, [showRegisterModal, itemName, itemCategory, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature, setVendorRegistrationState]);
 
   // Routing synchronization
   useEffect(() => {
@@ -178,7 +184,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
     if (vendorRegistrationState) {
       setShowResumePrompt(true);
     } else {
-      setRegStep('identification');
+      setRegStep('metadata');
       setShowRegisterModal(true);
     }
   };
@@ -186,13 +192,15 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const resetPortal = () => {
     if (!isSuccessRef.current) {
       setVendorRegistrationState({
-        itemName, itemCategory, itemValue, itemDesc, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
+        itemName, itemCategory, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
       });
     }
     setShowRegisterModal(false);
-    setRegStep('identification');
+    setRegStep('metadata');
     setItemName('');
     setItemDesc('');
+    setLocationAddress('');
+    setGpsCoords(null);
     setOracleVerdict(null);
     setIsProcessing(false);
     setGeneratedSku('');
@@ -204,7 +212,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
     try {
       const res = await runSpecialistDiagnostic(itemCategory, `Phase 2: Internal Standards Check for ${itemName}. Value: ${itemValue} EAC. Supplier Ethics Audit requested for node ${user.esin}.`);
       setOracleVerdict(res.text);
-      setRegStep('audit');
+      setRegStep('verification');
     } catch (e) {
       alert("Audit protocol failure.");
     } finally {
@@ -219,7 +227,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       const sku = `AGRO-${itemCategory.substring(0, 3).toUpperCase()}-${assetId}`;
       setGeneratedSku(sku);
       setSonicSignature(`AM-SONIC-${assetId}`);
-      setRegStep('branding');
+      setRegStep('anchoring');
       setIsProcessing(false);
     }, 2000);
   };
@@ -230,35 +238,38 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       return;
     }
 
-    if (await onSpendEAC(regFee, `ASSET_REGISTRATION_FEE_${itemName}`)) {
-      setIsProcessing(true);
-      setTimeout(() => {
-        const newProduct: VendorProduct = {
-          id: generatedSku,
-          name: itemName,
-          description: itemDesc,
-          price: Number(itemValue) * 1.1, // Industrial markup
-          initialValue: Number(itemValue),
-          registrationFee: regFee,
-          stock: 100,
-          category: itemCategory as any,
-          supplierEsin: user.esin,
-          supplierName: user.name,
-          supplierType: itemCategory.toUpperCase() as any,
-          status: 'QUALIFIED',
-          timestamp: new Date().toISOString(),
-          sku: generatedSku,
-          sonicSignature: sonicSignature,
-          isQualified: true,
-          isLiveProcessing: false
-        };
-        onRegisterProduct(newProduct);
-        isSuccessRef.current = true;
-        setVendorRegistrationState(null);
-        setIsProcessing(false);
-        setRegStep('success');
-      }, 2500);
-    }
+    setIsProcessing(true);
+    setTimeout(() => {
+      const newProduct: VendorProduct = {
+        id: generatedSku,
+        name: itemName,
+        description: itemDesc,
+        price: Number(itemValue) * 1.1, // Industrial markup
+        initialValue: Number(itemValue),
+        registrationFee: regFee,
+        stock: 100,
+        category: itemCategory as any,
+        supplierEsin: user.esin,
+        supplierName: user.name,
+        supplierType: itemCategory.toUpperCase() as any,
+        status: 'QUALIFIED',
+        timestamp: new Date().toISOString(),
+        sku: generatedSku,
+        sonicSignature: sonicSignature,
+        isQualified: true,
+        isLiveProcessing: false,
+        locationAddress: locationAddress,
+        gpsCoords: gpsCoords || undefined,
+        isOrganizationService: itemCategory === 'Organization Service',
+        inboundSignals: [],
+        financialLedger: []
+      };
+      onRegisterProduct(newProduct);
+      isSuccessRef.current = true;
+      setVendorRegistrationState(null);
+      setIsProcessing(false);
+      setRegStep('success');
+    }, 2500);
   };
 
   const handleToggleJitFlow = async (product: VendorProduct) => {
@@ -300,6 +311,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
   const handleManageShard = (product: VendorProduct) => {
     setLinkingProduct(product);
+    setLinkerTab('live_farming');
     setShowLinkerModal(true);
   };
 
@@ -326,6 +338,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       lastUpdate: 'Just now',
       isAuthentic: true,
       auditStatus: 'Linked to ' + linkingProduct.id,
+      sourceAssetId: linkingProduct.id,
+      sourceAssetType: 'VendorProduct',
       tasks: ['Biometric Handshake', 'Moisture Sync'],
       telemetryNodes: [],
       marketStatus: 'Forecasting',
@@ -422,75 +436,94 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
         {/* VIEW: LOCAL REGISTRY */}
         {activeTab === 'inventory' && (
           <div className="space-y-12 animate-in slide-in-from-right-4 duration-700">
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-                {myProducts.length === 0 ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">                {myProducts.length === 0 ? (
                   <div className="col-span-full py-40 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[64px] flex flex-col items-center gap-6">
                     <Package size={80} />
                     <p className="text-3xl font-black uppercase tracking-[0.5em] italic">REGISTRY_EMPTY</p>
                     <button onClick={handleStartRegistration} className="px-10 py-4 bg-white/10 rounded-full text-xs font-black uppercase tracking-widest hover:bg-white/20">Register First Asset</button>
                   </div>
                 ) : (
-                  myProducts.map(product => (
-                    <div key={product.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 hover:border-amber-500/40 transition-all group flex flex-col justify-between h-[620px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99]">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={300} /></div>
-                       
-                       <div className="space-y-8 relative z-10">
-                          <div className="flex justify-between items-start">
-                             <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 text-amber-500 shadow-2xl group-hover:rotate-6 transition-all`}>
-                                <Package size={32} />
+                  Object.entries(
+                    myProducts.reduce((acc, product) => {
+                      const cat = product.category || 'Uncategorized';
+                      if (!acc[cat]) acc[cat] = [];
+                      acc[cat].push(product);
+                      return acc;
+                    }, {} as Record<string, typeof myProducts>)
+                  ).map(([category, products]) => (
+                    <div key={category} className="col-span-full space-y-8 mb-12">
+                      <div className="flex items-center gap-6 border-b border-white/10 pb-4">
+                        <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-500">
+                          <Package size={24} />
+                        </div>
+                        <h3 className="text-3xl font-black text-white uppercase italic tracking-widest">{category}</h3>
+                        <span className="px-4 py-1 bg-white/5 rounded-full text-xs font-mono text-slate-400">{products.length} ASSETS</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                        {products.map(product => (
+                          <div key={product.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 hover:border-amber-500/40 transition-all group flex flex-col justify-between h-[620px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99]">
+                             <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={300} /></div>
+                             
+                             <div className="space-y-8 relative z-10">
+                                <div className="flex justify-between items-start">
+                                   <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 text-amber-500 shadow-2xl group-hover:rotate-6 transition-all`}>
+                                      <Package size={32} />
+                                   </div>
+                                   <div className="text-right flex flex-col items-end gap-2">
+                                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl ${
+                                         product.status === 'QUALIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
+                                      }`}>{product.status}</span>
+                                      {product.isLiveProcessing && (
+                                         <span className="px-3 py-1 bg-indigo-600/20 text-indigo-400 border border-indigo-500/40 rounded-lg text-[8px] font-black animate-pulse">JIT_ACTIVE</span>
+                                      )}
+                                   </div>
+                                </div>
+                                <div className="space-y-3">
+                                   <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-amber-400 transition-colors drop-shadow-2xl">{product.name}</h4>
+                                   <p className="text-[10px] text-slate-500 font-mono font-black uppercase tracking-widest italic">{product.sku}</p>
+                                </div>
+                                <p className="text-sm text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity line-clamp-3 font-medium">"{product.description}"</p>
                              </div>
-                             <div className="text-right flex flex-col items-end gap-2">
-                                <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl ${
-                                   product.status === 'QUALIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
-                                }`}>{product.status}</span>
-                                {product.isLiveProcessing && (
-                                   <span className="px-3 py-1 bg-indigo-600/20 text-indigo-400 border border-indigo-500/40 rounded-lg text-[8px] font-black animate-pulse">JIT_ACTIVE</span>
-                                )}
-                             </div>
-                          </div>
-                          <div className="space-y-3">
-                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-amber-400 transition-colors drop-shadow-2xl">{product.name}</h4>
-                             <p className="text-[10px] text-slate-500 font-mono font-black uppercase tracking-widest italic">{product.sku}</p>
-                          </div>
-                          <p className="text-sm text-slate-400 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity line-clamp-3 font-medium">"{product.description}"</p>
-                       </div>
 
-                       <div className="mt-auto pt-10 border-t border-white/5 space-y-6 relative z-10">
-                          <div className="grid grid-cols-2 gap-4">
-                             <div className="p-4 bg-black/60 rounded-3xl border border-white/5 text-center">
-                                <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Stock Level</p>
-                                <p className="text-2xl font-mono font-black text-white">{product.stock}</p>
-                             </div>
-                             <div className="p-4 bg-black/60 rounded-3xl border border-white/5 text-center">
-                                <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Sonic Auth</p>
-                                <div className="flex items-center justify-center gap-2 text-fuchsia-500">
-                                   <Music size={12} />
-                                   <span className="text-[10px] font-mono font-black uppercase">SYNC</span>
+                             <div className="mt-auto pt-10 border-t border-white/5 space-y-6 relative z-10">
+                                <div className="grid grid-cols-2 gap-4">
+                                   <div className="p-4 bg-black/60 rounded-3xl border border-white/5 text-center">
+                                      <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Stock Level</p>
+                                      <p className="text-2xl font-mono font-black text-white">{product.stock}</p>
+                                   </div>
+                                   <div className="p-4 bg-black/60 rounded-3xl border border-white/5 text-center">
+                                      <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Sonic Auth</p>
+                                      <div className="flex items-center justify-center gap-2 text-fuchsia-500">
+                                         <Music size={12} />
+                                         <span className="text-[10px] font-mono font-black uppercase">SYNC</span>
+                                      </div>
+                                   </div>
+                                </div>
+                                
+                                <div className="flex flex-col gap-3">
+                                   <button 
+                                      onClick={() => handleToggleJitFlow(product)}
+                                      disabled={isActivatingJit === product.id}
+                                      className={`w-full py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${
+                                         product.isLiveProcessing 
+                                         ? 'bg-rose-600/10 border border-rose-500/20 text-rose-500 hover:bg-rose-600 hover:text-white' 
+                                         : 'bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-600 hover:text-white'
+                                      }`}
+                                   >
+                                      {isActivatingJit === product.id ? <Loader2 size={14} className="animate-spin" /> : <ZapIcon size={14} />}
+                                      {product.isLiveProcessing ? 'DEACTIVATE JIT FLOW' : 'ACTIVATE JIT FLOW'}
+                                   </button>
+                                   <button 
+                                      onClick={() => handleManageShard(product)}
+                                      className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all shadow-md active:scale-95"
+                                   >
+                                      MANAGE SHARD
+                                   </button>
                                 </div>
                              </div>
                           </div>
-                          
-                          <div className="flex flex-col gap-3">
-                             <button 
-                                onClick={() => handleToggleJitFlow(product)}
-                                disabled={isActivatingJit === product.id}
-                                className={`w-full py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${
-                                   product.isLiveProcessing 
-                                   ? 'bg-rose-600/10 border border-rose-500/20 text-rose-500 hover:bg-rose-600 hover:text-white' 
-                                   : 'bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-600 hover:text-white'
-                                }`}
-                             >
-                                {isActivatingJit === product.id ? <Loader2 size={14} className="animate-spin" /> : <ZapIcon size={14} />}
-                                {product.isLiveProcessing ? 'DEACTIVATE JIT FLOW' : 'ACTIVATE JIT FLOW'}
-                             </button>
-                             <button 
-                               onClick={() => handleManageShard(product)}
-                               className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all shadow-md active:scale-95"
-                             >
-                                MANAGE SHARD
-                             </button>
-                          </div>
-                       </div>
+                        ))}
+                      </div>
                     </div>
                   ))
                 )}
@@ -639,73 +672,146 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       {showLinkerModal && linkingProduct && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in duration-500" onClick={() => setShowLinkerModal(false)}></div>
-           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[80px] border-indigo-500/30 bg-[#050706] shadow-[0_0_200px_rgba(99,102,241,0.2)] animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
+           <div className="relative z-10 w-full max-w-5xl glass-card rounded-[80px] border-indigo-500/30 bg-[#050706] shadow-[0_0_200px_rgba(99,102,241,0.2)] animate-in zoom-in duration-300 border-2 flex flex-col max-h-[90vh]">
               <div className="p-12 md:p-16 border-b border-white/5 bg-indigo-500/[0.01] flex justify-between items-center shrink-0">
                  <div className="flex items-center gap-10">
                     <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-3xl">
-                       {/* Fixed: Added missing Workflow icon import to lucide-react */}
                        <Workflow size={40} />
                     </div>
                     <div>
-                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Shard <span className="text-indigo-400">Linker</span></h3>
-                       <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">ASSOCIATE_VENDOR_WITH_LIVE_INGEST</p>
+                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Asset <span className="text-indigo-400">Terminal</span></h3>
+                       <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">MANAGEMENT_AND_ROUTING</p>
                     </div>
                  </div>
                  <button onClick={() => setShowLinkerModal(false)} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar bg-black/40 space-y-12">
-                 <div className="p-10 bg-indigo-600/5 rounded-[56px] border border-indigo-500/20 flex flex-col md:flex-row items-center justify-between gap-10 shadow-inner">
-                    <div className="text-left space-y-2">
-                       <h4 className="text-2xl font-black text-white uppercase tracking-tighter m-0">Target: {linkingProduct.name}</h4>
-                       <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">{linkingProduct.sku}</p>
-                    </div>
-                    <button 
-                      onClick={handleCreateAndAssociateLive}
-                      className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3 border-2 border-white/10 ring-8 ring-white/5"
-                    >
-                       <PlusCircle size={20} /> Register New Thread
-                    </button>
-                 </div>
+              <div className="flex border-b border-white/5 px-12 pt-6 gap-6">
+                {[
+                  { id: 'metadata', label: 'Metadata' },
+                  { id: 'live_farming', label: 'Live Routing' },
+                  { id: 'inbound_signals', label: 'Inbound Signals' },
+                  { id: 'financial_ledger', label: 'Financial Ledger' }
+                ].map(tab => (
+                  <button 
+                    key={tab.id}
+                    onClick={() => setLinkerTab(tab.id as any)}
+                    className={`pb-4 px-4 text-[10px] font-black uppercase tracking-widest transition-all ${linkerTab === tab.id ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-white'}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-                 <div className="space-y-8">
-                    <div className="flex items-center gap-4 px-6 border-b border-white/5 pb-4">
-                       <Monitor size={20} className="text-blue-400" />
-                       <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Existing Live Threads</h4>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       {myLiveAssets.length === 0 ? (
-                          <div className="col-span-full py-20 text-center opacity-20 border-4 border-dashed border-white/5 rounded-[64px] flex flex-col items-center gap-6">
-                             <SearchCode size={64} className="text-slate-700 animate-pulse" />
-                             <p className="text-xl font-black uppercase tracking-widest">No active live threads found</p>
-                          </div>
-                       ) : (
-                          myLiveAssets.map(liveAsset => (
-                             <div 
-                                key={liveAsset.id} 
-                                onClick={() => handleAssociateLiveProduct(liveAsset.id)}
-                                className="glass-card p-8 rounded-[48px] border-2 border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group/asset cursor-pointer flex flex-col justify-between h-[300px] shadow-xl relative overflow-hidden"
-                             >
-                                <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover/asset:scale-110 transition-transform"><Monitor size={200} /></div>
-                                <div className="flex justify-between items-start relative z-10">
-                                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-blue-400 group-hover/asset:scale-110 transition-transform">
-                                      <ZapIcon size={24} />
-                                   </div>
-                                   <span className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[8px] font-black uppercase">{liveAsset.stage}</span>
-                                </div>
-                                <div className="relative z-10">
-                                   <h5 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight group-hover/asset:text-indigo-400 transition-colors">{liveAsset.productType}</h5>
-                                   <p className="text-[10px] text-slate-700 font-mono mt-2 uppercase tracking-widest">{liveAsset.id} // {liveAsset.progress}% SYNC</p>
-                                </div>
-                                <div className="pt-6 border-t border-white/5 flex items-center justify-between text-indigo-400 text-[9px] font-black uppercase tracking-widest relative z-10">
-                                   SOURCE_SHARD <ArrowRight size={14} />
-                                </div>
-                             </div>
-                          ))
-                       )}
-                    </div>
-                 </div>
+              <div className="flex-1 overflow-y-auto p-12 md:p-16 custom-scrollbar bg-black/40 space-y-12">
+                 {linkerTab === 'live_farming' && (
+                   <>
+                     <div className="p-10 bg-indigo-600/5 rounded-[56px] border border-indigo-500/20 flex flex-col md:flex-row items-center justify-between gap-10 shadow-inner">
+                        <div className="text-left space-y-2">
+                           <h4 className="text-2xl font-black text-white uppercase tracking-tighter m-0">Target: {linkingProduct.name}</h4>
+                           <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">{linkingProduct.sku}</p>
+                        </div>
+                        <button 
+                          onClick={handleCreateAndAssociateLive}
+                          className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3 border-2 border-white/10 ring-8 ring-white/5"
+                        >
+                           <PlusCircle size={20} /> Register New Thread
+                        </button>
+                     </div>
+
+                     <div className="space-y-8">
+                        <div className="flex items-center gap-4 px-6 border-b border-white/5 pb-4">
+                           <Monitor size={20} className="text-blue-400" />
+                           <h4 className="text-xl font-black text-white uppercase italic tracking-widest">Existing Live Threads</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           {myLiveAssets.length === 0 ? (
+                              <div className="col-span-full py-20 text-center opacity-20 border-4 border-dashed border-white/5 rounded-[64px] flex flex-col items-center gap-6">
+                                 <SearchCode size={64} className="text-slate-700 animate-pulse" />
+                                 <p className="text-xl font-black uppercase tracking-widest">No active live threads found</p>
+                              </div>
+                           ) : (
+                              myLiveAssets.map(liveAsset => (
+                                 <div 
+                                    key={liveAsset.id} 
+                                    onClick={() => handleAssociateLiveProduct(liveAsset.id)}
+                                    className="glass-card p-8 rounded-[48px] border-2 border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group/asset cursor-pointer flex flex-col justify-between h-[300px] shadow-xl relative overflow-hidden"
+                                 >
+                                    <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover/asset:scale-110 transition-transform"><Monitor size={200} /></div>
+                                    <div className="flex justify-between items-start relative z-10">
+                                       <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-blue-400 group-hover/asset:scale-110 transition-transform">
+                                          <ZapIcon size={24} />
+                                       </div>
+                                       <span className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[8px] font-black uppercase">{liveAsset.stage}</span>
+                                    </div>
+                                    <div className="relative z-10">
+                                       <h5 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight group-hover/asset:text-indigo-400 transition-colors">{liveAsset.productType}</h5>
+                                       <p className="text-[10px] text-slate-700 font-mono mt-2 uppercase tracking-widest">{liveAsset.id} // {liveAsset.progress}% SYNC</p>
+                                    </div>
+                                    <div className="pt-6 border-t border-white/5 flex items-center justify-between text-indigo-400 text-[9px] font-black uppercase tracking-widest relative z-10">
+                                       SOURCE_SHARD <ArrowRight size={14} />
+                                    </div>
+                                 </div>
+                              ))
+                           )}
+                        </div>
+                     </div>
+                   </>
+                 )}
+                 {linkerTab === 'metadata' && (
+                   <div className="space-y-6">
+                     <div className="p-8 bg-white/5 rounded-[32px] border border-white/10">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Asset Name</p>
+                       <p className="text-xl text-white font-medium">{linkingProduct.name}</p>
+                     </div>
+                     <div className="p-8 bg-white/5 rounded-[32px] border border-white/10">
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Description</p>
+                       <p className="text-white font-medium">{linkingProduct.description}</p>
+                     </div>
+                     <div className="grid grid-cols-2 gap-6">
+                       <div className="p-8 bg-white/5 rounded-[32px] border border-white/10">
+                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Category</p>
+                         <p className="text-white font-medium">{linkingProduct.category}</p>
+                       </div>
+                       <div className="p-8 bg-white/5 rounded-[32px] border border-white/10">
+                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Location</p>
+                         <p className="text-white font-medium">{linkingProduct.locationAddress || 'N/A'}</p>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+                 {linkerTab === 'inbound_signals' && (
+                   <div className="space-y-6">
+                     {linkingProduct.inboundSignals && linkingProduct.inboundSignals.length > 0 ? (
+                       linkingProduct.inboundSignals.map((sig, i) => (
+                         <div key={i} className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                           <p className="text-white">{sig.message}</p>
+                         </div>
+                       ))
+                     ) : (
+                       <div className="py-20 text-center opacity-50">
+                         <p className="text-xl font-black uppercase tracking-widest">No inbound signals</p>
+                       </div>
+                     )}
+                   </div>
+                 )}
+                 {linkerTab === 'financial_ledger' && (
+                   <div className="space-y-6">
+                     {linkingProduct.financialLedger && linkingProduct.financialLedger.length > 0 ? (
+                       linkingProduct.financialLedger.map((entry, i) => (
+                         <div key={i} className="p-6 bg-white/5 rounded-2xl border border-white/10 flex justify-between">
+                           <p className="text-white">{entry.description}</p>
+                           <p className="text-amber-400 font-mono">{entry.amount} EAC</p>
+                         </div>
+                       ))
+                     ) : (
+                       <div className="py-20 text-center opacity-50">
+                         <p className="text-xl font-black uppercase tracking-widest">No ledger entries</p>
+                       </div>
+                     )}
+                   </div>
+                 )}
               </div>
 
               <div className="p-12 border-t border-white/5 bg-black/95 text-center shrink-0 z-20">
@@ -737,8 +843,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
               {/* Progress Stepper */}
               <div className="flex gap-4 px-20 pt-10 shrink-0 relative z-20">
-                 {['identification', 'ingest', 'audit', 'branding', 'success'].map((s, i) => {
-                    const stages = ['identification', 'ingest', 'audit', 'branding', 'success'];
+                 {['metadata', 'location', 'payment', 'verification', 'anchoring', 'success'].map((s, i) => {
+                    const stages = ['metadata', 'location', 'payment', 'verification', 'anchoring', 'success'];
                     const currentIdx = stages.indexOf(regStep);
                     return (
                       <div key={s} className="flex-1 flex flex-col gap-3">
@@ -751,8 +857,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
               <div className="flex-1 p-12 md:p-20 overflow-y-auto custom-scrollbar flex flex-col bg-black/40 relative z-10">
                  
-                 {/* STEP 1: IDENTIFICATION & FEE */}
-                 {regStep === 'identification' && (
+                 {/* STEP 1: METADATA */}
+                 {regStep === 'metadata' && (
                     <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
                        <div className="text-center space-y-6">
                           <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Primary <span className="text-amber-500">Data Shard</span></h4>
@@ -797,64 +903,118 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                        </div>
 
                        <button 
-                         onClick={() => setRegStep('ingest')}
+                         onClick={() => setRegStep('location')}
                          disabled={!itemName.trim()}
                          className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-amber-500/5 disabled:opacity-30"
                        >
-                          COMMENCE DATA INGEST <ArrowRight className="w-8 h-8 ml-4" />
+                          PROCEED TO LOCATION <ArrowRight className="w-8 h-8 ml-4" />
                        </button>
                     </div>
                  )}
 
-                 {/* STEP 2: INGEST METHOD */}
-                 {regStep === 'ingest' && (
+                 {/* STEP 2: LOCATION */}
+                 {regStep === 'location' && (
                     <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
                        <div className="text-center space-y-6">
-                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Verification of <span className="text-blue-400">Availability</span></h4>
-                          <p className="text-slate-400 text-xl font-medium italic leading-relaxed px-10">Choose the method to handshake your physical asset with the digital twin registry.</p>
+                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Asset <span className="text-blue-400">Location</span></h4>
+                          <p className="text-slate-400 text-xl font-medium italic leading-relaxed px-10">Specify the physical location for verification by organization auditors.</p>
                        </div>
 
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-3xl mx-auto w-full">
-                          <button 
-                            onClick={() => setIngestMethod('hardware')}
-                            className={`p-12 rounded-[56px] border-2 transition-all flex flex-col items-center gap-8 group ${ingestMethod === 'hardware' ? 'bg-blue-600/10 border-blue-500 text-blue-400 shadow-xl scale-105' : 'bg-black border-white/5 text-slate-700 hover:border-white/20'}`}
-                          >
-                             <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner group-hover:rotate-6 transition-transform">
-                                <SmartphoneNfc size={40} className={ingestMethod === 'hardware' ? 'text-blue-400' : 'text-slate-700'} />
+                       <div className="space-y-8 max-w-3xl mx-auto w-full">
+                          <div className="space-y-4">
+                             <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-6">Postal Address</label>
+                             <input 
+                               type="text" 
+                               value={locationAddress} 
+                               onChange={(e) => setLocationAddress(e.target.value)} 
+                               placeholder="e.g. 123 Agro Lane, Farmville, CA 90210"
+                               className="w-full bg-black/50 border-2 border-white/10 rounded-[40px] px-10 py-8 text-white text-xl font-medium italic focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
+                             />
+                          </div>
+                          
+                          <div className="space-y-4">
+                             <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-6">GPS Coordinates (Auto-detected if possible)</label>
+                             <div className="flex gap-4">
+                               <input 
+                                 type="number" 
+                                 value={gpsCoords?.lat || ''} 
+                                 onChange={(e) => setGpsCoords(prev => ({ lat: parseFloat(e.target.value), lng: prev?.lng || 0 }))} 
+                                 placeholder="Latitude"
+                                 className="w-full bg-black/50 border-2 border-white/10 rounded-[40px] px-10 py-8 text-white text-xl font-medium italic focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
+                               />
+                               <input 
+                                 type="number" 
+                                 value={gpsCoords?.lng || ''} 
+                                 onChange={(e) => setGpsCoords(prev => ({ lat: prev?.lat || 0, lng: parseFloat(e.target.value) }))} 
+                                 placeholder="Longitude"
+                                 className="w-full bg-black/50 border-2 border-white/10 rounded-[40px] px-10 py-8 text-white text-xl font-medium italic focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
+                               />
+                               <button 
+                                 onClick={() => {
+                                   if (navigator.geolocation) {
+                                     navigator.geolocation.getCurrentPosition(
+                                       (pos) => setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                                       (err) => alert("Could not get location: " + err.message)
+                                     );
+                                   } else {
+                                     alert("Geolocation is not supported by this browser.");
+                                   }
+                                 }}
+                                 className="px-8 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-[40px] font-black text-xs uppercase tracking-widest hover:bg-blue-600/40 transition-all flex items-center justify-center"
+                               >
+                                 <MapPin size={24} />
+                               </button>
                              </div>
-                             <div className="space-y-3">
-                                <p className="text-xl font-black uppercase italic leading-none">Hardware Ingest</p>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">Direct IoT sensor handshake (Soil, Livestock, Telemetry).</p>
-                             </div>
-                          </button>
-                          <button 
-                            onClick={() => setIngestMethod('network')}
-                            className={`p-12 rounded-[56px] border-2 transition-all flex flex-col items-center gap-8 group ${ingestMethod === 'network' ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400 shadow-xl scale-105' : 'bg-black border-white/5 text-slate-700 hover:border-white/20'}`}
-                          >
-                             <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner group-hover:rotate-6 transition-transform">
-                                <Globe size={40} className={ingestMethod === 'network' ? 'text-indigo-400' : 'text-slate-700'} />
-                             </div>
-                             <div className="space-y-3">
-                                <p className="text-xl font-black uppercase italic leading-none">Network Ingest</p>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">API-based synchronization for Service & Consulting assets.</p>
-                             </div>
-                          </button>
+                          </div>
                        </div>
 
                        <div className="pt-10 flex gap-6">
-                          <button onClick={() => setRegStep('identification')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all active:scale-95 shadow-xl">BACK_TO_DATA</button>
+                          <button onClick={() => setRegStep('metadata')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all active:scale-95 shadow-xl">BACK_TO_DATA</button>
                           <button 
-                            onClick={handleRunAudit}
-                            className="flex-[2] py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(37,99,235,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-white/5"
+                            onClick={() => setRegStep('payment')}
+                            disabled={!locationAddress.trim()}
+                            className="flex-[2] py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(37,99,235,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-white/5 disabled:opacity-30"
                           >
-                             INITIALIZE ORACLE AUDIT
+                             PROCEED TO PAYMENT
                           </button>
                        </div>
                     </div>
                  )}
 
-                 {/* STEP 3: ORACLE AUDIT */}
-                 {regStep === 'audit' && (
+                 {/* STEP 3: PAYMENT */}
+                 {regStep === 'payment' && (
+                    <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-6">
+                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Registration <span className="text-amber-500">Fee</span></h4>
+                          <p className="text-slate-400 text-xl font-medium italic leading-relaxed px-10">Pay the required EAC fee to initiate verification.</p>
+                       </div>
+
+                       <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-amber-500/20 shadow-3xl flex flex-col items-center justify-center">
+                          <div className="text-6xl font-black text-white mb-4">{regFee.toFixed(2)} <span className="text-amber-500 text-3xl">EAC</span></div>
+                          <p className="text-slate-400 text-sm uppercase tracking-widest font-bold">Standard Registration Fee (1% of Value)</p>
+                       </div>
+
+                       <div className="pt-10 flex gap-6">
+                          <button onClick={() => setRegStep('location')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all active:scale-95 shadow-xl">BACK_TO_LOCATION</button>
+                          <button 
+                            onClick={() => {
+                              if (user.wallet.balance < regFee) {
+                                alert("Insufficient EAC balance.");
+                                return;
+                              }
+                              onSpendEAC(regFee, `REG_FEE_${itemName}`);
+                              handleRunAudit();
+                            }}
+                            className="flex-[2] py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(37,99,235,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-white/5"
+                          >
+                             PAY & INITIALIZE AUDIT
+                          </button>
+                       </div>
+                    </div>
+                 )}
+
+                 {/* STEP 4: VERIFICATION */}
+                 {regStep === 'verification' && (
                     <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
                        <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-amber-500/20 shadow-3xl border-l-[16px] border-l-amber-600 relative overflow-hidden group/audit">
                           <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/audit:scale-125 transition-transform duration-[15s] pointer-events-none"><Sparkles size={600} className="text-amber-500" /></div>
@@ -864,11 +1024,11 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                              </div>
                              <div>
                                 <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Vetting Verdict</h4>
-                                <p className="text-amber-400/60 text-[11px] font-black uppercase tracking-[0.5em] mt-3 italic leading-none">INTERNAL_STANDARDS_SHARD_OK</p>
+                                <p className="text-amber-400/60 text-[11px] font-black uppercase tracking-[0.5em] mt-3 italic leading-none">PHYSICAL_AND_SYSTEMATIC_AUDIT_OK</p>
                              </div>
                           </div>
                           <div className="text-slate-300 text-2xl leading-[2.2] italic whitespace-pre-line font-medium relative z-10 pl-6 border-l border-white/10">
-                             {oracleVerdict || '"Analyzing supplier involvement history and asset development ethics against the SEHTI framework..."'}
+                             {oracleVerdict || '"Analyzing supplier involvement history, asset development ethics, and physical location data against the SEHTI framework..."'}
                           </div>
                           <div className="mt-12 pt-10 border-t border-white/5 relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                              <div className="flex items-center gap-6">
@@ -884,15 +1044,15 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                                 onClick={handleBranding}
                                 className="px-12 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-2 border-white/10 ring-8 ring-amber-500/10"
                              >
-                                EXECUTE SONIC BRANDING
+                                PROCEED TO ANCHORING
                              </button>
                           </div>
                        </div>
                     </div>
                  )}
 
-                 {/* STEP 4: SONIC ALIGNMENT (BRANDING) */}
-                 {regStep === 'branding' && (
+                 {/* STEP 5: ANCHORING */}
+                 {regStep === 'anchoring' && (
                     <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
                        <div className="text-center space-y-6">
                           <h4 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Agro Musika <span className="text-fuchsia-400">Alignment</span></h4>
@@ -940,7 +1100,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                     </div>
                  )}
 
-                 {/* STEP 5: SUCCESS & PUBLISHED */}
+                 {/* STEP 6: SUCCESS & PUBLISHED */}
                  {regStep === 'success' && (
                     <div className="flex-1 flex flex-col items-center justify-center space-y-20 py-20 animate-in zoom-in duration-1000 text-center relative">
                        <div className="w-64 h-64 agro-gradient rounded-full flex items-center justify-center shadow-[0_0_200px_rgba(16,185,129,0.5)] scale-110 relative group">
@@ -969,7 +1129,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
               <button onClick={() => { setShowResumePrompt(false); setShowRegisterModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Resume Registration
               </button>
-              <button onClick={() => { setVendorRegistrationState(null); setShowResumePrompt(false); setRegStep('identification'); setShowRegisterModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { setVendorRegistrationState(null); setShowResumePrompt(false); setRegStep('metadata'); setShowRegisterModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Start Fresh
               </button>
             </div>

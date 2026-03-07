@@ -46,6 +46,7 @@ interface AgroCalendarProps {
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
   onNavigate: (view: ViewState) => void;
+  signals?: SignalShard[];
 }
 
 const SEASONS = [
@@ -134,7 +135,7 @@ const DAILY_OFFICES = [
   { id: 'watch', time: '00:00', name: 'The Watch', liturgical: 'Vigils', state: 'Molecular repair.', icon: Moon, color: 'text-slate-400', bg: 'bg-slate-400/10', border: 'border-slate-400/20', desc: 'Cellular soil repair. Oracle resonance peak.' },
 ];
 
-const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC, onEmitSignal, onNavigate }) => {
+const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC, onEmitSignal, onNavigate, signals = [] }) => {
   const [activeTab, setActiveTab] = useState<'daily' | 'seasonal' | 'jit'>('daily');
   const [activeSeason, setActiveSeason] = useState<typeof SEASONS[0] | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -146,8 +147,11 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
   const [isForgingShard, setIsForgingShard] = useState(false);
 
   // JIT Integration States
-  const [isCalendarLinked, setIsCalendarLinked] = useState(false);
+  const calendarSignals = useMemo(() => {
+    return signals.filter(s => s.dispatchLayers.some(l => l.channel === 'CALENDAR'));
+  }, [signals]);
   const [isLinking, setIsLinking] = useState(false);
+  const [isCalendarLinked, setIsCalendarLinked] = useState(false);
   const [externalEvents, setExternalEvents] = useState([
     { id: 'ext-1', title: 'Nairobi Ingest Audit', time: '14:30', pillar: 'Industry', icon: Factory },
     { id: 'ext-2', title: 'Zone 4 Moisture Check', time: '16:00', pillar: 'Environmental', icon: Droplets }
@@ -591,6 +595,33 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                                       </div>
                                    </div>
                                 ))}
+                             </div>
+                          </div>
+
+                          <div className="space-y-6">
+                             <h4 className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] px-4 italic">Temporal_Signal_Quorum</h4>
+                             <div className="space-y-4">
+                                {calendarSignals.length > 0 ? calendarSignals.map(signal => (
+                                   <div key={signal.id} className="p-8 bg-indigo-600/5 border border-indigo-500/20 rounded-[44px] flex items-center justify-between group hover:bg-indigo-600/10 transition-all">
+                                      <div className="flex items-center gap-6">
+                                         <div className={`p-4 rounded-2xl ${signal.priority === 'critical' ? 'bg-red-500/10 text-red-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                                            <BellRing size={20}/>
+                                         </div>
+                                         <div>
+                                            <p className="text-lg font-black text-white uppercase italic leading-none">{signal.title}</p>
+                                            <p className="text-[10px] text-slate-500 font-mono mt-2 uppercase">{signal.message.substring(0, 40)}...</p>
+                                         </div>
+                                      </div>
+                                      <div className="text-right">
+                                         <p className="text-sm font-mono font-black text-white">{new Date(signal.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                         <span className={`text-[8px] font-black uppercase tracking-widest ${signal.priority === 'critical' ? 'text-red-400' : 'text-indigo-400'}`}>{signal.priority}</span>
+                                      </div>
+                                   </div>
+                                )) : (
+                                   <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[44px]">
+                                      <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.4em]">No_Temporal_Signals</p>
+                                   </div>
+                                )}
                              </div>
                           </div>
 

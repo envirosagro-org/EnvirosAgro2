@@ -94,7 +94,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
   // Dynamically derived services from Vendor Registry
   const registeredServices = useMemo(() => {
     const dynamicServices = vendorProducts
-      .filter(p => p.category === 'Service' && !p.name.toLowerCase().includes('tour'))
+      .filter(p => p.category === 'Service' || p.category === 'Organization Service' || p.category === 'Consultation')
       .map(p => ({
         id: p.id,
         name: p.name.toUpperCase(),
