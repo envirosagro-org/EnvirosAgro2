@@ -804,7 +804,7 @@ const App: React.FC = () => {
   if (isBooting) return <InitializationScreen onComplete={() => setIsBooting(false)} />;
 
   return (
-    <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000 relative">
+    <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 animate-in fade-in duration-1000 relative">
       {/* Quantum Energy Background */}
       <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)]"></div>

@@ -369,12 +369,12 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
         ))}
       </div>
 
-      <div className="min-h-[650px]">
+      <div className="min-h-fit">
         {/* TAB: PRIMARY HUB */}
         {tab === 'all' && (
           <div className="space-y-12 animate-in fade-in duration-500">
              {/* Featured Section */}
-             <div className="glass-card rounded-[64px] border-2 border-white/10 overflow-hidden relative group h-[500px] shadow-3xl">
+             <div className="glass-card rounded-[64px] border-2 border-white/10 overflow-hidden relative group min-h-[400px] shadow-3xl">
                 <img src="https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=1600" className="w-full h-full object-cover transition-transform duration-[20s] group-hover:scale-110" alt="Featured" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
                 <div className="absolute bottom-12 left-12 space-y-4 max-w-2xl">

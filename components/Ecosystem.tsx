@@ -387,7 +387,7 @@ ${auditResult.text}
                       </div>
                    </div>
 
-                   <div className="glass-card rounded-[48px] border border-white/5 bg-black/60 shadow-2xl overflow-hidden flex flex-col h-[500px]">
+                   <div className="glass-card rounded-[48px] border border-white/5 bg-black/60 shadow-2xl overflow-hidden flex flex-col min-h-[400px]">
                       <div className="p-6 border-b border-white/10 bg-white/5 grid grid-cols-4 text-[8px] font-black text-slate-600 uppercase tracking-widest italic px-10">
                          <span>Packet Identifier</span>
                          <span>Time Shard</span>
@@ -502,7 +502,7 @@ ${auditResult.text}
 
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                         <div key={i} className="p-8 glass-card rounded-[40px] border border-white/5 hover:border-white/20 bg-black/40 flex flex-col justify-between h-[380px] relative overflow-hidden group shadow-xl transition-all">
+                         <div key={i} className="p-8 glass-card rounded-[40px] border border-white/5 hover:border-white/20 bg-black/40 flex flex-col justify-between min-h-[300px] relative overflow-hidden group shadow-xl transition-all">
                             <div className="absolute top-0 right-0 p-6 opacity-[0.01] group-hover:scale-110 transition-transform"><Database size={150} /></div>
                             <div className="flex justify-between items-start mb-6 relative z-10">
                                <div className={`p-3 rounded-xl bg-white/5 border border-white/10 ${activeBrand.color} shadow-inner`}>
@@ -597,7 +597,7 @@ ${auditResult.text}
           <div 
             key={brand.id} 
             onClick={() => handlePortalLaunch(brand)} 
-            className="min-w-[300px] md:min-w-0 snap-center glass-card p-10 rounded-[64px] group hover:border-emerald-500/40 transition-all cursor-pointer flex flex-col h-[520px] overflow-hidden bg-black/40 shadow-3xl relative active:scale-[0.98] duration-300"
+            className="min-w-[300px] md:min-w-0 snap-center glass-card p-10 rounded-[64px] group hover:border-emerald-500/40 transition-all cursor-pointer flex flex-col min-h-[400px] overflow-hidden bg-black/40 shadow-3xl relative active:scale-[0.98] duration-300"
           >
             <div className={`absolute -bottom-10 -right-10 p-12 opacity-[0.01] group-hover:opacity-[0.03] group-hover:scale-125 transition-all duration-[10s] pointer-events-none ${brand.color}`}>
               <brand.icon size={300} />

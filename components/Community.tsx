@@ -247,7 +247,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
   }, [showProfileView]);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+    <div className="space-y-10 animate-in fade-in duration-500 pb-32 max-w-[1700px] mx-auto px-4 relative">
       
       {/* 1. Community HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -375,7 +375,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                           <div className="space-y-6 border-l-4 border-white/5 pl-10 ml-8">
                              <p className="text-2xl text-slate-300 italic leading-relaxed font-medium">"{post.text}"</p>
                              {post.mediaType && (
-                                <div className="rounded-[40px] overflow-hidden border-2 border-white/10 shadow-3xl relative group/media h-[400px]">
+                                <div className="rounded-[40px] overflow-hidden border-2 border-white/10 shadow-3xl relative group/media min-h-[300px]">
                                    <img src="https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=1200" className="w-full h-full object-cover group/media:scale-105 transition-transform duration-[10s]" alt="" />
                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
                                    <div className="absolute bottom-6 left-8 flex items-center gap-4">
@@ -585,7 +585,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
               {lmsSubTab === 'modules' && (
                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                     {LMS_MODULES.map(mod => (
-                       <div key={mod.id} className="glass-card p-12 rounded-[64px] border-2 border-white/5 hover:border-indigo-500/40 transition-all group flex flex-col justify-between h-[520px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99]">
+                       <div key={mod.id} className="glass-card p-12 rounded-[64px] border-2 border-white/5 hover:border-indigo-500/40 transition-all group flex flex-col justify-between min-h-[400px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99]">
                           <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Library size={300} /></div>
                           <div className="space-y-8 relative z-10">
                              <div className="flex justify-between items-start">
@@ -904,7 +904,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
       {/* --- MODAL: SYMMETRIC SIGNAL RELAY (MESSENGER) --- */}
       {showChat && (
         <div className="fixed bottom-10 right-10 z-[1000] w-full max-w-md animate-in slide-in-from-bottom-10 duration-500">
-           <div className="glass-card rounded-[48px] border-2 border-indigo-500/40 bg-[#050706] shadow-3xl overflow-hidden flex flex-col h-[650px] relative">
+           <div className="glass-card rounded-[48px] border-2 border-indigo-500/40 bg-[#050706] shadow-3xl overflow-hidden flex flex-col min-h-[500px] relative">
               <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none z-0">
                  <div className="w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent absolute top-0 animate-scan"></div>
               </div>

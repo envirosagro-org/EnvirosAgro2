@@ -306,7 +306,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       {/* Viewport */}
-      <div className="min-h-[750px]">
+      <div className="min-h-fit">
         {/* HUB */}
         {activeTab === 'hub' && (
           <div className="space-y-12 animate-in fade-in duration-700">
@@ -416,7 +416,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
               </div>
             </div>
             <div className="lg:col-span-8 space-y-8">
-              <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/20 h-[500px] shadow-3xl">
+              <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/20 min-h-[400px] shadow-3xl">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={simProjectionData}><Area type="monotone" name="Sustainability Index" dataKey="score" stroke="#10b981" strokeWidth={5} fill="#10b98110" /><Area type="monotone" name="Resilience Factor (m)" dataKey="m" stroke="#3b82f6" strokeWidth={3} fill="#3b82f605" strokeDasharray="5 5" /></AreaChart>
                 </ResponsiveContainer>

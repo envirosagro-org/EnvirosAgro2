@@ -182,7 +182,7 @@ const Industrial: React.FC<IndustrialProps> = ({
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative">
       
       {/* 1. Supply Chain Resonance HUD */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
@@ -192,7 +192,7 @@ const Industrial: React.FC<IndustrialProps> = ({
           { label: 'Quorum Integrity', val: '99.98', unit: '%', icon: ShieldCheck, color: 'text-blue-400' },
           { label: 'Chain Latency', val: '14', unit: 'ms', icon: Zap, color: 'text-amber-400' },
         ].map((m, i) => (
-          <div key={i} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 flex flex-col justify-between relative overflow-hidden group shadow-2xl h-[260px]">
+          <div key={i} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 flex flex-col justify-between relative overflow-hidden group shadow-2xl min-h-[260px]">
              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><m.icon size={120} /></div>
              <div className="space-y-4 relative z-10">
                 <p className={`text-[10px] ${m.color} font-black uppercase tracking-[0.5em] text-nowrap`}>{m.label}</p>
@@ -251,14 +251,14 @@ const Industrial: React.FC<IndustrialProps> = ({
       </div>
 
       {/* 3. Main Operational Viewport */}
-      <div className="min-h-[850px] relative z-10">
+      <div className="min-h-fit relative z-10">
         
         {/* --- VIEW: REGISTRY BRIDGE (Unified Nodes) --- */}
         {activeTab === 'bridge' && (
            <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                  {registryNodes.map((node, i) => (
-                    <div key={i} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden h-[500px]">
+                    <div key={i} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden min-h-[400px]">
                        <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:scale-110 transition-transform duration-[12s]"><node.bridgeIcon size={300} /></div>
                        
                        <div className="flex justify-between items-start relative z-10">
@@ -387,7 +387,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                        </div>
                        <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full border border-blue-500/20">{orders.length} ACTIVE</span>
                     </div>
-                    <div className="space-y-4 max-h-[700px] overflow-y-auto custom-scrollbar pr-4">
+                    <div className="space-y-4 pr-4">
                        {orders.length === 0 ? (
                          <div className="py-32 text-center opacity-10 border-2 border-dashed border-white/5 rounded-[48px] bg-black/20 flex flex-col items-center gap-4">
                             <Package size={48} />
@@ -455,7 +455,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                    { id: 'TND-104', title: 'Solar Ingest Array v4', budget: 45000, deadline: '5d', thrust: 'Technological', difficulty: 'Medium', bidders: 12, desc: 'Calibration of autonomous energy nodes for Zone 2 moisture sensors.' },
                    { id: 'TND-042', title: 'Carbon Vault Audit', budget: 15000, deadline: '2d', thrust: 'Environmental', difficulty: 'Standard', bidders: 8, desc: 'Third-party physical verification of bio-char sequestration proofs.' },
                  ].map(tender => (
-                    <div key={tender.id} className="p-12 glass-card rounded-[80px] border-2 border-white/5 bg-black/40 hover:border-amber-500/40 transition-all group flex flex-col justify-between h-[700px] shadow-3xl relative overflow-hidden active:scale-[0.99]">
+                    <div key={tender.id} className="p-12 glass-card rounded-[80px] border-2 border-white/5 bg-black/40 hover:border-amber-500/40 transition-all group flex flex-col justify-between min-h-[500px] shadow-3xl relative overflow-hidden active:scale-[0.99]">
                        <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Hammer size={300} /></div>
                        <div className="space-y-8 relative z-10">
                           <div className="flex justify-between items-start">
@@ -490,7 +490,7 @@ const Industrial: React.FC<IndustrialProps> = ({
            <div className="space-y-12 animate-in slide-in-from-right-4 duration-700">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                  {MOCK_WORKERS.map(worker => (
-                    <div key={worker.id} className="glass-card p-12 rounded-[80px] border-2 border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden h-[650px]">
+                    <div key={worker.id} className="glass-card p-12 rounded-[80px] border-2 border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden min-h-[500px]">
                        <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Fingerprint size={300} /></div>
                        
                        <div className="flex justify-between items-start mb-12 relative z-10">
