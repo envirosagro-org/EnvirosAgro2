@@ -120,10 +120,12 @@ const BOOT_LOGS = [
   "ESTABLISHING SECURITY HANDSHAKE...",
   "MAPPING_GEOFENCE_SHARDS [OK]",
   "CALIBRATING_M_CONSTANT_BASE [1.42]",
+  "ENERGIZING_QUANTUM_CORE...",
   "SYNCING_L3_INDUSTRIAL_LEDGER...",
   "ZK_PROOF_ENGINE_BOOT [SUCCESS]",
   "ESTABLISHING_ORACLE_HANDSHAKE...",
   "SEHTI_THRUST_ALIGNED",
+  "QUANTUM_STATE_LOCKED",
   "DATA_CONNECT_L3_SYNC_ACTIVE",
   "NODE_SYNC_FINALIZED"
 ];
@@ -742,7 +744,15 @@ const App: React.FC = () => {
   if (isBooting) return <InitializationScreen onComplete={() => setIsBooting(false)} />;
 
   return (
-    <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000">
+    <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-x-hidden animate-in fade-in duration-1000 relative">
+      {/* Quantum Energy Background */}
+      <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] opacity-50"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+
       <Toaster theme="dark" position="top-center" toastOptions={{ className: 'bg-black border border-white/10 text-white font-mono text-[10px] uppercase tracking-widest' }} />
       <div className="fixed top-0 left-0 right-0 z-[1000] h-8 bg-black/60 backdrop-blur-xl border-b border-white/5 flex items-center overflow-hidden">
         <div className="flex items-center gap-2 px-4 border-r border-white/10 h-full shrink-0">

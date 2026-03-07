@@ -55,15 +55,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
     <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700 w-full overflow-x-hidden pb-32 px-2 max-w-[1700px] mx-auto">
       
       {/* Network Pulse Ticker */}
-      <div className="glass-card p-2 rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shadow-xl shrink-0">
-        <div className="flex items-center gap-3 px-6 border-r border-white/10 shrink-0">
+      <div className="glass-card p-2 rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shadow-[0_0_30px_rgba(16,185,129,0.2)] shrink-0 relative">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(16,185,129,0.1),transparent)] -translate-x-full animate-[scan_3s_ease-in-out_infinite]"></div>
+        <div className="flex items-center gap-3 px-6 border-r border-white/10 shrink-0 relative z-10">
            <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
-           <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400 whitespace-nowrap">NETWORK_QUORUM_SYNC</span>
+           <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400 whitespace-nowrap">QUANTUM_QUORUM_SYNC</span>
         </div>
-        <div className="flex-1 px-6 overflow-hidden">
+        <div className="flex-1 px-6 overflow-hidden relative z-10">
            <div className="whitespace-nowrap animate-marquee text-[10px] text-emerald-400/80 font-mono font-black uppercase tracking-[0.4em]">
              {isMining ? 'NEURAL_FINALITY_SEQUENCE_ACTIVE • MINING_BLOCK_HASH_COMMIT • ' : ''}
-             LATEST_FINALITY: {blockchain[0]?.hash.substring(0, 16) || '0x882A_GENESIS'} • NODE_RESONANCE: 1.42x • DRIFT: {networkDrift}μ • ALL PILLARS NOMINAL • SYCAMORE_OS_v6.5 • CONSENSUS_REACHED_@_12:42_UTC • 
+             LATEST_FINALITY: {blockchain[0]?.hash.substring(0, 16) || '0x882A_GENESIS'} • QUANTUM_RESONANCE: 1.42x • DRIFT: {networkDrift}μ • ALL PILLARS ENERGIZED • SYCAMORE_OS_v6.5 • CONSENSUS_REACHED_@_12:42_UTC • 
            </div>
         </div>
       </div>
@@ -72,16 +73,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
         
         {/* Main Identity & Dynamic Metrics */}
         <div className="xl:col-span-8 space-y-8">
-          <div className="glass-card p-10 md:p-14 rounded-[64px] relative overflow-hidden group h-full flex flex-col justify-between shadow-3xl bg-black/40 border border-white/5 border-l-[20px] border-l-emerald-600">
+          <div className="glass-card p-10 md:p-14 rounded-[64px] relative overflow-hidden group h-full flex flex-col justify-between shadow-[0_0_80px_rgba(16,185,129,0.1)] bg-black/40 border border-white/5 border-l-[20px] border-l-emerald-600">
+             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1)_0%,transparent_60%)] pointer-events-none"></div>
              <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
                 <Network size={600} className="text-white" />
              </div>
              
              <div className="relative z-10 flex flex-col sm:flex-row justify-between gap-10 items-center pb-12 border-b border-white/5 mb-12">
                 <div className="flex items-center justify-center sm:justify-start gap-10 w-full flex-col sm:flex-row">
-                  <div className="w-32 h-32 rounded-[40px] bg-white text-slate-900 flex items-center justify-center text-5xl font-black shadow-[0_0_50px_rgba(255,255,255,0.1)] relative ring-8 ring-white/5 shrink-0 transition-transform group-hover:rotate-3">
+                  <div className="w-32 h-32 rounded-[40px] bg-white text-slate-900 flex items-center justify-center text-5xl font-black shadow-[0_0_50px_rgba(255,255,255,0.3)] relative ring-8 ring-white/5 shrink-0 transition-transform group-hover:rotate-3">
                     {user.name[0]}
-                    <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center border-4 border-[#050706] shadow-3xl">
+                    <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center border-4 border-[#050706] shadow-[0_0_30px_rgba(16,185,129,0.8)]">
                       <ShieldCheck className="w-6 h-6 text-white" />
                     </div>
                   </div>
@@ -150,32 +152,34 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
 
         {/* Oracle Hub Integration */}
         <div className="xl:col-span-4 flex flex-col gap-8">
-          <div className="glass-card p-10 md:p-14 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/5 flex-1 flex flex-col justify-between group overflow-hidden relative shadow-3xl min-h-[400px]">
+          <div className="glass-card p-10 md:p-14 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/5 flex-1 flex flex-col justify-between group overflow-hidden relative shadow-[0_0_80px_rgba(99,102,241,0.1)] min-h-[400px]">
+             <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_100%,rgba(99,102,241,0.15)_0%,transparent_60%)] pointer-events-none"></div>
              <div className="absolute top-0 right-0 p-10 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[10s] pointer-events-none">
                 <BrainCircuit size={400} className="text-indigo-400" />
              </div>
              <div className="relative z-10 space-y-8">
                 <div className="flex items-center gap-6">
-                   <div className="w-16 h-16 rounded-[28px] bg-indigo-600 shadow-[0_0_50px_rgba(99,102,241,0.3)] flex items-center justify-center border-4 border-white/10 shrink-0 group-hover:scale-110 transition-transform">
+                   <div className="w-16 h-16 rounded-[28px] bg-indigo-600 shadow-[0_0_50px_rgba(99,102,241,0.6)] flex items-center justify-center border-4 border-white/10 shrink-0 group-hover:scale-110 transition-transform">
                       {isMining ? <Loader2 className="w-8 h-8 text-white animate-spin" /> : <Bot className="w-8 h-8 text-white animate-pulse" />}
                    </div>
                    <div>
                       <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none m-0">Oracle <span className="text-indigo-400">Sync.</span></h4>
-                      <p className="text-[10px] font-mono text-indigo-400/60 font-bold uppercase mt-3 tracking-widest leading-none">ZK_HANDSHAKE_v6.5</p>
+                      <p className="text-[10px] font-mono text-indigo-400/60 font-bold uppercase mt-3 tracking-widest leading-none">QUANTUM_HANDSHAKE_v6.5</p>
                    </div>
                 </div>
                 <div className="p-10 bg-black/90 rounded-[48px] border border-indigo-500/20 shadow-inner border-l-8 border-l-indigo-600 relative overflow-hidden group/text">
+                   <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent,rgba(99,102,241,0.05),transparent)] -translate-x-full group-hover/text:translate-x-full transition-transform duration-1000"></div>
                    <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover/text:scale-125 transition-transform"><Sparkles size={200} className="text-indigo-400" /></div>
                    <p className="text-slate-300 text-xl leading-relaxed italic font-medium relative z-10">
-                     {isMining ? '"Finalizing ledger commit. Quorum consensus verified at 99.98%."' : '"Node resonance stabilized. m-Constant optimized by 14.2%. Recommend new genetic ingest shard."'}
+                     {isMining ? '"Finalizing ledger commit. Quorum consensus verified at 99.98%."' : '"Quantum resonance stabilized. m-Constant optimized by 14.2%. Recommend new genetic ingest shard."'}
                    </p>
                 </div>
              </div>
              <button 
                onClick={() => onNavigate('ai_analyst')} 
-               className="relative z-10 w-full py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl mt-8 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-4 border-white/10 ring-8 ring-white/5"
+               className="relative z-10 w-full py-8 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_40px_rgba(99,102,241,0.4)] mt-8 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-4 border-white/10 ring-8 ring-white/5"
              >
-                <Zap className="w-5 h-5 fill-current" /> INITIALIZE INGEST
+                <Zap className="w-5 h-5 fill-current animate-pulse" /> INITIALIZE INGEST
              </button>
           </div>
         </div>
