@@ -257,7 +257,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto px-4">
+    <div className="space-y-16 md:space-y-24 animate-in fade-in duration-500 pb-48 max-w-[1600px] mx-auto px-4 relative">
       {/* HUD Header */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-10 group shadow-3xl">
@@ -306,7 +306,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       {/* Viewport */}
-      <div className="min-h-fit">
+      <div className="min-h-[70vh] md:min-h-[80vh] space-y-16 md:space-y-24">
         {/* HUB */}
         {activeTab === 'hub' && (
           <div className="space-y-12 animate-in fade-in duration-700">

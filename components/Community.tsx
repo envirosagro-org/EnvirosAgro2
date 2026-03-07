@@ -247,7 +247,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
   }, [showProfileView]);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 pb-32 max-w-[1700px] mx-auto px-4 relative">
+    <div className="space-y-16 md:space-y-24 animate-in fade-in duration-500 pb-48 max-w-[1700px] mx-auto px-4 relative">
       
       {/* 1. Community HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

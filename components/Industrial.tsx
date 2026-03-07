@@ -182,7 +182,7 @@ const Industrial: React.FC<IndustrialProps> = ({
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative">
+    <div className="space-y-16 md:space-y-24 animate-in fade-in duration-700 pb-48 max-w-[1700px] mx-auto px-4 relative">
       
       {/* 1. Supply Chain Resonance HUD */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
@@ -251,7 +251,7 @@ const Industrial: React.FC<IndustrialProps> = ({
       </div>
 
       {/* 3. Main Operational Viewport */}
-      <div className="min-h-fit relative z-10">
+      <div className="min-h-[70vh] md:min-h-[80vh] relative z-10 space-y-16 md:space-y-24">
         
         {/* --- VIEW: REGISTRY BRIDGE (Unified Nodes) --- */}
         {activeTab === 'bridge' && (
