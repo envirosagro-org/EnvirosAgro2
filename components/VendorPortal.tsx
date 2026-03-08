@@ -101,7 +101,7 @@ const FORECAST_DATA = [
 import { useAppStore } from '../store';
 
 const ASSET_CATEGORIES = [
-  "Circular", "Raw", "Tour", "Consultation", "Ready", "Service", "Logistics", "Facility", "Organization Service", "Input", "Manufacturing", "Warehousing", "Distribution", "Veterinary"
+  "Circular", "Raw", "Tours", "Services", "Products", "Information", "Logistics", "Facility", "Organization Service", "Input", "Manufacturing", "Warehousing", "Distribution", "Veterinary"
 ];
 
 const VendorPortal: React.FC<VendorPortalProps> = ({ 
@@ -111,8 +111,9 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'live_terminal' | 'ledger'>('inventory');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showCategoryLinker, setShowCategoryLinker] = useState(false);
+  const [showProgramLinker, setShowProgramLinker] = useState(false);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
-  const [regStep, setRegStep] = useState<'metadata' | 'location' | 'payment' | 'verification' | 'anchoring' | 'success'>('metadata');
+  const [regStep, setRegStep] = useState<'metadata' | 'location' | 'programs' | 'payment' | 'verification' | 'anchoring' | 'success'>('metadata');
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Shard Linking State
@@ -123,6 +124,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   // Registration Form State
   const [itemName, setItemName] = useState('');
   const [itemCategory, setItemCategory] = useState(ASSET_CATEGORIES[0]);
+  const [selectedProgram, setSelectedProgram] = useState<{id: string, name: string} | null>(null);
   const [itemValue, setItemValue] = useState<string>('5000');
   const [itemDesc, setItemDesc] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
@@ -975,11 +977,11 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                        <div className="pt-10 flex gap-6">
                           <button onClick={() => setRegStep('metadata')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all active:scale-95 shadow-xl">BACK_TO_DATA</button>
                           <button 
-                            onClick={() => setRegStep('payment')}
+                            onClick={() => setRegStep('programs')}
                             disabled={!locationAddress.trim()}
                             className="flex-[2] py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(37,99,235,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-white/5 disabled:opacity-30"
                           >
-                             PROCEED TO PAYMENT
+                             PROCEED TO PROGRAMS
                           </button>
                        </div>
                     </div>
@@ -1148,12 +1150,31 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
         selectedAsset={{ name: itemName || 'New Asset', id: 'PENDING_REGISTRATION' }}
         linkerContext={{
           label: 'Asset Category',
-          sourceLedger: 'PROGRAMS'
+          sourceLedger: 'CATEGORIES'
         }}
         onNavigate={() => {}}
         onLinkResource={(resId, name) => {
           setItemCategory(name);
           setShowCategoryLinker(false);
+        }}
+        industrialUnits={[]}
+        blueprints={[]}
+        user={user}
+      />
+
+      {/* ECOSYSTEM PROGRAM INTEGRATION TOOL */}
+      <AssetAssociationTool
+        isOpen={showProgramLinker}
+        onClose={() => setShowProgramLinker(false)}
+        selectedAsset={{ name: itemName || 'New Asset', id: 'PENDING_REGISTRATION' }}
+        linkerContext={{
+          label: 'Ecosystem Program',
+          sourceLedger: 'PROGRAMS'
+        }}
+        onNavigate={() => {}}
+        onLinkResource={(resId, name) => {
+          setSelectedProgram({ id: resId, name });
+          setShowProgramLinker(false);
         }}
         industrialUnits={[]}
         blueprints={[]}

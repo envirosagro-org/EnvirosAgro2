@@ -112,7 +112,7 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                 </div>
                 <div>
                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Asset <span className="text-indigo-400">Association</span> Tool</h3>
-                   <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">CATEGORY_MANAGEMENT_FOR_{linkerContext?.label.toUpperCase().replace(/ /g, '_')}</p>
+                   <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">CATEGORY_MANAGEMENT_FOR_{linkerContext?.label ? linkerContext.label.toUpperCase().replace(/ /g, '_') : 'UNKNOWN'}</p>
                 </div>
              </div>
              <button onClick={onClose} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
