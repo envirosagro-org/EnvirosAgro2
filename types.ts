@@ -308,6 +308,7 @@ export interface FarmingContract {
   capitalIngested: boolean;
   milestones: MissionMilestone[];
   streamingRequirement?: boolean;
+  associatedPrograms?: string[];
 }
 
 export interface ContractApplication {
@@ -357,6 +358,7 @@ export interface LiveAgroProduct {
   isBroadcasting?: boolean;
   sourceAssetId?: string;
   sourceAssetType?: string;
+  associatedPrograms?: string[];
 }
 
 export interface NotificationShard {

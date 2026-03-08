@@ -97,6 +97,26 @@ import {
   PieChart,
   Pie
 } from 'recharts';
+import { 
+  DndContext, 
+  DragOverlay, 
+  closestCorners, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent
+} from '@dnd-kit/core';
+import { 
+  SortableContext, 
+  arrayMove, 
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { MediaShard, Task } from '../types';
@@ -142,6 +162,104 @@ const KANBAN_STAGES: KanbanStage[] = [
   { id: 'Quality_Audit', label: 'TQM VERIFICATION', color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
 ];
 
+const SortableTaskCard = ({ task, onOpenEvidence }: { task: any, onOpenEvidence: (t: any) => void }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id, data: { type: 'Task', task } });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners}
+      className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/60 shadow-xl space-y-6 group hover:border-emerald-500/30 transition-all cursor-grab active:cursor-grabbing"
+    >
+       <div className="flex justify-between items-start">
+          <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">{task.thrust}</span>
+          <div className={`p-2 rounded-lg bg-white/5 ${task.priority === 'High' ? 'text-rose-500' : 'text-emerald-400'}`}><AlertCircle size={14} /></div>
+       </div>
+       <h5 className="text-xl font-black text-white uppercase italic leading-tight">{task.title}</h5>
+       
+       {/* Enhanced Task Metadata */}
+       <div className="flex flex-wrap gap-2 pt-2">
+          {task.allocatedResources?.map((resId: string) => (
+             <span key={resId} className="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[7px] font-black uppercase rounded border border-indigo-500/20">
+                <SmartphoneNfc size={8} /> {resId}
+             </span>
+          ))}
+          {task.evidenceShards?.length > 0 && (
+             <span className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 text-emerald-400 text-[7px] font-black uppercase rounded border border-emerald-500/20">
+                <Paperclip size={8} /> {task.evidenceShards.length} SHARDS
+             </span>
+          )}
+          {task.assetId && (
+             <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-500/10 text-blue-400 text-[7px] font-black uppercase rounded border border-blue-500/20">
+                <Box size={8} /> {task.assetId}
+             </span>
+          )}
+       </div>
+
+       <div className="flex justify-between items-center pt-4 border-t border-white/5">
+          <div className="flex items-center gap-3">
+             <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-600 overflow-hidden border border-white/10">
+                <User size={12} />
+             </div>
+             <span className="text-[9px] text-slate-700 font-mono">NODE_{task.stewardEsin?.split('-')[1] || 'ROOT'}</span>
+          </div>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onOpenEvidence(task); }} 
+            onPointerDown={(e) => e.stopPropagation()}
+            className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg hover:bg-indigo-500 transition-all z-10 relative" 
+            title="Attach Evidence Shard"
+          >
+            <Upload size={14}/>
+          </button>
+       </div>
+    </div>
+  );
+};
+
+const DroppableColumn = ({ stage, tasks, onOpenEvidence }: { stage: KanbanStage, tasks: any[], onOpenEvidence: (t: any) => void }) => {
+  const { setNodeRef } = useSortable({
+    id: stage.id,
+    data: { type: 'Column', stage },
+  });
+
+  return (
+    <div className="space-y-6">
+       <div className="flex items-center justify-between px-6">
+          <h4 className={`text-sm font-black uppercase tracking-widest ${stage.color}`}>{stage.label}</h4>
+          <span className="px-3 py-1 bg-white/5 rounded-lg text-[10px] font-mono text-slate-500">{tasks.length}</span>
+       </div>
+       <div ref={setNodeRef} className="space-y-4 p-4 min-h-[500px] rounded-[48px] bg-black/20 border-2 border-dashed border-white/5">
+          <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+             {tasks.map((task:any) => (
+               <SortableTaskCard key={task.id} task={task} onOpenEvidence={onOpenEvidence} />
+             ))}
+          </SortableContext>
+          {tasks.length === 0 && (
+             <div className="h-full flex flex-col items-center justify-center opacity-10 py-20 pointer-events-none">
+                <PlusCircle size={48} className="text-slate-600 mb-4" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Shard Buffer Clear</p>
+             </div>
+          )}
+       </div>
+    </div>
+  );
+};
+
 const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC, onOpenEvidence, tasks = [], onSaveTask, notify, initialSection }) => {
   const [activeTool, setActiveTool] = useState<'kanban' | 'resources' | 'sigma' | 'kpis'>('kanban');
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -166,6 +284,79 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
   const [defects, setDefects] = useState(3);
   const [opportunities, setOpportunities] = useState(1000);
+
+  const [activeDragTask, setActiveDragTask] = useState<any | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const task = tasks.find((t: any) => t.id === active.id);
+    if (task) setActiveDragTask(task);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    const isActiveTask = active.data.current?.type === 'Task';
+    const isOverTask = over.data.current?.type === 'Task';
+    const isOverColumn = over.data.current?.type === 'Column';
+
+    if (!isActiveTask) return;
+
+    if (isActiveTask && isOverTask) {
+      const activeTask = tasks.find((t: any) => t.id === activeId);
+      const overTask = tasks.find((t: any) => t.id === overId);
+      
+      if (activeTask && overTask && activeTask.status !== overTask.status) {
+        onSaveTask({ ...activeTask, status: overTask.status });
+      }
+    }
+
+    if (isActiveTask && isOverColumn) {
+      const activeTask = tasks.find((t: any) => t.id === activeId);
+      if (activeTask && activeTask.status !== overId) {
+        onSaveTask({ ...activeTask, status: overId as string });
+      }
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragTask(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    const isActiveTask = active.data.current?.type === 'Task';
+    const isOverTask = over.data.current?.type === 'Task';
+    const isOverColumn = over.data.current?.type === 'Column';
+
+    if (isActiveTask && isOverColumn) {
+      const activeTask = tasks.find((t: any) => t.id === activeId);
+      if (activeTask && activeTask.status !== overId) {
+        onSaveTask({ ...activeTask, status: overId as string });
+      }
+    }
+  };
 
   const sigmaLevel = useMemo(() => {
     const dpmo = (defects / opportunities) * 1000000;
@@ -291,62 +482,29 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
       <div className="min-h-[700px] relative z-10">
         {activeTool === 'kanban' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in slide-in-from-bottom-8 duration-700">
-             {KANBAN_STAGES.map(stage => (
-                <div key={stage.id} className="space-y-6">
-                   <div className="flex items-center justify-between px-6">
-                      <h4 className={`text-sm font-black uppercase tracking-widest ${stage.color}`}>{stage.label}</h4>
-                      <span className="px-3 py-1 bg-white/5 rounded-lg text-[10px] font-mono text-slate-500">{tasks.filter((t:any) => t.status === stage.id).length}</span>
-                   </div>
-                   <div className="space-y-4 p-4 min-h-[500px] rounded-[48px] bg-black/20 border-2 border-dashed border-white/5">
-                      {tasks.filter((t:any) => t.status === stage.id).map((task:any) => (
-                        <div key={task.id} className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/60 shadow-xl space-y-6 group hover:border-emerald-500/30 transition-all cursor-pointer">
-                           <div className="flex justify-between items-start">
-                              <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">{task.thrust}</span>
-                              <div className={`p-2 rounded-lg bg-white/5 ${task.priority === 'High' ? 'text-rose-500' : 'text-emerald-400'}`}><AlertCircle size={14} /></div>
-                           </div>
-                           <h5 className="text-xl font-black text-white uppercase italic leading-tight">{task.title}</h5>
-                           
-                           {/* Enhanced Task Metadata */}
-                           <div className="flex flex-wrap gap-2 pt-2">
-                              {task.allocatedResources?.map((resId: string) => (
-                                 <span key={resId} className="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[7px] font-black uppercase rounded border border-indigo-500/20">
-                                    <SmartphoneNfc size={8} /> {resId}
-                                 </span>
-                              ))}
-                              {task.evidenceShards?.length > 0 && (
-                                 <span className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 text-emerald-400 text-[7px] font-black uppercase rounded border border-emerald-500/20">
-                                    <Paperclip size={8} /> {task.evidenceShards.length} SHARDS
-                                 </span>
-                              )}
-                              {task.assetId && (
-                                 <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-500/10 text-blue-400 text-[7px] font-black uppercase rounded border border-blue-500/20">
-                                    <Box size={8} /> {task.assetId}
-                                 </span>
-                              )}
-                           </div>
-
-                           <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                              <div className="flex items-center gap-3">
-                                 <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-600 overflow-hidden border border-white/10">
-                                    <User size={12} />
-                                 </div>
-                                 <span className="text-[9px] text-slate-700 font-mono">NODE_{task.stewardEsin?.split('-')[1] || 'ROOT'}</span>
-                              </div>
-                              <button onClick={() => onOpenEvidence(task)} className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg hover:bg-indigo-500 transition-all" title="Attach Evidence Shard"><Upload size={14}/></button>
-                           </div>
-                        </div>
-                      ))}
-                      {tasks.filter((t:any) => t.status === stage.id).length === 0 && (
-                         <div className="h-full flex flex-col items-center justify-center opacity-10 py-20">
-                            <PlusCircle size={48} className="text-slate-600 mb-4" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">Shard Buffer Clear</p>
-                         </div>
-                      )}
-                   </div>
-                </div>
-             ))}
-          </div>
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in slide-in-from-bottom-8 duration-700">
+               {KANBAN_STAGES.map(stage => (
+                  <DroppableColumn 
+                    key={stage.id} 
+                    stage={stage} 
+                    tasks={tasks.filter((t:any) => t.status === stage.id)} 
+                    onOpenEvidence={onOpenEvidence} 
+                  />
+               ))}
+            </div>
+            <DragOverlay>
+              {activeDragTask ? (
+                <SortableTaskCard task={activeDragTask} onOpenEvidence={onOpenEvidence} />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         )}
 
         {/* Other tools follow original logic... */}

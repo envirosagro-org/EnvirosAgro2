@@ -74,6 +74,7 @@ import {
 } from 'recharts';
 import { User, Order, LogisticProvider, VendorProduct, ViewState, SignalShard, LiveAgroProduct } from '../types';
 import { runSpecialistDiagnostic, analyzeDemandForecast } from '../services/geminiService';
+import AssetAssociationTool from './AssetAssociationTool';
 
 interface VendorPortalProps {
   user: User;
@@ -109,6 +110,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const { vendorRegistrationState, setVendorRegistrationState } = useAppStore();
   const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'live_terminal' | 'ledger'>('inventory');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showCategoryLinker, setShowCategoryLinker] = useState(false);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [regStep, setRegStep] = useState<'metadata' | 'location' | 'payment' | 'verification' | 'anchoring' | 'success'>('metadata');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -883,15 +885,17 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                           </div>
                        </div>
 
-                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
-                          {ASSET_CATEGORIES.map(cat => (
-                             <button 
-                                key={cat} onClick={() => setItemCategory(cat)}
-                                className={`p-6 rounded-[32px] border-2 transition-all text-[10px] font-black uppercase tracking-widest ${itemCategory === cat ? 'bg-amber-600/10 border-amber-500 text-amber-400 shadow-xl scale-105' : 'bg-black border-white/5 text-slate-600 hover:border-white/20'}`}
-                             >
-                                {cat}
-                             </button>
-                          ))}
+                       <div className="px-4">
+                          <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em] mb-3 block">Asset Category</label>
+                          <button 
+                             onClick={() => setShowCategoryLinker(true)}
+                             className="w-full bg-black border-2 border-white/10 rounded-[32px] py-8 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-amber-500/10 outline-none transition-all shadow-inner flex justify-between items-center hover:border-amber-500/50 group"
+                          >
+                             <span className={itemCategory ? 'text-amber-400' : 'text-slate-500 italic'}>{itemCategory || 'Select Category'}</span>
+                             <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                                <SearchCode size={24} className="text-amber-500" />
+                             </div>
+                          </button>
                        </div>
 
                        <div className="p-8 bg-amber-500/5 border border-amber-500/10 rounded-[44px] flex justify-between items-center shadow-inner group/fee hover:border-amber-400 transition-all">
@@ -1136,6 +1140,25 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
           </div>
         </div>
       )}
+
+      {/* ASSET CATEGORY MANAGEMENT TOOL */}
+      <AssetAssociationTool
+        isOpen={showCategoryLinker}
+        onClose={() => setShowCategoryLinker(false)}
+        selectedAsset={{ name: itemName || 'New Asset', id: 'PENDING_REGISTRATION' }}
+        linkerContext={{
+          label: 'Asset Category',
+          sourceLedger: 'PROGRAMS'
+        }}
+        onNavigate={() => {}}
+        onLinkResource={(resId, name) => {
+          setItemCategory(name);
+          setShowCategoryLinker(false);
+        }}
+        industrialUnits={[]}
+        blueprints={[]}
+        user={user}
+      />
 
       <style>{`
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }

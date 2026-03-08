@@ -39,6 +39,22 @@ const MOCK_RACK_DATA = [
   { id: 'RCK-03', name: 'Verti-Shard Gamma', type: 'Vertical Stack', crop: 'Strawberries', moisture: 88, ec: 2.1, ph: 6.5, status: 'SYNCING', temp: 21 },
 ];
 
+const generateTelemetryData = () => {
+  const data = [];
+  let baseMoisture = 85;
+  let baseTemp = 22;
+  for (let i = 0; i < 24; i++) {
+    baseMoisture += (Math.random() - 0.5) * 5;
+    baseTemp += (Math.random() - 0.5) * 2;
+    data.push({
+      time: `${i}:00`,
+      moisture: Math.max(0, Math.min(100, baseMoisture)),
+      temp: Math.max(15, Math.min(30, baseTemp)),
+    });
+  }
+  return data;
+};
+
 const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
   const [activeRack, setActiveRack] = useState(MOCK_RACK_DATA[0]);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -46,6 +62,11 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
   const [humidity, setHumidity] = useState(65);
   const [oracleInsight, setOracleInsight] = useState<string | null>(null);
   const [isAskingOracle, setIsAskingOracle] = useState(false);
+  const [telemetryData, setTelemetryData] = useState(generateTelemetryData());
+
+  useEffect(() => {
+    setTelemetryData(generateTelemetryData());
+  }, [activeRack]);
 
   const handleTuneSpectrum = () => {
     setIsSyncing(true);
@@ -176,6 +197,43 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
                        </div>
                     </div>
                  ))}
+              </div>
+
+              {/* Telemetry Chart */}
+              <div className="relative z-10 mb-12 bg-black/40 rounded-[48px] border border-white/5 p-8 shadow-inner h-[300px]">
+                 <div className="flex justify-between items-center mb-6 px-4">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                       <Activity size={14} className="text-emerald-400" /> 24H Telemetry Stream
+                    </h4>
+                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest animate-pulse">LIVE</span>
+                 </div>
+                 <div className="h-[200px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <AreaChart data={telemetryData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                          <defs>
+                             <linearGradient id="colorMoisture" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                             </linearGradient>
+                             <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                             </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis yAxisId="left" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip 
+                             contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', backdropFilter: 'blur(10px)' }}
+                             itemStyle={{ color: '#fff', fontSize: '12px', fontFamily: 'monospace' }}
+                             labelStyle={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}
+                          />
+                          <Area yAxisId="left" type="monotone" dataKey="moisture" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorMoisture)" />
+                          <Area yAxisId="right" type="monotone" dataKey="temp" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorTemp)" />
+                       </AreaChart>
+                    </ResponsiveContainer>
+                 </div>
               </div>
 
               <div className="flex-1 p-10 bg-indigo-600/5 border border-indigo-500/20 rounded-[48px] relative overflow-hidden group/oracle">

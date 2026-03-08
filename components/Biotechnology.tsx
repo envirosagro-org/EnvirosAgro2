@@ -827,6 +827,95 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
               </div>
            </div>
         )}
+
+        {/* --- TAB: MEDICAG --- */}
+        {activeTab === 'medicag' && (
+           <div className="space-y-12 animate-in fade-in duration-700">
+              <div className="flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-10 px-4">
+                 <div>
+                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">MedicAg <span className="text-teal-400">Telemetry</span></h3>
+                    <p className="text-slate-500 text-xl font-medium mt-4 italic">"Mugumo frequency alignment and bio-resonance tracking."</p>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                 <div className="glass-card p-12 rounded-[64px] border-2 border-white/5 bg-black/40 shadow-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none"><HeartPulse size={400} className="text-teal-400" /></div>
+                    <div className="relative z-10 space-y-12">
+                       <div className="flex items-center gap-6">
+                          <div className="p-6 rounded-3xl bg-teal-600/10 border border-teal-500/20 text-teal-400 shadow-xl">
+                             <Activity size={40} />
+                          </div>
+                          <div>
+                             <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic m-0">Resonance Shard</h4>
+                             <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-2">REALTIME_BIO_SYNC</p>
+                          </div>
+                       </div>
+
+                       <div className="space-y-8">
+                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 flex justify-between items-center">
+                             <div className="space-y-2">
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Mugumo Base Freq</p>
+                                <p className="text-4xl font-mono font-black text-white">{fs_base} <span className="text-sm text-teal-400">Hz</span></p>
+                             </div>
+                             <Waves size={40} className="text-teal-500/30" />
+                          </div>
+
+                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 flex justify-between items-center">
+                             <div className="space-y-2">
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Measured Freq</p>
+                                <p className="text-4xl font-mono font-black text-white">{fs_measured} <span className="text-sm text-teal-400">Hz</span></p>
+                             </div>
+                             <div className="text-right">
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Deviation</p>
+                                <p className={`text-xl font-mono font-black ${freqDeviation > 5 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                   {freqDeviation.toFixed(1)}%
+                                </p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="glass-card p-12 rounded-[64px] border-2 border-white/5 bg-black/40 shadow-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none"><Stethoscope size={400} className="text-rose-400" /></div>
+                    <div className="relative z-10 space-y-12">
+                       <div className="flex items-center gap-6">
+                          <div className="p-6 rounded-3xl bg-rose-600/10 border border-rose-500/20 text-rose-400 shadow-xl">
+                             <HeartPulse size={40} />
+                          </div>
+                          <div>
+                             <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic m-0">Biometric Shard</h4>
+                             <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-2">HRV_CORTISOL_PROXY</p>
+                          </div>
+                       </div>
+
+                       <div className="space-y-8">
+                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 flex justify-between items-center">
+                             <div className="space-y-2">
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">HRV Coherence</p>
+                                <p className="text-4xl font-mono font-black text-white">{hrv_val} <span className="text-sm text-rose-400">ms</span></p>
+                             </div>
+                             <div className="h-2 w-32 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-rose-500" style={{ width: `${Math.min(100, hrv_val)}%` }}></div>
+                             </div>
+                          </div>
+
+                          <div className="p-8 bg-black/60 rounded-[40px] border border-white/5 flex justify-between items-center">
+                             <div className="space-y-2">
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Cortisol Proxy</p>
+                                <p className="text-4xl font-mono font-black text-white">{cortisol_proxy} <span className="text-sm text-amber-400">μg/dL</span></p>
+                             </div>
+                             <div className="h-2 w-32 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, (cortisol_proxy / 25) * 100)}%` }}></div>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
       </div>
 
       <style>{`
