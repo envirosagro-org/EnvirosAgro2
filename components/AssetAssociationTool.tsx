@@ -22,7 +22,8 @@ import {
   Loader2,
   Package,
   Truck,
-  Warehouse
+  Warehouse,
+  Info
 } from 'lucide-react';
 import { ViewState, User } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
@@ -85,6 +86,7 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
       }
 
       const prompt = `Analyze the asset "${assetName}" (ID: ${selectedAsset.id}) within the context of "${linkerContext?.label}". 
+      The Asset Association Tool integrates agro assets with various programs in the ecosystem to ensure live farming meets standards and the market cloud contains quality assets.
       Suggest 2-3 specific, highly relevant ${suggestionTarget} that should be associated with this asset to maximize yield, efficiency, or ecological impact.
       Format the response as a simple bulleted list. Keep it concise, technical, and actionable.`;
       
@@ -112,7 +114,9 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                 </div>
                 <div>
                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Asset <span className="text-indigo-400">Association</span> Tool</h3>
-                   <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">CATEGORY_MANAGEMENT_FOR_{linkerContext?.label ? linkerContext.label.toUpperCase().replace(/ /g, '_') : 'UNKNOWN'}</p>
+                   <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">{linkerContext?.sourceLedger === 'CATEGORIES' ? 'ASSET_METADATA_LINKING' : 
+                        linkerContext?.sourceLedger === 'PROGRAMS' ? 'ECOSYSTEM_PROGRAM_INTEGRATION' : 
+                        'INVENTORY_LEDGER_SYNCHRONIZATION'}</p>
                 </div>
              </div>
              <button onClick={onClose} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
@@ -142,7 +146,7 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                       </div>
                       <div>
                          <h5 className="text-lg font-black text-white uppercase italic tracking-widest">Neural Analyst</h5>
-                         <p className="text-[10px] text-indigo-400 font-mono uppercase tracking-[0.2em]">Association Recommendations</p>
+                         <p className="text-[10px] text-indigo-400 font-mono uppercase tracking-[0.2em]">Ensuring live farming standards & market quality</p>
                       </div>
                    </div>
                    <div className="relative z-10 space-y-3">
@@ -171,7 +175,7 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                        linkerContext?.sourceLedger === 'VALUE' ? 'Value Blueprints' : 
                        linkerContext?.sourceLedger === 'PROGRAMS' ? 'Ecosystem Programs' :
                        linkerContext?.sourceLedger === 'CATEGORIES' ? 'Asset Categories' :
-                       'Registry Shards'}
+                       'Asset Inventory Ledger'}
                    </h4>
                 </div>
                 
@@ -181,10 +185,11 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                       [
                         { id: 'CAT-CIRC', name: 'Circular', icon: Sprout, col: 'text-emerald-400', desc: 'Regenerative and circular economy assets' },
                         { id: 'CAT-RAW', name: 'Raw', icon: Database, col: 'text-amber-400', desc: 'Unprocessed raw materials' },
-                        { id: 'CAT-TOUR', name: 'Tour', icon: MapPin, col: 'text-blue-400', desc: 'Agro-tourism and educational visits' },
+                        { id: 'CAT-TOUR', name: 'Tours', icon: MapPin, col: 'text-blue-400', desc: 'Agro-tourism and educational visits' },
+                         { id: 'CAT-INFO', name: 'Information', icon: Info, col: 'text-cyan-400', desc: 'Data shards, research, and technical documentation' },
                         { id: 'CAT-CONS', name: 'Consultation', icon: Monitor, col: 'text-purple-400', desc: 'Expert advice and planning' },
-                        { id: 'CAT-READY', name: 'Ready', icon: Package, col: 'text-green-400', desc: 'Ready-to-use consumer products' },
-                        { id: 'CAT-SERV', name: 'Service', icon: Wrench, col: 'text-indigo-400', desc: 'General agricultural services' },
+                        { id: 'CAT-READY', name: 'Products', icon: Package, col: 'text-green-400', desc: 'Ready-to-use consumer products' },
+                        { id: 'CAT-SERV', name: 'Services', icon: Wrench, col: 'text-indigo-400', desc: 'General agricultural services' },
                         { id: 'CAT-LOG', name: 'Logistics', icon: Truck, col: 'text-orange-400', desc: 'Transportation and delivery' },
                         { id: 'CAT-FAC', name: 'Facility', icon: Factory, col: 'text-slate-400', desc: 'Processing or storage facilities' },
                         { id: 'CAT-ORG', name: 'Organization Service', icon: Workflow, col: 'text-fuchsia-400', desc: 'B2B organizational services' },
