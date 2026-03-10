@@ -24,7 +24,7 @@ import {
   Gauge, 
   Fingerprint, 
   Smartphone, 
-  Sparkles,
+  Leaf,
   ArrowRight,
   ChevronRight,
   Stamp,
@@ -291,6 +291,15 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                  <p className="text-slate-400 text-lg font-medium italic max-w-lg mx-auto">
                     Uploading for Land Shard: <span className="text-emerald-400 font-black uppercase font-mono">{selectedLand?.id}</span>
                  </p>
+              </div>
+
+              <div className="flex justify-center">
+                 <button 
+                   onClick={() => onNavigate?.('multimedia_generator')}
+                   className="px-8 py-4 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-3 shadow-xl"
+                 >
+                    <Leaf size={16} /> GENERATE_EVIDENCE_SHARD
+                 </button>
               </div>
 
               <div 

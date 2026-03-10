@@ -454,6 +454,7 @@ export type ViewState =
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
   | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot'
+  | 'multimedia_generator' | 'cost_accounting' | 'internal_control'
   | 'mesh_protocol' | 'registry_handshake' | 'educational_resources';
 
 export interface VectorAddress {
@@ -559,6 +560,42 @@ export interface ShardCostCalibration {
   sehtiBonus: number;
   stressPenalty: number;
   finalYield: number;
+}
+
+export type UserRole = 'STEWARD' | 'ADMIN' | 'INVESTOR' | 'VENDOR' | 'GUEST' | 'ORACLE_CONTROLLER';
+
+export interface ControlRule {
+  id: string;
+  name: string;
+  description: string;
+  protocol: string;
+  isActive: boolean;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
+export interface UserResponsibility {
+  id: string;
+  role: UserRole;
+  task: string;
+  status: 'PENDING' | 'ACTIVE' | 'COMPLETED';
+  priority: number;
+}
+
+export interface InternalControlState {
+  balanceOfPowers: {
+    stewardship: number;
+    governance: number;
+    treasury: number;
+    intelligence: number;
+  };
+  activeRules: ControlRule[];
+  responsibilities: UserResponsibility[];
+  globalAnalysis: {
+    networkHealth: number;
+    totalTreasury: number;
+    systemLiquidity: number;
+    userLiquidity: number;
+  };
 }
 
 export interface MeshNode {

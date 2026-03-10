@@ -6,7 +6,7 @@ import {
   Target, 
   RefreshCw, 
   Settings, 
-  Sparkles, 
+  Leaf, 
   Bot, 
   Loader2, 
   Search, 
@@ -563,14 +563,14 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                        <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-10">
                           {!sigmaAdvice && !isOptimizing ? (
                              <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-10">
-                                <Sparkles size={140} className="text-slate-500" />
+                                <Leaf size={140} className="text-slate-500" />
                                 <p className="text-4xl font-black uppercase tracking-[0.6em] text-white italic">ORACLE_STANDBY</p>
                              </div>
                           ) : isOptimizing ? (
                              <div className="h-full flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in">
                                 <div className="relative">
                                    <div className="w-32 h-32 rounded-full border-t-4 border-indigo-500 animate-spin"></div>
-                                   <div className="absolute inset-0 flex items-center justify-center"><Sparkles size={40} className="text-indigo-400 animate-pulse" /></div>
+                                   <div className="absolute inset-0 flex items-center justify-center"><Leaf size={40} className="text-indigo-400 animate-pulse" /></div>
                                 </div>
                                 <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic">SEQUENCING REMEDIATION...</p>
                              </div>

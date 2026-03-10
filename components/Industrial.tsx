@@ -62,7 +62,7 @@ import {
   ScanLine,
   Building,
   RefreshCw,
-  Sparkles,
+  Leaf,
   Download,
   FlaskConical,
   ShoppingCart
@@ -241,6 +241,13 @@ const Industrial: React.FC<IndustrialProps> = ({
                />
             </div>
             <button 
+              onClick={() => onNavigate('multimedia_generator')}
+              className="p-4 bg-indigo-600/10 border border-indigo-500/30 rounded-2xl text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-xl active:scale-95"
+              title="Multimedia Forge"
+            >
+               <Leaf size={24} />
+            </button>
+            <button 
               onClick={() => onNavigate('registry_handshake')}
               className="p-4 bg-indigo-600/10 border border-indigo-500/30 rounded-2xl text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-xl active:scale-95"
               title="Initialize Physical Handshake"
@@ -352,7 +359,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                     ) : (
                        <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 w-full max-w-4xl mx-auto">
                           <div className="p-10 bg-black/90 rounded-[64px] border-l-[16px] border-l-indigo-600 border border-indigo-500/20 shadow-3xl text-left relative overflow-hidden group/advice">
-                             <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={400} /></div>
+                             <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Leaf size={400} /></div>
                              <div className="flex items-center gap-6 mb-10 border-b border-white/5 pb-8 relative z-10">
                                 <Bot size={32} className="text-indigo-400 animate-pulse" />
                                 <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Strategic Verdict</h4>

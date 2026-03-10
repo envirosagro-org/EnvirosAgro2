@@ -25,7 +25,6 @@ import {
   ArrowLeftCircle,
   Gauge,
   Bot,
-  Sparkles,
   Layers,
   Cpu,
   Microscope,

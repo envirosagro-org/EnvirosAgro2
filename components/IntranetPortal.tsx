@@ -19,7 +19,7 @@ import {
   AlertTriangle, 
   Zap, 
   Bot, 
-  Sparkles, 
+  Leaf, 
   Fingerprint, 
   Activity, 
   Search, 

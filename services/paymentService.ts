@@ -1,3 +1,5 @@
+import { generateAlphanumericId } from '../systemFunctions';
+
 /**
  * ENVIROSAGRO PAYMENT SERVICE
  * Production Staging Layer: Handles secure relays for financial shards.
@@ -27,7 +29,7 @@ export async function initiatePayPalPayout(userEmail: string, amount: string) {
                 console.log(`[EnvirosAgro Staging] Settlement Finalized via PayPal Bridge.`);
                 resolve({
                     batch_header: {
-                        payout_batch_id: `STG_SHARD_${Date.now()}_${Math.random().toString(36).substring(7).toUpperCase()}`,
+                        payout_batch_id: `STG_SHARD_${Date.now()}_${generateAlphanumericId(7)}`,
                         batch_status: "SUCCESS"
                     },
                     ledger_proof: "0xHS_PAYPAL_SETTLEMENT_OK"

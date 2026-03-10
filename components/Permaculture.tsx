@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Compass, Mountain, Layers, Zap, ShieldCheck, Bot, Sparkles, Search, 
+  Compass, Mountain, Layers, Zap, ShieldCheck, Bot, Leaf, Search, 
   PlusCircle, ArrowRight, Loader2, Activity, Target, Heart, Scale, 
   Trees, Sun, CloudRain, Binary, FileText, BadgeCheck, History, 
   Trash2, RefreshCw, Droplets, Microscope, BoxSelect, User as UserIcon, 
@@ -54,10 +54,12 @@ const generateZoneTelemetry = (zoneId: number) => {
 
 const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, onEmitSignal, notify, initialSection }) => {
   const [activeTab, setActiveTab] = useState<'zonation' | 'ethics' | 'lilies' | 'companion' | 'home_agro'>(
-    initialSection === 'home_agro' ? 'home_agro' : 'zonation'
+    (initialSection as any) || 'zonation'
   );
   const [selectedZone, setSelectedZone] = useState(ZONE_SHARDS[1]);
   const [isSyncingGeofence, setIsSyncingGeofence] = useState(false);
+
+  const zoneTelemetryData = useMemo(() => generateZoneTelemetry(selectedZone.id), [selectedZone.id]);
 
   const handleSyncGeofence = async () => {
     setIsSyncingGeofence(true);
@@ -81,7 +83,9 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
       notify({ 
         title: 'GEOFENCE_SYNCED', 
         message: 'Registry geofence shards aligned with satellite telemetry.', 
-        type: 'success' 
+        type: 'system',
+        priority: 'medium',
+        origin: 'MANUAL'
       });
     }
   };
@@ -170,7 +174,7 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
                             </h5>
                             <div className="flex-1 min-h-[150px] w-full relative">
                                <ResponsiveContainer width="100%" height="100%">
-                                  <AreaChart data={useMemo(() => generateZoneTelemetry(selectedZone.id), [selectedZone.id])} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                                  <AreaChart data={zoneTelemetryData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                                      <defs>
                                         <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>

@@ -30,7 +30,7 @@ import {
   Trash2, 
   Gem,
   Activity,
-  Sparkles,
+  Leaf,
   Search,
   Download, 
   Building2,
@@ -79,6 +79,7 @@ import { initiatePayPalPayout } from '../services/paymentService';
 import { toast } from 'sonner';
 
 import { TriggerButton } from './TriggerButton';
+import CostAccountingDashboard from './CostAccountingDashboard';
 
 interface AgroWalletProps {
   user: User;
@@ -128,7 +129,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   initialSection,
   costAudit
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'treasury' | 'staking' | 'swap' | 'gateway' | 'ledger' | 'calibrations'>('treasury');
+  const [activeSubTab, setActiveSubTab] = useState<'treasury' | 'staking' | 'swap' | 'gateway' | 'ledger' | 'accounting'>('treasury');
   const [showGatewayModal, setShowGatewayModal] = useState<'deposit' | 'withdrawal' | null>(null);
   const [showLinkProvider, setShowLinkProvider] = useState(false);
   const [gatewayStep, setGatewayStep] = useState<'config' | 'handoff' | 'external_sync' | 'sign' | 'success'>('config');
@@ -158,7 +159,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   // Routing Sync
   useEffect(() => {
-    if (initialSection && ['treasury', 'staking', 'swap', 'gateway', 'ledger', 'calibrations'].includes(initialSection)) {
+    if (initialSection && ['treasury', 'staking', 'swap', 'gateway', 'ledger', 'accounting'].includes(initialSection)) {
       setActiveSubTab(initialSection as any);
     }
   }, [initialSection]);
@@ -342,7 +343,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 mx-auto lg:mx-0 relative z-20">
         {[
           { id: 'treasury', label: 'Treasury Hub', icon: Wallet },
-          { id: 'calibrations', label: 'Cost Calibration', icon: Calculator },
+          { id: 'accounting', label: 'Cost Management', icon: Calculator },
           { id: 'gateway', label: 'PayPal Bridge', icon: Link2 },
           { id: 'staking', label: 'Staking', icon: Layers },
           { id: 'swap', label: 'Sharding', icon: ArrowRightLeft },
@@ -360,192 +361,70 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
       <div className="min-h-[850px] relative z-10">
         
-        {/* --- VIEW: TREASURY HUB --- */}
-        {activeSubTab === 'treasury' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-500">
-             <div className="lg:col-span-8 glass-card p-12 md:p-16 rounded-[72px] border border-emerald-500/20 bg-emerald-500/[0.02] relative overflow-hidden flex flex-col justify-center min-h-[500px] shadow-3xl group">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform duration-[15s]"><Wallet size={500} /></div>
-                <div className="relative z-10 space-y-12">
-                   <div className="text-center md:text-left">
-                      <span className="px-5 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-emerald-500/20 shadow-inner italic">MASTER_LIQUIDITY_SHARD</span>
-                      <div className="mt-10 flex flex-col md:flex-row items-baseline gap-6 justify-center md:justify-start">
-                         <h2 className="text-9xl md:text-[140px] font-black text-white tracking-tighter uppercase italic m-0 leading-none drop-shadow-[0_0_50px_rgba(16,185,129,0.2)]">
-                            {user.wallet.balance.toLocaleString()}
-                         </h2>
-                         <span className="text-4xl font-bold text-emerald-500 italic uppercase">EAC</span>
-                      </div>
-                   </div>
-                   <div className="flex flex-col sm:flex-row gap-6 max-w-2xl">
-                      <button 
-                        onClick={() => { setShowGatewayModal('deposit'); setGatewayStep('config'); }}
-                        className="flex-1 py-10 agro-gradient rounded-[36px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(16,185,129,0.3)] flex items-center justify-center gap-6 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-emerald-500/5 group"
-                      >
-                         <ArrowDownLeft size={32} /> INGEST PAYPAL
-                      </button>
-                      <button 
-                        onClick={() => { setShowGatewayModal('withdrawal'); setGatewayStep('config'); }}
-                        className="flex-1 py-10 bg-black/80 border-2 border-white/10 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95"
-                      >
-                         <ArrowUpRight size={32} className="text-blue-500" /> WITHDRAW PAYPAL
-                      </button>
-                   </div>
-                </div>
-             </div>
-
-             <div className="lg:col-span-4 space-y-8">
-                {/* CALIBRATION OVERLAY IN TREASURY */}
-                <div className="glass-card p-10 rounded-[56px] border border-rose-500/20 bg-rose-500/5 space-y-6 shadow-xl relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Scale size={180} className="text-rose-500" /></div>
-                   <div className="flex items-center justify-between relative z-10">
-                      <div className="flex items-center gap-4">
-                         <div className="p-4 bg-rose-600 rounded-2xl shadow-xl"><Calculator size={24} className="text-white" /></div>
-                         <h4 className="text-xl font-black text-white uppercase italic">Calibration</h4>
-                      </div>
-                      <span className="text-[10px] font-mono text-slate-700">v6.5</span>
-                   </div>
-                   <div className="relative z-10 py-4">
-                      <p className="text-5xl font-mono font-black text-white tracking-tighter italic">{costAudit?.calibratedCost || '...'}<span className="text-xl text-rose-500 ml-1">EAC</span></p>
-                      <p className="text-[10px] text-slate-600 font-bold uppercase mt-2 tracking-widest italic">"Should Be" Shard Price</p>
-                   </div>
-                </div>
-
-                <div className="p-10 glass-card rounded-[48px] border border-white/10 bg-black/40 space-y-4 shadow-xl">
-                   <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                      <Info className="text-blue-400 w-5 h-5" />
-                      <h4 className="text-sm font-black text-white uppercase tracking-widest">Protocol Notice</h4>
-                   </div>
-                   <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                      "Real-time cost accounting processes run in the background, continuously analyzing m-constant drift to optimize your node overhead."
-                   </p>
-                </div>
-             </div>
-          </div>
+        {/* --- VIEW: COST ACCOUNTING & CALIBRATION --- */}
+        {activeSubTab === 'accounting' && (
+          <CostAccountingDashboard 
+            costAudit={costAudit} 
+            onRunAudit={handleRunAudit}
+            oracleAdvice={oracleAdvice}
+          />
         )}
 
-        {/* --- VIEW: COST CALIBRATIONS --- */}
-        {activeSubTab === 'calibrations' && costAudit && (
-          <div className="space-y-12 animate-in zoom-in duration-700">
+        {/* --- VIEW: TREASURY HUB (Segregated) --- */}
+        {activeSubTab === 'treasury' && (
+          <div className="space-y-12 animate-in slide-in-from-left-4 duration-500">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div className="lg:col-span-8 glass-card p-12 rounded-[64px] border-2 border-indigo-500/20 bg-[#050706] relative overflow-hidden shadow-3xl group">
-                   <div className="absolute inset-0 bg-indigo-500/[0.01] pointer-events-none"></div>
-                   <div className="flex items-center justify-between mb-16 border-b border-white/5 pb-10 px-4">
-                      <div className="flex items-center gap-8">
-                         <div className="w-20 h-20 rounded-[32px] bg-indigo-600 flex items-center justify-center text-white shadow-3xl animate-float">
-                            <Scale size={40} />
-                         </div>
-                         <div>
-                            <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Economic <span className="text-indigo-400">Calibrator</span></h3>
-                            <p className="text-indigo-400/60 text-[11px] font-mono tracking-[0.6em] uppercase mt-4 italic">C_s = (C_b / m) * (1 + S_load)</p>
-                         </div>
-                      </div>
-                      <div className="text-right">
-                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Background Sync</p>
-                         <p className="text-4xl font-mono font-black text-emerald-400 leading-none mt-2">ACTIVE</p>
-                      </div>
-                   </div>
-
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10 px-4">
-                      <div className="space-y-8">
-                         <h4 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-4">
-                            <Calculator size={24} className="text-indigo-500" /> Price Optimization
-                         </h4>
-                         <div className="space-y-6">
-                            {[
-                               { l: 'Genesis Shard Cost', v: '100 EAC', b: 'bg-slate-800' },
-                               { l: 'Current Resonance Filter', v: `-${( (1 - (1/costAudit.mConstant)) * 100).toFixed(1)}%`, b: 'bg-emerald-600/20 text-emerald-400' },
-                               { l: 'Network Entropy Load', v: '+5%', b: 'bg-rose-600/10 text-rose-500' },
-                            ].map((item, i) => (
-                               <div key={i} className={`p-6 rounded-3xl flex justify-between items-center border border-white/5 ${item.b}`}>
-                                  <span className="text-xs font-black uppercase text-slate-400">{item.l}</span>
-                                  <span className="text-lg font-mono font-black">{item.v}</span>
-                               </div>
-                            ))}
-                            <div className="p-10 bg-indigo-600 rounded-[44px] shadow-[0_0_100px_rgba(99,102,241,0.3)] text-center space-y-2 border-4 border-white/10">
-                               <p className="text-[11px] font-black text-white/60 uppercase tracking-widest">SHARD_SHOULD_BE_VAL</p>
-                               <p className="text-7xl font-mono font-black text-white tracking-tighter">{costAudit.calibratedCost} <span className="text-xl">EAC</span></p>
-                            </div>
+                <div className="lg:col-span-8 glass-card p-12 md:p-16 rounded-[72px] border border-emerald-500/20 bg-emerald-500/[0.02] relative overflow-hidden flex flex-col justify-center min-h-[500px] shadow-3xl group">
+                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform duration-[15s]"><Wallet size={500} /></div>
+                   <div className="relative z-10 space-y-12">
+                      <div className="text-center md:text-left">
+                         <span className="px-5 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-emerald-500/20 shadow-inner italic">USER_TREASURY_SHARD</span>
+                         <div className="mt-10 flex flex-col md:flex-row items-baseline gap-6 justify-center md:justify-start">
+                            <h2 className="text-9xl md:text-[140px] font-black text-white tracking-tighter uppercase italic m-0 leading-none drop-shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+                               {user.wallet.balance.toLocaleString()}
+                            </h2>
+                            <span className="text-4xl font-bold text-emerald-500 italic uppercase">EAC</span>
                          </div>
                       </div>
-
-                      <div className="space-y-8 h-full flex flex-col">
-                         <h4 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-4">
-                            <PieIcon size={24} className="text-emerald-500" /> System Allocation
-                         </h4>
-                         <div className="flex-1 bg-black/40 rounded-[48px] border border-white/5 p-6 shadow-inner">
-                            <ResponsiveContainer width="100%" height="100%">
-                               <PieChart>
-                                  <Pie
-                                     data={COST_DISTRIBUTION}
-                                     innerRadius={60}
-                                     outerRadius={100}
-                                     paddingAngle={8}
-                                     dataKey="value"
-                                  >
-                                     {COST_DISTRIBUTION.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                                     ))}
-                                  </Pie>
-                                  <RechartsTooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
-                               </PieChart>
-                            </ResponsiveContainer>
-                         </div>
-                         <div className="grid grid-cols-2 gap-4">
-                            {COST_DISTRIBUTION.map(c => (
-                               <div key={c.name} className="flex items-center gap-3">
-                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }}></div>
-                                  <span className="text-[8px] font-black uppercase text-slate-600 truncate">{c.name}</span>
-                               </div>
-                            ))}
-                         </div>
+                      <div className="flex flex-col sm:flex-row gap-6 max-w-2xl">
+                         <button 
+                           onClick={() => { setShowGatewayModal('deposit'); setGatewayStep('config'); }}
+                           className="flex-1 py-10 agro-gradient rounded-[36px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(16,185,129,0.3)] flex items-center justify-center gap-6 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-emerald-500/5 group"
+                         >
+                            <ArrowDownLeft size={32} /> INGEST PAYPAL
+                         </button>
+                         <button 
+                           onClick={() => { setShowGatewayModal('withdrawal'); setGatewayStep('config'); }}
+                           className="flex-1 py-10 bg-black/80 border-2 border-white/10 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95"
+                         >
+                            <ArrowUpRight size={32} className="text-blue-500" /> WITHDRAW PAYPAL
+                         </button>
                       </div>
-                   </div>
-
-                   <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 relative z-10 px-4">
-                      <div className="flex items-center gap-6">
-                         <Stamp size={40} className="text-indigo-400" />
-                         <div className="text-left">
-                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Live Audit Shard</p>
-                            <p className="text-lg font-mono text-white">0xAUDIT_#{(Math.random()*1000).toFixed(0)}</p>
-                         </div>
-                      </div>
-                      <TriggerButton 
-                        action={handleRunAudit} 
-                        idleText="REQUEST STRATEGIC VERDICT"
-                        loadingText="CONSULTING ORACLE..."
-                        successText="VERDICT RECEIVED"
-                        errorText="HANDSHAKE FAILED"
-                        icon={<Bot size={16} />}
-                        className="px-16 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-2 border-white/10 ring-8 ring-white/5"
-                      />
                    </div>
                 </div>
 
                 <div className="lg:col-span-4 space-y-8">
-                   <div className="glass-card p-10 rounded-[56px] border-2 border-indigo-500/20 bg-indigo-950/10 relative overflow-hidden shadow-3xl flex flex-col flex-1 group">
-                      <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Bot size={400} /></div>
-                      <div className="relative z-10 space-y-10">
-                         <div className="flex items-center gap-6 border-b border-indigo-500/20 pb-8">
-                            <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl flex items-center justify-center text-white border-2 border-white/10">
-                               <Bot size={32} className="animate-pulse" />
-                            </div>
-                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Advisor</h3>
-                         </div>
-                         <div className="flex-1 min-h-[300px] overflow-y-auto custom-scrollbar pr-4">
-                            {!oracleAdvice ? (
-                               <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-20">
-                                  <Database size={80} className="text-slate-600" />
-                                  <p className="text-xl font-black uppercase tracking-[0.4em] text-white italic">ORACLE_STANDBY</p>
-                               </div>
-                            ) : (
-                               <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-10">
-                                  <div className="p-8 bg-black/80 rounded-[48px] border border-indigo-500/20 shadow-inner border-l-8 border-l-indigo-600">
-                                     <p className="text-slate-300 text-lg leading-relaxed italic whitespace-pre-line font-medium">
-                                        {oracleAdvice}
-                                     </p>
-                                  </div>
-                               </div>
-                            )}
-                         </div>
+                   {/* Global Treasury View */}
+                   <div className="p-10 glass-card rounded-[56px] border border-indigo-500/20 bg-indigo-500/5 space-y-6 shadow-xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Globe2 size={160} className="text-indigo-400" /></div>
+                      <div className="relative z-10">
+                         <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">Global Network Treasury</p>
+                         <h4 className="text-5xl font-mono font-black text-white tracking-tighter italic mt-4">12.4M <span className="text-lg">EAC</span></h4>
+                         <p className="text-[10px] text-slate-500 font-medium italic mt-4 leading-relaxed">
+                            "Aggregated liquidity across all 4,214 active nodes in the EnvirosAgro ecosystem."
+                         </p>
+                      </div>
+                   </div>
+
+                   {/* Internal System Treasury */}
+                   <div className="p-10 glass-card rounded-[56px] border border-rose-500/20 bg-rose-500/5 space-y-6 shadow-xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Database size={160} className="text-rose-400" /></div>
+                      <div className="relative z-10">
+                         <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest">Internal System Shard</p>
+                         <h4 className="text-5xl font-mono font-black text-white tracking-tighter italic mt-4">2.8M <span className="text-lg">EAC</span></h4>
+                         <p className="text-[10px] text-slate-500 font-medium italic mt-4 leading-relaxed">
+                            "Reserved for system-wide m-constant stabilization and EnvirosAgro AI resource anchoring."
+                         </p>
                       </div>
                    </div>
                 </div>

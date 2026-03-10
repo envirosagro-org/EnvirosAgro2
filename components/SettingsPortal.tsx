@@ -5,7 +5,7 @@ import {
   Smartphone, Volume2, Palette, Type, Sun, Moon, 
   CheckCircle2, AlertTriangle, Languages, Sliders, Battery, 
   Satellite, Wifi, Landmark, Cloud, Download, Compass, 
-  Layout, Eye, Sparkles, Binary, Heart, Search, 
+  Layout, Eye, Leaf, Binary, Heart, Search, 
   SmartphoneNfc, FileCode, BadgeCheck, Terminal, Bot, 
   ArrowRight, Key, Layers, Target, Scale, ZapOff, 
   Contrast, Maximize2, Sprout, Loader2, Link2, ShieldPlus, Fingerprint, Network

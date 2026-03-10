@@ -7,7 +7,7 @@ import {
   Minimize2,
   Send, 
   Loader2, 
-  Sparkles, 
+  Leaf, 
   ShieldCheck, 
   Zap, 
   Info, 
@@ -122,7 +122,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ isOpen, onClose
                 <SycamoreLogo size={32} className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
               </div>
               <div>
-                <h4 className="text-sm md:text-base font-black text-white uppercase tracking-widest leading-none">CONCIERGE ORACLE</h4>
+                <h4 className="text-sm md:text-base font-black text-white uppercase tracking-widest leading-none">ENVIROSAGRO AI</h4>
                 <p className="text-[8px] md:text-[10px] text-indigo-400 font-bold uppercase tracking-tighter mt-1">Industrial Deep-Link Logic</p>
               </div>
             </div>

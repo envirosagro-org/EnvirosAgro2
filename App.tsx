@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
-  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Sparkles, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, Factory, Monitor, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
+  LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, Factory, Monitor, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
   Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, Signal as SignalIcon, Target,
   Truck, Layers, Map as MapIcon, Compass as CompassIcon, Server, Workflow, ShieldPlus, ChevronLeftCircle, ArrowLeft,
   ChevronRight, ArrowUp, UserCheck, BookOpen, Stamp, Binoculars, Command, Bot, Wand2, Brain, ArrowRight, Home,
@@ -79,6 +79,7 @@ const DigitalMRV = React.lazy(() => import('./components/DigitalMRV'));
 const OnlineGarden = React.lazy(() => import('./components/OnlineGarden'));
 const FarmOS = React.lazy(() => import('./components/FarmOS'));
 const MediaLedger = React.lazy(() => import('./components/MediaLedger'));
+const AgroMultimediaGenerator = React.lazy(() => import('./components/AgroMultimediaGenerator'));
 const Sitemap = React.lazy(() => import('./components/Sitemap'));
 const AIAnalyst = React.lazy(() => import('./components/AIAnalyst'));
 const VerificationHUD = React.lazy(() => import('./components/VerificationHUD'));
@@ -88,6 +89,8 @@ const Robot = React.lazy(() => import('./components/Robot'));
 const MeshProtocol = React.lazy(() => import('./components/MeshProtocol'));
 const RegistryHandshake = React.lazy(() => import('./components/RegistryHandshake'));
 const EducationalResources = React.lazy(() => import('./components/EducationalResources'));
+const CostAccountingDashboard = React.lazy(() => import('./components/CostAccountingDashboard'));
+const InternalControlDashboard = React.lazy(() => import('./components/InternalControlDashboard'));
 
 import { 
   syncUserToCloud, 
@@ -108,6 +111,7 @@ import {
 } from './services/firebaseService';
 import { chatWithAgroExpert } from './services/geminiService';
 import { getFullCostAudit } from './services/costAccountingService';
+import { generateAlphanumericId } from './systemFunctions';
 
 export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => (
   <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className}`}>
@@ -319,7 +323,8 @@ const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
       { id: 'mesh_protocol', name: 'Mesh Protocol', icon: Network, sections: [{id: 'topology', label: 'Network Topology'}, {id: 'commits', label: 'Block Shards'}, {id: 'mempool', label: 'Inbound Mempool'}] },
       { id: 'sustainability', name: 'Sustainability Shard', icon: Leaf },
-      { id: 'ai_analyst', name: 'Neural Analyst', icon: Brain },
+      { id: 'ai_analyst', name: 'EnvirosAgro AI', icon: SycamoreLogo },
+      { id: 'internal_control', name: 'Internal Control', icon: ShieldCheck },
       { id: 'settings', name: 'System Settings', icon: Settings, sections: [{id: 'display', label: 'UI Display'}, {id: 'privacy', label: 'Security Shards'}] },
       { id: 'profile', name: 'Steward Profile', icon: UserIcon, sections: [{id: 'dossier', label: 'Personal Registry'}, {id: 'card', label: 'Identity Shard'}, {id: 'celestial', label: 'Birth Resonance'}] },
       { id: 'explorer', name: 'Monitoring Hub', icon: Database, sections: [{id: 'terminal', label: 'Signal Terminal'}, {id: 'blocks', label: 'Blocks'}, {id: 'ledger', label: 'Tx Ledger'}, {id: 'consensus', label: 'Quorum'}, {id: 'settlement', label: 'Finality'}] },
@@ -344,7 +349,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
     items: [
       { id: 'industrial', name: 'Industrial Cloud', icon: Factory, sections: [{id: 'bridge', label: 'Registry Bridge'}, {id: 'sync', label: 'Process Sync'}, {id: 'path', label: 'Analyzer'}] },
       { id: 'agro_value_enhancement', name: 'Value Forge', icon: FlaskConical, sections: [{id: 'synthesis', label: 'Asset Synthesis'}, {id: 'optimization', label: 'Process Tuning'}] },
-      { id: 'wallet', name: 'Agro Wallet Hub', icon: Wallet, sections: [{id: 'treasury', label: 'Utility'}, {id: 'calibrations', label: 'Cost Calibration'}, {id: 'staking', label: 'Staking'}, {id: 'swap', label: 'Swap'}] },
+      { id: 'wallet', name: 'Agro Wallet Hub', icon: Wallet, sections: [{id: 'treasury', label: 'Utility'}, {id: 'accounting', label: 'Cost Management'}, {id: 'staking', label: 'Staking'}, {id: 'swap', label: 'Swap'}] },
       { id: 'economy', name: 'Market Center', icon: Globe, sections: [{id: 'catalogue', label: 'Registry Assets'}, {id: 'infrastructure', label: 'Industrial Nodes'}, {id: 'forecasting', label: 'Demand Matrix'}] },
       { id: 'vendor', name: 'Vendor Command', icon: Warehouse },
       { id: 'ecosystem', name: 'Brand Multiverse', icon: Layers },
@@ -388,6 +393,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'biotech_hub', name: 'Biotech Hub', icon: Dna },
       { id: 'permaculture_hub', name: 'Permaculture Hub', icon: Compass },
       { id: 'cea_portal', name: 'CEA Portal', icon: BoxSelect },
+      { id: 'multimedia_generator', name: 'Agro Multimedia Forge', icon: SycamoreLogo },
       { id: 'media_ledger', name: 'Media Ledger', icon: FileStack },
       { id: 'media', name: 'Media Hub', icon: Tv },
       { id: 'channelling', name: 'Channelling Hub', icon: Share2 },
@@ -670,7 +676,7 @@ const App: React.FC = () => {
     if (existing) return;
 
     const newConn: HoodConnection = {
-      id: `HOOD-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      id: `HOOD-${generateAlphanumericId(7)}`,
       stewardEsin: user.esin,
       targetEsin,
       type,
@@ -697,7 +703,7 @@ const App: React.FC = () => {
       // Multi-channel routing
       const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP'); 
       if (popupLayer) { 
-        const id = Math.random().toString(36).substring(7); 
+        const id = generateAlphanumericId(7).toLowerCase(); 
         setNotifications(prev => [{ 
           id, 
           type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info', 
@@ -755,6 +761,9 @@ const App: React.FC = () => {
       case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => setView('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} />;
       case 'channelling': return <Channelling user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
       case 'media': return <MediaHub user={currentUser} userBalance={currentUser.wallet.balance} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} initialAction={viewSection} />;
+      case 'multimedia_generator': return <AgroMultimediaGenerator user={currentUser} onNavigate={navigate} onEarnEAC={handleEarnEAC} />;
+      case 'cost_accounting': return <CostAccountingDashboard />;
+      case 'internal_control': return <InternalControlDashboard userRole="STEWARD" currentPath={view} />;
       case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} initialSection={viewSection} />;
       case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} />;
       case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} liveProducts={liveProducts} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
@@ -882,23 +891,32 @@ const App: React.FC = () => {
            </div>
            
            <div className="flex-1 max-w-md mx-6 hidden md:block">
-              <button onClick={() => setIsGlobalSearchOpen(true)} className="w-full h-10 bg-white/5 border border-white/10 rounded-2xl px-6 flex items-center justify-between text-slate-500 hover:border-emerald-500/40 hover:bg-white/10 transition-all group shadow-inner">
-                 <div className="flex items-center gap-3">
-                    <Search size={14} className="group-hover:text-emerald-400 transition-colors" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">Search Multi-Ledger Registry...</span>
-                 </div>
-                 <div className="flex items-center gap-1.5 opacity-30">
-                    <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">⌘</span>
-                    <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">K</span>
-                 </div>
-              </button>
+              <div className="flex items-center gap-4">
+                 <button onClick={() => setIsGlobalSearchOpen(true)} className="flex-1 h-10 bg-white/5 border border-white/10 rounded-2xl px-6 flex items-center justify-between text-slate-500 hover:border-emerald-500/40 hover:bg-white/10 transition-all group shadow-inner">
+                    <div className="flex items-center gap-3">
+                       <Search size={14} className="group-hover:text-emerald-400 transition-colors" />
+                       <span className="text-[8px] font-black uppercase tracking-widest">Search Multi-Ledger Registry...</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 opacity-30">
+                       <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">⌘</span>
+                       <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">K</span>
+                    </div>
+                 </button>
+                 <button 
+                   onClick={() => navigate('internal_control')}
+                   className="h-10 px-4 bg-rose-600/10 border border-rose-600/20 rounded-2xl flex items-center gap-3 hover:bg-rose-600/20 transition-all group shadow-inner shrink-0"
+                 >
+                   <ShieldAlert size={14} className="text-rose-500 animate-pulse" />
+                   <span className="text-[7px] font-black uppercase tracking-widest text-rose-500">Control Active</span>
+                 </button>
+              </div>
            </div>
 
            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button 
                 onClick={() => { setIsConsultantOpen(!isConsultantOpen); setIsGlobalSearchOpen(false); setIsInboxOpen(false); }}
                 className={`p-2.5 rounded-xl border transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
-                title="Concierge Oracle"
+                title="EnvirosAgro AI"
               >
                  <SycamoreLogo size={18} className={isConsultantOpen ? "text-white" : "text-emerald-400"} />
                  <div className={`absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-black ${isConsultantOpen ? 'animate-none' : 'animate-pulse'}`}></div>

@@ -54,7 +54,8 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
   const startSession = async () => {
     setIsConnecting(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY;
+      const ai = new GoogleGenAI({ apiKey });
       
       // Safeguard against non-constructor or missing AudioContext
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;

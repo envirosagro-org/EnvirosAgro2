@@ -8,7 +8,7 @@ import {
   History, Fingerprint, Lock, Layers,
   ChevronRight, ArrowRight, ArrowUpRight,
   Database as PostgresIcon, Server, Search, RefreshCw,
-  Bot, Monitor, Sparkles, AlertCircle, LayoutGrid,
+  Bot, Monitor, Leaf, AlertCircle, LayoutGrid,
   Box,
   Atom,
   TrendingUp,
@@ -18,6 +18,7 @@ import { User, MeshNode, AgroBlock } from '../types';
 import { auditMeshStability, AIResponse } from '../services/geminiService';
 import { SycamoreLogo } from '../App';
 import { startBackgroundDataSync } from '../services/firebaseService';
+import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 
 interface MeshProtocolProps {
   user: User;
@@ -73,7 +74,7 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain }) => {
         const fromIdx = Math.floor(Math.random() * nodes.length);
         const toIdx = Math.floor(Math.random() * nodes.length);
         if (fromIdx !== toIdx) {
-          const shardId = `SHD-${Math.random().toString(36).substring(7).toUpperCase()}`;
+          const shardId = `SHD-${generateAlphanumericId(7)}`;
           setShardsInFlight(prev => [...prev, { id: shardId, from: nodes[fromIdx].id, to: nodes[toIdx].id, progress: 0 }]);
         }
       }
@@ -81,7 +82,7 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain }) => {
       // Mempool Ingest Logic
       if (Math.random() > 0.7) {
         const newTx: MempoolTx = {
-          hash: `0x${Math.random().toString(16).substring(2, 10).toUpperCase()}`,
+          hash: `0x${generateQuickHash()}`,
           from: nodes[Math.floor(Math.random() * nodes.length)]?.id || 'EXT_NODE',
           value: (Math.random() * 500 + 10).toFixed(1) + ' EAC',
           timestamp: new Date().toLocaleTimeString(),
@@ -301,7 +302,7 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain }) => {
                  ) : (
                     <div className="space-y-8 h-full flex flex-col">
                        <div className="glass-card p-12 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/10 flex flex-col text-center space-y-10 shadow-3xl relative overflow-hidden group/audit flex-1">
-                          <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><Sparkles size={400} className="text-indigo-400" /></div>
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><Leaf size={400} className="text-indigo-400" /></div>
                           <div className="relative z-10 space-y-12">
                              <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 animate-float">
                                 <Bot size={48} className="text-white animate-pulse" />

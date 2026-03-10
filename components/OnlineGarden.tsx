@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Satellite, Zap, ShieldCheck, Bot, Sparkles, 
+  Satellite, Zap, ShieldCheck, Bot, 
   Layers, Binary, Target, Globe, Loader2, Stamp, 
   Fingerprint, Wind, CheckCircle2, Sprout, RefreshCw, Terminal, 
   Activity, MapPin, Smartphone, Star, ArrowLeftCircle, Wrench, 
@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { User, ViewState, AgroResource } from '../types';
 import { analyzeMiningYield } from '../services/geminiService';
+import { generateQuickHash } from '../systemFunctions';
 
 interface OnlineGardenProps {
   user: User;
@@ -41,8 +42,8 @@ const ResourceShard: React.FC<{
   onExecute: (code: string) => void;
 }> = ({ resource, isSelected, onSelect, onExecute }) => {
   
-  const genesisHash = useMemo(() => `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}_GENESIS`, []);
-  const currentHash = useMemo(() => `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}_THREAD`, []);
+  const genesisHash = useMemo(() => `0x${generateQuickHash()}_GENESIS`, []);
+  const currentHash = useMemo(() => `0x${generateQuickHash()}_THREAD`, []);
 
   const getOptimizationCode = () => {
     const isLand = resource.category === 'LAND';
@@ -266,7 +267,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
         node_id: user.esin,
         m_constant: user.metrics.timeConstantTau
       });
-      const eventHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}_MINED`;
+      const eventHash = `0x${generateQuickHash()}_MINED`;
       setMiningInference({ ...res, eventHash });
       onEarnEAC(type === 'carbon' ? 50 : 25, `${type.toUpperCase()}_MINING_CYCLE_COMPLETE`);
     } catch (e) {
@@ -419,7 +420,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                       <div className="p-8 bg-black/90 rounded-[40px] border border-white/10 relative z-10 animate-in fade-in slide-in-from-top-2">
                          <div className="flex justify-between items-center mb-4">
                             <span className="text-[10px] font-mono text-blue-400 font-bold">COMMIT_SHARD_ACTIVE // {syncProgress}%</span>
-                            <span className="text-[10px] text-slate-600 font-mono">0xSYNC_{Math.random().toString(16).slice(2,8).toUpperCase()}_OK</span>
+                            <span className="text-[10px] text-slate-600 font-mono">0xSYNC_{generateQuickHash(6)}_OK</span>
                          </div>
                          <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5">
                             <div className="h-full bg-blue-500 rounded-full transition-all duration-300 shadow-[0_0_15px_#3b82f6]" style={{ width: `${syncProgress}%` }}></div>
@@ -563,7 +564,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
               {miningInference && !isMining && (
                  <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-8">
                     <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-amber-500/20 shadow-3xl border-l-[16px] border-l-amber-600 relative overflow-hidden group/advice">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform"><Sparkles size={600} className="text-amber-500" /></div>
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform"><Leaf size={600} className="text-amber-500" /></div>
                        <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
                           <div className="flex items-center gap-6">
                              <Bot size={40} className="text-amber-400" />

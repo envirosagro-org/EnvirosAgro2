@@ -5,7 +5,7 @@ import {
 import { 
   Leaf, Activity, Zap, Info, ShieldCheck, Binary, 
   Sprout, TrendingUp, Loader2, Waves, 
-  TreePine, Radio, Target, Heart, Atom, Sparkles, RefreshCw, AlertTriangle,
+  TreePine, Radio, Target, Heart, Atom, RefreshCw, AlertTriangle,
   Gauge, CheckCircle2, Dna, Fingerprint, Microscope, ArrowRight,
   ShieldAlert, Lock, Key, ShieldPlus, Database, History, 
   CloudRain, Wind, Scale, Landmark, Boxes, Workflow, 
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { analyzeSustainability, AIResponse } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
-import { calculateMConstant } from '../systemFunctions';
+import { calculateMConstant, generateQuickHash } from '../systemFunctions';
 
 interface SustainabilityProps {
   user: User;
@@ -111,7 +111,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
     
     setIsArchiving(true);
     try {
-      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const shardHash = `0x${generateQuickHash()}`;
       const newShard: Partial<MediaShard> = {
         title: `SUSTAINABILITY_AUDIT: ${integrityStatus}`,
         type: 'ORACLE',
@@ -137,7 +137,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
 
   const handleDownloadReport = () => {
     if (!oracleVerdict) return;
-    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const shardId = `0x${generateQuickHash()}`;
     const report = `
 ENVIROSAGRO™ SUSTAINABILITY AUDIT SHARD
 =======================================

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Globe, Server, Activity, ShieldCheck, Network, Zap, 
   Box, Loader2, Signal, Radio, Terminal, Database, 
-  Sparkles, Bot, ShieldAlert, Waves, Binary, Lock, Layers,
+  Leaf, Bot, ShieldAlert, Waves, Binary, Lock, Layers,
   ChevronRight, ArrowUpRight, Target, Gauge, Cpu, Workflow,
   Stamp, Eye, Search, AlertTriangle, Atom, Share2, 
   Fingerprint, Circle, Key, Link2, MapPin, RadioReceiver,
@@ -15,6 +15,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { auditMeshStability, AIResponse } from '../services/geminiService';
 import { SycamoreLogo } from '../App';
+import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 
 interface NodeShard {
   id: string;
@@ -88,7 +89,7 @@ const NetworkView: React.FC = () => {
         const fromIdx = Math.floor(Math.random() * nodes.length);
         const toIdx = Math.floor(Math.random() * nodes.length);
         if (fromIdx !== toIdx) {
-          const shardId = `SHD-${Math.random().toString(36).substring(7).toUpperCase()}`;
+          const shardId = `SHD-${generateAlphanumericId(7)}`;
           const fromName = nodes[fromIdx].id;
           const toName = nodes[toIdx].id;
           
@@ -109,7 +110,7 @@ const NetworkView: React.FC = () => {
       // 2. Mempool Ingest
       if (Math.random() > 0.7) {
         const newTx: MempoolTx = {
-          hash: `0x${Math.random().toString(16).substring(2, 10).toUpperCase()}`,
+          hash: `0x${generateQuickHash()}`,
           from: nodes[Math.floor(Math.random() * nodes.length)]?.id || 'EXT_NODE',
           value: (Math.random() * 500 + 10).toFixed(1) + ' EAC',
           timestamp: 'Just now',
@@ -400,7 +401,7 @@ const NetworkView: React.FC = () => {
                        ) : (
                           <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10">
                              <div className="p-10 md:p-14 bg-black/90 rounded-[64px] border border-indigo-500/20 shadow-3xl border-l-[24px] border-l-indigo-600 relative overflow-hidden group/advice text-left">
-                                <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={600} className="text-indigo-400" /></div>
+                                <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Leaf size={600} className="text-indigo-400" /></div>
                                 <div className="flex items-center gap-6 mb-12 border-b border-white/5 pb-8 relative z-10">
                                    <BadgeCheck size={44} className="text-indigo-400" />
                                    <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Audit Verdict</h4>

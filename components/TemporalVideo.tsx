@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Video, Play, Loader2, Sparkles, AlertTriangle, 
+  Video, Play, Loader2, Leaf, AlertTriangle, 
   Download, Clock, Database, ShieldCheck, RefreshCw, 
   Key, Globe, Bot, Binary, TrendingUp, X
 } from 'lucide-react';
 import { generateTemporalVideo, getTemporalVideoOperation } from '../services/geminiService';
 import { User } from '../types';
 import { SycamoreLogo } from '../App';
+import MultimediaPlayer from './MultimediaPlayer';
 
 interface TemporalVideoProps {
   user: User;
@@ -19,6 +20,7 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [status, setStatus] = useState('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [playerOpen, setPlayerOpen] = useState(false);
 
   useEffect(() => {
     checkApiKey();
@@ -61,7 +63,8 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
 
       const downloadLink = (operation as any).response?.generatedVideos?.[0]?.video?.uri;
       if (downloadLink) {
-        const response = await fetch(`${downloadLink}&key=${process.env.GEMINI_API_KEY}`);
+        const apiKey = process.env.GEMINI_API_KEY;
+        const response = await fetch(`${downloadLink}&key=${apiKey}`);
         const blob = await response.blob();
         setVideoUrl(URL.createObjectURL(blob));
       }
@@ -130,7 +133,7 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
                     onClick={handleGenerate}
                     className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-indigo-500/5"
                   >
-                     <Sparkles size={32} className="fill-current mr-4" /> INITIALIZE TEMPORAL FORGE
+                     <Leaf size={32} className="fill-current mr-4" /> INITIALIZE TEMPORAL FORGE
                   </button>
                </div>
             ) : isGenerating ? (
@@ -146,8 +149,13 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
               </div>
             ) : (
               <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10">
-                 <div className="rounded-[64px] overflow-hidden border-4 border-white/10 shadow-3xl bg-black relative aspect-video group/video">
-                    <video src={videoUrl!} controls autoPlay loop className="w-full h-full object-cover" />
+                 <div className="rounded-[64px] overflow-hidden border-4 border-white/10 shadow-3xl bg-black relative aspect-video group/video cursor-pointer" onClick={() => setPlayerOpen(true)}>
+                    <video src={videoUrl!} autoPlay loop muted className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/video:opacity-100 transition-opacity">
+                       <div className="w-24 h-24 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-3xl border-4 border-white/10">
+                          <Play size={48} fill="white" />
+                       </div>
+                    </div>
                     <div className="absolute top-8 right-8 flex gap-4 opacity-0 group-hover/video:opacity-100 transition-opacity">
                        <button className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl hover:bg-emerald-600 transition-all active:scale-90"><Download size={24}/></button>
                     </div>
@@ -160,6 +168,16 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
             )}
          </div>
       </div>
+
+      <MultimediaPlayer
+        isOpen={playerOpen}
+        onClose={() => setPlayerOpen(false)}
+        mediaUrl={videoUrl || ''}
+        mediaType="VIDEO"
+        title="TEMPORAL_SHARD_PREVIEW"
+        author={user.name}
+        shardId="VEO-SIM-01"
+      />
     </div>
   );
 };

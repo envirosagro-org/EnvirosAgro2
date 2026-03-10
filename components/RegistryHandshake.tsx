@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   SmartphoneNfc, Cpu, MapPin, Search, X, Loader2, CheckCircle2, 
-  ShieldCheck, ArrowRight, Upload, History, Binary, Bot, Sparkles, 
+  ShieldCheck, ArrowRight, Upload, History, Binary, Bot, Leaf, 
   Satellite, Fingerprint, Lock, ShieldAlert, Zap, Globe, Compass, 
   Stamp, Workflow, Terminal, Code2, Download, AlertTriangle, Info,
   BadgeCheck, Monitor, History as HistoryIcon, Send, RefreshCw, Layers,
@@ -20,6 +20,7 @@ interface RegistryHandshakeProps {
 }
 
 import { useAppStore } from '../store';
+import { generateAlphanumericId } from '../systemFunctions';
 
 const HARDWARE_PROTOCOL_STEPS: Partial<HandshakeStep>[] = [
   { id: 'NET_PAIR', label: 'Network Pairing' },
@@ -171,7 +172,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
     setStatusMsg('COMMITTING TO PERMANENT REGISTRY...');
     
     const newResource: AgroResource = {
-      id: `SHD-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+      id: `SHD-${generateAlphanumericId(4)}`,
       category: mode!,
       name: assetName,
       type: assetType,

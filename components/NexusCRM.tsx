@@ -23,7 +23,7 @@ import {
   ArrowUpRight,
   Clock,
   MessagesSquare,
-  Sparkles,
+  Leaf,
   Bot,
   User as UserIcon,
   Globe,
@@ -378,7 +378,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
                                ? 'bg-indigo-600 text-white rounded-tr-none border-t-8 border-indigo-500' 
                                : 'glass-card border border-white/10 rounded-tl-none italic bg-black/90 text-slate-200 border-l-8 border-l-emerald-500'
                           }`}>
-                             {msg.role === 'bot' && <div className="absolute top-0 right-0 p-6 opacity-[0.02]"><Sparkles size={140} /></div>}
+                             {msg.role === 'bot' && <div className="absolute top-0 right-0 p-6 opacity-[0.02]"><Leaf size={140} /></div>}
                              <p className="relative z-10 whitespace-pre-line font-medium leading-loose">"{msg.text}"</p>
                           </div>
                           <span className="text-[10px] font-mono text-slate-700 px-10 font-bold italic tracking-widest">{msg.time}</span>

@@ -16,7 +16,6 @@ import {
   X,
   Activity,
   Film,
-  Sparkles,
   Camera,
   Maximize,
   AlertCircle,
@@ -109,6 +108,8 @@ import {
 import { User, ViewState, MediaShard } from '../types';
 import { searchAgroTrends, chatWithAgroExpert, AIResponse } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import MultimediaPlayer from './MultimediaPlayer';
+import { generateQuickHash } from '../systemFunctions';
 
 interface MediaHubProps {
   user: User;
@@ -151,6 +152,17 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
   
   const [isMuted, setIsMuted] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+
+  // Multimedia Player State
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [playerConfig, setPlayerConfig] = useState<{
+    url: string;
+    type: 'VIDEO' | 'AUDIO';
+    title: string;
+    author?: string;
+    shardId?: string;
+    thumbnail?: string;
+  }>({ url: '', type: 'VIDEO', title: '' });
 
   // Device References
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -300,7 +312,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
         author: user.name,
         authorEsin: user.esin,
         timestamp: new Date().toISOString(),
-        hash: `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
+        hash: `0x${generateQuickHash()}`,
         mImpact: (reactionStats.check * 0.1 + 1.42).toFixed(2),
         size: `${(streamDuration * 0.42).toFixed(1)} MB`,
         content: `Mode: ${streamMode}. Engagement Proof: Zaps(${reactionStats.zaps}), Checks(${reactionStats.check}). Final Consensus: 100% Verified.`
@@ -334,9 +346,46 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
     }
   };
 
+  const openPlayer = (config: typeof playerConfig) => {
+    setPlayerConfig(config);
+    setPlayerOpen(true);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto px-1 md:px-4">
       
+      {/* AgroMusika Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-indigo-600 rounded-2xl shadow-2xl border border-white/10">
+              <Leaf size={24} className="text-white" />
+            </div>
+            <h2 className="text-xs font-black text-indigo-400 uppercase tracking-[0.6em] italic">AGROMUSIKA_MEDIA_CORE</h2>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">
+            Media <span className="text-indigo-400">Hub</span>
+          </h1>
+          <p className="text-slate-500 text-lg font-medium italic max-w-2xl">
+            "Powered by AgroMusika. High-fidelity industrial media ingest, synthesis, and archival for the EnvirosAgro ecosystem."
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-4">
+           <button 
+             onClick={() => onNavigate('multimedia_generator' as any)}
+             className="px-8 py-4 agro-gradient rounded-2xl text-white font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-3 hover:scale-105 transition-all border border-white/10 ring-8 ring-indigo-500/5"
+           >
+              <Zap size={18} /> MULTIMEDIA_FORGE
+           </button>
+           <button 
+             onClick={() => onNavigate('media_ledger')}
+             className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-white transition-all flex items-center gap-3 shadow-xl"
+           >
+              <Database size={18} /> MEDIA_LEDGER
+           </button>
+        </div>
+      </div>
+
       {/* Registry Pulse Ticker */}
       <div className="glass-card p-4 rounded-3xl border-emerald-500/20 flex items-center overflow-hidden bg-emerald-500/5 relative shadow-lg">
         <div className="flex items-center gap-3 shrink-0 px-6 border-r border-white/5 relative z-10">
@@ -381,7 +430,17 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                    <span className="px-4 py-1.5 bg-emerald-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-2xl">FEATURED_SHARD</span>
                    <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl">REGENERATIVE <span className="text-emerald-400">CITADELS</span></h3>
                    <p className="text-slate-200 text-xl font-medium italic drop-shadow-lg">"Exploring the high-fidelity integration of ancestral soil wisdom and cybernetic swarm logic."</p>
-                   <button onClick={() => setTab('video')} className="px-10 py-5 bg-white text-black rounded-full font-black text-xs uppercase tracking-widest shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
+                   <button 
+                     onClick={() => openPlayer({
+                       url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                       type: 'VIDEO',
+                       title: 'REGENERATIVE CITADELS',
+                       author: 'SkyScout Network',
+                       shardId: 'VID-FEAT-01',
+                       thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=1600'
+                     })} 
+                     className="px-10 py-5 bg-white text-black rounded-full font-black text-xs uppercase tracking-widest shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                   >
                       <PlayCircle size={20} /> Access Shard
                    </button>
                 </div>
@@ -486,7 +545,16 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                              <p className={`text-xl font-mono font-black ${track.free ? 'text-emerald-400' : 'text-amber-500'}`}>{track.free ? 'UNLOCKED' : `${track.cost} EAC`}</p>
                           </div>
                           {track.free ? (
-                             <button className="p-8 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white shadow-3xl active:scale-90 transition-all border-2 border-white/10 ring-8 ring-emerald-500/5">
+                             <button 
+                               onClick={() => openPlayer({
+                                 url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                                 type: 'AUDIO',
+                                 title: track.title,
+                                 author: 'Bio-Electric Node',
+                                 shardId: track.id
+                               })}
+                               className="p-8 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white shadow-3xl active:scale-90 transition-all border-2 border-white/10 ring-8 ring-emerald-500/5"
+                             >
                                 <Play size={32} fill="white" />
                              </button>
                           ) : (
@@ -683,13 +751,36 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
                     <div className="p-8 space-y-4">
                        <h4 className="text-xl font-black text-white uppercase italic">{node.title}</h4>
                        <p className="text-xs text-slate-500 line-clamp-2 italic">"{node.desc}"</p>
-                       <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-slate-400 hover:text-white hover:bg-emerald-600 transition-all uppercase">Enter Ingest Node</button>
+                       <button 
+                         onClick={() => openPlayer({
+                           url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+                           type: 'VIDEO',
+                           title: node.title,
+                           author: 'Registry Node',
+                           shardId: node.id,
+                           thumbnail: node.thumb
+                         })}
+                         className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-slate-400 hover:text-white hover:bg-emerald-600 transition-all uppercase"
+                       >
+                         Enter Ingest Node
+                       </button>
                     </div>
                  </div>
               ))}
            </div>
         )}
       </div>
+
+      <MultimediaPlayer
+        isOpen={playerOpen}
+        onClose={() => setPlayerOpen(false)}
+        mediaUrl={playerConfig.url}
+        mediaType={playerConfig.type}
+        title={playerConfig.title}
+        author={playerConfig.author}
+        shardId={playerConfig.shardId}
+        thumbnail={playerConfig.thumbnail}
+      />
 
       <style>{`
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }

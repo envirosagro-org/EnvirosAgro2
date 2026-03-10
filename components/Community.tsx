@@ -4,7 +4,7 @@ import * as LucideIcons from 'lucide-react';
 import { 
   PlayCircle, GraduationCap, Video, BookOpen, MessageSquare, Award, Clock, ChevronRight, FileText, Library, Coins,
   Users, Globe, Heart, PlusCircle, TrendingUp, ShieldCheck, Search, Users2, Briefcase, Lightbulb, CheckCircle2,
-  X, Loader2, ArrowUpRight, Handshake, Zap, Upload, Sparkles, BarChart4, ExternalLink, MapPin, Fingerprint,
+  X, Loader2, ArrowUpRight, Handshake, Zap, Upload, Leaf, BarChart4, ExternalLink, MapPin, Fingerprint,
   Activity, History, Info, BadgeCheck, Dna, Lock, SearchCode, Target, Bot, Brain, ShieldAlert, HeartPulse,
   BrainCircuit, AlertTriangle, Waves, Atom, RefreshCw, Scale, FileSignature, FileCheck, ClipboardCheck,
   FileDown, Timer, LayoutGrid, Trophy, PenTool, ArrowRight, AlertCircle, Download, Terminal, FileDigit,
@@ -36,6 +36,7 @@ import {
 import { User, ViewState, Collective, SocialPost, PostComment, StewardConnection } from '../types';
 import { generateAgroExam, getGroundedAgroResources, chatWithAgroExpert, AIResponse } from '../services/geminiService';
 import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '../services/firebaseService';
+import { generateAlphanumericId } from '../systemFunctions';
 
 interface CommunityProps {
   user: User;
@@ -132,7 +133,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
     if (!await onSpendEAC(fee, 'COLLECTIVE_NODE_INITIALIZATION')) return;
 
     const newColl: Collective = {
-      id: `SHD-${Math.random().toString(36).substring(7).toUpperCase()}`,
+      id: `SHD-${generateAlphanumericId(7)}`,
       name: newCollName,
       adminEsin: user.esin,
       adminName: user.name,
@@ -726,7 +727,7 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
               {lmsSubTab === 'forge' && (
                  <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-10 duration-700">
                     <div className="glass-card p-16 md:p-24 rounded-[80px] border-2 border-indigo-500/20 bg-black/60 shadow-3xl text-center space-y-12 relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Sparkles size={800} className="text-indigo-400" /></div>
+                       <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Leaf size={800} className="text-indigo-400" /></div>
                        <div className="relative z-10 space-y-10">
                           <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 animate-float group-hover:rotate-12 transition-transform">
                              <Wand2 size={48} className="text-white animate-pulse" />

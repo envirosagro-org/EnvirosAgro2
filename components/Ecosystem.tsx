@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  Flower2, Music, Heart, Bot, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, Sparkles, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCw, Handshake,
+  Flower2, Music, Heart, Bot, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCw, Handshake,
   Stethoscope as DoctorIcon,
   ShieldPlus,
   Thermometer,
@@ -49,6 +49,7 @@ import {
 import { User, ViewState, MediaShard } from '../types';
 import { runSpecialistDiagnostic, AIResponse } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 
 interface EcosystemProps {
   user: User;
@@ -122,7 +123,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
     if (activeBrand) {
       const interval = setInterval(() => {
         setTelemetryStream(prev => [
-          { id: Math.random().toString(36).slice(2, 6).toUpperCase(), time: new Date().toLocaleTimeString(), val: (Math.random() * 100).toFixed(2) },
+          { id: generateAlphanumericId(4), time: new Date().toLocaleTimeString(), val: (Math.random() * 100).toFixed(2) },
           ...prev
         ].slice(0, 10));
       }, 3000);
@@ -180,7 +181,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
     
     setIsArchiving(true);
     try {
-      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const shardHash = `0x${generateQuickHash()}`;
       const newShard: Partial<MediaShard> = {
         title: `BRAND_AUDIT: ${activeBrand.name}`,
         type: 'ORACLE',
@@ -206,7 +207,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
 
   const handleDownloadReport = () => {
     if (!auditResult || !activeBrand) return;
-    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const shardId = `0x${generateQuickHash()}`;
     const report = `
 ENVIROSAGRO™ BRAND MISSION SHARD
 =================================
@@ -323,7 +324,7 @@ ${auditResult.text}
                 <div className="space-y-10 animate-in fade-in duration-500">
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       <div className={`glass-card p-8 rounded-[48px] border border-white/5 bg-white/[0.01] space-y-8 shadow-2xl relative overflow-hidden group`}>
-                         <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><Sparkles size={200} /></div>
+                         <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><Leaf size={200} /></div>
                          <h3 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter m-0">Mission <span className={activeBrand.color}>Abstract</span></h3>
                          <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed opacity-90 group-hover:opacity-100 transition-opacity">
                             "{activeBrand.desc}"
@@ -448,7 +449,7 @@ ${auditResult.text}
                                <div className="relative">
                                   <Loader2 size={80} className={`text-${accentColor}-500 animate-spin mx-auto`} />
                                   <div className="absolute inset-0 flex items-center justify-center">
-                                     <Sparkles size={24} className={`text-${accentColor}-400 animate-pulse`} />
+                                     <Leaf size={24} className={`text-${accentColor}-400 animate-pulse`} />
                                   </div>
                                </div>
                                <p className={`text-${accentColor}-400 font-black text-lg uppercase tracking-[0.4em] animate-pulse italic m-0`}>SEQUENCING SHARDS...</p>
@@ -508,7 +509,7 @@ ${auditResult.text}
                                <div className={`p-3 rounded-xl bg-white/5 border border-white/10 ${activeBrand.color} shadow-inner`}>
                                   <Box size={20} />
                                </div>
-                               <span className="text-[9px] font-mono text-slate-800 font-black uppercase">SH_0x{Math.random().toString(16).slice(2, 6).toUpperCase()}</span>
+                               <span className="text-[9px] font-mono text-slate-800 font-black uppercase">SH_0x{generateQuickHash(4)}</span>
                             </div>
                             <div className="space-y-2 relative z-10">
                                <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors">Resource Unit #0{i}</h4>
@@ -644,7 +645,7 @@ ${auditResult.text}
            <div className="relative">
               <Loader2 className="w-24 h-24 text-emerald-500 animate-spin" />
               <div className="absolute inset-0 flex items-center justify-center">
-                 <Sparkles className="w-8 h-8 text-emerald-400 animate-pulse" />
+                 <Leaf className="w-8 h-8 text-emerald-400 animate-pulse" />
               </div>
            </div>
            <div className="space-y-2 text-center">

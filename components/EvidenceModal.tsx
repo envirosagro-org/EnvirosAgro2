@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Upload, ShieldCheck, Zap, Loader2, Cpu, Camera, 
-  FileText, Microscope, Binary, Coins, Sparkles, Bot,
+  FileText, Microscope, Binary, Coins, Bot,
   ArrowRight, Heart, Leaf, Dna, Database, CheckCircle2,
   AlertCircle, Cloud, MapPin, ClipboardCheck, Lock,
   Radio, Archive, Info, History, ArrowLeftCircle, Video,

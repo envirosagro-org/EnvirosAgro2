@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, Cpu, Activity, Zap, ShieldCheck, Binary, Layers, Microscope, FlaskConical, Scan, 
   AlertCircle, TrendingUp, Droplets, Wind, Sprout, Bot, Database, Upload, 
-  MapPin, X, Loader2, Sparkles, Gauge, Fingerprint, SearchCode, History, 
+  MapPin, X, Loader2, Leaf, Gauge, Fingerprint, SearchCode, History, 
   ChevronRight, LineChart, HeartPulse, Radar, 
   CheckCircle2, Info, ArrowUpRight, BrainCircuit, 
   Terminal, Atom, ImageIcon, FileSearch, 
@@ -22,6 +22,7 @@ import { User, AgroResource, ViewState, MediaShard } from '../types';
 // Fixed: Removed non-existent exports backupTelemetryShard and fetchTelemetryBackup
 import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from '../App';
+import { generateQuickHash } from '../systemFunctions';
 
 interface IntelligenceProps {
   user: User;
@@ -74,7 +75,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     
     setIsArchiving(shardKey);
     try {
-      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const shardHash = `0x${generateQuickHash()}`;
       const newShard: Partial<MediaShard> = {
         title: `${type.toUpperCase()}: ${mode.replace('_', ' ')}`,
         type: 'ORACLE',
@@ -311,7 +312,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
         {activeTab === 'hub' && (
           <div className="space-y-12 animate-in fade-in duration-700">
              <div className="p-10 md:p-14 glass-card rounded-[64px] border-indigo-500/20 bg-indigo-950/5 flex flex-col md:flex-row items-center justify-between gap-10 shadow-3xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[20s]"><Sparkles size={600} className="text-indigo-400" /></div>
+                <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:rotate-12 transition-transform duration-[20s]"><Leaf size={600} className="text-indigo-400" /></div>
                 <div className="flex items-center gap-10 relative z-10 text-center md:text-left flex-col md:flex-row">
                    <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl animate-float border-4 border-white/10 shrink-0">
                       <Zap className="w-10 h-10 text-white fill-current" />

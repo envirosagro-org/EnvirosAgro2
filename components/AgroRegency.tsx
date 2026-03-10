@@ -6,7 +6,6 @@ import {
   Zap, 
   ShieldCheck, 
   Bot, 
-  Sparkles, 
   Loader2, 
   Binary, 
   Layers, 
@@ -79,6 +78,8 @@ import {
 import { User, MediaShard } from '../types';
 import { chatWithAgroExpert, AIResponse } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import { SycamoreLogo } from '../App';
+import { generateQuickHash } from '../systemFunctions';
 
 interface AgroRegencyProps {
   user: User;
@@ -119,7 +120,7 @@ const STATE_SHARDS: Record<string, any[]> = {
   temporal: [
     { id: 'past', name: 'Past (Retrograde)', intensity: 0.30, density: 0.30, col: 'text-amber-600', icon: History, desc: 'Agricultural states from Cycle T-100.' },
     { id: 'present', name: 'Present (Registry)', intensity: 0.65, density: 0.65, col: 'text-white', icon: Clock, desc: 'Current real-time network status.' },
-    { id: 'future', name: 'Future (Advance)', intensity: 2.45, density: 2.80, col: 'text-indigo-500', icon: Sparkles, desc: 'Hypothetical states from Cycle T+50.' },
+    { id: 'future', name: 'Future (Advance)', intensity: 2.45, density: 2.80, col: 'text-indigo-500', icon: SycamoreLogo, desc: 'Hypothetical states from Cycle T+50.' },
   ],
   philosophy: [
     { id: 'permaculture', name: 'Taste: Permaculture', intensity: 0.50, density: 1.10, col: 'text-emerald-400', icon: Leaf, desc: 'Closed-loop, low stress (S), high C(a).' },
@@ -253,7 +254,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     try {
       const content = travelForecast || oracleReport || "";
       const typeLabel = travelForecast ? 'TRAVEL_FORECAST' : 'REGENCY_DERIVATIVE';
-      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const shardHash = `0x${generateQuickHash()}`;
       
       const newShard: Partial<MediaShard> = {
         title: `${typeLabel}: ${user.esin}`,
@@ -295,7 +296,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
   };
 
   const downloadReport = (content: string, mode: string, typeName: string) => {
-    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const shardId = `0x${generateQuickHash()}`;
     const report = `
 ENVIROSAGRO™ ${typeName.toUpperCase()} SHARD
 =================================
@@ -521,7 +522,7 @@ ${content}
                                     <Loader2 size={100} className="text-indigo-500 animate-spin mx-auto" />
                                  </div>
                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <Sparkles className="w-12 h-12 text-indigo-400 animate-pulse" />
+                                    <SycamoreLogo className="w-12 h-12 text-indigo-400 animate-pulse" />
                                  </div>
                               </div>
                               <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic m-0">FORGING_STATE_SHARD...</p>
@@ -538,7 +539,7 @@ ${content}
                                        <Fingerprint size={48} className="text-indigo-400" />
                                        <div className="text-left">
                                           <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">TEMPORAL_HASH</p>
-                                          <p className="text-xl font-mono text-white">0x{Math.random().toString(16).slice(2, 10).toUpperCase()}_FUTURING_OK</p>
+                                          <p className="text-xl font-mono text-white">0x{generateQuickHash()}_FUTURING_OK</p>
                                        </div>
                                     </div>
                                     <div className="flex gap-6">
@@ -692,7 +693,7 @@ ${content}
 
                  <div className="lg:col-span-5 space-y-8 flex flex-col">
                     <div className="glass-card p-12 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/10 flex flex-col text-center space-y-12 shadow-3xl relative overflow-hidden flex-1 group">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><Sparkles size={300} className="text-indigo-400" /></div>
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><SycamoreLogo size={300} className="text-indigo-400" /></div>
                        <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 relative z-10 animate-float">
                           <Bot size={56} className="text-white animate-pulse" />
                        </div>

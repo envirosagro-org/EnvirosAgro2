@@ -46,7 +46,6 @@ import {
   Building,
   Music,
   LineChart as LineChartIcon,
-  Sparkles,
   Factory,
   HeartPulse,
   SmartphoneNfc,
@@ -99,6 +98,7 @@ const FORECAST_DATA = [
 ];
 
 import { useAppStore } from '../store';
+import { generateAlphanumericId } from '../systemFunctions';
 
 const ASSET_CATEGORIES = [
   "Circular", "Raw", "Tours", "Services", "Products", "Information", "Logistics", "Facility", "Organization Service", "Input", "Manufacturing", "Warehousing", "Distribution", "Veterinary"
@@ -227,7 +227,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const handleBranding = () => {
     setIsProcessing(true);
     setTimeout(() => {
-      const assetId = Math.random().toString(36).substring(7).toUpperCase();
+      const assetId = generateAlphanumericId(7);
       const sku = `AGRO-${itemCategory.substring(0, 3).toUpperCase()}-${assetId}`;
       setGeneratedSku(sku);
       setSonicSignature(`AM-SONIC-${assetId}`);
@@ -587,7 +587,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
                  <div className="lg:col-span-4 space-y-8 flex flex-col">
                     <div className="glass-card p-10 rounded-[64px] border border-indigo-500/20 bg-indigo-950/10 space-y-8 shadow-xl relative overflow-hidden flex-1 group/advice">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/advice:scale-110 transition-transform duration-[12s]"><Sparkles size={300} className="text-indigo-400" /></div>
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/advice:scale-110 transition-transform duration-[12s]"><Leaf size={300} className="text-indigo-400" /></div>
                        <div className="flex items-center gap-4 relative z-10">
                           <Bot size={28} className="text-indigo-400 animate-pulse" />
                           <h4 className="text-xl font-black text-white uppercase tracking-widest">Streamlining Shard</h4>
@@ -1023,7 +1023,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                  {regStep === 'verification' && (
                     <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
                        <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-amber-500/20 shadow-3xl border-l-[16px] border-l-amber-600 relative overflow-hidden group/audit">
-                          <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/audit:scale-125 transition-transform duration-[15s] pointer-events-none"><Sparkles size={600} className="text-amber-500" /></div>
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/audit:scale-125 transition-transform duration-[15s] pointer-events-none"><Leaf size={600} className="text-amber-500" /></div>
                           <div className="flex items-center gap-8 mb-12 border-b border-white/5 pb-10 relative z-10">
                              <div className="w-20 h-20 bg-amber-600 rounded-3xl flex items-center justify-center text-white shadow-3xl animate-float">
                                 <Bot size={44} className="text-white animate-pulse" />

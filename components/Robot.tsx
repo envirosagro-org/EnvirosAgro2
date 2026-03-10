@@ -36,7 +36,7 @@ import {
   Eye,
   Settings,
   Trash2,
-  Sparkles,
+  Leaf,
   ArrowUpRight,
   FlaskConical,
   Code2,
@@ -52,6 +52,7 @@ import { User, ViewState, SignalShard } from '../types';
 import { chatWithAgroExpert, forgeSwarmMission } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from '../App';
+import { generateQuickHash } from '../systemFunctions';
 
 interface RobotProps {
   user: User;
@@ -99,7 +100,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
       const sources = fleet.map(b => b.id).concat(['EXTERNAL_IP', 'ORACLE_RELAY']);
       const actions = ['GET_GEOMAP', 'PUSH_TELEMETRY', 'AUTH_HANDSHAKE', 'M2M_SYNC'];
       const newPacket = {
-        id: `PKT-${Math.random().toString(16).substring(2, 6).toUpperCase()}`,
+        id: `PKT-${generateQuickHash(4)}`,
         time: new Date().toLocaleTimeString(),
         src: sources[Math.floor(Math.random() * sources.length)],
         act: actions[Math.floor(Math.random() * actions.length)],
@@ -390,7 +391,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-700">
              <div className="lg:col-span-5 space-y-8">
                 <div className="glass-card p-10 md:p-14 rounded-[72px] border-2 border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden shadow-3xl group">
-                   <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Sparkles size={400} className="text-indigo-400" /></div>
+                   <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Leaf size={400} className="text-indigo-400" /></div>
                    
                    <div className="relative z-10 space-y-10">
                       <div className="flex items-center gap-6 border-b border-white/5 pb-8">

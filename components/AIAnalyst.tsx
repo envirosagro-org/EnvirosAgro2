@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Send, Bot, User as UserIcon, Sparkles, Loader2, BarChart2, ShieldCheck, Info, TrendingUp, 
+  Send, Bot, User as UserIcon, Loader2, BarChart2, ShieldCheck, Info, TrendingUp, 
   Globe, ExternalLink, Trash2, Terminal, Cable, Activity, Database, Zap, 
   ShieldPlus, Workflow, SmartphoneNfc, Radio, CheckCircle2, ChevronRight,
   Code2, Share2, Network, Binary, ArrowRight, ArrowUpRight, Cpu,
@@ -59,7 +59,7 @@ const SHARD_DIRECTORY: { id: ViewState; label: string; icon: any; keywords: stri
 
 const BLUEPRINT_AUDIT_GROUPS = [
   { label: 'CORE AGRO', sync: 100, shards: 6, points: ['Farm Management', 'Crop Tracking', 'Supply Verification', 'Marketplace', 'Treasury', 'Sustainable Practices'], icon: Sprout, col: 'text-emerald-400' },
-  { label: 'INTELLIGENCE', sync: 100, shards: 4, points: ['Crop Analysis', 'Market Trends', 'Analytics Platform', 'Digital MRV'], icon: Brain, col: 'text-blue-400' },
+  { label: 'INTELLIGENCE', sync: 100, shards: 4, points: ['Crop Analysis', 'Market Trends', 'Analytics Platform', 'Digital MRV'], icon: SycamoreLogo, col: 'text-blue-400' },
   { label: 'BLOCKCHAIN', sync: 98, shards: 4, points: ['Smart Contracts', 'Genetic NFTs', 'Handshake Protocol', 'Ledger Explorer'], icon: Database, col: 'text-indigo-400' },
   { label: 'COMMUNITY', sync: 100, shards: 4, points: ['Farmer Forums', 'Network Ingest', 'Nexus CRM', 'Live Updates'], icon: Users, col: 'text-rose-400' },
   { label: 'COMMERCE', sync: 94, shards: 4, points: ['Contract Farming', 'Vendor Portal', 'EnvirosAgro Store', 'Marketplace Sync'], icon: ShoppingBag, col: 'text-amber-500' },
@@ -191,7 +191,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
         <div className="glass-card p-6 rounded-[32px] border-white/5 bg-black/40 flex-1 space-y-6 shadow-xl flex flex-col">
           <div className="flex items-center gap-4 border-b border-white/5 pb-6">
             <div className="p-3 bg-emerald-600 rounded-2xl shadow-lg shadow-emerald-900/40"><SycamoreLogo size={24} className="text-white" /></div>
-            <h3 className="font-black text-white uppercase italic tracking-widest">Oracle Logic</h3>
+            <h3 className="font-black text-white uppercase italic tracking-widest">EnvirosAgro AI</h3>
           </div>
           
           <div className="space-y-2 flex-1">
@@ -199,8 +199,8 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
               onClick={() => setActiveMode('neural')}
               className={`w-full flex items-center gap-4 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeMode === 'neural' ? 'bg-emerald-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
             >
-              <Bot className="w-4 h-4" />
-              Neural Analyst
+              <SycamoreLogo size={16} />
+              EnvirosAgro AI
             </button>
             <button 
               onClick={() => setActiveMode('tunnelling')}
@@ -304,7 +304,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
                           ? 'bg-indigo-600 text-white rounded-tr-none border-t-4 border-indigo-400' 
                           : 'bg-black/60 text-slate-200 border border-white/5 rounded-tl-none prose prose-invert border-l-4 border-l-emerald-500 italic font-medium'
                       }`}>
-                        {m.role === 'assistant' && <div className="absolute top-0 right-0 p-6 opacity-[0.02] pointer-events-none"><Sparkles size={100} /></div>}
+                        {m.role === 'assistant' && <div className="absolute top-0 right-0 p-6 opacity-[0.02] pointer-events-none"><SycamoreLogo size={100} /></div>}
                         {m.content.split('\n').map((line, i) => (
                           <p key={i} className={i > 0 ? 'mt-4' : ''}>{line}</p>
                         ))}
@@ -514,10 +514,10 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
 
                     <div className="flex flex-col gap-6">
                        <div className="glass-card p-10 rounded-[48px] border border-indigo-500/20 bg-indigo-950/10 flex-1 flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden group shadow-2xl">
-                          <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Sparkles size={250} className="text-indigo-400" /></div>
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><SycamoreLogo size={250} className="text-indigo-400" /></div>
                           <div className="relative">
                              <div className="w-20 h-20 bg-indigo-600 rounded-[28px] flex items-center justify-center text-white shadow-3xl animate-float border-2 border-white/10">
-                                {confidenceAnalysis ? <CheckCircle2 size={40} /> : <Bot size={40} className="animate-pulse" />}
+                                {confidenceAnalysis ? <CheckCircle2 size={40} /> : <SycamoreLogo size={40} className="animate-pulse" />}
                              </div>
                              <div className="absolute inset-[-10px] border-2 border-dashed border-indigo-400/20 rounded-[36px] animate-spin-slow"></div>
                           </div>

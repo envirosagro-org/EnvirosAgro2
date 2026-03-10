@@ -4,7 +4,7 @@ import {
   Scale, ShieldCheck, Landmark, BookOpen, ScrollText, 
   Binary, Target, Zap, Heart, Leaf, Users, Bot, 
   Database, Info, ChevronRight, Lock, Stamp, 
-  Gavel, HelpCircle, History, Sparkles, 
+  Gavel, HelpCircle, History, 
   Fingerprint,
   X,
   FileText,

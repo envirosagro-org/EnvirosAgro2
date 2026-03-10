@@ -24,7 +24,7 @@ import {
   Lock, 
   Info,
   Layers,
-  Sparkles,
+  Leaf,
   Bot, 
   Binary, 
   Star, 

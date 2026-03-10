@@ -30,7 +30,7 @@ import {
   Command,
   ArrowUpRight,
   Bot,
-  Sparkles,
+  Leaf,
   History,
   ShieldCheck,
   Atom,

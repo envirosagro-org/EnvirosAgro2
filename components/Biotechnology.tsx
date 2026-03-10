@@ -4,7 +4,7 @@ import {
   FlaskConical, 
   Zap, 
   Bot, 
-  Sparkles, 
+  Leaf, 
   Loader2, 
   ShieldCheck, 
   SearchCode, 
@@ -344,7 +344,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
 
                 <div className="p-10 glass-card rounded-[48px] border border-emerald-500/10 bg-emerald-500/5 space-y-6 group shadow-xl">
                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-emerald-600/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><Sparkles size={24} className="text-emerald-500" /></div>
+                      <div className="p-3 bg-emerald-600/10 rounded-2xl border border-emerald-500/20 group-hover:rotate-12 transition-transform"><Leaf size={24} className="text-emerald-500" /></div>
                       <h4 className="text-xl font-black text-white uppercase italic">Decoding <span className="text-emerald-400">Yield</span></h4>
                    </div>
                    <p className="text-sm text-slate-400 italic leading-relaxed">
@@ -676,7 +676,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                          {forgeStep === 'config' && (
                             <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-20 group">
                                <div className="relative">
-                                  <Sparkles size={180} className="text-slate-500 group-hover:text-blue-500 transition-colors duration-1000" />
+                                  <Leaf size={180} className="text-slate-500 group-hover:text-blue-500 transition-colors duration-1000" />
                                   <div className="absolute inset-0 border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
                                </div>
                                <div className="space-y-4">

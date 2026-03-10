@@ -43,6 +43,7 @@ import {
 import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "firebase/app-check";
 import { getDataConnect, connectDataConnectEmulator } from 'firebase/data-connect';
 import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
+import { generateAlphanumericId } from '../systemFunctions';
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2OCiMVOxaXWOBD3p4_mJp7TDJVwPpiNM",
@@ -210,7 +211,7 @@ export const requestPhoneCode = async (phone: string, appVerifier: any): Promise
 export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): Promise<SignalShard | null> => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
-  const id = `SIG-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+  const id = `SIG-${generateAlphanumericId(7)}`;
   const timestamp = new Date().toISOString();
   const layers: DispatchChannel[] = [];
   layers.push({ channel: 'INBOX', status: 'SENT', timestamp });

@@ -32,7 +32,7 @@ import {
   Loader2, 
   Target, 
   TrendingUp, 
-  Sparkles, 
+  Leaf, 
   Scale, 
   Heart, 
   Info, 
@@ -497,7 +497,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                                      <div className="lg:col-span-5 space-y-6">
                                         <div className="p-6 rounded-[32px] bg-indigo-500/5 border border-indigo-500/10 shadow-inner group relative overflow-hidden">
                                            <div className="flex items-center gap-3 mb-6 border-b border-indigo-500/20 pb-4 relative z-10">
-                                              <Sparkles className="w-4 h-4 text-indigo-400" />
+                                              <Leaf className="w-4 h-4 text-indigo-400" />
                                               <h5 className="text-[9px] font-black text-white uppercase tracking-widest italic">Oracle Summary</h5>
                                            </div>
                                            <p className="text-slate-300 text-xs md:text-sm leading-relaxed italic font-medium relative z-10">

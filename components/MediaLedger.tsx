@@ -28,9 +28,11 @@ import {
   X, 
   Eye, 
   Maximize2, 
-  MessageSquare
+  MessageSquare,
+  CirclePlay
 } from 'lucide-react';
-import { User, MediaShard } from '../types';
+import { User, MediaShard, ViewState } from '../types';
+import MultimediaPlayer from './MultimediaPlayer';
 
 interface MediaLedgerProps {
   user: User;
@@ -59,6 +61,32 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [] }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'video' | 'audio' | 'papers' | 'oracle'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShard, setSelectedShard] = useState<MediaShard | null>(null);
+
+  // Multimedia Player State
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [playerConfig, setPlayerConfig] = useState<{
+    url: string;
+    type: 'VIDEO' | 'AUDIO';
+    title: string;
+    author?: string;
+    shardId?: string;
+    thumbnail?: string;
+  }>({ url: '', type: 'VIDEO', title: '' });
+
+  const openPlayer = (shard: MediaShard) => {
+    if (shard.type !== 'VIDEO' && shard.type !== 'AUDIO') return;
+    
+    setPlayerConfig({
+      url: shard.type === 'VIDEO' 
+        ? 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' 
+        : 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      type: shard.type as 'VIDEO' | 'AUDIO',
+      title: shard.title,
+      author: shard.author,
+      shardId: shard.id
+    });
+    setPlayerOpen(true);
+  };
 
   const filteredShards = useMemo(() => {
     return shards.filter(shard => {
@@ -199,6 +227,11 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [] }) => {
                            </div>
                         </div>
                         <div className="flex justify-end gap-6 pr-8">
+                           {(shard.type === 'VIDEO' || shard.type === 'AUDIO') && (
+                             <button onClick={() => openPlayer(shard)} className="p-5 bg-emerald-600 rounded-2xl text-white shadow-3xl hover:bg-emerald-500 transition-all active:scale-90 border border-white/10" title="Play Shard">
+                                <CirclePlay size={24} />
+                             </button>
+                           )}
                            <button onClick={() => setSelectedShard(shard)} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-indigo-400 transition-all shadow-xl active:scale-90" title="Inspect Shard">
                               <Eye size={24} />
                            </button>
@@ -310,6 +343,18 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [] }) => {
 
               <div className="p-12 border-t border-white/5 bg-white/[0.01] flex justify-center gap-8 shrink-0">
                  <button onClick={() => setSelectedShard(null)} className="px-16 py-7 bg-white/5 border-2 border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-3xl active:scale-95">Abort_Inspection</button>
+                  {(selectedShard.type === 'VIDEO' || selectedShard.type === 'AUDIO') && (
+                    <button 
+                      onClick={() => {
+                        const shard = selectedShard;
+                        setSelectedShard(null);
+                        setTimeout(() => openPlayer(shard), 300);
+                      }}
+                      className="px-24 py-7 bg-emerald-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[12px] ring-white/5"
+                    >
+                       <CirclePlay size={28} /> PLAY_SHARD
+                    </button>
+                  )}
                  <button className="px-24 py-7 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[12px] ring-white/5">
                     <Download size={28} /> DOWNLOAD_AGRO_SHARD
                  </button>
@@ -317,6 +362,17 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [] }) => {
            </div>
         </div>
       )}
+
+      <MultimediaPlayer
+        isOpen={playerOpen}
+        onClose={() => setPlayerOpen(false)}
+        mediaUrl={playerConfig.url}
+        mediaType={playerConfig.type}
+        title={playerConfig.title}
+        author={playerConfig.author}
+        shardId={playerConfig.shardId}
+        thumbnail={playerConfig.thumbnail}
+      />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

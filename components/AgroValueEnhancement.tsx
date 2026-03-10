@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   FlaskConical, Binary, TrendingUp, Zap, Loader2, ChevronRight, Info, Database, 
   CheckCircle2, Bot, Activity, Workflow, Cpu, Stamp, Fingerprint, ShieldCheck, 
-  Dna, Target, Sparkles, Terminal, Download, FileCode, BadgeCheck, ZapOff,
+  Dna, Target, Terminal, Download, FileCode, BadgeCheck, ZapOff,
   BoxSelect, Wind, Droplets, Leaf, Scale, SmartphoneNfc, Factory, ArrowRight,
   ShieldPlus, Key, Boxes, ChevronDown, CheckCircle, AlertTriangle, ShieldAlert,
   // Added missing ClipboardList icon
@@ -210,6 +210,12 @@ const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({
                  </div>
               </div>
               <div className="space-y-6">
+                 <button 
+                   onClick={() => onNavigate('multimedia_generator')}
+                   className="w-full py-4 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-3 shadow-xl"
+                 >
+                    <Leaf size={16} /> MULTIMEDIA_FORGE
+                 </button>
                  <div className="space-y-3">
                     <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Raw Material</label>
                     <input 

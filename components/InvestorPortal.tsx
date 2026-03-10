@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Landmark, TrendingUp, ShieldCheck, PieChart as PieChartIcon, Search, Activity, 
-  CheckCircle2, X, Loader2, Gem, ChevronRight, LineChart as LineChartIcon, Bot, Sparkles, 
+  CheckCircle2, X, Loader2, Gem, ChevronRight, LineChart as LineChartIcon, Bot, Leaf, 
   Binary, Stamp, Target as TargetIcon, Users, BadgeCheck, Sprout, RefreshCw, 
   ShieldAlert, Fingerprint, Key, BarChart4, ClipboardCheck, ArrowUpRight, Coins, Wallet,
   Layers, Database, Terminal, Microscope, Zap, Globe, Gauge, ShieldPlus, ArrowDownToLine,
@@ -506,7 +506,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
                        <div className="p-10 bg-black rounded-[64px] border border-white/10 space-y-10 shadow-inner flex flex-col h-full overflow-hidden relative group/audit">
                           <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/audit:scale-110 transition-transform"><Database size={400} /></div>
                           <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.6em] border-b border-indigo-500/10 pb-6 px-4 italic flex items-center gap-4">
-                             <Sparkles size={24} /> ORACLE_VETTING_SHARD
+                             <Leaf size={24} /> ORACLE_VETTING_SHARD
                           </h4>
                           
                           <div className="flex-1 overflow-y-auto custom-scrollbar-terminal pr-4 pb-10">

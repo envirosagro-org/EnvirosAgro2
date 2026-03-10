@@ -3,7 +3,7 @@ import {
   Calendar, Clock, Sun, Moon, CloudRain, Snowflake, Wheat, 
   Sprout, Music, Radio, Zap, Heart, ShieldCheck, Landmark, 
   History, Info, ChevronRight, Binary, Target, Activity, 
-  Bot, Sparkles, CheckCircle2, Waves, Flame, Timer, 
+  Bot, Leaf, CheckCircle2, Waves, Flame, Timer, 
   Play, Pause, RotateCcw, Droplets,
   Loader2,
   X,
@@ -438,7 +438,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                               <div className="relative">
                                  <Loader2 size={120} className="text-emerald-500 animate-spin mx-auto" />
                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <Sparkles className="w-12 h-12 text-emerald-400 animate-pulse" />
+                                    <Leaf className="w-12 h-12 text-emerald-400 animate-pulse" />
                                  </div>
                               </div>
                               <p className="text-emerald-400 font-black text-3xl uppercase tracking-[0.8em] animate-pulse italic m-0">FORGING_LITURGICAL_SHARD...</p>

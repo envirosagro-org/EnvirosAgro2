@@ -40,7 +40,7 @@ export const calculateMConstant = (dn: number, in_val: number, ca: number, s: nu
  */
 export const syncGeofenceShard = async (esin: string, coords: { lat: number; lng: number }) => {
   // 1. ZK-Handshake verification
-  const signature = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}_GEO`;
+  const signature = `0x${generateQuickHash()}_GEO`;
   
   // 2. Metadata payload for registry ingest
   const payload = {
@@ -71,6 +71,20 @@ export const validateIndustrialInflow = (payload: any) => {
     missing_shards: missing,
     timestamp: Date.now()
   };
+};
+
+/**
+ * Generates a quick synchronous hash/ID.
+ */
+export const generateQuickHash = (length: number = 8): string => {
+  return Math.random().toString(16).slice(2, 2 + length).toUpperCase();
+};
+
+/**
+ * Generates a quick synchronous alphanumeric ID.
+ */
+export const generateAlphanumericId = (length: number = 8): string => {
+  return Math.random().toString(36).slice(2, 2 + length).toUpperCase();
 };
 
 // Fix: Added missing generateShardHash export used by dispatchService.ts for generating nonces

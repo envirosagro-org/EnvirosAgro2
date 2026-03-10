@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   PawPrint, TreePine, Droplets, Mountain, Wind, 
   Activity, Zap, ShieldCheck, Heart, Users, Target, 
-  Brain, Scale, Microscope, Binary, Coins, Sparkles, 
+  Brain, Scale, Microscope, Binary, Coins, 
   Bot, Loader2, Gauge, FlaskConical, Globe, 
   Layers, Lock, Database, Thermometer, Compass,
   CheckCircle2, AlertCircle, Info, ChevronRight, Fingerprint,
@@ -31,6 +31,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { User, ViewState, MediaShard } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import { generateQuickHash } from '../systemFunctions';
 
 interface NaturalResourcesProps {
   user: User;
@@ -63,7 +64,7 @@ const NaturalResources: React.FC<NaturalResourcesProps> = ({ user, type, onEarnE
   const [stream, setStream] = useState<any[]>([]);
 
   const downloadReport = (content: string, mode: string, typeName: string) => {
-    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const shardId = `0x${generateQuickHash()}`;
     const report = `
 ENVIROSAGRO™ ${typeName.toUpperCase()} SHARD
 =================================
@@ -92,7 +93,7 @@ ${content}
   useEffect(() => {
     const interval = setInterval(() => {
       const entry = {
-        id: Math.random().toString(16).substring(2, 6).toUpperCase(),
+        id: generateQuickHash(4),
         time: new Date().toLocaleTimeString(),
         event: 'TELEMETRY_INGEST',
         val: (Math.random() * 100).toFixed(2),
@@ -337,7 +338,7 @@ ${content}
         author: user.name,
         authorEsin: user.esin,
         timestamp: new Date().toISOString(),
-        hash: `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}_${type.slice(0, 3).toUpperCase()}`,
+        hash: `0x${generateQuickHash()}_${type.slice(0, 3).toUpperCase()}`,
         mImpact: (1.42 + Math.random() * 0.1).toFixed(2),
         content: res.text
       };
@@ -579,7 +580,7 @@ ${content}
               {oracleReport && (
                 <div className="animate-in slide-in-from-bottom-10 duration-700">
                    <div className="p-12 md:p-16 bg-black/80 rounded-[80px] border-2 border-emerald-500/20 shadow-3xl border-l-[24px] border-l-emerald-600 relative overflow-hidden group/advice">
-                      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/advice:scale-110 transition-transform"><Sparkles size={600} className="text-emerald-400" /></div>
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/advice:scale-110 transition-transform"><Leaf size={600} className="text-emerald-400" /></div>
                       <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
                          <div className="flex items-center gap-6">
                             <BadgeCheck size={40} className="text-emerald-400" />

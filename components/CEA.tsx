@@ -15,7 +15,7 @@ import {
   FlaskConical, 
   Gauge, 
   Bot, 
-  Sparkles, 
+  Leaf, 
   Cpu,
   Layers,
   SearchCode,

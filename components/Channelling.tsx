@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Share2, Video, Youtube, Twitter, Facebook, Instagram, Ghost, FileText, Search, PlusCircle, 
   TrendingUp, Eye, MessageSquare, Heart, Zap, Loader2, CheckCircle2, ExternalLink, X, 
-  Bot, Sparkles, Download, Filter, Users, Coins, ShieldCheck, Smartphone, Globe, 
+  Bot, Leaf, Download, Filter, Users, Coins, ShieldCheck, Smartphone, Globe, 
   BookOpen, FileJson, FileDown, Database, AtSign, Pin, HelpCircle, Cloud, Wind, 
   Linkedin, Send, ArrowRight, ArrowUpRight, Mic, Library, Film, Bookmark, FileCode, 
   Globe2, Info, Paperclip, ChevronRight, Fingerprint, Stamp, ShieldAlert, SearchCode, 
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { User } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
+import { generateAlphanumericId } from '../systemFunctions';
 
 interface ChannellingProps {
   user: User;
@@ -123,7 +124,7 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC, onSpendEAC }
 
   const finalizeIngest = () => {
     const newItem: ArchiveItem = {
-      id: `SHD-${Math.random().toString(36).substring(7).toUpperCase()}`,
+      id: `SHD-${generateAlphanumericId(7)}`,
       type: subType, title: subTitle, url: subUrl, author: user.name,
       views: 0, interactions: 0, eacEarned: 0, timestamp: 'Just now',
       thrust: subThrust

@@ -22,7 +22,7 @@ import {
   Code,
   Zap,
   Bot,
-  Sparkles,
+  Leaf,
   BookOpen,
   ArrowUpRight,
   Shield,
@@ -68,6 +68,7 @@ import {
 import { User, ViewState, AgroResource, MediaShard } from '../types';
 import { chatWithAgroExpert, analyzeMedia } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import { generateAlphanumericId } from '../systemFunctions';
 
 interface LogEntry {
   id: string;
@@ -213,7 +214,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
       if (activeTab === 'overview') {
         const source = sources[Math.floor(Math.random() * sources.length)];
         const event = events[Math.floor(Math.random() * events.length)];
-        const id = Math.random().toString(36).substring(7).toUpperCase();
+        const id = generateAlphanumericId(7);
         const val = (Math.random() * 100).toFixed(2);
         
         const newLog: LogEntry = {
@@ -257,7 +258,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
     setIsGeneratingKey(true);
     setTimeout(() => {
       const prefix = newKeyEnv === 'Production' ? 'EA_LIVE' : 'EA_TEST';
-      const kString = `${prefix}_${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
+      const kString = `${prefix}_${generateAlphanumericId(10)}`;
       setGeneratedKey(kString);
       setKeys([{ id: Date.now().toString(), name: newKeyName, key: kString, status: 'Live', env: newKeyEnv, scopes: newKeyScopes, usage: 0, lastUsed: 'Never', relay: 'BETA_SYNC', trustLevel: 100 }, ...keys]);
       setIsGeneratingKey(false);
@@ -316,7 +317,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
           { id: 'handshake', label: 'Node Handshake', icon: SmartphoneNfc },
           { id: 'vault', label: 'Evidence Vault', icon: CloudUpload },
           { id: 'api', label: 'Registry Keys', icon: Key },
-          { id: 'analyzer', label: 'Stream Analyzer', icon: Sparkles },
+          { id: 'analyzer', label: 'Stream Analyzer', icon: Leaf },
         ].map(tab => (
           <button 
             key={tab.id} 
@@ -528,7 +529,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
         {activeTab === 'analyzer' && (
            <div className="max-w-4xl mx-auto space-y-12 animate-in zoom-in duration-500">
               <div className="p-16 md:p-24 glass-card rounded-[80px] border-2 border-indigo-500/20 bg-indigo-950/5 text-center space-y-10 shadow-3xl relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Sparkles size={800} className="text-indigo-400" /></div>
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Leaf size={800} className="text-indigo-400" /></div>
                  <div className="relative z-10 space-y-8">
                     <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-[0_0_100px_rgba(99,102,241,0.3)] border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12">
                        <Bot size={64} className="text-white animate-pulse" />

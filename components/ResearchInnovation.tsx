@@ -5,7 +5,7 @@ import {
   FlaskConical, 
   Zap, 
   Bot, 
-  Sparkles, 
+  Leaf, 
   Loader2, 
   Search, 
   PlusCircle, 
@@ -68,6 +68,7 @@ import {
 import { User, ResearchPaper, AgroBook, ChapterShard, VendorProduct } from '../types';
 import { generateAgroResearch, analyzeMedia, chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
+import { generateAlphanumericId } from '../systemFunctions';
 
 interface ResearchInnovationProps {
   user: User;
@@ -218,7 +219,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
   const registerResearch = async () => {
     if (!researchOutput) return;
     const newPaper: ResearchPaper = {
-      id: `PAT-${Math.random().toString(36).substring(7).toUpperCase()}`,
+      id: `PAT-${generateAlphanumericId(7)}`,
       title: researchTitle,
       author: user.name,
       authorEsin: user.esin,
@@ -284,7 +285,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
     setIsPublishing(true);
     try {
       const newBook: AgroBook = {
-        id: `BOOK-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        id: `BOOK-${Date.now()}-${generateAlphanumericId(7)}`,
         title: bookTitle,
         authorEsin: user.esin,
         authorName: user.name,
@@ -395,6 +396,12 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
             className={`px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'book_forge' ? 'bg-fuchsia-600 text-white shadow-xl border border-fuchsia-400/50' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
           >
             Book Forge (AgroInPDF)
+          </button>
+          <button 
+            onClick={() => onNavigate('multimedia_generator')}
+            className="px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white shadow-xl flex items-center gap-3"
+          >
+            <Leaf size={14} /> Multimedia Forge
           </button>
         </div>
       </div>
@@ -632,7 +639,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                              disabled={isGeneratingTopic || !topicPrompt.trim()}
                              className="w-full py-8 bg-fuchsia-800 hover:bg-fuchsia-700 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(217,70,239,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 disabled:opacity-30 border-4 border-white/10 ring-[16px] ring-fuchsia-500/5"
                           >
-                             {isGeneratingTopic ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <Sparkles size={18} className="w-8 h-8" />}
+                             {isGeneratingTopic ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <Leaf size={18} className="w-8 h-8" />}
                              {isGeneratingTopic ? 'SHARDING...' : 'GENERATE CHAPTER'}
                           </button>
                        </div>
@@ -729,7 +736,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                                 <div className="relative">
                                    <Loader2 size={120} className="text-fuchsia-500 animate-spin mx-auto" />
                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <Sparkles size={40} className="text-fuchsia-400 animate-pulse" />
+                                      <Leaf size={40} className="text-fuchsia-400 animate-pulse" />
                                    </div>
                                 </div>
                                 <div className="space-y-4">

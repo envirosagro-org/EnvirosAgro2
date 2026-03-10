@@ -6,7 +6,6 @@ import {
   ShieldCheck, 
   Key, 
   Loader2, 
-  Sparkles, 
   Gift, 
   ArrowRight,
   ChevronRight,
@@ -52,6 +51,7 @@ import {
   sendVerificationShard,
   refreshAuthUser
 } from '../services/firebaseService';
+import { generateAlphanumericId } from '../systemFunctions';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -133,7 +133,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   const generateEsin = () => {
     setIsGeneratingEsin(true);
     setTimeout(() => {
-      setEsin(`EA-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
+      setEsin(`EA-${generateAlphanumericId(4)}-${generateAlphanumericId(4)}`);
       setIsGeneratingEsin(false);
     }, 1500);
   };

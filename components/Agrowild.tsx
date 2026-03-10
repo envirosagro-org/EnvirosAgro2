@@ -32,7 +32,7 @@ import {
   Target,
   Binary,
   Bot,
-  Sparkles,
+  Leaf,
   Loader2,
   Stamp,
   Network,
@@ -49,6 +49,7 @@ import {
 import { User, ViewState, Order, VendorProduct, MediaShard } from '../types';
 import { chatWithAgroExpert } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
+import { SycamoreLogo } from '../App';
 
 interface AgrowildProps {
   user: User;
@@ -370,7 +371,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
         <section id="discovery" className="min-w-full h-full snap-start overflow-y-auto custom-scrollbar p-6 md:p-12 lg:p-20 flex flex-col items-center justify-center">
            <div className="max-w-4xl w-full space-y-12 py-12 text-center">
               <div className="glass-card p-10 md:p-16 rounded-[64px] border-2 border-emerald-500/20 bg-emerald-950/5 relative overflow-hidden shadow-[0_40px_150px_rgba(0,0,0,0.8)] group">
-                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Sparkles size={400} className="text-emerald-400" /></div>
+                 <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><SycamoreLogo size={400} className="text-emerald-400" /></div>
                  
                  <div className="relative z-10 space-y-10">
                     <div className="w-24 h-24 rounded-[32px] bg-emerald-600 flex items-center justify-center shadow-3xl border-2 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 animate-float">
@@ -418,7 +419,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                     ) : (
                        <div className="animate-in slide-in-from-bottom-6 duration-1000 space-y-10 text-left max-w-3xl mx-auto">
                           <div className="p-8 md:p-12 bg-black/90 rounded-[48px] border border-emerald-500/20 shadow-3xl border-l-[12px] border-l-emerald-600 relative overflow-hidden group/advice">
-                             <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Sparkles size={400} className="text-emerald-400" /></div>
+                             <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><SycamoreLogo size={400} className="text-emerald-400" /></div>
                              <div className="flex justify-between items-center mb-8 relative z-10 border-b border-white/5 pb-6">
                                 <div className="flex items-center gap-6">
                                    <Stamp size={32} className="text-emerald-400" />

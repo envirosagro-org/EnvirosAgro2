@@ -5,7 +5,7 @@ import {
   AlertTriangle, HeartHandshake, X, Loader2, Send, Bot, User as UserIcon, MessageSquare,
   Fingerprint, MapPin, Phone, Mail, ExternalLink, ArrowRight, Share2, Youtube, Twitter,
   Linkedin, AtSign, Pin, HelpCircle, Cloud, Wind, Facebook, MessageCircleQuestion, Eye,
-  Target, Sparkles, Copyright, Shield, Award, CheckCircle2, BadgeCheck, Terminal,
+  Target, Copyright, Shield, Award, CheckCircle2, BadgeCheck, Terminal,
   MessagesSquare, Copy, Check, ShieldPlus, Leaf, HelpCircle as FaqIcon,
   ChevronDown, Code, Database, Gavel, Stamp, Signature, FileSignature, ScrollText,
   Cpu, Download, Target as TargetIcon, Activity, Binary, History, Scale as ScaleIcon,

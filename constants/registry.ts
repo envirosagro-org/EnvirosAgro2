@@ -42,7 +42,7 @@ export const REGISTRY_NODES: RegistryGroup[] = [
     items: [
       { id: 'industrial', name: 'Industrial Cloud', icon: Factory, sections: [{id: 'bridge', label: 'Registry Bridge'}, {id: 'sync', label: 'Process Sync'}, {id: 'path', label: 'Analyzer'}] },
       { id: 'agro_value_enhancement', name: 'Value Forge', icon: FlaskConical, sections: [{id: 'synthesis', label: 'Asset Synthesis'}, {id: 'optimization', label: 'Process Tuning'}] },
-      { id: 'wallet', name: 'Agro Wallet Hub', icon: Wallet, sections: [{id: 'treasury', label: 'Utility'}, {id: 'calibrations', label: 'Cost Calibration'}, {id: 'staking', label: 'Staking'}, {id: 'swap', label: 'Swap'}] },
+      { id: 'wallet', name: 'Agro Wallet Hub', icon: Wallet, sections: [{id: 'treasury', label: 'Utility'}, {id: 'accounting', label: 'Cost Management'}, {id: 'staking', label: 'Staking'}, {id: 'swap', label: 'Swap'}] },
       { id: 'economy', name: 'Market Center', icon: Globe, sections: [{id: 'catalogue', label: 'Registry Assets'}, {id: 'infrastructure', label: 'Industrial Nodes'}, {id: 'forecasting', label: 'Demand Matrix'}] },
       { id: 'vendor', name: 'Vendor Command', icon: Warehouse },
       { id: 'ecosystem', name: 'Brand Multiverse', icon: Layers },

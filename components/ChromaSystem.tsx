@@ -9,7 +9,6 @@ import {
   Activity, 
   ShieldCheck, 
   Bot, 
-  Sparkles, 
   Scale, 
   Thermometer, 
   Users, 
@@ -73,6 +72,7 @@ import { User, ViewState, MediaShard } from '../types';
 import { chatWithAgroExpert, analyzeMedia } from '../services/geminiService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { GoogleGenAI } from "@google/genai";
+import { generateQuickHash } from '../systemFunctions';
 
 interface ChromaSystemProps {
   user: User;
@@ -137,7 +137,7 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
     
     setIsArchiving(shardKey);
     try {
-      const shardHash = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+      const shardHash = `0x${generateQuickHash()}`;
       const newShard: Partial<MediaShard> = {
         title: `${type.toUpperCase()}: ${mode.replace('_', ' ')}`,
         type: 'ORACLE',
@@ -162,7 +162,7 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
   };
 
   const downloadReport = (content: string, mode: string, type: string) => {
-    const shardId = `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    const shardId = `0x${generateQuickHash()}`;
     const report = `
 ENVIROSAGRO™ ${type.toUpperCase()} SHARD
 =================================
@@ -199,7 +199,8 @@ ${content}
     setGraphicAnchored(false);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY;
+      const ai = new GoogleGenAI({ apiKey });
       const technicalPrompt = `Professional architectural and agricultural render of ${imagePrompt}. 
       Brand Influence: Lilies Around Aesthetic Revolution.
       Framework Context: ${selectedThrust.thrust} sustainability. 
@@ -425,6 +426,12 @@ ${content}
                        </div>
                     </div>
                     <div className="space-y-6">
+                       <button 
+                         onClick={() => onNavigate('multimedia_generator')}
+                         className="w-full py-4 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-3 shadow-xl"
+                       >
+                          <Leaf size={16} /> MULTIMEDIA_FORGE
+                       </button>
                        <div className="space-y-4">
                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Aesthetic Intent Shard</label>
                           <textarea 
@@ -464,7 +471,7 @@ ${content}
                        disabled={isGenerating || !imagePrompt.trim()}
                        className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
                     >
-                       {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 fill-current" />}
+                       {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Leaf className="w-6 h-6 fill-current" />}
                        {isGenerating ? 'Synthesizing...' : 'GENERATE AESTHETIC SHARD'}
                     </button>
                  </div>
@@ -597,7 +604,7 @@ ${content}
                         disabled={isForgingDesign || !designDescription.trim()}
                         className="w-full py-10 bg-fuchsia-800 hover:bg-fuchsia-700 rounded-[48px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(217,70,239,0.3)] flex items-center justify-center gap-8 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-[16px] ring-white/5"
                       >
-                         {isForgingDesign ? <Loader2 className="w-10 h-10 animate-spin" /> : <Sparkles className="w-10 h-10 fill-current" />}
+                         {isForgingDesign ? <Loader2 className="w-10 h-10 animate-spin" /> : <Leaf className="w-10 h-10 fill-current" />}
                          {isForgingDesign ? "SYNTHESIZING AESTHETIC..." : "FORGE LILIES SHARD"}
                       </button>
                    </div>
@@ -906,7 +913,7 @@ ${content}
                                     <Fingerprint size={40} className="text-indigo-400" />
                                     <div className="text-left">
                                        <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">CHROMATOGRAPHY_HASH</p>
-                                       <p className="text-lg font-mono text-white">0x{Math.random().toString(16).slice(2, 10).toUpperCase()}_PIGMENT_SYNC</p>
+                                       <p className="text-lg font-mono text-white">0x{generateQuickHash()}_PIGMENT_SYNC</p>
                                     </div>
                                  </div>
                                  <div className="flex gap-4">

@@ -7,7 +7,7 @@ import {
   Sprout, 
   FlaskConical, 
   Factory, 
-  Sparkles, 
+  Leaf, 
   Wrench, 
   Video, 
   ShieldAlert, 
@@ -142,7 +142,7 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                    <div className="absolute top-0 right-0 p-4 opacity-10"><Bot size={100} /></div>
                    <div className="flex items-center gap-4 mb-6 relative z-10">
                       <div className="p-3 bg-indigo-500/20 rounded-2xl text-indigo-400">
-                         {isScanning ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} />}
+                         {isScanning ? <Loader2 size={24} className="animate-spin" /> : <Leaf size={24} />}
                       </div>
                       <div>
                          <h5 className="text-lg font-black text-white uppercase italic tracking-widest">Neural Analyst</h5>
@@ -226,7 +226,7 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                         { id: 'PROG-PERMA', name: 'Permaculture', icon: Sprout, col: 'text-emerald-400', desc: 'Categorize in available zones' },
                         { id: 'PROG-BIO', name: 'Biotech Hub', icon: FlaskConical, col: 'text-fuchsia-400', desc: 'Track and trace genome' },
                         { id: 'PROG-CEA', name: 'CEA Portal', icon: Factory, col: 'text-teal-400', desc: 'Further evaluate under CEA' },
-                        { id: 'PROG-CHROMA', name: 'Chroma SEHTI', icon: Sparkles, col: 'text-amber-400', desc: 'Standardize frequency' },
+                        { id: 'PROG-CHROMA', name: 'Chroma SEHTI', icon: Leaf, col: 'text-amber-400', desc: 'Standardize frequency' },
                         { id: 'PROG-INV', name: 'Invention Ledger', icon: Wrench, col: 'text-blue-400', desc: 'Patent and IP tracking' },
                         { id: 'PROG-MEDIA', name: 'Media Ledger', icon: Video, col: 'text-rose-400', desc: 'Broadcast standardization' },
                         { id: 'PROG-EMERG', name: 'Emergency Command', icon: ShieldAlert, col: 'text-red-500', desc: 'Risk mitigation protocol' },

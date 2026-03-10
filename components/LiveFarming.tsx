@@ -3,7 +3,7 @@ import {
   Sprout, Activity, CheckCircle2, ArrowRight, Loader2, MapPin, Zap, ThumbsUp, 
   PlusCircle, Monitor, Clock, TrendingUp, Eye, X, Upload, Bot, Factory, 
   Package, Cpu, Layers, ShieldCheck, ShieldAlert, Database, Terminal, 
-  Wifi, Scan, Share2, Sparkles, Gauge, Smartphone, Wrench, 
+  Wifi, Scan, Share2, Leaf, Gauge, Smartphone, Wrench, 
   SmartphoneNfc, ClipboardList, ClipboardCheck, Target, Plus, ArrowUpRight, Stamp, 
   Workflow, Radio, Fingerprint, Info, ChevronRight, LayoutGrid, 
   Trello, Boxes, LineChart, ShoppingBag, Video, Edit3, Briefcase, Users, FlaskConical,

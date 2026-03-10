@@ -8,11 +8,11 @@ import {
   Network, ExternalLink, Zap, ArrowUpRight, Target, Share2, Package, 
   Truck, Box, ArrowLeft, ThumbsUp, LineChart as LineChartIcon, Signal, 
   History, Terminal, FileDigit, Waves, Stamp, ClipboardCheck, MoreVertical, 
-  Monitor, Workflow, Radio, MapPin, ArrowRight, Wallet, Sparkles, Binary, 
+  Monitor, Workflow, Radio, MapPin, ArrowRight, Wallet, Leaf, Binary, 
   Scale, Signature, FileSignature, Clock, BookOpen, Eye, Star, Download, 
   CreditCard, ChevronDown, Warehouse, Factory, PackageSearch, Receipt, 
   Music, Palette, Map as MapIcon,
-  Database
+  Database, Calculator
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, 
@@ -21,6 +21,7 @@ import {
 import { User, ViewState, Order, VendorProduct, RegisteredUnit, AgroBook, LiveAgroProduct } from '../types';
 import { predictMarketSentiment, AIResponse, chatWithAgroExpert } from '../services/geminiService';
 import { listenToCollection } from '../services/firebaseService';
+import { generateQuickHash } from '../systemFunctions';
 
 interface EconomyProps {
   user: User;
@@ -254,7 +255,7 @@ const Economy: React.FC<EconomyProps> = ({
           supplierEsin: item.supplierEsin,
           customerEsin: user.esin,
           timestamp: new Date().toISOString(),
-          trackingHash: `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
+          trackingHash: `0x${generateQuickHash()}`,
           sourceTab: item.isUserGenerated ? 'books' : 'market'
         });
       }
@@ -574,7 +575,7 @@ const Economy: React.FC<EconomyProps> = ({
 
                 <div className="lg:col-span-4 space-y-10 flex flex-col">
                    <div className="glass-card p-12 rounded-[72px] border-2 border-white/10 bg-black/40 shadow-2xl flex flex-col items-center justify-center text-center space-y-12 relative overflow-hidden flex-1 group">
-                      <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Sparkles size={500} className="text-indigo-400" /></div>
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Leaf size={500} className="text-indigo-400" /></div>
                       <div className="w-32 h-32 bg-indigo-600 rounded-[44px] flex items-center justify-center shadow-[0_0_100px_rgba(99,102,241,0.3)] border-4 border-white/10 group-hover:rotate-12 transition-transform duration-700 relative z-10">
                          <Bot size={56} className="text-white animate-pulse" />
                       </div>

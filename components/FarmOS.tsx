@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Binary, Cpu, Zap, Activity, Bot, Database, Terminal, 
-  Settings, Loader2, Sparkles, ShieldCheck, Target, 
+  Settings, Loader2, ShieldCheck, Target, 
   RefreshCw, Power, Radio, Gauge, Workflow, Layers,
   ChevronRight, ArrowUpRight, ClipboardList, Scan,
   Wifi, Satellite, Smartphone, Network, History,
@@ -94,6 +94,13 @@ const SNIPPETS = [
     desc: 'Deploy robotic pest containment shards.', 
     icon: Bot,
     code: `Bot.swarm_deploy(units: 12, mode: "MIN_STRESS");`
+  },
+  {
+    id: 'MUSIKA-1',
+    title: 'AGROMUSIKA_GENERATE',
+    desc: 'Trigger neural multimedia synthesis.',
+    icon: Leaf,
+    code: `IMPORT EOS.Media AS Musika;\nMusika.generate_shard(type: "VIDEO", prompt: "Regenerative Bantu garden time-lapse");`
   },
   { 
     id: 'S3', 
