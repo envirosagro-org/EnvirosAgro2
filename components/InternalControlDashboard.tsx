@@ -35,7 +35,7 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
     return () => clearInterval(interval);
   }, [userRole, currentPath]);
 
-  if (isLoading || !controlState) {
+  if (isLoading || !controlState || !controlState.balanceOfPowers || !controlState.globalAnalysis) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <Bot className="w-12 h-12 text-indigo-500 animate-pulse" />
@@ -45,10 +45,10 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
   }
 
   const powerData = [
-    { name: 'Stewardship', value: controlState.balanceOfPowers.stewardship, color: '#10b981' },
-    { name: 'Governance', value: controlState.balanceOfPowers.governance, color: '#6366f1' },
-    { name: 'Treasury', value: controlState.balanceOfPowers.treasury, color: '#f59e0b' },
-    { name: 'Intelligence', value: controlState.balanceOfPowers.intelligence, color: '#ec4899' },
+    { name: 'Stewardship', value: controlState.balanceOfPowers?.stewardship || 0, color: '#10b981' },
+    { name: 'Governance', value: controlState.balanceOfPowers?.governance || 0, color: '#6366f1' },
+    { name: 'Treasury', value: controlState.balanceOfPowers?.treasury || 0, color: '#f59e0b' },
+    { name: 'Intelligence', value: controlState.balanceOfPowers?.intelligence || 0, color: '#ec4899' },
   ];
 
   return (
@@ -77,11 +77,11 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
           <div className="grid grid-cols-2 gap-4 min-w-[300px]">
             <div className="p-6 glass-card rounded-3xl border-emerald-500/20 bg-emerald-500/5 text-center space-y-1">
               <p className="text-[9px] text-emerald-400 font-black uppercase tracking-widest">Network Health</p>
-              <p className="text-3xl font-mono font-black text-white">{controlState.globalAnalysis.networkHealth}%</p>
+              <p className="text-3xl font-mono font-black text-white">{controlState.globalAnalysis?.networkHealth || 0}%</p>
             </div>
             <div className="p-6 glass-card rounded-3xl border-indigo-500/20 bg-indigo-500/5 text-center space-y-1">
               <p className="text-[9px] text-indigo-400 font-black uppercase tracking-widest">Active Protocols</p>
-              <p className="text-3xl font-mono font-black text-white">{controlState.activeRules.length}</p>
+              <p className="text-3xl font-mono font-black text-white">{controlState.activeRules?.length || 0}</p>
             </div>
           </div>
         </div>
@@ -134,9 +134,9 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
               </div>
               <div className="space-y-6">
                 {[
-                  { label: 'Global Treasury', val: controlState.globalAnalysis.totalTreasury, col: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-                  { label: 'System Liquidity', val: controlState.globalAnalysis.systemLiquidity, col: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-                  { label: 'User Liquidity', val: controlState.globalAnalysis.userLiquidity, col: 'text-amber-400', bg: 'bg-amber-500/10' },
+                  { label: 'Global Treasury', val: controlState.globalAnalysis?.totalTreasury || 0, col: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                  { label: 'System Liquidity', val: controlState.globalAnalysis?.systemLiquidity || 0, col: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+                  { label: 'User Liquidity', val: controlState.globalAnalysis?.userLiquidity || 0, col: 'text-amber-400', bg: 'bg-amber-500/10' },
                 ].map((t, i) => (
                   <div key={i} className={`p-6 rounded-3xl border border-white/5 ${t.bg} space-y-2`}>
                     <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.label}</p>
@@ -157,7 +157,7 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4 py-1 bg-white/5 rounded-full border border-white/5">Blockchain Operations Sequence</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {controlState.activeRules.map((rule) => (
+              {(controlState.activeRules || []).map((rule) => (
                 <div key={rule.id} className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-4 group hover:border-indigo-500/30 transition-all">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
@@ -196,7 +196,7 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
                 <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Responsibility <span className="text-indigo-400">Dispatcher</span></h3>
               </div>
               <div className="space-y-4">
-                {controlState.responsibilities.map((resp) => (
+                {(controlState.responsibilities || []).map((resp) => (
                   <div key={resp.id} className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-3 hover:bg-white/[0.08] transition-all cursor-pointer">
                     <div className="flex justify-between items-center">
                       <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{resp.role}</span>

@@ -2,10 +2,32 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { InternalControlState, UserRole } from "../types";
 
-const apiKey = process.env.GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: apiKey! });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn("GEMINI_API_KEY not found in environment.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey: apiKey || '' });
+  }
+  return aiInstance;
+}
+
+const FALLBACK_STATE: InternalControlState = {
+  balanceOfPowers: { stewardship: 50, governance: 50, treasury: 50, intelligence: 50 },
+  activeRules: [
+    { id: 'FALLBACK_1', name: 'System Integrity Check', description: 'AI Dispatcher is currently in fallback mode. Protocols are being enforced by static rules.', protocol: 'STATIC_FALLBACK', isActive: true, severity: 'MEDIUM' }
+  ],
+  responsibilities: [
+    { id: 'RESP_FALLBACK', role: 'STEWARD', task: 'Verify system connectivity and API key configuration.', status: 'ACTIVE', priority: 1 }
+  ],
+  globalAnalysis: { networkHealth: 100, totalTreasury: 1000000, systemLiquidity: 500000, userLiquidity: 500000 }
+};
 
 export async function dispatchInternalControls(userRole: UserRole, currentPath: string): Promise<InternalControlState> {
+  const ai = getAI();
   const prompt = `
     As the EnvirosAgro AI Internal Control Dispatcher, analyze the current system state for a user with role: ${userRole} at path: ${currentPath}.
     
@@ -111,15 +133,17 @@ export async function dispatchInternalControls(userRole: UserRole, currentPath: 
       }
     });
 
-    return JSON.parse(response.text || "{}");
+    const result = JSON.parse(response.text || "{}");
+    
+    // Validate result structure to prevent crashes
+    if (!result.balanceOfPowers || !result.activeRules || !result.responsibilities || !result.globalAnalysis) {
+      console.warn("Incomplete Internal Control State received from AI, merging with fallback.");
+      return { ...FALLBACK_STATE, ...result };
+    }
+
+    return result as InternalControlState;
   } catch (error) {
     console.error("Internal Control Dispatcher Error:", error);
-    // Fallback state
-    return {
-      balanceOfPowers: { stewardship: 50, governance: 50, treasury: 50, intelligence: 50 },
-      activeRules: [],
-      responsibilities: [],
-      globalAnalysis: { networkHealth: 100, totalTreasury: 1000000, systemLiquidity: 500000, userLiquidity: 500000 }
-    };
+    return FALLBACK_STATE;
   }
 }
