@@ -44,7 +44,7 @@ interface CommunityProps {
   onContribution: (type: 'post' | 'upload' | 'module' | 'quiz', category: string) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
-  onNavigate: (view: ViewState, action?: string | null) => void;
+  onNavigate: (view: ViewState, section?: string | null, pushToHistory?: boolean, params?: any) => void;
   initialSection?: string | null;
   hoodConnections?: any[];
   onHookHood?: (targetEsin: string, type?: any) => void;
@@ -635,14 +635,26 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                                    <p className="text-4xl font-mono font-black text-blue-400">+5% α</p>
                                 </div>
                              </div>
-                             <button 
-                                onClick={() => handleStartExam("EnvirosAgro Ecosystem Architecture")}
-                                disabled={isGeneratingExam}
-                                className="w-full max-w-md py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-indigo-500/5 disabled:opacity-20"
-                             >
-                                {isGeneratingExam ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : <Play size={32} className="mx-auto" />}
-                                <p className="mt-4">{isGeneratingExam ? 'SYNTHESIZING EXAM SHARDS...' : 'COMMENCE CERTIFICATION'}</p>
-                             </button>
+                             <div className="flex flex-col md:flex-row justify-center gap-6">
+                               <button 
+                                  onClick={() => handleStartExam("EnvirosAgro Ecosystem Architecture")}
+                                  disabled={isGeneratingExam}
+                                  className="flex-1 max-w-xs py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-indigo-500/5 disabled:opacity-20"
+                               >
+                                  {isGeneratingExam ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : <Play size={32} className="mx-auto" />}
+                                  <p className="mt-4">{isGeneratingExam ? 'SYNTHESIZING EXAM SHARDS...' : 'COMMENCE CERTIFICATION'}</p>
+                               </button>
+                               <button 
+                                  onClick={() => onNavigate('multimedia_generator', null, true, {
+                                    prompt: "Generate a new master exam for the EnvirosAgro ecosystem. Include questions about m-Constant, SEHTI pillars, and Digital MRV protocols.",
+                                    type: 'document'
+                                  })}
+                                  className="flex-1 max-w-xs py-10 bg-white/5 border-4 border-white/10 rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl hover:bg-white/10 hover:scale-105 active:scale-95 transition-all"
+                               >
+                                  <Bot size={32} className="mx-auto" />
+                                  <p className="mt-4">AUTO-GENERATE NEW EXAM</p>
+                               </button>
+                             </div>
                           </div>
                        </div>
                     )}

@@ -95,6 +95,15 @@ interface AppState {
   
   costAudit: ShardCostCalibration | null;
   setCostAudit: (audit: ShardCostCalibration | null) => void;
+
+  // Ecosystem Synchronization State
+  ecosystemState: {
+    p1: number;
+    p2: number;
+    p3: number;
+    isAnchored: boolean;
+  };
+  updateEcosystemState: (state: Partial<AppState['ecosystemState']>) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -255,4 +264,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   costAudit: null,
   setCostAudit: (audit) => set({ costAudit: audit }),
+
+  ecosystemState: {
+    p1: 1.2,
+    p2: 8.5,
+    p3: 0.5,
+    isAnchored: false,
+  },
+  updateEcosystemState: (newState) => set((state) => ({
+    ecosystemState: { ...state.ecosystemState, ...newState }
+  })),
 }));

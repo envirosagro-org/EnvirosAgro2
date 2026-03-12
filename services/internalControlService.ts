@@ -133,7 +133,9 @@ export async function dispatchInternalControls(userRole: UserRole, currentPath: 
       }
     });
 
-    const result = JSON.parse(response.text || "{}");
+    const text = response.text || "{}";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const result = JSON.parse(jsonMatch ? jsonMatch[0] : text);
     
     // Validate result structure to prevent crashes
     if (!result.balanceOfPowers || !result.activeRules || !result.responsibilities || !result.globalAnalysis) {

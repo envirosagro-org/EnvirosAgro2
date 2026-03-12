@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { useAppStore } from './store';
-import { ViewState, User, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection } from './types';
+import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
 
@@ -641,6 +641,7 @@ const App: React.FC = () => {
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
   const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<any | null>(null);
   const [osInitialCode, setOsInitialCode] = useState<string | null>(null);
+  const [multimediaParams, setMultimediaParams] = useState<{ prompt?: string; type?: string } | null>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
@@ -736,7 +737,7 @@ const App: React.FC = () => {
   const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(signals.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
   const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
   const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => { let index: string | undefined; REGISTRY_NODES.forEach((group, dIdx) => { group.items.forEach((item, eIdx) => { if (item.id === v) { if (!section) { index = `[${dIdx + 1}.${eIdx + 1}]`; } else { const sIdx = item.sections?.findIndex(s => s.id === section); if (sIdx !== undefined && sIdx !== -1) { index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`; } } } }); }); return index; };
-  const navigate = useCallback((v: ViewState, section?: string | null, pushToHistory = true) => { const index = findMatrixIndex(v, section || null); if (pushToHistory) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; setHistory(prev => [...prev, currentAddress]); setForwardHistory([]); } setView(v); setViewSection(section || null); setIsMobileMenuOpen(false); if (window.innerWidth < 1024) setIsSidebarOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); emitSignal({ title: 'VECTOR_SHIFT', message: `Resolved route to ${index || v.toUpperCase()}.`, priority: 'low', type: 'system', origin: 'ORACLE', actionIcon: 'ChevronRight' }); }, [view, viewSection, emitSignal, setIsSidebarOpen, setIsMobileMenuOpen]);
+  const navigate = useCallback((v: ViewState, section?: string | null, pushToHistory = true, params?: any) => { const index = findMatrixIndex(v, section || null); if (pushToHistory) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; setHistory(prev => [...prev, currentAddress]); setForwardHistory([]); } setView(v); setViewSection(section || null); if (v === 'multimedia_generator') setMultimediaParams(params || null); setIsMobileMenuOpen(false); if (window.innerWidth < 1024) setIsSidebarOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); emitSignal({ title: 'VECTOR_SHIFT', message: `Resolved route to ${index || v.toUpperCase()}.`, priority: 'low', type: 'system', origin: 'ORACLE', actionIcon: 'ChevronRight' }); }, [view, viewSection, emitSignal, setIsSidebarOpen, setIsMobileMenuOpen]);
   const goBack = useCallback(() => { if (history.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const lastVector = history[history.length - 1]; setForwardHistory(prev => [...prev, currentAddress]); setHistory(prev => prev.slice(0, -1)); navigate(lastVector.dimension, lastVector.element || undefined, false); } else if (view !== 'dashboard') { navigate('dashboard', undefined, true); } }, [history, view, viewSection, navigate]);
   const goForward = useCallback(() => { if (forwardHistory.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const nextVector = forwardHistory[forwardHistory.length - 1]; setHistory(prev => [...prev, currentAddress]); setForwardHistory(prev => prev.slice(0, -1)); navigate(nextVector.dimension, nextVector.element || undefined, false); } }, [forwardHistory, view, viewSection, navigate]);
 
@@ -761,9 +762,11 @@ const App: React.FC = () => {
       case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => setView('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} />;
       case 'channelling': return <Channelling user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
       case 'media': return <MediaHub user={currentUser} userBalance={currentUser.wallet.balance} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} initialAction={viewSection} />;
-      case 'multimedia_generator': return <AgroMultimediaGenerator user={currentUser} onNavigate={navigate} onEarnEAC={handleEarnEAC} />;
+      case 'multimedia_generator': return <AgroMultimediaGenerator user={currentUser} onNavigate={navigate} onEarnEAC={handleEarnEAC} prefilledParams={multimediaParams} clearParams={() => setMultimediaParams(null)} />;
       case 'cost_accounting': return <CostAccountingDashboard />;
-      case 'internal_control': return <InternalControlDashboard userRole="STEWARD" currentPath={view} />;
+      case 'internal_control': 
+        const role = (currentUser.role as string) === 'OBSERVER' ? 'GUEST' : (currentUser.role as UserRole);
+        return <InternalControlDashboard userRole={role} currentPath={view} />;
       case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} initialSection={viewSection} />;
       case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} />;
       case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} liveProducts={liveProducts} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
@@ -793,7 +796,7 @@ const App: React.FC = () => {
       case 'digital_mrv': return <DigitalMRV user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} onEmitSignal={emitSignal} />;
       case 'online_garden': return <OnlineGarden user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} notify={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} />;
       case 'farm_os': return <FarmOS user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialCode={osInitialCode} clearInitialCode={() => setOsInitialCode(null)} initialSection={viewSection} />;
-      case 'media_ledger': return <MediaLedger user={currentUser} shards={mediaShards} />;
+      case 'media_ledger': return <MediaLedger user={currentUser} shards={mediaShards} onNavigate={navigate} />;
       case 'sitemap': return <Sitemap nodes={REGISTRY_NODES} onNavigate={navigate} />;
       case 'ai_analyst': return <AIAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
       case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} liveProducts={liveProducts} onSaveLiveProduct={(p) => saveCollectionItem('live_products', p)} />;

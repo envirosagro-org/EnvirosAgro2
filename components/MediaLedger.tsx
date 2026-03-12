@@ -37,6 +37,7 @@ import MultimediaPlayer from './MultimediaPlayer';
 interface MediaLedgerProps {
   user: User;
   shards: MediaShard[];
+  onNavigate: (view: ViewState, section?: string | null, pushToHistory?: boolean, params?: any) => void;
 }
 
 const TYPE_ICONS: Record<string, any> = {
@@ -57,7 +58,7 @@ const TYPE_COLORS: Record<string, string> = {
   INGEST: 'text-slate-400'
 };
 
-const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [] }) => {
+const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'video' | 'audio' | 'papers' | 'oracle'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShard, setSelectedShard] = useState<MediaShard | null>(null);
@@ -226,19 +227,23 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [] }) => {
                               <span className="text-2xl font-mono font-black text-white">{shard.mImpact}</span>
                            </div>
                         </div>
-                        <div className="flex justify-end gap-6 pr-8">
-                           {(shard.type === 'VIDEO' || shard.type === 'AUDIO') && (
-                             <button onClick={() => openPlayer(shard)} className="p-5 bg-emerald-600 rounded-2xl text-white shadow-3xl hover:bg-emerald-500 transition-all active:scale-90 border border-white/10" title="Play Shard">
-                                <CirclePlay size={24} />
-                             </button>
-                           )}
-                           <button onClick={() => setSelectedShard(shard)} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-indigo-400 transition-all shadow-xl active:scale-90" title="Inspect Shard">
-                              <Eye size={24} />
-                           </button>
-                           <button className="p-5 bg-indigo-600 rounded-2xl text-white shadow-3xl hover:bg-indigo-500 transition-all active:scale-90 border border-white/10" title="Download to Buffer">
-                              <Download size={24} />
-                           </button>
-                        </div>
+                         <div className="flex justify-end gap-6 pr-8">
+                            {(shard.type === 'VIDEO' || shard.type === 'AUDIO') && (
+                              <button onClick={() => openPlayer(shard)} className="p-5 bg-emerald-600 rounded-2xl text-white shadow-3xl hover:bg-emerald-500 transition-all active:scale-90 border border-white/10" title="Play Shard">
+                                 <CirclePlay size={24} />
+                              </button>
+                            )}
+                            <button onClick={() => setSelectedShard(shard)} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-indigo-400 transition-all shadow-xl active:scale-90" title="Inspect Shard">
+                               <Eye size={24} />
+                            </button>
+                            <button 
+                              onClick={() => (onNavigate as any)('multimedia_generator', null, true, { prompt: `Process and prepare download for shard: ${shard.title} (${shard.id}). Type: ${shard.type}`, type: shard.type === 'PAPER' ? 'document' : shard.type.toLowerCase() })}
+                              className="p-5 bg-indigo-600 rounded-2xl text-white shadow-3xl hover:bg-indigo-500 transition-all active:scale-90 border border-white/10" 
+                              title="Download to Buffer via Agro Multimedia"
+                            >
+                               <Download size={24} />
+                            </button>
+                         </div>
                     </div>
                   );
                })}
@@ -355,8 +360,15 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [] }) => {
                        <CirclePlay size={28} /> PLAY_SHARD
                     </button>
                   )}
-                 <button className="px-24 py-7 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[12px] ring-white/5">
-                    <Download size={28} /> DOWNLOAD_AGRO_SHARD
+                  <button 
+                    onClick={() => {
+                      const shard = selectedShard;
+                      setSelectedShard(null);
+                      (onNavigate as any)('multimedia_generator', null, true, { prompt: `Process and prepare download for shard: ${shard.title} (${shard.id}). Type: ${shard.type}`, type: shard.type === 'PAPER' ? 'document' : shard.type.toLowerCase() });
+                    }}
+                    className="px-24 py-7 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[12px] ring-white/5"
+                  >
+                    <Download size={28} /> DOWNLOAD_VIA_AGRO_MULTIMEDIA
                  </button>
               </div>
            </div>

@@ -18,7 +18,7 @@ import { SycamoreLogo } from '../App';
 
 interface InfoPortalProps {
   user: User;
-  onNavigate: (view: ViewState) => void;
+  onNavigate: (view: ViewState, section?: string | null, pushToHistory?: boolean, params?: any) => void;
   onAcceptAll?: () => void;
   onPermanentAction: (key: string, reward: number, reason: string) => Promise<boolean>;
 }
@@ -130,6 +130,13 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
   const [activeSection, setActiveSection] = useState<string>('about');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isSigningIndividual, setIsSigningIndividual] = useState<string | null>(null);
+
+  const handleGenerateFAQ = () => {
+    onNavigate('multimedia_generator', null, true, {
+      prompt: "Generate a comprehensive FAQ for the EnvirosAgro ecosystem, covering m-Constant, SEHTI pillars, and Digital MRV protocols.",
+      type: 'document'
+    });
+  };
 
   const shards = [
     { id: 'about', label: 'Institutional Bio', icon: Info, color: 'text-emerald-400' },
@@ -428,6 +435,14 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
               </div>
               <h3 className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter m-0 drop-shadow-2xl leading-none">REGISTRY <span className="text-slate-400">FAQ.</span></h3>
               <p className="text-slate-600 text-2xl uppercase font-black tracking-[0.5em] italic opacity-60">System Protocols & Technical Guidelines</p>
+              <div className="pt-8">
+                <button 
+                  onClick={handleGenerateFAQ}
+                  className="px-10 py-5 bg-emerald-600/10 border border-emerald-500/20 rounded-full text-emerald-400 font-black text-[10px] uppercase tracking-[0.4em] hover:bg-emerald-600 hover:text-white transition-all shadow-xl flex items-center gap-3 mx-auto"
+                >
+                  <Bot size={16} /> AUTO-GENERATE UPDATED FAQ
+                </button>
+              </div>
             </div>
             <div className="space-y-6 px-4">
               {FAQ_ITEMS.map((item, i) => (

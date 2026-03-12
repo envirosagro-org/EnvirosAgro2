@@ -40,9 +40,17 @@ interface AgroMultimediaGeneratorProps {
   user: User;
   onNavigate: (view: any) => void;
   onEarnEAC: (amount: number, reason: string) => void;
+  prefilledParams?: { prompt?: string; type?: string } | null;
+  clearParams?: () => void;
 }
 
-const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({ user, onNavigate, onEarnEAC }) => {
+const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({ 
+  user, 
+  onNavigate, 
+  onEarnEAC,
+  prefilledParams,
+  clearParams
+}) => {
   const [activeTab, setActiveTab] = useState<'video' | 'audio' | 'document'>('video');
   const [prompt, setPrompt] = useState('');
   const [docType, setDocType] = useState('Research Paper');
@@ -52,6 +60,21 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({ user,
   const [resultText, setResultText] = useState<string | null>(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [hasKey, setHasKey] = useState<boolean | null>(null);
+
+  // Handle prefilled params
+  React.useEffect(() => {
+    if (prefilledParams) {
+      if (prefilledParams.prompt) setPrompt(prefilledParams.prompt);
+      if (prefilledParams.type) {
+        const type = prefilledParams.type.toLowerCase();
+        if (type === 'video' || type === 'audio' || type === 'document') {
+          setActiveTab(type as any);
+        }
+      }
+      // Clear params after consuming
+      if (clearParams) clearParams();
+    }
+  }, [prefilledParams, clearParams]);
 
   React.useEffect(() => {
     const checkKey = async () => {
@@ -198,12 +221,13 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({ user,
               {(['video', 'audio', 'document'] as const).map(t => (
                 <button
                   key={t}
+                  id={`multimedia-tab-${t}`}
                   onClick={() => { setActiveTab(t); setResultUrl(null); setResultText(null); }}
                   className={`flex-1 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === t ? 'bg-indigo-600 text-white shadow-2xl' : 'text-slate-500 hover:text-slate-300'}`}
                 >
-                  {t === 'video' && <Video size={16} />}
-                  {t === 'audio' && <Music size={16} />}
-                  {t === 'document' && <FileText size={16} />}
+                  {t === 'video' && <Video id="multimedia-tab-video-icon" size={16} className={`transition-all duration-500 ${activeTab === 'video' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
+                  {t === 'audio' && <Music id="multimedia-tab-audio-icon" size={16} className={`transition-all duration-500 ${activeTab === 'audio' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
+                  {t === 'document' && <FileText id="multimedia-tab-document-icon" size={16} className={`transition-all duration-500 ${activeTab === 'document' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
                   {t}
                 </button>
               ))}
@@ -348,7 +372,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({ user,
                 {/* Actions Footer */}
                 <div className="p-10 border-t border-white/10 bg-white/5 flex justify-center gap-8">
                    <button onClick={handleAnchorToLedger} className="px-12 py-6 bg-emerald-600 rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 border-2 border-white/10">
-                      <Save size={20} /> ANCHOR_TO_LEDGER
+                      <Save size={20} /> PUBLISH_VIA_AGRO_IN_PDF
                    </button>
                    <button className="px-12 py-6 bg-white/5 border-2 border-white/10 rounded-full text-slate-400 font-black text-xs uppercase tracking-[0.4em] hover:text-white transition-all flex items-center gap-4">
                       <Share2 size={20} /> DISPATCH_SIGNAL

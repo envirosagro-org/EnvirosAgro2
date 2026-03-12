@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, Video, FileText, ChevronRight, PlayCircle, ExternalLink, GraduationCap, Link as LinkIcon } from 'lucide-react';
+import { ViewState } from '../types';
 
 interface Resource {
   id: string;
@@ -64,7 +65,7 @@ const RESOURCES: Resource[] = [
 ];
 
 interface EducationalResourcesProps {
-  onNavigate: (view: any, section?: string) => void;
+  onNavigate: (view: ViewState, section?: string | null, pushToHistory?: boolean, params?: any) => void;
 }
 
 const EducationalResources: React.FC<EducationalResourcesProps> = ({ onNavigate }) => {
@@ -96,6 +97,15 @@ const EducationalResources: React.FC<EducationalResourcesProps> = ({ onNavigate 
             Master the tools, technologies, and practices driving the regenerative agriculture revolution.
           </p>
         </div>
+        <button 
+          onClick={() => onNavigate('multimedia_generator', null, true, {
+            prompt: "Generate a new educational resource shard for the EnvirosAgro ecosystem. Focus on a novel sustainable farming technique or blockchain application.",
+            type: 'document'
+          })}
+          className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-black uppercase tracking-[0.3em] shadow-xl transition-all active:scale-95 flex items-center gap-3"
+        >
+          <PlayCircle size={18} /> AUTO-GENERATE NEW RESOURCE
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-4">
@@ -148,10 +158,16 @@ const EducationalResources: React.FC<EducationalResourcesProps> = ({ onNavigate 
               <span className="text-xs font-mono text-slate-500">
                 {resource.type === 'video' ? resource.duration : resource.readTime}
               </span>
-              <button onClick={() => onNavigate('media')} className="flex items-center gap-2 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors uppercase tracking-wider">
-                {resource.type === 'video' ? 'Watch Now' : 'Read More'}
-                <ChevronRight size={14} />
-              </button>
+              <button 
+                onClick={() => onNavigate('multimedia_generator', null, true, { 
+                  prompt: `Generate educational media for: ${resource.title}. Description: ${resource.description}`, 
+                  type: resource.type === 'video' ? 'video' : 'document' 
+                })} 
+                className="flex items-center gap-2 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors uppercase tracking-wider"
+              >
+                 {resource.type === 'video' ? 'Watch Now' : 'Read More'}
+                 <ChevronRight size={14} />
+               </button>
             </div>
           </div>
         ))}

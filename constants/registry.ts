@@ -7,7 +7,7 @@ import {
   Monitor, ClipboardCheck, HeartHandshake, Recycle, Wrench, Bot, 
   PawPrint, TreePine, Droplets, Mountain, Wind, ShieldPlus, Siren, 
   History, Scale, CalendarDays, Palette, Zap, Dna, Compass, BoxSelect, 
-  FileStack, Tv, Share2, SmartphoneNfc, BookOpen 
+  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck 
 } from 'lucide-react';
 
 export const REGISTRY_NODES: RegistryGroup[] = [
@@ -85,6 +85,7 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'research', name: 'Invention Ledger', icon: Zap },
       { id: 'biotech_hub', name: 'Biotech Hub', icon: Dna },
       { id: 'permaculture_hub', name: 'Permaculture Hub', icon: Compass },
+      { id: 'internal_control', name: 'Internal Control', icon: ShieldCheck },
       { id: 'cea_portal', name: 'CEA Portal', icon: BoxSelect },
       { id: 'media_ledger', name: 'Media Ledger', icon: FileStack },
       { id: 'media', name: 'Media Hub', icon: Tv },
