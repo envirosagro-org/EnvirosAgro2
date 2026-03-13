@@ -61,45 +61,20 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
   const [playerOpen, setPlayerOpen] = useState(false);
   const [hasKey, setHasKey] = useState<boolean | null>(null);
 
-  // Handle prefilled params
-  React.useEffect(() => {
-    if (prefilledParams) {
-      if (prefilledParams.prompt) setPrompt(prefilledParams.prompt);
-      if (prefilledParams.type) {
-        const type = prefilledParams.type.toLowerCase();
-        if (type === 'video' || type === 'audio' || type === 'document') {
-          setActiveTab(type as any);
-        }
-      }
-      // Clear params after consuming
-      if (clearParams) clearParams();
-    }
-  }, [prefilledParams, clearParams]);
+  const handleGenerate = async (overridePrompt?: string, overrideType?: string) => {
+    const p = overridePrompt || prompt;
+    const t = overrideType || activeTab;
 
-  React.useEffect(() => {
-    const checkKey = async () => {
-      const selected = await (window as any).aistudio.hasSelectedApiKey();
-      setHasKey(selected);
-    };
-    checkKey();
-  }, []);
-
-  const handleSelectKey = async () => {
-    await (window as any).aistudio.openSelectKey();
-    setHasKey(true);
-  };
-
-  const handleGenerate = async () => {
-    if (!prompt.trim() || isGenerating) return;
+    if (!p.trim() || isGenerating) return;
     setIsGenerating(true);
     setResultUrl(null);
     setResultText(null);
     setStatus('Initializing AgroMusika Neural Link...');
 
     try {
-      if (activeTab === 'video') {
+      if (t === 'video') {
         setStatus('Calibrating Veo 3.1 Fast Engine...');
-        let operation = await generateTemporalVideo(prompt);
+        let operation = await generateTemporalVideo(p);
         
         const statusMessages = [
           "Sequencing biological time shards...",
@@ -123,16 +98,16 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
           const blob = await response.blob();
           setResultUrl(URL.createObjectURL(blob));
         }
-      } else if (activeTab === 'audio') {
+      } else if (t === 'audio') {
         setStatus('Synthesizing Acoustic Resonance...');
-        const base64Audio = await generateAgroAcoustic(prompt);
+        const base64Audio = await generateAgroAcoustic(p);
         if (base64Audio) {
           const audioUrl = `data:audio/wav;base64,${base64Audio}`;
           setResultUrl(audioUrl);
         }
-      } else if (activeTab === 'document') {
+      } else if (t === 'document') {
         setStatus(`Drafting ${docType} via EnvirosAgro Agro Lang...`);
-        const res = await generateAgroDocument(docType, prompt);
+        const res = await generateAgroDocument(docType, p);
         setResultText(res.text);
       }
 
@@ -143,6 +118,43 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // Handle prefilled params
+  React.useEffect(() => {
+    if (prefilledParams) {
+      if (prefilledParams.prompt) setPrompt(prefilledParams.prompt);
+      if (prefilledParams.type) {
+        const type = prefilledParams.type.toLowerCase();
+        if (type === 'video' || type === 'audio' || type === 'document') {
+          setActiveTab(type as any);
+        }
+      }
+      
+      // Auto-generate if requested
+      if ((prefilledParams as any).autoGenerate) {
+        // We use setTimeout to ensure state updates have flushed, though we pass overrides directly
+        setTimeout(() => {
+          handleGenerate(prefilledParams.prompt, prefilledParams.type);
+        }, 100);
+      }
+
+      // Clear params after consuming
+      if (clearParams) clearParams();
+    }
+  }, [prefilledParams, clearParams]);
+
+  React.useEffect(() => {
+    const checkKey = async () => {
+      const selected = await (window as any).aistudio.hasSelectedApiKey();
+      setHasKey(selected);
+    };
+    checkKey();
+  }, []);
+
+  const handleSelectKey = async () => {
+    await (window as any).aistudio.openSelectKey();
+    setHasKey(true);
   };
 
   const handleAnchorToLedger = async () => {
@@ -265,7 +277,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
             </div>
 
             <button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={isGenerating || !prompt.trim()}
               className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-6 border-4 border-white/10 ring-[16px] ring-indigo-500/5"
             >

@@ -641,7 +641,7 @@ const App: React.FC = () => {
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
   const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<any | null>(null);
   const [osInitialCode, setOsInitialCode] = useState<string | null>(null);
-  const [multimediaParams, setMultimediaParams] = useState<{ prompt?: string; type?: string } | null>(null);
+  const [multimediaParams, setMultimediaParams] = useState<{ prompt?: string; type?: string; autoGenerate?: boolean } | null>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
@@ -650,15 +650,11 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkApiKey = async () => {
       // Only require API key selection in the development environment (AI Studio)
-      if (import.meta.env.DEV) {
-        if ((window as any).aistudio && (window as any).aistudio.hasSelectedApiKey) {
-          const selected = await (window as any).aistudio.hasSelectedApiKey();
-          setHasApiKey(selected);
-        } else {
-          setHasApiKey(true);
-        }
+      // We check if we are in the development environment by looking for the aistudio object
+      if ((window as any).aistudio && (window as any).aistudio.hasSelectedApiKey) {
+        const selected = await (window as any).aistudio.hasSelectedApiKey();
+        setHasApiKey(selected);
       } else {
-        // In production, bypass the selection screen
         setHasApiKey(true);
       }
     };
