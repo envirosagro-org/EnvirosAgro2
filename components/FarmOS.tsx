@@ -45,7 +45,7 @@ Prism.languages.agrolang = {
 };
 
 import { User, SignalShard } from '../types';
-import { auditAgroLangCode, chatWithAgroExpert } from '../services/geminiService';
+import { auditAgroLangCode, chatWithAgroLang } from '../services/agroLangService';
 
 interface FarmOSProps {
   user: User;

@@ -1,24 +1,12 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { InternalControlState, UserRole } from "../types";
-
-let aiInstance: GoogleGenAI | null = null;
-
-function getAI() {
-  if (!aiInstance) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn("GEMINI_API_KEY not found in environment.");
-    }
-    aiInstance = new GoogleGenAI({ apiKey: apiKey || '' });
-  }
-  return aiInstance;
-}
+import { callBackendEA } from "./agroLangService";
 
 const FALLBACK_STATE: InternalControlState = {
   balanceOfPowers: { stewardship: 50, governance: 50, treasury: 50, intelligence: 50 },
   activeRules: [
-    { id: 'FALLBACK_1', name: 'System Integrity Check', description: 'AI Dispatcher is currently in fallback mode. Protocols are being enforced by static rules.', protocol: 'STATIC_FALLBACK', isActive: true, severity: 'MEDIUM' }
+    { id: 'FALLBACK_1', name: 'System Integrity Check', description: 'Agro Lang Dispatcher is currently in fallback mode. Protocols are being enforced by static rules.', protocol: 'STATIC_FALLBACK', isActive: true, severity: 'MEDIUM' }
   ],
   responsibilities: [
     { id: 'RESP_FALLBACK', role: 'STEWARD', task: 'Verify system connectivity and API key configuration.', status: 'ACTIVE', priority: 1 }
@@ -27,9 +15,8 @@ const FALLBACK_STATE: InternalControlState = {
 };
 
 export async function dispatchInternalControls(userRole: UserRole, currentPath: string): Promise<InternalControlState> {
-  const ai = getAI();
   const prompt = `
-    As the EnvirosAgro AI Internal Control Dispatcher, analyze the current system state for a user with role: ${userRole} at path: ${currentPath}.
+    As the EnvirosAgro Agro Lang Internal Control Dispatcher, analyze the current system state for a user with role: ${userRole} at path: ${currentPath}.
     
     Generate a JSON response following this schema:
     {
@@ -70,7 +57,7 @@ export async function dispatchInternalControls(userRole: UserRole, currentPath: 
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await callBackendEA({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {

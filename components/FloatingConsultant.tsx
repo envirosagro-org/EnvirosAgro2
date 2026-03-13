@@ -21,7 +21,7 @@ import {
   Link2,
   Waves
 } from 'lucide-react';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 import { User, ViewState } from '../types';
 import { SycamoreLogo } from '../App';
 
@@ -80,14 +80,14 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ isOpen, onClose
         parts: [{ text: m.text }]
       }));
 
-      const sysInstruction = `You are the EnvirosAgro AI Concierge.
+      const sysInstruction = `You are the EnvirosAgro Agro Lang Concierge.
       CORE MISSION: Drive users toward deep agricultural sustainability using the EnvirosAgro OS.
       LOGIC BASE: "${WHAT_IS_AG_DEFINITION}".
       STYLE: Technical, helpful, authoritative, industrial.
       SHARD MAPPING: When a user mentions economy, capital, or buying, mention the "Market Cloud". When they mention data, mention "Science Oracle".
       IF relevant, use the keyword "HANDSHAKE" to signify a technical connection is possible.`;
 
-      const response = await chatWithAgroExpert(`${msg}\n\n(System: Identify relevant industrial shards for this query)`, history);
+      const response = await chatWithAgroLang(`${msg}\n\n(System: Identify relevant industrial shards for this query)`, history);
       
       setMessages(prev => [...prev, { 
         role: 'bot', 
@@ -122,7 +122,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ isOpen, onClose
                 <SycamoreLogo size={32} className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
               </div>
               <div>
-                <h4 className="text-sm md:text-base font-black text-white uppercase tracking-widest leading-none">ENVIROSAGRO AI</h4>
+                <h4 className="text-sm md:text-base font-black text-white uppercase tracking-widest leading-none">ENVIROSAGRO AGRO LANG</h4>
                 <p className="text-[8px] md:text-[10px] text-indigo-400 font-bold uppercase tracking-tighter mt-1">Industrial Deep-Link Logic</p>
               </div>
             </div>

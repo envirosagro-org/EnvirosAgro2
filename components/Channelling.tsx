@@ -10,7 +10,7 @@ import {
   ShieldPlus, Terminal, Key, Target, Activity
 } from 'lucide-react';
 import { User } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 import { generateAlphanumericId } from '../systemFunctions';
 
 interface ChannellingProps {
@@ -113,7 +113,7 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC, onSpendEAC }
   const runAudit = async () => {
     setIsProcessing(true);
     try {
-      const res = await chatWithAgroExpert(`Audit proposed shard: ${subTitle} (URL: ${subUrl}) for ${subThrust} alignment. Evaluate scientific accuracy and EOS framework compliance. Determine if this signal enhances regional m-constant stability.`, []);
+      const res = await chatWithAgroLang(`Audit proposed shard: ${subTitle} (URL: ${subUrl}) for ${subThrust} alignment. Evaluate scientific accuracy and EOS framework compliance. Determine if this signal enhances regional m-constant stability.`, []);
       setAuditReport(res.text);
     } catch (e) {
       setAuditReport("Oracle audit complete. Ready for registry anchor. Signal integrity verified at 94%.");

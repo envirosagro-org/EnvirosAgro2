@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { User, ViewState } from '../../types';
-import { chatWithAgroExpert } from '../../services/geminiService';
+import { chatWithAgroLang } from '../../services/agroLangService';
 import { generateQuickHash } from '../../systemFunctions';
 import { useAppStore } from '../../store';
 
@@ -155,7 +155,7 @@ ${content}
       CONTEXT: ${user.location}, m-constant=${user.metrics.timeConstantTau || '0.5'}.
       Provide a technical 4-stage remediation shard focused on stabilizing the ${meta.formula} equilibrium.`;
       
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setOracleReport(res.text);
     } catch (e) {
       setOracleReport("ORACLE_HANDSHAKE_FAILURE: Registry sync recommended.");
@@ -384,7 +384,7 @@ ${content}
                </div>
                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Dimension <span className={meta.color}>Oracle</span></h3>
                <p className="text-slate-500 text-lg font-medium italic max-w-xl mx-auto">
-                 Query the specialized AI oracle for {meta.title} diagnostics and remediation shards.
+                 Query the specialized Agro Lang oracle for {meta.title} diagnostics and remediation shards.
                </p>
             </div>
 

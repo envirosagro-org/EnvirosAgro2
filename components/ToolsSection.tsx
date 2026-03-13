@@ -117,7 +117,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { MediaShard, Task } from '../types';
 
@@ -376,7 +376,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
     setIsOptimizing(true);
     setSigmaAdvice(null);
     try {
-      const res = await chatWithAgroExpert(`Sigma Six Optimization. Target: ${sigmaInput}. Current Sigma Level: ${sigmaLevel}. Defects: ${defects}, Ops: ${opportunities}. Provide industrial remediation shards.`, []);
+      const res = await chatWithAgroLang(`Sigma Six Optimization. Target: ${sigmaInput}. Current Sigma Level: ${sigmaLevel}. Defects: ${defects}, Ops: ${opportunities}. Provide industrial remediation shards.`, []);
       setSigmaAdvice(res.text);
     } catch (e) {
       setSigmaAdvice("Oracle link timeout.");

@@ -46,7 +46,7 @@ import {
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { User, SignalShard } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 
 interface EmergencyProps {
   user: User;
@@ -143,7 +143,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
       const prompt = `Act as an EnvirosAgro Crisis Response Specialist. Analyze this immediate threat: "${threatSubject}". 
       Assess the impact on regional m-constant stability and C(a) constant. 
       Provide a technical 4st-stage remediation shard including containment, neutralisation, and registry reporting.`;
-      const response = await chatWithAgroExpert(prompt, []);
+      const response = await chatWithAgroLang(prompt, []);
       setRemediationAdvice(response.text);
     } catch (e) {
       setRemediationAdvice("Oracle Handshake Interrupted: Threat depth exceeded initial buffer.");

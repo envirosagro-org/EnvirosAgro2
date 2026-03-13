@@ -47,7 +47,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { User, Order, VendorProduct, ViewState, SignalShard } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 
 interface CircularGridProps {
   user: User;
@@ -132,7 +132,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({
       3. Identify if the asset can be re-minted into the Market Cloud.
       4. Format as a technical industrial report.`;
 
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setRepairVerdict(res.text);
       onEarnEAC(5, 'REPAIR_STRATEGY_CONTRIBUTION');
     } catch (e) {

@@ -19,7 +19,7 @@ import {
   Area, BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
 import { User, ViewState, Order, VendorProduct, RegisteredUnit, AgroBook, LiveAgroProduct } from '../types';
-import { predictMarketSentiment, AIResponse, chatWithAgroExpert } from '../services/geminiService';
+import { predictMarketSentiment, AgroLangResponse, chatWithAgroLang } from '../services/agroLangService';
 import { listenToCollection } from '../services/firebaseService';
 import { generateQuickHash } from '../systemFunctions';
 

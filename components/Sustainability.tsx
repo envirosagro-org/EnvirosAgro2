@@ -14,7 +14,7 @@ import {
   LineChart, Bot,
   FileDigit, ChevronRight, Menu, Search, UserPlus, ChevronUp
 } from 'lucide-react';
-import { analyzeSustainability, AIResponse } from '../services/geminiService';
+import { analyzeSustainability, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { calculateMConstant, generateQuickHash } from '../systemFunctions';
 
@@ -63,7 +63,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
   const [atmStatic, setAtmStatic] = useState(0.88);
   const [soilResonance, setSoilResonance] = useState(0.45);
   const [isAuditing, setIsAuditing] = useState(false);
-  const [oracleVerdict, setOracleVerdict] = useState<AIResponse | null>(null);
+  const [oracleVerdict, setOracleVerdict] = useState<AgroLangResponse | null>(null);
 
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);

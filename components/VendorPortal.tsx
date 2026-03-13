@@ -72,7 +72,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { User, Order, LogisticProvider, VendorProduct, ViewState, SignalShard, LiveAgroProduct } from '../types';
-import { runSpecialistDiagnostic, analyzeDemandForecast } from '../services/geminiService';
+import { runSpecialistDiagnostic, analyzeDemandForecast } from '../services/agroLangService';
 import AssetAssociationTool from './AssetAssociationTool';
 
 interface VendorPortalProps {

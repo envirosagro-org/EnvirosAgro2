@@ -17,7 +17,7 @@ import {
   Wifi, Play, Mountain
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { chatWithAgroExpert, analyzeSustainability, AIResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/geminiService';
+import { chatWithAgroLang, analyzeSustainability, AgroLangResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/agroLangService';
 import { User, AgroResource, ViewState, MediaShard } from '../types';
 // Fixed: Removed non-existent exports backupTelemetryShard and fetchTelemetryBackup
 import { saveCollectionItem } from '../services/firebaseService';
@@ -33,7 +33,7 @@ interface IntelligenceProps {
   initialSection?: string | null;
 }
 
-type TabState = 'hub' | 'twin' | 'simulator' | 'trends' | 'telemetry' | 'eos_ai' | 'sid' | 'evidence';
+type TabState = 'hub' | 'twin' | 'simulator' | 'trends' | 'telemetry' | 'eos_agro_lang' | 'sid' | 'evidence';
 type OracleMode = 'BIO_DIAGNOSTIC' | 'SPECTRAL_AUDIT' | 'GENOMIC_INQUIRY' | 'SOIL_REMEDIATION';
 
 const ORACLE_QUERY_COST = 25;
@@ -143,7 +143,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
     try {
       const prompt = `Perform a master synthesis of all intelligence shards for Node ${user.esin}. Provide a high-level strategic industrial directive.`;
-      const response = await chatWithAgroExpert(prompt, []);
+      const response = await chatWithAgroLang(prompt, []);
       setMasterVerdict(response.text);
       onEarnEAC(100, 'MASTER_INTELLIGENCE_QUORUM_SYNC_YIELD');
     } catch (e) {
@@ -204,7 +204,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
   // --- SID SCANNER ---
   const [isSidScanning, setIsSidScanning] = useState(false);
-  const [sidResult, setSidResult] = useState<AIResponse | null>(null);
+  const [sidResult, setSidResult] = useState<AgroLangResponse | null>(null);
   const [sidStepIndex, setSidStepIndex] = useState(0);
 
   const handleRunSidScan = async () => {
@@ -214,7 +214,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     setSidStepIndex(0);
     const stepInterval = setInterval(() => setSidStepIndex(p => (p < SID_STEPS.length - 1 ? p + 1 : p)), 1000);
     try {
-      const res = await chatWithAgroExpert(`Perform a SID Scan for Node ${user.esin}.`, []);
+      const res = await chatWithAgroLang(`Perform a SID Scan for Node ${user.esin}.`, []);
       setSidResult(res);
       onEarnEAC(20, 'SID_DIAGNOSTIC_INGEST_OK');
     } finally {
@@ -226,7 +226,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   // --- SCIENCE ORACLE (EOS AI) ---
   const [aiQuery, setAiQuery] = useState('');
   const [aiThinking, setAiThinking] = useState(false);
-  const [aiResult, setAiResult] = useState<AIResponse | null>(null);
+  const [aiResult, setAiResult] = useState<AgroLangResponse | null>(null);
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [fileBase64, setFileBase64] = useState<string | null>(null);
   const oracleFileInputRef = useRef<HTMLInputElement>(null);
@@ -247,7 +247,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
   // --- TREND INGEST ---
   const [isIngestingTrends, setIsIngestingTrends] = useState(false);
-  const [trendsResult, setTrendsResult] = useState<AIResponse | null>(null);
+  const [trendsResult, setTrendsResult] = useState<AgroLangResponse | null>(null);
   const handleIngestTrends = async () => {
     setIsIngestingTrends(true);
     try {
@@ -296,7 +296,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
           { id: 'simulator', name: 'EOS Simulator', icon: Cpu },
           { id: 'trends', name: 'Trend Ingest', icon: TrendingUp },
           { id: 'telemetry', name: 'IoT Telemetry', icon: Wifi },
-          { id: 'eos_ai', name: 'Science Oracle', icon: Bot },
+          { id: 'eos_agro_lang', name: 'Science Oracle', icon: Bot },
           { id: 'sid', name: 'SID Scanner', icon: Radiation },
           { id: 'evidence', name: 'Evidence Vault', icon: CloudUpload },
         ].map(t => (
@@ -345,7 +345,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                    <h4 className="text-xl font-black text-white uppercase italic">SID Scanner</h4>
                    <p className="text-[10px] text-slate-500 italic">"Social immunity: 98% nominal."</p>
                 </div>
-                <div onClick={() => setActiveTab('eos_ai')} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between shadow-xl cursor-pointer">
+                <div onClick={() => setActiveTab('eos_agro_lang')} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between shadow-xl cursor-pointer">
                    <div className="flex justify-between items-start"><div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition-transform"><Bot size={24} /></div><span className="text-[9px] font-black text-slate-700 uppercase">NEURAL_HUB</span></div>
                    <h4 className="text-xl font-black text-white uppercase italic">Science Oracle</h4>
                    <p className="text-[10px] text-slate-500 italic">"Expert audit ready for ingest."</p>
@@ -484,7 +484,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
         )}
 
         {/* ORACLE (EOS AI) */}
-        {activeTab === 'eos_ai' && (
+        {activeTab === 'eos_agro_lang' && (
            <div className="max-w-6xl mx-auto space-y-12 animate-in zoom-in duration-500">
               <div className="lg:col-span-8 flex flex-col">
                  <div className="glass-card rounded-[64px] min-h-[650px] border-2 border-white/5 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
@@ -518,7 +518,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                        {aiResult && (
                           <div className="animate-in slide-in-from-bottom-10 duration-700 space-y-12 pb-10 flex-1">
                              <div className="p-10 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 border border-indigo-500/20 shadow-3xl"><div className="prose prose-invert max-w-none text-slate-300 text-xl md:text-2xl italic leading-relaxed whitespace-pre-line font-medium">{aiResult.text}</div></div>
-                             <div className="flex justify-center gap-6"><button onClick={() => setAiResult(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white shadow-xl transition-all">New Inquiry</button><button onClick={() => anchorToLedger(aiResult.text, 'Oracle', 'AI_Inquiry')} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-widest shadow-xl transition-all"><Stamp size={18} className="mr-2" /> Anchor to Ledger</button></div>
+                             <div className="flex justify-center gap-6"><button onClick={() => setAiResult(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white shadow-xl transition-all">New Inquiry</button><button onClick={() => anchorToLedger(aiResult.text, 'Oracle', 'AgroLang_Inquiry')} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-widest shadow-xl transition-all"><Stamp size={18} className="mr-2" /> Anchor to Ledger</button></div>
                           </div>
                        )}
                     </div>

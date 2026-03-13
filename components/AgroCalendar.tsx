@@ -38,7 +38,7 @@ import {
   Factory
 } from 'lucide-react';
 import { User, SignalShard, ViewState } from '../types';
-import { getWeatherForecast, chatWithAgroExpert, AIResponse } from '../services/geminiService';
+import { getWeatherForecast, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 
 interface AgroCalendarProps {
   user: User;
@@ -139,7 +139,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
   const [activeTab, setActiveTab] = useState<'daily' | 'seasonal' | 'jit'>('daily');
   const [activeSeason, setActiveSeason] = useState<typeof SEASONS[0] | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [weatherData, setWeatherData] = useState<AIResponse | null>(null);
+  const [weatherData, setWeatherData] = useState<AgroLangResponse | null>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   
@@ -207,7 +207,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
       
       Generate a 3-paragraph "Liturgical Shard" that combines spiritual stewardship with technical agricultural guidance.`;
       
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setLiturgicalShard(res.text);
       
       await onEmitSignal({

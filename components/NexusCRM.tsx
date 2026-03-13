@@ -49,7 +49,7 @@ import {
   Gavel
 } from 'lucide-react';
 import { User, VendorProduct, ViewState, Order } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 
 interface NexusCRMProps {
   user: User;
@@ -127,7 +127,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
     setIsTyping(true);
 
     try {
-      const response = await chatWithAgroExpert(msg, supportChat.map(c => ({ role: c.role === 'bot' ? 'model' : 'user', parts: [{ text: c.text }] })));
+      const response = await chatWithAgroLang(msg, supportChat.map(c => ({ role: c.role === 'bot' ? 'model' : 'user', parts: [{ text: c.text }] })));
       setSupportChat(prev => [...prev, { role: 'bot', text: response.text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     } catch (e) {
       setSupportChat(prev => [...prev, { role: 'bot', text: "Protocol sync error. Oracle handshake failed.", time: 'Error' }]);

@@ -47,7 +47,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { User, ViewState, MediaShard } from '../types';
-import { runSpecialistDiagnostic, AIResponse } from '../services/geminiService';
+import { runSpecialistDiagnostic, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 
@@ -108,7 +108,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
   const [isSyncing, setIsSyncing] = useState(false);
   
   const [isAuditing, setIsAuditing] = useState(false);
-  const [auditResult, setAuditResult] = useState<AIResponse | null>(null);
+  const [auditResult, setAuditResult] = useState<AgroLangResponse | null>(null);
   const [telemetryStream, setTelemetryStream] = useState<any[]>([]);
 
   // Archiving states

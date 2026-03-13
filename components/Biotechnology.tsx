@@ -59,7 +59,7 @@ import {
   Compass
 } from 'lucide-react';
 import { User, ViewState } from '../types';
-import { decodeAgroGenetics, chatWithAgroExpert } from '../services/geminiService';
+import { decodeAgroGenetics, chatWithAgroLang } from '../services/agroLangService';
 
 interface BiotechnologyProps {
   user: User;
@@ -166,7 +166,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
         Primary Trait: ${genomeTrait}
         Stability Target: ${stabilityIndex}%
         Provide a technical DNA sharding report including phenotypic expression targets and SEHTI alignment.`;
-        const res = await chatWithAgroExpert(prompt, []);
+        const res = await chatWithAgroLang(prompt, []);
         setForgeResult(res.text);
         setIsForging(false);
       } catch (e) {

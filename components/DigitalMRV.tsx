@@ -43,7 +43,7 @@ import {
   Wind
 } from 'lucide-react';
 import { User, AgroResource, ViewState, SignalShard } from '../types';
-import { analyzeMRVEvidence } from '../services/geminiService';
+import { analyzeMRVEvidence } from '../services/agroLangService';
 
 interface DigitalMRVProps {
   user: User;
@@ -332,7 +332,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                  <div className="space-y-3">
                     {[
                        { l: 'SELF-REPORTED', a: '0.50', active: !evidenceFile },
-                       { l: 'AI VERIFIED PHOTO', a: '0.85', active: !!evidenceFile },
+                       { l: 'AGRO LANG VERIFIED PHOTO', a: '0.85', active: !!evidenceFile },
                        { l: 'IOT / SPECTRAL LINK', a: '1.00', active: false },
                     ].map((tier, i) => (
                        <div key={i} className={`px-8 py-6 rounded-[24px] border transition-all flex justify-between items-center ${tier.active ? 'bg-blue-600/10 border-blue-500 shadow-inner ring-1 ring-blue-500/20' : 'bg-white/5 border-transparent opacity-40'}`}>

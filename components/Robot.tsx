@@ -49,7 +49,7 @@ import {
   Send
 } from 'lucide-react';
 import { User, ViewState, SignalShard } from '../types';
-import { chatWithAgroExpert, forgeSwarmMission } from '../services/geminiService';
+import { chatWithAgroLang, forgeSwarmMission } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from '../App';
 import { generateQuickHash } from '../systemFunctions';
@@ -124,7 +124,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
     try {
       const logSample = packetLogs.slice(0, 5).map(p => `[${p.time}] ${p.src}: ${p.act} (RISK: ${p.risk})`).join('\n');
       const prompt = `Act as the EnvirosAgro Cyber-Security Oracle. Analyze this crawler packet stream for Node ${user.esin}:\n\n${logSample}\n\nIdentify anomalies or potential SID injections.`;
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setAuditReport(res.text);
       onEarnEAC(10, 'SECURITY_THREAT_IDENTIFIED');
     } catch (e) {

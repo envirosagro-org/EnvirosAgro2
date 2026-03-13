@@ -120,8 +120,8 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
                     <ShieldCheck size={32} className="text-white" />
                   </div>
                   <div>
-                    <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Internal <span className="text-indigo-400">Control System</span></h2>
-                    <p className="text-indigo-400/60 text-[10px] font-mono tracking-[0.5em] uppercase mt-2">Immutable Protocol Dispatcher v9.4</p>
+                    <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">EA Internal <span className="text-indigo-400">Control</span></h2>
+                    <p className="text-indigo-400/60 text-[10px] font-mono tracking-[0.5em] uppercase mt-2">EA Protocol Dispatcher v9.4</p>
                   </div>
                 </div>
                 <p className="text-slate-400 text-lg italic max-w-2xl">
@@ -283,7 +283,7 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
               <div className="p-3 bg-indigo-600 rounded-xl shadow-lg">
                 <ListChecks size={20} className="text-white" />
               </div>
-              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Responsibility <span className="text-indigo-400">Dispatcher</span></h3>
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">EA Responsibility <span className="text-indigo-400">Dispatcher</span></h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {(controlState.responsibilities || []).map((resp) => (

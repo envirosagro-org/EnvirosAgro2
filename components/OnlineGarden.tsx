@@ -14,7 +14,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip 
 } from 'recharts';
 import { User, ViewState, AgroResource } from '../types';
-import { analyzeMiningYield } from '../services/geminiService';
+import { analyzeMiningYield } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
 
 interface OnlineGardenProps {

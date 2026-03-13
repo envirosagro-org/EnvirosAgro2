@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { User } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 
 interface CEAProps {
   user: User;
@@ -91,7 +91,7 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
       Spectrum Level: ${lightSpectrum}%
       
       Provide a technical remediation shard for growth optimization.`;
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setOracleInsight(res.text);
     } catch (e) {
       setOracleInsight("Registry synchronization error. Handshake interrupted.");

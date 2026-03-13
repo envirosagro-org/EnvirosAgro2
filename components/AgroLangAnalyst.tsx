@@ -10,11 +10,11 @@ import {
   Coins, Microscope, Scan, Users, PawPrint, Leaf, Brain, ShoppingBag, Lightbulb, Trees, Layers, Stamp,
   FileSearch, ClipboardList, ShieldAlert
 } from 'lucide-react';
-import { chatWithAgroExpert, analyzeSustainability, AIResponse } from '../services/geminiService';
+import { chatWithAgroLang, analyzeSustainability, AgroLangResponse } from '../services/agroLangService';
 import { User as AgroUser, ViewState, SignalShard } from '../types';
 import { SycamoreLogo } from '../App';
 
-interface AIAnalystProps {
+interface AgroLangAnalystProps {
   user: AgroUser;
   onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
   onNavigate: (view: ViewState, section?: string) => void;
@@ -31,7 +31,7 @@ const TUNNELLING_AGROLANG = `// Initiate Registry Handshake for Asset Verificati
 HANDSHAKE(asset_id: "VIN_9920", type: "Tractor_Unit_01")
 
 // Establish direct link through the Tunnelling Hub
-TUNNEL link(source: AI_Terminal, destination: Field_Controller_A) {
+TUNNEL link(source: AgroLang_Terminal, destination: Field_Controller_A) {
     SET protocol: "Encrypted_Direct"
     ANCHOR task: "Variable_Rate_Fertilization"
 }
@@ -72,10 +72,10 @@ const BLUEPRINT_AUDIT_GROUPS = [
   { label: 'QUALITY', sync: 100, shards: 4, points: ['TQM Grid', 'Chroma System', 'Circular Grid', 'Code of Laws'], icon: ClipboardCheck, col: 'text-indigo-600' },
 ];
 
-const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate }) => {
+const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, onNavigate }) => {
   const [activeMode, setActiveMode] = useState<'neural' | 'tunnelling' | 'status'>('neural');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: `Greetings Steward ${user.name}. I am the primary AI Analyst for Node ${user.esin}. My systems are currently synchronized with the 60-shard architecture. How can I facilitate your agricultural finality today?` }
+    { role: 'assistant', content: `Greetings Steward ${user.name}. I am the primary Agro Lang Analyst for Node ${user.esin}. My systems are currently synchronized with the 60-shard architecture. How can I facilitate your agricultural finality today?` }
   ]);
   const [input, setInput] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -110,7 +110,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
     }));
 
     try {
-      const response = await chatWithAgroExpert(userMessage, history, useSearch);
+      const response = await chatWithAgroLang(userMessage, history, useSearch);
       
       const textToScan = (userMessage + " " + response.text).toLowerCase();
       const suggested = SHARD_DIRECTORY.filter(shard => 
@@ -161,7 +161,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
       type: 'ledger_anchor',
       origin: 'ORACLE',
       title: 'TUNNEL_FINALITY_REACHED',
-      message: `AI Analyst successfully sharded a tunnelling protocol for node ${user.esin}. Confidence: 98.4%.`,
+      message: `Agro Lang Analyst successfully sharded a tunnelling protocol for node ${user.esin}. Confidence: 98.4%.`,
       priority: 'high',
       actionIcon: 'Zap'
     });
@@ -191,7 +191,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
         <div className="glass-card p-6 rounded-[32px] border-white/5 bg-black/40 flex-1 space-y-6 shadow-xl flex flex-col">
           <div className="flex items-center gap-4 border-b border-white/5 pb-6">
             <div className="p-3 bg-emerald-600 rounded-2xl shadow-lg shadow-emerald-900/40"><SycamoreLogo size={24} className="text-white" /></div>
-            <h3 className="font-black text-white uppercase italic tracking-widest">EnvirosAgro AI</h3>
+            <h3 className="font-black text-white uppercase italic tracking-widest">Agro Lang</h3>
           </div>
           
           <div className="space-y-2 flex-1">
@@ -200,7 +200,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
               className={`w-full flex items-center gap-4 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeMode === 'neural' ? 'bg-emerald-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
             >
               <SycamoreLogo size={16} />
-              EnvirosAgro AI
+              Agro Lang
             </button>
             <button 
               onClick={() => setActiveMode('tunnelling')}
@@ -276,7 +276,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
                   <SycamoreLogo size={32} className="text-white group-hover:rotate-12 transition-transform" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white uppercase italic tracking-widest m-0 leading-none">Neural Analyst</h3>
+                  <h3 className="text-xl font-black text-white uppercase italic tracking-widest m-0 leading-none">EA Neural Analyst</h3>
                   <div className="flex items-center gap-3 mt-2">
                     <div className="px-3 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase tracking-widest">EOS_CORE_STABLE</div>
                     <span className="text-[8px] text-slate-600 uppercase tracking-widest font-mono italic">
@@ -356,7 +356,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
                     </div>
                     <div className="bg-white/5 border border-white/10 p-6 rounded-3xl rounded-tl-none flex items-center gap-4">
                       <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest animate-pulse italic">Sequencing Oracle Response...</span>
+                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest animate-pulse italic">Sequencing EA Response...</span>
                     </div>
                   </div>
                 </div>
@@ -646,4 +646,4 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onEmitSignal, onNavigate })
   );
 };
 
-export default AIAnalyst;
+export default AgroLangAnalyst;

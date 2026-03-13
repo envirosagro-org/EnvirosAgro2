@@ -26,7 +26,7 @@ import {
   Info
 } from 'lucide-react';
 import { ViewState, User } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 
 interface LinkerContext {
   label: string;
@@ -90,8 +90,8 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
       Suggest 2-3 specific, highly relevant ${suggestionTarget} that should be associated with this asset to maximize yield, efficiency, or ecological impact.
       Format the response as a simple bulleted list. Keep it concise, technical, and actionable.`;
       
-      const response = await chatWithAgroExpert(prompt, []);
-      const suggestions = response.text.split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('*')).map(line => line.replace(/^[-*]\s*/, '').trim());
+      const response = await chatWithAgroLang(prompt, []);
+      const suggestions = response.text.split('\n').filter((line: string) => line.trim().startsWith('-') || line.trim().startsWith('*')).map((line: string) => line.replace(/^[-*]\s*/, '').trim());
       setAiSuggestions(suggestions.length > 0 ? suggestions : ["No specific high-priority associations detected at this time."]);
     } catch (error) {
       console.error("Failed to scan associations:", error);
@@ -137,7 +137,7 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
              </div>
 
              <div className="space-y-8">
-                {/* AI NEURAL ANALYST SUGGESTIONS */}
+                {/* AGRO LANG NEURAL ANALYST SUGGESTIONS */}
                 <div className="p-8 bg-indigo-900/20 border border-indigo-500/30 rounded-[40px] relative overflow-hidden">
                    <div className="absolute top-0 right-0 p-4 opacity-10"><Bot size={100} /></div>
                    <div className="flex items-center gap-4 mb-6 relative z-10">

@@ -66,7 +66,7 @@ import {
   Database
 } from 'lucide-react';
 import { User, ViewState, AgroResource, MediaShard } from '../types';
-import { chatWithAgroExpert, analyzeMedia } from '../services/geminiService';
+import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
 
@@ -184,7 +184,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
     setAnalysisResult(null);
     try {
       const prompt = `Perform a high-fidelity audit of the current network ingest stream for Node ${user.esin}. Identify packet resonance drifts and sharding integrity.`;
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setAnalysisResult(res.text);
     } catch (e) {
       setAnalysisResult("SYSTEM_ERROR: Oracle link interrupted. Shard integrity could not be verified.");

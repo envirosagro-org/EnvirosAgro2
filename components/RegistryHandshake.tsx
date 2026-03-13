@@ -8,7 +8,7 @@ import {
   FileText
 } from 'lucide-react';
 import { User, AgroResource, ViewState, SignalShard, HandshakeStep } from '../types';
-import { generateHandshakeAgroLang } from '../services/geminiService';
+import { generateHandshakeAgroLang } from '../services/agroLangService';
 
 interface RegistryHandshakeProps {
   user: User;

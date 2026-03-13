@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { User, AgroProject, ViewState } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 
 interface InvestorPortalProps {
   user: User;
@@ -76,11 +76,11 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
     setIsAiVetting(true);
     setAiAnalysis(null);
     try {
-      const prompt = `Perform a deep AI Vetting for agricultural mission ${mission.id} (${mission.name}). 
+      const prompt = `Perform a deep Agro Lang Vetting for agricultural mission ${mission.id} (${mission.name}). 
       Crop: ${mission.crop}. Risk Rating: ${mission.risk}. Est ROI: ${mission.roi}%.
       Include soil health data simulation, historical weather pattern interpretation for that region, and market price forecasting. 
       Format as a technical industrial report.`;
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setAiAnalysis(res.text);
     } catch (e) {
       setAiAnalysis("Oracle handshake timeout. Risk levels remain at nominal baseline.");
@@ -437,7 +437,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
                        <Bot size={44} className="animate-pulse" />
                     </div>
                     <div>
-                       <h3 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0">AI <span className="text-indigo-400">Evaluation.</span></h3>
+                       <h3 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0">Agro Lang <span className="text-indigo-400">Evaluation.</span></h3>
                        <p className="text-indigo-400/60 text-[11px] font-mono tracking-[0.5em] uppercase mt-4 italic">ORACLE_INGEST_v6.5</p>
                     </div>
                  </div>
@@ -501,7 +501,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
                        </div>
                     </div>
 
-                    {/* AI Risk Analysis Area */}
+                    {/* Agro Lang Risk Analysis Area */}
                     <div className="space-y-10">
                        <div className="p-10 bg-black rounded-[64px] border border-white/10 space-y-10 shadow-inner flex flex-col h-full overflow-hidden relative group/audit">
                           <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/audit:scale-110 transition-transform"><Database size={400} /></div>
@@ -520,7 +520,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
                                      className="px-14 py-6 bg-indigo-600/10 border border-indigo-500/20 rounded-full text-indigo-400 font-black text-[11px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-xl flex items-center gap-4"
                                    >
                                       {isAiVetting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Microscope size={20} />}
-                                      START AI CHECK
+                                      START AGRO LANG CHECK
                                    </button>
                                 </div>
                              ) : (

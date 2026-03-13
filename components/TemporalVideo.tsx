@@ -4,7 +4,7 @@ import {
   Download, Clock, Database, ShieldCheck, RefreshCw, 
   Key, Globe, Bot, Binary, TrendingUp, X
 } from 'lucide-react';
-import { generateTemporalVideo, getTemporalVideoOperation } from '../services/geminiService';
+import { generateTemporalVideo, getTemporalVideoOperation } from '../services/agroLangService';
 import { User } from '../types';
 import { SycamoreLogo } from '../App';
 import MultimediaPlayer from './MultimediaPlayer';

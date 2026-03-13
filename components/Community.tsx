@@ -34,7 +34,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { User, ViewState, Collective, SocialPost, PostComment, StewardConnection } from '../types';
-import { generateAgroExam, getGroundedAgroResources, chatWithAgroExpert, AIResponse } from '../services/geminiService';
+import { generateAgroExam, getGroundedAgroResources, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
 

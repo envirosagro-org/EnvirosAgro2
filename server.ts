@@ -16,13 +16,13 @@ async function startServer() {
   app.use(express.json());
 
   // API Routes
-  app.post("/api/gemini", async (req, res) => {
+  app.post("/api/agro-lang", async (req, res) => {
     const { model, contents, config } = req.body;
     
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        return res.status(500).json({ error: "GEMINI_API_KEY not configured on server." });
+        return res.status(500).json({ error: "EA_AI_API_KEY not configured on server." });
       }
 
       const ai = new GoogleGenAI({ apiKey });
@@ -36,19 +36,19 @@ async function startServer() {
       // Estimating tokens (rough approximation: 4 chars per token)
       const inputTokens = JSON.stringify(contents).length / 4;
       const outputTokens = (response.text || "").length / 4;
-      await costAccountingEngine.accountGeminiUsage(inputTokens + outputTokens, model);
+      await costAccountingEngine.accountAIUsage(inputTokens + outputTokens, model);
 
       res.json(response);
     } catch (error: any) {
-      console.error("Backend Gemini Error:", error);
+      console.error("Backend Agro Lang Error:", error);
       res.status(error.status || 500).json({ error: error.message });
     }
   });
 
-  app.post("/api/gemini/video", async (req, res) => {
+  app.post("/api/ea-ai/video", async (req, res) => {
     const { prompt } = req.body;
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
       const ai = new GoogleGenAI({ apiKey: apiKey! });
       const operation = await ai.models.generateVideos({
         model: 'veo-3.1-fast-generate-preview',
@@ -59,9 +59,9 @@ async function startServer() {
       // Account for video generation (higher cost)
       await costAccountingEngine.recordTransaction({
         type: 'COST',
-        category: 'GEMINI_API',
+        category: 'EA_AI_API',
         amount: 2.50, // Simulated cost for video generation
-        description: `EnvirosAgro AI Video Generation: ${prompt.slice(0, 30)}...`
+        description: `Agro Lang Video Generation: ${prompt.slice(0, 30)}...`
       });
 
       res.json(operation);
@@ -70,10 +70,10 @@ async function startServer() {
     }
   });
 
-  app.post("/api/gemini/video/operation", async (req, res) => {
+  app.post("/api/ea-ai/video/operation", async (req, res) => {
     const { operation } = req.body;
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
       const ai = new GoogleGenAI({ apiKey: apiKey! });
       const result = await ai.operations.getVideosOperation({ operation });
       res.json(result);

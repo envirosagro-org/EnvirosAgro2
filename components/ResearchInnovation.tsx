@@ -66,7 +66,7 @@ import {
   PencilRuler
 } from 'lucide-react';
 import { User, ResearchPaper, AgroBook, ChapterShard, VendorProduct } from '../types';
-import { generateAgroResearch, analyzeMedia, chatWithAgroExpert } from '../services/geminiService';
+import { generateAgroResearch, analyzeMedia, chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
 
@@ -254,7 +254,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       Format: TECHNICAL_SHARD.
       Content: 4 detailed paragraphs in Markdown. 
       Context: EnvirosAgro Sustainability Framework (m-constant, C(a)).`;
-      const response = await chatWithAgroExpert(prompt, []);
+      const response = await chatWithAgroLang(prompt, []);
       
       const newChapter: ChapterShard = {
         id: `CH-${Date.now()}`,

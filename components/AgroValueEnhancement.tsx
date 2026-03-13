@@ -10,7 +10,7 @@ import {
   ClipboardList
 } from 'lucide-react';
 import { User, ValueBlueprint, AgroResource, AssetGuarantee, ValueProcessStep } from '../types';
-import { generateValueBlueprint, activateLiveSequence } from '../services/geminiService';
+import { generateValueBlueprint, activateLiveSequence } from '../services/agroLangService';
 
 interface AgroValueEnhancementProps {
   user: User;

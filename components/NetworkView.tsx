@@ -13,7 +13,7 @@ import {
   LineChart
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { auditMeshStability, AIResponse } from '../services/geminiService';
+import { auditMeshStability, AgroLangResponse } from '../services/agroLangService';
 import { SycamoreLogo } from '../App';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 
@@ -53,7 +53,7 @@ const NetworkView: React.FC = () => {
   const [consensusLevel, setConsensusLevel] = useState(99.98);
   const [latency, setLatency] = useState(14);
   const [isAuditing, setIsAuditing] = useState(false);
-  const [auditVerdict, setAuditVerdict] = useState<AIResponse | null>(null);
+  const [auditVerdict, setAuditVerdict] = useState<AgroLangResponse | null>(null);
   const [shardsInFlight, setShardsInFlight] = useState<{ id: string; from: string; to: string; progress: number }[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 

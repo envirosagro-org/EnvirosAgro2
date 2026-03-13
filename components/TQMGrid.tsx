@@ -73,7 +73,7 @@ import {
   ShoppingBag as CRMIcon
 } from 'lucide-react';
 import { User, Order, LiveAgroProduct, ViewState, SignalShard } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
 
 interface TQMGridProps {
@@ -149,7 +149,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
     return [
       { stage: 'Procurement', source_portal: 'Vendor_Portal', timestamp: order.timestamp, payload: { origin: 'Verified Supplier', batch: order.trackingHash }, prev_hash: h1, unique_hash: h2, verification_signature: 'EA-ORACLE-V1' },
       { stage: 'Industrial_Kanban', source_portal: 'Industrial_Portal', timestamp: 'Finalized', payload: { bin_id: "B-44", status: "In-Progress", tool_id: "K-88" }, prev_hash: h2, unique_hash: h3, verification_signature: 'EA-SYSTEM-B42' },
-      { stage: 'Live_Processing', source_portal: 'Live_Farming', timestamp: 'Active', payload: { passed_inspection: true, moisture_level: "12%" }, prev_hash: h3, unique_hash: h4, verification_signature: 'CERT_AI_STUDIO_01' },
+      { stage: 'Live_Processing', source_portal: 'Live_Farming', timestamp: 'Active', payload: { passed_inspection: true, moisture_level: "12%" }, prev_hash: h3, unique_hash: h4, verification_signature: 'CERT_EA_STUDIO_01' },
       { stage: 'Market_Cloud_Validation', source_portal: 'Market_Cloud', timestamp: 'Ready', payload: { warehouse_loc: "Zone-A", customer_tier: "Gold" }, prev_hash: h4, unique_hash: h5, verification_signature: 'LOG_MGR' },
     ];
   };
@@ -179,7 +179,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
       3. Verify the existence of verification_signature at each stage.
       4. Provide a technical industrial finality report.`;
 
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setAuditVerdict(res.text);
     } catch (e) {
       setAuditVerdict("ORACLE_SYNC_ERROR: Ledger handshake interrupted. Shard sequentiality could not be verified.");
@@ -245,7 +245,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
         {[
           { id: 'pipeline', label: 'Inbound Pipeline', icon: Workflow },
           { id: 'trace', label: 'Trace & Track', icon: History },
-          { id: 'auditor', label: 'AI Oracle Audit', icon: Bot },
+          { id: 'auditor', label: 'Agro Lang Oracle Audit', icon: Bot },
           { id: 'sourcing', label: 'Sourcing Map', icon: Globe },
         ].map(tab => (
           <button 
@@ -427,7 +427,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
           </div>
         )}
 
-        {/* --- VIEW: AI ORACLE AUDIT (Intelligent Auditor) --- */}
+        {/* --- VIEW: AGRO LANG ORACLE AUDIT (Intelligent Auditor) --- */}
         {activeTab === 'auditor' && (
            <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-10 duration-1000">
               <div className="glass-card p-16 md:p-24 rounded-[80px] border-2 border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden shadow-3xl text-center space-y-12 group">

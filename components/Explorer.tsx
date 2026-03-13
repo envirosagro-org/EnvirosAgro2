@@ -69,7 +69,7 @@ import {
   BarChart, Bar, Cell
 } from 'recharts';
 import { AgroBlock, User, AgroTransaction, SignalShard, ViewState } from '../types';
-import { settleRegistryBatch, AIResponse, auditMeshStability, probeValidatorNode } from '../services/geminiService';
+import { settleRegistryBatch, AgroLangResponse, auditMeshStability, probeValidatorNode } from '../services/agroLangService';
 import { SycamoreLogo } from '../App';
 
 interface ExplorerProps {
@@ -113,13 +113,13 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
   const [expandedShardId, setExpandedShardId] = useState<string | null>(null);
 
   const [isSettling, setIsSettling] = useState(false);
-  const [settlementResult, setSettlementResult] = useState<AIResponse | null>(null);
+  const [settlementResult, setSettlementResult] = useState<AgroLangResponse | null>(null);
   const [isAnalyzingPulse, setIsAnalyzingPulse] = useState(false);
-  const [pulseVerdict, setPulseVerdict] = useState<AIResponse | null>(null);
+  const [pulseVerdict, setPulseVerdict] = useState<AgroLangResponse | null>(null);
   const [hashRate, setHashRate] = useState(12.4);
   const [probingNode, setProbingNode] = useState<string | null>(null);
   const [isProbing, setIsProbing] = useState(false);
-  const [probeResult, setProbeResult] = useState<AIResponse | null>(null);
+  const [probeResult, setProbeResult] = useState<AgroLangResponse | null>(null);
 
   useEffect(() => {
     if (initialSection && ['overview', 'terminal', 'blocks', 'ledger', 'consensus', 'settlement'].includes(initialSection)) {

@@ -453,7 +453,7 @@ export type ViewState =
   | 'agro_regency' | 'code_of_laws' | 'agro_calendar' | 'chroma_system'
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
-  | 'sitemap' | 'auth' | 'ai_analyst' | 'settings' | 'temporal_video' | 'robot'
+  | 'sitemap' | 'auth' | 'agro_lang_analyst' | 'settings' | 'temporal_video' | 'robot'
   | 'multimedia_generator' | 'cost_accounting' | 'internal_control'
   | 'mesh_protocol' | 'registry_handshake' | 'educational_resources';
 

@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
     define: {
       // Emulate process.env for browser compatibility as required by the GenAI SDK
       // Fix: use process.env from explicitly imported process
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY || ''),
+      'process.env.EA_AI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY || ''),
       'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY || '')
     },
     build: {

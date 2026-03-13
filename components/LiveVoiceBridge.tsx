@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Mic, MicOff, Bot, X, Loader2, ShieldCheck, Activity } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
-import { encode, decode } from '../services/geminiService';
+import { encode, decode } from '../services/agroLangService';
 
 interface LiveVoiceBridgeProps {
   isOpen: boolean;
@@ -54,7 +54,7 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
   const startSession = async () => {
     setIsConnecting(true);
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
       const ai = new GoogleGenAI({ apiKey });
       
       // Safeguard against non-constructor or missing AudioContext

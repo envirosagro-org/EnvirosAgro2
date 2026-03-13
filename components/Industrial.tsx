@@ -74,7 +74,7 @@ import {
   Cell
 } from 'recharts';
 import { User, RegisteredUnit, ViewState, WorkerProfile, AgroProject, VendorProduct, Order } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 
 interface IndustrialProps {
   user: User;
@@ -172,7 +172,7 @@ const Industrial: React.FC<IndustrialProps> = ({
       
       Identify the critical path for asset sharding. Detect bottlenecks between the Ingest Node and Market Cloud. Suggest process synchronization steps.`;
       
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setOracleAdvice(res.text);
     } catch (e) {
       setOracleAdvice("Handshake Interrupted. Registry drift detected in Sector 4.");

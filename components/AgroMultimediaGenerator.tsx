@@ -29,7 +29,7 @@ import {
   getTemporalVideoOperation, 
   generateAgroAcoustic, 
   generateAgroDocument 
-} from '../services/geminiService';
+} from '../services/agroLangService';
 import { User, MediaShard } from '../types';
 import { SycamoreLogo } from '../App';
 import MultimediaPlayer from './MultimediaPlayer';
@@ -131,7 +131,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
           setResultUrl(audioUrl);
         }
       } else if (activeTab === 'document') {
-        setStatus(`Drafting ${docType} via EnvirosAgro AI...`);
+        setStatus(`Drafting ${docType} via EnvirosAgro Agro Lang...`);
         const res = await generateAgroDocument(docType, prompt);
         setResultText(res.text);
       }

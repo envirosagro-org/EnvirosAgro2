@@ -10,7 +10,7 @@ import {
   Trello
 } from 'lucide-react';
 import { User, ViewState } from '../types';
-import { diagnoseCropIssue } from '../services/geminiService';
+import { diagnoseCropIssue } from '../services/agroLangService';
 
 interface EvidenceModalProps {
   isOpen: boolean;

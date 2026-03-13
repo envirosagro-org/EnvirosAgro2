@@ -74,7 +74,7 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, ShardCostCalibration } from '../types';
-import { analyzeInstitutionalRisk, consultFinancialOracle, AIResponse, chatWithAgroExpert } from '../services/geminiService';
+import { analyzeInstitutionalRisk, consultFinancialOracle, AgroLangResponse, chatWithAgroLang } from '../services/agroLangService';
 import { initiatePayPalPayout } from '../services/paymentService';
 import { toast } from 'sonner';
 
@@ -212,7 +212,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       Calculate the "Economic Resistance Shard". Identify cost centers that are leaking energy. 
       Propose a 3-stage sharding strategy to reduce procurement overhead by 15%.`;
       
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setOracleAdvice(res.text);
       return res.text;
     } catch (e) {
@@ -423,7 +423,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                          <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest">Internal System Shard</p>
                          <h4 className="text-5xl font-mono font-black text-white tracking-tighter italic mt-4">2.8M <span className="text-lg">EAC</span></h4>
                          <p className="text-[10px] text-slate-500 font-medium italic mt-4 leading-relaxed">
-                            "Reserved for system-wide m-constant stabilization and EnvirosAgro AI resource anchoring."
+                            "Reserved for system-wide m-constant stabilization and EnvirosAgro Agro Lang resource anchoring."
                          </p>
                       </div>
                    </div>

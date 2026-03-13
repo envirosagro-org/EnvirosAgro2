@@ -176,7 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                 </div>
              </div>
              <button 
-               onClick={() => onNavigate('ai_analyst')} 
+               onClick={() => onNavigate('agro_lang_analyst')} 
                className="relative z-10 w-full py-8 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_40px_rgba(99,102,241,0.4)] mt-8 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-4 border-white/10 ring-8 ring-white/5"
              >
                 <SycamoreLogo size={20} className="fill-current animate-pulse" /> INITIALIZE INGEST

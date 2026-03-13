@@ -81,7 +81,7 @@ const FarmOS = React.lazy(() => import('./components/FarmOS'));
 const MediaLedger = React.lazy(() => import('./components/MediaLedger'));
 const AgroMultimediaGenerator = React.lazy(() => import('./components/AgroMultimediaGenerator'));
 const Sitemap = React.lazy(() => import('./components/Sitemap'));
-const AIAnalyst = React.lazy(() => import('./components/AIAnalyst'));
+const AgroLangAnalyst = React.lazy(() => import('./components/AgroLangAnalyst'));
 const VerificationHUD = React.lazy(() => import('./components/VerificationHUD'));
 const SettingsPortal = React.lazy(() => import('./components/SettingsPortal'));
 const TemporalVideo = React.lazy(() => import('./components/TemporalVideo'));
@@ -109,7 +109,7 @@ import {
   verifyAppCheckHandshake,
   startBackgroundDataSync
 } from './services/firebaseService';
-import { chatWithAgroExpert } from './services/geminiService';
+import { chatWithAgroLang } from './services/agroLangService';
 import { getFullCostAudit } from './services/costAccountingService';
 import { generateAlphanumericId } from './systemFunctions';
 
@@ -323,14 +323,14 @@ const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
       { id: 'mesh_protocol', name: 'Mesh Protocol', icon: Network, sections: [{id: 'topology', label: 'Network Topology'}, {id: 'commits', label: 'Block Shards'}, {id: 'mempool', label: 'Inbound Mempool'}] },
       { id: 'sustainability', name: 'Sustainability Shard', icon: Leaf },
-      { id: 'ai_analyst', name: 'EnvirosAgro AI', icon: SycamoreLogo },
+      { id: 'agro_lang_analyst', name: 'EnvirosAgro Agro Lang', icon: SycamoreLogo },
       { id: 'internal_control', name: 'Internal Control', icon: ShieldCheck },
       { id: 'settings', name: 'System Settings', icon: Settings, sections: [{id: 'display', label: 'UI Display'}, {id: 'privacy', label: 'Security Shards'}] },
       { id: 'profile', name: 'Steward Profile', icon: UserIcon, sections: [{id: 'dossier', label: 'Personal Registry'}, {id: 'card', label: 'Identity Shard'}, {id: 'celestial', label: 'Birth Resonance'}] },
       { id: 'explorer', name: 'Monitoring Hub', icon: Database, sections: [{id: 'terminal', label: 'Signal Terminal'}, {id: 'blocks', label: 'Blocks'}, {id: 'ledger', label: 'Tx Ledger'}, {id: 'consensus', label: 'Quorum'}, {id: 'settlement', label: 'Finality'}] },
       { id: 'farm_os', name: 'Farm OS', icon: Binary, sections: [{id: 'kernel', label: 'Kernel Stack'}, {id: 'ide', label: 'AgroLang IDE'}, {id: 'shell', label: 'System Shell'}] },
       { id: 'impact', name: 'Network Impact', icon: TrendingUp, sections: [{id: 'whole', label: 'Vitality'}, {id: 'carbon', label: 'Carbon Ledger'}, {id: 'thrusts', label: 'Resonance'}] },
-      { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'eos_ai', label: 'Expert Oracle'}] },
+      { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'eos_agro_lang', label: 'Expert Oracle'}] },
       { id: 'sitemap', name: 'Registry Matrix', icon: MapIcon },
       { id: 'info', name: 'Hub Info', icon: Info, sections: [{id: 'about', label: 'About'}, {id: 'security', label: 'Security'}, {id: 'legal', label: 'Legal'}, {id: 'faq', label: 'FAQ'}] }
     ]
@@ -426,7 +426,7 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
       const socialContext = GLOBAL_STEWARD_REGISTRY.map(s => `- Steward: ${s.name} (ESIN: ${s.esin}), Role: ${s.role}, Skills: ${s.skills.join(', ')}`).join('\n');
       const ledgerContext = `- Media Shards: ${SEARCHABLE_MEDIA_LEDGER.map(m => m.title).join(', ')}\n- Missions: ${GLOBAL_PROJECTS_MISSIONS.map(m => m.name).join(', ')}\n- Experiences: ${ITEM_CATEGORY_EXPERIENCES.map(e => e.title).join(', ')}\n- Logistics: ${LOGISTICS_SHARDS.map(l => l.name).join(', ')}\n- Community Exams/Modules: ${LMS_EXAMS_MODULES.map(e => e.title).join(', ')}\n- Market Products: ${vendorProducts.map(p => p.name).join(', ')}`;
       const prompt = `Act as the EnvirosAgro Navigation and Multi-Ledger Oracle. Based on the sitemap, steward registry, and ledger archives, recommend EXACTLY ONE shard, section, or ledger entry that best answers the user's query.\n\nRegistry Sitemap: ${sitemapContext}\nSocial Steward Registry: ${socialContext}\nIndustrial Ledgers Index: ${ledgerContext}\n\nUser Query: "${searchTerm}"\n\nReturn format:\nREASON: [Why relevant]\nVIEW: [shard id]\nSECTION: [section id or all]\nSTEWARD_ESIN: [optional esin]`;
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       const reason = res.text.match(/REASON:\s*(.*)/i)?.[1] || "Deep semantic match found in registry.";
       const view = res.text.match(/VIEW:\s*([a-z_0-9]+)/i)?.[1] || "dashboard";
       const section = res.text.match(/SECTION:\s*([a-z_0-9]+)/i)?.[1];
@@ -645,6 +645,25 @@ const App: React.FC = () => {
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkApiKey = async () => {
+      // Only require API key selection in the development environment (AI Studio)
+      if (import.meta.env.DEV) {
+        if ((window as any).aistudio && (window as any).aistudio.hasSelectedApiKey) {
+          const selected = await (window as any).aistudio.hasSelectedApiKey();
+          setHasApiKey(selected);
+        } else {
+          setHasApiKey(true);
+        }
+      } else {
+        // In production, bypass the selection screen
+        setHasApiKey(true);
+      }
+    };
+    checkApiKey();
+  }, []);
 
   // Initialize Background Sync & Cost Calibration
   useEffect(() => {
@@ -798,7 +817,7 @@ const App: React.FC = () => {
       case 'farm_os': return <FarmOS user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialCode={osInitialCode} clearInitialCode={() => setOsInitialCode(null)} initialSection={viewSection} />;
       case 'media_ledger': return <MediaLedger user={currentUser} shards={mediaShards} onNavigate={navigate} />;
       case 'sitemap': return <Sitemap nodes={REGISTRY_NODES} onNavigate={navigate} />;
-      case 'ai_analyst': return <AIAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
+      case 'agro_lang_analyst': return <AgroLangAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
       case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} liveProducts={liveProducts} onSaveLiveProduct={(p) => saveCollectionItem('live_products', p)} />;
       case 'ingest': return <NetworkIngest user={currentUser} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} />;
       case 'info': return <InfoPortal user={currentUser} onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} onPermanentAction={handlePerformPermanentAction} />;
@@ -814,6 +833,41 @@ const App: React.FC = () => {
   const unreadSignalsCount = useMemo(() => signals.filter(s => !s.read).length, [signals]);
 
   if (isBooting) return <InitializationScreen onComplete={() => setIsBooting(false)} />;
+
+  if (hasApiKey === false) {
+    return (
+      <div className="min-h-screen bg-[#050706] text-slate-200 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)] pointer-events-none"></div>
+        <div className="max-w-md w-full glass-card p-8 rounded-3xl border border-white/10 text-center space-y-6 relative z-10">
+          <SycamoreLogo size={64} className="mx-auto text-emerald-500" />
+          <h1 className="text-2xl font-black uppercase tracking-widest text-white">API Key Required</h1>
+          <p className="text-sm text-slate-400">
+            This application uses advanced Gemini models that require a paid Google Cloud project. 
+            Please select your API key to continue.
+          </p>
+          <a 
+            href="https://ai.google.dev/gemini-api/docs/billing" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs text-emerald-400 hover:text-emerald-300 underline block"
+          >
+            Learn more about billing requirements
+          </a>
+          <button
+            onClick={async () => {
+              if ((window as any).aistudio && (window as any).aistudio.openSelectKey) {
+                await (window as any).aistudio.openSelectKey();
+                setHasApiKey(true);
+              }
+            }}
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all"
+          >
+            Select API Key
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 animate-in fade-in duration-1000 relative">
@@ -919,7 +973,7 @@ const App: React.FC = () => {
               <button 
                 onClick={() => { setIsConsultantOpen(!isConsultantOpen); setIsGlobalSearchOpen(false); setIsInboxOpen(false); }}
                 className={`p-2.5 rounded-xl border transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
-                title="EnvirosAgro AI"
+                title="EnvirosAgro Agro Lang"
               >
                  <SycamoreLogo size={18} className={isConsultantOpen ? "text-white" : "text-emerald-400"} />
                  <div className={`absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-black ${isConsultantOpen ? 'animate-none' : 'animate-pulse'}`}></div>

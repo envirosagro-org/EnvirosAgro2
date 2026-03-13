@@ -99,7 +99,7 @@ const CostAccountingDashboard: React.FC<CostAccountingDashboardProps> = ({
             <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">Cost <span className="text-emerald-400">Accounting</span></h2>
           </div>
           <p className="text-slate-400 text-lg font-medium italic max-w-2xl">
-            Real-time managerial accounting and cost optimization engine. Managing the EnvirosAgro treasury and AI resource allocation.
+            Real-time managerial accounting and cost optimization engine. Managing the EnvirosAgro treasury and Agro Lang resource allocation.
           </p>
         </div>
         
@@ -207,7 +207,7 @@ const CostAccountingDashboard: React.FC<CostAccountingDashboardProps> = ({
                 <div className="p-3 bg-emerald-600 rounded-xl shadow-lg">
                   <Zap size={20} className="text-white" />
                 </div>
-                <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">AI <span className="text-emerald-400">Optimization</span></h3>
+                <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Agro Lang <span className="text-emerald-400">Optimization</span></h3>
               </div>
               
               <div className="space-y-8">
@@ -227,7 +227,7 @@ const CostAccountingDashboard: React.FC<CostAccountingDashboardProps> = ({
                     <p className="text-[10px] font-black text-white uppercase tracking-widest">Neural Recommendation</p>
                   </div>
                   <p className="text-xs text-slate-400 italic leading-relaxed">
-                    {oracleAdvice || "System detected high-frequency EnvirosAgro AI sharding. Applying 12% bulk discount to next 500 transactions to optimize treasury liquidity."}
+                    {oracleAdvice || "System detected high-frequency EnvirosAgro Agro Lang sharding. Applying 12% bulk discount to next 500 transactions to optimize treasury liquidity."}
                   </p>
                 </div>
 
@@ -277,7 +277,7 @@ const CostAccountingDashboard: React.FC<CostAccountingDashboardProps> = ({
                 <span className="text-sm text-slate-500 ml-2 uppercase tracking-widest">Units</span>
               </p>
               <p className="text-[10px] text-slate-500 font-medium italic leading-relaxed">
-                Current operational volume required to cover all system costs including EnvirosAgro AI and Oracle anchoring.
+                Current operational volume required to cover all system costs including EnvirosAgro Agro Lang and Oracle anchoring.
               </p>
             </div>
           </div>

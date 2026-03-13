@@ -15,7 +15,7 @@ import {
   Stamp
 } from 'lucide-react';
 import { User, MeshNode, AgroBlock } from '../types';
-import { auditMeshStability, AIResponse } from '../services/geminiService';
+import { auditMeshStability, AgroLangResponse } from '../services/agroLangService';
 import { SycamoreLogo } from '../App';
 import { startBackgroundDataSync } from '../services/firebaseService';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';

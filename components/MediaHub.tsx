@@ -106,7 +106,7 @@ import {
   Clock
 } from 'lucide-react';
 import { User, ViewState, MediaShard } from '../types';
-import { searchAgroTrends, chatWithAgroExpert, AIResponse } from '../services/geminiService';
+import { searchAgroTrends, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import MultimediaPlayer from './MultimediaPlayer';
 import { generateQuickHash } from '../systemFunctions';
@@ -135,7 +135,7 @@ const INITIAL_AUDIO_TRACKS = [
 const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEarnEAC, onNavigate, initialSection, initialAction }) => {
   const [tab, setTab] = useState<'all' | 'video' | 'news' | 'audio' | 'streaming'>('all');
   const [loadingNews, setLoadingNews] = useState(false);
-  const [newsResult, setNewsResult] = useState<AIResponse | null>(null);
+  const [newsResult, setNewsResult] = useState<AgroLangResponse | null>(null);
 
   // Streaming Portal States
   const [isRegistered, setIsRegistered] = useState(false);

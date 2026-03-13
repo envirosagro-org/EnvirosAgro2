@@ -15,7 +15,7 @@ import {
   TableProperties, SearchCode, Workflow, Layers, Wrench
 } from 'lucide-react';
 import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone, ValueBlueprint, Task, RegisteredUnit } from '../types';
-import { analyzeBidHandshake, AIResponse } from '../services/geminiService';
+import { analyzeBidHandshake, AgroLangResponse } from '../services/agroLangService';
 import AssetAssociationTool from './AssetAssociationTool';
 
 interface ContractFarmingProps {

@@ -76,7 +76,7 @@ import {
   ComposedChart, Bar, Cell 
 } from 'recharts';
 import { User, MediaShard } from '../types';
-import { chatWithAgroExpert, AIResponse } from '../services/geminiService';
+import { chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from '../App';
 import { generateQuickHash } from '../systemFunctions';
@@ -110,7 +110,7 @@ const STATE_SHARDS: Record<string, any[]> = {
   civilization: [
     { id: 'barbaric', name: 'Primitive / Barbaric', intensity: 0.12, density: 0.15, col: 'text-rose-500', icon: Skull, desc: 'Low sharding, high manual stress (S).' },
     { id: 'industrial', name: 'Modern Industrial', intensity: 0.85, density: 0.75, col: 'text-slate-400', icon: Factory, desc: 'Standard planetary baseline.' },
-    { id: 'cybernetic', name: 'Cybernetic / Future', intensity: 1.85, density: 2.10, col: 'text-indigo-400', icon: Rocket, desc: 'Total AI Studio integration, ZK-Finality.' },
+    { id: 'cybernetic', name: 'Cybernetic / Future', intensity: 1.85, density: 2.10, col: 'text-indigo-400', icon: Rocket, desc: 'Total EA Studio / Agro Shell integration, ZK-Finality.' },
   ],
   biological: [
     { id: 'native', name: 'Native / Heirloom', intensity: 0.35, density: 0.45, col: 'text-emerald-500', icon: Sprout, desc: 'Heritage DNA, low output but high resilience.' },
@@ -200,7 +200,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
       4. Provide a technical path for "Registry Synchronization" between their current local node and this target state.
       Format as a technical industrial report. Use markdown.`;
 
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setTravelForecast(res.text);
       onEarnEAC(20, 'TEMPORAL_SHARD_FORGED');
     } catch (e) {
@@ -237,7 +237,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
       Sabbath Status: ${isSabbathActive ? 'ACTIVE' : 'IDLE'}
       
       Calculate the "Regenerative Velocity" (dy/dx). Analyze the impact of the 1/6th fallowing law (Sabbath-Yajna) on this node.`;
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setOracleReport(res.text);
     } catch (e) {
       setOracleReport("Derivative node timeout. Handshake interrupted.");

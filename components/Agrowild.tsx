@@ -47,7 +47,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { User, ViewState, Order, VendorProduct, MediaShard } from '../types';
-import { chatWithAgroExpert } from '../services/geminiService';
+import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from '../App';
 
@@ -170,7 +170,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
       4. Provide a unique SKU identifier for the discovery.
       Format as a technical industrial report.`;
 
-      const res = await chatWithAgroExpert(prompt, []);
+      const res = await chatWithAgroLang(prompt, []);
       setDiscoveryVerdict(res.text);
       onEarnEAC(5, 'DISCOVERY_STRATEGY_CONTRIBUTION');
     } catch (e) {

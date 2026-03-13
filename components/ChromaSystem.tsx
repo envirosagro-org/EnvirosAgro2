@@ -69,7 +69,7 @@ import {
   Atom
 } from 'lucide-react';
 import { User, ViewState, MediaShard } from '../types';
-import { chatWithAgroExpert, analyzeMedia } from '../services/geminiService';
+import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { GoogleGenAI } from "@google/genai";
 import { generateQuickHash } from '../systemFunctions';
@@ -199,7 +199,7 @@ ${content}
     setGraphicAnchored(false);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
       const ai = new GoogleGenAI({ apiKey });
       const technicalPrompt = `Professional architectural and agricultural render of ${imagePrompt}. 
       Brand Influence: Lilies Around Aesthetic Revolution.
@@ -289,7 +289,7 @@ ${content}
       const prompt = `Perform a Digital Chromatography Audit on this crop shard. 
       Predicted Health Index (Hi): ${hi}. Analyze spectral pigments and suggest SEHTI remediation. Include Lilies Around aesthetic impact analysis.`;
       
-      const response = await chatWithAgroExpert(prompt, []);
+      const response = await chatWithAgroLang(prompt, []);
       setChromaDiagnosis({ hi, report: response.text });
       onEarnEAC(20, 'CHROMATOGRAPHY_INGEST_SYNC');
     } catch (e) {
@@ -317,7 +317,7 @@ ${content}
       2. Calculate Albedo and Psychological Resonance for floriculture.
       3. Recommend material index and Lilies Around resilience score.`;
       
-      const response = await chatWithAgroExpert(prompt, []);
+      const response = await chatWithAgroLang(prompt, []);
       setDesignShard(response.text);
       onEarnEAC(15, 'LILIES_DESIGN_INGEST_SYNERGY');
     } catch (e) {
@@ -422,7 +422,7 @@ ${content}
                        </div>
                        <div>
                           <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Nature <span className="text-emerald-400">Canvas</span></h3>
-                          <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">AI_AESTHETIC_INGEST</p>
+                          <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">AGRO_LANG_AESTHETIC_INGEST</p>
                        </div>
                     </div>
                     <div className="space-y-6">

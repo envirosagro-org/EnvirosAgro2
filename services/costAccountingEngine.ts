@@ -5,7 +5,7 @@ import { generateAlphanumericId } from '../systemFunctions';
 export interface Transaction {
   id: string;
   type: 'COST' | 'REVENUE' | 'TAX' | 'PAYMENT';
-  category: 'GEMINI_API' | 'ORACLE' | 'ANCHORING' | 'REGISTRATION' | 'PRODUCTION' | 'SALES';
+  category: 'EA_AI_API' | 'ORACLE' | 'ANCHORING' | 'REGISTRATION' | 'PRODUCTION' | 'SALES';
   amount: number;
   description: string;
   timestamp: number;
@@ -24,10 +24,10 @@ export interface FinancialReport {
 class CostAccountingEngine {
   private transactions: Transaction[] = [];
   private walletBalance: number = 100000; // Initial system treasury
-  private geminiUsage: { tokens: number; cost: number } = { tokens: 0, cost: 0 };
+  private aiUsage: { tokens: number; cost: number } = { tokens: 0, cost: 0 };
   
   // Pricing Constants (Simulated in EAC/USD equivalent)
-  private readonly GEMINI_COST_PER_1K_TOKENS = 0.0005; 
+  private readonly AI_COST_PER_1K_TOKENS = 0.0005; 
   private readonly ORACLE_BASE_COST = 5;
   private readonly ANCHORING_BASE_COST = 2;
   private readonly REGISTRATION_FEE = 50;
@@ -55,16 +55,16 @@ class CostAccountingEngine {
     return newTransaction;
   }
 
-  public async accountGeminiUsage(tokens: number, model: string) {
-    const cost = (tokens / 1000) * this.GEMINI_COST_PER_1K_TOKENS;
-    this.geminiUsage.tokens += tokens;
-    this.geminiUsage.cost += cost;
+  public async accountAIUsage(tokens: number, model: string) {
+    const cost = (tokens / 1000) * this.AI_COST_PER_1K_TOKENS;
+    this.aiUsage.tokens += tokens;
+    this.aiUsage.cost += cost;
     
     this.recordTransaction({
       type: 'COST',
-      category: 'GEMINI_API',
+      category: 'EA_AI_API',
       amount: cost,
-      description: `EnvirosAgro AI Usage: ${model} (${tokens} tokens)`,
+      description: `Agro Lang Usage: ${model} (${tokens} tokens)`,
       metadata: { tokens, model }
     });
   }
@@ -120,9 +120,9 @@ class CostAccountingEngine {
   }
 
   public async runAIOptimization() {
-    // This would call Gemini to analyze transactions and suggest optimizations
+    // This would call Agro Lang to analyze transactions and suggest optimizations
     // For now, we simulate the background process
-    console.log("Running AI Cost Optimization...");
+    console.log("Running Agro Lang Cost Optimization...");
   }
 
   public getTransactions() {
