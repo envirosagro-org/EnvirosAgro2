@@ -53,6 +53,12 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   const [newTask, setNewTask] = useState({ title: '', priority: 'Standard', thrust: 'Industry' });
 
   const isSuccessRef = useRef(false);
+  const taskRef = useRef(newTask);
+
+  // Update ref whenever state changes
+  useEffect(() => {
+    taskRef.current = newTask;
+  }, [newTask]);
 
   // Sync local state with missionRegistrationState
   useEffect(() => {
@@ -67,12 +73,13 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   useEffect(() => {
     return () => {
       if (showTaskModal && !isSuccessRef.current) {
-        setMissionRegistrationState(newTask);
+        setMissionRegistrationState(taskRef.current);
       }
     };
-  }, [showTaskModal, newTask, setMissionRegistrationState]);
+  }, [showTaskModal, setMissionRegistrationState]);
 
   const handleStartTaskRegistration = () => {
+    isSuccessRef.current = false;
     if (missionRegistrationState) {
       setShowResumePrompt(true);
     } else {
@@ -455,10 +462,10 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
             <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
             <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
             <div className="flex flex-col gap-4">
-              <button onClick={() => { setShowResumePrompt(false); setShowTaskModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setShowResumePrompt(false); setShowTaskModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Resume Registration
               </button>
-              <button onClick={() => { setMissionRegistrationState(null); setShowResumePrompt(false); setNewTask({ title: '', priority: 'Standard', thrust: 'Industry' }); setShowTaskModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setMissionRegistrationState(null); setShowResumePrompt(false); setNewTask({ title: '', priority: 'Standard', thrust: 'Industry' }); setShowTaskModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Start Fresh
               </button>
             </div>

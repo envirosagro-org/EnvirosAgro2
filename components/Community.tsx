@@ -45,6 +45,7 @@ interface CommunityProps {
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
   onNavigate: (view: ViewState, section?: string | null, pushToHistory?: boolean, params?: any) => void;
+  onEmitSignal: (signal: any) => void;
   initialSection?: string | null;
   hoodConnections?: any[];
   onHookHood?: (targetEsin: string, type?: any) => void;
@@ -79,7 +80,18 @@ const MOCK_STEWARDS = [
   { esin: 'EA-ROBO-9214', name: 'Dr. Orion Bot', role: 'Automation Engineer', location: 'Tokyo Hub', res: 95, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150', online: true, skills: ['Swarm Control', 'Mesh Ingest'] },
 ];
 
-const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpendEAC, onContribution, onNavigate, initialSection, hoodConnections = [], onHookHood }) => {
+const Community: React.FC<CommunityProps> = ({ 
+  user, 
+  isGuest, 
+  onEarnEAC, 
+  onSpendEAC, 
+  onContribution, 
+  onNavigate, 
+  onEmitSignal,
+  initialSection, 
+  hoodConnections = [], 
+  onHookHood 
+}) => {
   const [activeTab, setActiveTab] = useState<'social' | 'shards' | 'lms' | 'network' | 'comic'>('social');
   const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams' | 'forge'>('modules');
   
@@ -242,6 +254,57 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
     });
   };
 
+  const handleVouch = async (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    const updatedPost = { ...post, vouchCount: (post.vouchCount || 0) + 1 };
+    await saveCollectionItem('social_posts', updatedPost);
+    onEarnEAC(5, 'SOCIAL_VOUCH_REWARD');
+  };
+
+  const handleAddComment = async (postId: string, commentText: string) => {
+    if (!commentText.trim()) return;
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    const newComment: PostComment = {
+      id: `COM-${Date.now()}`,
+      authorEsin: user.esin,
+      authorName: user.name,
+      text: commentText,
+      timestamp: new Date().toISOString()
+    };
+    const updatedPost = { ...post, comments: [...post.comments, newComment] };
+    await saveCollectionItem('social_posts', updatedPost);
+    onEarnEAC(10, 'SOCIAL_ECHO_REWARD');
+  };
+
+  const [forgeTopic, setForgeTopic] = useState('');
+  const [isForging, setIsForging] = useState(false);
+
+  const handleForgeKnowledge = async () => {
+    if (!forgeTopic.trim()) return;
+    setIsForging(true);
+    try {
+      const response = await chatWithAgroLang(`Forge a technical knowledge shard about: ${forgeTopic}. Format as a structured educational module.`, []);
+      if (response && response.text) {
+        onEarnEAC(150, 'KNOWLEDGE_FORGE_YIELD');
+        onEmitSignal({
+          type: 'ledger_anchor',
+          origin: 'ORACLE',
+          title: 'KNOWLEDGE_SHARD_FORGED',
+          message: `New technical shard synthesized for topic: ${forgeTopic}.`,
+          priority: 'medium'
+        });
+        setForgeTopic('');
+        alert("Knowledge Shard successfully committed to the Learning Ledger.");
+      }
+    } catch (e) {
+      alert("Forge synchronization failed.");
+    } finally {
+      setIsForging(false);
+    }
+  };
+
   const selectedStewardDossier = useMemo(() => {
     if (!showProfileView) return null;
     return MOCK_STEWARDS.find(s => s.esin === showProfileView);
@@ -388,18 +451,64 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                              )}
                           </div>
 
-                          <div className="pt-10 border-t border-white/5 flex gap-10">
-                             <button className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-emerald-400 transition-all uppercase tracking-widest">
-                                <ThumbsUp size={18} /> {post.likes + 12} Vouches
+                          <div className="pt-10 border-t border-white/5 flex flex-wrap gap-10">
+                             <button 
+                                onClick={() => handleVouch(post.id)}
+                                className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-emerald-400 transition-all uppercase tracking-widest"
+                             >
+                                <ThumbsUp size={18} /> {post.vouchCount || 0} Vouches
                              </button>
                              <button className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-blue-400 transition-all uppercase tracking-widest">
-                                <MessageSquare size={18} /> {post.comments.length + 4} Echoes
+                                <MessageSquare size={18} /> {post.comments.length} Echoes
                              </button>
                              <button className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-indigo-400 transition-all uppercase tracking-widest">
                                 <Share2 size={18} /> Shard Signal
                              </button>
                              <button onClick={() => onNavigate('digital_mrv')} className="ml-auto px-6 py-2 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">Audit Evidence</button>
                           </div>
+
+                          {/* Comment Input */}
+                          <div className="pt-6 flex gap-4 items-center">
+                             <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-500 shrink-0">
+                                <UserIcon size={16} />
+                             </div>
+                             <div className="flex-1 relative">
+                                <input 
+                                   type="text"
+                                   placeholder="Add an echo to this signal..."
+                                   onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                         handleAddComment(post.id, (e.target as HTMLInputElement).value);
+                                         (e.target as HTMLInputElement).value = '';
+                                      }
+                                   }}
+                                   className="w-full bg-black/40 border border-white/10 rounded-full px-6 py-3 text-[11px] text-white italic outline-none focus:border-indigo-500/50 transition-all"
+                                />
+                                <button className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-300">
+                                   <Send size={14} />
+                                </button>
+                             </div>
+                          </div>
+
+                          {/* Comments List */}
+                          {post.comments.length > 0 && (
+                             <div className="space-y-4 pt-6">
+                                {post.comments.slice(0, 3).map(comment => (
+                                   <div key={comment.id} className="flex gap-4 items-start pl-4 border-l-2 border-white/5">
+                                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-600 shrink-0">
+                                         <UserIcon size={12} />
+                                      </div>
+                                      <div className="flex-1">
+                                         <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-white uppercase italic">{comment.authorName}</span>
+                                            <span className="text-[8px] font-mono text-slate-700">{new Date(comment.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                         </div>
+                                         <p className="text-[11px] text-slate-400 italic mt-1">"{comment.text}"</p>
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+                          )}
                        </div>
                     ))}
                  </div>
@@ -753,10 +862,18 @@ const Community: React.FC<CommunityProps> = ({ user, isGuest, onEarnEAC, onSpend
                           </div>
                           <div className="max-w-2xl mx-auto space-y-8">
                              <textarea 
+                                value={forgeTopic}
+                                onChange={e => setForgeTopic(e.target.value)}
                                 placeholder="Describe a technical topic to synthesize (e.g. m-Constant derived moisture sharding)..."
                                 className="w-full bg-black/80 border-2 border-white/10 rounded-[40px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-indigo-500/5 transition-all outline-none h-48 resize-none shadow-inner placeholder:text-stone-900"
                              />
-                             <button className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5">FORGE KNOWLEDGE SHARD</button>
+                             <button 
+                                onClick={handleForgeKnowledge}
+                                disabled={isForging || !forgeTopic.trim()}
+                                className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5 disabled:opacity-30"
+                             >
+                                {isForging ? <Loader2 className="animate-spin mx-auto" /> : 'FORGE KNOWLEDGE SHARD'}
+                             </button>
                           </div>
                        </div>
                     </div>

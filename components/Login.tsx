@@ -85,8 +85,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
 
   const isSuccessRef = useRef(false);
+  const dataRef = useRef({ name, email, password, farmName, farmSize, mainCrop, location });
+
+  // Update ref whenever state changes
+  useEffect(() => {
+    dataRef.current = { name, email, password, farmName, farmSize, mainCrop, location };
+  }, [name, email, password, farmName, farmSize, mainCrop, location]);
 
   const handleRegisterClick = () => {
+    isSuccessRef.current = false;
     if (registrationState) {
       setShowResumePrompt(true);
     } else {
@@ -113,12 +120,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   useEffect(() => {
     return () => {
       if (mode === 'register' && !isSuccessRef.current) {
-        updateRegistrationData({
-          name, email, password, farmName, farmSize, mainCrop, location
-        });
+        updateRegistrationData(dataRef.current);
       }
     };
-  }, [mode, name, email, password, farmName, farmSize, mainCrop, location, updateRegistrationData]);
+  }, [mode, updateRegistrationData]);
 
   // Generate a random ESIN for registration visual feedback
   const [esin, setEsin] = useState('');
@@ -566,10 +571,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
             <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
             <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
             <div className="flex flex-col gap-4">
-              <button onClick={() => { setShowResumePrompt(false); setMode('register'); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setShowResumePrompt(false); setMode('register'); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Resume Registration
               </button>
-              <button onClick={() => { setRegistrationState(null); setShowResumePrompt(false); setMode('register'); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setRegistrationState(null); setShowResumePrompt(false); setMode('register'); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Start Fresh
               </button>
             </div>

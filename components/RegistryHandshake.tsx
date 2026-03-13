@@ -56,6 +56,12 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
   const [agroLangShard, setAgroLangShard] = useState<any>(null);
 
   const isSuccessRef = useRef(false);
+  const stateRef = useRef({ mode, currentStep, assetName, assetType, evidenceFile, esinSign, agroLangShard });
+
+  // Update ref whenever state changes
+  useEffect(() => {
+    stateRef.current = { mode, currentStep, assetName, assetType, evidenceFile, esinSign, agroLangShard };
+  }, [mode, currentStep, assetName, assetType, evidenceFile, esinSign, agroLangShard]);
 
   // Sync local state with handshakeRegistrationState
   useEffect(() => {
@@ -73,18 +79,17 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
   // Save progress on unmount
   useEffect(() => {
     return () => {
-      if (mode && !isSuccessRef.current) {
-        setHandshakeRegistrationState({
-          mode, currentStep, assetName, assetType, evidenceFile, esinSign, agroLangShard
-        });
+      if (stateRef.current.mode && !isSuccessRef.current) {
+        setHandshakeRegistrationState(stateRef.current);
       }
     };
-  }, [mode, currentStep, assetName, assetType, evidenceFile, esinSign, agroLangShard, setHandshakeRegistrationState]);
+  }, [setHandshakeRegistrationState]);
 
   const steps = mode === 'HARDWARE' ? HARDWARE_PROTOCOL_STEPS : LAND_PROTOCOL_STEPS;
   const isLastStep = currentStep === steps.length - 1;
 
   const handleModeSelect = (m: 'HARDWARE' | 'LAND') => {
+    isSuccessRef.current = false;
     setMode(m);
     setCurrentStep(0);
     setEvidenceFile(null);
@@ -438,10 +443,10 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
             <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
             <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
             <div className="flex flex-col gap-4">
-              <button onClick={() => { setShowResumePrompt(false); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setShowResumePrompt(false); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Resume Registration
               </button>
-              <button onClick={() => { setHandshakeRegistrationState(null); setShowResumePrompt(false); setMode(null); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setHandshakeRegistrationState(null); setShowResumePrompt(false); setMode(null); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Start Fresh
               </button>
             </div>

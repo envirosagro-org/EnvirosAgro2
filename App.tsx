@@ -606,20 +606,29 @@ const GlobalSearch: React.FC<{ isOpen: boolean; onClose: () => void; onNavigate:
 };
 
 const App: React.FC = () => {
-  const {
-    user, setUser,
-    view, setView,
-    viewSection, setViewSection,
-    isSidebarOpen, setIsSidebarOpen,
-    isMobileMenuOpen, setIsMobileMenuOpen,
-    isGlobalSearchOpen, setIsGlobalSearchOpen,
-    isInboxOpen, setIsInboxOpen,
-    projects, setProjects,
-    transactions, setTransactions,
-    signals, setSignals,
-    costAudit, setCostAudit,
-    registrationState
-  } = useAppStore();
+  const user = useAppStore(state => state.user);
+  const setUser = useAppStore(state => state.setUser);
+  const view = useAppStore(state => state.view);
+  const setView = useAppStore(state => state.setView);
+  const viewSection = useAppStore(state => state.viewSection);
+  const setViewSection = useAppStore(state => state.setViewSection);
+  const isSidebarOpen = useAppStore(state => state.isSidebarOpen);
+  const setIsSidebarOpen = useAppStore(state => state.setIsSidebarOpen);
+  const isMobileMenuOpen = useAppStore(state => state.isMobileMenuOpen);
+  const setIsMobileMenuOpen = useAppStore(state => state.setIsMobileMenuOpen);
+  const isGlobalSearchOpen = useAppStore(state => state.isGlobalSearchOpen);
+  const setIsGlobalSearchOpen = useAppStore(state => state.setIsGlobalSearchOpen);
+  const isInboxOpen = useAppStore(state => state.isInboxOpen);
+  const setIsInboxOpen = useAppStore(state => state.setIsInboxOpen);
+  const projects = useAppStore(state => state.projects);
+  const setProjects = useAppStore(state => state.setProjects);
+  const transactions = useAppStore(state => state.transactions);
+  const setTransactions = useAppStore(state => state.setTransactions);
+  const signals = useAppStore(state => state.signals);
+  const setSignals = useAppStore(state => state.setSignals);
+  const costAudit = useAppStore(state => state.costAudit);
+  const setCostAudit = useAppStore(state => state.setCostAudit);
+  const registrationState = useAppStore(state => state.registrationState);
 
   const [isBooting, setIsBooting] = useState(true);
   const [isUnverified, setIsUnverified] = useState(false);
@@ -732,7 +741,8 @@ const App: React.FC = () => {
       }
 
       // Auto-connection logic for Stewards
-      if (signal.meta?.payload?.senderEsin && user && signal.meta.payload.senderEsin !== user.esin) {
+      const currentUser = useAppStore.getState().user;
+      if (signal.meta?.payload?.senderEsin && currentUser && signal.meta.payload.senderEsin !== currentUser.esin) {
         const senderRole = signal.meta.payload.senderRole;
         if (senderRole === 'STEWARD' || senderRole === 'INVESTOR' || senderRole === 'AUDITOR') {
           hookHood(signal.meta.payload.senderEsin, signal.type === 'task' ? 'AUDIT' : 'DEAL');
@@ -741,18 +751,124 @@ const App: React.FC = () => {
 
       // Email Simulation (Log to console for now)
       if (signal.dispatchLayers.some(l => l.channel === 'EMAIL')) {
-        console.log(`[EMAIL_ROUTING] To: ${user?.email || 'Node'}, Subject: ${signal.title}, Body: ${signal.message}`);
+        console.log(`[EMAIL_ROUTING] To: ${currentUser?.email || 'Node'}, Subject: ${signal.title}, Body: ${signal.message}`);
       }
     } 
-  }, [user, hookHood]);
-  const handleSpendEAC = async (amount: number, reason: string) => { if (!user) { setView('auth'); return false; } if (user.wallet.balance < amount) { emitSignal({ title: 'INSUFFICIENT_FUNDS', message: `Need ${amount} EAC for ${reason}.`, priority: 'high', type: 'commerce', origin: 'MANUAL' }); return false; } const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance - amount } }; const syncOk = await syncUserToCloud(updatedUser); if (!syncOk) return false; setUser(updatedUser); const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Transfer', farmId: user.esin, details: reason, value: -amount, unit: 'EAC' }; await saveCollectionItem('transactions', newTx); emitSignal({ title: 'TREASURY_SETTLEMENT', message: `Node sharded ${amount} EAC for ${reason}.`, priority: 'medium', type: 'ledger_anchor', origin: 'TREASURY', actionIcon: 'Coins' }); return true; };
-  const handleEarnEAC = async (amount: number, reason: string) => { if (!user) return; const updatedUser = { ...user, wallet: { ...user.wallet, balance: user.wallet.balance + amount, lifetimeEarned: (user.wallet.lifetimeEarned || 0) + amount } }; const syncOk = await syncUserToCloud(updatedUser); if (!syncOk) return; setUser(updatedUser); const newTx: AgroTransaction = { id: `TX-${Date.now()}`, type: 'Reward', farmId: user.esin, details: reason, value: amount, unit: 'EAC' }; await saveCollectionItem('transactions', newTx); };
-  const handlePerformPermanentAction = async (actionKey: string, reward?: number, reason?: string) => { if (!user || user.completedActions?.includes(actionKey)) return false; const ok = await markPermanentAction(actionKey); if (ok && reward && reason) await handleEarnEAC(reward, reason); return ok; };
+  }, [hookHood, setNotifications]);
+  const handleSpendEAC = useCallback(async (amount: number, reason: string) => {
+    const currentUser = useAppStore.getState().user;
+    if (!currentUser) {
+      setView('auth');
+      return false;
+    }
+    if (currentUser.wallet.balance < amount) {
+      emitSignal({
+        title: 'INSUFFICIENT_FUNDS',
+        message: `Need ${amount} EAC for ${reason}.`,
+        priority: 'high',
+        type: 'commerce',
+        origin: 'MANUAL'
+      });
+      return false;
+    }
+    const updatedUser = {
+      ...currentUser,
+      wallet: {
+        ...currentUser.wallet,
+        balance: currentUser.wallet.balance - amount
+      }
+    };
+    const syncOk = await syncUserToCloud(updatedUser);
+    if (!syncOk) return false;
+    setUser(updatedUser);
+    const newTx: AgroTransaction = {
+      id: `TX-${Date.now()}`,
+      type: 'Transfer',
+      farmId: currentUser.esin,
+      details: reason,
+      value: -amount,
+      unit: 'EAC'
+    };
+    await saveCollectionItem('transactions', newTx);
+    emitSignal({
+      title: 'TREASURY_SETTLEMENT',
+      message: `Node sharded ${amount} EAC for ${reason}.`,
+      priority: 'medium',
+      type: 'ledger_anchor',
+      origin: 'TREASURY',
+      actionIcon: 'Coins'
+    });
+    return true;
+  }, [setUser, setView, emitSignal]);
+
+  const handleEarnEAC = useCallback(async (amount: number, reason: string) => {
+    const currentUser = useAppStore.getState().user;
+    if (!currentUser) return;
+    const updatedUser = {
+      ...currentUser,
+      wallet: {
+        ...currentUser.wallet,
+        balance: currentUser.wallet.balance + amount,
+        lifetimeEarned: (currentUser.wallet.lifetimeEarned || 0) + amount
+      }
+    };
+    const syncOk = await syncUserToCloud(updatedUser);
+    if (!syncOk) return;
+    setUser(updatedUser);
+    const newTx: AgroTransaction = {
+      id: `TX-${Date.now()}`,
+      type: 'Reward',
+      farmId: currentUser.esin,
+      details: reason,
+      value: amount,
+      unit: 'EAC'
+    };
+    await saveCollectionItem('transactions', newTx);
+  }, [setUser]);
+
+  const handlePerformPermanentAction = useCallback(async (actionKey: string, reward?: number, reason?: string) => {
+    const currentUser = useAppStore.getState().user;
+    if (!currentUser || currentUser.completedActions?.includes(actionKey)) return false;
+    const ok = await markPermanentAction(actionKey);
+    if (ok && reward && reason) await handleEarnEAC(reward, reason);
+    return ok;
+  }, [handleEarnEAC]);
   const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
   const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(signals.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
   const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
   const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => { let index: string | undefined; REGISTRY_NODES.forEach((group, dIdx) => { group.items.forEach((item, eIdx) => { if (item.id === v) { if (!section) { index = `[${dIdx + 1}.${eIdx + 1}]`; } else { const sIdx = item.sections?.findIndex(s => s.id === section); if (sIdx !== undefined && sIdx !== -1) { index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`; } } } }); }); return index; };
-  const navigate = useCallback((v: ViewState, section?: string | null, pushToHistory = true, params?: any) => { const index = findMatrixIndex(v, section || null); if (pushToHistory) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; setHistory(prev => [...prev, currentAddress]); setForwardHistory([]); } setView(v); setViewSection(section || null); if (v === 'multimedia_generator') setMultimediaParams(params || null); setIsMobileMenuOpen(false); if (window.innerWidth < 1024) setIsSidebarOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); emitSignal({ title: 'VECTOR_SHIFT', message: `Resolved route to ${index || v.toUpperCase()}.`, priority: 'low', type: 'system', origin: 'ORACLE', actionIcon: 'ChevronRight' }); }, [view, viewSection, emitSignal, setIsSidebarOpen, setIsMobileMenuOpen]);
+  const navigate = useCallback((v: ViewState, section?: string | null, pushToHistory = true, params?: any) => { 
+    const currentView = useAppStore.getState().view;
+    const currentSection = useAppStore.getState().viewSection;
+    const index = findMatrixIndex(v, section || null); 
+    
+    if (pushToHistory) { 
+      const currentAddress: VectorAddress = { 
+        dimension: currentView, 
+        element: currentSection, 
+        matrixIndex: findMatrixIndex(currentView, currentSection) 
+      }; 
+      setHistory(prev => [...prev, currentAddress]); 
+      setForwardHistory([]); 
+    } 
+    
+    setView(v); 
+    setViewSection(section || null); 
+    if (v === 'multimedia_generator') setMultimediaParams(params || null); 
+    setIsMobileMenuOpen(false); 
+    if (window.innerWidth < 1024) setIsSidebarOpen(false); 
+    setIsConsultantOpen(false); 
+    setIsInboxOpen(false); 
+    
+    emitSignal({ 
+      title: 'VECTOR_SHIFT', 
+      message: `Resolved route to ${index || v.toUpperCase()}.`, 
+      priority: 'low', 
+      type: 'system', 
+      origin: 'ORACLE', 
+      actionIcon: 'ChevronRight' 
+    }); 
+  }, [emitSignal, setView, setViewSection, setIsSidebarOpen, setIsMobileMenuOpen]);
   const goBack = useCallback(() => { if (history.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const lastVector = history[history.length - 1]; setForwardHistory(prev => [...prev, currentAddress]); setHistory(prev => prev.slice(0, -1)); navigate(lastVector.dimension, lastVector.element || undefined, false); } else if (view !== 'dashboard') { navigate('dashboard', undefined, true); } }, [history, view, viewSection, navigate]);
   const goForward = useCallback(() => { if (forwardHistory.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const nextVector = forwardHistory[forwardHistory.length - 1]; setHistory(prev => [...prev, currentAddress]); setForwardHistory(prev => prev.slice(0, -1)); navigate(nextVector.dimension, nextVector.element || undefined, false); } }, [forwardHistory, view, viewSection, navigate]);
 
@@ -768,7 +884,7 @@ const App: React.FC = () => {
       case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} liveProducts={liveProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} onUpdateUser={(u) => setUser(u)} initialSection={viewSection} />;
       case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={(u) => setUser(u)} onSwap={async () => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={emitSignal} transactions={transactions} initialSection={viewSection} costAudit={costAudit} />;
       case 'intelligence': return <Intelligence user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onOpenEvidence={() => setIsEvidenceOpen(true)} initialSection={viewSection} />;
-      case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} hoodConnections={hoodConnections} onHookHood={hookHood} />;
+      case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} hoodConnections={hoodConnections} onHookHood={hookHood} />;
       case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection={viewSection} onNavigate={navigate} />;
       case 'network_signals': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection="terminal" onNavigate={navigate} />;
       case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} />;

@@ -52,6 +52,12 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
   const [linkerContext, setLinkerContext] = useState<{label: string, icon: any, target: string, action?: string, sourceLedger: string} | null>(null);
 
   const isSuccessRef = useRef(false);
+  const assetRef = useRef(newAsset);
+
+  // Update ref whenever state changes
+  useEffect(() => {
+    assetRef.current = newAsset;
+  }, [newAsset]);
 
   // Sync local state with liveFarmingRegistrationState
   useEffect(() => {
@@ -65,12 +71,13 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
   useEffect(() => {
     return () => {
       if (showAddModal && !isSuccessRef.current) {
-        setLiveFarmingRegistrationState(newAsset);
+        setLiveFarmingRegistrationState(assetRef.current);
       }
     };
-  }, [showAddModal, newAsset, setLiveFarmingRegistrationState]);
+  }, [showAddModal, setLiveFarmingRegistrationState]);
 
   const handleStartAssetRegistration = () => {
+    isSuccessRef.current = false;
     if (liveFarmingRegistrationState) {
       setShowResumePrompt(true);
     } else {
@@ -653,10 +660,10 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
             <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
             <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
             <div className="flex flex-col gap-4">
-              <button onClick={() => { setShowResumePrompt(false); setShowAddModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setShowResumePrompt(false); setShowAddModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Resume Registration
               </button>
-              <button onClick={() => { setLiveFarmingRegistrationState(null); setShowResumePrompt(false); setNewAsset({ name: '', category: 'Produce' }); setShowAddModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setLiveFarmingRegistrationState(null); setShowResumePrompt(false); setNewAsset({ name: '', category: 'Produce' }); setShowAddModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Start Fresh
               </button>
             </div>

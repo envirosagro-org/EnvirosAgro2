@@ -156,6 +156,8 @@ export interface VendorProduct {
   inboundSignals?: any[];
   financialLedger?: any[];
   isLiveProcessing?: boolean;
+  programId?: string;
+  programName?: string;
 }
 
 export interface ChapterShard {
@@ -537,6 +539,7 @@ export interface SocialPost {
 }
 
 export interface PostComment {
+  id: string;
   authorEsin: string;
   authorName: string;
   text: string;

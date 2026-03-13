@@ -143,12 +143,19 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const [isActivatingJit, setIsActivatingJit] = useState<string | null>(null);
 
   const isSuccessRef = useRef(false);
+  const stateRef = useRef({ itemName, itemCategory, selectedProgram, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature });
+
+  // Update ref whenever state changes
+  useEffect(() => {
+    stateRef.current = { itemName, itemCategory, selectedProgram, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature };
+  }, [itemName, itemCategory, selectedProgram, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature]);
 
   // Sync local state with vendorRegistrationState
   useEffect(() => {
     if (showRegisterModal && vendorRegistrationState) {
       if (vendorRegistrationState.itemName) setItemName(vendorRegistrationState.itemName);
       if (vendorRegistrationState.itemCategory) setItemCategory(vendorRegistrationState.itemCategory);
+      if (vendorRegistrationState.selectedProgram) setSelectedProgram(vendorRegistrationState.selectedProgram);
       if (vendorRegistrationState.itemValue) setItemValue(vendorRegistrationState.itemValue);
       if (vendorRegistrationState.itemDesc) setItemDesc(vendorRegistrationState.itemDesc);
       if (vendorRegistrationState.locationAddress) setLocationAddress(vendorRegistrationState.locationAddress);
@@ -167,12 +174,10 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   useEffect(() => {
     return () => {
       if (showRegisterModal && !isSuccessRef.current) {
-        setVendorRegistrationState({
-          itemName, itemCategory, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
-        });
+        setVendorRegistrationState(stateRef.current);
       }
     };
-  }, [showRegisterModal, itemName, itemCategory, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature, setVendorRegistrationState]);
+  }, [showRegisterModal, setVendorRegistrationState]);
 
   // Routing synchronization
   useEffect(() => {
@@ -185,6 +190,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const regFee = useMemo(() => (Number(itemValue) || 0) * 0.01, [itemValue]);
 
   const handleStartRegistration = () => {
+    isSuccessRef.current = false;
     if (vendorRegistrationState) {
       setShowResumePrompt(true);
     } else {
@@ -196,7 +202,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const resetPortal = () => {
     if (!isSuccessRef.current) {
       setVendorRegistrationState({
-        itemName, itemCategory, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
+        itemName, itemCategory, selectedProgram, itemValue, itemDesc, locationAddress, gpsCoords, ingestMethod, regStep, oracleVerdict, generatedSku, sonicSignature
       });
     }
     setShowRegisterModal(false);
@@ -209,6 +215,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
     setIsProcessing(false);
     setGeneratedSku('');
     setSonicSignature('');
+    setSelectedProgram(null);
   };
 
   const handleRunAudit = async () => {
@@ -266,7 +273,9 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
         gpsCoords: gpsCoords || undefined,
         isOrganizationService: itemCategory === 'Organization Service',
         inboundSignals: [],
-        financialLedger: []
+        financialLedger: [],
+        programId: selectedProgram?.id,
+        programName: selectedProgram?.name
       };
       onRegisterProduct(newProduct);
       isSuccessRef.current = true;
@@ -847,8 +856,8 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
               {/* Progress Stepper */}
               <div className="flex gap-4 px-20 pt-10 shrink-0 relative z-20">
-                 {['metadata', 'location', 'payment', 'verification', 'anchoring', 'success'].map((s, i) => {
-                    const stages = ['metadata', 'location', 'payment', 'verification', 'anchoring', 'success'];
+                 {['metadata', 'location', 'programs', 'payment', 'verification', 'anchoring', 'success'].map((s, i) => {
+                    const stages = ['metadata', 'location', 'programs', 'payment', 'verification', 'anchoring', 'success'];
                     const currentIdx = stages.indexOf(regStep);
                     return (
                       <div key={s} className="flex-1 flex flex-col gap-3">
@@ -987,7 +996,39 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                     </div>
                  )}
 
-                 {/* STEP 3: PAYMENT */}
+                 {/* STEP 3: PROGRAMS */}
+                 {regStep === 'programs' && (
+                    <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
+                       <div className="text-center space-y-6">
+                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Ecosystem <span className="text-emerald-400">Programs</span></h4>
+                          <p className="text-slate-400 text-xl font-medium italic leading-relaxed px-10">Optionally associate this asset with a recognized ecosystem program.</p>
+                       </div>
+
+                       <div className="max-w-3xl mx-auto w-full">
+                          <button 
+                             onClick={() => setShowProgramLinker(true)}
+                             className="w-full bg-black border-2 border-white/10 rounded-[32px] py-8 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-emerald-500/10 outline-none transition-all shadow-inner flex justify-between items-center hover:border-emerald-500/50 group"
+                          >
+                             <span className={selectedProgram ? 'text-emerald-400' : 'text-slate-500 italic'}>{selectedProgram ? selectedProgram.name : 'Select Program (Optional)'}</span>
+                             <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                                <Layers size={24} className="text-emerald-500" />
+                             </div>
+                          </button>
+                       </div>
+
+                       <div className="pt-10 flex gap-6">
+                          <button onClick={() => setRegStep('location')} className="flex-1 py-8 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all active:scale-95 shadow-xl">BACK_TO_LOCATION</button>
+                          <button 
+                            onClick={() => setRegStep('payment')}
+                            className="flex-[2] py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(37,99,235,0.3)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-white/5"
+                          >
+                             PROCEED TO PAYMENT
+                          </button>
+                       </div>
+                    </div>
+                 )}
+
+                 {/* STEP 4: PAYMENT */}
                  {regStep === 'payment' && (
                     <div className="space-y-12 animate-in slide-in-from-right-10 duration-700 flex-1 flex flex-col justify-center">
                        <div className="text-center space-y-6">
@@ -1132,10 +1173,10 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
             <h3 className="text-xl font-black text-white uppercase tracking-widest mb-4">Confirm Form Resubmission</h3>
             <p className="text-slate-400 mb-8 text-sm">You have an incomplete registration process. Would you like to resume where you left off or start a new registration?</p>
             <div className="flex flex-col gap-4">
-              <button onClick={() => { setShowResumePrompt(false); setShowRegisterModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setShowResumePrompt(false); setShowRegisterModal(true); }} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Resume Registration
               </button>
-              <button onClick={() => { setVendorRegistrationState(null); setShowResumePrompt(false); setRegStep('metadata'); setShowRegisterModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
+              <button onClick={() => { isSuccessRef.current = false; setVendorRegistrationState(null); setShowResumePrompt(false); setRegStep('metadata'); setShowRegisterModal(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all">
                 Start Fresh
               </button>
             </div>
