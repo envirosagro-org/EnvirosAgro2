@@ -14,7 +14,7 @@ import {
   ClipboardList, ArrowDownCircle, CheckCircle as CheckCircleIcon,
   TableProperties, SearchCode, Workflow, Layers, Wrench
 } from 'lucide-react';
-import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone, ValueBlueprint, Task, RegisteredUnit } from '../types';
+import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone, ValueBlueprint, Task, RegisteredUnit, LiveAgroProduct } from '../types';
 import { analyzeBidHandshake, AgroLangResponse } from '../services/agroLangService';
 import AssetAssociationTool from './AssetAssociationTool';
 
@@ -28,6 +28,8 @@ interface ContractFarmingProps {
   blueprints: ValueBlueprint[];
   onSaveTask: (task: Partial<Task>) => void;
   industrialUnits: RegisteredUnit[];
+  liveProducts?: LiveAgroProduct[];
+  onSaveProduct?: (product: LiveAgroProduct) => void;
 }
 
 import { useAppStore } from '../store';
@@ -40,7 +42,7 @@ const CATEGORY_META: Record<MissionCategory, { label: string, icon: any, color: 
   INDUSTRIAL_LOGISTICS: { label: 'Industrial/Logistics', icon: Factory, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
 };
 
-const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate, contracts, setContracts, onSaveContract, blueprints, onSaveTask, industrialUnits }) => {
+const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate, contracts, setContracts, onSaveContract, blueprints, onSaveTask, industrialUnits, liveProducts = [], onSaveProduct }) => {
   const { missionRegistrationState, setMissionRegistrationState } = useAppStore();
   const [activeTab, setActiveTab] = useState<'manifest' | 'terminal' | 'archive'>('manifest');
   const [activeMission, setActiveMission] = useState<FarmingContract | null>(null);
@@ -96,12 +98,23 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   const handleLinkResource = (resId: string, name: string, type?: string) => {
     if (!activeMission) return;
     
-    if (type === 'PROGRAMS') {
+    if (type === 'PROGRAMS' || type === 'LIVE_FARMING') {
       const updated = {
         ...activeMission,
         associatedPrograms: [...(activeMission.associatedPrograms || []), resId]
       };
       onSaveContract(updated);
+
+      if (type === 'LIVE_FARMING' && onSaveProduct) {
+        const productToUpdate = liveProducts.find(p => p.id === resId);
+        if (productToUpdate) {
+          onSaveProduct({
+            ...productToUpdate,
+            associatedMissions: [...(productToUpdate.associatedMissions || []), activeMission.id],
+            progress: Math.min(100, productToUpdate.progress + 15)
+          });
+        }
+      }
     }
     
     notify({ 
@@ -121,7 +134,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
       timestamp: new Date().toISOString(),
       stewardEsin: user.esin,
       assetId: activeMission.id,
-      description: type === 'PROGRAMS'
+      description: type === 'PROGRAMS' || type === 'LIVE_FARMING'
         ? `Standardize asset under ${name} program protocols. Categorize inventory and evaluate under program guidelines.`
         : `Verify mission-critical handshake with sourced ledger item ${resId}.`
     });
@@ -334,14 +347,9 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                 {[
                                    { label: 'Mission Optimization', icon: BrainCircuit, target: 'intelligence', col: 'text-indigo-400', sourceLedger: 'RESOURCE' },
-                                   { label: 'Live Farming', icon: Sprout, target: 'live_farming', col: 'text-emerald-400', sourceLedger: 'RESOURCE' },
-                                   { label: 'Value Enhancement', icon: FlaskConical, target: 'agro_value_enhancement', col: 'text-fuchsia-400', sourceLedger: 'VALUE' },
-                                   { label: 'Live Broadcast', icon: Video, target: 'media', action: 'PROCESS_STREAM', col: 'text-rose-500', sourceLedger: 'RESOURCE' },
+                                   { label: 'Shift to Live Farming', icon: Sprout, target: 'live_farming', col: 'text-emerald-400', sourceLedger: 'LIVE_FARMING_SHIFT' },
                                    { label: 'Evidence Ingest', icon: Upload, target: 'digital_mrv', action: 'ingest', col: 'text-blue-400', sourceLedger: 'RESOURCE' },
-                                   { label: 'Registry Handshake', icon: SmartphoneNfc, target: 'registry_handshake', col: 'text-amber-500', sourceLedger: 'RESOURCE' },
-                                   { label: 'Network Ingest', icon: Wifi, target: 'ingest', col: 'text-teal-400', sourceLedger: 'RESOURCE' },
                                    { label: 'Collective Registry', icon: Users, target: 'community', action: 'shards', col: 'text-indigo-400', sourceLedger: 'RESOURCE' },
-                                   { label: 'Industrial Cloud', icon: Factory, target: 'industrial', col: 'text-slate-400', sourceLedger: 'INDUSTRIAL' },
                                    { label: 'Program Integration', icon: Layers, target: 'programs', action: 'integrate', col: 'text-purple-400', sourceLedger: 'PROGRAMS' },
                                 ].map((tool, i) => (
                                    <button 
@@ -409,6 +417,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
         industrialUnits={industrialUnits}
         blueprints={blueprints}
         user={user}
+        liveProducts={liveProducts}
       />
 
       {/* NEW KANBAN TASK MODAL */}

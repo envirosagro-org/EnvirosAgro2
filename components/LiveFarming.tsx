@@ -11,8 +11,9 @@ import {
   TableProperties, Shield, ClipboardList as ClipboardListIcon, Boxes as BoxesIcon,
   ArrowDownCircle, SearchCode
 } from 'lucide-react';
-import { User, LiveAgroProduct, ViewState, AgroResource, ValueBlueprint, Task, RegisteredUnit } from '../types';
+import { User, LiveAgroProduct, ViewState, AgroResource, ValueBlueprint, Task, RegisteredUnit, FarmingContract } from '../types';
 import AssetAssociationTool from './AssetAssociationTool';
+import { optimizeProductionProcess } from '../services/agroLangService';
 
 interface LiveFarmingProps {
   user: User;
@@ -26,11 +27,13 @@ interface LiveFarmingProps {
   onSaveTask: (task: Partial<Task>) => void;
   blueprints: ValueBlueprint[];
   industrialUnits: RegisteredUnit[];
+  contracts: FarmingContract[];
+  onSaveContract?: (contract: FarmingContract) => void;
 }
 
 import { useAppStore } from '../store';
 
-const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct, onNavigate, notify, initialSection, onSaveTask, blueprints, industrialUnits }) => {
+const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct, onNavigate, notify, initialSection, onSaveTask, blueprints, industrialUnits, contracts, onSaveContract }) => {
   const { liveFarmingRegistrationState, setLiveFarmingRegistrationState } = useAppStore();
   const [activeTab, setActiveTab] = useState<'ledger' | 'terminal'>('ledger');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -50,6 +53,11 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
   // Shard Linker State
   const [showShardLinker, setShowShardLinker] = useState(false);
   const [linkerContext, setLinkerContext] = useState<{label: string, icon: any, target: string, action?: string, sourceLedger: string} | null>(null);
+
+  // AI Optimization State
+  const [showAIOptimization, setShowAIOptimization] = useState(false);
+  const [aiOptimizationResult, setAiOptimizationResult] = useState<any>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   const isSuccessRef = useRef(false);
   const assetRef = useRef(newAsset);
@@ -203,6 +211,22 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
         associatedPrograms: [...(selectedAsset.associatedPrograms || []), resId],
         progress: Math.min(100, selectedAsset.progress + 5)
       };
+    } else if (type === 'MISSIONS') {
+      updated = {
+        ...selectedAsset,
+        associatedMissions: [...(selectedAsset.associatedMissions || []), resId],
+        progress: Math.min(100, selectedAsset.progress + 15)
+      };
+      
+      if (onSaveContract) {
+        const contractToUpdate = contracts.find(c => c.id === resId);
+        if (contractToUpdate) {
+          onSaveContract({
+            ...contractToUpdate,
+            associatedPrograms: [...(contractToUpdate.associatedPrograms || []), selectedAsset.id]
+          });
+        }
+      }
     } else {
       updated = {
         ...selectedAsset,
@@ -232,12 +256,28 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
       assetId: selectedAsset.id,
       description: type === 'PROGRAMS' 
         ? `Standardize asset under ${name} program protocols. Categorize inventory and evaluate under program guidelines.`
+        : type === 'MISSIONS'
+        ? `Execute mission ${name} via live farming asset ${selectedAsset.id}. Ensure routing and sequencing align with contract requirements.`
         : `Verify handshake with sourced ledger item ${resId}.`
     });
   };
 
-  const handleTriggerTool = (tool: any) => {
+  const handleTriggerTool = async (tool: any) => {
     if (!selectedAsset) return;
+    if (tool.target === 'ai_optimization') {
+      setShowAIOptimization(true);
+      setIsOptimizing(true);
+      try {
+        const result = await optimizeProductionProcess(selectedAsset, selectedAsset.tasks || [], blueprints);
+        setAiOptimizationResult(result.json);
+      } catch (error) {
+        console.error("AI Optimization Error:", error);
+        notify({ title: 'AI_OPTIMIZATION_FAILED', message: 'Failed to generate optimization strategy.', type: 'error' });
+      } finally {
+        setIsOptimizing(false);
+      }
+      return;
+    }
     setLinkerContext(tool);
     setShowShardLinker(true);
   };
@@ -443,6 +483,15 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                                     ))}
                                  </div>
                               )}
+                              {selectedAsset.associatedMissions && selectedAsset.associatedMissions.length > 0 && (
+                                 <div className="flex flex-wrap gap-2 mt-2">
+                                    {selectedAsset.associatedMissions.map(mission => (
+                                       <span key={mission} className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-[8px] font-black uppercase tracking-widest">
+                                          MISSION: {mission.substring(0, 8)}
+                                       </span>
+                                    ))}
+                                 </div>
+                              )}
                            </div>
                         </div>
                         <div className="flex flex-wrap gap-4 mt-4 md:mt-0">
@@ -457,12 +506,13 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                         <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.6em] italic mb-8">STRATEGIC_TOOLING_HUB</h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                            {[
+                              { label: 'AI Optimization', icon: Bot, target: 'ai_optimization', action: 'optimize', col: 'text-emerald-400', sourceLedger: 'AI' },
                               { label: 'Ingest Evidence', icon: Upload, target: 'digital_mrv', action: 'ingest', col: 'text-blue-400', sourceLedger: 'RESOURCE' },
                               { label: 'Registry Handshake', icon: SmartphoneNfc, target: 'registry_handshake', col: 'text-indigo-400', sourceLedger: 'RESOURCE' },
                               { label: 'Network Ingest', icon: Wifi, target: 'ingest', col: 'text-teal-400', sourceLedger: 'RESOURCE' },
                               { label: 'Live Broadcast', icon: Video, target: 'media', action: 'PROCESS_STREAM', col: 'text-rose-500', sourceLedger: 'RESOURCE' },
                               { label: 'Value Analysis', icon: FlaskConical, target: 'agro_value_enhancement', action: 'synthesis', col: 'text-fuchsia-400', sourceLedger: 'VALUE' },
-                              { label: 'Mission Sync', icon: Briefcase, target: 'contract_farming', col: 'text-amber-500', sourceLedger: 'RESOURCE' },
+                              { label: 'Mission Sync', icon: Briefcase, target: 'contract_farming', col: 'text-amber-500', sourceLedger: 'MISSIONS' },
                               { label: 'Collective Hub', icon: Users, target: 'community', action: 'shards', col: 'text-indigo-400', sourceLedger: 'RESOURCE' },
                               { label: 'Industrial Pair', icon: Factory, target: 'industrial', action: 'bridge', col: 'text-slate-400', sourceLedger: 'INDUSTRIAL' },
                               { label: 'TQM Audit', icon: ClipboardCheck, target: 'tqm', col: 'text-emerald-500', sourceLedger: 'RESOURCE' },
@@ -579,6 +629,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
         onLinkResource={handleLinkResource}
         industrialUnits={industrialUnits}
         blueprints={blueprints}
+        contracts={contracts}
         user={user}
       />
 
@@ -668,6 +719,102 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {showAIOptimization && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowAIOptimization(false)}></div>
+           <div className="relative z-10 w-full max-w-4xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in border-2 flex flex-col max-h-[90vh]">
+              <div className="p-10 border-b border-white/5 bg-emerald-500/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white shadow-2xl"><Bot size={32} /></div>
+                    <div>
+                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter m-0 leading-none">AI <span className="text-emerald-400">Optimization</span></h3>
+                       <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-1">Production Sequencing & Routing</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowAIOptimization(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X size={24} /></button>
+              </div>
+              
+              <div className="p-12 overflow-y-auto custom-scrollbar flex-1">
+                {isOptimizing ? (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-8">
+                    <div className="relative">
+                      <div className="w-32 h-32 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin"></div>
+                      <Bot size={48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-400 animate-pulse" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Analyzing Production Systems</h4>
+                      <p className="text-slate-500 font-mono text-xs uppercase tracking-[0.2em]">Aligning sequencing and routing processes...</p>
+                    </div>
+                  </div>
+                ) : aiOptimizationResult ? (
+                  <div className="space-y-10">
+                    <div className="p-8 rounded-3xl bg-emerald-900/10 border border-emerald-500/20">
+                      <h4 className="text-sm font-black text-emerald-400 uppercase tracking-[0.3em] mb-4">Optimization Strategy</h4>
+                      <p className="text-slate-300 leading-relaxed">{aiOptimizationResult.optimization_strategy}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-6">
+                        <h4 className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                          <Workflow size={16} /> Recommended Sequence
+                        </h4>
+                        <div className="space-y-3">
+                          {aiOptimizationResult.recommended_sequence?.map((seq: string, idx: number) => (
+                            <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-4">
+                              <span className="text-indigo-400 font-black font-mono text-xs mt-0.5">{String(idx + 1).padStart(2, '0')}</span>
+                              <p className="text-sm text-slate-300">{seq}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        <h4 className="text-xs font-black text-amber-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                          <ArrowRight size={16} /> Routing Adjustments
+                        </h4>
+                        <div className="space-y-3">
+                          {aiOptimizationResult.routing_adjustments?.map((adj: string, idx: number) => (
+                            <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-4">
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 shrink-0"></div>
+                              <p className="text-sm text-slate-300">{adj}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="p-8 rounded-3xl bg-blue-900/10 border border-blue-500/20 flex items-center justify-between">
+                        <div>
+                          <h4 className="text-xs font-black text-blue-400 uppercase tracking-[0.3em] mb-1">Est. Time to Market</h4>
+                          <p className="text-slate-400 text-sm">Projected finality timeline</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-4xl font-black text-white">{aiOptimizationResult.estimated_time_to_market_days}</span>
+                          <span className="text-blue-400 font-black ml-2 uppercase text-xs tracking-widest">Days</span>
+                        </div>
+                      </div>
+
+                      <div className="p-8 rounded-3xl bg-rose-900/10 border border-rose-500/20 space-y-4">
+                        <h4 className="text-xs font-black text-rose-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                          <ShieldAlert size={16} /> Risk Factors
+                        </h4>
+                        <ul className="space-y-2">
+                          {aiOptimizationResult.risk_factors?.map((risk: string, idx: number) => (
+                            <li key={idx} className="text-sm text-slate-300 flex items-start gap-3">
+                              <span className="text-rose-500 mt-1">-</span> {risk}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+           </div>
         </div>
       )}
 

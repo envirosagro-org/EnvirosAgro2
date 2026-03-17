@@ -374,6 +374,79 @@ export const chatWithAgroLang = async (message: string, history: any[], useSearc
   }
 };
 
+export const optimizeProductionProcess = async (assetData: any, tasks: any[], blueprints: any[]): Promise<AgroLangResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const response = await callBackendEA({
+        model: 'gemini-3-pro-preview',
+        contents: `Analyze the following live farming asset and its current tasks to optimize the production process.
+        Asset: ${JSON.stringify(assetData)}
+        Tasks: ${JSON.stringify(tasks)}
+        Available Blueprints: ${JSON.stringify(blueprints)}
+        
+        Provide a strategic plan ensuring the production system aligns with the right sequencing and routing processes until the asset is declared ready for market. Return the response in JSON format.`,
+        config: {
+          systemInstruction: "You are the EnvirosAgro AI Production Optimizer. Your goal is to ensure optimal sequencing and routing for live farming assets.",
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              optimization_strategy: { type: Type.STRING },
+              recommended_sequence: { type: Type.ARRAY, items: { type: Type.STRING } },
+              routing_adjustments: { type: Type.ARRAY, items: { type: Type.STRING } },
+              estimated_time_to_market_days: { type: Type.NUMBER },
+              risk_factors: { type: Type.ARRAY, items: { type: Type.STRING } }
+            },
+            required: ["optimization_strategy", "recommended_sequence", "routing_adjustments", "estimated_time_to_market_days"]
+          }
+        }
+      });
+      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
+};
+
+export const queryProgramAssets = async (assetData: any, programName: string, blueprints: any[], industrialUnits: any[]): Promise<any[]> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const response = await callBackendEA({
+        model: 'gemini-3-pro-preview',
+        contents: `Analyze the live farming asset "${assetData.productType || assetData.name}" (ID: ${assetData.id}).
+        The user wants to associate this asset with the "${programName}" program.
+        Available Blueprints: ${JSON.stringify(blueprints.map(b => ({ id: b.blueprint_id, name: b.input_material.name })))}
+        Available Industrial Units: ${JSON.stringify(industrialUnits.map(u => ({ id: u.id, name: u.name })))}
+        
+        Determine if there are any existing assets (blueprints or units) that fit this program and would optimize the production process for the given asset.
+        Ensure effective and efficient routes.
+        Return a JSON array of matching assets. If no suitable assets exist, return an empty array.`,
+        config: {
+          systemInstruction: "You are the EnvirosAgro AI Program Asset Matcher. Your goal is to find the best existing assets for a given program and live farming asset.",
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                name: { type: Type.STRING },
+                type: { type: Type.STRING, description: "Either 'blueprint' or 'unit'" },
+                reason: { type: Type.STRING, description: "Why this asset is a good match" }
+              },
+              required: ["id", "name", "type", "reason"]
+            }
+          }
+        }
+      });
+      return JSON.parse(response.text || "[]");
+    });
+  } catch (err) {
+    console.error("Failed to query program assets:", err);
+    return [];
+  }
+};
+
 export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {

@@ -18,10 +18,12 @@ interface AgroValueEnhancementProps {
   onEarnEAC: (amount: number, reason: string) => void;
   onNavigate: (view: any) => void;
   initialSection?: string | null;
+  blueprints?: ValueBlueprint[];
+  onSaveBlueprint?: (blueprint: ValueBlueprint) => void;
 }
 
 const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({ 
-  user, onSpendEAC, onEarnEAC, onNavigate, initialSection 
+  user, onSpendEAC, onEarnEAC, onNavigate, initialSection, blueprints = [], onSaveBlueprint 
 }) => {
   const [activeTab, setActiveTab] = useState<'synthesis' | 'optimization'>('synthesis');
   
@@ -31,7 +33,6 @@ const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   
   // State Machine: Blueprint Persistence
-  const [blueprints, setBlueprints] = useState<ValueBlueprint[]>([]);
   const [selectedBlueprintId, setSelectedBlueprintId] = useState<string | null>(null);
 
   // Activation Workflow States
@@ -64,7 +65,7 @@ const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({
           status: 'READY_FOR_ASSETS',
           value_process_steps: res.json.value_process_steps.map((s: any) => ({ ...s, status: 'PENDING' }))
         };
-        setBlueprints(prev => [newBlueprint, ...prev]);
+        if (onSaveBlueprint) onSaveBlueprint(newBlueprint);
         setSelectedBlueprintId(newBlueprint.blueprint_id);
         onEarnEAC(10, 'ARCHITECTURAL_DATA_MINT');
       }
@@ -106,11 +107,14 @@ const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({
       // Simulate physical anchor delay
       await new Promise(r => setTimeout(r, 3000));
       
-      setBlueprints(prev => prev.map(b => 
-        b.blueprint_id === selectedBlueprint.blueprint_id 
-          ? { ...b, status: 'LIVE', guarantees, value_process_steps: b.value_process_steps.map((s, i) => ({ ...s, status: i === 0 ? 'ACTIVE' : 'PENDING' })) }
-          : b
-      ));
+      if (onSaveBlueprint) {
+        onSaveBlueprint({ 
+          ...selectedBlueprint, 
+          status: 'LIVE', 
+          guarantees, 
+          value_process_steps: selectedBlueprint.value_process_steps.map((s, i) => ({ ...s, status: i === 0 ? 'ACTIVE' : 'PENDING' })) 
+        });
+      }
       
       setActivationStatus('SUCCESS');
       onEarnEAC(50, 'LIVE_SEQUENCE_INGESTED');

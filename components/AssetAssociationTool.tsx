@@ -18,6 +18,7 @@ import {
   Database, 
   SmartphoneNfc, 
   SearchCode,
+  Briefcase,
   Bot,
   Loader2,
   Package,
@@ -26,7 +27,7 @@ import {
   Info
 } from 'lucide-react';
 import { ViewState, User } from '../types';
-import { chatWithAgroLang } from '../services/agroLangService';
+import { chatWithAgroLang, queryProgramAssets } from '../services/agroLangService';
 
 interface LinkerContext {
   label: string;
@@ -44,6 +45,8 @@ interface AssetAssociationToolProps {
   onLinkResource: (resId: string, name: string, type?: string) => void;
   industrialUnits: any[];
   blueprints: any[];
+  contracts?: any[];
+  liveProducts?: any[];
   user: User;
 }
 
@@ -56,18 +59,45 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
   onLinkResource,
   industrialUnits,
   blueprints,
+  contracts = [],
+  liveProducts = [],
   user
 }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  
+  // Program Querying State
+  const [selectedProgram, setSelectedProgram] = useState<any>(null);
+  const [isQueryingProgram, setIsQueryingProgram] = useState(false);
+  const [programAssets, setProgramAssets] = useState<any[] | null>(null);
 
   useEffect(() => {
     if (isOpen && selectedAsset && linkerContext) {
       scanForAssociations();
+      setSelectedProgram(null);
+      setProgramAssets(null);
     } else {
       setAiSuggestions([]);
+      setSelectedProgram(null);
+      setProgramAssets(null);
     }
   }, [isOpen, selectedAsset, linkerContext]);
+
+  const handleProgramSelect = async (prog: any) => {
+    setSelectedProgram(prog);
+    setIsQueryingProgram(true);
+    setProgramAssets(null);
+    
+    try {
+      const assets = await queryProgramAssets(selectedAsset, prog.name, blueprints, industrialUnits);
+      setProgramAssets(assets);
+    } catch (error) {
+      console.error("Failed to query program assets:", error);
+      setProgramAssets([]);
+    } finally {
+      setIsQueryingProgram(false);
+    }
+  };
 
   const scanForAssociations = async () => {
     setIsScanning(true);
@@ -83,11 +113,15 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
         suggestionTarget = 'value blueprints';
       } else if (linkerContext?.sourceLedger === 'PROGRAMS') {
         suggestionTarget = 'ecosystem programs';
+      } else if (linkerContext?.sourceLedger === 'MISSIONS') {
+        suggestionTarget = 'farming contracts or missions';
+      } else if (linkerContext?.sourceLedger === 'LIVE_FARMING_SHIFT') {
+        suggestionTarget = 'live farming assets or programs';
       }
 
       const prompt = `Analyze the asset "${assetName}" (ID: ${selectedAsset.id}) within the context of "${linkerContext?.label}". 
-      The Asset Association Tool integrates agro assets with various programs in the ecosystem to ensure live farming meets standards and the market cloud contains quality assets.
-      Suggest 2-3 specific, highly relevant ${suggestionTarget} that should be associated with this asset to maximize yield, efficiency, or ecological impact.
+      The Asset Association Tool integrates agro assets with various programs in the ecosystem for production planning and operations management.
+      Suggest 2-3 specific, highly relevant ${suggestionTarget} that should be associated with this asset to maximize yield, efficiency, or ecological impact, ensuring the production system aligns with the right sequencing and routing processes.
       Format the response as a simple bulleted list. Keep it concise, technical, and actionable.`;
       
       const response = await chatWithAgroLang(prompt, []);
@@ -222,39 +256,93 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                        </div>
                       ))
                    ) : linkerContext?.sourceLedger === 'PROGRAMS' ? (
-                      [
-                        { id: 'PROG-PERMA', name: 'Permaculture', icon: Sprout, col: 'text-emerald-400', desc: 'Categorize in available zones' },
-                        { id: 'PROG-BIO', name: 'Biotech Hub', icon: FlaskConical, col: 'text-fuchsia-400', desc: 'Track and trace genome' },
-                        { id: 'PROG-CEA', name: 'CEA Portal', icon: Factory, col: 'text-teal-400', desc: 'Further evaluate under CEA' },
-                        { id: 'PROG-CHROMA', name: 'Chroma SEHTI', icon: Leaf, col: 'text-amber-400', desc: 'Standardize frequency' },
-                        { id: 'PROG-INV', name: 'Invention Ledger', icon: Wrench, col: 'text-blue-400', desc: 'Patent and IP tracking' },
-                        { id: 'PROG-MEDIA', name: 'Media Ledger', icon: Video, col: 'text-rose-400', desc: 'Broadcast standardization' },
-                        { id: 'PROG-EMERG', name: 'Emergency Command', icon: ShieldAlert, col: 'text-red-500', desc: 'Risk mitigation protocol' },
-                        { id: 'PROG-SWARM', name: 'Robotic Swarm', icon: Cpu, col: 'text-indigo-400', desc: 'Automate physical tasks' },
-                        { id: 'PROG-NAT', name: 'Natural Resources', icon: MapPin, col: 'text-green-500', desc: 'Ecological auditing' },
-                      ].map(prog => (
-                        <div 
-                          key={prog.id} 
-                          onClick={() => onLinkResource(prog.id, prog.name, 'PROGRAMS')}
-                          className="glass-card p-8 rounded-[48px] border-2 border-white/5 hover:border-purple-500/40 bg-black/60 transition-all group/asset cursor-pointer flex flex-col justify-between h-[300px] shadow-xl relative overflow-hidden"
-                        >
-                          <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover/asset:scale-110 transition-transform"><prog.icon size={200} /></div>
-                          <div className="flex justify-between items-start relative z-10">
-                             <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 ${prog.col} group-hover/asset:scale-110 transition-all`}>
-                                <prog.icon size={24} />
-                             </div>
-                             <span className={`px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black uppercase`}>ACTIVE</span>
+                      selectedProgram ? (
+                        <div className="col-span-full space-y-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xl font-black text-white uppercase italic tracking-widest">{selectedProgram.name} Assets</h4>
+                            <button onClick={() => setSelectedProgram(null)} className="text-xs text-slate-400 hover:text-white uppercase tracking-widest">Back to Programs</button>
                           </div>
-                          <div className="relative z-10">
-                             <h5 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight group-hover/asset:text-purple-400 transition-colors">{prog.name}</h5>
-                             <p className="text-[10px] text-slate-700 font-mono mt-2 uppercase tracking-widest">{prog.id} // CATEGORY</p>
-                             <p className="text-xs text-slate-400 mt-3 font-medium">{prog.desc}</p>
-                          </div>
-                          <div className="pt-6 border-t border-white/5 flex items-center justify-between text-purple-400 text-[9px] font-black uppercase tracking-widest relative z-10">
-                             INTEGRATE_PROGRAM <ArrowRight size={14} />
-                          </div>
-                       </div>
-                      ))
+                          
+                          {isQueryingProgram ? (
+                            <div className="py-20 flex flex-col items-center justify-center space-y-6">
+                              <Loader2 size={48} className="text-indigo-400 animate-spin" />
+                              <p className="text-slate-400 font-mono text-xs uppercase tracking-widest">Querying EnvirosAgro AI for optimal assets...</p>
+                            </div>
+                          ) : programAssets && programAssets.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-4">
+                              {programAssets.map((asset: any, idx: number) => (
+                                <div key={idx} className="p-6 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-between group hover:border-indigo-500/50 transition-all">
+                                  <div className="space-y-2">
+                                    <h5 className="text-lg font-black text-white uppercase italic tracking-tight">{asset.name}</h5>
+                                    <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">{asset.type} // {asset.id}</p>
+                                    <p className="text-sm text-slate-300 mt-2">{asset.reason}</p>
+                                  </div>
+                                  <button 
+                                    onClick={() => onLinkResource(asset.id, asset.name, asset.type === 'blueprint' ? 'VALUE' : 'INDUSTRIAL')}
+                                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                                  >
+                                    Associate
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="py-16 flex flex-col items-center justify-center text-center space-y-6 border-2 border-dashed border-white/10 rounded-[48px] bg-black/40">
+                              <SearchCode size={48} className="text-slate-500" />
+                              <div className="space-y-2">
+                                <h5 className="text-lg font-black text-white uppercase tracking-widest">No Assets Found</h5>
+                                <p className="text-sm text-slate-400">EnvirosAgro AI did not find any optimal assets for this live farming asset in the {selectedProgram.name} program.</p>
+                              </div>
+                              <button 
+                                onClick={() => {
+                                  onClose();
+                                  const target = selectedProgram.name.toLowerCase().includes('value') ? 'agro_value_enhancement' : 
+                                                 selectedProgram.name.toLowerCase().includes('cea') ? 'industrial' : 'ecosystem';
+                                  onNavigate(target as ViewState, 'create');
+                                }}
+                                className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3"
+                              >
+                                <PlusCircle size={16} /> Create Asset in Program
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        [
+                          { id: 'PROG-VALUE', name: 'Value Enhancement', icon: FlaskConical, col: 'text-blue-400', desc: 'Optimize production blueprints' },
+                          { id: 'PROG-PERMA', name: 'Permaculture', icon: Sprout, col: 'text-emerald-400', desc: 'Categorize in available zones' },
+                          { id: 'PROG-BIO', name: 'Biotech Hub', icon: FlaskConical, col: 'text-fuchsia-400', desc: 'Track and trace genome' },
+                          { id: 'PROG-CEA', name: 'CEA Portal', icon: Factory, col: 'text-teal-400', desc: 'Further evaluate under CEA' },
+                          { id: 'PROG-CHROMA', name: 'Chroma SEHTI', icon: Leaf, col: 'text-amber-400', desc: 'Standardize frequency' },
+                          { id: 'PROG-INV', name: 'Invention Ledger', icon: Wrench, col: 'text-blue-400', desc: 'Patent and IP tracking' },
+                          { id: 'PROG-MEDIA', name: 'Media Ledger', icon: Video, col: 'text-rose-400', desc: 'Broadcast standardization' },
+                          { id: 'PROG-EMERG', name: 'Emergency Command', icon: ShieldAlert, col: 'text-red-500', desc: 'Risk mitigation protocol' },
+                          { id: 'PROG-SWARM', name: 'Robotic Swarm', icon: Cpu, col: 'text-indigo-400', desc: 'Automate physical tasks' },
+                          { id: 'PROG-NAT', name: 'Natural Resources', icon: MapPin, col: 'text-green-500', desc: 'Ecological auditing' },
+                        ].map(prog => (
+                          <div 
+                            key={prog.id} 
+                            onClick={() => handleProgramSelect(prog)}
+                            className="glass-card p-8 rounded-[48px] border-2 border-white/5 hover:border-purple-500/40 bg-black/60 transition-all group/asset cursor-pointer flex flex-col justify-between h-[300px] shadow-xl relative overflow-hidden"
+                          >
+                            <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover/asset:scale-110 transition-transform"><prog.icon size={200} /></div>
+                            <div className="flex justify-between items-start relative z-10">
+                               <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 ${prog.col} group-hover/asset:scale-110 transition-all`}>
+                                  <prog.icon size={24} />
+                               </div>
+                               <span className={`px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black uppercase`}>ACTIVE</span>
+                            </div>
+                            <div className="relative z-10">
+                               <h5 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight group-hover/asset:text-purple-400 transition-colors">{prog.name}</h5>
+                               <p className="text-[10px] text-slate-700 font-mono mt-2 uppercase tracking-widest">{prog.id} // CATEGORY</p>
+                               <p className="text-xs text-slate-400 mt-3 font-medium">{prog.desc}</p>
+                            </div>
+                            <div className="pt-6 border-t border-white/5 flex items-center justify-between text-purple-400 text-[9px] font-black uppercase tracking-widest relative z-10">
+                               QUERY_AI_ASSETS <ArrowRight size={14} />
+                            </div>
+                         </div>
+                        ))
+                      )
                    ) : linkerContext?.sourceLedger === 'INDUSTRIAL' ? (
                       industrialUnits.length === 0 ? (
                         <div className="col-span-full py-20 text-center opacity-20 border-4 border-dashed border-white/5 rounded-[64px] flex flex-col items-center gap-6">
@@ -311,6 +399,66 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                             </div>
                             <div className="pt-6 border-t border-white/5 flex items-center justify-between text-indigo-400 text-[9px] font-black uppercase tracking-widest relative z-10">
                                ASSOCIATE_BLUEPRINT <ArrowRight size={14} />
+                            </div>
+                         </div>
+                        ))
+                      )
+                   ) : linkerContext?.sourceLedger === 'MISSIONS' ? (
+                      contracts.length === 0 ? (
+                        <div className="col-span-full py-20 text-center opacity-20 border-4 border-dashed border-white/5 rounded-[64px] flex flex-col items-center gap-6">
+                           <Briefcase size={64} className="text-slate-700 animate-pulse" />
+                           <p className="text-xl font-black uppercase tracking-widest">No active missions found</p>
+                        </div>
+                      ) : (
+                        contracts.map(contract => (
+                          <div 
+                            key={contract.id} 
+                            onClick={() => onLinkResource(contract.id, contract.productType, 'MISSIONS')}
+                            className="glass-card p-8 rounded-[48px] border-2 border-white/5 hover:border-amber-500/40 bg-black/60 transition-all group/asset cursor-pointer flex flex-col justify-between h-[300px] shadow-xl relative overflow-hidden"
+                          >
+                            <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover/asset:scale-110 transition-transform"><Briefcase size={200} /></div>
+                            <div className="flex justify-between items-start relative z-10">
+                               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-amber-400 group-hover/asset:scale-110 transition-all">
+                                  <Briefcase size={24} />
+                               </div>
+                               <span className={`px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black uppercase`}>{contract.status}</span>
+                            </div>
+                            <div className="relative z-10">
+                               <h5 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight group-hover/asset:text-amber-400 transition-colors">{contract.productType}</h5>
+                               <p className="text-[10px] text-slate-700 font-mono mt-2 uppercase tracking-widest">{contract.id} // {contract.category}</p>
+                            </div>
+                            <div className="pt-6 border-t border-white/5 flex items-center justify-between text-amber-400 text-[9px] font-black uppercase tracking-widest relative z-10">
+                               SYNC_MISSION <ArrowRight size={14} />
+                            </div>
+                         </div>
+                        ))
+                      )
+                   ) : linkerContext?.sourceLedger === 'LIVE_FARMING_SHIFT' ? (
+                      liveProducts.length === 0 ? (
+                        <div className="col-span-full py-20 text-center opacity-20 border-4 border-dashed border-white/5 rounded-[64px] flex flex-col items-center gap-6">
+                           <Sprout size={64} className="text-emerald-700 animate-pulse" />
+                           <p className="text-xl font-black uppercase tracking-widest">No live farming programs found</p>
+                        </div>
+                      ) : (
+                        liveProducts.map(product => (
+                          <div 
+                            key={product.id} 
+                            onClick={() => onLinkResource(product.id, product.name, 'LIVE_FARMING')}
+                            className="glass-card p-8 rounded-[48px] border-2 border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group/asset cursor-pointer flex flex-col justify-between h-[300px] shadow-xl relative overflow-hidden"
+                          >
+                            <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover/asset:scale-110 transition-transform"><Sprout size={200} /></div>
+                            <div className="flex justify-between items-start relative z-10">
+                               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-emerald-400 group-hover/asset:scale-110 transition-all">
+                                  <Sprout size={24} />
+                               </div>
+                               <span className={`px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black uppercase`}>{product.status}</span>
+                            </div>
+                            <div className="relative z-10">
+                               <h5 className="text-2xl font-black text-white uppercase italic m-0 tracking-tight group-hover/asset:text-emerald-400 transition-colors">{product.name}</h5>
+                               <p className="text-[10px] text-slate-700 font-mono mt-2 uppercase tracking-widest">{product.id} // {product.cropType}</p>
+                            </div>
+                            <div className="pt-6 border-t border-white/5 flex items-center justify-between text-emerald-400 text-[9px] font-black uppercase tracking-widest relative z-10">
+                               SHIFT_TO_PROGRAM <ArrowRight size={14} />
                             </div>
                          </div>
                         ))

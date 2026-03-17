@@ -136,7 +136,7 @@ export interface VendorProduct {
   initialValue?: number;
   registrationFee?: number;
   stock: number;
-  category: 'Seed' | 'Input' | 'Tool' | 'Technology' | 'Logistics' | 'Produce' | 'Service' | 'Book' | 'Manufacturing' | 'Consultation' | 'Warehousing' | 'Distribution' | 'VETERINARY' | 'Tour Guide' | 'Acoustic' | 'Circular' | 'Raw' | 'Tour' | 'Ready' | 'Facility' | 'Organization Service';
+  category: 'Seed' | 'Input' | 'Tool' | 'Technology' | 'Logistics' | 'Produce' | 'Service' | 'Book' | 'Manufacturing' | 'Consultation' | 'Warehousing' | 'Distribution' | 'VETERINARY' | 'Tour Guide' | 'Acoustic' | 'Circular' | 'Raw' | 'Tour' | 'Ready' | 'Facility' | 'Organization Service' | 'Mission' | 'Blueprint';
   supplierEsin: string;
   supplierName: string;
   supplierType: SupplierType;
@@ -361,6 +361,7 @@ export interface LiveAgroProduct {
   sourceAssetId?: string;
   sourceAssetType?: string;
   associatedPrograms?: string[];
+  associatedMissions?: string[];
 }
 
 export interface NotificationShard {

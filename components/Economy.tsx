@@ -12,7 +12,7 @@ import {
   Scale, Signature, FileSignature, Clock, BookOpen, Eye, Star, Download, 
   CreditCard, ChevronDown, Warehouse, Factory, PackageSearch, Receipt, 
   Music, Palette, Map as MapIcon,
-  Database, Calculator
+  Database, Calculator, FlaskConical
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, 
@@ -34,6 +34,7 @@ interface EconomyProps {
   onPlaceOrder: (order: Partial<Order>) => void;
   projects: any[];
   contracts: any[];
+  blueprints: any[];
   industrialUnits: RegisteredUnit[];
   onUpdateUser: (user: User) => void;
   notify: any;
@@ -69,7 +70,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 const Economy: React.FC<EconomyProps> = ({ 
-  user, isGuest, onSpendEAC, onNavigate, vendorProducts = [], liveProducts = [], onPlaceOrder, industrialUnits = [], notify, initialSection 
+  user, isGuest, onSpendEAC, onNavigate, vendorProducts = [], liveProducts = [], onPlaceOrder, industrialUnits = [], contracts = [], blueprints = [], notify, initialSection 
 }) => {
   const [activeTab, setActiveTab] = useState<'catalogue' | 'infrastructure' | 'forecasting' | 'checkout'>('catalogue');
   const [searchTerm, setSearchTerm] = useState('');
@@ -197,6 +198,42 @@ const Economy: React.FC<EconomyProps> = ({
       }
     });
 
+    // 5. Missions & Contracts (Registry Shards)
+    contracts.forEach(c => {
+      list.push({
+        id: c.id,
+        name: c.productType,
+        description: `Contract for ${c.category}. Budget: ${c.budget} EAC.`,
+        category: 'Mission',
+        finalPrice: Math.ceil(2500 * sentimentAlpha),
+        stock: 1,
+        supplierName: c.investorName,
+        supplierEsin: c.investorEsin,
+        sourceLabel: 'Contract Ledger',
+        isMission: true,
+        icon: Target,
+        distance: 5
+      });
+    });
+
+    // 6. Asset Blueprints (Knowledge/Design Shards)
+    blueprints.forEach(b => {
+      list.push({
+        id: b.blueprint_id,
+        name: b.input_material.name,
+        description: `Industrial blueprint for ${b.input_material.name}. Status: ${b.status}.`,
+        category: 'Blueprint',
+        finalPrice: Math.ceil(5000 * sentimentAlpha),
+        stock: 999,
+        supplierName: 'Value Forge',
+        supplierEsin: 'EA-VF-NODE',
+        sourceLabel: 'Value Enhancement',
+        isBlueprint: true,
+        icon: FlaskConical,
+        distance: 0
+      });
+    });
+
     // Filtering & Sorting
     let filtered = list.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -215,9 +252,11 @@ const Economy: React.FC<EconomyProps> = ({
   }, [vendorProducts, books, sentimentAlpha, user.coords, searchTerm, categoryFilter, sortMethod]);
 
   const categories = useMemo(() => {
-    const cats = new Set(vendorProducts.map(item => item.category));
+    const cats = new Set<string>(vendorProducts.map(item => item.category));
     cats.add('Book');
     cats.add('Acoustic');
+    cats.add('Mission');
+    cats.add('Blueprint');
     return ['All', ...Array.from(cats)];
   }, [vendorProducts]);
 
@@ -474,21 +513,16 @@ const Economy: React.FC<EconomyProps> = ({
         {activeTab === 'infrastructure' && (
            <div className="space-y-16 animate-in zoom-in duration-700 px-4 md:px-0">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-                 {[
-                   { id: 'NODE-WH-01', name: 'Nairobi Central Warehouse', type: 'Warehousing', capacity: '120k Units', load: 62, icon: Warehouse, color: 'text-amber-500', dist: '14km' },
-                   { id: 'NODE-LG-04', name: 'East African Logistics Relay', type: 'Logistics', capacity: '14.2 GB/s', load: 88, icon: Truck, color: 'text-blue-500', dist: '42km' },
-                   { id: 'NODE-MF-82', name: 'Bio-Refinery Unit #82', type: 'Manufacturing', capacity: '500t/Cycle', load: 45, icon: Factory, color: 'text-indigo-500', dist: '85km' },
-                   { id: 'NODE-DT-12', name: 'Mombasa Port Distribution', type: 'Distribution', capacity: '24k Parcels', load: 78, icon: Network, color: 'text-emerald-500', dist: '480km' },
-                 ].map(node => (
+                 {industrialUnits.length > 0 ? industrialUnits.map(node => (
                     <div key={node.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between shadow-2xl relative overflow-hidden h-[480px]">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[15s]"><node.icon size={250} /></div>
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[15s]"><Factory size={250} /></div>
                        <div className="flex justify-between items-start relative z-10">
-                          <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${node.color} shadow-inner group-hover:rotate-6 transition-all`}>
-                             <node.icon size={32} />
+                          <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 text-indigo-500 shadow-inner group-hover:rotate-6 transition-all`}>
+                             <Factory size={32} />
                           </div>
                           <div className="flex flex-col items-end gap-2">
                             <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[9px] font-black uppercase rounded-full border border-indigo-500/20 tracking-widest">NODE_ACTIVE</span>
-                            <span className="text-[9px] font-mono text-slate-700 font-black">{node.dist} Relative</span>
+                            <span className="text-[9px] font-mono text-slate-700 font-black">Local Relative</span>
                           </div>
                        </div>
                        <div className="space-y-4 relative z-10">
@@ -498,20 +532,59 @@ const Economy: React.FC<EconomyProps> = ({
                        <div className="pt-10 border-t border-white/5 space-y-4 relative z-10">
                           <div className="flex justify-between text-[11px] font-black uppercase text-slate-500">
                              <span>Operational Capacity</span>
-                             <span className="text-white font-mono">{node.capacity}</span>
+                             <span className="text-white font-mono">100%</span>
                           </div>
                           <div className="space-y-2">
                              <div className="flex justify-between text-[9px] font-black uppercase text-slate-700">
                                 <span>Utilization Load</span>
-                                <span className={node.color}>{node.load}%</span>
+                                <span className="text-indigo-500">45%</span>
                              </div>
                              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                <div className={`h-full ${node.color.replace('text', 'bg')} transition-all duration-1000`} style={{ width: `${node.load}%` }}></div>
+                                <div className={`h-full bg-indigo-500 transition-all duration-1000`} style={{ width: `45%` }}></div>
                              </div>
                           </div>
                        </div>
                     </div>
-                 ))}
+                 )) : (
+                   [
+                    { id: 'NODE-WH-01', name: 'Nairobi Central Warehouse', type: 'Warehousing', capacity: '120k Units', load: 62, icon: Warehouse, color: 'text-amber-500', dist: '14km' },
+                    { id: 'NODE-LG-04', name: 'East African Logistics Relay', type: 'Logistics', capacity: '14.2 GB/s', load: 88, icon: Truck, color: 'text-blue-500', dist: '42km' },
+                    { id: 'NODE-MF-82', name: 'Bio-Refinery Unit #82', type: 'Manufacturing', capacity: '500t/Cycle', load: 45, icon: Factory, color: 'text-indigo-500', dist: '85km' },
+                    { id: 'NODE-DT-12', name: 'Mombasa Port Distribution', type: 'Distribution', capacity: '24k Parcels', load: 78, icon: Network, color: 'text-emerald-500', dist: '480km' },
+                  ].map(node => (
+                     <div key={node.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between shadow-2xl relative overflow-hidden h-[480px]">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform duration-[15s]"><node.icon size={250} /></div>
+                        <div className="flex justify-between items-start relative z-10">
+                           <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${node.color} shadow-inner group-hover:rotate-6 transition-all`}>
+                              <node.icon size={32} />
+                           </div>
+                           <div className="flex flex-col items-end gap-2">
+                             <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[9px] font-black uppercase rounded-full border border-indigo-500/20 tracking-widest">NODE_ACTIVE</span>
+                             <span className="text-[9px] font-mono text-slate-700 font-black">{node.dist} Relative</span>
+                           </div>
+                        </div>
+                        <div className="space-y-4 relative z-10">
+                           <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-indigo-400 transition-colors">{node.name}</h4>
+                           <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">{node.id} // {node.type.toUpperCase()}</p>
+                        </div>
+                        <div className="pt-10 border-t border-white/5 space-y-4 relative z-10">
+                           <div className="flex justify-between text-[11px] font-black uppercase text-slate-500">
+                              <span>Operational Capacity</span>
+                              <span className="text-white font-mono">{node.capacity}</span>
+                           </div>
+                           <div className="space-y-2">
+                              <div className="flex justify-between text-[9px] font-black uppercase text-slate-700">
+                                 <span>Utilization Load</span>
+                                 <span className={node.color}>{node.load}%</span>
+                              </div>
+                              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                 <div className={`h-full ${node.color.replace('text', 'bg')} transition-all duration-1000`} style={{ width: `${node.load}%` }}></div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  ))
+                 )}
               </div>
 
               <div className="glass-card p-12 md:p-20 rounded-[80px] border-emerald-500/20 bg-emerald-600/[0.02] flex flex-col md:flex-row items-center justify-between gap-12 shadow-3xl relative overflow-hidden group">
