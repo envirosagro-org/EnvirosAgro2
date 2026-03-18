@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   SmartphoneNfc, Cpu, MapPin, Search, X, Loader2, CheckCircle2, 
-  ShieldCheck, ArrowRight, Upload, History, Binary, Bot, Leaf, 
+  ShieldCheck, ArrowRight, Upload, History, Binary, Leaf, 
   Satellite, Fingerprint, Lock, ShieldAlert, Zap, Globe, Compass, 
   Stamp, Workflow, Terminal, Code2, Download, AlertTriangle, Info,
   BadgeCheck, Monitor, History as HistoryIcon, Send, RefreshCw, Layers,
   FileText
 } from 'lucide-react';
 import { User, AgroResource, ViewState, SignalShard, HandshakeStep } from '../types';
+import { HenIcon } from './Icons';
 import { generateHandshakeAgroLang } from '../services/agroLangService';
 
 interface RegistryHandshakeProps {

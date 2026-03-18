@@ -8,7 +8,7 @@ import {
   History, Fingerprint, Lock, Layers,
   ChevronRight, ArrowRight, ArrowUpRight,
   Database as PostgresIcon, Server, Search, RefreshCw,
-  Bot, Monitor, Leaf, AlertCircle, LayoutGrid,
+  Monitor, Leaf, AlertCircle, LayoutGrid,
   Box,
   Atom,
   TrendingUp,
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { User, MeshNode, AgroBlock } from '../types';
 import { auditMeshStability, AgroLangResponse } from '../services/agroLangService';
-import { SycamoreLogo } from '../App';
+import { SycamoreLogo, HenIcon } from './Icons';
 import { startBackgroundDataSync } from '../services/firebaseService';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 
@@ -305,7 +305,7 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain }) => {
                           <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><Leaf size={400} className="text-indigo-400" /></div>
                           <div className="relative z-10 space-y-12">
                              <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 animate-float">
-                                <Bot size={48} className="text-white animate-pulse" />
+                                <HenIcon size={48} className="text-white animate-pulse" />
                              </div>
                              <div className="space-y-4">
                                 <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Stability <span className="text-indigo-400">Oracle</span></h3>

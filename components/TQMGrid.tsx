@@ -13,7 +13,6 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   X, 
-  Bot, 
   Leaf, 
   MapPin, 
   Package, 
@@ -73,6 +72,7 @@ import {
   ShoppingBag as CRMIcon
 } from 'lucide-react';
 import { User, Order, LiveAgroProduct, ViewState, SignalShard } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
 
@@ -229,7 +229,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                   onClick={() => setActiveTab('auditor')}
                   className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl transition-all flex items-center gap-3"
                 >
-                  <Bot size={18} /> Intelligent Auditor
+                  <HenIcon size={18} /> Intelligent Auditor
                 </button>
               </div>
            </div>
@@ -245,7 +245,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
         {[
           { id: 'pipeline', label: 'Inbound Pipeline', icon: Workflow },
           { id: 'trace', label: 'Trace & Track', icon: History },
-          { id: 'auditor', label: 'Agro Lang Oracle Audit', icon: Bot },
+          { id: 'auditor', label: 'Agro Lang Oracle Audit', icon: HenIcon },
           { id: 'sourcing', label: 'Sourcing Map', icon: Globe },
         ].map(tab => (
           <button 
@@ -419,7 +419,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                        onClick={() => setActiveTab('auditor')}
                        className="px-20 py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-emerald-500/5"
                      >
-                        INITIALIZE THREAD AUDIT <Bot className="w-8 h-8 ml-4 animate-pulse" />
+                        INITIALIZE THREAD AUDIT <HenIcon className="w-8 h-8 ml-4 animate-pulse" />
                      </button>
                   </div>
                </div>
@@ -435,7 +435,7 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
                  
                  <div className="relative z-10 space-y-10">
                     <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-[0_0_120px_rgba(99,102,241,0.4)] border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 animate-float">
-                       <Bot size={64} className="text-white animate-pulse" />
+                       <HenIcon size={64} className="text-white animate-pulse" />
                     </div>
                     <div className="space-y-4">
                        <h3 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter m-0 leading-none italic">INTELLIGENT <span className="text-indigo-400">AUDITOR</span></h3>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Compass, Mountain, Layers, Zap, ShieldCheck, Bot, Leaf, Search, 
+  Compass, Mountain, Layers, Zap, ShieldCheck, Leaf, Search, 
   PlusCircle, ArrowRight, Loader2, Activity, Target, Heart, Scale, 
   Trees, Sun, CloudRain, Binary, FileText, BadgeCheck, History, 
   Trash2, RefreshCw, Droplets, Microscope, BoxSelect, User as UserIcon, 
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { User, ViewState, MediaShard, SignalShard } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 

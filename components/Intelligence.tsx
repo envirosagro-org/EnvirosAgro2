@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Monitor, Cpu, Activity, Zap, ShieldCheck, Binary, Layers, Microscope, FlaskConical, Scan, 
-  AlertCircle, TrendingUp, Droplets, Wind, Sprout, Bot, Database, Upload, 
+  AlertCircle, TrendingUp, Droplets, Wind, Sprout, Database, Upload, 
   MapPin, X, Loader2, Leaf, Gauge, Fingerprint, SearchCode, History, 
   ChevronRight, LineChart, HeartPulse, Radar, 
   CheckCircle2, Info, ArrowUpRight, BrainCircuit, 
@@ -19,9 +19,10 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { chatWithAgroLang, analyzeSustainability, AgroLangResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/agroLangService';
 import { User, AgroResource, ViewState, MediaShard } from '../types';
+import { HenIcon } from './Icons';
 // Fixed: Removed non-existent exports backupTelemetryShard and fetchTelemetryBackup
 import { saveCollectionItem } from '../services/firebaseService';
-import { SycamoreLogo } from '../App';
+import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
 
 interface IntelligenceProps {
@@ -296,7 +297,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
           { id: 'simulator', name: 'EOS Simulator', icon: Cpu },
           { id: 'trends', name: 'Trend Ingest', icon: TrendingUp },
           { id: 'telemetry', name: 'IoT Telemetry', icon: Wifi },
-          { id: 'eos_agro_lang', name: 'Science Oracle', icon: Bot },
+          { id: 'eos_agro_lang', name: 'Science Oracle', icon: HenIcon },
           { id: 'sid', name: 'SID Scanner', icon: Radiation },
           { id: 'evidence', name: 'Evidence Vault', icon: CloudUpload },
         ].map(t => (
@@ -346,7 +347,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                    <p className="text-[10px] text-slate-500 italic">"Social immunity: 98% nominal."</p>
                 </div>
                 <div onClick={() => setActiveTab('eos_agro_lang')} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between shadow-xl cursor-pointer">
-                   <div className="flex justify-between items-start"><div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition-transform"><Bot size={24} /></div><span className="text-[9px] font-black text-slate-700 uppercase">NEURAL_HUB</span></div>
+                   <div className="flex justify-between items-start"><div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition-transform"><HenIcon size={24} /></div><span className="text-[9px] font-black text-slate-700 uppercase">NEURAL_HUB</span></div>
                    <h4 className="text-xl font-black text-white uppercase italic">Science Oracle</h4>
                    <p className="text-[10px] text-slate-500 italic">"Expert audit ready for ingest."</p>
                 </div>

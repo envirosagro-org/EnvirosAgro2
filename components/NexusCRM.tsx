@@ -24,7 +24,6 @@ import {
   Clock,
   MessagesSquare,
   Leaf,
-  Bot,
   User as UserIcon,
   Globe,
   Settings,
@@ -49,6 +48,7 @@ import {
   Gavel
 } from 'lucide-react';
 import { User, VendorProduct, ViewState, Order } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 
 interface NexusCRMProps {
@@ -346,7 +346,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
               <div className="p-12 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 relative z-20">
                  <div className="flex items-center gap-10">
                     <div className="w-24 h-24 bg-indigo-600 rounded-[40px] flex items-center justify-center text-white shadow-[0_0_80px_rgba(99,102,241,0.4)] group overflow-hidden relative border-4 border-white/10 ring-8 ring-indigo-500/5">
-                       <Bot size={48} className="group-hover:scale-110 transition-transform relative z-10" />
+                       <HenIcon size={48} className="group-hover:scale-110 transition-transform relative z-10" />
                        <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                     </div>
                     <div>
@@ -369,7 +369,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
                        <div className={`flex flex-col gap-4 max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                           <div className={`flex items-center gap-4 mb-2 px-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border-2 shadow-2xl transition-all group ${msg.role === 'user' ? 'bg-indigo-600/20 border-indigo-500/30 text-indigo-400' : 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400'}`}>
-                                {msg.role === 'user' ? <UserIcon size={20} /> : <Bot size={20} />}
+                                {msg.role === 'user' ? <UserIcon size={20} /> : <HenIcon size={20} />}
                              </div>
                              <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] italic">{msg.role === 'user' ? user.name : 'NEXUS_ORACLE'}</span>
                           </div>

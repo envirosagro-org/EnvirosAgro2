@@ -3,13 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   Share2, Video, Youtube, Twitter, Facebook, Instagram, Ghost, FileText, Search, PlusCircle, 
   TrendingUp, Eye, MessageSquare, Heart, Zap, Loader2, CheckCircle2, ExternalLink, X, 
-  Bot, Leaf, Download, Filter, Users, Coins, ShieldCheck, Smartphone, Globe, 
+  Leaf, Download, Filter, Users, Coins, ShieldCheck, Smartphone, Globe, 
   BookOpen, FileJson, FileDown, Database, AtSign, Pin, HelpCircle, Cloud, Wind, 
   Linkedin, Send, ArrowRight, ArrowUpRight, Mic, Library, Film, Bookmark, FileCode, 
   Globe2, Info, Paperclip, ChevronRight, Fingerprint, Stamp, ShieldAlert, SearchCode, 
   ShieldPlus, Terminal, Key, Target, Activity
 } from 'lucide-react';
 import { User } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { generateAlphanumericId } from '../systemFunctions';
 
@@ -324,7 +325,7 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC, onSpendEAC }
                     <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10 text-center animate-in zoom-in duration-500">
                        <div className="relative">
                           <Loader2 className="w-24 h-24 text-emerald-700 animate-spin" />
-                          <div className="absolute inset-0 flex items-center justify-center"><Bot className="w-12 h-12 text-emerald-400 animate-pulse" /></div>
+                          <div className="absolute inset-0 flex items-center justify-center"><HenIcon className="w-12 h-12 text-emerald-400 animate-pulse" /></div>
                        </div>
                        <div className="space-y-4">
                           <p className="text-emerald-400 font-black text-2xl uppercase tracking-[0.5em] animate-pulse italic">Auditing Shard Consensus...</p>

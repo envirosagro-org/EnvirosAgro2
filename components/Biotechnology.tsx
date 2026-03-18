@@ -3,7 +3,6 @@ import {
   Dna, 
   FlaskConical, 
   Zap, 
-  Bot, 
   Leaf, 
   Loader2, 
   ShieldCheck, 
@@ -59,6 +58,7 @@ import {
   Compass
 } from 'lucide-react';
 import { User, ViewState } from '../types';
+import { HenIcon } from './Icons';
 import { decodeAgroGenetics, chatWithAgroLang } from '../services/agroLangService';
 
 interface BiotechnologyProps {
@@ -285,7 +285,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
                         <>
                           {[
                             { l: 'A: AGRO-BIO (Plant/Soil)', v: bioSignal, set: setBioSignal, col: 'accent-emerald-500', icon: Sprout },
-                            { l: 'T: TECH (Automation)', v: techStatus, set: setTechStatus, col: 'accent-blue-500', icon: Bot },
+                            { l: 'T: TECH (Automation)', v: techStatus, set: setTechStatus, col: 'accent-blue-500', icon: HenIcon },
                             { l: 'C: CONSUME (Market)', v: marketDemand, set: setMarketDemand, col: 'accent-orange-500', icon: Cookie },
                             { l: 'G: GOVERN (Institutional)', v: govIntegrity, set: setGovIntegrity, col: 'accent-indigo-500', icon: Landmark },
                           ].map((base, idx) => (

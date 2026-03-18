@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   User, ViewState, MediaShard 
 } from '../types';
+import { HenIcon } from './Icons';
 import { 
   Leaf, Activity, Zap, Info, ShieldCheck, Binary, 
   Sprout, TrendingUp, Loader2, Waves, 
@@ -11,7 +12,7 @@ import {
   CloudRain, Wind, Scale, Landmark, Boxes, Workflow, 
   Eye, Monitor, AlertCircle, Terminal, Cpu,
   BadgeCheck, Sun, Download, X, Gavel, KeyRound, Stamp,
-  LineChart, Bot,
+  LineChart,
   FileDigit, ChevronRight, Menu, Search, UserPlus, ChevronUp
 } from 'lucide-react';
 import { analyzeSustainability, AgroLangResponse } from '../services/agroLangService';
@@ -195,7 +196,7 @@ ${oracleVerdict.text}
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-10 mb-10">
           <div className="flex items-center gap-6">
             <div className="w-16 h-16 rounded-[24px] bg-indigo-600 flex items-center justify-center text-white shadow-3xl">
-              <Bot size={36} className="animate-pulse" />
+              <HenIcon size={36} className="animate-pulse" />
             </div>
             <div>
               <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">RESONANCE <span className="text-indigo-400">ORACLE</span></h3>

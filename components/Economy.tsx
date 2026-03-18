@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ShoppingBag, Search, Filter, ShieldCheck, Activity, BadgeCheck, Globe, 
   Loader2, X, Plus, ShoppingCart, Trash2, Lock, Gem, TrendingUp, Building, 
-  Bot, Landmark, Briefcase, Users, HardHat, Boxes, Cpu, ShieldPlus, Coins, 
+  Landmark, Briefcase, Users, HardHat, Boxes, Cpu, ShieldPlus, Coins, 
   ArrowRightCircle, LayoutGrid, ChevronRight, CheckCircle2, BarChart3, 
   Network, ExternalLink, Zap, ArrowUpRight, Target, Share2, Package, 
   Truck, Box, ArrowLeft, ThumbsUp, LineChart as LineChartIcon, Signal, 
@@ -19,6 +19,7 @@ import {
   Area, BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
 import { User, ViewState, Order, VendorProduct, RegisteredUnit, AgroBook, LiveAgroProduct } from '../types';
+import { HenIcon } from './Icons';
 import { predictMarketSentiment, AgroLangResponse, chatWithAgroLang } from '../services/agroLangService';
 import { listenToCollection } from '../services/firebaseService';
 import { generateQuickHash } from '../systemFunctions';
@@ -355,7 +356,7 @@ const Economy: React.FC<EconomyProps> = ({
                 disabled={isSyncingSentiment}
                 className="w-full py-5 mt-4 bg-indigo-600 hover:bg-indigo-500 rounded-[32px] text-white font-black text-[11px] uppercase tracking-[0.3em] flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 border-2 border-white/10 ring-8 ring-indigo-500/5"
               >
-                 {isSyncingSentiment ? <Loader2 size={18} className="animate-spin text-white" /> : <Bot size={18} className="text-white" />}
+                 {isSyncingSentiment ? <Loader2 size={18} className="animate-spin text-white" /> : <HenIcon size={18} className="text-white" />}
                  RECALIBRATE RESONANCE
               </button>
            </div>
@@ -650,7 +651,7 @@ const Economy: React.FC<EconomyProps> = ({
                    <div className="glass-card p-12 rounded-[72px] border-2 border-white/10 bg-black/40 shadow-2xl flex flex-col items-center justify-center text-center space-y-12 relative overflow-hidden flex-1 group">
                       <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Leaf size={500} className="text-indigo-400" /></div>
                       <div className="w-32 h-32 bg-indigo-600 rounded-[44px] flex items-center justify-center shadow-[0_0_100px_rgba(99,102,241,0.3)] border-4 border-white/10 group-hover:rotate-12 transition-transform duration-700 relative z-10">
-                         <Bot size={56} className="text-white animate-pulse" />
+                         <HenIcon size={56} className="text-white animate-pulse" />
                       </div>
                       <div className="space-y-6 relative z-10">
                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Oracle <span className="text-indigo-400">Demand</span></h4>

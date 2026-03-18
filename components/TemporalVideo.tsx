@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   Video, Play, Loader2, Leaf, AlertTriangle, 
   Download, Clock, Database, ShieldCheck, RefreshCw, 
-  Key, Globe, Bot, Binary, TrendingUp, X
+  Key, Globe, Binary, TrendingUp, X
 } from 'lucide-react';
 import { generateTemporalVideo, getTemporalVideoOperation } from '../services/agroLangService';
 import { User } from '../types';
-import { SycamoreLogo } from '../App';
+import { HenIcon } from './Icons';
+import { SycamoreLogo } from './Icons';
 import MultimediaPlayer from './MultimediaPlayer';
 
 interface TemporalVideoProps {
@@ -140,7 +141,7 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
               <div className="flex flex-col items-center justify-center space-y-16 py-32 text-center animate-in zoom-in duration-500">
                  <div className="relative">
                     <Loader2 size={120} className="text-indigo-500 animate-spin mx-auto" />
-                    <div className="absolute inset-0 flex items-center justify-center"><Bot size={48} className="text-indigo-400 animate-pulse" /></div>
+                    <div className="absolute inset-0 flex items-center justify-center"><HenIcon size={48} className="text-indigo-400 animate-pulse" /></div>
                  </div>
                  <div className="space-y-4">
                     <p className="text-indigo-400 font-black text-3xl uppercase tracking-[0.6em] animate-pulse italic m-0">{status}</p>

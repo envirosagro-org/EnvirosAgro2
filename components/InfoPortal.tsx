@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Info, ShieldCheck, ChevronRight, Scale, BookOpen, Globe, Zap, Users, Lock, FileText,
-  AlertTriangle, HeartHandshake, X, Loader2, Send, Bot, User as UserIcon, MessageSquare,
+  AlertTriangle, HeartHandshake, X, Loader2, Send, User as UserIcon, MessageSquare,
   Fingerprint, MapPin, Phone, Mail, ExternalLink, ArrowRight, Share2, Youtube, Twitter,
   Linkedin, AtSign, Pin, HelpCircle, Cloud, Wind, Facebook, MessageCircleQuestion, Eye,
   Target, Copyright, Shield, Award, CheckCircle2, BadgeCheck, Terminal,
@@ -14,7 +14,8 @@ import {
   Gauge, Heart, Siren
 } from 'lucide-react';
 import { User, ViewState } from '../types';
-import { SycamoreLogo } from '../App';
+import { HenIcon } from './Icons';
+import { SycamoreLogo } from './Icons';
 
 interface InfoPortalProps {
   user: User;
@@ -140,6 +141,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
 
   const shards = [
     { id: 'about', label: 'Institutional Bio', icon: Info, color: 'text-emerald-400' },
+    { id: 'lore', label: 'Agikuyu Heritage', icon: Leaf, color: 'text-emerald-500' },
     { id: 'security', label: 'Security Protocols', icon: ShieldCheck, color: 'text-indigo-400' },
     { id: 'legal', label: 'Legal Statutes', icon: Gavel, color: 'text-amber-500' },
     { id: 'agreements', label: 'Node Covenant', icon: FileText, color: 'text-blue-400' },
@@ -197,6 +199,37 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
                     <p className="text-[11px] text-slate-700 italic font-medium">"{box.desc}"</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+        );
+      case 'lore':
+        return (
+          <section className="space-y-12 animate-in fade-in slide-in-from-right-10 duration-700">
+            <div className="flex items-center gap-6 mb-4">
+              <div className="w-16 h-16 rounded-3xl bg-emerald-600 flex items-center justify-center text-white shadow-3xl border-4 border-white/10 animate-float">
+                <Leaf size={32} />
+              </div>
+              <div>
+                <h2 className="text-5xl md:text-8xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">AGIKUYU <span className="text-emerald-400">HERITAGE.</span></h2>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.6em] mt-4 italic opacity-60">SHARD_00 // MUGUMO_SYCAMORE_SACRIFICE</p>
+              </div>
+            </div>
+            <div className="p-12 md:p-16 glass-card rounded-[80px] border-2 border-emerald-500/20 bg-emerald-600/[0.02] shadow-3xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><SycamoreLogo size={600} className="text-emerald-400" /></div>
+              <div className="space-y-12 relative z-10">
+                <p className="text-slate-300 text-2xl md:text-4xl leading-[2.1] italic font-medium border-l-[16px] border-emerald-500 pl-12 md:pl-20 font-sans">
+                  "Rooted in the Agikuyu Mugumo sycamore sacrifice, EnvirosAgro is built for sustainability and resilience. The Mugumo tree stands as an antenna connecting the earth to the cosmos."
+                </p>
+                <div className="prose prose-invert max-w-none text-slate-400 text-lg md:text-xl leading-relaxed italic pl-12 md:pl-20 opacity-80 space-y-6">
+                  <p><strong>The Sycamore Leaf:</strong> Our logo symbolizes the Mugumo tree acting as a natural antenna, receiving and transmitting the vital energies of the ecosystem.</p>
+                  <p><strong>The Hen:</strong> The hen icon represents the goat traditionally used in the sacrifice, a symbol of offering and sustenance.</p>
+                  <p><strong>Soil & Air:</strong> The soil is the foundational element holding the Mugumo tree to the ground, while the air holds its branches in space, creating a perfect balance between the terrestrial and the celestial.</p>
+                  <p><strong>The Elders:</strong> You, the stewards and elders, are the human element—applying both art and science to nurture and protect our natural resources.</p>
+                  <p><strong>Aggressive Entropy & Remediation:</strong> The sacrifice was traditionally invoked when aggressive entropy was detected in nature. It served as a profound remediation process and a regenerative act to heal the land.</p>
+                  <p><strong>Rain Trigger & Irrigation:</strong> Symbolically, the sacrifice optimized irrigation. It was believed that following the ritual, the rains would commence—a clear signal that entropy had been restored and balance returned to the ecosystem.</p>
+                  <p><strong>Fallowing Acts:</strong> The ritual was intrinsically linked to fallowing acts, allowing the earth to rest, recover, and regenerate its vital forces.</p>
+                </div>
               </div>
             </div>
           </section>
@@ -440,7 +473,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
                   onClick={handleGenerateFAQ}
                   className="px-10 py-5 bg-emerald-600/10 border border-emerald-500/20 rounded-full text-emerald-400 font-black text-[10px] uppercase tracking-[0.4em] hover:bg-emerald-600 hover:text-white transition-all shadow-xl flex items-center gap-3 mx-auto"
                 >
-                  <Bot size={16} /> AUTO-GENERATE UPDATED FAQ
+                  <HenIcon size={16} /> AUTO-GENERATE UPDATED FAQ
                 </button>
               </div>
             </div>
@@ -500,7 +533,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
             <div className="mt-20 flex justify-center">
                <div className="p-12 glass-card rounded-[64px] border-indigo-500/20 bg-indigo-950/5 flex flex-col items-center gap-8 shadow-3xl max-w-3xl w-full">
                   <div className="flex items-center gap-6">
-                     <Bot className="text-indigo-400 w-12 h-12" />
+                     <HenIcon className="text-indigo-400 w-12 h-12" />
                      <h5 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Inquiry Shard</h5>
                   </div>
                   <p className="text-slate-400 text-xl font-medium italic text-center leading-relaxed">

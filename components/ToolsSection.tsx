@@ -7,7 +7,6 @@ import {
   RefreshCw, 
   Settings, 
   Leaf, 
-  Bot, 
   Loader2, 
   Search, 
   Scale, 
@@ -120,6 +119,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { MediaShard, Task } from '../types';
+import { HenIcon } from './Icons';
 
 interface ToolsSectionProps {
   user: any; 
@@ -542,7 +542,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                             disabled={isOptimizing || !sigmaInput.trim()}
                             className="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-xs uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all disabled:opacity-30"
                           >
-                             {isOptimizing ? <Loader2 size={24} className="animate-spin" /> : <Bot size={24} />}
+                             {isOptimizing ? <Loader2 size={24} className="animate-spin" /> : <HenIcon size={24} />}
                              {isOptimizing ? 'SYNTHESIZING...' : 'INITIALIZE SIGMA AUDIT'}
                           </button>
                        </div>
@@ -603,7 +603,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={200} /></div>
                     <div className="flex justify-between items-start mb-10 relative z-10">
                        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner group-hover:rotate-12 transition-all">
-                          {asset.name.includes('Drone') ? <Bot className={asset.col} size={28} /> : asset.name.includes('Node') ? <Radio className={asset.col} size={28} /> : <Construction className={asset.col} size={28} />}
+                          {asset.name.includes('Drone') ? <HenIcon className={asset.col} size={28} /> : asset.name.includes('Node') ? <Radio className={asset.col} size={28} /> : <Construction className={asset.col} size={28} />}
                        </div>
                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border tracking-widest shadow-xl ${asset.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'}`}>{asset.status}</span>
                     </div>

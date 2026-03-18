@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   FlaskConical, Binary, TrendingUp, Zap, Loader2, ChevronRight, Info, Database, 
-  CheckCircle2, Bot, Activity, Workflow, Cpu, Stamp, Fingerprint, ShieldCheck, 
+  CheckCircle2, Activity, Workflow, Cpu, Stamp, Fingerprint, ShieldCheck, 
   Dna, Target, Terminal, Download, FileCode, BadgeCheck, ZapOff,
   BoxSelect, Wind, Droplets, Leaf, Scale, SmartphoneNfc, Factory, ArrowRight,
   ShieldPlus, Key, Boxes, ChevronDown, CheckCircle, AlertTriangle, ShieldAlert,
@@ -10,6 +10,7 @@ import {
   ClipboardList
 } from 'lucide-react';
 import { User, ValueBlueprint, AgroResource, AssetGuarantee, ValueProcessStep } from '../types';
+import { HenIcon } from './Icons';
 import { generateValueBlueprint, activateLiveSequence } from '../services/agroLangService';
 
 interface AgroValueEnhancementProps {
@@ -290,7 +291,7 @@ const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({
                     <div className="flex flex-col md:flex-row justify-between items-start mb-12 relative z-10 px-4 gap-10">
                        <div className="flex items-center gap-10">
                           <div className={`p-6 rounded-[32px] shadow-2xl group-hover:rotate-6 transition-all border-2 border-white/10 ${selectedBlueprint.status === 'LIVE' ? 'bg-emerald-600' : 'bg-blue-600'}`}>
-                             <Bot size={44} className="text-white animate-pulse" />
+                             <HenIcon size={44} className="text-white animate-pulse" />
                           </div>
                           <div>
                              <h3 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">

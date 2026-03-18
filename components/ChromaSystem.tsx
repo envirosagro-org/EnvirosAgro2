@@ -8,7 +8,6 @@ import {
   Zap, 
   Activity, 
   ShieldCheck, 
-  Bot, 
   Scale, 
   Thermometer, 
   Users, 
@@ -69,6 +68,7 @@ import {
   Atom
 } from 'lucide-react';
 import { User, ViewState, MediaShard } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { GoogleGenAI } from "@google/genai";
@@ -86,7 +86,7 @@ const SEHTI_CHROMA_MAPPING = [
   { id: 'environmental', thrust: 'Environmental', variable: 'B_s', spectrum: 'Bio (Green/Brown/Teal)', frequency: '528Hz', context: 'Production, Waste', diagnosis: 'Health: Chlorophyll Density', color: '#4A7C59', icon: Leaf },
   { id: 'human', thrust: 'Human', variable: 'C_s', spectrum: 'Calm (Blue/Indigo/Violet)', frequency: '396Hz', context: 'Labs, Rest Areas', diagnosis: 'Deficiency: Phosphorus/Fungal', color: '#818cf8', icon: Heart },
   { id: 'lilies', thrust: 'Aesthetic', variable: 'L_s', spectrum: 'Fuchsia (Pink/Gold/Light)', frequency: '440Hz', context: 'Lilies Around, Floriculture', diagnosis: 'Peak: Aesthetic Resonance', color: '#f472b6', icon: Flower2 },
-  { id: 'technological', thrust: 'Technological', variable: 'U_s', spectrum: 'UV/IR (Greyscale Mapping)', frequency: '639Hz', context: 'Server Rooms, Robotics', diagnosis: 'Early Detection: Pre-symptomatic', color: '#2F3E46', icon: Bot },
+  { id: 'technological', thrust: 'Technological', variable: 'U_s', spectrum: 'UV/IR (Greyscale Mapping)', frequency: '639Hz', context: 'Server Rooms, Robotics', diagnosis: 'Early Detection: Pre-symptomatic', color: '#2F3E46', icon: HenIcon },
 ];
 
 const ARCHITECTURAL_PALETTES = [
@@ -653,7 +653,7 @@ ${content}
                               <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover/final:scale-110 transition-transform duration-[15s]"><Crown size={600} className="text-fuchsia-400" /></div>
                               <div className="flex justify-between items-center mb-16 relative z-10 border-b border-white/5 pb-10 gap-8">
                                  <div className="flex items-center gap-10">
-                                    <Bot className="w-14 h-14 text-fuchsia-400 animate-pulse" />
+                                    <HenIcon className="w-14 h-14 text-fuchsia-400 animate-pulse" />
                                     <div>
                                        <h4 className="text-4xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Lilies Oracle</h4>
                                        <p className="text-fuchsia-400/60 text-[10px] font-black uppercase tracking-[0.4em] mt-3">AESTHETIC_VITALITY_SYNC // VERIFIED_SHARD</p>
@@ -847,7 +847,7 @@ ${content}
                    <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20">
                       <div className="flex items-center gap-8">
                          <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-xl group overflow-hidden relative">
-                            <Bot size={32} className="group-hover:scale-110 transition-transform relative z-10" />
+                            <HenIcon size={32} className="group-hover:scale-110 transition-transform relative z-10" />
                             <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                          </div>
                          <div>

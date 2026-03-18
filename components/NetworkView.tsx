@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Globe, Server, Activity, ShieldCheck, Network, Zap, 
   Box, Loader2, Signal, Radio, Terminal, Database, 
-  Leaf, Bot, ShieldAlert, Waves, Binary, Lock, Layers,
+  Leaf, ShieldAlert, Waves, Binary, Lock, Layers,
   ChevronRight, ArrowUpRight, Target, Gauge, Cpu, Workflow,
   Stamp, Eye, Search, AlertTriangle, Atom, Share2, 
   Fingerprint, Circle, Key, Link2, MapPin, RadioReceiver,
@@ -13,8 +13,9 @@ import {
   LineChart
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { HenIcon } from './Icons';
 import { auditMeshStability, AgroLangResponse } from '../services/agroLangService';
-import { SycamoreLogo } from '../App';
+import { SycamoreLogo } from './Icons';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 
 interface NodeShard {
@@ -224,7 +225,7 @@ const NetworkView: React.FC = () => {
               disabled={isAuditing}
               className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-2 border-white/10 ring-[16px] ring-white/5 disabled:opacity-30"
             >
-               {isAuditing ? <Loader2 size={18} className="animate-spin" /> : <Bot size={18} />}
+               {isAuditing ? <Loader2 size={18} className="animate-spin" /> : <HenIcon size={18} />}
                STABILITY_AUDIT
             </button>
          </div>
@@ -367,7 +368,7 @@ const NetworkView: React.FC = () => {
                     <div className="relative z-10 space-y-10">
                        <div className="flex items-center gap-8">
                           <div className="w-20 h-20 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 group-hover/oracle:rotate-12 transition-transform duration-700">
-                             <Bot size={44} className="text-white animate-pulse" />
+                             <HenIcon size={44} className="text-white animate-pulse" />
                           </div>
                           <div>
                              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Stability <span className="text-indigo-400">Oracle</span></h3>

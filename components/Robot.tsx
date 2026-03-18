@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  Bot, 
   Shield, 
   Zap, 
   Network, 
@@ -48,18 +47,20 @@ import {
   Binary,
   Send
 } from 'lucide-react';
+import { HenIcon } from './Icons';
 import { User, ViewState, SignalShard } from '../types';
 import { chatWithAgroLang, forgeSwarmMission } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
-import { SycamoreLogo } from '../App';
+import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
 
 interface RobotProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
-  onNavigate: (view: ViewState) => void;
+  onNavigate: (view: ViewState, section?: string) => void;
   onEmitSignal: (signal: Partial<SignalShard>) => Promise<void>;
+  initialSection?: string | null;
 }
 
 interface Crawler {
@@ -80,8 +81,13 @@ const INITIAL_FLEET: Crawler[] = [
   { id: 'BOT-4420', name: 'Harvester Core', type: 'HarvesterBot', status: 'MAINTENANCE', handshake: 'PENDING', load: 0, battery: 12, threatLevel: 0, pos: { x: 50, y: 75 } },
 ];
 
-const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal }) => {
+const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialSection }) => {
   const [activeTab, setActiveTab] = useState<'registry' | 'forge' | 'terminal' | 'radar'>('registry');
+
+  useEffect(() => {
+    if (initialSection === 'registry') setActiveTab('registry');
+    else if (initialSection === 'security') setActiveTab('terminal');
+  }, [initialSection]);
   const [fleet, setFleet] = useState<Crawler[]>(INITIAL_FLEET);
   const [packetLogs, setPacketLogs] = useState<any[]>([]);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -192,7 +198,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
            </div>
            <div className="w-40 h-40 rounded-[48px] bg-indigo-600 flex items-center justify-center shadow-[0_0_100px_rgba(79,70,229,0.4)] shrink-0 border-4 border-white/10 relative overflow-hidden group-hover:scale-105 transition-all">
               <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
-              <Bot size={80} className="text-white relative z-10 animate-pulse" />
+              <HenIcon size={80} className="text-white relative z-10 animate-pulse" />
               <div className="absolute inset-0 border-2 border-dashed border-white/20 rounded-[48px] animate-spin-slow"></div>
            </div>
            <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
@@ -236,6 +242,12 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
             <tab.icon size={18} /> {tab.label}
           </button>
         ))}
+        <button 
+          onClick={() => onNavigate('robot', 'sync')}
+          className="flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap text-rose-500 bg-rose-600/10 border border-rose-600/20 hover:bg-rose-600/20"
+        >
+          <Globe size={18} /> AI Crawler Sync
+        </button>
       </div>
 
       <div className="min-h-[750px] relative z-10">
@@ -246,10 +258,10 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                 {fleet.map(bot => (
                   <div key={bot.id} className={`glass-card p-10 rounded-[64px] border-2 transition-all group flex flex-col justify-between h-[580px] shadow-3xl relative overflow-hidden active:scale-[0.99] ${bot.status === 'SECURITY_LOCK' ? 'bg-rose-950/10 border-rose-500/40' : 'bg-black/40 border-white/5 hover:border-indigo-500/40'}`}>
-                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Bot size={300} /></div>
+                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><HenIcon size={300} /></div>
                      <div className="flex justify-between items-start mb-8 relative z-10">
                         <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 shadow-inner group-hover:rotate-6 transition-all ${bot.status === 'SECURITY_LOCK' ? 'text-rose-500' : 'text-indigo-400'}`}>
-                           <Bot size={32} />
+                           <HenIcon size={32} />
                         </div>
                         <div className="text-right flex flex-col items-end gap-2">
                            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl ${
@@ -311,7 +323,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
                          style={{ left: `${bot.pos.x}%`, top: `${bot.pos.y}%` }}
                        >
                           <div className={`w-full h-full rounded-full border-2 border-white shadow-2xl flex items-center justify-center transition-all ${bot.status === 'SECURITY_LOCK' ? 'bg-rose-600' : selectedBotId === bot.id ? 'bg-indigo-600' : 'bg-emerald-600'}`}>
-                             <Bot size={14} className="text-white" />
+                             <HenIcon size={14} className="text-white" />
                           </div>
                           {selectedBotId === bot.id && <div className="absolute inset-[-10px] rounded-full border-2 border-dashed border-indigo-400 animate-spin-slow"></div>}
                        </div>
@@ -338,7 +350,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
                        <div className="space-y-10">
                           <div className="flex items-center gap-6 border-b border-white/5 pb-8">
                              <div className="w-16 h-16 rounded-[24px] bg-indigo-600 flex items-center justify-center text-white shadow-xl">
-                                <Bot size={32} />
+                                <HenIcon size={32} />
                              </div>
                              <div>
                                 <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">{selectedBot.name}</h4>

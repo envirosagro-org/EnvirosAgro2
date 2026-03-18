@@ -22,7 +22,6 @@ import {
   SmartphoneNfc, 
   Link2, 
   DollarSign, 
-  Bot, 
   Repeat, 
   Info, 
   BarChart4, 
@@ -74,6 +73,7 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, ShardCostCalibration } from '../types';
+import { HenIcon } from './Icons';
 import { analyzeInstitutionalRisk, consultFinancialOracle, AgroLangResponse, chatWithAgroLang } from '../services/agroLangService';
 import { initiatePayPalPayout } from '../services/paymentService';
 import { toast } from 'sonner';

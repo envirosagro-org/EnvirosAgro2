@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, ShieldCheck, Lock, Eye, EyeOff, 
   Activity, Scale, Zap, Database, Globe, 
-  AlertTriangle, CheckCircle2, Bot, Fingerprint,
+  AlertTriangle, CheckCircle2, Fingerprint,
   LayoutGrid, ListChecks, TrendingUp, Landmark
 } from 'lucide-react';
 import { 
@@ -11,6 +11,7 @@ import {
   ResponsiveContainer, Cell, PieChart, Pie 
 } from 'recharts';
 import { InternalControlState, UserRole } from '../types';
+import { HenIcon } from './Icons';
 import { dispatchInternalControls } from '../services/internalControlService';
 
 interface InternalControlDashboardProps {
@@ -49,7 +50,7 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <Bot className="w-12 h-12 text-indigo-500 animate-pulse" />
+        <HenIcon className="w-12 h-12 text-indigo-500 animate-pulse" />
         <p className="text-slate-500 font-mono text-[10px] uppercase tracking-[0.4em]">Synchronizing Internal Control Protocols...</p>
       </div>
     );
@@ -88,7 +89,7 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
           {[
             { id: 'overview', label: 'Overview', icon: LayoutGrid },
             { id: 'protocols', label: 'Protocols', icon: ShieldCheck },
-            { id: 'dispatcher', label: 'Dispatcher', icon: Bot }
+            { id: 'dispatcher', label: 'Dispatcher', icon: HenIcon }
           ].map((tab) => (
             <button
               key={tab.id}

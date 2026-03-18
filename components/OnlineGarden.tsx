@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Satellite, Zap, ShieldCheck, Bot, 
+  Satellite, Zap, ShieldCheck, 
   Layers, Binary, Target, Globe, Loader2, Stamp, 
   Fingerprint, Wind, CheckCircle2, Sprout, RefreshCw, Terminal, 
   Activity, MapPin, Smartphone, Star, ArrowLeftCircle, Wrench, 
@@ -14,6 +14,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip 
 } from 'recharts';
 import { User, ViewState, AgroResource } from '../types';
+import { HenIcon } from './Icons';
 import { analyzeMiningYield } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
 
@@ -567,7 +568,7 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
                        <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform"><Leaf size={600} className="text-amber-500" /></div>
                        <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
                           <div className="flex items-center gap-6">
-                             <Bot size={40} className="text-amber-400" />
+                             <HenIcon size={40} className="text-amber-400" />
                              <h4 className="text-3xl font-black text-white uppercase italic m-0">Mining Shard Yield</h4>
                           </div>
                           <div className="px-6 py-2 bg-amber-600/10 border border-amber-500/20 rounded-full">

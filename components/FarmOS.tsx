@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Binary, Cpu, Zap, Activity, Bot, Database, Terminal, 
+  Binary, Cpu, Zap, Activity, Database, Terminal, 
   Settings, Loader2, ShieldCheck, Target, 
   RefreshCw, Power, Radio, Gauge, Workflow, Layers,
   ChevronRight, ArrowUpRight, ClipboardList, Scan,
@@ -45,6 +45,7 @@ Prism.languages.agrolang = {
 };
 
 import { User, SignalShard } from '../types';
+import { HenIcon } from './Icons';
 import { auditAgroLangCode, chatWithAgroLang } from '../services/agroLangService';
 
 interface FarmOSProps {
@@ -92,7 +93,7 @@ const SNIPPETS = [
     id: 'S2', 
     title: 'SWARM_DEFEND', 
     desc: 'Deploy robotic pest containment shards.', 
-    icon: Bot,
+    icon: HenIcon,
     code: `Bot.swarm_deploy(units: 12, mode: "MIN_STRESS");`
   },
   {

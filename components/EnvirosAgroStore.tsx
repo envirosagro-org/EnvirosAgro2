@@ -25,7 +25,6 @@ import {
   Info,
   Layers,
   Leaf,
-  Bot, 
   Binary, 
   Star, 
   Tag, 
@@ -48,6 +47,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { User, Order } from '../types';
+import { HenIcon } from './Icons';
 
 interface EnvirosAgroStoreProps {
   user: User;

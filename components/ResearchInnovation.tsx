@@ -4,7 +4,6 @@ import {
   Microscope, 
   FlaskConical, 
   Zap, 
-  Bot, 
   Leaf, 
   Loader2, 
   Search, 
@@ -66,6 +65,7 @@ import {
   PencilRuler
 } from 'lucide-react';
 import { User, ResearchPaper, AgroBook, ChapterShard, VendorProduct } from '../types';
+import { HenIcon } from './Icons';
 import { generateAgroResearch, analyzeMedia, chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
@@ -566,7 +566,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                  <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative bg-[#050706]">
                     {!researchOutput && !isSynthesizing ? (
                        <div className="h-full flex flex-col items-center justify-center text-center space-y-12 opacity-10">
-                          <Bot size={140} className="text-slate-500" />
+                          <HenIcon size={140} className="text-slate-500" />
                           <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic leading-none">FORGE_STANDBY</p>
                        </div>
                     ) : isSynthesizing ? (
@@ -625,7 +625,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
 
                     <div className="space-y-6 pt-6 border-t border-white/5">
                        <div className="flex items-center gap-4 px-4">
-                          <Bot size={20} className="text-fuchsia-400" />
+                          <HenIcon size={20} className="text-fuchsia-400" />
                           <h5 className="text-sm font-black text-white uppercase italic tracking-widest leading-none">Generate Topic Shard</h5>
                        </div>
                        <div className="space-y-4 px-2">

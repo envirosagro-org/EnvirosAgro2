@@ -8,7 +8,6 @@ import {
   Clapperboard, 
   Music, 
   Mic2, 
-  Bot, 
   Database, 
   History, 
   Binary, 
@@ -32,6 +31,7 @@ import {
   CirclePlay
 } from 'lucide-react';
 import { User, MediaShard, ViewState } from '../types';
+import { HenIcon } from './Icons';
 import MultimediaPlayer from './MultimediaPlayer';
 
 interface MediaLedgerProps {
@@ -44,7 +44,7 @@ const TYPE_ICONS: Record<string, any> = {
   VIDEO: Clapperboard,
   AUDIO: Music,
   PAPER: FileText,
-  ORACLE: Bot,
+  ORACLE: HenIcon,
   POST: MessageSquare,
   INGEST: Database
 };
@@ -164,7 +164,7 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
              { id: 'video', label: 'Cinema Shards', icon: Clapperboard },
              { id: 'audio', label: 'Acoustic Shards', icon: Music },
              { id: 'papers', label: 'Knowledge Shards', icon: FileText },
-             { id: 'oracle', label: 'Oracle Verdicts', icon: Bot },
+             { id: 'oracle', label: 'Oracle Verdicts', icon: HenIcon },
            ].map(tab => (
              <button 
                key={tab.id} 

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Upload, ShieldCheck, Zap, Loader2, Cpu, Camera, 
-  FileText, Microscope, Binary, Coins, Bot,
+  FileText, Microscope, Binary, Coins,
   ArrowRight, Heart, Leaf, Dna, Database, CheckCircle2,
   AlertCircle, Cloud, MapPin, ClipboardCheck, Lock,
   Radio, Archive, Info, History, ArrowLeftCircle, Video,
@@ -10,6 +10,7 @@ import {
   Trello
 } from 'lucide-react';
 import { User, ViewState } from '../types';
+import { HenIcon } from './Icons';
 import { diagnoseCropIssue } from '../services/agroLangService';
 
 interface EvidenceModalProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TreePine, Target, Heart, Binary } from 'lucide-react';
-import ResourceDimensionBase, { ResourceMeta } from './ResourceDimensionBase';
+import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
 import { useAppStore } from '../../store';
 
@@ -32,8 +32,8 @@ const PlantsWorld: React.FC<PlantsWorldProps> = (props) => {
     forgeTitle: 'Botanical Lineage Shard',
     forgeDesc: 'Document and anchor a specific seed lineage into the registry.',
     simControls: [
-      { label: 'E: Engagement', val: ecosystemState.p1, set: (v) => updateEcosystemState({ p1: v }), min: 0.1, max: 5, step: 0.1 },
-      { label: 'Ca: Agro Code', val: ecosystemState.p2, set: (v) => updateEcosystemState({ p2: v }), min: 1, max: 10, step: 0.1 },
+      { label: 'E: Engagement', val: ecosystemState.p1, set: (v: number) => updateEcosystemState({ p1: v }), min: 0.1, max: 5, step: 0.1 },
+      { label: 'Ca: Agro Code', val: ecosystemState.p2, set: (v: number) => updateEcosystemState({ p2: v }), min: 1, max: 10, step: 0.1 },
     ],
     ledgerItems: [
       { id: 'SHD-PLA-882', name: 'Bantu Maize DNA Shard', hash: '0x882A_PLA', status: 'VERIFIED' },

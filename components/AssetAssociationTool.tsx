@@ -19,7 +19,6 @@ import {
   SmartphoneNfc, 
   SearchCode,
   Briefcase,
-  Bot,
   Loader2,
   Package,
   Truck,
@@ -27,6 +26,7 @@ import {
   Info
 } from 'lucide-react';
 import { ViewState, User } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang, queryProgramAssets } from '../services/agroLangService';
 
 interface LinkerContext {
@@ -173,7 +173,7 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
              <div className="space-y-8">
                 {/* AGRO LANG NEURAL ANALYST SUGGESTIONS */}
                 <div className="p-8 bg-indigo-900/20 border border-indigo-500/30 rounded-[40px] relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-4 opacity-10"><Bot size={100} /></div>
+                   <div className="absolute top-0 right-0 p-4 opacity-10"><HenIcon size={100} /></div>
                    <div className="flex items-center gap-4 mb-6 relative z-10">
                       <div className="p-3 bg-indigo-500/20 rounded-2xl text-indigo-400">
                          {isScanning ? <Loader2 size={24} className="animate-spin" /> : <Leaf size={24} />}

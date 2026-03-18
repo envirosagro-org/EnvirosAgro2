@@ -5,7 +5,7 @@ import {
   Database, Lock, AlertTriangle, HardHat, Handshake, FileSignature, Key, 
   FileSearch, FileCheck, ShieldAlert, ArrowRight, TrendingUp, History, 
   CheckCircle, AlertCircle, FileDigit, Fingerprint, ArrowLeftCircle, 
-  Target, BarChart4, LayoutGrid, Bot, Leaf, ClipboardCheck, Building2, 
+  Target, BarChart4, LayoutGrid, Leaf, ClipboardCheck, Building2, 
   Users, TreePine, ShieldPlus, Info, Stamp, Network, Plus, Heart, 
   Factory, Target as TargetIcon, Truck, Monitor, Radio, Gavel, Scale, 
   Waves, Layout, Star, ChevronDown, Sprout, ArrowUpRight, MessageSquare, 
@@ -15,6 +15,7 @@ import {
   TableProperties, SearchCode, Workflow, Layers, Wrench
 } from 'lucide-react';
 import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone, ValueBlueprint, Task, RegisteredUnit, LiveAgroProduct } from '../types';
+import { HenIcon } from './Icons';
 import { analyzeBidHandshake, AgroLangResponse } from '../services/agroLangService';
 import AssetAssociationTool from './AssetAssociationTool';
 

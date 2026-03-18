@@ -9,7 +9,6 @@ import {
   Zap, 
   ShieldCheck, 
   Database, 
-  Bot, 
   Binary, 
   ArrowRight,
   Play,
@@ -31,7 +30,8 @@ import {
   generateAgroDocument 
 } from '../services/agroLangService';
 import { User, MediaShard } from '../types';
-import { SycamoreLogo } from '../App';
+import { HenIcon } from './Icons';
+import { SycamoreLogo } from './Icons';
 import MultimediaPlayer from './MultimediaPlayer';
 import { saveCollectionItem } from '../services/firebaseService';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
@@ -290,7 +290,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
           {isGenerating && (
             <div className="p-8 bg-indigo-900/10 border-2 border-indigo-500/20 rounded-[40px] flex items-center gap-8 animate-pulse">
               <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-2xl">
-                <Bot size={24} />
+                <HenIcon size={24} />
               </div>
               <div>
                 <p className="text-indigo-400 font-black text-lg uppercase tracking-widest italic leading-none">{status}</p>

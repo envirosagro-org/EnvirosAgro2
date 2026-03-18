@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
-  Bot, 
   X, 
   Minus, 
   Maximize2, 
@@ -23,7 +22,8 @@ import {
 } from 'lucide-react';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { User, ViewState } from '../types';
-import { SycamoreLogo } from '../App';
+import { HenIcon } from './Icons';
+import { SycamoreLogo } from './Icons';
 
 interface FloatingConsultantProps {
   isOpen: boolean;

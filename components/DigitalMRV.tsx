@@ -3,7 +3,6 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { 
   Scan, 
   Upload, 
-  Bot, 
   Zap, 
   ShieldCheck, 
   Binary, 
@@ -43,6 +42,7 @@ import {
   Wind
 } from 'lucide-react';
 import { User, AgroResource, ViewState, SignalShard } from '../types';
+import { HenIcon } from './Icons';
 import { analyzeMRVEvidence } from '../services/agroLangService';
 
 interface DigitalMRVProps {
@@ -179,7 +179,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
       <div className="space-y-4">
          {[
            { l: 'LAYER 1: THE EDGE', v: 'INGEST', i: Smartphone, c: 'text-blue-400', d: 'Telemetry Inflow' },
-           { l: 'LAYER 2: VALIDATOR HUB', v: 'VERIFY', i: Bot, c: 'text-indigo-400', d: 'Oracle Validation' },
+           { l: 'LAYER 2: VALIDATOR HUB', v: 'VERIFY', i: HenIcon, c: 'text-indigo-400', d: 'Oracle Validation' },
            { l: 'LAYER 3: BLOCKCHAIN', v: 'MINT', i: Binary, c: 'text-emerald-400', d: 'Token Finality' },
          ].map((layer, idx) => (
            <div key={idx} className="glass-card p-6 rounded-[32px] border border-white/5 bg-white/[0.02] flex items-center justify-between group hover:border-white/10 transition-all shadow-xl">
@@ -396,7 +396,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                              <div className="p-10 md:p-14 bg-black/80 rounded-[64px] border border-indigo-500/20 shadow-3xl border-l-8 border-l-indigo-500 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[10s]"><Layers size={400} /></div>
                                 <div className="flex items-center gap-6 mb-10 relative z-10 border-b border-white/5 pb-6">
-                                   <Bot className="w-10 h-10 text-indigo-400" />
+                                   <HenIcon className="w-10 h-10 text-indigo-400" />
                                    <div>
                                       <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tighter">Verification Narrative</h4>
                                       <p className="text-indigo-400/60 text-[9px] font-black uppercase tracking-widest mt-1">EASF_AUDIT_LOG_SHARD</p>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { SycamoreLogo } from '../App';
+import { SycamoreLogo } from './Icons';
 // Added missing icons for environmental thrust, human heart resonance, registry connectivity, system config and ledger layers
 import { 
   ShieldCheck, Zap, Globe, Activity, Cpu, Binary, 
-  Coins, Users, ArrowRight, BrainCircuit, Bot, 
+  Coins, Users, ArrowRight, BrainCircuit, 
   TrendingUp, Fingerprint, Lock, Sprout, Briefcase, Database, Wallet, Pickaxe, History, Package, Trello,
   LayoutGrid, ArrowUpRight, ShoppingBag, Radio, Signal, Eye, ChevronRight,
   Gem, Landmark, PlayCircle, BookOpen, Lightbulb, CheckCircle2,
@@ -11,6 +11,7 @@ import {
   Loader2, Atom, Network, Gauge, Leaf, Heart, Wifi, Settings, Layers
 } from 'lucide-react';
 import { ViewState, User, Order, AgroBlock } from '../types';
+import { HenIcon } from './Icons';
 import IdentityCard from './IdentityCard';
 
 import { useAppNavigation } from '../hooks/useAppNavigation';

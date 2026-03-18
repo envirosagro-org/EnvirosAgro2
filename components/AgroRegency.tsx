@@ -5,7 +5,6 @@ import {
   Activity, 
   Zap, 
   ShieldCheck, 
-  Bot, 
   Loader2, 
   Binary, 
   Layers, 
@@ -76,9 +75,9 @@ import {
   ComposedChart, Bar, Cell 
 } from 'recharts';
 import { User, MediaShard } from '../types';
+import { HenIcon, SycamoreLogo } from './Icons';
 import { chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
-import { SycamoreLogo } from '../App';
 import { generateQuickHash } from '../systemFunctions';
 
 interface AgroRegencyProps {
@@ -98,6 +97,7 @@ const TRAVEL_DIMENSIONS = [
   { id: 'civilization', label: 'Civilization', icon: Landmark, desc: 'Social growth states.' },
   { id: 'biological', label: 'Biological', icon: Dna, desc: 'Genetic evolution.' },
   { id: 'temporal', label: 'Temporal', icon: Clock, desc: 'Time-space shifts.' },
+  { id: 'mythological', label: 'Lore/Mythos', icon: SycamoreLogo, desc: 'Agikuyu ancestral states.' },
   { id: 'philosophy', label: 'Taste/Philosophy', icon: Heart, desc: 'Agricultural taste profiles.' },
 ];
 
@@ -122,10 +122,15 @@ const STATE_SHARDS: Record<string, any[]> = {
     { id: 'present', name: 'Present (Registry)', intensity: 0.65, density: 0.65, col: 'text-white', icon: Clock, desc: 'Current real-time network status.' },
     { id: 'future', name: 'Future (Advance)', intensity: 2.45, density: 2.80, col: 'text-indigo-500', icon: SycamoreLogo, desc: 'Hypothetical states from Cycle T+50.' },
   ],
+  mythological: [
+    { id: 'mugumo_sync', name: 'Mugumo Antenna Sync', intensity: 0.88, density: 0.92, col: 'text-emerald-400', icon: SycamoreLogo, desc: 'Ancestral communication via the sacred sycamore.' },
+    { id: 'entropy_restore', name: 'Entropy Restoration', intensity: 0.15, density: 1.85, col: 'text-indigo-400', icon: RotateCcw, desc: 'Ritualistic remediation of aggressive entropy.' },
+    { id: 'rain_trigger', name: 'Rain Trigger Ritual', intensity: 1.50, density: 0.20, col: 'text-blue-400', icon: Cloud, desc: 'Optimizing irrigation through ancestral resonance.' },
+  ],
   philosophy: [
     { id: 'permaculture', name: 'Taste: Permaculture', intensity: 0.50, density: 1.10, col: 'text-emerald-400', icon: Leaf, desc: 'Closed-loop, low stress (S), high C(a).' },
     { id: 'monoculture', name: 'Taste: Industrialist', intensity: 1.15, density: 0.45, col: 'text-rose-400', icon: LayoutGrid, desc: 'High intensity, monoculture sharding.' },
-    { id: 'cyber_regen', name: 'Taste: Cyber-Regen', intensity: 1.65, density: 1.85, col: 'text-indigo-400', icon: Bot, desc: 'Merging robot swarms with biodynamic soil.' },
+    { id: 'cyber_regen', name: 'Taste: Cyber-Regen', intensity: 1.65, density: 1.85, col: 'text-indigo-400', icon: HenIcon, desc: 'Merging robot swarms with biodynamic soil.' },
   ]
 };
 
@@ -141,7 +146,22 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
   // Sabbath / Fallowing Law State
   const [productionCycles, setProductionCycles] = useState(4);
   const [isSabbathActive, setIsSabbathActive] = useState(false);
+  const [isRemediating, setIsRemediating] = useState(false);
+  const [entropyLevel, setEntropyLevel] = useState(0.65); // 0 to 1, higher is worse
   const [isRecalibrating, setIsRecalibrating] = useState(false);
+
+  const handleSacrificeRemediation = async () => {
+    const fee = 50;
+    if (!await onSpendEAC(fee, 'ENTROPY_REMEDIATION_SACRIFICE')) return;
+
+    setIsRemediating(true);
+    setTimeout(() => {
+      setEntropyLevel(prev => Math.max(0.05, prev - 0.4));
+      setIsRemediating(false);
+      onEarnEAC(25, 'ENTROPY_RESTORED_RITUAL_SUCCESS');
+      alert("ENTROPY_REMEDIATION_COMPLETE: The sacrifice has been accepted by the registry. Aggressive entropy levels have been suppressed. Mugumo resonance restored.");
+    }, 4000);
+  };
 
   // Agro Travel States
   const [activeDimension, setActiveDimension] = useState('geography');
@@ -187,17 +207,22 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     setIsTraveling(true);
     setTravelForecast(null);
     try {
-      const prompt = `Act as the EnvirosAgro Travel Oracle. A steward is performing a "Temporal/Spatial State Shift".
+      const prompt = `Act as the EnvirosAgro Travel Oracle. A steward is performing a "Temporal/Spatial State Shift" rooted in Agikuyu lore.
       DIMENSION: ${activeDimension}
       TARGET STATE: ${selectedState.name}
       USER METRICS: Ca = ${user.metrics.agriculturalCodeU}, current m-constant = ${user.metrics.timeConstantTau}.
       TARGET ENVIRONMENT: Intensity = ${selectedState.intensity}, Density = ${selectedState.density}.
       
+      Lore Context:
+      - Mugumo (Sycamore) as the antenna for ancestral sync.
+      - Sacrifice (Hen/Goat) to restore entropy.
+      - Fallowing (Sabbath) as a regenerative ritual.
+      
       Requirements:
       1. Forecast the "Resilience Deviation" if Sustainability (Ca) remains constant but they adopt the target's development state.
-      2. If moving from "Barbaric to Modern" or "Native to GMO", analyze the cultural and industrial friction shards.
-      3. Describe "Futuring Anomalies" the node might encounter in this new state.
-      4. Provide a technical path for "Registry Synchronization" between their current local node and this target state.
+      2. If moving from "Barbaric to Modern" or "Native to GMO", analyze the cultural and industrial friction shards using Agikuyu remediation metaphors.
+      3. Describe "Futuring Anomalies" the node might encounter in this new state (e.g., aggressive entropy spikes).
+      4. Provide a technical path for "Registry Synchronization" between their current local node and this target state, anchored by the Mugumo antenna.
       Format as a technical industrial report. Use markdown.`;
 
       const res = await chatWithAgroLang(prompt, []);
@@ -210,15 +235,38 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     }
   };
 
-  const handleRetrievePast = () => {
+  const handleRetrievePast = async () => {
     if (!queryId.trim()) return;
     setIsRetrieving(true);
-    setTimeout(() => {
-      const match = HISTORICAL_SHARDS.find(s => s.id === queryId);
-      setRestoredShard(match || { id: queryId, status: 'NOT_FOUND' });
+    setRestoredShard(null);
+    
+    try {
+      // Simulate searching the media_ledger via lore-infused logic
+      const prompt = `Act as the Shard Retrieval Engine. A steward is searching for historical shard ID: "${queryId}".
+      Context: Agikuyu ancestral memory retrieval.
+      If the ID starts with "REG-G", it is a legacy registry shard.
+      If it starts with "0x", it is a recently anchored oracle shard.
+      
+      Provide a brief "Memory Reconstruction" of what this shard contains based on its ID pattern.`;
+      
+      const res = await chatWithAgroLang(prompt, []);
+      
+      // Also check local mock for immediate feedback
+      const localMatch = HISTORICAL_SHARDS.find(s => s.id === queryId);
+      
+      setRestoredShard({
+        id: queryId,
+        content: res.text,
+        localData: localMatch,
+        status: 'RESTORED'
+      });
+      
+      onEarnEAC(10, 'HISTORICAL_SHARD_RETRIEVAL_AUTH');
+    } catch (e) {
+      setRestoredShard({ id: queryId, status: 'NOT_FOUND' });
+    } finally {
       setIsRetrieving(false);
-      if (match) onEarnEAC(10, 'HISTORICAL_SHARD_RETRIEVAL_AUTH');
-    }, 2000);
+    }
   };
 
   const handleOracleCalc = async () => {
@@ -229,14 +277,19 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
     setOracleReport(null);
     setIsArchived(false);
     try {
-      const prompt = `Act as an EnvirosAgro Regency Oracle. Execute the dy/dx derivative for this node:
+      const prompt = `Act as an EnvirosAgro Regency Oracle. Execute the dy/dx derivative for this node, integrating Agikuyu regenerative lore:
       Current C(a): ${user.metrics.agriculturalCodeU}
       Current m-constant: ${user.metrics.timeConstantTau}
       Historical baseline: ${user.metrics.baselineM}
       Production Cycles: ${productionCycles}/6
       Sabbath Status: ${isSabbathActive ? 'ACTIVE' : 'IDLE'}
       
-      Calculate the "Regenerative Velocity" (dy/dx). Analyze the impact of the 1/6th fallowing law (Sabbath-Yajna) on this node.`;
+      Lore Context:
+      - The Mugumo tree acts as a spiritual antenna.
+      - Aggressive entropy requires ritualistic remediation (sacrifice).
+      - Fallowing (Sabbath-Yajna) is the act of restoring soil-air balance.
+      
+      Calculate the "Regenerative Velocity" (dy/dx). Analyze the impact of the 1/6th fallowing law (Sabbath-Yajna) on this node's entropy levels and m-constant stability.`;
       const res = await chatWithAgroLang(prompt, []);
       setOracleReport(res.text);
     } catch (e) {
@@ -350,7 +403,7 @@ ${content}
           { id: 'compliance', label: 'Sabbath-Yajna Monitor', icon: Gavel },
           { id: 'travel', label: 'Agro Travel Hub', icon: PlaneTakeoff },
           { id: 'retrieval', label: 'Shard Retrieval', icon: FileSearch },
-          { id: 'oracle', label: 'Regency Oracle', icon: Bot },
+          { id: 'oracle', label: 'Regency Oracle', icon: HenIcon },
         ].map(tab => (
           <button 
             key={tab.id} 
@@ -447,13 +500,18 @@ ${content}
                       </div>
                    </div>
 
-                   <div className="p-10 glass-card rounded-[56px] border border-blue-500/20 bg-blue-950/10 space-y-6 group shadow-xl">
-                      <div className="flex items-center gap-4">
-                         <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-500/20 group-hover:rotate-12 transition-transform"><Bot size={24} className="text-blue-500" /></div>
-                         <h4 className="text-xl font-black text-white uppercase italic">Travel <span className="text-blue-400">Logic</span></h4>
+                   <div className="p-10 glass-card rounded-[56px] border border-blue-500/20 bg-blue-950/10 space-y-6 group shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:rotate-12 transition-transform"><SycamoreLogo size={120} className="text-blue-400" /></div>
+                      <div className="flex items-center gap-4 relative z-10">
+                         <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-500/20 group-hover:rotate-12 transition-transform"><Activity size={24} className="text-blue-500" /></div>
+                         <h4 className="text-xl font-black text-white uppercase italic">Mugumo <span className="text-blue-400">Antenna</span></h4>
                       </div>
-                      <p className="text-sm text-slate-400 italic leading-relaxed">
-                         "Selecting states based on your desired Taste/Philosophy or developmental trajectory allows the registry to forecast Resilience (m) deviations while maintaining your individual Sustainability Constant ($C_a$)."
+                      <div className="flex items-center gap-3 relative z-10">
+                         <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                         <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Ancestral Sync: Optimal</p>
+                      </div>
+                      <p className="text-sm text-slate-400 italic leading-relaxed relative z-10">
+                         "The Mugumo tree acts as a temporal antenna, grounding your travel projections in ancestral wisdom while maintaining the node's m-constant."
                       </p>
                    </div>
                 </div>
@@ -506,7 +564,7 @@ ${content}
                    <div className="glass-card rounded-[64px] border-2 border-white/5 bg-black/60 min-h-[500px] flex flex-col relative overflow-hidden shadow-3xl">
                       <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 px-14">
                          <div className="flex items-center gap-6">
-                            <Bot className="text-indigo-400 w-10 h-10 animate-pulse" />
+                            <HenIcon className="text-indigo-400 w-10 h-10 animate-pulse" />
                             <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0">Futuring <span className="text-indigo-400">Oracle Payload</span></h4>
                          </div>
                          {travelForecast && (
@@ -613,6 +671,13 @@ ${content}
                       </AreaChart>
                    </ResponsiveContainer>
                 </div>
+
+                {oracleReport && (
+                  <div className="mt-8 p-8 bg-indigo-500/5 rounded-3xl border border-indigo-500/10 animate-in slide-in-from-bottom-4 duration-500">
+                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-4">Calculus Audit Report</p>
+                     <p className="text-sm text-slate-300 italic leading-relaxed">{oracleReport}</p>
+                  </div>
+                )}
              </div>
              <div className="lg:col-span-4 space-y-8 text-white">
                 <div className="glass-card p-10 rounded-[48px] border-emerald-500/20 bg-emerald-950/10 space-y-8 shadow-xl relative overflow-hidden group">
@@ -624,17 +689,29 @@ ${content}
                          dy/dx = lim[Δx→0] <br/> (f(x+Δx) - f(x)) / Δx
                       </p>
                    </div>
-                   <button className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-3 relative z-10">
-                      <Zap size={16} fill="currentColor" /> Refresh Calculus Node
+                   <button 
+                     onClick={handleOracleCalc}
+                     disabled={isAnalyzing}
+                     className="w-full py-5 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-3 relative z-10 disabled:opacity-50"
+                   >
+                      {isAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} fill="currentColor" />}
+                      {isAnalyzing ? 'ANALYZING...' : 'RUN DERIVATIVE ANALYSIS'}
                    </button>
                 </div>
                 
-                <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-950/5 space-y-6 shadow-xl group">
-                   <div className="flex items-center gap-4">
+                <div className="glass-card p-10 rounded-[48px] border-indigo-500/20 bg-indigo-950/5 space-y-6 shadow-xl group relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:rotate-12 transition-transform"><SycamoreLogo size={100} className="text-indigo-400" /></div>
+                   <div className="flex items-center gap-4 relative z-10">
                       <TrendingUp size={20} className="text-indigo-400" />
                       <h4 className="text-lg font-black uppercase italic tracking-widest">Growth Vector</h4>
                    </div>
-                   <p className="text-sm text-slate-400 italic">"Node productivity is trending upwards. m-constant delta is +0.02 per cycle."</p>
+                   <p className="text-sm text-slate-400 italic relative z-10">
+                      "Node productivity is trending upwards. m-constant delta is +0.02 per cycle. Mugumo antenna sync is optimal."
+                   </p>
+                   <div className="pt-4 border-t border-white/5 flex items-center gap-3 relative z-10">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Entropy Restored</span>
+                   </div>
                 </div>
              </div>
           </div>
@@ -643,69 +720,99 @@ ${content}
         {activeTab === 'compliance' && (
            <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                 <div className="lg:col-span-7 glass-card p-16 md:p-24 rounded-[80px] border-2 border-emerald-500/20 bg-[#020503] shadow-3xl text-center space-y-12 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Gavel size={800} className="text-emerald-400" /></div>
+                 
+                 {/* Left: Sabbath Protocol */}
+                 <div className="lg:col-span-7 glass-card p-12 md:p-16 rounded-[64px] border-2 border-emerald-500/20 bg-[#020503] shadow-3xl text-center space-y-10 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Gavel size={600} className="text-emerald-400" /></div>
                     
-                    <div className="relative z-10 space-y-10">
-                       <div className="w-32 h-32 rounded-[44px] bg-emerald-600 flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 animate-float">
-                          <Gavel size={56} className="text-white" />
+                    <div className="relative z-10 space-y-8">
+                       <div className="w-24 h-24 rounded-[32px] bg-emerald-600 flex items-center justify-center shadow-3xl mx-auto border-4 border-white/10 animate-float">
+                          <Gavel size={40} className="text-white" />
                        </div>
-                       <div className="space-y-6">
-                          <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">SABBATH <span className="text-emerald-400">PROTOCOL</span></h3>
-                          <p className="text-slate-400 text-xl font-medium italic max-w-2xl mx-auto">"For every 6 cycles of production, the land requires 1 cycle of regenerative fallow. Compliance ensures long-term m-constant survival."</p>
+                       <div className="space-y-4">
+                          <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">SABBATH <span className="text-emerald-400">PROTOCOL</span></h3>
+                          <p className="text-slate-400 text-lg font-medium italic max-w-xl mx-auto">"For every 6 cycles of production, the land requires 1 cycle of regenerative fallow. Compliance ensures long-term m-constant survival."</p>
                        </div>
 
-                       <div className="flex flex-col items-center gap-8 py-10 border-y border-white/5 max-w-xl mx-auto">
-                          <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.6em]">PRODUCTION_CYCLE_ACCUMULATION</p>
-                          <div className="flex gap-4">
+                       <div className="flex flex-col items-center gap-6 py-8 border-y border-white/5 max-w-lg mx-auto">
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em]">PRODUCTION_CYCLE_ACCUMULATION</p>
+                          <div className="flex gap-3">
                              {[1, 2, 3, 4, 5, 6].map(i => (
-                                <div key={i} className={`w-12 h-16 rounded-xl border-2 transition-all duration-700 flex flex-col items-center justify-center ${i <= productionCycles ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-800'}`}>
-                                   <p className="text-xs font-mono font-black">{i}</p>
-                                   <Circle size={8} className={`mt-2 ${i <= productionCycles ? 'fill-indigo-400' : 'fill-transparent'}`} />
+                                <div key={i} className={`w-10 h-14 rounded-xl border-2 transition-all duration-700 flex flex-col items-center justify-center ${i <= productionCycles ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-800'}`}>
+                                   <p className="text-[10px] font-mono font-black">{i}</p>
+                                   <Circle size={6} className={`mt-1 ${i <= productionCycles ? 'fill-indigo-400' : 'fill-transparent'}`} />
                                 </div>
                              ))}
                           </div>
-                          <p className={`text-sm font-black uppercase tracking-widest ${productionCycles >= 6 ? 'text-rose-500 animate-pulse' : 'text-slate-600'}`}>
+                          <p className={`text-[10px] font-black uppercase tracking-widest ${productionCycles >= 6 ? 'text-rose-500 animate-pulse' : 'text-slate-600'}`}>
                              {productionCycles >= 6 ? 'THRESHOLD_REACHED: FALLOW_REQUIRED' : `${6 - productionCycles} CYCLES UNTIL FALLOW`}
                           </p>
                        </div>
 
-                       <div className="max-w-md mx-auto space-y-8">
-                          <div className="space-y-4">
-                             <label className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">ADMIN SIGNATURE (ESIN)</label>
+                       <div className="max-w-sm mx-auto space-y-6">
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">ADMIN SIGNATURE (ESIN)</label>
                              <input 
                                 type="text" value={esinSign} onChange={e => setEsinSign(e.target.value)}
                                 placeholder="EA-XXXX-XXXX"
-                                className="w-full bg-black border-2 border-white/10 rounded-[32px] py-8 text-center text-4xl font-mono text-white outline-none focus:border-emerald-500 focus:ring-8 focus:ring-emerald-500/5 transition-all uppercase placeholder:text-stone-900 shadow-inner" 
+                                className="w-full bg-black border-2 border-white/10 rounded-[24px] py-6 text-center text-2xl font-mono text-white outline-none focus:border-emerald-500 focus:ring-8 focus:ring-emerald-500/5 transition-all uppercase placeholder:text-stone-900 shadow-inner" 
                              />
                           </div>
                           <button 
                              onClick={handleAuthorizeFallow}
                              disabled={isRecalibrating || !esinSign || productionCycles < 6}
-                             className={`w-full py-10 rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-3xl transition-all border-4 border-white/10 ring-[16px] ring-white/5 ${isRecalibrating ? 'bg-indigo-900' : productionCycles < 6 ? 'bg-white/5 text-slate-700 cursor-not-allowed grayscale' : 'agro-gradient hover:scale-105 active:scale-95'}`}
+                             className={`w-full py-8 rounded-full text-white font-black text-[11px] uppercase tracking-[0.5em] shadow-3xl transition-all border-4 border-white/10 ring-[12px] ring-white/5 ${isRecalibrating ? 'bg-indigo-900' : productionCycles < 6 ? 'bg-white/5 text-slate-700 cursor-not-allowed grayscale' : 'agro-gradient hover:scale-105 active:scale-95'}`}
                           >
-                             {isRecalibrating ? <Loader2 className="animate-spin mx-auto" /> : <Stamp className="w-8 h-8 mx-auto" />}
+                             {isRecalibrating ? <Loader2 className="animate-spin mx-auto" /> : <Stamp className="w-6 h-6 mx-auto" />}
                              <p className="mt-2">{isRecalibrating ? 'CALIBRATING FALLOW...' : 'AUTHORIZE FALLOW SHARD'}</p>
                           </button>
                        </div>
                     </div>
                  </div>
 
+                 {/* Right: Entropy Remediation */}
                  <div className="lg:col-span-5 space-y-8 flex flex-col">
-                    <div className="glass-card p-12 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/10 flex flex-col text-center space-y-12 shadow-3xl relative overflow-hidden flex-1 group">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><SycamoreLogo size={300} className="text-indigo-400" /></div>
-                       <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 relative z-10 animate-float">
-                          <Bot size={56} className="text-white animate-pulse" />
+                    <div className="glass-card p-12 rounded-[64px] border-2 border-rose-500/20 bg-rose-950/10 flex flex-col text-center space-y-10 shadow-3xl relative overflow-hidden flex-1 group">
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-[12s]"><HenIcon size={300} className="text-rose-400" /></div>
+                       <div className="w-20 h-20 bg-rose-600 rounded-[28px] flex items-center justify-center shadow-3xl border-4 border-white/10 relative z-10 mx-auto animate-float">
+                          <HenIcon size={40} className="text-white animate-pulse" />
                        </div>
                        <div className="space-y-4 relative z-10">
-                          <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Regenerative <span className="text-indigo-400">Impact</span></h4>
-                          <p className="text-slate-400 text-lg leading-relaxed italic px-10">
-                             "The fallowing law ensures that the variable 'm' does not decay to zero through over-extraction. One sixth of production time is the mathematical minimum for planetary balance."
+                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Entropy <span className="text-rose-400">Remediation</span></h4>
+                          <p className="text-slate-400 text-sm leading-relaxed italic px-6">
+                             "Aggressive entropy detected in the node substrate. Ritualistic remediation (Sacrifice Protocol) required to restore ancestral resonance."
                           </p>
                        </div>
-                       <div className="p-10 bg-black/60 rounded-[48px] border-2 border-indigo-500/20 w-full relative z-10 shadow-inner">
-                          <p className="text-[11px] text-slate-700 uppercase font-black mb-4">Registry Compliance Score</p>
-                          <p className="text-7xl font-mono font-black text-indigo-400 tracking-tighter italic">0.98<span className="text-xl">μ</span></p>
+                       
+                       <div className="space-y-6 relative z-10">
+                          <div className="p-8 bg-black/60 rounded-[40px] border-2 border-rose-500/20 w-full shadow-inner">
+                             <div className="flex justify-between items-center mb-4">
+                                <p className="text-[10px] text-slate-700 uppercase font-black">Entropy Level</p>
+                                <span className={`text-xs font-mono font-black ${entropyLevel > 0.7 ? 'text-rose-500' : 'text-emerald-500'}`}>{(entropyLevel * 100).toFixed(1)}%</span>
+                             </div>
+                             <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                <div 
+                                  className={`h-full transition-all duration-1000 ${entropyLevel > 0.7 ? 'bg-rose-500 shadow-[0_0_20px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_20px_#10b981]'}`}
+                                  style={{ width: `${entropyLevel * 100}%` }}
+                                ></div>
+                             </div>
+                          </div>
+
+                          <button 
+                            onClick={handleSacrificeRemediation}
+                            disabled={isRemediating || entropyLevel < 0.2}
+                            className={`w-full py-8 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl transition-all border-4 border-white/10 ring-[12px] ring-white/5 ${isRemediating ? 'bg-rose-900' : entropyLevel < 0.2 ? 'bg-white/5 text-slate-700 cursor-not-allowed' : 'bg-rose-600 hover:bg-rose-500 hover:scale-105 active:scale-95'}`}
+                          >
+                             {isRemediating ? <Loader2 className="animate-spin mx-auto" /> : <RotateCcw className="w-6 h-6 mx-auto" />}
+                             <p className="mt-2">{isRemediating ? 'EXECUTING SACRIFICE...' : 'INITIATE SACRIFICE PROTOCOL'}</p>
+                          </button>
+                       </div>
+
+                       <div className="pt-6 border-t border-white/5 flex items-center justify-center gap-3 relative z-10">
+                          <div className={`w-2 h-2 rounded-full animate-pulse ${entropyLevel > 0.7 ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${entropyLevel > 0.7 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                             {entropyLevel > 0.7 ? 'CRITICAL_ENTROPY_DETECTED' : 'NODE_STABILITY_OPTIMAL'}
+                          </span>
                        </div>
                     </div>
                  </div>
@@ -733,10 +840,73 @@ ${content}
                       disabled={isRetrieving || !queryId}
                       className="w-full py-10 bg-indigo-600 hover:bg-indigo-500 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30"
                     >
-                       {isRetrieving ? <Loader2 size={80} className="w-8 h-8 animate-spin" /> : <History className="w-8 h-8" />}
+                       {isRetrieving ? <Loader2 className="w-8 h-8 animate-spin" /> : <History className="w-8 h-8" />}
                        {isRetrieving ? 'QUERYING LEDGER...' : 'INITIALIZE RETRIEVAL'}
                     </button>
                  </div>
+
+                 {restoredShard && (
+                   <div className="mt-12 p-10 bg-black/80 rounded-[48px] border-2 border-indigo-500/20 text-left animate-in slide-in-from-bottom-8 duration-700 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none"><Database size={200} className="text-indigo-400" /></div>
+                      <div className="flex items-center justify-between mb-8">
+                         <div className="flex items-center gap-4">
+                            <FileSearch className="text-indigo-400" size={24} />
+                            <h4 className="text-xl font-black uppercase italic tracking-widest text-white">Shard: {restoredShard.id}</h4>
+                         </div>
+                         <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${restoredShard.status === 'RESTORED' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+                            {restoredShard.status}
+                         </span>
+                      </div>
+
+                      {restoredShard.status === 'RESTORED' ? (
+                        <div className="space-y-8 relative z-10">
+                           <div className="space-y-6 mb-10">
+                              <div className="flex items-center gap-3">
+                                 <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Memory Reconstruction</p>
+                              </div>
+                              <div className="p-8 bg-black/40 rounded-[32px] border border-white/5 font-mono text-sm text-indigo-300 leading-relaxed italic relative group/recon">
+                                 <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover/recon:opacity-100 transition-opacity duration-500"></div>
+                                 <div className="relative z-10">
+                                    <span className="text-indigo-500 mr-2">{">>>"}</span>
+                                    {restoredShard.content || 'Reconstructing ancestral pathways...'}
+                                 </div>
+                              </div>
+                           </div>
+
+                           {restoredShard.localData && (
+                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                {[
+                                  { label: 'Date', value: restoredShard.localData.date, icon: Clock },
+                                  { label: 'Type', value: restoredShard.localData.type, icon: Layers },
+                                  { label: 'Ca', value: restoredShard.localData.ca, icon: Binary },
+                                  { label: 'm', value: restoredShard.localData.m, icon: Activity },
+                                ].map((item, idx) => (
+                                  <div key={idx} className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                     <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <item.icon size={10} /> {item.label}
+                                     </p>
+                                     <p className="text-sm font-mono font-black text-white">{item.value}</p>
+                                  </div>
+                                ))}
+                             </div>
+                           )}
+
+                           <div className="flex justify-end gap-4 pt-6 border-t border-white/5">
+                              <button onClick={() => downloadReport(restoredShard.content, 'Retrieval', 'History')} className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                 <Download size={16} /> Export Shard
+                              </button>
+                           </div>
+                        </div>
+                      ) : (
+                        <div className="py-12 text-center space-y-4">
+                           <ShieldAlert size={48} className="text-rose-500 mx-auto" />
+                           <p className="text-xl font-black text-white uppercase italic">Shard Integrity Compromised</p>
+                           <p className="text-sm text-slate-500 uppercase tracking-widest">The requested identifier does not exist in the ancestral registry.</p>
+                        </div>
+                      )}
+                   </div>
+                 )}
               </div>
            </div>
         )}
@@ -746,7 +916,7 @@ ${content}
               <div className="p-10 md:p-20 glass-card rounded-[80px] border border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden flex flex-col items-center gap-12 shadow-3xl group">
                  <div className="relative z-10 space-y-8 w-full">
                     <div className="w-32 h-32 bg-indigo-600 rounded-[48px] flex items-center justify-center shadow-3xl border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
-                       <Bot size={64} className="text-white animate-pulse" />
+                       <HenIcon size={64} className="text-white animate-pulse" />
                     </div>
                     <h3 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Regency <span className="text-indigo-400">Oracle</span></h3>
                  </div>

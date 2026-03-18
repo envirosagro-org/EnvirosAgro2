@@ -21,8 +21,7 @@ import {
   Coins, 
   Terminal, 
   Fingerprint, 
-  Download, 
-  Bot, 
+  Download,
   Target,
   Stamp,
   ShieldAlert,
@@ -72,6 +71,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { User, Order, LogisticProvider, VendorProduct, ViewState, SignalShard, LiveAgroProduct } from '../types';
+import { HenIcon } from './Icons';
 import { runSpecialistDiagnostic, analyzeDemandForecast } from '../services/agroLangService';
 import AssetAssociationTool from './AssetAssociationTool';
 
@@ -565,7 +565,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                          disabled={isForecasting}
                          className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center gap-3"
                        >
-                          {isForecasting ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
+                          {isForecasting ? <Loader2 size={14} className="animate-spin" /> : <HenIcon size={14} />}
                           REFRESH_ORACLE
                        </button>
                     </div>
@@ -598,7 +598,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                     <div className="glass-card p-10 rounded-[64px] border border-indigo-500/20 bg-indigo-950/10 space-y-8 shadow-xl relative overflow-hidden flex-1 group/advice">
                        <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/advice:scale-110 transition-transform duration-[12s]"><Leaf size={300} className="text-indigo-400" /></div>
                        <div className="flex items-center gap-4 relative z-10">
-                          <Bot size={28} className="text-indigo-400 animate-pulse" />
+                          <HenIcon size={28} className="text-indigo-400 animate-pulse" />
                           <h4 className="text-xl font-black text-white uppercase tracking-widest">Streamlining Shard</h4>
                        </div>
                        <div className="p-8 bg-black/60 rounded-[40px] border border-indigo-500/20 shadow-inner relative z-10 border-l-4 border-l-indigo-600">
@@ -1067,7 +1067,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                           <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/audit:scale-125 transition-transform duration-[15s] pointer-events-none"><Leaf size={600} className="text-amber-500" /></div>
                           <div className="flex items-center gap-8 mb-12 border-b border-white/5 pb-10 relative z-10">
                              <div className="w-20 h-20 bg-amber-600 rounded-3xl flex items-center justify-center text-white shadow-3xl animate-float">
-                                <Bot size={44} className="text-white animate-pulse" />
+                                <HenIcon size={44} className="text-white animate-pulse" />
                              </div>
                              <div>
                                 <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Vetting Verdict</h4>

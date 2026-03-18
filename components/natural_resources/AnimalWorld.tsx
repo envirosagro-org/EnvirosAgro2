@@ -1,6 +1,6 @@
 import React from 'react';
 import { PawPrint, Users, Brain, Activity } from 'lucide-react';
-import ResourceDimensionBase, { ResourceMeta } from './ResourceDimensionBase';
+import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
 import { useAppStore } from '../../store';
 
@@ -32,9 +32,9 @@ const AnimalWorld: React.FC<AnimalWorldProps> = (props) => {
     forgeTitle: 'Animal Identity Shard',
     forgeDesc: 'Mint a new biometric identity for an individual animal node.',
     simControls: [
-      { label: 'P: Population', val: ecosystemState.p1, set: (v) => updateEcosystemState({ p1: v }), min: 1, max: 500, step: 1 },
-      { label: 'S: Stewardship', val: ecosystemState.p2, set: (v) => updateEcosystemState({ p2: v }), min: 0.1, max: 2, step: 0.01 },
-      { label: 'H: Stress', val: ecosystemState.p3, set: (v) => updateEcosystemState({ p3: v }), min: 0.01, max: 1, step: 0.01 },
+      { label: 'P: Population', val: ecosystemState.p1, set: (v: number) => updateEcosystemState({ p1: v }), min: 1, max: 500, step: 1 },
+      { label: 'S: Stewardship', val: ecosystemState.p2, set: (v: number) => updateEcosystemState({ p2: v }), min: 0.1, max: 2, step: 0.01 },
+      { label: 'H: Stress', val: ecosystemState.p3, set: (v: number) => updateEcosystemState({ p3: v }), min: 0.01, max: 1, step: 0.01 },
     ],
     ledgerItems: [
       { id: 'SHD-ANI-882', name: 'Bovine Identity Shard', hash: '0x882A_ANI', status: 'VERIFIED' },

@@ -3,7 +3,7 @@ import {
   Calendar, Clock, Sun, Moon, CloudRain, Snowflake, Wheat, 
   Sprout, Music, Radio, Zap, Heart, ShieldCheck, Landmark, 
   History, Info, ChevronRight, Binary, Target, Activity, 
-  Bot, Leaf, CheckCircle2, Waves, Flame, Timer, 
+  Leaf, CheckCircle2, Waves, Flame, Timer, 
   Play, Pause, RotateCcw, Droplets,
   Loader2,
   X,
@@ -38,6 +38,7 @@ import {
   Factory
 } from 'lucide-react';
 import { User, SignalShard, ViewState } from '../types';
+import { HenIcon } from './Icons';
 import { getWeatherForecast, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 
 interface AgroCalendarProps {
@@ -422,7 +423,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                       <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-10">
                          <div className="flex items-center gap-6">
                             <div className="p-4 bg-emerald-600 rounded-[28px] shadow-3xl border border-white/10 group-hover:rotate-12 transition-transform">
-                               <Bot size={32} className="text-white animate-pulse" />
+                               <HenIcon size={32} className="text-white animate-pulse" />
                             </div>
                             <div>
                                <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Liturgical <span className="text-emerald-400">Shard</span></h3>
@@ -630,7 +631,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                              <div className="p-10 bg-indigo-950/20 border-2 border-indigo-500/20 rounded-[56px] space-y-6 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><History size={200} className="text-indigo-400" /></div>
                                 <div className="flex items-center gap-4 relative z-10">
-                                   <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl border border-white/10"><Bot size={24} className="text-white" /></div>
+                                   <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl border border-white/10"><HenIcon size={24} className="text-white" /></div>
                                    <h5 className="text-xl font-black text-white uppercase italic">Calendar Oracle Memo</h5>
                                 </div>
                                 <p className="text-slate-400 text-lg leading-relaxed italic border-l-4 border-indigo-500/40 pl-8 relative z-10">

@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, Wallet, Menu, X, Radio, ShieldAlert, Zap, ShieldCheck, Landmark, Store, Cable, Mic, Coins, Activity, Globe, Share2, Search, Bell, Wrench, Recycle, HeartHandshake, ClipboardCheck, ChevronLeft, Sprout, Briefcase, PawPrint, TrendingUp, Compass, Siren, History, Infinity, Scale, FileSignature, CalendarDays, Palette, Cpu, Microscope, Wheat, Database, BoxSelect, Dna, Boxes, LifeBuoy, Terminal, Handshake, Users, Info, Droplets, Mountain, Wind, LogOut, Warehouse, Factory, Monitor, FlaskConical, Scan, QrCode, Flower, ArrowLeftCircle, TreePine, Binary, Gauge, Loader2, ChevronDown, Leaf, AlertCircle, Copy, Check, ExternalLink, Network as NetworkIcon, User as UserIcon, UserPlus,
   Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, Signal as SignalIcon, Target,
   Truck, Layers, Map as MapIcon, Compass as CompassIcon, Server, Workflow, ShieldPlus, ChevronLeftCircle, ArrowLeft,
-  ChevronRight, ArrowUp, UserCheck, BookOpen, Stamp, Binoculars, Command, Bot, Wand2, Brain, ArrowRight, Home,
+  ChevronRight, ArrowUp, UserCheck, BookOpen, Stamp, Binoculars, Command, Wand2, Brain, ArrowRight, Home,
   Building, ShieldX, ScanLine,
   MapPin,
   Download,
@@ -28,7 +28,9 @@ import {
   SmartphoneNfc,
   Cloud
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Toaster } from 'sonner';
+import { SycamoreLogo, HenIcon } from './components/Icons';
 import { useAppStore } from './store';
 import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection } from './types';
 
@@ -86,6 +88,7 @@ const VerificationHUD = React.lazy(() => import('./components/VerificationHUD'))
 const SettingsPortal = React.lazy(() => import('./components/SettingsPortal'));
 const TemporalVideo = React.lazy(() => import('./components/TemporalVideo'));
 const Robot = React.lazy(() => import('./components/Robot'));
+const RobotSync = React.lazy(() => import('./components/RobotSync'));
 const MeshProtocol = React.lazy(() => import('./components/MeshProtocol'));
 const RegistryHandshake = React.lazy(() => import('./components/RegistryHandshake'));
 const EducationalResources = React.lazy(() => import('./components/EducationalResources'));
@@ -113,25 +116,30 @@ import { chatWithAgroLang } from './services/agroLangService';
 import { getFullCostAudit } from './services/costAccountingService';
 import { generateAlphanumericId } from './systemFunctions';
 
-export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => (
-  <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className}`}>
-    <path d="M100 180C100 180 95 160 100 145" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-    <path d="M100 145C100 145 70 140 50 120C30 100 20 80 25 55C30 30 55 20 75 35C85 45 100 30 100 30C100 30 115 45 125 35C145 20 170 30 175 55C180 80 170 100 150 120C130 140 100 145 100 145Z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" />
-  </svg>
+const LoadingHUD: React.FC = () => (
+  <div className="flex flex-col items-center justify-center p-20 space-y-6">
+    <div className="relative">
+      <div className="w-20 h-20 border-4 border-emerald-500/20 rounded-full animate-pulse"></div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <Loader2 className="text-emerald-500 animate-spin" size={32} />
+      </div>
+    </div>
+    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] animate-pulse">Synchronizing_Registry_Node...</p>
+  </div>
 );
 
 const BOOT_LOGS = [
   "INITIALIZING RECAPTCHA APP_CHECK...",
-  "ESTABLISHING SECURITY HANDSHAKE...",
-  "MAPPING_GEOFENCE_SHARDS [OK]",
-  "CALIBRATING_M_CONSTANT_BASE [1.42]",
-  "ENERGIZING_QUANTUM_CORE...",
-  "SYNCING_L3_INDUSTRIAL_LEDGER...",
-  "ZK_PROOF_ENGINE_BOOT [SUCCESS]",
-  "ESTABLISHING_ORACLE_HANDSHAKE...",
+  "AGGRESSIVE_ENTROPY_DETECTED...",
+  "MUGUMO_ANTENNA_SYNC [OK]",
+  "GROUNDING_SOIL_ELEMENT...",
+  "AIR_SPACE_CALIBRATION [SUCCESS]",
+  "ELDER_WISDOM_PROTOCOL_ACTIVE",
+  "HEN_SACRIFICE_RESONANCE [LOCKED]",
+  "FALLOWING_PROTOCOL_ENGAGED...",
+  "RAIN_TRIGGER_IRRIGATION_OPTIMIZED [SUCCESS]",
+  "ENTROPY_RESTORED_TO_BASELINE",
   "SEHTI_THRUST_ALIGNED",
-  "QUANTUM_STATE_LOCKED",
-  "DATA_CONNECT_L3_SYNC_ACTIVE",
   "NODE_SYNC_FINALIZED"
 ];
 
@@ -180,12 +188,28 @@ const RECOMMENDED_SEARCHES = [
 ];
 
 const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const [phase, setPhase] = useState<'falling' | 'scratching' | 'booting'>('falling');
   const [progress, setProgress] = useState(0);
   const [currentLog, setCurrentLog] = useState(0);
   const [isVerifying, setIsVerifying] = useState(true);
   const [verifStatus, setVerifStatus] = useState('PENDING_HANDSHAKE');
 
   useEffect(() => {
+    if (phase === 'falling') {
+      const timer = setTimeout(() => setPhase('scratching'), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'scratching') {
+      const timer = setTimeout(() => setPhase('booting'), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== 'booting') return;
     const runHandshake = async () => {
       await new Promise(r => setTimeout(r, 1000));
       const success = await verifyAppCheckHandshake();
@@ -198,10 +222,10 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
       setIsVerifying(false);
     };
     runHandshake();
-  }, []);
+  }, [phase]);
 
   useEffect(() => {
-    if (isVerifying) return;
+    if (phase !== 'booting' || isVerifying) return;
     const logInterval = setInterval(() => {
       setCurrentLog(prev => (prev < BOOT_LOGS.length - 1 ? prev + 1 : prev));
     }, 1200);
@@ -219,45 +243,112 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
       clearInterval(logInterval);
       clearInterval(progressInterval);
     };
-  }, [onComplete, isVerifying]);
+  }, [onComplete, isVerifying, phase]);
 
   return (
     <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center space-y-12 overflow-hidden px-6">
       <div className="absolute inset-0 pointer-events-none z-10 opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
-      <div className="relative group">
-        <div className="w-48 h-48 md:w-64 md:h-64 rounded-[48px] bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-pulse relative z-20 overflow-hidden">
-          <SycamoreLogo size={120} className="text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]" />
-          <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent animate-pulse"></div>
-        </div>
-        <div className="absolute inset-[-30px] border-2 border-dashed border-emerald-500/20 rounded-[64px] animate-spin-slow"></div>
-        {isVerifying && (
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-4 animate-in fade-in duration-500">
-             <div className="p-4 bg-black/80 rounded-2xl border border-white/10 backdrop-blur-xl flex flex-col items-center gap-2">
-               <Loader2 size={32} className="text-emerald-500 animate-spin" />
-               <span className="text-[8px] font-black text-white tracking-[0.2em]">{verifStatus}</span>
-             </div>
-           </div>
+      
+      <AnimatePresence mode="wait">
+        {phase === 'falling' && (
+          <motion.div 
+            key="falling"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="relative w-full h-64 flex items-center justify-center"
+          >
+            {[...Array(12)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ y: -400, x: Math.random() * 400 - 200, rotate: 0, opacity: 0 }}
+                animate={{ 
+                  y: 100, 
+                  rotate: 360, 
+                  opacity: [0, 1, 1, 0],
+                  x: (Math.random() * 400 - 200) + (Math.sin(i) * 50)
+                }}
+                transition={{ 
+                  duration: 2.5, 
+                  delay: i * 0.2,
+                  ease: "easeOut"
+                }}
+                className="absolute"
+              >
+                <SycamoreLogo size={40} className="text-emerald-500/40" />
+              </motion.div>
+            ))}
+          </motion.div>
         )}
-      </div>
-      <div className="w-full max-w-md space-y-8 relative z-20">
-        <div className="h-1 bg-white/5 rounded-full overflow-hidden p-px shadow-inner">
-          <div className="h-full bg-emerald-500 shadow-[0_0_20px_#10b981] transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
-        </div>
-        <div className="flex flex-col items-center gap-6">
-           <p className="text-[11px] font-mono font-black text-emerald-400/80 uppercase tracking-[0.4em] animate-pulse h-4 text-center">
-              {BOOT_LOGS[currentLog]}
-           </p>
-           <div className="flex items-center gap-6">
-              <p className="text-[9px] font-mono text-slate-700 font-bold uppercase tracking-widest">
-                SYSTEM_BOOT // REGISTRY_SYNC: {progress}%
-              </p>
-              {progress > 50 && <ShieldCheck size={14} className="text-emerald-500 animate-in zoom-in" />}
-           </div>
-        </div>
-      </div>
+
+        {phase === 'scratching' && (
+          <motion.div 
+            key="scratching"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.2 }}
+            className="flex flex-col items-center justify-center space-y-4"
+          >
+            <motion.div
+              animate={{ 
+                x: [-10, 10, -10, 10, 0],
+                y: [0, -5, 0, -5, 0],
+                rotate: [-5, 5, -5, 5, 0]
+              }}
+              transition={{ duration: 0.5, repeat: 4 }}
+            >
+              <HenIcon size={120} className="text-emerald-500" />
+            </motion.div>
+            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] animate-pulse">Grounding_Soil_Element...</p>
+          </motion.div>
+        )}
+
+        {phase === 'booting' && (
+          <motion.div 
+            key="booting"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center space-y-12 w-full"
+          >
+            <div className="relative group">
+              <div className="w-48 h-48 md:w-64 md:h-64 rounded-[48px] bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-pulse relative z-20 overflow-hidden">
+                <SycamoreLogo size={120} className="text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent animate-pulse"></div>
+              </div>
+              <div className="absolute inset-[-30px] border-2 border-dashed border-emerald-500/20 rounded-[64px] animate-spin-slow"></div>
+              {isVerifying && (
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-4 animate-in fade-in duration-500">
+                   <div className="p-4 bg-black/80 rounded-2xl border border-white/10 backdrop-blur-xl flex flex-col items-center gap-2">
+                     <Loader2 size={32} className="text-emerald-500 animate-spin" />
+                     <span className="text-[8px] font-black text-white tracking-[0.2em]">{verifStatus}</span>
+                   </div>
+                 </div>
+              )}
+            </div>
+            <div className="w-full max-w-md space-y-8 relative z-20">
+              <div className="h-1 bg-white/5 rounded-full overflow-hidden p-px shadow-inner">
+                <div className="h-full bg-emerald-500 shadow-[0_0_20px_#10b981] transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
+              </div>
+              <div className="flex flex-col items-center gap-6">
+                 <p className="text-[11px] font-mono font-black text-emerald-400/80 uppercase tracking-[0.4em] animate-pulse h-4 text-center">
+                    {BOOT_LOGS[currentLog]}
+                 </p>
+                 <div className="flex items-center gap-6">
+                    <p className="text-[9px] font-mono text-slate-700 font-bold uppercase tracking-widest">
+                      SYSTEM_BOOT // REGISTRY_SYNC: {progress}%
+                    </p>
+                    {progress > 50 && <ShieldCheck size={14} className="text-emerald-500 animate-in zoom-in" />}
+                 </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="absolute bottom-12 flex flex-col items-center gap-3 opacity-40">
         <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">Enviros<span className="text-emerald-400">Agro</span></h1>
         <p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.5em] text-center">Decentralized Regenerative Grid</p>
+        <p className="text-[8px] text-emerald-500/50 font-black uppercase tracking-[0.5em] text-center mt-2">Rooted in Agikuyu Mugumo Lore</p>
       </div>
     </div>
   );
@@ -367,7 +458,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake, sections: [{id: 'directory', label: 'Directory'}, {id: 'support', label: 'Support'}] },
       { id: 'circular', name: 'Circular Grid', icon: Recycle, sections: [{id: 'market', label: 'Refurbished Store'}] },
       { id: 'tools', name: 'Industrial Tools', icon: Wrench, sections: [{id: 'kanban', label: 'Kanban'}, {id: 'sigma', label: 'Six Sigma'}] },
-      { id: 'robot', name: 'Swarm Command', icon: Bot, sections: [{id: 'registry', label: 'Fleet Registry'}, {id: 'security', label: 'Intranet Security'}] }
+      { id: 'robot', name: 'Swarm Command', icon: HenIcon, sections: [{id: 'registry', label: 'Fleet Registry'}, {id: 'security', label: 'Intranet Security'}, {id: 'sync', label: 'AI Crawler Sync'}] }
     ]
   },
   {
@@ -395,7 +486,7 @@ const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'cea_portal', name: 'CEA Portal', icon: BoxSelect },
       { id: 'multimedia_generator', name: 'Agro Multimedia Forge', icon: SycamoreLogo },
       { id: 'media_ledger', name: 'Media Ledger', icon: FileStack },
-      { id: 'media', name: 'Media Hub', icon: Tv },
+      { id: 'media', name: 'Media Hub', icon: Tv, sections: [{id: 'all', label: 'Primary Hub'}, {id: 'video', label: 'Video Nodes'}, {id: 'news', label: 'Newsstand'}, {id: 'audio', label: 'Acoustic Registry'}, {id: 'comic', label: 'Make it Comic'}] },
       { id: 'channelling', name: 'Channelling Hub', icon: Share2 },
       { id: 'registry_handshake', name: 'Registry Handshake', icon: SmartphoneNfc },
       { id: 'educational_resources', name: 'Educational Resources', icon: BookOpen }
@@ -953,7 +1044,28 @@ const App: React.FC = () => {
       case 'info': return <InfoPortal user={currentUser} onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} onPermanentAction={handlePerformPermanentAction} />;
       case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} />;
       case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;
-      case 'robot': return <Robot user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} />;
+      case 'robot': 
+        return (
+          <Suspense fallback={<LoadingHUD />}>
+            {viewSection === 'sync' ? (
+              <RobotSync 
+                user={currentUser} 
+                onSpendEAC={handleSpendEAC} 
+                onEarnEAC={handleEarnEAC} 
+                onNavigate={navigate} 
+              />
+            ) : (
+              <Robot 
+                user={currentUser} 
+                onSpendEAC={handleSpendEAC} 
+                onEarnEAC={handleEarnEAC} 
+                onNavigate={navigate} 
+                onEmitSignal={emitSignal}
+                initialSection={viewSection}
+              />
+            )}
+          </Suspense>
+        );
       case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onEmitSignal={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} />;
       case 'educational_resources': return <EducationalResources onNavigate={navigate} />;
       default: return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;

@@ -5,7 +5,7 @@ import {
   PlayCircle, GraduationCap, Video, BookOpen, MessageSquare, Award, Clock, ChevronRight, FileText, Library, Coins,
   Users, Globe, Heart, PlusCircle, TrendingUp, ShieldCheck, Search, Users2, Briefcase, Lightbulb, CheckCircle2,
   X, Loader2, ArrowUpRight, Handshake, Zap, Upload, Leaf, BarChart4, ExternalLink, MapPin, Fingerprint,
-  Activity, History, Info, BadgeCheck, Dna, Lock, SearchCode, Target, Bot, Brain, ShieldAlert, HeartPulse,
+  Activity, History, Info, BadgeCheck, Dna, Lock, SearchCode, Target, Brain, ShieldAlert, HeartPulse,
   BrainCircuit, AlertTriangle, Waves, Atom, RefreshCw, Scale, FileSignature, FileCheck, ClipboardCheck,
   FileDown, Timer, LayoutGrid, Trophy, PenTool, ArrowRight, AlertCircle, Download, Terminal, FileDigit,
   Shield, Stamp, Scan, User as UserIcon, Share2, MoreVertical, ThumbsUp, MessageSquareShare, Monitor,
@@ -25,7 +25,6 @@ import {
   UserCheck,
   Layout as LayoutIcon,
   Shapes,
-  Gamepad2,
   Crosshair,
   MessageSquare as MessageIcon,
   Play,
@@ -34,6 +33,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { User, ViewState, Collective, SocialPost, PostComment, StewardConnection } from '../types';
+import { HenIcon } from './Icons';
 import { generateAgroExam, getGroundedAgroResources, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
@@ -92,7 +92,7 @@ const Community: React.FC<CommunityProps> = ({
   hoodConnections = [], 
   onHookHood 
 }) => {
-  const [activeTab, setActiveTab] = useState<'social' | 'shards' | 'lms' | 'network' | 'comic'>('social');
+  const [activeTab, setActiveTab] = useState<'social' | 'shards' | 'lms' | 'network'>('social');
   const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams' | 'forge'>('modules');
   
   const [collectives, setCollectives] = useState<Collective[]>(INITIAL_COLLECTIVES);
@@ -358,7 +358,6 @@ const Community: React.FC<CommunityProps> = ({
           { id: 'network', label: 'Steward Network', icon: Globe },
           { id: 'shards', label: 'Collective Shards', icon: Users2 },
           { id: 'lms', label: 'Knowledge Base', icon: Library },
-          { id: 'comic', label: 'Make it Comic', icon: Gamepad2 },
         ].map(t => (
           <button 
             key={t.id} 
@@ -761,7 +760,7 @@ const Community: React.FC<CommunityProps> = ({
                                   })}
                                   className="flex-1 max-w-xs py-10 bg-white/5 border-4 border-white/10 rounded-full text-white font-black text-sm uppercase tracking-[0.5em] shadow-xl hover:bg-white/10 hover:scale-105 active:scale-95 transition-all"
                                >
-                                  <Bot size={32} className="mx-auto" />
+                                  <HenIcon size={32} className="mx-auto" />
                                   <p className="mt-4">AUTO-GENERATE NEW EXAM</p>
                                </button>
                              </div>
@@ -881,89 +880,6 @@ const Community: React.FC<CommunityProps> = ({
               )}
            </div>
         )}
-
-      {/* --- VIEW: MAKE IT COMIC --- */}
-      {activeTab === 'comic' && (
-        <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700 max-w-[1600px] mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-8 px-6">
-            <div className="space-y-2">
-              <h3 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Make it <span className="text-indigo-400">Comic.</span></h3>
-              <p className="text-slate-500 text-lg font-medium italic opacity-70">"Generate agro-related comedy and sports content using the AgroMusika Neural Forge."</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div className="glass-card p-12 rounded-[64px] border-2 border-white/5 hover:border-indigo-500/40 transition-all group flex flex-col justify-between min-h-[400px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99] cursor-pointer" onClick={() => onNavigate('multimedia_generator', null, true, { prompt: 'Create a funny stand-up comedy routine about the struggles of a modern farmer dealing with unpredictable weather and stubborn tractors.', type: 'audio', autoGenerate: true })}>
-              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Mic size={300} /></div>
-              <div className="space-y-8 relative z-10">
-                <div className="flex justify-between items-start">
-                  <div className="p-5 rounded-3xl bg-white/5 border border-white/10 text-indigo-400 shadow-2xl group-hover:rotate-6 transition-all">
-                    <Mic size={36} />
-                  </div>
-                  <span className="px-5 py-2 rounded-full text-[10px] font-black uppercase border tracking-widest bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
-                    COMEDY ROUTINE
-                  </span>
-                </div>
-                <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-indigo-400 transition-colors drop-shadow-2xl">Agro Stand-up</h4>
-                <p className="text-slate-400 text-lg italic leading-relaxed">"Generate a hilarious audio stand-up routine about farm life."</p>
-              </div>
-              <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white"><Bot size={14} /></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">AgroMusika Audio</span>
-                </div>
-                <button className="p-4 bg-white/5 rounded-full text-white hover:bg-indigo-600 transition-all shadow-xl"><ArrowRight size={20} /></button>
-              </div>
-            </div>
-
-            <div className="glass-card p-12 rounded-[64px] border-2 border-white/5 hover:border-emerald-500/40 transition-all group flex flex-col justify-between min-h-[400px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99] cursor-pointer" onClick={() => onNavigate('multimedia_generator', null, true, { prompt: 'Create an action-packed, fast-paced sports highlight reel of a competitive tractor pulling event, with dramatic angles and intense music.', type: 'video', autoGenerate: true })}>
-              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Trophy size={300} /></div>
-              <div className="space-y-8 relative z-10">
-                <div className="flex justify-between items-start">
-                  <div className="p-5 rounded-3xl bg-white/5 border border-white/10 text-emerald-400 shadow-2xl group-hover:rotate-6 transition-all">
-                    <Trophy size={36} />
-                  </div>
-                  <span className="px-5 py-2 rounded-full text-[10px] font-black uppercase border tracking-widest bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                    SPORTS HIGHLIGHT
-                  </span>
-                </div>
-                <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors drop-shadow-2xl">Tractor Pulling</h4>
-                <p className="text-slate-400 text-lg italic leading-relaxed">"Generate an intense video highlight reel of agro-sports."</p>
-              </div>
-              <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white"><VideoIcon size={14} /></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Veo 3.1 Video</span>
-                </div>
-                <button className="p-4 bg-white/5 rounded-full text-white hover:bg-emerald-600 transition-all shadow-xl"><ArrowRight size={20} /></button>
-              </div>
-            </div>
-            
-            <div className="glass-card p-12 rounded-[64px] border-2 border-white/5 hover:border-amber-500/40 transition-all group flex flex-col justify-between min-h-[400px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99] cursor-pointer" onClick={() => onNavigate('multimedia_generator', null, true, { prompt: 'Write a funny comic strip script about a scarecrow who is afraid of birds and tries to make friends with them instead.', type: 'document', autoGenerate: true })}>
-              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><PenTool size={300} /></div>
-              <div className="space-y-8 relative z-10">
-                <div className="flex justify-between items-start">
-                  <div className="p-5 rounded-3xl bg-white/5 border border-white/10 text-amber-400 shadow-2xl group-hover:rotate-6 transition-all">
-                    <PenTool size={36} />
-                  </div>
-                  <span className="px-5 py-2 rounded-full text-[10px] font-black uppercase border tracking-widest bg-amber-500/10 text-amber-400 border-amber-500/20">
-                    COMIC SCRIPT
-                  </span>
-                </div>
-                <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-amber-400 transition-colors drop-shadow-2xl">Scarecrow Tales</h4>
-                <p className="text-slate-400 text-lg italic leading-relaxed">"Generate a script for a funny agro-themed comic strip."</p>
-              </div>
-              <div className="pt-8 border-t border-white/5 flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center text-white"><FileText size={14} /></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Agro Lang Document</span>
-                </div>
-                <button className="p-4 bg-white/5 rounded-full text-white hover:bg-amber-600 transition-all shadow-xl"><ArrowRight size={20} /></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       </div>
 

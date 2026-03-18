@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Landmark, TrendingUp, ShieldCheck, PieChart as PieChartIcon, Search, Activity, 
-  CheckCircle2, X, Loader2, Gem, ChevronRight, LineChart as LineChartIcon, Bot, Leaf, 
+  CheckCircle2, X, Loader2, Gem, ChevronRight, LineChart as LineChartIcon, Leaf, 
   Binary, Stamp, Target as TargetIcon, Users, BadgeCheck, Sprout, RefreshCw, 
   ShieldAlert, Fingerprint, Key, BarChart4, ClipboardCheck, ArrowUpRight, Coins, Wallet,
   Layers, Database, Terminal, Microscope, Zap, Globe, Gauge, ShieldPlus, ArrowDownToLine,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { User, AgroProject, ViewState } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 
 interface InvestorPortalProps {
@@ -434,7 +435,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
               <div className="p-10 md:p-14 border-b border-white/5 bg-indigo-500/[0.01] flex justify-between items-center shrink-0 relative z-10 px-20">
                  <div className="flex items-center gap-10">
                     <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-3xl border-2 border-white/10">
-                       <Bot size={44} className="animate-pulse" />
+                       <HenIcon size={44} className="animate-pulse" />
                     </div>
                     <div>
                        <h3 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter italic m-0">Agro Lang <span className="text-indigo-400">Evaluation.</span></h3>
@@ -512,7 +513,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
                           <div className="flex-1 overflow-y-auto custom-scrollbar-terminal pr-4 pb-10">
                              {!aiAnalysis ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center space-y-10">
-                                   <Bot size={80} className="text-slate-800 animate-float opacity-30" />
+                                   <HenIcon size={80} className="text-slate-800 animate-float opacity-30" />
                                    <p className="text-slate-600 text-lg font-bold italic max-w-xs uppercase tracking-widest px-10 leading-relaxed">"Invoke the Oracle to reveal historical soil patterns and risk forecasting."</p>
                                    <button 
                                      onClick={() => handleAiVetting(selectedMission)}

@@ -21,7 +21,6 @@ import {
   AlertTriangle,
   Code,
   Zap,
-  Bot,
   Leaf,
   BookOpen,
   ArrowUpRight,
@@ -66,6 +65,7 @@ import {
   Database
 } from 'lucide-react';
 import { User, ViewState, AgroResource, MediaShard } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
@@ -532,7 +532,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
                  <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Leaf size={800} className="text-indigo-400" /></div>
                  <div className="relative z-10 space-y-8">
                     <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-[0_0_100px_rgba(99,102,241,0.3)] border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12">
-                       <Bot size={64} className="text-white animate-pulse" />
+                       <HenIcon size={64} className="text-white animate-pulse" />
                     </div>
                     <div className="space-y-4">
                        <h3 className="text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">STREAM <span className="text-indigo-400">ANALYZER</span></h3>
@@ -552,7 +552,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
                       <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-8 pt-10">
                          <div className="p-10 bg-black/80 rounded-[64px] border-2 border-indigo-500/20 shadow-3xl border-l-[16px] border-l-indigo-600 text-left relative overflow-hidden">
                             <div className="flex items-center gap-6 mb-8 border-b border-white/5 pb-6">
-                               <Bot size={32} className="text-indigo-400 animate-pulse" />
+                               <HenIcon size={32} className="text-indigo-400 animate-pulse" />
                                <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tighter">Analysis Verdict</h4>
                             </div>
                             <p className="text-slate-300 text-xl leading-relaxed italic whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10">

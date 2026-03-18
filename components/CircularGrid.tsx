@@ -13,7 +13,6 @@ import {
   Activity, 
   Binary, 
   BadgeCheck,
-  Bot,
   Leaf,
   Loader2,
   Zap,
@@ -47,6 +46,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { User, Order, VendorProduct, ViewState, SignalShard } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 
 interface CircularGridProps {
@@ -220,7 +220,7 @@ const CircularGrid: React.FC<CircularGridProps> = ({
         {[
           { id: 'market', label: 'Refurbished Hub', icon: PackageSearch },
           { id: 'registry', label: 'Circular Ledger', icon: History },
-          { id: 'repair', label: 'Repair Diagnostics', icon: Bot },
+          { id: 'repair', label: 'Repair Diagnostics', icon: HenIcon },
         ].map(tab => (
           <button 
             key={tab.id} 

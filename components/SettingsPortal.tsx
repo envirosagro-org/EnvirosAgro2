@@ -6,11 +6,12 @@ import {
   CheckCircle2, AlertTriangle, Languages, Sliders, Battery, 
   Satellite, Wifi, Landmark, Cloud, Download, Compass, 
   Layout, Eye, Leaf, Binary, Heart, Search, 
-  SmartphoneNfc, FileCode, BadgeCheck, Terminal, Bot, 
+  SmartphoneNfc, FileCode, BadgeCheck, Terminal, 
   ArrowRight, Key, Layers, Target, Scale, ZapOff, 
   Contrast, Maximize2, Sprout, Loader2, Link2, ShieldPlus, Fingerprint, Network
 } from 'lucide-react';
 import { User, ViewState } from '../types';
+import { HenIcon } from './Icons';
 
 interface SettingsPortalProps {
   user: User;
@@ -433,7 +434,7 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
            <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-950/10 flex flex-col items-center text-center space-y-10 shadow-3xl relative overflow-hidden group/map">
               <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/map:scale-110 transition-transform duration-[12s]"><Network size={400} className="text-indigo-400" /></div>
               <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center shadow-3xl border-4 border-white/10 group-hover:rotate-12 transition-transform duration-700 relative z-10 animate-float">
-                 <Bot size={48} className="text-white animate-pulse" />
+                 <HenIcon size={48} className="text-white animate-pulse" />
               </div>
               <div className="space-y-6 relative z-10">
                  <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">System <span className="text-indigo-400">Sync Map</span></h4>

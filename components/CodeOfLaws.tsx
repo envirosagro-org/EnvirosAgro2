@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
   Scale, ShieldCheck, Landmark, BookOpen, ScrollText, 
-  Binary, Target, Zap, Heart, Leaf, Users, Bot, 
+  Binary, Target, Zap, Heart, Leaf, Users, 
   Database, Info, ChevronRight, Lock, Stamp, 
   Gavel, HelpCircle, History, 
   Fingerprint,
@@ -21,6 +21,7 @@ import {
   Sprout
 } from 'lucide-react';
 import { User } from '../types';
+import { HenIcon } from './Icons';
 
 interface CodeOfLawsProps {
   user: User;
@@ -115,7 +116,7 @@ const LAWS: Law[] = [
     principle: 'Technology must serve life, not war or destruction.',
     precedents: ['ISAIAH 2:4', 'AGROBOTO SERVANT LOGIC'],
     statute: "The Agroboto division is prohibited from developing dual-use technologies that can be weaponized. Robotics must be 'servants of the Githaka', designed to reduce physical burden (S) on the human worker, not replace the connection to the land.",
-    icon: Bot,
+    icon: HenIcon,
     color: 'text-blue-500',
     bg: 'bg-blue-500/10'
   },

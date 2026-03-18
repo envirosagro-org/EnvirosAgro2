@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  Flower2, Music, Heart, Bot, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCw, Handshake,
+  Flower2, Music, Heart, Cookie, Baby, X, Activity, Leaf, Cpu, ArrowRight, ArrowRightLeft, Landmark, Binary, Package, Palette, PencilRuler, Moon, Waves, Radio, ChefHat, BookOpen, Video, FileText, Download, Microscope, User as UserIcon, HeartPulse, Factory, BadgeCheck, ShieldAlert, Zap, Layers, Smartphone, Star, Target, BrainCircuit, Scan, ShieldCheck as ShieldCheckIcon, HandHelping, Users, Search, ClipboardCheck, Globe, Sprout, Monitor, Radar, Gem, Stethoscope, GraduationCap, FileCode, Waves as WavesIcon, Speaker, Ticket, Shield, SearchCode, Flame, Wind, Loader2, TrendingUp, Gauge, Terminal, Satellite, RadioReceiver, Microscope as MicroscopeIcon, Droplets, Play, Battery, Signal, Cog, ZapOff, PlayCircle, BarChart4, Network, AlertCircle, PlusCircle, Coins, Pause, ChevronRight, CheckCircle2, History, RefreshCw, Handshake,
   Stethoscope as DoctorIcon,
   ShieldPlus,
   Thermometer,
@@ -47,6 +47,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { User, ViewState, MediaShard } from '../types';
+import { HenIcon } from './Icons';
 import { runSpecialistDiagnostic, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
@@ -83,7 +84,7 @@ const THRUST_METADATA: Record<ThrustType, { label: string; icon: any; color: str
 };
 
 const BRANDS: Brand[] = [
-  { id: 'agroboto', name: 'Agroboto', icon: Bot, color: 'text-slate-500', accent: 'text-slate-400', bg: 'bg-slate-500/10', desc: 'Autonomous intelligence. Swarm-based precision farming and robotic terra-mapping.', action: 'Fleet Ingest', thrust: 'technological', volume: '1.8K BOTS' },
+  { id: 'agroboto', name: 'Agroboto', icon: HenIcon, color: 'text-slate-500', accent: 'text-slate-400', bg: 'bg-slate-500/10', desc: 'Autonomous intelligence. Swarm-based precision farming and robotic terra-mapping.', action: 'Fleet Ingest', thrust: 'technological', volume: '1.8K BOTS' },
   { id: 'medicag', name: 'MedicAg', icon: HeartPulse, color: 'text-teal-600', accent: 'text-teal-500', bg: 'bg-teal-600/10', desc: 'Earth-wellness triage. Clinical audits for soil, steward, and animal health shards.', action: 'Health Audit', thrust: 'human', volume: '8.2K CLINICS', isLight: true },
   { id: 'junior', name: 'AgroJunior', icon: Baby, color: 'text-amber-700', accent: 'text-amber-600', bg: 'bg-amber-700/10', desc: 'STEM-driven growth. Virtual garden twins and agricultural play for the next generation.', action: 'Adventure Start', thrust: 'human', volume: '12.4K JUNIORS', isLight: true },
   { id: 'love4agro', name: 'Love4Agro', icon: Heart, color: 'text-rose-800', accent: 'text-rose-700', bg: 'bg-rose-800/10', desc: 'Empathy in agriculture. Bio-electric community resonance and steward vouching.', action: 'Willingness Audit', thrust: 'societal', volume: '24.2K WILLING', isLight: true },
@@ -97,7 +98,7 @@ const BRANDS: Brand[] = [
 const PORTAL_TABS = [
   { id: 'home', label: 'OPERATIONAL HUB', icon: LayoutGrid },
   { id: 'telemetry', label: 'INFLOW STREAM', icon: Activity },
-  { id: 'audit', label: 'ORACLE AUDIT', icon: Bot },
+  { id: 'audit', label: 'ORACLE AUDIT', icon: HenIcon },
   { id: 'shards', label: 'REGISTRY ASSETS', icon: Database },
 ];
 
@@ -424,12 +425,12 @@ ${auditResult.text}
                 <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 text-center">
                    <div className={`p-10 md:p-16 glass-card rounded-[64px] border border-${accentColor}-500/20 bg-${accentColor}-950/[0.03] relative overflow-hidden flex flex-col items-center gap-10 shadow-3xl group`}>
                       <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
-                         <Bot size={500} />
+                         <HenIcon size={500} />
                       </div>
                       
                       <div className="relative z-10 space-y-8 w-full">
                          <div className={`w-20 h-20 rounded-[32px] bg-${accentColor}-600 flex items-center justify-center shadow-2xl mx-auto border-2 border-white/10 group-hover:rotate-12 transition-transform duration-700 animate-float`}>
-                            <Bot size={40} className="text-white animate-pulse" />
+                            <HenIcon size={40} className="text-white animate-pulse" />
                          </div>
                          <div className="space-y-2">
                             <h3 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Institutional <span className={activeBrand.color}>Oracle</span></h3>

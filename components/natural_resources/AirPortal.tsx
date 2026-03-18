@@ -1,6 +1,6 @@
 import React from 'react';
 import { Wind, Activity, Binary, Waves } from 'lucide-react';
-import ResourceDimensionBase, { ResourceMeta } from './ResourceDimensionBase';
+import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
 import { useAppStore } from '../../store';
 
@@ -32,8 +32,8 @@ const AirPortal: React.FC<AirPortalProps> = (props) => {
     forgeTitle: 'Atmospheric Sync Shard',
     forgeDesc: 'Mint carbon sequestration potential based on air quality metrics.',
     simControls: [
-      { label: 'SID: Viral Load', val: ecosystemState.p1, set: (v) => updateEcosystemState({ p1: v }), min: 0, max: 100, step: 1 },
-      { label: 'O2: Oxygen', val: ecosystemState.p2, set: (v) => updateEcosystemState({ p2: v }), min: 50, max: 100, step: 1 },
+      { label: 'SID: Viral Load', val: ecosystemState.p1, set: (v: number) => updateEcosystemState({ p1: v }), min: 0, max: 100, step: 1 },
+      { label: 'O2: Oxygen', val: ecosystemState.p2, set: (v: number) => updateEcosystemState({ p2: v }), min: 50, max: 100, step: 1 },
     ],
     ledgerItems: [
       { id: 'SHD-AIR-882', name: 'Zone 4 Particulate Shard', hash: '0x882A_AIR', status: 'VERIFIED' },

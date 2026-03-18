@@ -29,7 +29,6 @@ import {
   Search,
   Command,
   ArrowUpRight,
-  Bot,
   Leaf,
   History,
   ShieldCheck,
@@ -45,6 +44,7 @@ import {
   Stamp
 } from 'lucide-react';
 import { ViewState } from '../types';
+import { HenIcon } from './Icons';
 import { RegistryGroup } from '../App';
 
 interface SitemapProps {

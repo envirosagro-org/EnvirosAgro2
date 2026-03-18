@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { Mic, MicOff, Bot, X, Loader2, ShieldCheck, Activity } from 'lucide-react';
+import { Mic, MicOff, X, Loader2, ShieldCheck, Activity } from 'lucide-react';
+import { HenIcon } from './Icons';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
 import { encode, decode } from '../services/agroLangService';
 
@@ -148,7 +149,7 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
       <div className="glass-card rounded-[32px] border-emerald-500/40 bg-[#050706] shadow-2xl overflow-hidden flex flex-col border-2">
         <div className="p-6 bg-emerald-600/10 flex items-center justify-between border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg"><Bot className="w-6 h-6" /></div>
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg"><HenIcon className="w-6 h-6" /></div>
             <div>
               <h4 className="text-sm font-black text-white uppercase tracking-widest">Voice Bridge</h4>
               <p className="text-[10px] text-emerald-400 font-bold uppercase">{isActive ? 'Live Link' : 'Standby'}</p>

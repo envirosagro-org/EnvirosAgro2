@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Sprout, Activity, CheckCircle2, ArrowRight, Loader2, MapPin, Zap, ThumbsUp, 
-  PlusCircle, Monitor, Clock, TrendingUp, Eye, X, Upload, Bot, Factory, 
+  PlusCircle, Monitor, Clock, TrendingUp, Eye, X, Upload, Factory, 
   Package, Cpu, Layers, ShieldCheck, ShieldAlert, Database, Terminal, 
   Wifi, Scan, Share2, Leaf, Gauge, Smartphone, Wrench, 
   SmartphoneNfc, ClipboardList, ClipboardCheck, Target, Plus, ArrowUpRight, Stamp, 
@@ -12,6 +12,7 @@ import {
   ArrowDownCircle, SearchCode
 } from 'lucide-react';
 import { User, LiveAgroProduct, ViewState, AgroResource, ValueBlueprint, Task, RegisteredUnit, FarmingContract } from '../types';
+import { HenIcon } from './Icons';
 import AssetAssociationTool from './AssetAssociationTool';
 import { optimizeProductionProcess } from '../services/agroLangService';
 
@@ -506,7 +507,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                         <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.6em] italic mb-8">STRATEGIC_TOOLING_HUB</h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                            {[
-                              { label: 'AI Optimization', icon: Bot, target: 'ai_optimization', action: 'optimize', col: 'text-emerald-400', sourceLedger: 'AI' },
+                              { label: 'AI Optimization', icon: HenIcon, target: 'ai_optimization', action: 'optimize', col: 'text-emerald-400', sourceLedger: 'AI' },
                               { label: 'Ingest Evidence', icon: Upload, target: 'digital_mrv', action: 'ingest', col: 'text-blue-400', sourceLedger: 'RESOURCE' },
                               { label: 'Registry Handshake', icon: SmartphoneNfc, target: 'registry_handshake', col: 'text-indigo-400', sourceLedger: 'RESOURCE' },
                               { label: 'Network Ingest', icon: Wifi, target: 'ingest', col: 'text-teal-400', sourceLedger: 'RESOURCE' },
@@ -533,7 +534,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                      <div className="mt-16 p-10 bg-indigo-900/10 border-2 border-indigo-500/20 rounded-[64px] flex flex-col items-center justify-center gap-12 shadow-4xl relative overflow-hidden">
                         <div className="flex items-center gap-10 relative z-10 text-center flex-col sm:flex-row">
                            <div className="w-24 h-24 rounded-[40px] bg-indigo-600 flex items-center justify-center text-white shadow-3xl animate-float shrink-0 ring-8 ring-indigo-500/5">
-                              <Bot size={48} />
+                              <HenIcon size={48} />
                            </div>
                            <div className="text-left space-y-2">
                               <h5 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Qualification Gate</h5>
@@ -728,7 +729,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
            <div className="relative z-10 w-full max-w-4xl glass-card rounded-[64px] border-emerald-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in border-2 flex flex-col max-h-[90vh]">
               <div className="p-10 border-b border-white/5 bg-emerald-500/[0.02] flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white shadow-2xl"><Bot size={32} /></div>
+                    <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white shadow-2xl"><HenIcon size={32} /></div>
                     <div>
                        <h3 className="text-3xl font-black text-white uppercase tracking-tighter m-0 leading-none">AI <span className="text-emerald-400">Optimization</span></h3>
                        <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-1">Production Sequencing & Routing</p>
@@ -742,7 +743,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                   <div className="flex flex-col items-center justify-center py-20 space-y-8">
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin"></div>
-                      <Bot size={48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-400 animate-pulse" />
+                      <HenIcon size={48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-400 animate-pulse" />
                     </div>
                     <div className="text-center space-y-2">
                       <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Analyzing Production Systems</h4>

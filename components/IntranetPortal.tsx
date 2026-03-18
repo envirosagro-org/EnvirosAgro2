@@ -18,7 +18,6 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   Zap, 
-  Bot, 
   Leaf, 
   Fingerprint, 
   Activity, 
@@ -42,6 +41,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { User, ViewState } from '../types';
+import { HenIcon } from './Icons';
 import { verifyAuditorAccess } from '../services/firebaseService';
 
 interface IntranetPortalProps {

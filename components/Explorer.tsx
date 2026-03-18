@@ -51,7 +51,6 @@ import {
   Monitor, 
   Workflow, 
   ChevronRight, 
-  Bot, 
   Gavel,
   Bell,
   Mail,
@@ -69,8 +68,9 @@ import {
   BarChart, Bar, Cell
 } from 'recharts';
 import { AgroBlock, User, AgroTransaction, SignalShard, ViewState } from '../types';
+import { HenIcon } from './Icons';
 import { settleRegistryBatch, AgroLangResponse, auditMeshStability, probeValidatorNode } from '../services/agroLangService';
-import { SycamoreLogo } from '../App';
+import { SycamoreLogo } from './Icons';
 
 interface ExplorerProps {
   blockchain?: AgroBlock[];
@@ -314,7 +314,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                  <div className="lg:col-span-4 space-y-8 flex flex-col">
                     <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-950/5 flex flex-col items-center justify-center text-center space-y-8 flex-1 group shadow-3xl">
                        <div className="w-24 h-24 bg-indigo-600 rounded-[40px] flex items-center justify-center shadow-3xl animate-pulse border-4 border-white/10 shrink-0 relative overflow-hidden">
-                          <Bot size={48} className="text-white" />
+                          <HenIcon size={48} className="text-white" />
                           <div className="absolute inset-0 bg-white/10 animate-pulse"></div>
                        </div>
                        <div className="space-y-3">

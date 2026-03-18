@@ -4,13 +4,14 @@ import {
   TrendingUp, TrendingDown, DollarSign, PieChart, Activity, 
   ShieldCheck, Zap, Database, RefreshCw, ArrowUpRight, 
   ArrowDownRight, Calculator, Scale, Percent, Landmark,
-  Bot, Leaf, Loader2
+  Leaf, Loader2
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell
 } from 'recharts';
 import { ShardCostCalibration } from '../types';
+import { HenIcon } from './Icons';
 
 interface FinancialReport {
   totalRevenue: number;
@@ -199,7 +200,7 @@ const CostAccountingDashboard: React.FC<CostAccountingDashboardProps> = ({
         <div className="lg:col-span-4 space-y-8">
           <div className="glass-card p-10 rounded-[56px] border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
-              <Bot size={160} />
+              <HenIcon size={160} />
             </div>
             
             <div className="space-y-6 relative z-10">

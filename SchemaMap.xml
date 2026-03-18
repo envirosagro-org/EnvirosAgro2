@@ -7,7 +7,12 @@
             <Section id="oracle" vector="[1.1.2]" label="Oracle Hub" url="https://envirosagro.org/dashboard/oracle" />
             <Section id="path" vector="[1.1.3]" label="Strategic Path" url="https://envirosagro.org/dashboard/path" />
         </Domain>
-        <Domain id="ai_analyst" vector="[1.2]" label="Neural Analyst" componentPath="components/AIAnalyst.tsx" thrust="Technological" url="https://envirosagro.org/ai_analyst" />
+        <Domain id="mesh_protocol" vector="[1.2]" label="Mesh Protocol" componentPath="components/MeshProtocol.tsx" url="https://envirosagro.org/mesh_protocol">
+            <Section id="topology" vector="[1.2.1]" label="Network Topology" url="https://envirosagro.org/mesh_protocol/topology" />
+            <Section id="commits" vector="[1.2.2]" label="Block Shards" url="https://envirosagro.org/mesh_protocol/commits" />
+            <Section id="mempool" vector="[1.2.3]" label="Inbound Mempool" url="https://envirosagro.org/mesh_protocol/mempool" />
+        </Domain>
+        <Domain id="ai_analyst" vector="[1.3]" label="Neural Analyst" componentPath="components/AIAnalyst.tsx" thrust="Technological" url="https://envirosagro.org/ai_analyst" />
         <Domain id="settings" vector="[1.3]" label="System Settings" componentPath="components/SettingsPortal.tsx" url="https://envirosagro.org/settings">
             <Section id="display" vector="[1.3.1]" label="UI Display" url="https://envirosagro.org/settings/display" />
             <Section id="privacy" vector="[1.3.2]" label="Security Shards" url="https://envirosagro.org/settings/privacy" />
@@ -36,7 +41,13 @@
             <Section id="simulator" vector="[1.10.2]" label="EOS Physics" url="https://envirosagro.org/intelligence/simulator" />
             <Section id="eos_ai" vector="[1.10.6]" label="Expert Oracle" url="https://envirosagro.org/intelligence/eos_ai" />
         </Domain>
-        <Domain id="explorer" vector="[1.11]" label="Registry Explorer" componentPath="components/Explorer.tsx" url="https://envirosagro.org/explorer" />
+        <Domain id="explorer" vector="[1.11]" label="Registry Explorer" componentPath="components/Explorer.tsx" url="https://envirosagro.org/explorer">
+            <Section id="terminal" vector="[1.11.1]" label="Signal Terminal" url="https://envirosagro.org/explorer/terminal" />
+            <Section id="blocks" vector="[1.11.2]" label="Blocks" url="https://envirosagro.org/explorer/blocks" />
+            <Section id="ledger" vector="[1.11.3]" label="Tx Ledger" url="https://envirosagro.org/explorer/ledger" />
+            <Section id="consensus" vector="[1.11.4]" label="Quorum" url="https://envirosagro.org/explorer/consensus" />
+            <Section id="settlement" vector="[1.11.5]" label="Finality" url="https://envirosagro.org/explorer/settlement" />
+        </Domain>
     </Dimension>
 
     <!-- DIMENSION 2: MISSIONS & CAPITAL -->
@@ -55,6 +66,7 @@
         </Domain>
         <Domain id="community" vector="[2.4]" label="Steward Community" componentPath="components/Community.tsx" url="https://envirosagro.org/community">
             <Section id="social" vector="[2.4.1]" label="Social Mesh" url="https://envirosagro.org/community/social" />
+            <Section id="shards" vector="[2.4.2]" label="Social Shards" url="https://envirosagro.org/community/shards" />
             <Section id="lms" vector="[2.4.3]" label="Knowledge Base" url="https://envirosagro.org/community/lms" />
         </Domain>
     </Dimension>
@@ -89,16 +101,34 @@
             <Section id="land_select" vector="[4.2.1]" label="Geofence" url="https://envirosagro.org/digital_mrv/land_select" />
             <Section id="ingest" vector="[4.2.2]" label="Evidence Ingest" url="https://envirosagro.org/digital_mrv/ingest" />
         </Domain>
-        <Domain id="ingest" vector="[4.3]" label="Data Ingest" componentPath="components/NetworkIngest.tsx" url="https://envirosagro.org/ingest" />
-        <Domain id="live_farming" vector="[4.4]" label="Inflow Control" componentPath="components/LiveFarming.tsx" url="https://envirosagro.org/live_farming" />
+        <Domain id="ingest" vector="[4.3]" label="Data Ingest" componentPath="components/NetworkIngest.tsx" url="https://envirosagro.org/ingest">
+            <Section id="handshake" vector="[4.3.1]" label="Node Pairing" url="https://envirosagro.org/ingest/handshake" />
+            <Section id="streams" vector="[4.3.2]" label="Registry Keys" url="https://envirosagro.org/ingest/streams" />
+            <Section id="vault" vector="[4.3.3]" label="Evidence Vault" url="https://envirosagro.org/ingest/vault" />
+        </Domain>
+        <Domain id="live_farming" vector="[4.4]" label="Inflow Control" componentPath="components/LiveFarming.tsx" url="https://envirosagro.org/live_farming">
+            <Section id="lifecycle" vector="[4.4.1]" label="Pipeline" url="https://envirosagro.org/live_farming/lifecycle" />
+        </Domain>
         <Domain id="tqm" vector="[4.5]" label="TQM Trace Hub" componentPath="components/TQMGrid.tsx" url="https://envirosagro.org/tqm">
             <Section id="orders" vector="[4.5.1]" label="Shipments" url="https://envirosagro.org/tqm/orders" />
             <Section id="trace" vector="[4.5.2]" label="Traceability" url="https://envirosagro.org/tqm/trace" />
         </Domain>
-        <Domain id="crm" vector="[4.6]" label="Nexus CRM" componentPath="components/NexusCRM.tsx" url="https://envirosagro.org/crm" />
-        <Domain id="circular" vector="[4.7]" label="Circular Grid" componentPath="components/CircularGrid.tsx" url="https://envirosagro.org/circular" />
-        <Domain id="tools" vector="[4.8]" label="Industrial Tools" componentPath="components/ToolsSection.tsx" url="https://envirosagro.org/tools" />
-        <Domain id="robot" vector="[4.9]" label="Swarm Command" componentPath="components/Robot.tsx" url="https://envirosagro.org/robot" />
+        <Domain id="crm" vector="[4.6]" label="Nexus CRM" componentPath="components/NexusCRM.tsx" url="https://envirosagro.org/crm">
+            <Section id="directory" vector="[4.6.1]" label="Directory" url="https://envirosagro.org/crm/directory" />
+            <Section id="support" vector="[4.6.2]" label="Support" url="https://envirosagro.org/crm/support" />
+        </Domain>
+        <Domain id="circular" vector="[4.7]" label="Circular Grid" componentPath="components/CircularGrid.tsx" url="https://envirosagro.org/circular">
+            <Section id="market" vector="[4.7.1]" label="Refurbished Store" url="https://envirosagro.org/circular/market" />
+        </Domain>
+        <Domain id="tools" vector="[4.8]" label="Industrial Tools" componentPath="components/ToolsSection.tsx" url="https://envirosagro.org/tools">
+            <Section id="kanban" vector="[4.8.1]" label="Kanban" url="https://envirosagro.org/tools/kanban" />
+            <Section id="sigma" vector="[4.8.2]" label="Six Sigma" url="https://envirosagro.org/tools/sigma" />
+        </Domain>
+        <Domain id="robot" vector="[4.9]" label="Swarm Command" componentPath="components/Robot.tsx" url="https://envirosagro.org/robot">
+            <Section id="registry" vector="[4.9.1]" label="Fleet Registry" url="https://envirosagro.org/robot/registry" />
+            <Section id="security" vector="[4.9.2]" label="Intranet Security" url="https://envirosagro.org/robot/security" />
+            <Section id="sync" vector="[4.9.3]" label="AI Crawler Sync" url="https://envirosagro.org/robot/sync" />
+        </Domain>
     </Dimension>
 
     <!-- DIMENSION 5: NATURAL RESOURCES -->
@@ -123,6 +153,12 @@
         <Domain id="registry_handshake" vector="[6.9]" label="Node Handshake" componentPath="components/RegistryHandshake.tsx" url="https://envirosagro.org/registry_handshake" />
         <Domain id="biotech_hub" vector="[6.10]" label="Biotech Hub" componentPath="components/Biotechnology.tsx" url="https://envirosagro.org/biotech_hub" />
         <Domain id="media_ledger" vector="[6.13]" label="Media Ledger" componentPath="components/MediaLedger.tsx" url="https://envirosagro.org/media_ledger" />
-        <Domain id="media" vector="[6.14]" label="Media Hub" componentPath="components/MediaHub.tsx" url="https://envirosagro.org/media" />
+        <Domain id="media" vector="[6.14]" label="Media Hub" componentPath="components/MediaHub.tsx" url="https://envirosagro.org/media">
+            <Section id="all" vector="[6.14.1]" label="Primary Hub" url="https://envirosagro.org/media/all" />
+            <Section id="video" vector="[6.14.2]" label="Video Nodes" url="https://envirosagro.org/media/video" />
+            <Section id="news" vector="[6.14.3]" label="Newsstand" url="https://envirosagro.org/media/news" />
+            <Section id="audio" vector="[6.14.4]" label="Acoustic Registry" url="https://envirosagro.org/media/audio" />
+            <Section id="comic" vector="[6.14.5]" label="Make it Comic" url="https://envirosagro.org/media/comic" />
+        </Domain>
     </Dimension>
 </EnvirosAgroRegistry>

@@ -10,7 +10,6 @@ import {
   ShieldCheck, 
   Clock,
   Maximize2,
-  Bot,
   Factory,
   Activity,
   ArrowRightCircle,
@@ -74,6 +73,7 @@ import {
   Cell
 } from 'recharts';
 import { User, RegisteredUnit, ViewState, WorkerProfile, AgroProject, VendorProduct, Order } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 
 interface IndustrialProps {
@@ -361,7 +361,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                           <div className="p-10 bg-black/90 rounded-[64px] border-l-[16px] border-l-indigo-600 border border-indigo-500/20 shadow-3xl text-left relative overflow-hidden group/advice">
                              <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover/advice:scale-110 transition-transform duration-[15s]"><Leaf size={400} /></div>
                              <div className="flex items-center gap-6 mb-10 border-b border-white/5 pb-8 relative z-10">
-                                <Bot size={32} className="text-indigo-400 animate-pulse" />
+                                <HenIcon size={32} className="text-indigo-400 animate-pulse" />
                                 <h4 className="text-3xl font-black text-white uppercase italic m-0 tracking-tighter">Strategic Verdict</h4>
                              </div>
                              <div className="prose prose-invert max-w-none text-slate-300 text-2xl leading-[2.1] italic whitespace-pre-line font-medium relative z-10 pl-8 border-l-2 border-white/5">

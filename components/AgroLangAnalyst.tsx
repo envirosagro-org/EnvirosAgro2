@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Send, Bot, User as UserIcon, Loader2, BarChart2, ShieldCheck, Info, TrendingUp, 
+  Send, User as UserIcon, Loader2, BarChart2, ShieldCheck, Info, TrendingUp, 
   Globe, ExternalLink, Trash2, Terminal, Cable, Activity, Database, Zap, 
   ShieldPlus, Workflow, SmartphoneNfc, Radio, CheckCircle2, ChevronRight,
   Code2, Share2, Network, Binary, ArrowRight, ArrowUpRight, Cpu,
@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import { chatWithAgroLang, analyzeSustainability, AgroLangResponse } from '../services/agroLangService';
 import { User as AgroUser, ViewState, SignalShard } from '../types';
-import { SycamoreLogo } from '../App';
+import { HenIcon } from './Icons';
+import { SycamoreLogo } from './Icons';
 
 interface AgroLangAnalystProps {
   user: AgroUser;

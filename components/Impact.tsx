@@ -24,7 +24,6 @@ import {
   ChevronRight,
   ArrowLeftCircle,
   Gauge,
-  Bot,
   Layers,
   Cpu,
   Microscope,
@@ -58,6 +57,7 @@ import {
   Bar
 } from 'recharts';
 import { User, ViewState } from '../types';
+import { HenIcon } from './Icons';
 
 interface ImpactProps {
   user: User;
@@ -287,9 +287,9 @@ const Impact: React.FC<ImpactProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
                     </div>
 
                     <div className="p-10 glass-card rounded-[48px] border border-blue-500/20 bg-blue-500/5 space-y-6 shadow-xl relative overflow-hidden group/tip">
-                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/tip:scale-125 transition-transform"><Bot size={150} /></div>
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover/tip:scale-125 transition-transform"><HenIcon size={150} /></div>
                        <div className="flex items-center gap-4 relative z-10">
-                          <Bot className="w-8 h-8 text-blue-400" />
+                          <HenIcon className="w-8 h-8 text-blue-400" />
                           <h4 className="text-xl font-black text-white uppercase italic">Impact Recommendation</h4>
                        </div>
                        <p className="text-slate-400 text-sm leading-relaxed italic relative z-10 border-l-2 border-blue-500/20 pl-6">
@@ -429,10 +429,10 @@ const Impact: React.FC<ImpactProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
 
              <div className="lg:col-span-5 space-y-8 flex flex-col">
                 <div className="glass-card p-12 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/10 space-y-10 shadow-3xl relative overflow-hidden group/oracle flex-1">
-                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform duration-[10s]"><Bot size={300} className="text-indigo-400" /></div>
+                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform duration-[10s]"><HenIcon size={300} className="text-indigo-400" /></div>
                    <div className="flex items-center gap-6 relative z-10">
                       <div className="p-4 bg-indigo-600 rounded-[28px] shadow-3xl border-2 border-white/10 group-hover/oracle:rotate-12 transition-transform">
-                         <Bot className="w-10 h-10 text-white" />
+                         <HenIcon className="w-10 h-10 text-white" />
                       </div>
                       <div>
                         <h4 className="text-2xl font-black text-white uppercase italic tracking-widest m-0 leading-none">Impact <span className="text-indigo-400">Oracle</span></h4>

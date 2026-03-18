@@ -31,10 +31,9 @@ import {
   Fingerprint,
   Target,
   Binary,
-  Bot,
+  Stamp,
   Leaf,
   Loader2,
-  Stamp,
   Network,
   Atom,
   Wind,
@@ -47,9 +46,9 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { User, ViewState, Order, VendorProduct, MediaShard } from '../types';
+import { HenIcon, SycamoreLogo } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
-import { SycamoreLogo } from '../App';
 
 interface AgrowildProps {
   user: User;
@@ -69,9 +68,9 @@ const AGROWILD_TABS = [
 ];
 
 const BASE_TOURISM_OFFERS = [
-  { id: 'TOU-01', title: 'SPECTRAL BIRDING SAFARI', duration: '4h', cost: 150, rating: 4.9, thumb: 'https://images.unsplash.com/photo-1549336573-19965159074d?q=80&w=400', desc: 'Guided multi-spectral binocular tour focusing on rare migratory shards.', supplierEsin: 'EA-TOUR-HUB', node: 'NODE_NAIROBI_04' },
-  { id: 'TOU-02', title: 'BANTU NATURE WALK', duration: '2h', cost: 50, rating: 4.8, thumb: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=400', desc: 'Ancestral botanical walk through lineage forests and moisture hubs.', supplierEsin: 'EA-TOUR-HUB', node: 'NODE_PARIS_82' },
-  { id: 'TOU-03', title: 'NIGHT PREDATOR TRACKING', duration: '6h', cost: 300, rating: 5.0, thumb: 'https://images.unsplash.com/photo-1557406230-ceddd547a61d?q=80&w=400', desc: 'Thermal ingest mission to monitor nocturnal carnivore health and load.', supplierEsin: 'EA-TOUR-HUB', node: 'NODE_TOKYO_01' },
+  { id: 'TOU-01', title: 'MUGUMO SPECTRAL SAFARI', duration: '4h', cost: 150, rating: 4.9, thumb: 'https://images.unsplash.com/photo-1549336573-19965159074d?q=80&w=400', desc: 'Guided multi-spectral binocular tour focusing on rare migratory shards and temporal echoes.', supplierEsin: 'EA-TOUR-HUB', node: 'NODE_NAIROBI_04' },
+  { id: 'TOU-02', title: 'AGIKUYU ANCESTRAL WALK', duration: '2h', cost: 50, rating: 4.8, thumb: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=400', desc: 'Ancestral botanical walk through lineage forests, tracing the roots of the Githaka.', supplierEsin: 'EA-TOUR-HUB', node: 'NODE_PARIS_82' },
+  { id: 'TOU-03', title: 'NIGHT ENTROPY TRACKING', duration: '6h', cost: 300, rating: 5.0, thumb: 'https://images.unsplash.com/photo-1557406230-ceddd547a61d?q=80&w=400', desc: 'Thermal ingest mission to monitor nocturnal carnivore health and local entropy levels.', supplierEsin: 'EA-TOUR-HUB', node: 'NODE_TOKYO_01' },
 ];
 
 const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onPlaceOrder, vendorProducts, notify }) => {
@@ -101,7 +100,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
         title: p.name.toUpperCase(),
         duration: 'Varies',
         cost: p.price,
-        rating: 4.5 + Math.random() * 0.5,
+        rating: 4.5 + (p.name.length % 5) * 0.1,
         thumb: p.image || 'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=400',
         desc: p.description,
         supplierEsin: p.supplierEsin,
@@ -162,13 +161,14 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
     setDiscoveryVerdict(null);
 
     try {
-      const prompt = `Act as a Botanical Oracle for the EnvirosAgro network. Analyze the following species discovery: "${speciesQuery}". 
+      const prompt = `Act as a Botanical Oracle for the EnvirosAgro network, deeply rooted in Agikuyu lore and the concept of the Mugumo (sycamore) tree as a temporal antenna.
+      Analyze the following species discovery: "${speciesQuery}". 
       Requirements:
-      1. Identify the biological shard and its ecosystem function.
-      2. Calculate the "Resonance Delta" (+/- % impact on m-constant).
-      3. Recommend a conservation protocol or sharding path.
-      4. Provide a unique SKU identifier for the discovery.
-      Format as a technical industrial report.`;
+      1. Identify the biological shard and its ecosystem function within the context of ancestral memory and regeneration.
+      2. Calculate the "Resonance Delta" (+/- % impact on m-constant) and its effect on the local node's temporal stability.
+      3. Recommend a conservation protocol or sharding path, referencing the Sabbath-Yajna (fallowing) or Entropy Remediation (sacrifice) if necessary.
+      4. Provide a unique SKU identifier for the discovery, formatted as a sacred registry hash.
+      Format as a technical industrial report infused with mythological gravitas.`;
 
       const res = await chatWithAgroLang(prompt, []);
       setDiscoveryVerdict(res.text);
@@ -221,7 +221,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                   onClick={() => scrollToSection('discovery')}
                   className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-[9px] uppercase tracking-[0.3em] shadow-xl transition-all flex items-center gap-2"
                 >
-                  <Bot size={16} /> Botanical Oracle
+                  <HenIcon size={16} /> Botanical Oracle
                 </button>
               </div>
            </div>
@@ -269,9 +269,9 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
 
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
-                { id: 'CON-01', name: 'Mugumo Ancient Shard', status: 'UNTOUCHABLE', resonance: 1.618, col: 'text-emerald-400', desc: 'The root antenna node for the entire Githaka cluster. Zero stress (S) baseline.' },
-                { id: 'CON-02', name: 'Nairobi Inflow Forest', status: 'AUDITING', resonance: 1.42, col: 'text-blue-400', desc: 'A secondary carbon sequestration shard undergoing high-frequency telemetry sync.' },
-                { id: 'CON-03', name: 'Valencia Marine Node', status: 'ACTIVE', resonance: 1.55, col: 'text-indigo-400', desc: 'Aquatic bio-data bridge monitoring micro-nutrient drift in regional waters.' },
+                { id: 'CON-01', name: 'Mugumo Ancestral Root', status: 'UNTOUCHABLE', resonance: 1.618, col: 'text-emerald-400', desc: 'The primary temporal antenna for the Githaka cluster. Anchors ancestral memory with a zero-stress (S) baseline.' },
+                { id: 'CON-02', name: 'Nairobi Fallow Expanse', status: 'SABBATH', resonance: 1.42, col: 'text-amber-400', desc: 'Currently undergoing Sabbath-Yajna regeneration. Telemetry sync paused to allow m-constant restoration.' },
+                { id: 'CON-03', name: 'Rift Valley Bio-Bridge', status: 'ACTIVE', resonance: 1.55, col: 'text-indigo-400', desc: 'Active biological shard monitoring micro-nutrient drift and entropy levels across the rift.' },
               ].map((node, i) => (
                 <div key={i} className="glass-card p-8 md:p-10 rounded-[48px] md:rounded-[64px] border-2 border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col justify-between min-h-[450px] relative overflow-hidden bg-black/40 shadow-3xl active:scale-[0.99]">
                    <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><TreePine size={300} /></div>
@@ -308,8 +308,8 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
         <section id="tourism" className="min-w-full h-full snap-start overflow-y-auto custom-scrollbar p-6 md:p-12 lg:p-20 space-y-12">
            <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-8">
               <div className="space-y-2 text-center md:text-left flex-1">
-                 <h3 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Tourism <span className="text-blue-400">Shards</span></h3>
-                 <p className="text-slate-600 text-lg font-medium italic opacity-70">"Authorized ingest missions within verified biological clusters."</p>
+                 <h3 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Lore <span className="text-blue-400">Expeditions</span></h3>
+                 <p className="text-slate-600 text-lg font-medium italic opacity-70">"Authorized ingest missions and temporal journeys within verified biological clusters."</p>
               </div>
               <div className="relative group w-full md:w-[400px]">
                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700 group-focus-within:text-blue-400" />
@@ -375,7 +375,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                  
                  <div className="relative z-10 space-y-10">
                     <div className="w-24 h-24 rounded-[32px] bg-emerald-600 flex items-center justify-center shadow-3xl border-2 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 animate-float">
-                       <Bot size={48} className="text-white animate-pulse" />
+                       <HenIcon size={48} className="text-white animate-pulse" />
                     </div>
                     <div className="space-y-4">
                        <h2 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">BOTANICAL <span className="text-emerald-400">DISCOVERY.</span></h2>

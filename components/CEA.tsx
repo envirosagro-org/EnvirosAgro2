@@ -14,7 +14,6 @@ import {
   Binary, 
   FlaskConical, 
   Gauge, 
-  Bot, 
   Leaf, 
   Cpu,
   Layers,
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { User } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 
 interface CEAProps {
@@ -237,9 +237,9 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
               </div>
 
               <div className="flex-1 p-10 bg-indigo-600/5 border border-indigo-500/20 rounded-[48px] relative overflow-hidden group/oracle">
-                 <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform"><Bot size={300} className="text-indigo-400" /></div>
+                 <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover/oracle:scale-110 transition-transform"><HenIcon size={300} className="text-indigo-400" /></div>
                  <div className="flex items-center gap-6 relative z-10 mb-8">
-                    <div className="p-3 bg-indigo-500 rounded-2xl shadow-xl"><Bot className="w-8 h-8 text-white" /></div>
+                    <div className="p-3 bg-indigo-500 rounded-2xl shadow-xl"><HenIcon className="w-8 h-8 text-white" /></div>
                     <h4 className="text-xl font-black text-white uppercase tracking-widest italic m-0">CEA <span className="text-indigo-400">Oracle</span></h4>
                  </div>
                  {!oracleInsight ? (

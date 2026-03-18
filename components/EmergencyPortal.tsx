@@ -4,7 +4,6 @@ import {
   AlertTriangle, 
   ShieldAlert, 
   Zap, 
-  Bot, 
   Leaf, 
   Radio, 
   Activity, 
@@ -46,6 +45,7 @@ import {
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { User, SignalShard } from '../types';
+import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 
 interface EmergencyProps {
@@ -176,7 +176,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
         {[
           { id: 'alerts', label: 'Hazard Feed', icon: Radio },
           { id: 'sos', label: 'Signal Broadcast', icon: Siren },
-          { id: 'remediation', label: 'Remediation Oracle', icon: Bot },
+          { id: 'remediation', label: 'Remediation Oracle', icon: HenIcon },
           { id: 'safety', label: 'Safety Vault', icon: ShieldCheck },
         ].map(tab => (
           <button 
@@ -348,7 +348,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
                 
                 <div className="relative z-10 space-y-10">
                    <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-[0_0_120px_rgba(99,102,241,0.4)] border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12 animate-float">
-                      <Bot size={64} className="text-white animate-pulse" />
+                      <HenIcon size={64} className="text-white animate-pulse" />
                    </div>
                    <div className="space-y-4">
                       <h3 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter m-0 leading-none italic">REMEDIATION <span className="text-indigo-400">ORACLE</span></h3>

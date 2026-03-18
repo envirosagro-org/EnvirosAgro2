@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Activity, Zap, ShieldCheck, Heart, Users, Target, 
   Brain, Scale, Microscope, Binary, Coins, 
-  Bot, Loader2, Gauge, FlaskConical, Globe, 
+  Loader2, Gauge, FlaskConical, Globe, 
   Layers, Lock, Database, Thermometer, Compass,
   CheckCircle2, AlertCircle, Info, ChevronRight, Fingerprint,
   Sprout, Waves, Cpu, Landmark, ShieldAlert, Dna, 
@@ -27,10 +27,11 @@ import {
   Plus
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { User, ViewState } from '../../types';
-import { chatWithAgroLang } from '../../services/agroLangService';
-import { generateQuickHash } from '../../systemFunctions';
-import { useAppStore } from '../../store';
+import { User, ViewState } from '../types';
+import { HenIcon } from './Icons';
+import { chatWithAgroLang } from '../services/agroLangService';
+import { generateQuickHash } from '../systemFunctions';
+import { useAppStore } from '../store';
 
 export interface ResourceMeta {
   title: string;
@@ -230,7 +231,7 @@ ${content}
         {[
           { id: 'overview', label: 'Overview', icon: Globe },
           { id: 'ledger', label: 'Registry Ledger', icon: Database },
-          { id: 'oracle', label: 'Oracle Diagnostic', icon: Bot },
+          { id: 'oracle', label: 'Oracle Diagnostic', icon: HenIcon },
           { id: 'forge', label: 'Shard Forge', icon: Zap },
           { id: 'sim', label: 'Ecosystem Sim', icon: Activity },
         ].map(tab => (
@@ -380,7 +381,7 @@ ${content}
           <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
             <div className="text-center space-y-4">
                <div className={`w-20 h-20 rounded-[32px] bg-black/40 border ${meta.border} flex items-center justify-center mx-auto shadow-2xl`}>
-                  <Bot size={40} className={meta.color} />
+                  <HenIcon size={40} className={meta.color} />
                </div>
                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Dimension <span className={meta.color}>Oracle</span></h3>
                <p className="text-slate-500 text-lg font-medium italic max-w-xl mx-auto">
@@ -413,7 +414,7 @@ ${content}
             {oracleReport && (
               <div className="animate-in slide-in-from-bottom-6 duration-500 space-y-6">
                 <div className="p-10 bg-black/90 rounded-[48px] border border-white/10 shadow-3xl relative overflow-hidden group">
-                   <div className={`absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform ${meta.color}`}><Bot size={200} /></div>
+                   <div className={`absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform ${meta.color}`}><HenIcon size={200} /></div>
                    <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
                       <div className="flex items-center gap-4">
                          <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 ${meta.color}`}>
