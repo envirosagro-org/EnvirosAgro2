@@ -50,6 +50,8 @@ import { HenIcon, SycamoreLogo } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 
+import ShareButton from './ShareButton';
+
 interface AgrowildProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
@@ -354,12 +356,20 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                                 <span className="text-xs text-blue-400 italic font-black font-sans">EAC</span>
                              </div>
                           </div>
-                          <button 
-                            onClick={() => handleOrderExperience(offer)}
-                            className="p-6 md:p-8 rounded-[32px] bg-blue-600 hover:bg-blue-500 text-white shadow-3xl active:scale-90 transition-all border-2 border-white/10 ring-4 ring-blue-500/5 group/btn"
-                          >
-                             <ChevronRight size={32} className="group-hover/btn:translate-x-1 transition-transform" />
-                          </button>
+                          <div className="flex gap-2">
+                            <ShareButton 
+                              title={`Agrowild: ${offer.title}`}
+                              text={`Check out this ${offer.duration} ingest mission: ${offer.desc}`}
+                              className="p-6 md:p-8 rounded-[32px] bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white shadow-3xl active:scale-90 transition-all border-2 border-white/10"
+                              iconSize={24}
+                            />
+                            <button 
+                              onClick={() => handleOrderExperience(offer)}
+                              className="p-6 md:p-8 rounded-[32px] bg-blue-600 hover:bg-blue-500 text-white shadow-3xl active:scale-90 transition-all border-2 border-white/10 ring-4 ring-blue-500/5 group/btn"
+                            >
+                               <ChevronRight size={32} className="group-hover/btn:translate-x-1 transition-transform" />
+                            </button>
+                          </div>
                        </div>
                     </div>
                  </div>
@@ -438,7 +448,15 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
                                       <p className="text-xs font-mono text-white tracking-widest">0xBIO_SHARD_#{(Math.random()*1000).toFixed(0)}</p>
                                    </div>
                                 </div>
-                                <button onClick={() => setDiscoveryVerdict(null)} className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all ring-4 ring-white/5 border border-white/10">ANCHOR TO BIO-LEDGER</button>
+                                <div className="flex gap-4">
+                                   <ShareButton 
+                                      title="EnvirosAgro Discovery Verdict"
+                                      text={discoveryVerdict || ''}
+                                      className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-emerald-400 font-black text-[10px] uppercase tracking-[0.4em] shadow-xl active:scale-95 transition-all"
+                                      iconSize={18}
+                                   />
+                                   <button onClick={() => setDiscoveryVerdict(null)} className="px-10 py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all ring-4 ring-white/5 border border-white/10">ANCHOR TO BIO-LEDGER</button>
+                                </div>
                              </div>
                           </div>
                        </div>

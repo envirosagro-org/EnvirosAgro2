@@ -14,6 +14,7 @@ import { chatWithAgroLang, analyzeSustainability, AgroLangResponse } from '../se
 import { User as AgroUser, ViewState, SignalShard } from '../types';
 import { HenIcon } from './Icons';
 import { SycamoreLogo } from './Icons';
+import ShareButton from './ShareButton';
 
 interface AgroLangAnalystProps {
   user: AgroUser;
@@ -309,6 +310,17 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
                         {m.content.split('\n').map((line, i) => (
                           <p key={i} className={i > 0 ? 'mt-4' : ''}>{line}</p>
                         ))}
+                        {m.role === 'assistant' && (
+                           <div className="mt-6 pt-6 border-t border-white/5 flex justify-end">
+                              <ShareButton 
+                                 title="EnvirosAgro AI Response"
+                                 text={`EnvirosAgro AI Analysis: ${m.content}`}
+                                 className="px-6 py-3 bg-white/5 hover:bg-emerald-600/20 border border-white/10 rounded-full text-slate-400 hover:text-emerald-400 transition-all flex items-center gap-2 text-[9px] font-black uppercase tracking-widest"
+                                 iconSize={14}
+                                 label="Share Response"
+                              />
+                           </div>
+                        )}
                       </div>
                     </div>
                     

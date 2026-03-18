@@ -33,6 +33,7 @@ import {
 import { User, MediaShard, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import MultimediaPlayer from './MultimediaPlayer';
+import { ShareButton } from './ShareButton';
 
 interface MediaLedgerProps {
   user: User;
@@ -236,6 +237,12 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
                             <button onClick={() => setSelectedShard(shard)} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-indigo-400 transition-all shadow-xl active:scale-90" title="Inspect Shard">
                                <Eye size={24} />
                             </button>
+                            <ShareButton 
+                              title={`EnvirosAgro Media Ledger: ${shard.title}`}
+                              text={`Check out this ${shard.type} shard by ${shard.author} on EnvirosAgro!`}
+                              className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-emerald-400 transition-all shadow-xl active:scale-90"
+                              iconSize={24}
+                            />
                             <button 
                               onClick={() => (onNavigate as any)('multimedia_generator', null, true, { prompt: `Process and prepare download for shard: ${shard.title} (${shard.id}). Type: ${shard.type}`, type: shard.type === 'PAPER' ? 'document' : shard.type.toLowerCase() })}
                               className="p-5 bg-indigo-600 rounded-2xl text-white shadow-3xl hover:bg-indigo-500 transition-all active:scale-90 border border-white/10" 
@@ -346,8 +353,15 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
                  </div>
               </div>
 
-              <div className="p-12 border-t border-white/5 bg-white/[0.01] flex justify-center gap-8 shrink-0">
+              <div className="p-12 border-t border-white/5 bg-white/[0.01] flex justify-center gap-8 shrink-0 flex-wrap">
                  <button onClick={() => setSelectedShard(null)} className="px-16 py-7 bg-white/5 border-2 border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all shadow-3xl active:scale-95">Abort_Inspection</button>
+                 <ShareButton 
+                   title={`EnvirosAgro Media Ledger: ${selectedShard.title}`}
+                   text={`Check out this ${selectedShard.type} shard by ${selectedShard.author} on EnvirosAgro!`}
+                   className="px-16 py-7 bg-white/5 border-2 border-white/10 rounded-[40px] text-slate-500 font-black text-xs uppercase tracking-widest hover:text-emerald-400 transition-all shadow-3xl active:scale-95 flex items-center justify-center gap-4"
+                   iconSize={20}
+                   label="SHARE_SHARD"
+                 />
                   {(selectedShard.type === 'VIDEO' || selectedShard.type === 'AUDIO') && (
                     <button 
                       onClick={() => {

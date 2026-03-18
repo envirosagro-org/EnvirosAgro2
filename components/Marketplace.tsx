@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Tag, TrendingUp, Search, Filter, ShoppingBag, Zap, Award } from 'lucide-react';
+import { ShareButton } from './ShareButton';
 
 const Marketplace: React.FC = () => {
   const products = [
@@ -60,9 +61,17 @@ const Marketplace: React.FC = () => {
                   <span className="text-xs font-bold text-emerald-400">EAC</span>
                 </div>
               </div>
-              <button className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400">
-                <ShoppingBag className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                <ShareButton 
+                  title={`Marketplace: ${item.name}`}
+                  text={`Check out ${item.name} for ${item.price} EAC!`}
+                  className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400"
+                  iconSize={20}
+                />
+                <button className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400">
+                  <ShoppingBag className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         ))}

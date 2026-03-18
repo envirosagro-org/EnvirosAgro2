@@ -69,6 +69,7 @@ import { HenIcon } from './Icons';
 import { generateAgroResearch, analyzeMedia, chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
+import ShareButton from './ShareButton';
 
 interface ResearchInnovationProps {
   user: User;
@@ -463,6 +464,13 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                              </div>
                           </div>
                           <div className="mt-10 pt-8 border-t border-white/5 flex gap-4 relative z-10">
+                             <ShareButton 
+                                title={`AgroInPDF: ${book.title}`}
+                                text={`Check out this AgroInPDF publication: ${book.title} by ${book.authorName}`}
+                                className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-emerald-400 transition-all flex items-center justify-center gap-2"
+                                iconSize={14}
+                                label="SHARE"
+                             />
                              <button onClick={() => downloadBook(book)} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2">
                                 <Download size={14} /> MD_EXPORT
                              </button>
@@ -503,7 +511,16 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
                           <Star size={16} fill="currentColor" />
                           <span className="text-xs font-mono font-black text-white">{paper.rating}</span>
                         </div>
-                        <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all shadow-xl active:scale-90"><Download size={20} /></button>
+                        <div className="flex gap-4">
+                           <ShareButton 
+                              title={`Agro Patent: ${paper.title}`}
+                              text={`Check out this technical patent from EnvirosAgro: ${paper.title} by ${paper.author}`}
+                              className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-emerald-400 transition-all shadow-xl active:scale-90"
+                              iconSize={20}
+                              label=""
+                           />
+                           <button className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all shadow-xl active:scale-90"><Download size={20} /></button>
+                        </div>
                      </div>
                   </div>
                 ))}

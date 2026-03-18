@@ -14,6 +14,7 @@ import {
   Music, Palette, Map as MapIcon,
   Database, Calculator, FlaskConical
 } from 'lucide-react';
+import { ShareButton } from './ShareButton';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, 
   Area, BarChart, Bar, Cell, PieChart, Pie
@@ -496,12 +497,20 @@ const Economy: React.FC<EconomyProps> = ({
                                  <span className="text-sm italic font-sans font-black text-slate-600">EAC</span>
                               </div>
                            </div>
-                           <button 
-                             onClick={() => handleAddToCart(item)}
-                             className={`p-8 rounded-[36px] transition-all shadow-3xl active:scale-90 border-2 border-white/10 group/buy relative overflow-hidden ${item.isUserGenerated ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-emerald-600 hover:bg-emerald-500'} text-white`}
-                           >
-                              <Plus size={32} className="relative z-10" />
-                           </button>
+                           <div className="flex gap-4">
+                              <ShareButton 
+                                 title={`EnvirosAgro Product: ${item.name}`}
+                                 text={`Check out ${item.name} from ${item.supplierName} on EnvirosAgro! ${item.description}`}
+                                 className="p-8 bg-white/5 border-2 border-white/10 rounded-[36px] text-slate-500 hover:text-emerald-400 transition-all shadow-xl active:scale-90 flex items-center justify-center"
+                                 iconSize={24}
+                              />
+                              <button 
+                                onClick={() => handleAddToCart(item)}
+                                className={`p-8 rounded-[36px] transition-all shadow-3xl active:scale-90 border-2 border-white/10 group/buy relative overflow-hidden ${item.isUserGenerated ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-emerald-600 hover:bg-emerald-500'} text-white`}
+                              >
+                                 <Plus size={32} className="relative z-10" />
+                              </button>
+                           </div>
                         </div>
                      </div>
                   </div>

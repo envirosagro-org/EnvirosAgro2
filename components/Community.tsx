@@ -37,6 +37,7 @@ import { HenIcon } from './Icons';
 import { generateAgroExam, getGroundedAgroResources, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
+import { ShareButton } from './ShareButton';
 
 interface CommunityProps {
   user: User;
@@ -460,9 +461,15 @@ const Community: React.FC<CommunityProps> = ({
                              <button className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-blue-400 transition-all uppercase tracking-widest">
                                 <MessageSquare size={18} /> {post.comments.length} Echoes
                              </button>
-                             <button className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-indigo-400 transition-all uppercase tracking-widest">
-                                <Share2 size={18} /> Shard Signal
-                             </button>
+                             <div className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-indigo-400 transition-all uppercase tracking-widest cursor-pointer">
+                                <ShareButton 
+                                  title={`EnvirosAgro Post by ${post.authorName}`}
+                                  text={post.text}
+                                  className="text-inherit hover:text-inherit"
+                                  iconSize={18}
+                                />
+                                <span>Shard Signal</span>
+                             </div>
                              <button onClick={() => onNavigate('digital_mrv')} className="ml-auto px-6 py-2 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">Audit Evidence</button>
                           </div>
 
@@ -651,6 +658,12 @@ const Community: React.FC<CommunityProps> = ({
                              </div>
                           )}
                           <div className="flex gap-4">
+                             <ShareButton 
+                                title={`EnvirosAgro Collective: ${shard.name}`}
+                                text={`Join the ${shard.name} collective on EnvirosAgro! Mission: ${shard.mission}`}
+                                className="p-8 bg-white/5 border-2 border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-emerald-400 transition-all shadow-xl active:scale-95 flex items-center justify-center"
+                                iconSize={20}
+                             />
                              <button className="flex-1 py-8 bg-white/5 border-2 border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-4">
                                 <FileText size={20} /> VIEW_MANIFEST
                              </button>

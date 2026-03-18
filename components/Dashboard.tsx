@@ -13,6 +13,7 @@ import {
 import { ViewState, User, Order, AgroBlock } from '../types';
 import { HenIcon } from './Icons';
 import IdentityCard from './IdentityCard';
+import { ShareButton } from './ShareButton';
 
 import { useAppNavigation } from '../hooks/useAppNavigation';
 
@@ -94,6 +95,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                         {user.name.split(' ')[0]} <span className="text-emerald-400">{user.name.split(' ')[1] || 'STEWARD'}</span>
                       </h3>
                       <div className="px-5 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/30 text-[10px] font-black text-emerald-400 animate-pulse tracking-widest">ANCHORED</div>
+                      <ShareButton 
+                        title={`EnvirosAgro Profile: ${user.name}`}
+                        text={`Check out my EnvirosAgro profile! My role is ${user.role}.`}
+                        className="p-2 bg-white/5 rounded-full hover:bg-emerald-500 hover:text-white transition-all text-slate-400"
+                        iconSize={18}
+                      />
                     </div>
                     <p className="text-slate-500 text-sm font-black uppercase tracking-[0.4em] flex items-center gap-3 justify-center sm:justify-start">
                        <SycamoreLogo size={16} className="text-indigo-400" /> {user.role} // {user.esin}

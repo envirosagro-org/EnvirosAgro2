@@ -79,6 +79,7 @@ import { HenIcon, SycamoreLogo } from './Icons';
 import { chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { generateQuickHash } from '../systemFunctions';
+import { ShareButton } from './ShareButton';
 
 interface AgroRegencyProps {
   user: User;
@@ -388,7 +389,15 @@ ${content}
          </div>
          <div className="space-y-6 relative z-10 text-center md:text-left flex-1">
             <div className="space-y-2">
-               <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20 shadow-inner italic">REGISTRY_REGENCY_v5.0</span>
+               <div className="flex items-center justify-center md:justify-start gap-4">
+                 <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase rounded-full tracking-[0.4em] border border-indigo-500/20 shadow-inner italic">REGISTRY_REGENCY_v5.0</span>
+                 <ShareButton 
+                   title="EnvirosAgro: Agro Regency"
+                   text="Exploring the Agro Regency node on EnvirosAgro!"
+                   className="p-2 bg-white/5 rounded-full hover:bg-indigo-500 hover:text-white transition-all text-slate-400"
+                   iconSize={16}
+                 />
+               </div>
                <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0 leading-none drop-shadow-2xl">Agro <span className="text-indigo-400">Regency</span></h2>
             </div>
             <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl">
@@ -893,6 +902,13 @@ ${content}
                            )}
 
                            <div className="flex justify-end gap-4 pt-6 border-t border-white/5">
+                              <ShareButton 
+                                title={`EnvirosAgro Retrieved Shard: ${restoredShard.id}`}
+                                text={`Check out this retrieved shard from the EnvirosAgro ledger: ${restoredShard.content}`}
+                                className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-emerald-400 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                                iconSize={16}
+                                label="Share Shard"
+                              />
                               <button onClick={() => downloadReport(restoredShard.content, 'Retrieval', 'History')} className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                                  <Download size={16} /> Export Shard
                               </button>
@@ -932,6 +948,13 @@ ${content}
                     <div className="mt-10 p-10 bg-black/60 rounded-[48px] border border-indigo-500/20 text-left animate-in fade-in space-y-10">
                        <p className="text-slate-300 text-xl leading-loose italic">{oracleReport}</p>
                        <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-center items-center gap-6 relative z-10">
+                          <ShareButton 
+                            title="EnvirosAgro Regency Oracle Audit"
+                            text={`Check out this Oracle dy/dx Audit from EnvirosAgro: ${oracleReport}`}
+                            className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-emerald-400 transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl"
+                            iconSize={18}
+                            label="Share Shard"
+                          />
                           {/* Calling downloadReport here correctly now */}
                           <button onClick={() => downloadReport(oracleReport || "", "Regency", "Audit")} className="px-10 py-5 bg-white/5 border border-white/10 rounded-full text-slate-400 hover:text-white transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-xl">
                              <Download size={18} /> Download Shard

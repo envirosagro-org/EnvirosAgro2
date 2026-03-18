@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Video, FileText, ChevronRight, PlayCircle, ExternalLink, GraduationCap, Link as LinkIcon } from 'lucide-react';
 import { ViewState } from '../types';
+import { ShareButton } from './ShareButton';
 
 interface Resource {
   id: string;
@@ -158,16 +159,24 @@ const EducationalResources: React.FC<EducationalResourcesProps> = ({ onNavigate 
               <span className="text-xs font-mono text-slate-500">
                 {resource.type === 'video' ? resource.duration : resource.readTime}
               </span>
-              <button 
-                onClick={() => onNavigate('multimedia_generator', null, true, { 
-                  prompt: `Generate educational media for: ${resource.title}. Description: ${resource.description}`, 
-                  type: resource.type === 'video' ? 'video' : 'document' 
-                })} 
-                className="flex items-center gap-2 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors uppercase tracking-wider"
-              >
-                 {resource.type === 'video' ? 'Watch Now' : 'Read More'}
-                 <ChevronRight size={14} />
-               </button>
+              <div className="flex items-center gap-4">
+                <ShareButton 
+                  title={`EnvirosAgro Education: ${resource.title}`}
+                  text={`Check out this educational resource: ${resource.title} on EnvirosAgro!`}
+                  className="text-slate-500 hover:text-emerald-400 transition-colors"
+                  iconSize={16}
+                />
+                <button 
+                  onClick={() => onNavigate('multimedia_generator', null, true, { 
+                    prompt: `Generate educational media for: ${resource.title}. Description: ${resource.description}`, 
+                    type: resource.type === 'video' ? 'video' : 'document' 
+                  })} 
+                  className="flex items-center gap-2 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors uppercase tracking-wider"
+                >
+                   {resource.type === 'video' ? 'Watch Now' : 'Read More'}
+                   <ChevronRight size={14} />
+                 </button>
+              </div>
             </div>
           </div>
         ))}
