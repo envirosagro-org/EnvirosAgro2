@@ -408,6 +408,91 @@ export const optimizeProductionProcess = async (assetData: any, tasks: any[], bl
   }
 };
 
+export const automateSupplyChain = async (assetData: any, vendorRegistry: any[]): Promise<AgroLangResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const response = await callBackendEA({
+        model: 'gemini-3-pro-preview',
+        contents: `Automate the full supply chain and industrial operations for the following live farming asset:
+        Asset: ${JSON.stringify(assetData)}
+        Vendor Registry: ${JSON.stringify(vendorRegistry.map(v => ({ id: v.id, name: v.name, type: v.supplierType, category: v.category })))}
+        
+        Your goal is to provide a comprehensive automation plan covering:
+        1. PROCUREMENT & SOURCING: Automatically identify and integrate the best vendors from the registry.
+        2. LOGISTICS & PROVISIONING: Source and integrate a Logistics Provider for JIT fulfillment.
+        3. INSURANCE & RISK: Integrate an Insurance Provider to ensure maximum market qualification.
+        4. OPERATIONS & PROCESSING: Define automated operational steps and processing requirements.
+        5. TQM (Total Quality Management): Establish automated quality checks and compliance parameters.
+        6. VENDOR COMMAND: Define smart contract parameters and network signals for robust, agile communication with all integrated vendors.
+        
+        Return the response in JSON format.`,
+        config: {
+          systemInstruction: "You are the EnvirosAgro AI Supply Chain & Industrial Automator. Your goal is to ensure seamless, end-to-end automated integration of vendors, logistics, and quality management for live farming assets.",
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              automation_summary: { type: Type.STRING },
+              integrated_vendors: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    name: { type: Type.STRING },
+                    role: { type: Type.STRING, description: "e.g., Logistics, Insurance, Processor, Supplier" },
+                    integration_logic: { type: Type.STRING }
+                  }
+                }
+              },
+              smart_contract_params: {
+                type: Type.OBJECT,
+                properties: {
+                  escrow_amount: { type: Type.NUMBER },
+                  conditions: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  finality_trigger: { type: Type.STRING }
+                }
+              },
+              network_signals: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    target_vendor_id: { type: Type.STRING },
+                    signal_type: { type: Type.STRING },
+                    message: { type: Type.STRING },
+                    priority: { type: Type.STRING, enum: ["low", "medium", "high", "critical"] }
+                  }
+                }
+              },
+              kanban_automation: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    title: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    priority: { type: Type.STRING },
+                    system: { type: Type.STRING, description: "e.g., TQM, Procurement, Operations" }
+                  }
+                }
+              },
+              tqm_parameters: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              }
+            },
+            required: ["automation_summary", "integrated_vendors", "smart_contract_params", "network_signals", "kanban_automation"]
+          }
+        }
+      });
+      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
+};
+
 export const queryProgramAssets = async (assetData: any, programName: string, blueprints: any[], industrialUnits: any[]): Promise<any[]> => {
   try {
     return await callOracleWithRetry(async () => {

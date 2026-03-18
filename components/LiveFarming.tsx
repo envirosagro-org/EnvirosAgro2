@@ -11,10 +11,10 @@ import {
   TableProperties, Shield, ClipboardList as ClipboardListIcon, Boxes as BoxesIcon,
   ArrowDownCircle, SearchCode
 } from 'lucide-react';
-import { User, LiveAgroProduct, ViewState, AgroResource, ValueBlueprint, Task, RegisteredUnit, FarmingContract } from '../types';
+import { User, LiveAgroProduct, ViewState, AgroResource, ValueBlueprint, Task, RegisteredUnit, FarmingContract, VendorProduct } from '../types';
 import { HenIcon } from './Icons';
 import AssetAssociationTool from './AssetAssociationTool';
-import { optimizeProductionProcess } from '../services/agroLangService';
+import { optimizeProductionProcess, automateSupplyChain } from '../services/agroLangService';
 
 interface LiveFarmingProps {
   user: User;
@@ -30,11 +30,12 @@ interface LiveFarmingProps {
   industrialUnits: RegisteredUnit[];
   contracts: FarmingContract[];
   onSaveContract?: (contract: FarmingContract) => void;
+  vendorProducts: VendorProduct[];
 }
 
 import { useAppStore } from '../store';
 
-const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct, onNavigate, notify, initialSection, onSaveTask, blueprints, industrialUnits, contracts, onSaveContract }) => {
+const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct, onNavigate, notify, initialSection, onSaveTask, blueprints, industrialUnits, contracts, onSaveContract, vendorProducts }) => {
   const { liveFarmingRegistrationState, setLiveFarmingRegistrationState } = useAppStore();
   const [activeTab, setActiveTab] = useState<'ledger' | 'terminal'>('ledger');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -59,6 +60,11 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
   const [showAIOptimization, setShowAIOptimization] = useState(false);
   const [aiOptimizationResult, setAiOptimizationResult] = useState<any>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+
+  // Supply Chain Automation State
+  const [showSupplyChainAutomation, setShowSupplyChainAutomation] = useState(false);
+  const [supplyChainResult, setSupplyChainResult] = useState<any>(null);
+  const [isAutomatingSupplyChain, setIsAutomatingSupplyChain] = useState(false);
 
   const isSuccessRef = useRef(false);
   const assetRef = useRef(newAsset);
@@ -279,8 +285,60 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
       }
       return;
     }
+    if (tool.target === 'supply_chain_automation') {
+      handleAutomateSupplyChain();
+      return;
+    }
     setLinkerContext(tool);
     setShowShardLinker(true);
+  };
+
+  const handleAutomateSupplyChain = async () => {
+    if (!selectedAsset) return;
+    setShowSupplyChainAutomation(true);
+    setIsAutomatingSupplyChain(true);
+    try {
+      const result = await automateSupplyChain(selectedAsset, vendorProducts);
+      const data = result.json;
+      setSupplyChainResult(data);
+
+      // 1. Create Kanban Tasks
+      if (data.kanban_automation) {
+        for (const task of data.kanban_automation) {
+          onSaveTask({
+            id: `TSK-AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            title: task.title,
+            description: task.description,
+            priority: task.priority || 'Standard',
+            thrust: task.system || 'Industry',
+            status: 'Inception',
+            timestamp: new Date().toISOString(),
+            stewardEsin: user.esin,
+            assetId: selectedAsset.id
+          });
+          await new Promise(r => setTimeout(r, 100));
+        }
+      }
+
+      // 2. Emit Network Signals
+      if (data.network_signals) {
+        for (const signal of data.network_signals) {
+          notify({
+            title: signal.signal_type || 'SUPPLY_CHAIN_SIGNAL',
+            message: signal.message,
+            type: signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info',
+            targetVendorId: signal.target_vendor_id
+          });
+        }
+      }
+
+      notify({ title: 'SUPPLY_CHAIN_AUTOMATED', message: `Full automation plan sharded for ${selectedAsset.id}.`, type: 'success' });
+    } catch (error) {
+      console.error("Supply Chain Automation Error:", error);
+      notify({ title: 'AUTOMATION_FAILED', message: 'Failed to automate supply chain systems.', type: 'error' });
+    } finally {
+      setIsAutomatingSupplyChain(false);
+    }
   };
 
   const triggerMandatoryCheck = (type: 'verify' | 'audit') => {
@@ -508,6 +566,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                            {[
                               { label: 'AI Optimization', icon: HenIcon, target: 'ai_optimization', action: 'optimize', col: 'text-emerald-400', sourceLedger: 'AI' },
+                              { label: 'Supply Chain AI', icon: Workflow, target: 'supply_chain_automation', action: 'automate', col: 'text-amber-400', sourceLedger: 'AI' },
                               { label: 'Ingest Evidence', icon: Upload, target: 'digital_mrv', action: 'ingest', col: 'text-blue-400', sourceLedger: 'RESOURCE' },
                               { label: 'Registry Handshake', icon: SmartphoneNfc, target: 'registry_handshake', col: 'text-indigo-400', sourceLedger: 'RESOURCE' },
                               { label: 'Network Ingest', icon: Wifi, target: 'ingest', col: 'text-teal-400', sourceLedger: 'RESOURCE' },
@@ -810,6 +869,145 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+           </div>
+        </div>
+      )}
+
+      {showSupplyChainAutomation && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-[#050706]/98 backdrop-blur-3xl animate-in fade-in" onClick={() => setShowSupplyChainAutomation(false)}></div>
+           <div className="relative z-10 w-full max-w-5xl glass-card rounded-[64px] border-amber-500/30 bg-[#050706] overflow-hidden shadow-3xl animate-in zoom-in border-2 flex flex-col max-h-[90vh]">
+              <div className="p-10 border-b border-white/5 bg-amber-500/[0.02] flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-amber-600 rounded-3xl flex items-center justify-center text-white shadow-2xl"><Workflow size={32} /></div>
+                    <div>
+                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter m-0 leading-none">Supply Chain <span className="text-amber-400">Automation</span></h3>
+                       <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mt-1">JIT Fulfillment & Vendor Command</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowSupplyChainAutomation(false)} className="p-4 bg-white/5 border border-white/10 rounded-full text-slate-600 hover:text-white transition-all"><X size={24} /></button>
+              </div>
+              
+              <div className="p-12 overflow-y-auto custom-scrollbar flex-1">
+                {isAutomatingSupplyChain ? (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-8">
+                    <div className="relative">
+                      <div className="w-32 h-32 rounded-full border-4 border-amber-500/20 border-t-amber-500 animate-spin"></div>
+                      <Workflow size={48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-amber-400 animate-pulse" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <h4 className="text-2xl font-black text-white uppercase tracking-widest italic">Automating Supply Chain Systems</h4>
+                      <p className="text-slate-500 font-mono text-xs uppercase tracking-[0.2em]">Integrating vendors, logistics, and smart contracts...</p>
+                    </div>
+                  </div>
+                ) : supplyChainResult ? (
+                  <div className="space-y-12">
+                    <div className="p-8 rounded-3xl bg-amber-900/10 border border-amber-500/20">
+                      <h4 className="text-sm font-black text-amber-400 uppercase tracking-[0.3em] mb-4">Automation Summary</h4>
+                      <p className="text-slate-300 leading-relaxed">{supplyChainResult.automation_summary}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div className="space-y-6">
+                        <h4 className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                          <Users size={16} /> Integrated Vendors
+                        </h4>
+                        <div className="space-y-4">
+                          {supplyChainResult.integrated_vendors?.map((vendor: any, idx: number) => (
+                            <div key={idx} className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
+                              <div className="flex justify-between items-center">
+                                <h5 className="text-sm font-black text-white uppercase">{vendor.name}</h5>
+                                <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[8px] font-black uppercase">{vendor.role}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 italic">{vendor.integration_logic}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        <h4 className="text-xs font-black text-emerald-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                          <ClipboardListIcon size={16} /> Kanban Automation
+                        </h4>
+                        <div className="space-y-4">
+                          {supplyChainResult.kanban_automation?.map((task: any, idx: number) => (
+                            <div key={idx} className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
+                              <div className="flex justify-between items-center">
+                                <h5 className="text-sm font-black text-white uppercase">{task.title}</h5>
+                                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[8px] font-black uppercase">{task.system}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 italic">{task.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div className="space-y-6">
+                        <h4 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                          <ShieldCheck size={16} /> Smart Contract Parameters
+                        </h4>
+                        <div className="p-8 rounded-3xl bg-purple-900/10 border border-purple-500/20 space-y-6">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-black text-slate-500 uppercase">Escrow Amount</span>
+                            <span className="text-xl font-black text-white font-mono">{supplyChainResult.smart_contract_params?.escrow_amount} EAC</span>
+                          </div>
+                          <div className="space-y-3">
+                            <span className="text-[10px] font-black text-slate-500 uppercase">Conditions</span>
+                            <ul className="space-y-2">
+                              {supplyChainResult.smart_contract_params?.conditions?.map((cond: string, idx: number) => (
+                                <li key={idx} className="text-[11px] text-slate-300 flex items-start gap-3">
+                                  <CheckCircle2 size={12} className="text-purple-500 mt-0.5" /> {cond}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="pt-4 border-t border-white/5">
+                            <span className="text-[10px] font-black text-slate-500 uppercase">Finality Trigger</span>
+                            <p className="text-[11px] text-purple-400 font-bold mt-1">{supplyChainResult.smart_contract_params?.finality_trigger}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        <h4 className="text-xs font-black text-teal-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                          <Radio size={16} /> Network Signals
+                        </h4>
+                        <div className="space-y-4">
+                          {supplyChainResult.network_signals?.map((signal: any, idx: number) => (
+                            <div key={idx} className="p-6 rounded-3xl bg-white/5 border border-white/10 flex items-start gap-4">
+                              <div className={`p-2 rounded-lg ${signal.priority === 'critical' ? 'bg-rose-500/20 text-rose-500' : 'bg-teal-500/20 text-teal-400'}`}>
+                                <Zap size={14} />
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[10px] font-black text-white uppercase">{signal.signal_type}</span>
+                                  <span className="text-[8px] font-mono text-slate-600">TO: {signal.target_vendor_id}</span>
+                                </div>
+                                <p className="text-[11px] text-slate-400 italic">{signal.message}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-8 rounded-3xl bg-blue-900/10 border border-blue-500/20 space-y-4">
+                      <h4 className="text-xs font-black text-blue-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                        <BadgeCheck size={16} /> TQM Parameters
+                      </h4>
+                      <div className="flex flex-wrap gap-3">
+                        {supplyChainResult.tqm_parameters?.map((param: string, idx: number) => (
+                          <span key={idx} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                            {param}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   </div>

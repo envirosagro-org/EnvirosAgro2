@@ -120,8 +120,14 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
       }
 
       const prompt = `Analyze the asset "${assetName}" (ID: ${selectedAsset.id}) within the context of "${linkerContext?.label}". 
-      The Asset Association Tool integrates agro assets with various programs in the ecosystem for production planning and operations management.
-      Suggest 2-3 specific, highly relevant ${suggestionTarget} that should be associated with this asset to maximize yield, efficiency, or ecological impact, ensuring the production system aligns with the right sequencing and routing processes.
+      The Asset Association Tool is specifically for IN-SOURCING. This involves:
+      1. Category management of assets (e.g., Circular, Raw, Logistics, etc.).
+      2. Owned asset integration from programs (e.g., Value Enhancement/Production Blueprints, Live Streaming/Metadata).
+      
+      Suggest 2-3 specific, highly relevant ${suggestionTarget} from the user's OWNED inventory that should be associated with this asset.
+      Owned asset integration threads and strings a live asset with other assets belonging to the owner within system programs. This allows the asset to gain insights from the market through its associations.
+      
+      Note: This tool is for internal threading and category management. External outsourcing and selling are handled separately by the AI-driven Supply Chain Automation.
       Format the response as a simple bulleted list. Keep it concise, technical, and actionable.`;
       
       const response = await chatWithAgroLang(prompt, []);
@@ -147,10 +153,10 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                    <Workflow size={40} />
                 </div>
                 <div>
-                   <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Asset <span className="text-indigo-400">Association</span> Tool</h3>
-                   <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">{linkerContext?.sourceLedger === 'CATEGORIES' ? 'ASSET_METADATA_LINKING' : 
-                        linkerContext?.sourceLedger === 'PROGRAMS' ? 'ECOSYSTEM_PROGRAM_INTEGRATION' : 
-                        'INVENTORY_LEDGER_SYNCHRONIZATION'}</p>
+                   <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">In-Sourcing <span className="text-indigo-400">Association</span> Tool</h3>
+                   <p className="text-indigo-400/60 font-mono text-[11px] tracking-[0.5em] uppercase mt-4 italic">{linkerContext?.sourceLedger === 'CATEGORIES' ? 'ASSET_CATEGORY_MANAGEMENT' : 
+                        linkerContext?.sourceLedger === 'PROGRAMS' ? 'OWNED_PROGRAM_INTEGRATION' : 
+                        'INTERNAL_LEDGER_SYNCHRONIZATION'}</p>
                 </div>
              </div>
              <button onClick={onClose} className="p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-white transition-all"><X size={32} /></button>
@@ -309,13 +315,13 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
                         </div>
                       ) : (
                         [
-                          { id: 'PROG-VALUE', name: 'Value Enhancement', icon: FlaskConical, col: 'text-blue-400', desc: 'Optimize production blueprints' },
+                          { id: 'PROG-VALUE', name: 'Value Enhancement', icon: FlaskConical, col: 'text-blue-400', desc: 'Production blueprints and value threading' },
                           { id: 'PROG-PERMA', name: 'Permaculture', icon: Sprout, col: 'text-emerald-400', desc: 'Categorize in available zones' },
                           { id: 'PROG-BIO', name: 'Biotech Hub', icon: FlaskConical, col: 'text-fuchsia-400', desc: 'Track and trace genome' },
                           { id: 'PROG-CEA', name: 'CEA Portal', icon: Factory, col: 'text-teal-400', desc: 'Further evaluate under CEA' },
                           { id: 'PROG-CHROMA', name: 'Chroma SEHTI', icon: Leaf, col: 'text-amber-400', desc: 'Standardize frequency' },
                           { id: 'PROG-INV', name: 'Invention Ledger', icon: Wrench, col: 'text-blue-400', desc: 'Patent and IP tracking' },
-                          { id: 'PROG-MEDIA', name: 'Media Ledger', icon: Video, col: 'text-rose-400', desc: 'Broadcast standardization' },
+                          { id: 'PROG-MEDIA', name: 'Media Ledger', icon: Video, col: 'text-rose-400', desc: 'Live streaming and broadcast metadata' },
                           { id: 'PROG-EMERG', name: 'Emergency Command', icon: ShieldAlert, col: 'text-red-500', desc: 'Risk mitigation protocol' },
                           { id: 'PROG-SWARM', name: 'Robotic Swarm', icon: Cpu, col: 'text-indigo-400', desc: 'Automate physical tasks' },
                           { id: 'PROG-NAT', name: 'Natural Resources', icon: MapPin, col: 'text-green-500', desc: 'Ecological auditing' },
