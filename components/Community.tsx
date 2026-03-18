@@ -424,7 +424,7 @@ const Community: React.FC<CommunityProps> = ({
                           <div className="flex justify-between items-start">
                              <div className="flex items-center gap-6">
                                 <div onClick={() => setShowProfileView(post.authorEsin)} className="w-16 h-16 rounded-[28px] border-2 border-white/10 overflow-hidden cursor-pointer shadow-xl group-hover:scale-105 transition-transform">
-                                   <img src={post.authorAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100'} className="w-full h-full object-cover" alt="" />
+                                   <img src={post.authorAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100'} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                                 </div>
                                 <div>
                                    <h4 onClick={() => setShowProfileView(post.authorEsin)} className="text-2xl font-black text-white uppercase italic tracking-tight m-0 cursor-pointer group-hover:text-emerald-400 transition-colors">{post.authorName}</h4>
@@ -441,7 +441,7 @@ const Community: React.FC<CommunityProps> = ({
                              <p className="text-2xl text-slate-300 italic leading-relaxed font-medium">"{post.text}"</p>
                              {post.mediaType && (
                                 <div className="rounded-[40px] overflow-hidden border-2 border-white/10 shadow-3xl relative group/media min-h-[300px]">
-                                   <img src="https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=1200" className="w-full h-full object-cover group/media:scale-105 transition-transform duration-[10s]" alt="" />
+                                   <img src="https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=1200" className="w-full h-full object-cover group/media:scale-105 transition-transform duration-[10s]" alt="" referrerPolicy="no-referrer" />
                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
                                    <div className="absolute bottom-6 left-8 flex items-center gap-4">
                                       <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-2xl"><ImageIcon size={20} /></div>
@@ -533,7 +533,7 @@ const Community: React.FC<CommunityProps> = ({
                              <div className="flex items-center gap-6 relative z-10">
                                 <div className="relative shrink-0">
                                    <div onClick={() => setShowProfileView(steward.esin)} className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:scale-105 transition-all shadow-xl cursor-pointer">
-                                      <img src={steward.avatar} alt="" className="w-full h-full object-cover" />
+                                      <img src={steward.avatar} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                    </div>
                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-black ${steward.online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-800'}`}></div>
                                 </div>
@@ -589,7 +589,7 @@ const Community: React.FC<CommunityProps> = ({
                        <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Globe size={200} /></div>
                        <div className="relative group">
                           <div onClick={() => setShowProfileView(steward.esin)} className="w-32 h-32 rounded-[44px] overflow-hidden border-4 border-white/10 shadow-3xl cursor-pointer group-hover:scale-105 transition-transform">
-                             <img src={steward.avatar} className="w-full h-full object-cover" alt="" />
+                             <img src={steward.avatar} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                           </div>
                           <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white border-4 border-[#050706] shadow-2xl">
                              <BadgeCheck size={20} />
@@ -999,7 +999,7 @@ const Community: React.FC<CommunityProps> = ({
                  <div className="flex flex-col items-center text-center space-y-8 pt-10">
                     <div className="relative">
                        <div className="w-48 h-48 rounded-full border-8 border-indigo-500/20 overflow-hidden shadow-3xl transition-transform hover:scale-105 duration-700">
-                          <img src={selectedStewardDossier.avatar} className="w-full h-full object-cover" alt="" />
+                          <img src={selectedStewardDossier.avatar} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                        </div>
                        <div className={`absolute bottom-2 right-2 w-10 h-10 rounded-full border-8 border-[#050706] ${selectedStewardDossier.online ? 'bg-emerald-500 shadow-[0_0_200px_#10b981]' : 'bg-slate-700'}`}></div>
                     </div>

@@ -323,7 +323,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
               {tourismOffers.map(offer => (
                  <div key={offer.id} className="glass-card rounded-[48px] md:rounded-[64px] border-2 border-white/5 hover:border-blue-500/40 transition-all flex flex-col group active:scale-[0.99] duration-500 shadow-3xl bg-black/40 relative overflow-hidden min-h-[550px]">
                     <div className="h-64 relative overflow-hidden shrink-0">
-                       <img src={offer.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-[10s] grayscale-[0.3] group-hover:grayscale-0" alt={offer.title} />
+                       <img src={offer.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-[10s] grayscale-[0.3] group-hover:grayscale-0" alt={offer.title} referrerPolicy="no-referrer" />
                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
                        <div className="absolute top-6 right-6 p-4 bg-blue-600 rounded-[24px] shadow-2xl text-white group-hover:rotate-12 transition-transform border-2 border-white/10">
                           <Binoculars size={28} />

@@ -95,7 +95,7 @@ const IdentityCard: React.FC<IdentityCardProps> = ({ user, isPrintMode = false }
             {/* Photo & QR Section */}
             <div className="w-24 md:w-36 flex flex-col items-center gap-3 md:gap-4 shrink-0 mt-0">
                <div className="w-full aspect-square rounded-xl md:rounded-2xl bg-black border border-emerald-500/20 p-1 md:p-2 relative overflow-hidden group/qr shadow-2xl flex items-center justify-center">
-                  <img src={qrUrl} alt="Identity QR" className="w-full h-full object-contain" />
+                  <img src={qrUrl} alt="Identity QR" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                   <div className="absolute inset-0 border border-emerald-500/10 pointer-events-none"></div>
                </div>
                <div className="w-full flex gap-1 md:gap-2">

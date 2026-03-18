@@ -187,7 +187,7 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-180px)] animate-in fade-in duration-700">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 min-h-[900px] lg:h-[calc(100vh-180px)] animate-in fade-in duration-700">
       {/* Sidebar Controls */}
       <div className="lg:col-span-1 space-y-4 h-full flex flex-col">
         <div className="glass-card p-6 rounded-[32px] border-white/5 bg-black/40 flex-1 space-y-6 shadow-xl flex flex-col">
@@ -206,14 +206,14 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
             </button>
             <button 
               onClick={() => setActiveMode('tunnelling')}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeMode === 'tunnelling' ? 'bg-indigo-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
+              className={`w-full flex items-center gap-6 p-6 rounded-3xl text-[11px] font-black uppercase tracking-widest transition-all ${activeMode === 'tunnelling' ? 'bg-indigo-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
             >
               <Cable className="w-4 h-4" />
               Tunnelling Hub
             </button>
             <button 
               onClick={() => setActiveMode('status')}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeMode === 'status' ? 'bg-amber-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
+              className={`w-full flex items-center gap-6 p-6 rounded-3xl text-[11px] font-black uppercase tracking-widest transition-all ${activeMode === 'status' ? 'bg-amber-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
             >
               <ClipboardCheck className="w-4 h-4" />
               System Sync Audit
@@ -292,7 +292,7 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
 
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto p-8 md:p-12 space-y-12 scroll-smooth custom-scrollbar"
+              className="flex-1 min-h-[600px] overflow-y-auto p-10 md:p-16 space-y-16 scroll-smooth custom-scrollbar"
             >
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
@@ -301,7 +301,7 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
                       <div className={`w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border shadow-xl ${m.role === 'user' ? 'bg-indigo-600 border-indigo-400' : 'bg-black border-white/10'}`}>
                         {m.role === 'user' ? <UserIcon className="w-5 h-5 text-white" /> : <SycamoreLogo size={24} className="text-emerald-400" />}
                       </div>
-                      <div className={`p-8 rounded-[40px] text-lg leading-relaxed shadow-2xl relative overflow-hidden ${
+                      <div className={`p-10 md:p-12 rounded-[48px] text-xl leading-relaxed shadow-2xl relative overflow-hidden ${
                         m.role === 'user' 
                           ? 'bg-indigo-600 text-white rounded-tr-none border-t-4 border-indigo-400' 
                           : 'bg-black/60 text-slate-200 border border-white/5 rounded-tl-none prose prose-invert border-l-4 border-l-emerald-500 italic font-medium'
@@ -376,12 +376,12 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
               )}
             </div>
 
-            <div className="p-8 border-t border-white/5 bg-black/95">
+            <div className="p-10 md:p-14 border-t border-white/5 bg-black/95">
               <div className="relative group max-w-5xl mx-auto">
                 <input 
                   type="text"
                   placeholder="Query the mesh for industrial patterns..."
-                  className="w-full bg-white/[0.01] border-2 border-white/5 rounded-[32px] py-8 pl-10 pr-24 text-xl text-white focus:outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all font-medium italic placeholder:text-stone-900 shadow-inner"
+                  className="w-full bg-white/[0.01] border-2 border-white/5 rounded-[48px] py-10 md:py-14 pl-12 pr-32 text-2xl text-white focus:outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all font-medium italic placeholder:text-stone-900 shadow-inner"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -389,9 +389,9 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
                 <button 
                   onClick={handleSend}
                   disabled={isAnalyzing || !input.trim()}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-6 bg-indigo-600 rounded-[24px] text-white shadow-[0_0_50px_rgba(99,102,241,0.5)] hover:bg-indigo-500 transition-all disabled:opacity-20 active:scale-90"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-8 bg-indigo-600 rounded-[28px] text-white shadow-[0_0_50px_rgba(99,102,241,0.5)] hover:bg-indigo-500 transition-all disabled:opacity-20 active:scale-90"
                 >
-                  <Send className="w-8 h-8" />
+                  <Send className="w-10 h-10" />
                 </button>
               </div>
             </div>
@@ -632,7 +632,7 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
           </div>
         )}
 
-        <div className="p-8 border-t border-white/5 bg-black/95">
+        <div className="p-10 border-t border-white/5 bg-black/95">
            <div className="flex justify-between items-center px-10">
               <div className="flex items-center gap-4">
                  <div className={`w-2 h-2 rounded-full ${isSimulating ? 'bg-indigo-500 animate-pulse' : 'bg-emerald-500'} shadow-[0_0_100px_currentColor]`}></div>

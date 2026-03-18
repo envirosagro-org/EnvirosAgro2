@@ -173,7 +173,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
          <div className="relative group">
             <div className="w-40 h-40 md:w-56 md:h-56 rounded-full bg-[#1e293b] border-4 border-white/5 shadow-3xl overflow-hidden flex items-center justify-center relative">
                {user.avatar ? (
-                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
                ) : (
                  <div className="w-full h-full bg-slate-800 flex items-center justify-center text-6xl font-black text-slate-700">
                     {user.name[0]}

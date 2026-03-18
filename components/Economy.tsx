@@ -437,7 +437,7 @@ const Economy: React.FC<EconomyProps> = ({
                   <div key={item.id} className="glass-card rounded-[64px] overflow-hidden border-2 border-white/5 hover:border-emerald-500/30 transition-all flex flex-col group shadow-2xl bg-black/40 relative h-[680px]">
                      <div className="h-64 relative overflow-hidden bg-[#050706]">
                         {item.image ? (
-                           <img src={item.image} className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-[10s]" alt={item.name} />
+                           <img src={item.image} className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-[10s]" alt={item.name} referrerPolicy="no-referrer" />
                         ) : (
                            <div className="w-full h-full flex items-center justify-center opacity-10">
                               <Package size={120} />
@@ -718,7 +718,7 @@ const Economy: React.FC<EconomyProps> = ({
                                 <div key={item.cartId} className="p-10 md:p-12 flex flex-col md:flex-row items-center justify-between group/line hover:bg-white/[0.02] transition-all gap-8">
                                    <div className="flex items-center gap-10 w-full md:w-auto">
                                       <div className="w-24 h-24 rounded-[32px] overflow-hidden border-2 border-white/10 shadow-2xl group-hover/line:scale-105 transition-transform shrink-0">
-                                         <img src={item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=200'} className="w-full h-full object-cover grayscale-[0.3] group-hover/line:grayscale-0" alt="" />
+                                         <img src={item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=200'} className="w-full h-full object-cover grayscale-[0.3] group-hover/line:grayscale-0" alt="" referrerPolicy="no-referrer" />
                                       </div>
                                       <div className="space-y-2">
                                          <h5 className="text-2xl md:text-3xl font-black text-white uppercase italic leading-none group-hover/line:text-emerald-400 transition-colors m-0 tracking-tighter">{item.name}</h5>

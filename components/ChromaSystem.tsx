@@ -507,7 +507,7 @@ ${content}
                     ) : (
                        <div className="flex-1 flex flex-col animate-in fade-in zoom-in duration-1000">
                           <div className="relative group/img overflow-hidden flex-1 flex items-center justify-center bg-stone-950">
-                             <img src={generatedImageUrl!} className="w-full h-full object-contain max-h-[700px] shadow-2xl" alt="Generated" />
+                             <img src={generatedImageUrl!} className="w-full h-full object-contain max-h-[700px] shadow-2xl" alt="Generated" referrerPolicy="no-referrer" />
                              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 group-hover/img:opacity-0 transition-opacity"></div>
                              <div className="absolute top-10 right-10 flex gap-4">
                                 <button className="p-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-2xl hover:scale-110 active:scale-95 transition-all"><Maximize size={24}/></button>
@@ -820,7 +820,7 @@ ${content}
                     ) : (
                        <div className="space-y-10 animate-in zoom-in duration-500">
                           <div className="relative w-full aspect-square rounded-[40px] overflow-hidden shadow-2xl border border-white/10 group">
-                             <img src={filePreview} className="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt="Preview" />
+                             <img src={filePreview} className="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt="Preview" referrerPolicy="no-referrer" />
                              <div className="absolute inset-0 bg-emerald-500/10 animate-pulse pointer-events-none"></div>
                              <button onClick={() => { setFilePreview(null); setChromaDiagnosis(null); }} className="absolute top-4 right-4 p-3 bg-black/60 rounded-full text-white hover:bg-rose-600 transition-colors"><X size={20}/></button>
                           </div>

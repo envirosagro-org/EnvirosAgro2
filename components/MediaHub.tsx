@@ -427,7 +427,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
           <div className="space-y-12 animate-in fade-in duration-500">
              {/* Featured Section */}
              <div className="glass-card rounded-[64px] border-2 border-white/10 overflow-hidden relative group min-h-[400px] shadow-3xl">
-                <img src="https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=1600" className="w-full h-full object-cover transition-transform duration-[20s] group-hover:scale-110" alt="Featured" />
+                <img src="https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=1600" className="w-full h-full object-cover transition-transform duration-[20s] group-hover:scale-110" alt="Featured" referrerPolicy="no-referrer" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
                 <div className="absolute bottom-12 left-12 space-y-4 max-w-2xl">
                    <span className="px-4 py-1.5 bg-emerald-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-2xl">FEATURED_SHARD</span>
@@ -745,7 +745,7 @@ const MediaHub: React.FC<MediaHubProps> = ({ user, userBalance, onSpendEAC, onEa
               {VIDEO_NODES.map(node => (
                  <div key={node.id} className="glass-card rounded-[56px] overflow-hidden border border-white/5 bg-black/40 group hover:border-emerald-500/20 transition-all shadow-xl">
                     <div className="h-48 relative overflow-hidden">
-                       <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                       <img src={node.thumb} className="w-full h-full object-cover group-hover:scale-110 transition-transform" referrerPolicy="no-referrer" />
                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
                        <div className="absolute top-4 left-4">
                           <span className="px-3 py-1 bg-rose-600 rounded-full text-white text-[8px] font-black uppercase">LIVE</span>

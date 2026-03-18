@@ -35,6 +35,7 @@ import { useAppStore } from './store';
 import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const Sustainability = React.lazy(() => import('./components/Sustainability'));
@@ -694,7 +695,7 @@ const GlobalSearch: React.FC<{
                                <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
                                   <div className="relative shrink-0">
                                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-[28px] md:rounded-[40px] overflow-hidden border-2 border-white/10 group-hover:card:border-indigo-500 transition-all shadow-xl cursor-pointer">
-                                        <img src={steward.avatar} className="w-full h-full object-cover" alt="" />
+                                        <img src={steward.avatar} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                                      </div>
                                      <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-black ${steward.online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-800'}`}></div>
                                   </div>
@@ -743,7 +744,7 @@ const GlobalSearch: React.FC<{
                             <div key={item.id} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col justify-between h-[380px] shadow-3xl relative overflow-hidden active:scale-[0.99] group/asset">
                                <div className="absolute top-0 right-0 p-8 opacity-[0.01] group-hover/asset:opacity-[0.05] group-hover/asset:scale-110 transition-all"><ShoppingCart size={200} /></div>
                                <div className="flex items-start justify-between mb-6 relative z-10">
-                                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover/asset:border-emerald-500 transition-all shadow-xl"><img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400'} className="w-full h-full object-cover" alt="" /></div>
+                                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover/asset:border-emerald-500 transition-all shadow-xl"><img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400'} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" /></div>
                                   <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-inner">ASSET_MINTED</span>
                                </div>
                                <div className="space-y-2 relative z-10">
@@ -1186,6 +1187,7 @@ const App: React.FC = () => {
   }
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 animate-in fade-in duration-1000 relative">
       {/* Quantum Energy Background */}
       <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
@@ -1362,7 +1364,7 @@ const App: React.FC = () => {
               <button onClick={() => setIsGlobalSearchOpen(true)} className="md:hidden p-2.5 bg-white/5 rounded-xl hover:bg-white/10 transition-all"><Search size={16} className="text-slate-400" /></button>
               {user && <button onClick={() => navigate('wallet')} className="px-3 py-2 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={12} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[8px] sm:text-[10px] font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
               <button onClick={() => navigate('profile')} className={`flex items-center gap-2 px-2 py-1.5 rounded-xl border transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
-                 {user ? (<><div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon size={12} className="text-slate-500 m-auto mt-1.5" />}</div><span className="text-[8px] font-black text-white hidden sm:block truncate max-w-[60px] uppercase italic">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={14} className="text-emerald-400" /><span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Sync</span></>)}
+                 {user ? (<><div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" referrerPolicy="no-referrer" /> : <UserIcon size={12} className="text-slate-500 m-auto mt-1.5" />}</div><span className="text-[8px] font-black text-white hidden sm:block truncate max-w-[60px] uppercase italic">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={14} className="text-emerald-400" /><span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Sync</span></>)}
               </button>
            </div>
         </header>
@@ -1423,6 +1425,7 @@ const App: React.FC = () => {
       <FloatingConsultant isOpen={isConsultantOpen} onClose={() => setIsConsultantOpen(false)} user={user || GUEST_STWD} onNavigate={navigate} />
       <RegistrationResumePopup />
     </div>
+    </ErrorBoundary>
   );
 };
 

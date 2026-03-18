@@ -405,7 +405,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/card:scale-110 transition-transform duration-700"><Activity size={150} /></div>
                              <div className="flex items-center gap-8 relative z-10">
                                 <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 group-hover/card:border-blue-500 transition-all shadow-2xl bg-slate-900">
-                                   <img src={order.itemImage || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=200'} className="w-full h-full object-cover" alt="" />
+                                   <img src={order.itemImage || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=200'} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                                 </div>
                                 <div>
                                    <h5 className="text-xl font-black text-white uppercase italic m-0 tracking-tight">{order.itemName}</h5>
@@ -502,7 +502,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                        
                        <div className="flex justify-between items-start mb-12 relative z-10">
                           <div className="w-24 h-24 rounded-[40px] border-4 border-white/10 bg-slate-800 overflow-hidden shadow-3xl group-hover:scale-105 transition-transform duration-700">
-                             <img src={worker.avatar} className="w-full h-full object-cover" alt="" />
+                             <img src={worker.avatar} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                           </div>
                           <div className="text-right">
                              <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest">VERIFIED_STEWARD</span>

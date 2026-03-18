@@ -273,7 +273,7 @@ const EnvirosAgroStore: React.FC<EnvirosAgroStoreProps> = ({ user, onSpendEAC, o
                
                {item.thumb ? (
                  <div className="h-64 relative overflow-hidden">
-                    <img src={item.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[8s] grayscale-[0.2] group-hover:grayscale-0" alt={item.name} />
+                    <img src={item.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[8s] grayscale-[0.2] group-hover:grayscale-0" alt={item.name} referrerPolicy="no-referrer" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
                     <div className="absolute top-6 left-6">
                        <span className="px-4 py-1.5 bg-emerald-600 text-white backdrop-blur-md rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-2xl flex items-center gap-2 border border-white/20">

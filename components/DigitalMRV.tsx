@@ -309,7 +309,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*" />
                  {evidenceFile ? (
                    <div className="relative w-full aspect-square rounded-[40px] overflow-hidden shadow-3xl border-2 border-emerald-500/40 group-hover/upload:scale-105 transition-transform duration-500">
-                      <img src={evidenceFile} className="w-full h-full object-cover" alt="Evidence" />
+                      <img src={evidenceFile} className="w-full h-full object-cover" alt="Evidence" referrerPolicy="no-referrer" />
                    </div>
                  ) : (
                    <>

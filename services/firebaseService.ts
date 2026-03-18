@@ -45,6 +45,7 @@ import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "firebase/app-
 import { getDataConnect, connectDataConnectEmulator } from 'firebase/data-connect';
 import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
 import { generateAlphanumericId } from '../systemFunctions';
+import { handleFirestoreError, OperationType } from "./errorHandling";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2OCiMVOxaXWOBD3p4_mJp7TDJVwPpiNM",
@@ -247,14 +248,20 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): P
     const pulseRef = ref(rtdb, 'network_pulse');
     await push(pulseRef, { message: `${rawSignal.title}: ${rawSignal.message}`, timestamp: rtdbTimestamp() });
     return cleanSignal as SignalShard;
-  } catch (e) { return null; }
+  } catch (e) { 
+    handleFirestoreError(e, OperationType.WRITE, `signals/${id}`);
+    return null; 
+  }
 };
 
 export const updateSignalReadStatus = async (id: string, read: boolean) => {
   try {
     await updateDoc(doc(db, "signals", id), { read });
     return true;
-  } catch (e) { return false; }
+  } catch (e) { 
+    handleFirestoreError(e, OperationType.UPDATE, `signals/${id}`);
+    return false; 
+  }
 };
 
 export const markAllSignalsAsReadInDb = async (signalIds: string[]) => {
@@ -264,7 +271,10 @@ export const markAllSignalsAsReadInDb = async (signalIds: string[]) => {
     signalIds.forEach(id => { batch.update(doc(db, "signals", id), { read: true }); });
     await batch.commit();
     return true;
-  } catch (e) { return false; }
+  } catch (e) { 
+    handleFirestoreError(e, OperationType.UPDATE, "signals_batch");
+    return false; 
+  }
 };
 
 export const listenToPulse = (callback: (pulse: string) => void) => {
@@ -287,12 +297,20 @@ export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
     const cleanUserData = cleanObject(userData);
     await setDoc(doc(db, "stewards", userId), { ...cleanUserData, lastSync: Date.now(), stewardId: userId }, { merge: true });
     return true;
-  } catch (e) { return false; }
+  } catch (e) { 
+    handleFirestoreError(e, OperationType.WRITE, `stewards/${userId}`);
+    return false; 
+  }
 };
 
 export const getStewardProfile = async (uid: string): Promise<AgroUser | null> => {
-  const snap = await getDoc(doc(db, "stewards", uid));
-  return snap.exists() ? snap.data() as AgroUser : null;
+  try {
+    const snap = await getDoc(doc(db, "stewards", uid));
+    return snap.exists() ? snap.data() as AgroUser : null;
+  } catch (e) {
+    handleFirestoreError(e, OperationType.GET, `stewards/${uid}`);
+    return null;
+  }
 };
 
 export const markPermanentAction = async (actionKey: string) => {
@@ -301,7 +319,10 @@ export const markPermanentAction = async (actionKey: string) => {
   try {
     await updateDoc(doc(db, "stewards", userId), { completedActions: arrayUnion(actionKey) });
     return true;
-  } catch (e) { return false; }
+  } catch (e) { 
+    handleFirestoreError(e, OperationType.UPDATE, `stewards/${userId}`);
+    return false; 
+  }
 };
 
 export const saveCollectionItem = async (collectionName: string, item: any) => {
@@ -310,8 +331,13 @@ export const saveCollectionItem = async (collectionName: string, item: any) => {
   const cleanItem = cleanObject(item);
   const data = { ...cleanItem, stewardId: userId, lastModified: Date.now() };
   const docRef = item.id ? doc(db, collectionName, item.id) : doc(collection(db, collectionName));
-  await setDoc(docRef, data, { merge: true });
-  return docRef.id;
+  try {
+    await setDoc(docRef, data, { merge: true });
+    return docRef.id;
+  } catch (e) {
+    handleFirestoreError(e, OperationType.WRITE, `${collectionName}/${docRef.id}`);
+    return null;
+  }
 };
 
 export const listenToCollection = (collectionName: string, callback: (items: any[]) => void, isGlobal: boolean = false) => {
@@ -319,12 +345,17 @@ export const listenToCollection = (collectionName: string, callback: (items: any
   if (!userId && !isGlobal) return () => {};
   let q = isGlobal ? query(collection(db, collectionName)) : query(collection(db, collectionName), where("stewardId", "==", userId));
   return onSnapshot(q, snap => callback(snap.docs.map(d => ({ ...d.data(), id: d.id }))), (err) => {
-    console.warn(`Registry Sync Warning (${collectionName}):`, err.message);
+    handleFirestoreError(err, OperationType.LIST, collectionName);
   });
 };
 
 export const verifyAuditorAccess = async (email: string) => {
-  const q = query(collection(db, "auditors"), where("email", "==", email));
-  const snap = await getDocs(q);
-  return !snap.empty;
+  try {
+    const q = query(collection(db, "auditors"), where("email", "==", email));
+    const snap = await getDocs(q);
+    return !snap.empty;
+  } catch (e) {
+    handleFirestoreError(e, OperationType.LIST, "auditors");
+    return false;
+  }
 };

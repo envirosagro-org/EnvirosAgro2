@@ -524,7 +524,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                        <div className="space-y-6">
                           <div className="p-6 bg-black/60 rounded-3xl border border-white/5 text-center space-y-4">
                              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-xl">
-                                <img src="https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png" alt="Google Cal" className="w-8 h-8" />
+                                <img src="https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png" alt="Google Cal" className="w-8 h-8" referrerPolicy="no-referrer" />
                              </div>
                              <p className="text-xs text-slate-400 italic">"Adsorb external task shards and memos into your liturgical office flow."</p>
                           </div>
