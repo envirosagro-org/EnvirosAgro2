@@ -3,6 +3,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { costAccountingEngine } from "./services/costAccountingEngine";
+import { QueryEngineService } from "./services/queryEngineService";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -109,6 +110,65 @@ async function startServer() {
     } catch (error: any) {
       console.error("Error in /api/accounting/transactions:", error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Global Search API
+  app.get("/api/search", async (req, res) => {
+    const { q, limit } = req.query;
+    try {
+      const results = await QueryEngineService.globalSearch(String(q || ""), Number(limit || 20));
+      res.json(results);
+    } catch (error: any) {
+      console.error("Search Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Dynamic Sitemap XML
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const items = await QueryEngineService.getAllSearchableItems();
+      const baseUrl = process.env.APP_URL || `https://${req.get('host')}`;
+      
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+      
+      // Static routes
+      const staticRoutes = ['', 'dashboard', 'economy', 'community', 'research', 'agrowild', 'regency', 'multimedia', 'ledger'];
+      staticRoutes.forEach(route => {
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}/${route}</loc>\n`;
+        xml += `    <changefreq>daily</changefreq>\n`;
+        xml += `    <priority>0.8</priority>\n`;
+        xml += `  </url>\n`;
+      });
+
+      // Dynamic routes from Query Engine
+      items.forEach(item => {
+        // Ensure item.url is relative for sitemap if it was generated with origin
+        let relativeUrl = item.url;
+        if (relativeUrl.startsWith('http')) {
+          try {
+            const urlObj = new URL(relativeUrl);
+            relativeUrl = urlObj.search; // for deep links like /?view=...
+          } catch (e) {}
+        }
+
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}${relativeUrl}</loc>\n`;
+        xml += `    <changefreq>weekly</changefreq>\n`;
+        xml += `    <priority>0.5</priority>\n`;
+        xml += `  </url>\n`;
+      });
+
+      xml += `</urlset>`;
+      
+      res.header('Content-Type', 'application/xml');
+      res.send(xml);
+    } catch (error: any) {
+      console.error("Sitemap Error:", error);
+      res.status(500).send("Error generating sitemap");
     }
   });
 

@@ -506,6 +506,8 @@ const GlobalSearch: React.FC<{
 }> = ({ isOpen, onClose, onNavigate, vendorProducts, contracts, blueprints, liveProducts, industrialUnits }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAiSearching, setIsAiSearching] = useState(false);
+  const [isApiSearching, setIsApiSearching] = useState(false);
+  const [apiResults, setApiResults] = useState<any[]>([]);
   const [aiDeepSuggestion, setAiDeepSuggestion] = useState<{ view: string; section?: string; explanation: string; stewardEsin?: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -513,9 +515,33 @@ const GlobalSearch: React.FC<{
     if (isOpen) {
       inputRef.current?.focus();
       setSearchTerm('');
+      setApiResults([]);
       setAiDeepSuggestion(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchTerm.trim().length > 2) {
+        setIsApiSearching(true);
+        try {
+          const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
+          if (response.ok) {
+            const data = await response.json();
+            setApiResults(data);
+          }
+        } catch (e) {
+          console.error("Search API Error:", e);
+        } finally {
+          setIsApiSearching(false);
+        }
+      } else {
+        setApiResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   const handleAiDeepQuery = async () => {
     if (!searchTerm.trim()) return;
@@ -540,7 +566,7 @@ const GlobalSearch: React.FC<{
   };
 
   const filteredResults = useMemo(() => {
-    if (!searchTerm.trim()) return { shards: [], stewards: [], assets: [], knowledge: [], infrastructure: [] };
+    if (!searchTerm.trim()) return { shards: [], stewards: [], assets: [], knowledge: [], infrastructure: [], api: [] };
     const term = searchTerm.toLowerCase();
     const shards: any[] = [];
     REGISTRY_NODES.forEach(group => group.items.forEach(item => { if (item.name.toLowerCase().includes(term) || item.id.toLowerCase().includes(term) || group.category.toLowerCase().includes(term)) shards.push({ ...item, category: group.category, matchedSections: item.sections?.filter(s => s.label.toLowerCase().includes(term)) }); }));
@@ -557,8 +583,8 @@ const GlobalSearch: React.FC<{
       ...contracts.filter(m => m.productType.toLowerCase().includes(term) || m.category.toLowerCase().includes(term)),
       ...industrialUnits.filter(u => u.name.toLowerCase().includes(term) || u.type.toLowerCase().includes(term))
     ];
-    return { shards: shards.slice(0, 5), stewards: stewards.slice(0, 5), assets: assets.slice(0, 5), knowledge: knowledge.slice(0, 5), infrastructure: infrastructure.slice(0, 5) };
-  }, [searchTerm, vendorProducts]);
+    return { shards: shards.slice(0, 5), stewards: stewards.slice(0, 5), assets: assets.slice(0, 5), knowledge: knowledge.slice(0, 5), infrastructure: infrastructure.slice(0, 5), api: apiResults };
+  }, [searchTerm, vendorProducts, apiResults]);
 
   if (!isOpen) return null;
 
@@ -580,6 +606,12 @@ const GlobalSearch: React.FC<{
           </div>
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 space-y-12 bg-[#050706]/40">
+           {isApiSearching && (
+             <div className="flex items-center justify-center py-4">
+               <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+               <span className="ml-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">Querying_Multi_Ledger...</span>
+             </div>
+           )}
            {aiDeepSuggestion && (
              <div className="p-8 md:p-12 bg-indigo-900/10 border-2 border-indigo-500/30 rounded-[48px] animate-in slide-in-from-top-4 duration-500 space-y-8 relative overflow-hidden group/sugg">
                 <div className="absolute top-0 right-0 p-8 opacity-[0.1] group-hover/sugg:rotate-12 transition-transform"><SycamoreLogo size={180} className="text-indigo-400" /></div>
@@ -629,6 +661,30 @@ const GlobalSearch: React.FC<{
              </div>
            ) : (
              <div className="space-y-20">
+                {filteredResults.api.length > 0 && (
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-4 px-4"><Database size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Global_Registry_Results</p></div>
+                    <div className="grid gap-4">
+                      {filteredResults.api.map((item: any) => (
+                        <div key={item.id} onClick={() => { window.location.href = item.url; onClose(); }} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] cursor-pointer">
+                          <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
+                            <div className="p-6 rounded-[28px] md:rounded-[36px] bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 group-hover:rotate-6 transition-all shadow-inner">
+                              {item.type === 'steward' ? <UserIcon size={40} /> : item.type === 'product' ? <ShoppingCart size={40} /> : item.type === 'pulse' ? <Activity size={40} /> : <BoxSelect size={40} />}
+                            </div>
+                            <div className="space-y-2">
+                              <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-emerald-400 transition-colors leading-tight">{item.title}</h4>
+                              <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-1">{item.type.toUpperCase()} // {item.id}</p>
+                              <p className="text-[11px] text-slate-400 italic line-clamp-2">{item.description}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-4 relative z-10 shrink-0">
+                            <button className="px-10 py-5 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">Open Shard <ExternalLink size={18} /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {filteredResults.stewards.length > 0 && (
                    <div className="space-y-8">
                       <div className="flex items-center gap-4 px-4"><Users size={16} className="text-indigo-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Social_Steward_Registry</p></div>
@@ -764,6 +820,24 @@ const App: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
+
+  // Deep Link Handling
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view') as ViewState;
+    const sectionParam = params.get('section');
+    const idParam = params.get('id');
+
+    if (viewParam) {
+      // Small delay to ensure data is loaded if needed
+      setTimeout(() => {
+        navigate(viewParam, sectionParam, true, { id: idParam });
+        // Clear the URL params without refreshing
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }, 500);
+    }
+  }, []);
 
   useEffect(() => {
     const checkApiKey = async () => {

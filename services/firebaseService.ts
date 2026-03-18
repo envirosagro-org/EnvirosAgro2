@@ -40,6 +40,7 @@ import {
   serverTimestamp as rtdbTimestamp,
   off
 } from "firebase/database";
+import { getStorage, ref as storageRef, listAll, getDownloadURL } from "firebase/storage";
 import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "firebase/app-check";
 import { getDataConnect, connectDataConnectEmulator } from 'firebase/data-connect';
 import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
@@ -106,6 +107,7 @@ export const db = initializeFirestore(app, {
 }); 
 
 export const rtdb = getDatabase(app);
+export const storage = getStorage(app);
 
 // 4. Data Connect Initialization
 export const dataConnect = getDataConnect(app, {
