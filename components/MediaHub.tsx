@@ -427,7 +427,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
               className="flex flex-col gap-8"
             >
               {/* Call Interface */}
-              <div className="relative aspect-video lg:aspect-[21/9] bg-zinc-900 rounded-[3rem] border border-white/5 overflow-hidden group shadow-[0_0_100px_rgba(0,0,0,0.5)] backdrop-blur-3xl">
+              <div className="relative min-h-[500px] md:min-h-[600px] lg:min-h-0 lg:aspect-[21/9] bg-zinc-950/80 rounded-[3rem] border border-white/10 overflow-hidden group shadow-[0_0_100px_rgba(16,185,129,0.15)] backdrop-blur-3xl ring-1 ring-white/5 before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.15),transparent_50%)] before:pointer-events-none">
                 {remoteStream ? (
                   <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
                 ) : (
@@ -537,7 +537,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
               className="flex flex-col gap-12"
             >
               {/* Featured Content / Active Stream */}
-              <div className="relative aspect-video lg:aspect-[21/9] bg-zinc-900 rounded-[3rem] border border-white/5 overflow-hidden group shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+              <div className="relative min-h-[500px] md:min-h-[600px] lg:min-h-0 lg:aspect-[21/9] bg-zinc-950/80 rounded-[3rem] border border-white/10 overflow-hidden group shadow-[0_0_100px_rgba(16,185,129,0.15)] backdrop-blur-3xl ring-1 ring-white/5 before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.15),transparent_50%)] before:pointer-events-none">
                 {isBroadcasting ? (
                   <div className="w-full h-full bg-black flex items-center justify-center relative">
                     <video ref={broadcastVideoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-60" />
@@ -680,7 +680,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
               className="flex flex-col gap-12"
             >
               {/* Spatial Visualization Area */}
-              <div className="relative aspect-video lg:aspect-[21/9] bg-zinc-900 rounded-[3rem] border border-white/5 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+              <div className="relative min-h-[500px] md:min-h-[600px] lg:min-h-0 lg:aspect-[21/9] bg-zinc-950/80 rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] backdrop-blur-3xl ring-1 ring-white/5 before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.15),transparent_50%)] before:pointer-events-none">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.05)_0%,transparent_70%)]" />
                 
                 {/* Mock Spatial Grid */}
@@ -783,7 +783,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
               className="flex flex-col gap-12"
             >
               {/* Drone Feed / Telemetry */}
-              <div className="relative aspect-video lg:aspect-[21/9] bg-zinc-900 rounded-[3rem] border border-white/5 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+              <div className="relative min-h-[500px] md:min-h-[600px] lg:min-h-0 lg:aspect-[21/9] bg-zinc-950/80 rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] backdrop-blur-3xl ring-1 ring-white/5 before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.15),transparent_50%)] before:pointer-events-none">
                 {isBroadcasting ? (
                   <div className="w-full h-full relative">
                     <div className="absolute inset-0 bg-black flex items-center justify-center">
