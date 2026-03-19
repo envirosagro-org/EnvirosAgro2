@@ -368,7 +368,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#050505] text-white p-6 md:p-12 font-sans pb-32 max-w-7xl mx-auto w-full relative">
+    <div className="flex flex-col min-h-[150vh] bg-[#050505] text-white p-6 md:p-12 font-sans pb-32 max-w-7xl mx-auto w-full relative">
       {/* Background Atmosphere */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 blur-[120px] rounded-full" />
