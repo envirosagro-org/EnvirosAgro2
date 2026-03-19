@@ -1,5 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
+} from 'recharts';
+import { 
   User, ViewState, MediaShard 
 } from '../types';
 import { HenIcon } from './Icons';
@@ -12,12 +15,22 @@ import {
   CloudRain, Wind, Scale, Landmark, Boxes, Workflow, 
   Eye, Monitor, AlertCircle, Terminal, Cpu,
   BadgeCheck, Sun, Download, X, Gavel, KeyRound, Stamp,
-  LineChart,
   FileDigit, ChevronRight, Menu, Search, UserPlus, ChevronUp
 } from 'lucide-react';
 import { analyzeSustainability, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { calculateMConstant, generateQuickHash } from '../systemFunctions';
+
+// Mock data for sustainability metrics
+const sustainabilityData = [
+  { name: 'Jan', carbon: 4000, water: 2400, biodiversity: 2400 },
+  { name: 'Feb', carbon: 3000, water: 1398, biodiversity: 2210 },
+  { name: 'Mar', carbon: 2000, water: 9800, biodiversity: 2290 },
+  { name: 'Apr', carbon: 2780, water: 3908, biodiversity: 2000 },
+  { name: 'May', carbon: 1890, water: 4800, biodiversity: 2181 },
+  { name: 'Jun', carbon: 2390, water: 3800, biodiversity: 2500 },
+  { name: 'Jul', carbon: 3490, water: 4300, biodiversity: 2100 },
+];
 
 interface SustainabilityProps {
   user: User;
@@ -59,6 +72,24 @@ const DNAHelix: React.FC<{ isAggressive: boolean }> = ({ isAggressive }) => {
     </div>
   );
 };
+
+const ImpactAnalyticsDashboard: React.FC = () => (
+  <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 shadow-3xl mb-10">
+    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-8">Impact Analytics</h3>
+    <div className="h-[300px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={sustainabilityData}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+          <XAxis dataKey="name" stroke="#666" />
+          <YAxis stroke="#666" />
+          <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid #333' }} />
+          <Area type="monotone" dataKey="carbon" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
+          <Area type="monotone" dataKey="water" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
+);
 
 const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavigate }) => {
   const [atmStatic, setAtmStatic] = useState(0.88);
@@ -166,6 +197,7 @@ ${oracleVerdict.text}
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 relative max-w-2xl mx-auto px-4 md:px-0">
+      <ImpactAnalyticsDashboard />
       
       {/* Omega Equilibrium Card */}
       <div className="glass-card p-10 md:p-14 rounded-[64px] border border-white/5 bg-black/40 text-center space-y-8 shadow-3xl">

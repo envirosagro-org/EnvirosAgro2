@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { iotService } from '../services/iotService';
 import { SycamoreLogo } from './Icons';
 // Added missing icons for environmental thrust, human heart resonance, registry connectivity, system config and ledger layers
 import { 
@@ -22,15 +23,26 @@ interface DashboardProps {
   isGuest: boolean;
   orders?: Order[];
   blockchain?: AgroBlock[];
+  mempool?: any[];
   isMining?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], blockchain = [], isMining = false }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], blockchain = [], mempool = [], isMining = false }) => {
   const { navigate } = useAppNavigation();
   const onNavigate = navigate;
   const [showIdentityCard, setShowIdentityCard] = useState(false);
   const [networkDrift, setNetworkDrift] = useState(0.02);
+  const [isIoTActive, setIsIoTActive] = useState(false);
   const totalBalance = user.wallet.balance + (user.wallet.bonusBalance || 0);
+
+  const toggleIoT = () => {
+    if (isIoTActive) {
+      iotService.stopSimulation();
+    } else {
+      iotService.startSimulation((amount, reason) => console.log(`Reward: ${amount}, Reason: ${reason}`));
+    }
+    setIsIoTActive(!isIoTActive);
+  };
 
   useEffect(() => {
     const driftInterval = setInterval(() => {
@@ -46,11 +58,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
   ];
 
   const THRUSTS = [
-    { id: 'S', label: 'Societal', val: 82, col: 'text-rose-400', icon: Users },
-    { id: 'E', label: 'Environmental', val: 94, col: 'text-emerald-400', icon: Leaf },
-    { id: 'H', label: 'Human', val: 76, col: 'text-teal-400', icon: Heart },
-    { id: 'T', label: 'Technological', val: 88, col: 'text-blue-400', icon: Cpu },
-    { id: 'I', label: 'Industry', val: 91, col: 'text-indigo-400', icon: Landmark },
+    { id: 'S', label: 'Societal', val: user.metrics.socialImmunity || 82, col: 'text-rose-400', icon: Users },
+    { id: 'E', label: 'Environmental', val: user.metrics.sustainabilityScore || 94, col: 'text-emerald-400', icon: Leaf },
+    { id: 'H', label: 'Human', val: Math.round((user.metrics.timeConstantTau || 0.76) * 100), col: 'text-teal-400', icon: Heart },
+    { id: 'T', label: 'Technological', val: Math.round((user.metrics.agriculturalCodeU || 0.88) * 100), col: 'text-blue-400', icon: Cpu },
+    { id: 'I', label: 'Industry', val: Math.round((user.metrics.baselineM || 0.91) * 100), col: 'text-indigo-400', icon: Landmark },
   ];
 
   return (
@@ -60,8 +72,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
       <div className="glass-card p-2 rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shadow-[0_0_30px_rgba(16,185,129,0.2)] shrink-0 relative">
         <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(16,185,129,0.1),transparent)] -translate-x-full animate-[scan_3s_ease-in-out_infinite]"></div>
         <div className="flex items-center gap-3 px-6 border-r border-white/10 shrink-0 relative z-10">
-           <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
-           <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400 whitespace-nowrap">QUANTUM_QUORUM_SYNC</span>
+           <button 
+             onClick={toggleIoT}
+             className={`flex items-center gap-2 ${isIoTActive ? 'text-emerald-400' : 'text-slate-500'}`}
+           >
+             <Cpu className="w-5 h-5" />
+             <span className="text-[9px] font-black uppercase tracking-[0.3em] whitespace-nowrap">{isIoTActive ? 'IOT_ACTIVE' : 'START_IOT'}</span>
+           </button>
         </div>
         <div className="flex-1 px-6 overflow-hidden relative z-10">
            <div className="whitespace-nowrap animate-marquee text-[10px] text-emerald-400/80 font-mono font-black uppercase tracking-[0.4em]">
@@ -135,6 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                   { label: 'TREASURY', val: totalBalance.toFixed(0), unit: 'SHRD', icon: Coins, col: 'text-emerald-400', progress: 85, desc: 'Liquid Utility' },
                   { label: 'RESONANCE', val: user.wallet.exchangeRate.toFixed(2), unit: 'μ', icon: Gauge, col: 'text-blue-400', progress: 78, desc: 'm-Constant Index' },
                   { label: 'QUORUM', val: blockchain.length + 4281, unit: 'BLCK', icon: Layers, col: 'text-indigo-400', progress: 100, desc: 'Ledger Depth' },
+                  { label: 'MEMPOOL', val: mempool.length, unit: 'TX', icon: Binary, col: 'text-amber-400', progress: Math.min(100, mempool.length * 10), desc: 'Pending Shards' },
                   { label: 'VITALITY', val: user.metrics.sustainabilityScore, unit: '%', icon: Sprout, col: 'text-emerald-500', progress: user.metrics.sustainabilityScore, desc: 'C(a) Sustainability' },
                 ].map((stat, i) => (
                   <div key={i} className="p-8 bg-black/80 rounded-[48px] border-2 border-white/5 space-y-4 group/stat hover:border-white/20 transition-all shadow-3xl overflow-hidden relative">
@@ -166,13 +184,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                 <SycamoreLogo size={400} className="text-indigo-400" />
              </div>
              <div className="relative z-10 space-y-8">
-                <div className="flex items-center gap-6">
-                   <div className="w-16 h-16 rounded-[28px] bg-indigo-600 shadow-[0_0_50px_rgba(99,102,241,0.6)] flex items-center justify-center border-4 border-white/10 shrink-0 group-hover:scale-110 transition-transform">
-                      {isMining ? <Loader2 className="w-8 h-8 text-white animate-spin" /> : <SycamoreLogo size={32} className="text-white animate-pulse" />}
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 rounded-[28px] bg-indigo-600 shadow-[0_0_50px_rgba(99,102,241,0.6)] flex items-center justify-center border-4 border-white/10 shrink-0 group-hover:scale-110 transition-transform">
+                         {isMining ? <Loader2 className="w-8 h-8 text-white animate-spin" /> : <SycamoreLogo size={32} className="text-white animate-pulse" />}
+                      </div>
+                      <div>
+                         <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none m-0">Oracle <span className="text-indigo-400">Sync.</span></h4>
+                         <p className="text-[10px] font-mono text-indigo-400/60 font-bold uppercase mt-3 tracking-widest leading-none">QUANTUM_HANDSHAKE_v6.5</p>
+                      </div>
                    </div>
-                   <div>
-                      <h4 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none m-0">Oracle <span className="text-indigo-400">Sync.</span></h4>
-                      <p className="text-[10px] font-mono text-indigo-400/60 font-bold uppercase mt-3 tracking-widest leading-none">QUANTUM_HANDSHAKE_v6.5</p>
+                   <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                         <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">VAULT_ONLINE</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                         <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">EVIDENCE_INGEST_READY</span>
+                      </div>
                    </div>
                 </div>
                 <div className="p-10 bg-black/90 rounded-[48px] border border-indigo-500/20 shadow-inner border-l-8 border-l-indigo-600 relative overflow-hidden group/text">

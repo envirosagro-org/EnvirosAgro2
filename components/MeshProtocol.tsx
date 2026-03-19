@@ -14,7 +14,7 @@ import {
   TrendingUp,
   Stamp
 } from 'lucide-react';
-import { User, MeshNode, AgroBlock } from '../types';
+import { User, MeshNode, AgroBlock, MempoolTransaction } from '../types';
 import { auditMeshStability, AgroLangResponse } from '../services/agroLangService';
 import { SycamoreLogo, HenIcon } from './Icons';
 import { startBackgroundDataSync } from '../services/firebaseService';
@@ -23,14 +23,7 @@ import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 interface MeshProtocolProps {
   user: User;
   blockchain: AgroBlock[];
-}
-
-interface MempoolTx {
-  hash: string;
-  from: string;
-  value: string;
-  timestamp: string;
-  thrust: string;
+  mempool: MempoolTransaction[];
 }
 
 const INITIAL_MESH_NODES: MeshNode[] = [
@@ -41,10 +34,9 @@ const INITIAL_MESH_NODES: MeshNode[] = [
   { id: 'ASIA-91', esin: 'EA-ASN-091', label: 'Tokyo Relay', status: 'UP', lastBlock: '0x882A_FINAL', peers: ['AFRI-4'], latency: 32, load: 55 },
 ];
 
-const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain }) => {
+const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain, mempool }) => {
   const [activeTab, setActiveTab] = useState<'topology' | 'commits' | 'mempool'>('commits');
   const [nodes, setNodes] = useState<MeshNode[]>(INITIAL_MESH_NODES);
-  const [mempool, setMempool] = useState<MempoolTx[]>([]);
   const [isAuditing, setIsAuditing] = useState(false);
   const [oracleVerdict, setOracleVerdict] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -77,18 +69,6 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain }) => {
           const shardId = `SHD-${generateAlphanumericId(7)}`;
           setShardsInFlight(prev => [...prev, { id: shardId, from: nodes[fromIdx].id, to: nodes[toIdx].id, progress: 0 }]);
         }
-      }
-
-      // Mempool Ingest Logic
-      if (Math.random() > 0.7) {
-        const newTx: MempoolTx = {
-          hash: `0x${generateQuickHash()}`,
-          from: nodes[Math.floor(Math.random() * nodes.length)]?.id || 'EXT_NODE',
-          value: (Math.random() * 500 + 10).toFixed(1) + ' EAC',
-          timestamp: new Date().toLocaleTimeString(),
-          thrust: ['Societal', 'Environmental', 'Human', 'Technological', 'Industry'][Math.floor(Math.random() * 5)]
-        };
-        setMempool(prev => [newTx, ...prev].slice(0, 10));
       }
     }, 3000);
     return () => clearInterval(interval);
@@ -413,21 +393,21 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain }) => {
                       </div>
                    ) : (
                       mempool.map((tx, i) => (
-                         <div key={tx.hash} className="grid grid-cols-12 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer animate-in fade-in" style={{ animationDelay: `${i * 80}ms` }}>
+                         <div key={tx.id} className="grid grid-cols-12 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer animate-in fade-in" style={{ animationDelay: `${i * 80}ms` }}>
                             <div className="col-span-5 flex items-center gap-8">
                                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center border-2 border-amber-500/20 text-amber-400 group-hover:scale-110 transition-all shadow-inner">
                                   <Binary size={24} />
                                </div>
                                <div>
-                                  <p className="text-xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:text-amber-400 transition-colors m-0">{tx.hash}</p>
-                                  <p className="text-[9px] text-slate-700 font-mono mt-2 uppercase font-black tracking-widest italic">{tx.thrust} Thrust</p>
+                                  <p className="text-xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:text-amber-400 transition-colors m-0">0x{tx.id.substring(0, 8)}...</p>
+                                  <p className="text-[9px] text-slate-700 font-mono mt-2 uppercase font-black tracking-widest italic">{tx.data.type} Thrust</p>
                                </div>
                             </div>
                             <div className="col-span-3">
-                               <span className="text-sm font-black text-slate-400 group-hover:text-white transition-colors">{tx.from}</span>
+                               <span className="text-sm font-black text-slate-400 group-hover:text-white transition-colors">{tx.stewardId}</span>
                             </div>
                             <div className="col-span-2 text-center">
-                               <p className="text-2xl font-mono font-black text-white">{tx.value}</p>
+                               <p className="text-2xl font-mono font-black text-white">{tx.data.value} {tx.data.unit}</p>
                             </div>
                             <div className="col-span-2 flex justify-end pr-8 items-center gap-6">
                                <div className="flex items-center gap-3">

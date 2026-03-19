@@ -1,17 +1,18 @@
 
-import { GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
+
+const API_KEY = process.env.EA_AI_API_KEY || process.env.API_KEY || "";
 
 export const callBackendEA = async (params: { model: string; contents: any; config?: any }) => {
-  const response = await fetch("/api/agro-lang", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params)
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Backend Agro Lang Error");
+  if (!API_KEY) {
+    throw new Error("API_KEY missing");
   }
-  return await response.json();
+  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  return await ai.models.generateContent({
+    model: params.model,
+    contents: params.contents,
+    config: params.config
+  });
 };
 
 const FRAMEWORK_CONTEXT = `
@@ -247,6 +248,7 @@ export const forgeSwarmMission = async (objective: string): Promise<AgroLangResp
           - IMPORT EOS.Network AS Net;
           - SEQUENCE [Title] { ... }
           - Bot.swarm_deploy(units: [Int], mode: "[String]");
+          - Bot.device_command(id: "[String]", cmd: "[String]");
           - Net.sync_node(id: "[String]", priority: "[String]");
           - COMMIT_SHARD(registry: "[String]", finality: ZK_PROVEN);`,
           responseMimeType: "application/json",
@@ -860,12 +862,19 @@ export const analyzeMiningYield = async (miningData: any): Promise<AgroLangRespo
 };
 
 export const generateTemporalVideo = async (prompt: string) => {
-  const response = await fetch("/api/ea-ai/video", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt })
+  if (!API_KEY) {
+    throw new Error("API_KEY missing");
+  }
+  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  return await ai.models.generateVideos({
+    model: 'veo-3.1-fast-generate-preview',
+    prompt,
+    config: {
+      numberOfVideos: 1,
+      resolution: '720p',
+      aspectRatio: '16:9'
+    }
   });
-  return await response.json();
 };
 
 export const generateAgroAcoustic = async (prompt: string): Promise<string | undefined> => {
@@ -912,12 +921,11 @@ export const generateAgroDocument = async (type: string, prompt: string): Promis
 };
 
 export const getTemporalVideoOperation = async (operation: any) => {
-  const response = await fetch("/api/ea-ai/video/operation", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ operation })
-  });
-  return await response.json();
+  if (!API_KEY) {
+    throw new Error("API_KEY missing");
+  }
+  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  return await ai.operations.getVideosOperation({ operation });
 };
 
 export function encode(bytes: Uint8Array) {

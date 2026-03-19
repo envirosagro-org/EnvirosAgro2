@@ -61,6 +61,7 @@ const MultimediaPlayer: React.FC<MultimediaPlayerProps> = ({
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const mediaRef = mediaType === 'VIDEO' ? videoRef : audioRef;
+  const effectiveUrl = mediaUrl || '';
 
   useEffect(() => {
     if (isOpen) {
@@ -68,7 +69,7 @@ const MultimediaPlayer: React.FC<MultimediaPlayerProps> = ({
       setCurrentTime(0);
       setDuration(0);
     }
-  }, [isOpen, mediaUrl]);
+  }, [isOpen, effectiveUrl]);
 
   const togglePlay = () => {
     if (mediaRef.current) {
@@ -186,7 +187,7 @@ const MultimediaPlayer: React.FC<MultimediaPlayerProps> = ({
           {mediaType === 'VIDEO' ? (
             <video
               ref={videoRef}
-              src={mediaUrl}
+              src={effectiveUrl}
               className="w-full h-full object-contain"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
@@ -218,7 +219,7 @@ const MultimediaPlayer: React.FC<MultimediaPlayerProps> = ({
 
               <audio
                 ref={audioRef}
-                src={mediaUrl}
+                src={effectiveUrl}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
               />
@@ -242,9 +243,14 @@ const MultimediaPlayer: React.FC<MultimediaPlayerProps> = ({
                      {content || 'NO_CONTENT_SHARD_DETECTED'}
                   </div>
                   <div className="flex justify-center pt-10">
-                     <button className="px-12 py-5 bg-indigo-600 rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl flex items-center gap-4">
+                     <a 
+                        href={effectiveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-12 py-5 bg-indigo-600 rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl flex items-center gap-4"
+                     >
                         <Download size={18} /> DOWNLOAD_DOCUMENT_SHARD
-                     </button>
+                     </a>
                   </div>
                </div>
             </div>

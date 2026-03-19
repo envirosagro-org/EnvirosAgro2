@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "HardwareDevice": {
+      "title": "HardwareDevice",
+      "description": "Represents an IIoT hardware device registered in the FarmSwarm network.",
+      "type": "object",
+      "properties": {
+        "deviceId": { "type": "string", "description": "Unique identifier for the hardware." },
+        "ownerUid": { "type": "string", "description": "UID of the user who registered the device." },
+        "protocol": { "type": "string", "description": "Communication protocol (e.g., CAN, MQTT, Modbus)." },
+        "status": { "type": "string", "description": "Current operational status." },
+        "registeredAt": { "type": "string", "format": "date-time", "description": "Timestamp of registration." }
+      },
+      "required": ["deviceId", "ownerUid", "protocol", "status", "registeredAt"]
+    },
+    "TelemetryData": {
+      "title": "TelemetryData",
+      "description": "Represents persistent telemetry data stored in Firestore.",
+      "type": "object",
+      "properties": {
+        "deviceId": { "type": "string" },
+        "payload": { "type": "string", "description": "Serialized telemetry payload." },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["deviceId", "payload", "timestamp"]
+    },
+    "BlockchainBlock": {
+      "title": "BlockchainBlock",
+      "description": "Represents an immutable block in the EnvirosAgro blockchain ledger.",
+      "type": "object",
+      "properties": {
+        "index": { "type": "integer", "description": "The block's position in the chain." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the block was added." },
+        "transactions": { "type": "array", "items": { "type": "object" }, "description": "An array of transaction data." },
+        "previousHash": { "type": "string", "description": "The SHA-256 hash of the previous block." },
+        "hash": { "type": "string", "description": "The SHA-256 hash of the current block." },
+        "validator": { "type": "string", "description": "The node that validated the block." },
+        "status": { "type": "string", "enum": ["Confirmed", "Pending"] }
+      },
+      "required": ["index", "timestamp", "transactions", "previousHash", "hash", "validator", "status"]
+    }
+  },
+  "firestore": {
+    "/devices/{deviceId}": {
+      "schema": { "$ref": "HardwareDevice" },
+      "description": "Collection of registered hardware devices."
+    },
+    "/devices/{deviceId}/telemetry/{telemetryId}": {
+      "schema": { "$ref": "TelemetryData" },
+      "description": "Collection of persistent telemetry records for a device."
+    },
+    "/blocks/{blockId}": {
+      "schema": { "$ref": "BlockchainBlock" },
+      "description": "The immutable blockchain ledger."
+    }
+  }
+}

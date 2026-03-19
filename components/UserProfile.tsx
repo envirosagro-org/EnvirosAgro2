@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { 
   User as UserIcon, MapPin, ShieldCheck, Edit3, 
   BadgeCheck, Loader2, Star, Flower2, Stamp, Wallet, 
@@ -68,6 +69,78 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
   const [editBio, setEditBio] = useState(user.bio || '');
   const [editLocation, setEditLocation] = useState(user.location);
   const [isSaving, setIsSaving] = useState(false);
+
+  const idCardRef = useRef<HTMLDivElement>(null);
+  const certRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onUpdate({ ...user, avatar: reader.result as string });
+        notify('success', 'AVATAR_UPDATED', 'Profile picture has been updated.');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDownloadIdCard = async () => {
+    if (idCardRef.current) {
+      try {
+        const canvas = await html2canvas(idCardRef.current, { backgroundColor: null, scale: 2 });
+        const link = document.createElement('a');
+        link.download = `envirosagro-identity-${user.esin}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        notify('success', 'DOWNLOAD_COMPLETE', 'Identity card downloaded successfully.');
+      } catch (error) {
+        notify('error', 'DOWNLOAD_FAILED', 'Failed to generate identity card image.');
+      }
+    }
+  };
+
+  const handleDownloadCert = async () => {
+    if (certRef.current) {
+      try {
+        const canvas = await html2canvas(certRef.current, { backgroundColor: '#050706', scale: 2 });
+        const link = document.createElement('a');
+        link.download = `celestial-certificate-${user.esin}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        notify('success', 'DOWNLOAD_COMPLETE', 'Celestial certificate downloaded successfully.');
+      } catch (error) {
+        notify('error', 'DOWNLOAD_FAILED', 'Failed to generate celestial certificate image.');
+      }
+    }
+  };
+
+  const handleShare = (platform: string) => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Check out my EnvirosAgro profile! My role is ${user.role}.`);
+    
+    let shareUrl = '';
+    switch (platform) {
+      case 'Twitter':
+        shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
+        break;
+      case 'LinkedIn':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+        break;
+      case 'Facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+        break;
+      case 'Direct_Link':
+        navigator.clipboard.writeText(window.location.href);
+        notify('success', 'LINK_COPIED', 'Profile link copied to clipboard.');
+        return;
+    }
+    
+    if (shareUrl) {
+      window.open(shareUrl, '_blank');
+    }
+  };
 
   const skillsData = useMemo(() => [
     { subject: 'Soil Science', A: (user.metrics.sustainabilityScore || 0) + 10 },
@@ -186,6 +259,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                   <BadgeCheck size={32} className="text-white" />
                </div>
             </div>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0 right-0 p-4 bg-emerald-600 rounded-full border-4 border-[#020403] shadow-[0_0_40px_rgba(16,185,129,0.5)] hover:scale-110 transition-transform duration-500 z-20 cursor-pointer"
+            >
+               <Camera size={24} className="text-white" />
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleAvatarUpload} 
+              accept="image/*" 
+              className="hidden" 
+            />
          </div>
 
          <div className="space-y-4 relative z-10">
@@ -267,9 +353,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                  <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Physical <span className="text-emerald-400">Handshake Shard</span></h3>
                  <p className="text-slate-500 italic text-lg">"Your sovereign industrial identity, verifiable via QR or NFC taps."</p>
               </div>
-              <div className="p-10 glass-card rounded-[80px] bg-white/[0.01] border-2 border-white/5 shadow-3xl">
+              <div className="p-10 glass-card rounded-[80px] bg-white/[0.01] border-2 border-white/5 shadow-3xl" ref={idCardRef}>
                  <IdentityCard user={user} />
               </div>
+              <button 
+                onClick={handleDownloadIdCard}
+                className="py-4 px-8 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-full font-black text-sm uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-xl flex items-center gap-3"
+              >
+                <Download size={20} /> Download Identity Card
+              </button>
            </div>
          )}
 
@@ -284,7 +376,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                  </p>
               </div>
 
-              <div className="glass-card p-12 md:p-20 rounded-[80px] border-2 border-fuchsia-500/20 bg-fuchsia-950/5 space-y-12 shadow-3xl relative overflow-hidden group">
+              <div className="glass-card p-12 md:p-20 rounded-[80px] border-2 border-fuchsia-500/20 bg-fuchsia-950/5 space-y-12 shadow-3xl relative overflow-hidden group" ref={certRef}>
                  <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none">
                     <Flower2 size={1000} className="text-fuchsia-500" />
                  </div>
@@ -325,16 +417,26 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                             ? `"This celestial shard is already anchored to your node. 50 EAC growth yield was sharded to your registry account."`
                             : `"Identifying a high resonance between your birth node and the current seasonal cycle. Minting this shard anchors 50 EAC growth yield to your registry account."`}
                        </p>
-                       <button 
-                         onClick={handleMintCertificate}
-                         disabled={isMintingCert || isCelestialAlreadyMinted}
-                         className={`w-full max-w-md py-8 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl transition-all flex items-center justify-center gap-6 border-2 ${
-                            isCelestialAlreadyMinted ? 'bg-black border-white/10 opacity-60 cursor-not-allowed' : 'agro-gradient hover:scale-105 active:scale-95 ring-8 ring-white/5 border-white/10'
-                         }`}
-                       >
-                          {isMintingCert ? <Loader2 className="animate-spin w-6 h-6" /> : isCelestialAlreadyMinted ? <BadgeCheck size={28} /> : <Stamp size={28} />}
-                          {isMintingCert ? 'SETTLING SHARD...' : isCelestialAlreadyMinted ? 'PERMANENTLY ANCHORED' : 'ANCHOR CELESTIAL SHARD'}
-                       </button>
+                       <div className="flex flex-col sm:flex-row gap-4">
+                         <button 
+                           onClick={handleMintCertificate}
+                           disabled={isMintingCert || isCelestialAlreadyMinted}
+                           className={`flex-1 py-8 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl transition-all flex items-center justify-center gap-6 border-2 ${
+                              isCelestialAlreadyMinted ? 'bg-black border-white/10 opacity-60 cursor-not-allowed' : 'agro-gradient hover:scale-105 active:scale-95 ring-8 ring-white/5 border-white/10'
+                           }`}
+                         >
+                            {isMintingCert ? <Loader2 className="animate-spin w-6 h-6" /> : isCelestialAlreadyMinted ? <BadgeCheck size={28} /> : <Stamp size={28} />}
+                            {isMintingCert ? 'SETTLING SHARD...' : isCelestialAlreadyMinted ? 'PERMANENTLY ANCHORED' : 'ANCHOR CELESTIAL SHARD'}
+                         </button>
+                         {isCelestialAlreadyMinted && (
+                           <button 
+                             onClick={handleDownloadCert}
+                             className="py-8 px-10 bg-fuchsia-600/20 text-fuchsia-400 border border-fuchsia-500/30 rounded-full font-black text-sm uppercase tracking-widest hover:bg-fuchsia-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3"
+                           >
+                             <Download size={24} />
+                           </button>
+                         )}
+                       </div>
                     </div>
                  </div>
               </div>
@@ -462,11 +564,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                         { l: 'Facebook', i: Facebook, c: 'bg-blue-800' },
                         { l: 'Direct_Link', i: Copy, c: 'bg-emerald-600' },
                      ].map(social => (
-                        <button key={social.l} className="p-8 bg-black/60 rounded-[32px] border border-white/5 hover:border-emerald-500/40 transition-all flex flex-col items-center gap-4 group/btn shadow-xl active:scale-95">
+                        <button key={social.l} onClick={() => handleShare(social.l)} className="p-8 bg-black/60 rounded-[32px] border border-white/5 hover:border-emerald-500/40 transition-all flex flex-col items-center gap-4 group/btn shadow-xl active:scale-95">
                            <div className={`p-4 rounded-2xl ${social.c} text-white shadow-2xl group-hover/btn:scale-110 transition-transform`}>
                               <social.i size={24} />
                            </div>
-                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{social.l}</span>
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{social.l.replace('_', ' ')}</span>
                         </button>
                      ))}
                   </div>

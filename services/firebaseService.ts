@@ -40,22 +40,14 @@ import {
   serverTimestamp as rtdbTimestamp,
   off
 } from "firebase/database";
-import { getStorage, ref as storageRef, listAll, getDownloadURL } from "firebase/storage";
+import { getStorage, ref as storageRef, listAll, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "firebase/app-check";
 import { getDataConnect, connectDataConnectEmulator } from 'firebase/data-connect';
-import { User as AgroUser, SignalShard, DispatchChannel } from "../types";
+import { User as AgroUser, SignalShard, DispatchChannel, MachineNode } from "../types";
 import { generateAlphanumericId } from '../systemFunctions';
 import { handleFirestoreError, OperationType } from "./errorHandling";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyD2OCiMVOxaXWOBD3p4_mJp7TDJVwPpiNM",
-  authDomain: "envirosagro.org",
-  databaseURL: "https://envirosagro2git-41536716-7747d-default-rtdb.firebaseio.com",
-  projectId: "envirosagro2git-41536716-7747d",
-  storageBucket: "envirosagro2git-41536716-7747d.firebasestorage.app",
-  messagingSenderId: "218810534057",
-  appId: "1:218810534057:web:2d32abbb459755499fc1b8"
-};
+import firebaseConfig from "../firebase-applet-config.json" assert { type: "json" };
 
 // --- APP CHECK DEBUG TOKEN INITIALIZATION ---
 if (typeof window !== "undefined") {
@@ -289,6 +281,41 @@ export const listenToPulse = (callback: (pulse: string) => void) => {
   return () => off(pulseRef);
 };
 
+// --- M2M HANDSHAKE ---
+export const registerMachineNode = async (node: MachineNode) => {
+  const userId = auth.currentUser?.uid;
+  if (!userId) return null;
+  try {
+    const docRef = doc(db, "machine_nodes", node.id);
+    await setDoc(docRef, { ...node, stewardId: userId, lastModified: Date.now() });
+    return docRef.id;
+  } catch (e) {
+    handleFirestoreError(e, OperationType.WRITE, `machine_nodes/${node.id}`);
+    return null;
+  }
+};
+
+export const listenToHandshakeSignals = (nodeId: string, callback: (signal: any) => void) => {
+  const signalsRef = ref(rtdb, `handshake_signals/${nodeId}`);
+  onValue(signalsRef, (snapshot) => {
+    if (snapshot.exists()) {
+      callback(snapshot.val());
+    }
+  });
+  return () => off(signalsRef);
+};
+
+export const sendHandshakeSignal = async (targetNodeId: string, signal: any) => {
+  try {
+    const signalsRef = ref(rtdb, `handshake_signals/${targetNodeId}`);
+    await push(signalsRef, { ...signal, timestamp: rtdbTimestamp() });
+    return true;
+  } catch (e) {
+    console.error("Handshake signal error:", e);
+    return false;
+  }
+};
+
 // --- REGISTRY SYNC (FIRESTORE) ---
 export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
   const userId = uid || auth.currentUser?.uid;
@@ -338,6 +365,44 @@ export const saveCollectionItem = async (collectionName: string, item: any) => {
     handleFirestoreError(e, OperationType.WRITE, `${collectionName}/${docRef.id}`);
     return null;
   }
+};
+
+/**
+ * UPLOAD MEDIA SHARD
+ * Uploads binary data (video/PDF/photo) to Cloud Storage with resumable support.
+ */
+export const uploadMediaShard = (
+  file: File, 
+  onProgress?: (progress: number) => void
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      reject(new Error("Authentication required for upload."));
+      return;
+    }
+
+    const fileId = `MEDIA-${generateAlphanumericId(10)}`;
+    const path = `media/${userId}/${fileId}_${file.name}`;
+    const fileRef = storageRef(storage, path);
+    
+    const uploadTask = uploadBytesResumable(fileRef, file);
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        if (onProgress) onProgress(progress);
+      }, 
+      (error) => {
+        console.error("Upload failed:", error);
+        reject(error);
+      }, 
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        resolve(downloadURL);
+      }
+    );
+  });
 };
 
 export const listenToCollection = (collectionName: string, callback: (items: any[]) => void, isGlobal: boolean = false) => {

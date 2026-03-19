@@ -57,6 +57,12 @@ service firebase.storage {
     match /ingest/{esin}/{allPaths=**} {
       allow read, write: if isSignedIn();
     }
+
+    // 5. Broadcasts: Live Streams and Podcasts
+    match /broadcasts/{sessionId}/{segmentId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isAppVerified();
+    }
     
     match /{allPaths=**} {
       allow read, write: if isSignedIn();

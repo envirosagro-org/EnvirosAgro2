@@ -67,7 +67,7 @@ import {
 import { User, ViewState, AgroResource, MediaShard } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
-import { saveCollectionItem } from '../services/firebaseService';
+import { saveCollectionItem, uploadMediaShard } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
 
 interface LogEntry {
@@ -95,6 +95,7 @@ interface APIKey {
 
 interface NetworkIngestProps {
   user: User;
+  shards?: MediaShard[];
   onUpdateUser: (user: User) => void;
   onSpendEAC?: (amount: number, reason: string) => Promise<boolean>;
   onNavigate: (view: ViewState) => void;
@@ -132,7 +133,7 @@ const INITIAL_KEYS: APIKey[] = [
 
 const PROVISIONING_FEE = 500;
 
-const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpendEAC, onNavigate, onExecuteToShell, initialSection }) => {
+const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpdateUser, onSpendEAC, onNavigate, onExecuteToShell, initialSection }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'handshake' | 'vault' | 'api' | 'analyzer'>('overview');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [keys, setKeys] = useState<APIKey[]>(INITIAL_KEYS);
@@ -159,8 +160,8 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
   // Evidence Vault States
-  const [evidenceShards, setEvidenceShards] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Implement missing handleStartProvision handler
   const handleStartProvision = () => {
@@ -264,6 +265,39 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
       setIsGeneratingKey(false);
       setShowKeyModal(false);
     }, 2000);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    try {
+      const downloadUrl = await uploadMediaShard(file, (p) => setUploadProgress(p));
+      const type = file.type.startsWith('video/') ? 'VIDEO' : file.type.startsWith('audio/') ? 'AUDIO' : 'PAPER';
+      
+      const newShard: Partial<MediaShard> = {
+        title: file.name.split('.')[0],
+        type: type as any,
+        source: 'VAULT_INGEST',
+        author: user.name,
+        authorEsin: user.esin,
+        timestamp: new Date().toISOString(),
+        hash: Math.random().toString(16).substring(2, 10).toUpperCase(),
+        mImpact: (Math.random() * 5).toFixed(2),
+        size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        downloadUrl
+      };
+      
+      await saveCollectionItem('media_ledger', newShard);
+      alert("Evidence Shard successfully anchored to the Vault.");
+    } catch (err) {
+      console.error(err);
+      alert("Vault Ingest failed. Check network stability.");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -447,27 +481,25 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
         {activeTab === 'vault' && (
            <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700">
               <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-10 px-6">
-                 <div className="space-y-2">
+                  <div className="space-y-2">
                     <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Evidence <span className="text-blue-400">Vault.</span></h3>
                     <p className="text-slate-500 text-xl italic font-medium">"Managing multi-format shards for industrial finality audits."</p>
                  </div>
-                 <button className="px-12 py-6 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all flex items-center gap-4">
-                    <CloudUpload size={20} /> INGEST NEW PROOF
-                 </button>
+                 <label className={`px-12 py-6 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all flex items-center gap-4 cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {isUploading ? <Zap className="animate-spin" size={20} /> : <CloudUpload size={20} />}
+                    {isUploading ? `UPLOADING ${uploadProgress.toFixed(0)}%` : 'INGEST NEW PROOF'}
+                    <input type="file" className="hidden" onChange={handleFileUpload} />
+                 </label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                 {[
-                   { id: 'SHD-882-01', title: 'Zone 4 Moisture Scan', type: 'IMAGE', time: '2h ago', size: '1.4MB', col: 'text-emerald-400' },
-                   { id: 'SHD-104-42', title: 'Deed Verification Shard', type: 'DOC', time: '5h ago', size: '0.8MB', col: 'text-indigo-400' },
-                   { id: 'SHD-091-88', title: 'Spectral DNA Buffer', type: 'DATA', time: '1d ago', size: '4.2MB', col: 'text-blue-400' },
-                 ].map(shard => (
+                 {shards.filter(s => s.source === 'VAULT_INGEST' || s.source === 'CLOUD_STORAGE_INGEST').map(shard => (
                    <div key={shard.id} className="p-10 glass-card rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col justify-between h-[450px] shadow-2xl relative overflow-hidden active:scale-[0.99]">
                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Database size={200} /></div>
                       <div className="space-y-6 relative z-10">
                          <div className="flex justify-between items-start">
                             <div className="p-5 rounded-3xl bg-white/5 border border-white/10 group-hover:rotate-6 transition-all shadow-inner">
-                               <FileDigit size={32} className={shard.col} />
+                               <FileDigit size={32} className="text-indigo-400" />
                             </div>
                             <span className="text-[10px] font-mono text-slate-800 font-black uppercase italic">{shard.id}</span>
                          </div>
@@ -475,15 +507,16 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, onUpdateUser, onSpe
                          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">{shard.type} // {shard.size}</p>
                       </div>
                       <div className="pt-8 border-t border-white/5 flex justify-between items-center relative z-10 mt-auto">
-                         <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">{shard.time}</span>
-                         <button className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-700 hover:text-white transition-all shadow-xl active:scale-90"><History size={20} /></button>
+                         <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">{new Date(shard.timestamp).toLocaleDateString()}</span>
+                         <button onClick={() => onNavigate('media_ledger')} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-700 hover:text-white transition-all shadow-xl active:scale-90"><Eye size={20} /></button>
                       </div>
                    </div>
                  ))}
-                 <div className="p-10 border-4 border-dashed border-white/5 rounded-[64px] flex flex-col items-center justify-center text-center space-y-6 opacity-20 hover:opacity-100 transition-all cursor-pointer group">
-                    <PlusCircle size={64} className="group-hover:scale-110 transition-transform" />
-                    <p className="text-[11px] font-black uppercase tracking-widest">Append Proof Shard</p>
-                 </div>
+                 <label className={`p-10 border-4 border-dashed border-white/5 rounded-[64px] flex flex-col items-center justify-center text-center space-y-6 opacity-20 hover:opacity-100 transition-all cursor-pointer group ${isUploading ? 'pointer-events-none' : ''}`}>
+                    {isUploading ? <Zap size={64} className="animate-spin text-indigo-400" /> : <PlusCircle size={64} className="group-hover:scale-110 transition-transform" />}
+                    <p className="text-[11px] font-black uppercase tracking-widest">{isUploading ? `Syncing ${uploadProgress.toFixed(0)}%` : 'Append Proof Shard'}</p>
+                    <input type="file" className="hidden" onChange={handleFileUpload} />
+                 </label>
               </div>
            </div>
         )}

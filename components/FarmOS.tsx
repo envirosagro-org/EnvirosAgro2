@@ -37,7 +37,7 @@ import 'prismjs/components/prism-javascript';
 Prism.languages.agrolang = {
   'comment': /\/\/.*/,
   'string': /(["'])(?:(?=(\\?))\2.)*?\1/,
-  'keyword': /\b(IMPORT|AS|AUTHENTICATE|SEQUENCE|CONSTRAIN|COMMIT_SHARD|target|gain|units|mode|registry|finality|source|weight|zone)\b/,
+  'keyword': /\b(IMPORT|AS|AUTHENTICATE|SEQUENCE|CONSTRAIN|COMMIT_SHARD|target|gain|units|mode|registry|finality|source|weight|zone|device_command|get_device_status)\b/,
   'function': /\b[a-z_]\w*(?=\s*\()/i,
   'number': /\b\d+(?:\.\d+)?(?:Hz|v)?\b/i,
   'operator': /[=<>!]+/,
@@ -47,6 +47,11 @@ Prism.languages.agrolang = {
 import { User, SignalShard } from '../types';
 import { HenIcon } from './Icons';
 import { auditAgroLangCode, chatWithAgroLang } from '../services/agroLangService';
+import { sendDeviceCommand } from '../services/deviceService';
+import { rtdb, db } from '../src/firebase';
+import { ref, get } from 'firebase/database';
+import { collection, getDocs } from 'firebase/firestore';
+import DeviceControl from './DeviceControl';
 
 interface FarmOSProps {
   user: User;
@@ -74,6 +79,13 @@ const SNIPPETS = [
     desc: 'Establish lean external network sync.', 
     icon: Globe,
     code: `IMPORT EOS.Network AS Net;\nNet.bridge_external(id: "EA-EXT-01", protocol: "ZK_HANDSHAKE");`
+  },
+  { 
+    id: 'DEV-1', 
+    title: 'DEVICE_AUTO_CMD', 
+    desc: 'Acquire status and transmit command.', 
+    icon: Cpu,
+    code: `IMPORT EOS.Automation AS Bot;\nBot.get_device_status(id: "PUMP_01");\nBot.device_command(id: "PUMP_01", cmd: "ACTIVATE_FLOW");`
   },
   { 
     id: 'NET-2', 
@@ -133,6 +145,17 @@ const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
   });
 
   const [isExecutingLogic, setIsExecutingLogic] = useState(false);
+  const [devices, setDevices] = useState<any[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDevices = async () => {
+      const devicesRef = collection(db, 'devices');
+      const snapshot = await getDocs(devicesRef);
+      setDevices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    };
+    fetchDevices();
+  }, []);
 
   // IDE Local States
   const [activeShard, setActiveShard] = useState('Production_Init.al');
@@ -316,6 +339,23 @@ SEQUENCE Optimize_Cycle_882 {
         addLog("Robot swarm signal transmitted.", 'success');
         setResourceLoad(prev => ({ ...prev, T: Math.min(100, prev.T + 12) }));
       }
+      if (line.includes('Bot.device_command')) {
+        const match = line.match(/device_command\(id:\s*"(.*?)",\s*cmd:\s*"(.*?)"\)/);
+        if (match) {
+            const [_, deviceId, cmd] = match;
+            await sendDeviceCommand(deviceId, cmd);
+            addLog(`Device command sent to ${deviceId}: ${cmd}`, 'success');
+        }
+      }
+      if (line.includes('Bot.get_device_status')) {
+        const match = line.match(/get_device_status\(id:\s*"(.*?)"\)/);
+        if (match) {
+            const [_, deviceId] = match;
+            const statusRef = ref(rtdb, `devices/${deviceId}/status`);
+            const snapshot = await get(statusRef);
+            addLog(`Device status for ${deviceId}: ${snapshot.val() || 'Offline'}`, 'info');
+        }
+      }
       if (line.includes('COMMIT_SHARD')) {
         addLog("Finality reached. Shard anchored.", 'success');
       }
@@ -335,6 +375,27 @@ SEQUENCE Optimize_Cycle_882 {
     
     if (cmd === 'agro-apply-logic' && activeShard) {
       executeOptimization(codeMap[activeShard]);
+    } else if (cmd.startsWith('device-status ')) {
+      const deviceId = cmd.split(' ')[1];
+      if (deviceId) {
+        addLog(`Acquiring status for ${deviceId}...`, 'info');
+        const statusRef = ref(rtdb, `devices/${deviceId}/status`);
+        const snapshot = await get(statusRef);
+        addLog(`Device ${deviceId} status: ${snapshot.val() || 'Offline'}`, 'success');
+      } else {
+        addLog("Usage: device-status [DEVICE_ID]", 'error');
+      }
+    } else if (cmd.startsWith('device-cmd ')) {
+      const parts = cmd.split(' ');
+      const deviceId = parts[1];
+      const command = parts.slice(2).join(' ');
+      if (deviceId && command) {
+        addLog(`Transmitting command to ${deviceId}: ${command}`, 'info');
+        await sendDeviceCommand(deviceId, command);
+        addLog(`Command transmitted successfully.`, 'success');
+      } else {
+        addLog("Usage: device-cmd [DEVICE_ID] [COMMAND]", 'error');
+      }
     } else if (cmd === 'npx wrangler deploy') {
       setIsExecutingLogic(true);
       addLog("Initializing Project Deployment Shard...", 'info');
@@ -342,7 +403,7 @@ SEQUENCE Optimize_Cycle_882 {
       addLog("Deployment Finalized at 0x882A.", 'success');
       setIsExecutingLogic(false);
     } else if (cmd === 'help') {
-      addLog("Syscalls: npx wrangler deploy, net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
+      addLog("Syscalls: device-status [ID], device-cmd [ID] [CMD], npx wrangler deploy, net-sync, mesh-finality, ingest-status, agro-apply-logic, clear, help", 'info');
     } else if (cmd === 'clear') {
       setLogs([]);
     } else {
@@ -602,6 +663,22 @@ SEQUENCE Optimize_Cycle_882 {
                        </div>
                     </div>
                  ))}
+              </div>
+              <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 shadow-xl">
+                <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-8">Registered Devices</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {devices.map(device => (
+                    <div key={device.id} className="p-4 border rounded-xl bg-white/5 flex justify-between items-center">
+                      <span>{device.deviceId}</span>
+                      <button onClick={() => setSelectedDevice(device.deviceId)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg">Control</button>
+                    </div>
+                  ))}
+                </div>
+                {selectedDevice && (
+                  <div className="mt-8">
+                    <DeviceControl deviceId={selectedDevice} />
+                  </div>
+                )}
               </div>
            </div>
         )}

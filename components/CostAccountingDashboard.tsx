@@ -49,25 +49,29 @@ const CostAccountingDashboard: React.FC<CostAccountingDashboardProps> = ({
 
   const fetchData = async () => {
     try {
-      const responses = await Promise.all([
-        fetch('/api/accounting/report'),
-        fetch('/api/accounting/wallet'),
-        fetch('/api/accounting/transactions')
-      ]);
+      // Mocking data as we are in a decentralized frontend-only mode.
+      // In a production environment, these would be fetched from a secure backend.
       
-      const [reportRes, walletRes, transRes] = responses;
+      const mockReport: FinancialReport = {
+        totalRevenue: 124500.50,
+        totalCosts: 84200.25,
+        netProfit: 40300.25,
+        taxLiability: 12045.00,
+        breakEvenPoint: 450.5,
+        costOptimizationScore: 88
+      };
       
-      for (const res of responses) {
-        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
-          const text = await res.text();
-          console.error(`Response not JSON for ${res.url}:`, res.status, text.substring(0, 100));
-          throw new Error(`Response not JSON for ${res.url}`);
-        }
-      }
+      const mockTransactions: Transaction[] = [
+        { id: 'TX-001', type: 'REVENUE', category: 'Harvest', amount: 15000, description: 'Bantu Coffee Batch #882', timestamp: Date.now() - 86400000 * 5 },
+        { id: 'TX-002', type: 'COST', category: 'Logistics', amount: 2400, description: 'Eco-Rail Shard Delivery', timestamp: Date.now() - 86400000 * 4 },
+        { id: 'TX-003', type: 'REVENUE', category: 'Carbon', amount: 8500, description: 'Mugumo Carbon Minting v6', timestamp: Date.now() - 86400000 * 3 },
+        { id: 'TX-004', type: 'COST', category: 'Maintenance', amount: 1200, description: 'Oracle Node Calibration', timestamp: Date.now() - 86400000 * 2 },
+        { id: 'TX-005', type: 'REVENUE', category: 'Services', amount: 3200, description: 'Agro Lang Deep Query Fee', timestamp: Date.now() - 86400000 * 1 }
+      ];
       
-      setReport(await reportRes.json());
-      setWalletBalance((await walletRes.json()).balance);
-      setTransactions(await transRes.json());
+      setReport(mockReport);
+      setWalletBalance(542000.75);
+      setTransactions(mockTransactions);
     } catch (error) {
       console.error("Failed to fetch accounting data:", error);
     } finally {

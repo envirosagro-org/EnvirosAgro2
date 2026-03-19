@@ -119,6 +119,7 @@ const Community: React.FC<CommunityProps> = ({
 
   const [showChat, setShowChat] = useState<string | null>(null); 
   const [chatInput, setChatInput] = useState('');
+  const [showHoodOptions, setShowHoodOptions] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialSection) {
@@ -186,6 +187,7 @@ const Community: React.FC<CommunityProps> = ({
       comments: []
     };
     await saveCollectionItem('social_posts', newPost);
+    onEarnEAC(20, 'SOCIAL_SIGNAL_BROADCAST');
     setIsPosting(false);
     setPostContent('');
     setPostMedia(null);
@@ -219,7 +221,11 @@ const Community: React.FC<CommunityProps> = ({
     }
   };
 
-  const handleHoodRequest = async (targetEsin: string) => {
+  const handleHoodRequest = async (targetEsin: string, type: any = 'SOCIAL') => {
+    if (onHookHood) {
+      onHookHood(targetEsin, type);
+      return;
+    }
     const existing = connections.find(c => (c.fromEsin === user.esin && c.toEsin === targetEsin) || (c.fromEsin === targetEsin && c.toEsin === user.esin));
     if (existing) return;
     const newConn: StewardConnection = {
@@ -230,13 +236,14 @@ const Community: React.FC<CommunityProps> = ({
       timestamp: new Date().toISOString()
     };
     await saveCollectionItem('connections', newConn);
+    onEarnEAC(15, 'HOOD_REQUEST_INITIATED');
     dispatchNetworkSignal({
       type: 'engagement',
       origin: 'MANUAL',
       title: 'HOOD_REQUEST_INBOUND',
-      message: `${user.name} requests a social handshake with your node.`,
+      message: `${user.name} requests a ${type} handshake with your node.`,
       priority: 'medium',
-      meta: { target: 'profile', payload: { esin: user.esin } }
+      meta: { target: 'profile', payload: { esin: user.esin, type } }
     });
   };
 

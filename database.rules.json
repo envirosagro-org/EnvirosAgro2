@@ -21,6 +21,43 @@
     "system_heartbeat": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "handshake_signals": {
+      "$node_id": {
+        ".read": "auth != null && auth.uid == $node_id",
+        ".write": "auth != null && auth.uid == $node_id"
+      }
+    },
+    "mempool": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$tx_id": {
+        ".validate": "newData.hasChildren(['id', 'data', 'timestamp', 'stewardId'])"
+      }
+    },
+    "broadcasts": {
+      "$sessionId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "broadcast_segments": {
+      "$sessionId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "broadcast_comments": {
+      "$sessionId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "spatial_users": {
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $userId"
+      }
     }
   }
 }

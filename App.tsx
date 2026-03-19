@@ -1,3 +1,4 @@
+import { iotService } from './services/iotService';
 import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { 
@@ -32,7 +33,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Toaster } from 'sonner';
 import { SycamoreLogo, HenIcon } from './components/Icons';
 import { useAppStore } from './store';
-import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection } from './types';
+import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -53,6 +54,8 @@ const UserProfile = React.lazy(() => import('./components/UserProfile'));
 const InvestorPortal = React.lazy(() => import('./components/InvestorPortal'));
 const VendorPortal = React.lazy(() => import('./components/VendorPortal'));
 const NetworkIngest = React.lazy(() => import('./components/NetworkIngest'));
+const HardwareRegistry = React.lazy(() => import('./components/HardwareRegistry'));
+const DeviceControl = React.lazy(() => import('./components/DeviceControl'));
 const ToolsSection = React.lazy(() => import('./components/ToolsSection'));
 const LiveVoiceBridge = React.lazy(() => import('./components/LiveVoiceBridge'));
 const Channelling = React.lazy(() => import('./components/Channelling'));
@@ -95,6 +98,10 @@ const RegistryHandshake = React.lazy(() => import('./components/RegistryHandshak
 const EducationalResources = React.lazy(() => import('./components/EducationalResources'));
 const CostAccountingDashboard = React.lazy(() => import('./components/CostAccountingDashboard'));
 const InternalControlDashboard = React.lazy(() => import('./components/InternalControlDashboard'));
+const Governance = React.lazy(() => import('./components/Governance'));
+const CarbonCredits = React.lazy(() => import('./components/CarbonCredits'));
+const Traceability = React.lazy(() => import('./components/Traceability'));
+const Marketplace = React.lazy(() => import('./components/Marketplace'));
 
 import { 
   syncUserToCloud, 
@@ -408,92 +415,7 @@ export interface RegistryGroup {
   items: RegistryItem[];
 }
 
-const REGISTRY_NODES: RegistryGroup[] = [
-  { 
-    category: 'Command & Strategy', 
-    items: [
-      { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
-      { id: 'mesh_protocol', name: 'Mesh Protocol', icon: Network, sections: [{id: 'topology', label: 'Network Topology'}, {id: 'commits', label: 'Block Shards'}, {id: 'mempool', label: 'Inbound Mempool'}] },
-      { id: 'sustainability', name: 'Sustainability Shard', icon: Leaf },
-      { id: 'agro_lang_analyst', name: 'EnvirosAgro Agro Lang', icon: SycamoreLogo },
-      { id: 'internal_control', name: 'Internal Control', icon: ShieldCheck },
-      { id: 'settings', name: 'System Settings', icon: Settings, sections: [{id: 'display', label: 'UI Display'}, {id: 'privacy', label: 'Security Shards'}] },
-      { id: 'profile', name: 'Steward Profile', icon: UserIcon, sections: [{id: 'dossier', label: 'Personal Registry'}, {id: 'card', label: 'Identity Shard'}, {id: 'celestial', label: 'Birth Resonance'}] },
-      { id: 'explorer', name: 'Monitoring Hub', icon: Database, sections: [{id: 'terminal', label: 'Signal Terminal'}, {id: 'blocks', label: 'Blocks'}, {id: 'ledger', label: 'Tx Ledger'}, {id: 'consensus', label: 'Quorum'}, {id: 'settlement', label: 'Finality'}] },
-      { id: 'farm_os', name: 'Farm OS', icon: Binary, sections: [{id: 'kernel', label: 'Kernel Stack'}, {id: 'ide', label: 'AgroLang IDE'}, {id: 'shell', label: 'System Shell'}] },
-      { id: 'impact', name: 'Network Impact', icon: TrendingUp, sections: [{id: 'whole', label: 'Vitality'}, {id: 'carbon', label: 'Carbon Ledger'}, {id: 'thrusts', label: 'Resonance'}] },
-      { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'eos_agro_lang', label: 'Expert Oracle'}] },
-      { id: 'sitemap', name: 'Registry Matrix', icon: MapIcon },
-      { id: 'info', name: 'Hub Info', icon: Info, sections: [{id: 'about', label: 'About'}, {id: 'security', label: 'Security'}, {id: 'legal', label: 'Legal'}, {id: 'faq', label: 'FAQ'}] }
-    ]
-  },
-  {
-    category: 'Missions & Capital',
-    items: [
-      { id: 'contract_farming', name: 'Contract Farming', icon: Handshake, sections: [{id: 'browse', label: 'Missions'}, {id: 'deployments', label: 'Deployments'}] },
-      { id: 'investor', name: 'Investor Portal', icon: Briefcase, sections: [{id: 'opportunities', label: 'Vetting'}, {id: 'portfolio', label: 'Portfolio'}, {id: 'analytics', label: 'Analytics'}] },
-      { id: 'agrowild', name: 'Agrowild', icon: Binoculars, sections: [{id: 'conservancy', label: 'Protected Nodes'}, {id: 'tourism', label: 'Eco-Tourism'}] },
-      { id: 'community', name: 'Steward Community', icon: Users, sections: [{id: 'social', label: 'Social Mesh'}, {id: 'shards', label: 'Social Shards'}, {id: 'lms', label: 'Knowledge Base'}] }
-    ]
-  },
-  {
-    category: 'Value & Production',
-    items: [
-      { id: 'industrial', name: 'Industrial Cloud', icon: Factory, sections: [{id: 'bridge', label: 'Registry Bridge'}, {id: 'sync', label: 'Process Sync'}, {id: 'path', label: 'Analyzer'}] },
-      { id: 'agro_value_enhancement', name: 'Value Forge', icon: FlaskConical, sections: [{id: 'synthesis', label: 'Asset Synthesis'}, {id: 'optimization', label: 'Process Tuning'}] },
-      { id: 'wallet', name: 'Agro Wallet Hub', icon: Wallet, sections: [{id: 'treasury', label: 'Utility'}, {id: 'accounting', label: 'Cost Management'}, {id: 'staking', label: 'Staking'}, {id: 'swap', label: 'Swap'}] },
-      { id: 'economy', name: 'Market Center', icon: Globe, sections: [{id: 'catalogue', label: 'Registry Assets'}, {id: 'infrastructure', label: 'Industrial Nodes'}, {id: 'forecasting', label: 'Demand Matrix'}] },
-      { id: 'vendor', name: 'Vendor Command', icon: Warehouse },
-      { id: 'ecosystem', name: 'Brand Multiverse', icon: Layers },
-      { id: 'envirosagro_store', name: 'Official Org Store', icon: Store }
-    ]
-  },
-  {
-    category: 'Operations & Trace',
-    items: [
-      { id: 'online_garden', name: 'Online Garden', icon: Flower, sections: [{id: 'bridge', label: 'Telemetry Bridge'}, {id: 'shards', label: 'Shard Manager'}, {id: 'mining', label: 'Extraction'}] },
-      { id: 'digital_mrv', name: 'Digital MRV', icon: Scan, sections: [{id: 'land_select', label: 'Geofence'}, {id: 'ingest', label: 'Evidence Ingest'}] },
-      { id: 'ingest', name: 'Data Inflow Hub', icon: Cable, sections: [{id: 'handshake', label: 'Node Pairing'}, {id: 'streams', label: 'Registry Keys'}, {id: 'vault', label: 'Evidence Vault'}] },
-      { id: 'live_farming', name: 'Inflow Control', icon: Monitor, sections: [{id: 'lifecycle', label: 'Pipeline'}] },
-      { id: 'tqm', name: 'TQM Trace Hub', icon: ClipboardCheck, sections: [{id: 'orders', label: 'Shipments'}, {id: 'trace', label: 'Traceability'}] },
-      { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake, sections: [{id: 'directory', label: 'Directory'}, {id: 'support', label: 'Support'}] },
-      { id: 'circular', name: 'Circular Grid', icon: Recycle, sections: [{id: 'market', label: 'Refurbished Store'}] },
-      { id: 'tools', name: 'Industrial Tools', icon: Wrench, sections: [{id: 'kanban', label: 'Kanban'}, {id: 'sigma', label: 'Six Sigma'}] },
-      { id: 'robot', name: 'Swarm Command', icon: HenIcon, sections: [{id: 'registry', label: 'Fleet Registry'}, {id: 'security', label: 'Intranet Security'}, {id: 'sync', label: 'AI Crawler Sync'}] }
-    ]
-  },
-  {
-    category: 'Natural Resources',
-    items: [
-      { id: 'animal_world', name: 'Animal World', icon: PawPrint },
-      { id: 'plants_world', name: 'Plants World', icon: TreePine },
-      { id: 'aqua_portal', name: 'Aqua Portal', icon: Droplets },
-      { id: 'soil_portal', name: 'Soil Portal', icon: Mountain },
-      { id: 'air_portal', name: 'Air Portal', icon: Wind }
-    ]
-  },
-  {
-    category: 'Network Governance',
-    items: [
-      { id: 'intranet', name: 'Intranet Hub', icon: ShieldPlus },
-      { id: 'emergency_portal', name: 'Emergency Command', icon: Siren },
-      { id: 'agro_regency', name: 'Agro Regency', icon: History },
-      { id: 'code_of_laws', name: 'Code of Laws', icon: Scale },
-      { id: 'agro_calendar', name: 'Liturgical Calendar', icon: CalendarDays },
-      { id: 'chroma_system', name: 'Chroma-SEHTI', icon: Palette },
-      { id: 'research', name: 'Invention Ledger', icon: Zap },
-      { id: 'biotech_hub', name: 'Biotech Hub', icon: Dna },
-      { id: 'permaculture_hub', name: 'Permaculture Hub', icon: Compass },
-      { id: 'cea_portal', name: 'CEA Portal', icon: BoxSelect },
-      { id: 'multimedia_generator', name: 'Agro Multimedia Forge', icon: SycamoreLogo },
-      { id: 'media_ledger', name: 'Media Ledger', icon: FileStack },
-      { id: 'media', name: 'Media Hub', icon: Tv, sections: [{id: 'all', label: 'Primary Hub'}, {id: 'video', label: 'Video Nodes'}, {id: 'news', label: 'Newsstand'}, {id: 'audio', label: 'Acoustic Registry'}, {id: 'comic', label: 'Make it Comic'}] },
-      { id: 'channelling', name: 'Channelling Hub', icon: Share2 },
-      { id: 'registry_handshake', name: 'Registry Handshake', icon: SmartphoneNfc },
-      { id: 'educational_resources', name: 'Educational Resources', icon: BookOpen }
-    ]
-  }
-];
+import { REGISTRY_NODES } from './constants/registry';
 
 const GlobalSearch: React.FC<{ 
   isOpen: boolean; 
@@ -522,26 +444,9 @@ const GlobalSearch: React.FC<{
   }, [isOpen]);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (searchTerm.trim().length > 2) {
-        setIsApiSearching(true);
-        try {
-          const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
-          if (response.ok) {
-            const data = await response.json();
-            setApiResults(data);
-          }
-        } catch (e) {
-          console.error("Search API Error:", e);
-        } finally {
-          setIsApiSearching(false);
-        }
-      } else {
-        setApiResults([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
+    // Search API is currently disabled as we are in a decentralized frontend-only mode.
+    // Local search results are already computed in filteredResults.
+    setApiResults([]);
   }, [searchTerm]);
 
   const handleAiDeepQuery = async () => {
@@ -795,28 +700,39 @@ const App: React.FC = () => {
   const costAudit = useAppStore(state => state.costAudit);
   const setCostAudit = useAppStore(state => state.setCostAudit);
   const registrationState = useAppStore(state => state.registrationState);
+  
+  const history = useAppStore(state => state.history);
+  const forwardHistory = useAppStore(state => state.forwardHistory);
+  const blockchain = useAppStore(state => state.blockchain);
+  const setBlockchain = useAppStore(state => state.setBlockchain);
+  const mempool = useAppStore(state => state.mempool);
+  const setMempool = useAppStore(state => state.setMempool);
+  const multimediaParams = useAppStore(state => state.multimediaParams);
+  const setMultimediaParams = useAppStore(state => state.setMultimediaParams);
+  const navigate = useAppStore(state => state.navigate);
+  const goBack = useAppStore(state => state.goBack);
+  const goForward = useAppStore(state => state.goForward);
 
   const [isBooting, setIsBooting] = useState(true);
   const [isUnverified, setIsUnverified] = useState(false);
   const [isConsultantOpen, setIsConsultantOpen] = useState(false);
-  const [history, setHistory] = useState<VectorAddress[]>([]);
-  const [forwardHistory, setForwardHistory] = useState<VectorAddress[]>([]);
   const [contracts, setContracts] = useState<FarmingContract[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
   const [industrialUnits, setIndustrialUnits] = useState<RegisteredUnit[]>([]);
   const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
   const [hoodConnections, setHoodConnections] = useState<HoodConnection[]>([]);
-  const [blockchain, setBlockchain] = useState<AgroBlock[]>([]);
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
   const [mediaShards, setMediaShards] = useState<MediaShard[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [blueprints, setBlueprints] = useState<ValueBlueprint[]>([]);
   const [pulseMessage, setPulseMessage] = useState('Registry synchronized. No anomalies detected.');
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [votes, setVotes] = useState<Vote[]>([]);
+  const [carbonCredits, setCarbonCredits] = useState<CarbonCredit[]>([]);
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
-  const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<any | null>(null);
+  const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<Task | null>(null);
   const [osInitialCode, setOsInitialCode] = useState<string | null>(null);
-  const [multimediaParams, setMultimediaParams] = useState<{ prompt?: string; type?: string; autoGenerate?: boolean } | null>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showZenithButton, setShowZenithButton] = useState(false);
@@ -878,33 +794,30 @@ const App: React.FC = () => {
   const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   useEffect(() => { const handleResize = () => { const isLg = window.innerWidth >= 1024; setIsSidebarOpen(isLg); if (isLg) setIsMobileMenuOpen(false); }; handleResize(); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
   useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { if (fbUser) { const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); if (isVerified) { setIsUnverified(false); const profile = await getStewardProfile(fbUser.uid); if (profile) setUser(profile); } else { setIsUnverified(true); setUser(null); } } else { setIsUnverified(false); setUser(null); } }); }, []);
-  useEffect(() => { const unsubProjects = listenToCollection('projects', setProjects, true); const unsubContracts = listenToCollection('contracts', setContracts, true); const unsubOrders = listenToCollection('orders', setOrders); const unsubProducts = listenToCollection('products', setVendorProducts, true); const unsubUnits = listenToCollection('industrial_units', setIndustrialUnits); const unsubLive = listenToCollection('live_products', setLiveProducts, true); const unsubTx = listenToCollection('transactions', setTransactions); const unsubSignals = listenToCollection('signals', setSignals); const unsubMedia = listenToCollection('media_ledger', setMediaShards, true); const unsubBlocks = listenToCollection('blocks', setBlockchain, true); const unsubTasks = listenToCollection('tasks', setTasks); const unsubBlueprints = listenToCollection('blueprints', setBlueprints); const unsubPulse = listenToPulse(setPulseMessage); return () => { unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts(); unsubUnits(); unsubLive(); unsubTx(); unsubSignals(); unsubPulse(); unsubMedia(); unsubBlocks(); unsubTasks(); unsubBlueprints(); }; }, [user]);
-  const hookHood = useCallback(async (targetEsin: string, type: HoodConnection['type'] = 'SOCIAL') => {
-    if (!user || user.esin === targetEsin) return;
-    const existing = hoodConnections.find(c => c.targetEsin === targetEsin && c.status === 'ACTIVE');
-    if (existing) return;
-
-    const newConn: HoodConnection = {
-      id: `HOOD-${generateAlphanumericId(7)}`,
-      stewardEsin: user.esin,
-      targetEsin,
-      type,
-      status: 'ACTIVE',
-      timestamp: new Date().toISOString()
-    };
-
-    setHoodConnections(prev => [newConn, ...prev]);
-    await saveCollectionItem('hood_connections', newConn);
-    
-    emitSignal({
-      title: 'HOOD_HOOKED',
-      message: `Direct link established with node ${targetEsin}. Efficiency synchronized.`,
-      priority: 'medium',
-      type: 'engagement',
-      origin: 'ORACLE',
-      actionIcon: 'Link2'
-    });
-  }, [user, hoodConnections]);
+  useEffect(() => { 
+    const unsubProjects = listenToCollection('projects', setProjects, true); 
+    const unsubContracts = listenToCollection('contracts', setContracts, true); 
+    const unsubOrders = listenToCollection('orders', setOrders); 
+    const unsubProducts = listenToCollection('products', setVendorProducts, true); 
+    const unsubUnits = listenToCollection('industrial_units', setIndustrialUnits); 
+    const unsubLive = listenToCollection('live_products', setLiveProducts, true); 
+    const unsubTx = listenToCollection('transactions', setTransactions); 
+    const unsubSignals = listenToCollection('signals', setSignals); 
+    const unsubMedia = listenToCollection('media_ledger', setMediaShards, true); 
+    const unsubBlocks = listenToCollection('blocks', setBlockchain, true); 
+    const unsubMempool = listenToCollection('mempool', setMempool, true);
+    const unsubTasks = listenToCollection('tasks', setTasks); 
+    const unsubBlueprints = listenToCollection('blueprints', setBlueprints); 
+    const unsubProposals = listenToCollection('proposals', setProposals, true);
+    const unsubVotes = listenToCollection('votes', setVotes, true);
+    const unsubCarbonCredits = listenToCollection('carbon_credits', setCarbonCredits, true);
+    const unsubPulse = listenToPulse(setPulseMessage); 
+    return () => { 
+      unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts(); unsubUnits(); unsubLive(); unsubTx(); unsubSignals(); unsubPulse(); unsubMedia(); unsubBlocks(); unsubMempool(); unsubTasks(); unsubBlueprints(); unsubProposals(); unsubVotes(); unsubCarbonCredits();
+    }; 
+  }, [user]);
+  const hookHoodRef = useRef<any>(null);
+  const emitSignalRef = useRef<any>(null);
 
   const emitSignal = useCallback(async (signalData: Partial<SignalShard>) => { 
     const signal = await dispatchNetworkSignal(signalData); 
@@ -919,7 +832,6 @@ const App: React.FC = () => {
           title: signal.title, 
           message: signal.message, 
           duration: 6000, 
-          actionLabel: signal.actionLabel, 
           actionIcon: signalData.actionIcon 
         }, ...prev]); 
       }
@@ -929,7 +841,7 @@ const App: React.FC = () => {
       if (signal.meta?.payload?.senderEsin && currentUser && signal.meta.payload.senderEsin !== currentUser.esin) {
         const senderRole = signal.meta.payload.senderRole;
         if (senderRole === 'STEWARD' || senderRole === 'INVESTOR' || senderRole === 'AUDITOR') {
-          hookHood(signal.meta.payload.senderEsin, signal.type === 'task' ? 'AUDIT' : 'DEAL');
+          hookHoodRef.current(signal.meta.payload.senderEsin, signal.type === 'task' ? 'AUDIT' : 'DEAL');
         }
       }
 
@@ -938,7 +850,78 @@ const App: React.FC = () => {
         console.log(`[EMAIL_ROUTING] To: ${currentUser?.email || 'Node'}, Subject: ${signal.title}, Body: ${signal.message}`);
       }
     } 
-  }, [hookHood, setNotifications]);
+  }, []);
+
+  const handleEarnEAC = useCallback(async (amount: number, reason: string) => {
+    const currentUser = useAppStore.getState().user;
+    if (!currentUser) return;
+    const updatedUser = {
+      ...currentUser,
+      wallet: {
+        ...currentUser.wallet,
+        balance: currentUser.wallet.balance + amount,
+        lifetimeEarned: (currentUser.wallet.lifetimeEarned || 0) + amount
+      }
+    };
+    const syncOk = await syncUserToCloud(updatedUser);
+    if (!syncOk) return;
+    setUser(updatedUser);
+    const newTx: AgroTransaction = {
+      id: `TX-${Date.now()}`,
+      type: 'Reward',
+      farmId: currentUser.esin,
+      details: reason,
+      value: amount,
+      unit: 'EAC'
+    };
+    await saveCollectionItem('transactions', newTx);
+  }, [setUser]);
+
+  useEffect(() => {
+    iotService.startSimulation(handleEarnEAC);
+    return () => iotService.stopSimulation();
+  }, [handleEarnEAC]);
+
+  const hookHood: (targetEsin: string, type?: HoodConnection['type']) => Promise<void> = useCallback(async (targetEsin: string, type: HoodConnection['type'] = 'SOCIAL') => {
+    if (!user || user.esin === targetEsin) return;
+    const existing = hoodConnections.find(c => c.targetEsin === targetEsin && c.status === 'ACTIVE' && c.type === type);
+    if (existing) {
+      if (['VIDEO', 'PODCAST', 'LIVESTREAM'].includes(type)) {
+        navigate('media', type.toLowerCase());
+      }
+      return;
+    }
+
+    const newConn: HoodConnection = {
+      id: `HOOD-${generateAlphanumericId(7)}`,
+      stewardEsin: user.esin,
+      targetEsin,
+      type,
+      status: 'ACTIVE',
+      timestamp: new Date().toISOString()
+    };
+
+    setHoodConnections(prev => [newConn, ...prev]);
+    await saveCollectionItem('hood_connections', newConn);
+    
+    // Reward for socialization/engagement
+    handleEarnEAC(25, `HOOD_SYNC_${type}`);
+
+    emitSignalRef.current({
+      title: 'HOOD_HOOKED',
+      message: `Direct ${type} link established with node ${targetEsin}. Efficiency synchronized.`,
+      priority: 'medium',
+      type: 'engagement',
+      origin: 'ORACLE',
+      actionIcon: 'Link2'
+    });
+
+    // If it's a media connection, navigate to Media Hub to facilitate the stream
+    if (['VIDEO', 'PODCAST', 'LIVESTREAM'].includes(type)) {
+      navigate('media', type.toLowerCase());
+    }
+  }, [user, hoodConnections, navigate, handleEarnEAC, emitSignal]);
+
   const handleSpendEAC = useCallback(async (amount: number, reason: string) => {
     const currentUser = useAppStore.getState().user;
     if (!currentUser) {
@@ -985,31 +968,6 @@ const App: React.FC = () => {
     return true;
   }, [setUser, setView, emitSignal]);
 
-  const handleEarnEAC = useCallback(async (amount: number, reason: string) => {
-    const currentUser = useAppStore.getState().user;
-    if (!currentUser) return;
-    const updatedUser = {
-      ...currentUser,
-      wallet: {
-        ...currentUser.wallet,
-        balance: currentUser.wallet.balance + amount,
-        lifetimeEarned: (currentUser.wallet.lifetimeEarned || 0) + amount
-      }
-    };
-    const syncOk = await syncUserToCloud(updatedUser);
-    if (!syncOk) return;
-    setUser(updatedUser);
-    const newTx: AgroTransaction = {
-      id: `TX-${Date.now()}`,
-      type: 'Reward',
-      farmId: currentUser.esin,
-      details: reason,
-      value: amount,
-      unit: 'EAC'
-    };
-    await saveCollectionItem('transactions', newTx);
-  }, [setUser]);
-
   const handlePerformPermanentAction = useCallback(async (actionKey: string, reward?: number, reason?: string) => {
     const currentUser = useAppStore.getState().user;
     if (!currentUser || currentUser.completedActions?.includes(actionKey)) return false;
@@ -1020,41 +978,7 @@ const App: React.FC = () => {
   const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
   const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(signals.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
   const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
-  const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => { let index: string | undefined; REGISTRY_NODES.forEach((group, dIdx) => { group.items.forEach((item, eIdx) => { if (item.id === v) { if (!section) { index = `[${dIdx + 1}.${eIdx + 1}]`; } else { const sIdx = item.sections?.findIndex(s => s.id === section); if (sIdx !== undefined && sIdx !== -1) { index = `[${dIdx + 1}.${eIdx + 1}.${sIdx + 1}]`; } } } }); }); return index; };
-  const navigate = useCallback((v: ViewState, section?: string | null, pushToHistory = true, params?: any) => { 
-    const currentView = useAppStore.getState().view;
-    const currentSection = useAppStore.getState().viewSection;
-    const index = findMatrixIndex(v, section || null); 
-    
-    if (pushToHistory) { 
-      const currentAddress: VectorAddress = { 
-        dimension: currentView, 
-        element: currentSection, 
-        matrixIndex: findMatrixIndex(currentView, currentSection) 
-      }; 
-      setHistory(prev => [...prev, currentAddress]); 
-      setForwardHistory([]); 
-    } 
-    
-    setView(v); 
-    setViewSection(section || null); 
-    if (v === 'multimedia_generator') setMultimediaParams(params || null); 
-    setIsMobileMenuOpen(false); 
-    if (window.innerWidth < 1024) setIsSidebarOpen(false); 
-    setIsConsultantOpen(false); 
-    setIsInboxOpen(false); 
-    
-    emitSignal({ 
-      title: 'VECTOR_SHIFT', 
-      message: `Resolved route to ${index || v.toUpperCase()}.`, 
-      priority: 'low', 
-      type: 'system', 
-      origin: 'ORACLE', 
-      actionIcon: 'ChevronRight' 
-    }); 
-  }, [emitSignal, setView, setViewSection, setIsSidebarOpen, setIsMobileMenuOpen]);
-  const goBack = useCallback(() => { if (history.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const lastVector = history[history.length - 1]; setForwardHistory(prev => [...prev, currentAddress]); setHistory(prev => prev.slice(0, -1)); navigate(lastVector.dimension, lastVector.element || undefined, false); } else if (view !== 'dashboard') { navigate('dashboard', undefined, true); } }, [history, view, viewSection, navigate]);
-  const goForward = useCallback(() => { if (forwardHistory.length > 0) { const currentAddress: VectorAddress = { dimension: view, element: viewSection, matrixIndex: findMatrixIndex(view, viewSection) }; const nextVector = forwardHistory[forwardHistory.length - 1]; setHistory(prev => [...prev, currentAddress]); setForwardHistory(prev => prev.slice(0, -1)); navigate(nextVector.dimension, nextVector.element || undefined, false); } }, [forwardHistory, view, viewSection, navigate]);
+  // Navigation and findMatrixIndex are now handled by the store
 
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
@@ -1062,8 +986,8 @@ const App: React.FC = () => {
     if (isUnverified) return <VerificationHUD userEmail={auth.currentUser?.email || 'Unauthorized Node'} onVerified={() => { setIsUnverified(false); setView('dashboard'); }} onLogout={handleLogout} />;
     switch (view) {
       case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;
-      case 'dashboard': return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
-      case 'mesh_protocol': return <MeshProtocol user={currentUser} blockchain={blockchain} />;
+      case 'dashboard': return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} mempool={mempool} isMining={false} orders={orders} />;
+      case 'mesh_protocol': return <MeshProtocol user={currentUser} blockchain={blockchain} mempool={mempool} />;
       case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
       case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} liveProducts={liveProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} blueprints={blueprints} onUpdateUser={(u) => setUser(u)} initialSection={viewSection} />;
       case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={(u) => setUser(u)} onSwap={async () => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={emitSignal} transactions={transactions} initialSection={viewSection} costAudit={costAudit} />;
@@ -1076,12 +1000,26 @@ const App: React.FC = () => {
       case 'investor': return <InvestorPortal user={currentUser} onUpdate={(u) => setUser(u)} onSpendEAC={handleSpendEAC} projects={projects} onNavigate={navigate} />;
       case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => setView('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} />;
       case 'channelling': return <Channelling user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
-      case 'media': return <MediaHub user={currentUser} userBalance={currentUser.wallet.balance} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} initialAction={viewSection} />;
+      case 'media': return (
+        <Suspense fallback={<LoadingHUD />}>
+          <MediaHub 
+            user={currentUser} 
+            onEarnEAC={handleEarnEAC} 
+            onSpendEAC={handleSpendEAC} 
+            onNavigate={navigate} 
+            onEmitSignal={emitSignal} 
+          />
+        </Suspense>
+      );
       case 'multimedia_generator': return <AgroMultimediaGenerator user={currentUser} onNavigate={navigate} onEarnEAC={handleEarnEAC} prefilledParams={multimediaParams} clearParams={() => setMultimediaParams(null)} />;
       case 'cost_accounting': return <CostAccountingDashboard />;
       case 'internal_control': 
         const role = (currentUser.role as string) === 'OBSERVER' ? 'GUEST' : (currentUser.role as UserRole);
         return <InternalControlDashboard userRole={role} currentPath={view} />;
+      case 'governance': return <Governance user={currentUser} proposals={proposals} onSaveProposal={(p) => saveCollectionItem('proposals', p)} onSaveVote={(v) => saveCollectionItem('votes', v)} notify={emitSignal} />;
+      case 'carbon_credits': return <CarbonCredits user={currentUser} credits={carbonCredits} products={liveProducts} onVerifyCredit={(id) => saveCollectionItem('carbon_credits', { id, verificationStatus: 'VERIFIED', verifierEsin: currentUser.esin })} notify={emitSignal} />;
+      case 'traceability': return <Traceability product={liveProducts[0]} />;
+      case 'marketplace': return <Marketplace />;
       case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} initialSection={viewSection} />;
       case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} />;
       case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} liveProducts={liveProducts} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
@@ -1115,7 +1053,7 @@ const App: React.FC = () => {
       case 'sitemap': return <Sitemap nodes={REGISTRY_NODES} onNavigate={navigate} />;
       case 'agro_lang_analyst': return <AgroLangAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
       case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} liveProducts={liveProducts} onSaveLiveProduct={(p) => saveCollectionItem('live_products', p)} />;
-      case 'ingest': return <NetworkIngest user={currentUser} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} />;
+      case 'ingest': return <NetworkIngest user={currentUser} shards={mediaShards} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} />;
       case 'info': return <InfoPortal user={currentUser} onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} onPermanentAction={handlePerformPermanentAction} />;
       case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} />;
       case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;
@@ -1142,6 +1080,8 @@ const App: React.FC = () => {
           </Suspense>
         );
       case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onEmitSignal={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} />;
+      case 'hardware_registry': return <HardwareRegistry />;
+      case 'device_control': return <DeviceControl deviceId="test-device-1" />;
       case 'educational_resources': return <EducationalResources onNavigate={navigate} />;
       default: return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }

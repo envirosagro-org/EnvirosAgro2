@@ -14,6 +14,7 @@ import {
 import { User, LiveAgroProduct, ViewState, AgroResource, ValueBlueprint, Task, RegisteredUnit, FarmingContract, VendorProduct } from '../types';
 import { HenIcon } from './Icons';
 import AssetAssociationTool from './AssetAssociationTool';
+import Traceability from './Traceability';
 import { optimizeProductionProcess, automateSupplyChain } from '../services/agroLangService';
 
 interface LiveFarmingProps {
@@ -622,6 +623,17 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                               {selectedAsset.isSystemAudited ? 'SYSTEM_AUDITED' : 'SYSTEM AUDIT'}
                            </button>
                         </div>
+                     </div>
+
+                     {/* TRACEABILITY HUB */}
+                     <div className="mt-16 p-10 bg-indigo-900/10 border-2 border-indigo-500/20 rounded-[64px] shadow-4xl relative overflow-hidden">
+                       <div className="flex items-center gap-6 border-b border-white/5 pb-8 mb-8">
+                         <div className="p-4 bg-indigo-600/10 rounded-2xl border border-indigo-500/30 text-indigo-400">
+                           <Scan size={28} />
+                         </div>
+                         <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Traceability <span className="text-indigo-400">Hub</span></h4>
+                       </div>
+                       <Traceability product={selectedAsset} />
                      </div>
 
                      <div className="mt-16 pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center relative z-10 gap-10">

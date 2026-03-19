@@ -1,4 +1,5 @@
 import { RegistryGroup } from '../types';
+import { SycamoreLogo, HenIcon } from '../components/Icons';
 import { 
   LayoutDashboard, Network, Leaf, Brain, Settings, User as UserIcon, 
   Database, Binary, TrendingUp, Microscope, Map as MapIcon, Info, 
@@ -7,7 +8,7 @@ import {
   Monitor, ClipboardCheck, HeartHandshake, Recycle, Wrench, Bot, 
   PawPrint, TreePine, Droplets, Mountain, Wind, ShieldPlus, Siren, 
   History, Scale, CalendarDays, Palette, Zap, Dna, Compass, BoxSelect, 
-  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck 
+  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu
 } from 'lucide-react';
 
 export const REGISTRY_NODES: RegistryGroup[] = [
@@ -17,13 +18,14 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
       { id: 'mesh_protocol', name: 'Mesh Protocol', icon: Network, sections: [{id: 'topology', label: 'Network Topology'}, {id: 'commits', label: 'Block Shards'}, {id: 'mempool', label: 'Inbound Mempool'}] },
       { id: 'sustainability', name: 'Sustainability Shard', icon: Leaf },
-      { id: 'agro_lang_analyst', name: 'Neural Analyst', icon: Brain },
+      { id: 'agro_lang_analyst', name: 'EnvirosAgro Agro Lang', icon: SycamoreLogo },
+      { id: 'internal_control', name: 'Internal Control', icon: ShieldCheck },
       { id: 'settings', name: 'System Settings', icon: Settings, sections: [{id: 'display', label: 'UI Display'}, {id: 'privacy', label: 'Security Shards'}] },
       { id: 'profile', name: 'Steward Profile', icon: UserIcon, sections: [{id: 'dossier', label: 'Personal Registry'}, {id: 'card', label: 'Identity Shard'}, {id: 'celestial', label: 'Birth Resonance'}] },
       { id: 'explorer', name: 'Monitoring Hub', icon: Database, sections: [{id: 'terminal', label: 'Signal Terminal'}, {id: 'blocks', label: 'Blocks'}, {id: 'ledger', label: 'Tx Ledger'}, {id: 'consensus', label: 'Quorum'}, {id: 'settlement', label: 'Finality'}] },
       { id: 'farm_os', name: 'Farm OS', icon: Binary, sections: [{id: 'kernel', label: 'Kernel Stack'}, {id: 'ide', label: 'AgroLang IDE'}, {id: 'shell', label: 'System Shell'}] },
       { id: 'impact', name: 'Network Impact', icon: TrendingUp, sections: [{id: 'whole', label: 'Vitality'}, {id: 'carbon', label: 'Carbon Ledger'}, {id: 'thrusts', label: 'Resonance'}] },
-      { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'eos_ai', label: 'Expert Oracle'}] },
+      { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'eos_agro_lang', label: 'Expert Oracle'}] },
       { id: 'sitemap', name: 'Registry Matrix', icon: MapIcon },
       { id: 'info', name: 'Hub Info', icon: Info, sections: [{id: 'about', label: 'About'}, {id: 'security', label: 'Security'}, {id: 'legal', label: 'Legal'}, {id: 'faq', label: 'FAQ'}] }
     ]
@@ -60,7 +62,8 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake, sections: [{id: 'directory', label: 'Directory'}, {id: 'support', label: 'Support'}] },
       { id: 'circular', name: 'Circular Grid', icon: Recycle, sections: [{id: 'market', label: 'Refurbished Store'}] },
       { id: 'tools', name: 'Industrial Tools', icon: Wrench, sections: [{id: 'kanban', label: 'Kanban'}, {id: 'sigma', label: 'Six Sigma'}] },
-      { id: 'robot', name: 'Swarm Command', icon: Bot, sections: [{id: 'registry', label: 'Fleet Registry'}, {id: 'security', label: 'Intranet Security'}] }
+      { id: 'robot', name: 'Swarm Command', icon: HenIcon, sections: [{id: 'registry', label: 'Fleet Registry'}, {id: 'security', label: 'Intranet Security'}, {id: 'sync', label: 'AI Crawler Sync'}] },
+      { id: 'device_control', name: 'Device Control', icon: Cpu }
     ]
   },
   {
@@ -85,10 +88,10 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'research', name: 'Invention Ledger', icon: Zap },
       { id: 'biotech_hub', name: 'Biotech Hub', icon: Dna },
       { id: 'permaculture_hub', name: 'Permaculture Hub', icon: Compass },
-      { id: 'internal_control', name: 'Internal Control', icon: ShieldCheck },
       { id: 'cea_portal', name: 'CEA Portal', icon: BoxSelect },
+      { id: 'multimedia_generator', name: 'Agro Multimedia Forge', icon: SycamoreLogo },
       { id: 'media_ledger', name: 'Media Ledger', icon: FileStack },
-      { id: 'media', name: 'Media Hub', icon: Tv },
+      { id: 'media', name: 'Media Hub', icon: Tv, sections: [{id: 'all', label: 'Primary Hub'}, {id: 'video', label: 'Video Nodes'}, {id: 'news', label: 'Newsstand'}, {id: 'audio', label: 'Acoustic Registry'}, {id: 'comic', label: 'Make it Comic'}] },
       { id: 'channelling', name: 'Channelling Hub', icon: Share2 },
       { id: 'registry_handshake', name: 'Registry Handshake', icon: SmartphoneNfc },
       { id: 'educational_resources', name: 'Educational Resources', icon: BookOpen }

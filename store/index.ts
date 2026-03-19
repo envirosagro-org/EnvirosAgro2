@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, ViewState, AgroTransaction, AgroProject, ShardCostCalibration, SignalShard, VectorAddress, RegistryGroup, RegistryItem } from '../types';
+import { User, ViewState, AgroTransaction, AgroProject, ShardCostCalibration, SignalShard, VectorAddress, RegistryGroup, RegistryItem, AgroBlock } from '../types';
 import { REGISTRY_NODES } from '../constants/registry';
 
 const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => {
@@ -66,7 +66,7 @@ interface AppState {
   history: VectorAddress[];
   forwardHistory: VectorAddress[];
   
-  navigate: (v: ViewState, section?: string, pushToHistory?: boolean) => void;
+  navigate: (v: ViewState, section?: string | null, pushToHistory?: boolean, params?: any) => void;
   goBack: () => void;
   goForward: () => void;
   
@@ -93,8 +93,17 @@ interface AppState {
   projects: AgroProject[];
   setProjects: (projects: AgroProject[]) => void;
   
+  mempool: any[];
+  setMempool: (mempool: any[]) => void;
+
+  blockchain: AgroBlock[];
+  setBlockchain: (blocks: AgroBlock[]) => void;
+  
   costAudit: ShardCostCalibration | null;
   setCostAudit: (audit: ShardCostCalibration | null) => void;
+
+  multimediaParams: { prompt?: string; type?: string; autoGenerate?: boolean } | null;
+  setMultimediaParams: (params: { prompt?: string; type?: string; autoGenerate?: boolean } | null) => void;
 
   // Ecosystem Synchronization State
   ecosystemState: {
@@ -153,7 +162,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   history: [],
   forwardHistory: [],
   
-  navigate: (v, section, pushToHistory = true) => {
+  navigate: (v, section, pushToHistory = true, params = null) => {
     const state = get();
     const index = findMatrixIndex(v, section || null);
     
@@ -172,9 +181,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       view: v,
       viewSection: section || null,
+      multimediaParams: v === 'multimedia_generator' ? params : state.multimediaParams,
       isMobileMenuOpen: false,
-      isInboxOpen: false
+      isInboxOpen: false,
+      isGlobalSearchOpen: false
     });
+
+    if (window.innerWidth < 1024) {
+      set({ isSidebarOpen: false });
+    }
     
     state.emitSignal({
       title: 'VECTOR_SHIFT',
@@ -261,9 +276,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   projects: [],
   setProjects: (projects) => set({ projects }),
+
+  mempool: [],
+  setMempool: (mempool) => set({ mempool }),
+
+  blockchain: [],
+  setBlockchain: (blockchain) => set({ blockchain }),
   
   costAudit: null,
   setCostAudit: (audit) => set({ costAudit: audit }),
+
+  multimediaParams: null,
+  setMultimediaParams: (params) => set({ multimediaParams: params }),
 
   ecosystemState: {
     p1: 1.2,

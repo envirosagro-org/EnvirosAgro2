@@ -250,15 +250,24 @@ export interface AgroTransaction {
   details: string;
   value: number;
   unit: string;
+  payloadHash?: string; // Reference to Storage file hash
 }
 
 export interface AgroBlock {
-  hash: string;
-  prevHash: string;
+  index: number;
   timestamp: string;
   transactions: AgroTransaction[];
+  previousHash: string;
+  hash: string;
   validator: string;
-  status: string;
+  status: 'Confirmed' | 'Pending';
+}
+
+export interface MempoolTransaction {
+  id: string;
+  data: AgroTransaction;
+  timestamp: string;
+  stewardId: string;
 }
 
 export interface ValueProcessStep {
@@ -457,8 +466,8 @@ export type ViewState =
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
   | 'sitemap' | 'auth' | 'agro_lang_analyst' | 'settings' | 'temporal_video' | 'robot'
-  | 'multimedia_generator' | 'cost_accounting' | 'internal_control'
-  | 'mesh_protocol' | 'registry_handshake' | 'educational_resources';
+  | 'multimedia_generator' | 'cost_accounting' | 'internal_control' | 'governance' | 'carbon_credits' | 'traceability' | 'marketplace'
+  | 'mesh_protocol' | 'registry_handshake' | 'educational_resources' | 'hardware_registry' | 'device_control';
 
 export interface VectorAddress {
   dimension: ViewState;
@@ -611,4 +620,148 @@ export interface MeshNode {
   peers: string[];
   latency: number;
   load: number;
+}
+
+export interface MachineNode {
+  id: string;
+  name: string;
+  type: string;
+  status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE';
+  stewardId?: string;
+  lastModified?: number;
+  metadata?: any;
+}
+
+export interface WebRTCCall {
+  id: string;
+  callerId: string;
+  callerName: string;
+  calleeId: string;
+  calleeName: string;
+  status: 'OFFERING' | 'ANSWERING' | 'CONNECTED' | 'DISCONNECTED' | 'REJECTED' | 'MISSED';
+  offer?: any; // RTCSessionDescriptionInit
+  answer?: any; // RTCSessionDescriptionInit
+  timestamp: string;
+}
+
+export interface IceCandidate {
+  id: string;
+  candidate: any; // RTCIceCandidateInit
+  senderId: string;
+  timestamp: string;
+}
+
+export interface BroadcastSession {
+  id: string;
+  hostId: string;
+  hostName: string;
+  title: string;
+  type: 'LIVE_STREAM' | 'PODCAST' | 'DRONE';
+  status: 'LIVE' | 'ENDED';
+  startTime: string;
+  endTime?: string;
+  listenerCount: number;
+  thumbnail?: string;
+  hash?: string; // Blockchain verification hash
+  description?: string;
+}
+
+export interface BroadcastSegment {
+  id: string;
+  sessionId: string;
+  sequence: number;
+  storagePath: string;
+  timestamp: string;
+  duration: number;
+}
+
+export interface BroadcastComment {
+  id: string;
+  sessionId: string;
+  authorId: string;
+  authorName: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface SpatialTransform {
+  pos: { x: number; y: number; z: number };
+  rot: { x: number; y: number; z: number };
+  anim_state?: string;
+  lastUpdate: number;
+}
+
+export interface ARAnchor {
+  id: string;
+  stewardId: string;
+  location: { lat: number; lng: number; alt?: number };
+  spatialPos: { x: number; y: number; z: number };
+  metadata: any;
+  type: 'GRAFFITI' | 'MARKER' | 'INFOPANEL';
+  timestamp: string;
+}
+
+export interface DroneTelemetry {
+  id: string;
+  droneId: string;
+  stewardId: string;
+  gps: { lat: number; lng: number; alt: number };
+  battery: number;
+  speed: number;
+  heading: number;
+  sensors: {
+    soil_ph?: number;
+    humidity?: number;
+    temp?: number;
+  };
+  timestamp: string;
+  signature?: string; // Blockchain verification
+}
+
+export interface TelemetryBatch {
+  id: string;
+  droneId: string;
+  readings: DroneTelemetry[];
+  startTime: string;
+  endTime: string;
+  hash: string;
+}
+
+export interface SensorReading {
+  id: string;
+  stewardId: string;
+  sensorType: 'SOIL_MOISTURE' | 'NUTRIENT_LEVEL' | 'TEMPERATURE';
+  value: number;
+  unit: string;
+  timestamp: string;
+}
+
+export interface Proposal {
+  id: string;
+  title: string;
+  description: string;
+  authorEsin: string;
+  authorName: string;
+  status: 'PROPOSED' | 'ACTIVE' | 'PASSED' | 'REJECTED';
+  timestamp: string;
+  votes: Vote[];
+  thrust: string;
+}
+
+export interface Vote {
+  id: string;
+  proposalId: string;
+  stewardEsin: string;
+  decision: 'YES' | 'NO' | 'ABSTAIN';
+  timestamp: string;
+}
+
+export interface CarbonCredit {
+  id: string;
+  assetId: string; // Links to LiveAgroProduct
+  stewardEsin: string;
+  amount: number; // CO2e in tons
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'REVOKED';
+  timestamp: string;
+  verifierEsin?: string;
 }

@@ -24,6 +24,7 @@ import {
   Zap, 
   Globe, 
   PlusCircle, 
+  CloudUpload,
   X, 
   Eye, 
   Maximize2, 
@@ -34,6 +35,7 @@ import { User, MediaShard, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import MultimediaPlayer from './MultimediaPlayer';
 import { ShareButton } from './ShareButton';
+import { uploadMediaShard, saveCollectionItem } from '../services/firebaseService';
 
 interface MediaLedgerProps {
   user: User;
@@ -63,6 +65,8 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
   const [activeTab, setActiveTab] = useState<'all' | 'video' | 'audio' | 'papers' | 'oracle'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShard, setSelectedShard] = useState<MediaShard | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Multimedia Player State
   const [playerOpen, setPlayerOpen] = useState(false);
@@ -79,9 +83,9 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
     if (shard.type !== 'VIDEO' && shard.type !== 'AUDIO') return;
     
     setPlayerConfig({
-      url: shard.type === 'VIDEO' 
+      url: shard.downloadUrl || (shard.type === 'VIDEO' 
         ? 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' 
-        : 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+        : 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'),
       type: shard.type as 'VIDEO' | 'AUDIO',
       title: shard.title,
       author: shard.author,
@@ -186,6 +190,49 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
                placeholder="Search by Shard ID, Title or Author..." 
                className="w-full bg-black/60 border border-white/10 rounded-full py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-mono italic shadow-inner"
             />
+         </div>
+         
+         <div className="flex items-center gap-4">
+            <label className={`px-12 py-6 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all flex items-center gap-4 cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              {isUploading ? <Zap className="animate-spin" size={20} /> : <CloudUpload size={20} />}
+              {isUploading ? `UPLOADING ${uploadProgress.toFixed(0)}%` : 'INGEST NEW SHARD'}
+              <input 
+                type="file" 
+                className="hidden" 
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  
+                  setIsUploading(true);
+                  try {
+                    const downloadUrl = await uploadMediaShard(file, (p) => setUploadProgress(p));
+                    const type = file.type.startsWith('video/') ? 'VIDEO' : file.type.startsWith('audio/') ? 'AUDIO' : 'PAPER';
+                    
+                    const newShard: Partial<MediaShard> = {
+                      title: file.name.split('.')[0],
+                      type: type as any,
+                      source: 'CLOUD_STORAGE_INGEST',
+                      author: user.name,
+                      authorEsin: user.esin,
+                      timestamp: new Date().toISOString(),
+                      hash: Math.random().toString(16).substring(2, 10).toUpperCase(),
+                      mImpact: (Math.random() * 5).toFixed(2),
+                      size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+                      downloadUrl
+                    };
+                    
+                    await saveCollectionItem('media_ledger', newShard);
+                    alert("Media Shard successfully anchored to Cloud Storage.");
+                  } catch (err) {
+                    console.error(err);
+                    alert("Ingest failed. Check network stability.");
+                  } finally {
+                    setIsUploading(false);
+                    setUploadProgress(0);
+                  }
+                }}
+              />
+            </label>
          </div>
       </div>
 
@@ -373,6 +420,16 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
                     >
                        <CirclePlay size={28} /> PLAY_SHARD
                     </button>
+                  )}
+                  {selectedShard.downloadUrl && (
+                    <a 
+                      href={selectedShard.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-24 py-7 bg-indigo-600 rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_0_100px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-6 border-4 border-white/10 ring-[12px] ring-white/5"
+                    >
+                      <Download size={28} /> DIRECT_DOWNLOAD
+                    </a>
                   )}
                   <button 
                     onClick={() => {
