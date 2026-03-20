@@ -2,6 +2,7 @@ import React from 'react';
 import { useAppStore } from '../store';
 import { useAppNavigation } from '../hooks/useAppNavigation';
 import { UserPlus, ArrowRight, X } from 'lucide-react';
+import { NavigationLink } from './NavigationLink';
 
 export const RegistrationResumePopup: React.FC = () => {
   const { registrationState, setRegistrationState, view } = useAppStore();
@@ -38,12 +39,12 @@ export const RegistrationResumePopup: React.FC = () => {
           <p className="text-xs text-slate-400 mb-4">
             You have an incomplete registration process. Continue to unlock full network capabilities.
           </p>
-          <button 
-            onClick={() => navigate('auth')}
+          <NavigationLink 
+            path="auth"
             className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-lg"
           >
             Continue Registration <ArrowRight size={14} />
-          </button>
+          </NavigationLink>
         </div>
       </div>
     </div>

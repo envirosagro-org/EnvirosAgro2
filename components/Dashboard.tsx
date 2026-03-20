@@ -15,6 +15,7 @@ import { ViewState, User, Order, AgroBlock } from '../types';
 import { HenIcon } from './Icons';
 import IdentityCard from './IdentityCard';
 import { ShareButton } from './ShareButton';
+import { NavigationLink } from './NavigationLink';
 
 import { useAppNavigation } from '../hooks/useAppNavigation';
 
@@ -132,18 +133,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                 </div>
                 
                 <div className="flex flex-col gap-4 w-full sm:w-auto">
-                   <button 
-                     onClick={() => onNavigate('profile', 'card')} 
+                   <NavigationLink 
+                     path="profile/card" 
                      className="px-8 py-5 agro-gradient rounded-[28px] text-[11px] font-black uppercase tracking-[0.3em] text-white hover:scale-105 active:scale-95 transition-all shadow-3xl flex items-center justify-center gap-3 shrink-0 border-2 border-white/10"
                    >
                      <Fingerprint className="w-5 h-5" /> IDENTITY_SHARD
-                   </button>
-                   <button 
-                     onClick={() => onNavigate('settings')} 
+                   </NavigationLink>
+                   <NavigationLink 
+                     path="settings" 
                      className="px-8 py-4 bg-white/5 border border-white/10 rounded-[28px] text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 shrink-0"
                    >
                      <Settings className="w-5 h-5" /> SYSTEM_CONFIG
-                   </button>
+                   </NavigationLink>
                 </div>
              </div>
 
@@ -154,8 +155,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                   { label: 'QUORUM', val: blockchain.length + 4281, unit: 'BLCK', icon: Layers, col: 'text-indigo-400', progress: 100, desc: 'Ledger Depth' },
                   { label: 'MEMPOOL', val: mempool.length, unit: 'TX', icon: Binary, col: 'text-amber-400', progress: Math.min(100, mempool.length * 10), desc: 'Pending Shards' },
                   { label: 'VITALITY', val: user.metrics.sustainabilityScore, unit: '%', icon: Sprout, col: 'text-emerald-500', progress: user.metrics.sustainabilityScore, desc: 'C(a) Sustainability' },
-                ].map((stat, i) => (
-                  <div key={i} className="p-8 bg-black/80 rounded-[48px] border-2 border-white/5 space-y-4 group/stat hover:border-white/20 transition-all shadow-3xl overflow-hidden relative">
+                ].map((stat) => (
+                  <div key={stat.label} className="p-8 bg-black/80 rounded-[48px] border-2 border-white/5 space-y-4 group/stat hover:border-white/20 transition-all shadow-3xl overflow-hidden relative">
                     <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:scale-110 transition-transform"><stat.icon size={80} className={stat.col} /></div>
                     <div className="flex items-center gap-3 mb-2 relative z-10">
                        <div className={`p-2 rounded-xl bg-white/5 ${stat.col}`}><stat.icon size={14} /></div>
@@ -233,7 +234,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 px-4">
            {THRUSTS.map((t) => (
-             <div key={t.id} onClick={() => onNavigate('impact')} className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/30 transition-all flex flex-col items-center text-center space-y-6 relative overflow-hidden active:scale-[0.98] duration-300 cursor-pointer">
+             <NavigationLink key={t.id} path="impact" className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/60 shadow-xl group hover:border-indigo-500/30 transition-all flex flex-col items-center text-center space-y-6 relative overflow-hidden active:scale-[0.98] duration-300 cursor-pointer">
                 <div className="absolute -bottom-8 -right-8 p-4 opacity-[0.02] group-hover:scale-125 transition-transform duration-[10s]"><t.icon size={180} className={t.col} /></div>
                 <div className={`p-6 rounded-3xl bg-white/5 border border-white/10 ${t.col} shadow-inner group-hover:rotate-12 transition-transform`}>
                    <t.icon size={32} />
@@ -251,7 +252,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                       <div className={`h-full rounded-full transition-all duration-[2.5s] ${t.col.replace('text', 'bg')} shadow-[0_0_15px_currentColor]`} style={{ width: `${t.val}%` }}></div>
                    </div>
                 </div>
-             </div>
+             </NavigationLink>
            ))}
         </div>
       </div>

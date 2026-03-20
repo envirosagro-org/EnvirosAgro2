@@ -469,12 +469,6 @@ export type ViewState =
   | 'multimedia_generator' | 'cost_accounting' | 'internal_control' | 'governance' | 'carbon_credits' | 'traceability' | 'marketplace'
   | 'mesh_protocol' | 'registry_handshake' | 'educational_resources' | 'hardware_registry' | 'device_control';
 
-export interface VectorAddress {
-  dimension: ViewState;
-  element: string | null;
-  matrixIndex?: string; // e.g. "[2.1]"
-}
-
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 export interface DispatchChannel {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, ViewState, AgroTransaction, AgroProject, ShardCostCalibration, SignalShard, VectorAddress, RegistryGroup, RegistryItem, AgroBlock } from '../types';
+import { User, ViewState, AgroTransaction, AgroProject, ShardCostCalibration, SignalShard, RegistryGroup, RegistryItem, AgroBlock } from '../types';
 import { REGISTRY_NODES } from '../constants/registry';
 
 const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => {
@@ -62,9 +62,6 @@ interface AppState {
   
   viewSection: string | null;
   setViewSection: (section: string | null) => void;
-  
-  history: VectorAddress[];
-  forwardHistory: VectorAddress[];
   
   navigate: (v: ViewState, section?: string | null, pushToHistory?: boolean, params?: any) => void;
   goBack: () => void;
@@ -159,23 +156,40 @@ export const useAppStore = create<AppState>((set, get) => ({
   viewSection: null,
   setViewSection: (section) => set({ viewSection: section }),
   
-  history: [],
-  forwardHistory: [],
-  
   navigate: (v, section, pushToHistory = true, params = null) => {
     const state = get();
     const index = findMatrixIndex(v, section || null);
     
     if (pushToHistory) {
-      const currentAddress: VectorAddress = {
-        dimension: state.view,
-        element: state.viewSection,
-        matrixIndex: findMatrixIndex(state.view, state.viewSection)
-      };
-      set({
-        history: [...state.history, currentAddress],
-        forwardHistory: []
-      });
+      // Sync URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('view', v);
+      if (section) {
+        newUrl.searchParams.set('section', section);
+      } else {
+        newUrl.searchParams.delete('section');
+      }
+      if (params?.id) {
+        newUrl.searchParams.set('id', params.id);
+      } else {
+        newUrl.searchParams.delete('id');
+      }
+      window.history.pushState({ view: v, section, params }, '', newUrl.toString());
+    } else {
+      // Sync URL without pushing to history
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('view', v);
+      if (section) {
+        newUrl.searchParams.set('section', section);
+      } else {
+        newUrl.searchParams.delete('section');
+      }
+      if (params?.id) {
+        newUrl.searchParams.set('id', params.id);
+      } else {
+        newUrl.searchParams.delete('id');
+      }
+      window.history.replaceState({ view: v, section, params }, '', newUrl.toString());
     }
     
     set({
@@ -203,43 +217,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   
   goBack: () => {
-    const state = get();
-    if (state.history.length > 0) {
-      const currentAddress: VectorAddress = {
-        dimension: state.view,
-        element: state.viewSection,
-        matrixIndex: findMatrixIndex(state.view, state.viewSection)
-      };
-      const lastVector = state.history[state.history.length - 1];
-      
-      set({
-        forwardHistory: [...state.forwardHistory, currentAddress],
-        history: state.history.slice(0, -1)
-      });
-      
-      state.navigate(lastVector.dimension, lastVector.element || undefined, false);
-    } else if (state.view !== 'dashboard') {
-      state.navigate('dashboard', undefined, true);
-    }
+    window.history.back();
   },
   
   goForward: () => {
-    const state = get();
-    if (state.forwardHistory.length > 0) {
-      const currentAddress: VectorAddress = {
-        dimension: state.view,
-        element: state.viewSection,
-        matrixIndex: findMatrixIndex(state.view, state.viewSection)
-      };
-      const nextVector = state.forwardHistory[state.forwardHistory.length - 1];
-      
-      set({
-        history: [...state.history, currentAddress],
-        forwardHistory: state.forwardHistory.slice(0, -1)
-      });
-      
-      state.navigate(nextVector.dimension, nextVector.element || undefined, false);
-    }
+    window.history.forward();
   },
   
   isSidebarOpen: true,

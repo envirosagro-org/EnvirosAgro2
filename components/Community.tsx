@@ -592,7 +592,7 @@ const Community: React.FC<CommunityProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                  {[...MOCK_STEWARDS, ...MOCK_STEWARDS, ...MOCK_STEWARDS].map((steward, i) => (
-                    <div key={i} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col items-center text-center space-y-8 shadow-3xl relative overflow-hidden active:scale-[0.99]">
+                    <div key={`${steward.esin}-${i}`} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col items-center text-center space-y-8 shadow-3xl relative overflow-hidden active:scale-[0.99]">
                        <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Globe size={200} /></div>
                        <div className="relative group">
                           <div onClick={() => setShowProfileView(steward.esin)} className="w-32 h-32 rounded-[44px] overflow-hidden border-4 border-white/10 shadow-3xl cursor-pointer group-hover:scale-105 transition-transform">
@@ -805,7 +805,7 @@ const Community: React.FC<CommunityProps> = ({
                              <div className="grid gap-4">
                                 {examQuestions[currentQuestion].options.map((opt: string, idx: number) => (
                                    <button 
-                                      key={idx}
+                                      key={opt}
                                       onClick={() => setUserAnswers({...userAnswers, [currentQuestion]: idx})}
                                       className={`p-10 rounded-[48px] border-2 transition-all text-left flex justify-between items-center group/opt ${userAnswers[currentQuestion] === idx ? 'bg-indigo-600/10 border-indigo-500 text-white shadow-xl scale-102' : 'bg-white/5 border-transparent text-slate-400 hover:border-white/10'}`}
                                    >

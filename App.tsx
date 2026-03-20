@@ -6,7 +6,7 @@ import {
   Tv, Fingerprint, BadgeCheck, AlertTriangle, FileText, Clapperboard, FileStack, Code2, Signal as SignalIcon, Target,
   Truck, Layers, Map as MapIcon, Compass as CompassIcon, Server, Workflow, ShieldPlus, ChevronLeftCircle, ArrowLeft,
   ChevronRight, ArrowUp, UserCheck, BookOpen, Stamp, Binoculars, Command, Wand2, Brain, ArrowRight, Home,
-  Building, ShieldX, ScanLine,
+  Building, ShieldX, ScanLine, Eye,
   MapPin,
   Download,
   FileDigit,
@@ -33,10 +33,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Toaster } from 'sonner';
 import { SycamoreLogo, HenIcon } from './components/Icons';
 import { useAppStore } from './store';
-import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, VectorAddress, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit } from './types';
+import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
 import ErrorBoundary from './components/ErrorBoundary';
+import { NavigationLink } from './components/NavigationLink';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const Sustainability = React.lazy(() => import('./components/Sustainability'));
@@ -546,8 +547,8 @@ const GlobalSearch: React.FC<{
                 <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-1000">
                    <div className="flex items-center gap-4 px-4"><SycamoreLogo size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Recommended_Queries</p></div>
                    <div className="flex flex-wrap gap-4 px-4">
-                      {RECOMMENDED_SEARCHES.map((rec, i) => (
-                         <button key={i} onClick={() => setSearchTerm(rec.query)} className="flex items-center gap-4 px-8 py-5 bg-white/5 hover:bg-emerald-600/10 border-2 border-white/5 hover:border-emerald-500/40 rounded-[32px] transition-all group/chip active:scale-95 shadow-xl">
+                      {RECOMMENDED_SEARCHES.map((rec) => (
+                         <button key={rec.label} onClick={() => setSearchTerm(rec.query)} className="flex items-center gap-4 px-8 py-5 bg-white/5 hover:bg-emerald-600/10 border-2 border-white/5 hover:border-emerald-500/40 rounded-[32px] transition-all group/chip active:scale-95 shadow-xl">
                             <rec.icon size={18} className="text-slate-500 group-hover/chip:text-emerald-400 transition-colors" />
                             <span className="text-sm font-black text-slate-400 group-hover/chip:text-white uppercase tracking-widest italic">{rec.label}</span>
                          </button>
@@ -591,7 +592,37 @@ const GlobalSearch: React.FC<{
                     </div>
                   </div>
                 )}
-                {filteredResults.stewards.length > 0 && (
+                {filteredResults.shards.length > 0 && (
+                   <div className="space-y-8">
+                      <div className="flex items-center gap-4 px-4"><LayoutGrid size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Registry_Shard_Nodes</p></div>
+                      <div className="grid gap-4">
+                         {filteredResults.shards.map((item: any) => (
+                            <div key={item.id} onClick={() => { onNavigate(item.id as ViewState); onClose(); }} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] cursor-pointer">
+                               <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
+                                  <div className="p-6 rounded-[28px] md:rounded-[36px] bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 group-hover:rotate-6 transition-all shadow-inner">
+                                     <item.icon size={40} />
+                                  </div>
+                                  <div className="space-y-2">
+                                     <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-emerald-400 transition-colors leading-tight">{item.name}</h4>
+                                     <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-1">{item.category} // {item.id}</p>
+                                     {item.matchedSections && item.matchedSections.length > 0 && (
+                                       <div className="flex flex-wrap gap-2 mt-3">
+                                         {item.matchedSections.map((s: any) => (
+                                           <span key={s.id} className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[7px] font-black text-emerald-400 uppercase tracking-widest">{s.label}</span>
+                                         ))}
+                                       </div>
+                                     )}
+                                  </div>
+                               </div>
+                               <div className="flex gap-4 relative z-10 shrink-0">
+                                  <button className="px-10 py-5 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">Enter Shard <ArrowRight size={18} /></button>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                 )}
+                 {filteredResults.stewards.length > 0 && (
                    <div className="space-y-8">
                       <div className="flex items-center gap-4 px-4"><Users size={16} className="text-indigo-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Social_Steward_Registry</p></div>
                       <div className="grid gap-4">
@@ -641,12 +672,36 @@ const GlobalSearch: React.FC<{
                       </div>
                    </div>
                 )}
-                {filteredResults.assets.length > 0 && (
+                {filteredResults.infrastructure.length > 0 && (
+                    <div className="space-y-8">
+                       <div className="flex items-center gap-4 px-4"><Landmark size={16} className="text-amber-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Industrial_Infrastructure_Ledger</p></div>
+                       <div className="grid gap-4">
+                          {filteredResults.infrastructure.map((item: any) => (
+                             <div key={item.id} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-amber-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99]">
+                                <div className="flex items-center gap-8 relative z-10 w-full md:w-auto">
+                                   <div className="p-6 rounded-[28px] md:rounded-[36px] bg-amber-600/10 border border-amber-500/20 text-amber-400 group-hover:rotate-6 transition-all shadow-inner">
+                                      {item.type === 'UNIT' ? <Landmark size={40} /> : item.productType ? <Briefcase size={40} /> : <Truck size={40} />}
+                                   </div>
+                                   <div className="space-y-2">
+                                      <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-amber-400 transition-colors leading-tight">{item.name || item.productType}</h4>
+                                      <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-1">{item.category || item.type} // {item.id}</p>
+                                      <p className="text-[11px] text-slate-400 italic">{item.status || item.budget || item.speed}</p>
+                                   </div>
+                                </div>
+                                <div className="flex gap-4 relative z-10 shrink-0">
+                                   <button onClick={() => { onNavigate(item.type === 'UNIT' ? 'industrial' : 'contract_farming'); onClose(); }} className="px-10 py-5 bg-amber-600 hover:bg-amber-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">Inspect Asset <Eye size={18} /></button>
+                                </div>
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+                 )}
+                 {filteredResults.assets.length > 0 && (
                    <div className="space-y-8">
                       <div className="flex items-center gap-4 px-4"><ShoppingBag size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Industrial_Asset_Quorum</p></div>
                       <div className="grid grid-cols-2 gap-6">
-                         {filteredResults.assets.map((item: any) => (
-                            <div key={item.id} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col justify-between h-[380px] shadow-3xl relative overflow-hidden active:scale-[0.99] group/asset">
+                         {filteredResults.assets.map((item: any, i: number) => (
+                            <div key={item.id || item.blueprint_id || i} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col justify-between h-[380px] shadow-3xl relative overflow-hidden active:scale-[0.99] group/asset">
                                <div className="absolute top-0 right-0 p-8 opacity-[0.01] group-hover/asset:opacity-[0.05] group-hover/asset:scale-110 transition-all"><ShoppingCart size={200} /></div>
                                <div className="flex items-start justify-between mb-6 relative z-10">
                                   <div className="w-16 h-16 md:w-20 md:h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover/asset:border-emerald-500 transition-all shadow-xl"><img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400'} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" /></div>
@@ -701,8 +756,6 @@ const App: React.FC = () => {
   const setCostAudit = useAppStore(state => state.setCostAudit);
   const registrationState = useAppStore(state => state.registrationState);
   
-  const history = useAppStore(state => state.history);
-  const forwardHistory = useAppStore(state => state.forwardHistory);
   const blockchain = useAppStore(state => state.blockchain);
   const setBlockchain = useAppStore(state => state.setBlockchain);
   const mempool = useAppStore(state => state.mempool);
@@ -738,22 +791,40 @@ const App: React.FC = () => {
   const [showZenithButton, setShowZenithButton] = useState(false);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
 
-  // Deep Link Handling
+  // Deep Link & History Handling
   useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state) {
+        const { view: v, section, params } = event.state;
+        if (v) {
+          navigate(v as ViewState, section, false, params);
+        }
+      } else {
+        const params = new URLSearchParams(window.location.search);
+        const viewParam = params.get('view') as ViewState;
+        const sectionParam = params.get('section');
+        const idParam = params.get('id');
+        if (viewParam) {
+          navigate(viewParam, sectionParam, false, idParam ? { id: idParam } : undefined);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    // Initial load
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view') as ViewState;
     const sectionParam = params.get('section');
     const idParam = params.get('id');
 
     if (viewParam) {
-      // Small delay to ensure data is loaded if needed
       setTimeout(() => {
-        navigate(viewParam, sectionParam, true, { id: idParam });
-        // Clear the URL params without refreshing
-        const newUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
+        navigate(viewParam, sectionParam, false, idParam ? { id: idParam } : undefined);
       }, 500);
     }
+
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useEffect(() => {
@@ -1179,10 +1250,10 @@ const App: React.FC = () => {
                 {(isSidebarOpen || isMobileMenuOpen) && <p className={`px-4 text-[7px] font-black uppercase tracking-0.3em text-slate-700 italic`}>{group.category}</p>}
                 <div className="space-y-1">
                   {group.items.map(item => (
-                    <button key={item.id} onClick={() => navigate(item.id as ViewState)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id || (view === 'network_signals' && item.id === 'explorer') ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+                    <NavigationLink key={item.id} path={item.id} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id || (view === 'network_signals' && item.id === 'explorer') ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
                       <item.icon size={16} className={view === item.id ? 'text-white' : 'text-slate-500'} />
                       {(isSidebarOpen || isMobileMenuOpen) && <span className="text-[8px] font-black uppercase tracking-[0.2em] text-left leading-none">{item.name}</span>}
-                    </button>
+                    </NavigationLink>
                   ))}
                 </div>
              </div>
@@ -1200,7 +1271,22 @@ const App: React.FC = () => {
               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden lg:block p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0">{isSidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}</button>
               <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all shrink-0"><Menu size={18}/></button>
               <div className="space-y-0.5 truncate max-w-[120px] sm:max-w-none">
-                 <h2 className="text-sm sm:text-lg font-black text-white uppercase italic tracking-widest truncate leading-tight">{(view || '').replace(/_/g, ' ')}</h2>
+                 <div className="flex items-center gap-1.5 sm:gap-2 text-[8px] sm:text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
+                   <NavigationLink path="dashboard" className="cursor-pointer hover:text-emerald-400 transition-colors">HOME</NavigationLink>
+                   {view !== 'dashboard' && (
+                     <>
+                       <ChevronRight size={10} className="text-slate-600 shrink-0" />
+                       <span className="text-white truncate">{(view || '').replace(/_/g, ' ')}</span>
+                     </>
+                   )}
+                   {viewSection && (
+                     <>
+                       <ChevronRight size={10} className="text-slate-600 shrink-0" />
+                       <span className="text-emerald-400 truncate">{(viewSection || '').replace(/_/g, ' ')}</span>
+                     </>
+                   )}
+                 </div>
+                 <h2 className="text-sm sm:text-lg font-black text-white uppercase italic tracking-widest truncate leading-tight">{(viewSection || view || '').replace(/_/g, ' ')}</h2>
                  <p className="text-[6px] sm:text-[8px] text-slate-600 font-mono tracking-widest uppercase truncate font-bold">STATUS: {user ? 'ANCHORED' : 'OBSERVER_MODE'}</p>
               </div>
            </div>
@@ -1317,19 +1403,19 @@ const App: React.FC = () => {
 
         <footer className="mt-20 pt-8 border-t border-white/5 pb-12 flex flex-col items-center gap-10 opacity-60 hover:opacity-100 transition-opacity duration-500 px-4">
            <div className="flex w-full items-center justify-between gap-4">
-              <button onClick={goBack} disabled={history.length === 0} className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all active:scale-95 group/back ${history.length > 0 ? 'bg-emerald-600/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`} title="Vector Retrograde">
+              <button onClick={goBack} className="flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all active:scale-95 group/back" title="Vector Retrograde">
                  <ChevronLeft size={16} className="group-hover/back:-translate-x-1 transition-transform" />
-                 <div className="flex flex-col items-start text-left hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">{history.length > 0 ? history[history.length - 1].matrixIndex : 'Prev_Vector'}</span></div>
+                 <div className="flex flex-col items-start text-left hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">Prev_Vector</span></div>
               </button>
               <div className="flex p-1 glass-card rounded-[24px] bg-black/40 border border-white/5 shadow-3xl">
                  {[ { id: 'dashboard', label: 'Command', icon: LayoutGrid }, { id: 'mesh_protocol', label: 'Mesh', icon: NetworkIcon }, { id: 'economy', label: 'Market', icon: Globe }, { id: 'wallet', label: 'Treasury', icon: Coins }, { id: 'intelligence', label: 'Science', icon: Microscope }, { id: 'sitemap', label: 'Matrix', icon: MapIcon } ].map(shard => (
-                   <button key={shard.id} onClick={() => navigate(shard.id as ViewState)} className={`p-3 rounded-xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-600 hover:text-white hover:bg-white/5'}`} title={shard.label}>
+                   <NavigationLink key={shard.id} path={shard.id} className={`p-3 rounded-xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-600 hover:text-white hover:bg-white/5'}`} title={shard.label}>
                       <shard.icon size={16} /><div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[7px] font-black uppercase tracking-widest rounded border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">{shard.label}</div>
-                   </button>
+                   </NavigationLink>
                  ))}
               </div>
-              <button onClick={goForward} disabled={forwardHistory.length === 0} className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all active:scale-95 group/fwd ${forwardHistory.length > 0 ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white' : 'border-white/5 text-slate-800 opacity-20 cursor-not-allowed'}`} title="Vector Advance">
-                 <div className="flex flex-col items-end text-right hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 transition-all">Advance</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">{forwardHistory.length > 0 ? forwardHistory[forwardHistory.length - 1].matrixIndex : 'Next_Vector'}</span></div>
+              <button onClick={goForward} className="flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 border-indigo-500/40 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all active:scale-95 group/fwd" title="Vector Advance">
+                 <div className="flex flex-col items-end text-right hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 transition-all">Advance</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">Next_Vector</span></div>
                  <ChevronRight size={16} className="group-hover/fwd:translate-x-1 transition-transform" />
               </button>
            </div>

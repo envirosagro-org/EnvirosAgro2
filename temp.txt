@@ -1,0 +1,214 @@
+136:    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] animate-pulse">Synchronizing_Registry_Node...</p>
+140:const BOOT_LOGS = [
+143:  "MUGUMO_ANTENNA_SYNC [OK]",
+145:  "AIR_SPACE_CALIBRATION [SUCCESS]",
+147:  "HEN_SACRIFICE_RESONANCE [LOCKED]",
+149:  "RAIN_TRIGGER_IRRIGATION_OPTIMIZED [SUCCESS]",
+155:const GLOBAL_STEWARD_REGISTRY = [
+156:  { esin: 'EA-ALPH-8821', name: 'Steward Alpha', role: 'Soil Expert', location: 'Nairobi, Kenya', res: 98, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150', online: true, skills: ['Bantu Soil Sharding', 'Drought Mitigation'] },
+157:  { esin: 'EA-GAIA-1104', name: 'Gaia Green', role: 'Genetics Analyst', location: 'Omaha, USA', res: 92, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150', online: false, skills: ['DNA Sequencing', 'Aura Ingest'] },
+158:  { esin: 'EA-ROBO-9214', name: 'Dr. Orion Bot', role: 'Automation Engineer', location: 'Tokyo Hub', res: 95, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150', online: true, skills: ['Agroboto Control', 'Mesh Stability'] },
+159:  { esin: 'EA-LILY-0042', name: 'Aesthetic Rose', role: 'Botanical Architect', location: 'Valencia Shard', res: 99, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150', online: true, skills: ['Lilies Design', 'Chroma Calibration'] },
+162:const SEARCHABLE_MEDIA_LEDGER = [
+169:const GLOBAL_PROJECTS_MISSIONS = [
+174:const ITEM_CATEGORY_EXPERIENCES = [
+179:const LOGISTICS_SHARDS = [
+184:const LMS_EXAMS_MODULES = [
+189:const RECOMMENDED_SEARCHES = [
+200:  const [phase, setPhase] = useState<'falling' | 'scratching' | 'booting'>('falling');
+201:  const [progress, setProgress] = useState(0);
+202:  const [currentLog, setCurrentLog] = useState(0);
+203:  const [isVerifying, setIsVerifying] = useState(true);
+204:  const [verifStatus, setVerifStatus] = useState('PENDING_HANDSHAKE');
+211:  }, [phase]);
+218:  }, [phase]);
+234:  }, [phase]);
+255:  }, [onComplete, isVerifying, phase]);
+258:    <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center space-y-12 overflow-hidden px-6">
+259:      <div className="absolute inset-0 pointer-events-none z-10 opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
+270:            {[...Array(12)].map((_, i) => (
+277:                  opacity: [0, 1, 1, 0],
+303:                x: [-10, 10, -10, 10, 0],
+304:                y: [0, -5, 0, -5, 0],
+305:                rotate: [-5, 5, -5, 5, 0]
+311:            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] animate-pulse">Grounding_Soil_Element...</p>
+323:              <div className="w-48 h-48 md:w-64 md:h-64 rounded-[48px] bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.15)] animate-pulse relative z-20 overflow-hidden">
+324:                <SycamoreLogo size={120} className="text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]" />
+327:              <div className="absolute inset-[-30px] border-2 border-dashed border-emerald-500/20 rounded-[64px] animate-spin-slow"></div>
+332:                     <span className="text-[8px] font-black text-white tracking-[0.2em]">{verifStatus}</span>
+339:                <div className="h-full bg-emerald-500 shadow-[0_0_20px_#10b981] transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
+342:                 <p className="text-[11px] font-mono font-black text-emerald-400/80 uppercase tracking-[0.4em] animate-pulse h-4 text-center">
+343:                    {BOOT_LOGS[currentLog]}
+346:                    <p className="text-[9px] font-mono text-slate-700 font-bold uppercase tracking-widest">
+359:        <p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.5em] text-center">Decentralized Regenerative Grid</p>
+360:        <p className="text-[8px] text-emerald-500/50 font-black uppercase tracking-[0.5em] text-center mt-2">Rooted in Agikuyu Mugumo Lore</p>
+381:    linkedProviders: [],
+383:    lastSyncDate: new Date().toISOString().split('T')[0],
+397:  completedActions: [],
+411:  sections?: { id: string; label: string; desc?: string }[];
+416:  items: RegistryItem[];
+425:  vendorProducts: VendorProduct[];
+426:  contracts: FarmingContract[];
+427:  blueprints: any[];
+428:  liveProducts: LiveAgroProduct[];
+429:  industrialUnits: RegisteredUnit[];
+431:  const [searchTerm, setSearchTerm] = useState('');
+432:  const [isAiSearching, setIsAiSearching] = useState(false);
+433:  const [isApiSearching, setIsApiSearching] = useState(false);
+434:  const [apiResults, setApiResults] = useState<any[]>([]);
+435:  const [aiDeepSuggestion, setAiDeepSuggestion] = useState<{ view: string; section?: string; explanation: string; stewardEsin?: string } | null>(null);
+442:      setApiResults([]);
+445:  }, [isOpen]);
+450:    setApiResults([]);
+451:  }, [searchTerm]);
+461:      const prompt = `Act as the EnvirosAgro Navigation and Multi-Ledger Oracle. Based on the sitemap, steward registry, and ledger archives, recommend EXACTLY ONE shard, section, or ledger entry that best answers the user's query.\n\nRegistry Sitemap: ${sitemapContext}\nSocial Steward Registry: ${socialContext}\nIndustrial Ledgers Index: ${ledgerContext}\n\nUser Query: "${searchTerm}"\n\nReturn format:\nREASON: [Why relevant]\nVIEW: [shard id]\nSECTION: [section id or all]\nSTEWARD_ESIN: [optional esin]`;
+462:      const res = await chatWithAgroLang(prompt, []);
+463:      const reason = res.text.match(/REASON:\s*(.*)/i)?.[1] || "Deep semantic match found in registry.";
+464:      const view = res.text.match(/VIEW:\s*([a-z_0-9]+)/i)?.[1] || "dashboard";
+465:      const section = res.text.match(/SECTION:\s*([a-z_0-9]+)/i)?.[1];
+466:      const stewardEsin = res.text.match(/STEWARD_ESIN:\s*(EA-[A-Z0-9-]+)/i)?.[1];
+476:    if (!searchTerm.trim()) return { shards: [], stewards: [], assets: [], knowledge: [], infrastructure: [], api: [] };
+478:    const shards: any[] = [];
+481:    const assets = [
+487:    const knowledge = [...SEARCHABLE_MEDIA_LEDGER.filter(m => m.title.toLowerCase().includes(term) || m.desc.toLowerCase().includes(term) || m.source.toLowerCase().includes(term)), ...LMS_EXAMS_MODULES.filter(e => e.title.toLowerCase().includes(term) || e.category.toLowerCase().includes(term))];
+488:    const infrastructure = [
+494:  }, [searchTerm, vendorProducts, apiResults]);
+499:    <div className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden" onClick={(e) => e.target === e.currentTarget && onClose()}>
+500:      <div className="w-full max-w-4xl glass-card rounded-3xl border border-white/10 overflow-hidden shadow-[0_0_150px_rgba(0,0,0,0.8)] flex flex-col h-[85vh] md:h-[80vh] animate-in zoom-in-95 duration-300">
+515:        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 space-y-12 bg-[#050706]/40">
+519:               <span className="ml-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">Querying_Multi_Ledger...</span>
+523:             <div className="p-8 md:p-12 bg-indigo-900/10 border-2 border-indigo-500/30 rounded-[48px] animate-in slide-in-from-top-4 duration-500 space-y-8 relative overflow-hidden group/sugg">
+524:                <div className="absolute top-0 right-0 p-8 opacity-[0.1] group-hover/sugg:rotate-12 transition-transform"><SycamoreLogo size={180} className="text-indigo-400" /></div>
+531:                   <button onClick={() => { onNavigate(aiDeepSuggestion.view as ViewState, aiDeepSuggestion.section); onClose(); }} className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ring-8 ring-indigo-500/5">Navigate Shard <ArrowRight size={18} /></button>
+543:                     <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic drop-shadow-2xl">SEARCH_MATRIX</p>
+548:                   <div className="flex items-center gap-4 px-4"><SycamoreLogo size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Recommended_Queries</p></div>
+551:                         <button key={i} onClick={() => setSearchTerm(rec.query)} className="flex items-center gap-4 px-8 py-5 bg-white/5 hover:bg-emerald-600/10 border-2 border-white/5 hover:border-emerald-500/40 rounded-[32px] transition-all group/chip active:scale-95 shadow-xl">
+558:                <div className="p-8 bg-indigo-900/10 border-2 border-indigo-500/20 rounded-[48px] flex items-center justify-between group/bot-hint shadow-2xl mx-4">
+560:                      <div className="p-5 bg-indigo-600 rounded-[28px] shadow-3xl border-2 border-white/10 group-hover/bot-hint:rotate-12 transition-transform"><SycamoreLogo size={32} className="text-white animate-pulse" /></div>
+563:                         <p className="text-[10px] text-slate-500 mt-2 font-medium italic opacity-80 group-hover/bot-hint:opacity-100 transition-opacity">"Initialize an Oracle Deep Query to perform a high-fidelity scan across all unindexed sharded data."</p>
+566:                   <div className="hidden md:flex gap-4"><div className="px-6 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full"><span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest italic">NEURAL_READY</span></div></div>
+573:                    <div className="flex items-center gap-4 px-4"><Database size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Global_Registry_Results</p></div>
+576:                        <div key={item.id} onClick={() => { window.location.href = item.url; onClose(); }} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] cursor-pointer">
+578:                            <div className="p-6 rounded-[28px] md:rounded-[36px] bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 group-hover:rotate-6 transition-all shadow-inner">
+583:                              <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-1">{item.type.toUpperCase()} // {item.id}</p>
+584:                              <p className="text-[11px] text-slate-400 italic line-clamp-2">{item.description}</p>
+588:                            <button className="px-10 py-5 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">Open Shard <ExternalLink size={18} /></button>
+597:                      <div className="flex items-center gap-4 px-4"><Users size={16} className="text-indigo-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Social_Steward_Registry</p></div>
+600:                            <div key={steward.esin} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-indigo-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99] duration-300 group/card">
+603:                                     <div className="w-16 h-16 md:w-24 md:h-24 rounded-[28px] md:rounded-[40px] overflow-hidden border-2 border-white/10 group-hover:card:border-indigo-500 transition-all shadow-xl cursor-pointer">
+610:                                     <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-2">{steward.role} // {steward.esin}</p>
+615:                                  <button onClick={() => { onNavigate('contract_farming'); onClose(); }} className="px-8 py-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl text-indigo-400 hover:bg-indigo-600 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">Connect Shard</button>
+624:                      <div className="flex items-center gap-4 px-4"><FileStack size={16} className="text-blue-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Knowledge_&_Media_Archive</p></div>
+627:                            <div key={item.id} className="glass-card p-6 md:p-10 rounded-[40px] border-white/5 hover:border-blue-500/40 bg-black/60 transition-all group flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden active:scale-[0.99]">
+629:                                  <div className="p-6 rounded-[28px] md:rounded-[36px] bg-blue-600/10 border border-blue-500/20 text-blue-400 group-hover:rotate-6 transition-all shadow-inner">
+634:                                     <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase mt-1">{item.source || item.category} // {item.id}</p>
+638:                                  <button onClick={() => { onNavigate(item.reward ? 'community' : 'media_ledger'); onClose(); }} className="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">{item.type === 'PAPER' ? <Download size={18} /> : <Zap size={18} />} Access Shard</button>
+647:                      <div className="flex items-center gap-4 px-4"><ShoppingBag size={16} className="text-emerald-400" /><p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] italic">Industrial_Asset_Quorum</p></div>
+650:                            <div key={item.id} className="glass-card p-6 md:p-8 rounded-[40px] border-white/5 hover:border-emerald-500/40 bg-black/60 transition-all group flex flex-col justify-between h-[380px] shadow-3xl relative overflow-hidden active:scale-[0.99] group/asset">
+651:                               <div className="absolute top-0 right-0 p-8 opacity-[0.01] group-hover/asset:opacity-[0.05] group-hover/asset:scale-110 transition-all"><ShoppingCart size={200} /></div>
+653:                                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-[28px] overflow-hidden border-2 border-white/10 group-hover/asset:border-emerald-500 transition-all shadow-xl"><img src={item.thumb || item.image || 'https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?q=80&w=400'} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" /></div>
+654:                                  <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest shadow-inner">ASSET_MINTED</span>
+658:                                  <p className="text-[9px] text-slate-700 font-mono font-black uppercase tracking-widest mt-2">{item.price || item.cost} EAC // {item.id}</p>
+661:                                  <button onClick={() => { onNavigate(item.node ? 'agrowild' : 'economy'); onClose(); }} className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95"><ArrowUpRight size={14} /> Procure Shard</button>
+672:           <div className="flex items-center gap-4 text-[7px] font-black text-slate-700 uppercase tracking-widest italic"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500/20 animate-pulse"></div>MULTI_LEDGER_INDEXING_ACTIVE</div>
+673:           <div className="flex items-center gap-3"><span className="text-[7px] font-mono text-slate-800 uppercase tracking-widest">v6.5.2 // QUORUM_SYNC</span></div>
+715:  const [isBooting, setIsBooting] = useState(true);
+716:  const [isUnverified, setIsUnverified] = useState(false);
+717:  const [isConsultantOpen, setIsConsultantOpen] = useState(false);
+718:  const [contracts, setContracts] = useState<FarmingContract[]>([]);
+719:  const [orders, setOrders] = useState<Order[]>([]);
+720:  const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
+721:  const [industrialUnits, setIndustrialUnits] = useState<RegisteredUnit[]>([]);
+722:  const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
+723:  const [hoodConnections, setHoodConnections] = useState<HoodConnection[]>([]);
+724:  const [notifications, setNotifications] = useState<NotificationShard[]>([]);
+725:  const [mediaShards, setMediaShards] = useState<MediaShard[]>([]);
+726:  const [tasks, setTasks] = useState<Task[]>([]);
+727:  const [blueprints, setBlueprints] = useState<ValueBlueprint[]>([]);
+728:  const [pulseMessage, setPulseMessage] = useState('Registry synchronized. No anomalies detected.');
+729:  const [proposals, setProposals] = useState<Proposal[]>([]);
+730:  const [votes, setVotes] = useState<Vote[]>([]);
+731:  const [carbonCredits, setCarbonCredits] = useState<CarbonCredit[]>([]);
+732:  const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
+733:  const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<Task | null>(null);
+734:  const [osInitialCode, setOsInitialCode] = useState<string | null>(null);
+736:  const [scrollProgress, setScrollProgress] = useState(0);
+737:  const [showZenithButton, setShowZenithButton] = useState(false);
+738:  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
+774:  }, []);
+788:  }, []);
+806:  }, [user]);
+808:  useEffect(() => { if (mainContentRef.current) mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' }); }, [view]);
+809:  useEffect(() => { const handleKeyDown = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsGlobalSearchOpen(!isGlobalSearchOpen); } if (e.key === 'Escape') { setIsGlobalSearchOpen(false); setIsConsultantOpen(false); setIsInboxOpen(false); } }; window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown); }, [isGlobalSearchOpen, setIsGlobalSearchOpen]);
+812:  useEffect(() => { const handleResize = () => { const isLg = window.innerWidth >= 1024; setIsSidebarOpen(isLg); if (isLg) setIsMobileMenuOpen(false); }; handleResize(); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
+813:  useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { if (fbUser) { const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); if (isVerified) { setIsUnverified(false); const profile = await getStewardProfile(fbUser.uid); if (profile) setUser(profile); } else { setIsUnverified(true); setUser(null); } } else { setIsUnverified(false); setUser(null); } }); }, []);
+835:  }, [user]);
+846:        setNotifications(prev => [{ 
+867:        console.log(`[EMAIL_ROUTING] To: ${currentUser?.email || 'Node'}, Subject: ${signal.title}, Body: ${signal.message}`);
+870:  }, []);
+895:  }, [setUser]);
+900:  }, [handleEarnEAC]);
+902:  const hookHood: (targetEsin: string, type?: HoodConnection['type']) => Promise<void> = useCallback(async (targetEsin: string, type: HoodConnection['type'] = 'SOCIAL') => {
+906:      if (['VIDEO', 'PODCAST', 'LIVESTREAM'].includes(type)) {
+921:    setHoodConnections(prev => [newConn, ...prev]);
+937:    if (['VIDEO', 'PODCAST', 'LIVESTREAM'].includes(type)) {
+940:  }, [user, hoodConnections, navigate, handleEarnEAC, emitSignal]);
+986:  }, [setUser, setView, emitSignal]);
+994:  }, [handleEarnEAC]);
+1013:      case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection={viewSection} onNavigate={navigate} />;
+1014:      case 'network_signals': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection="terminal" onNavigate={navigate} />;
+1016:      case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} vendorProducts={vendorProducts} orders={orders} notify={emitSignal} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} initialSection={viewSection} />;
+1038:      case 'traceability': return <Traceability product={liveProducts[0]} />;
+1072:      case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} liveProducts={liveProducts} onSaveLiveProduct={(p) => saveCollectionItem('live_products', p)} />;
+1107:  const unreadSignalsCount = useMemo(() => signals.filter(s => !s.read).length, [signals]);
+1113:      <div className="min-h-screen bg-[#050706] text-slate-200 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+1114:        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)] pointer-events-none"></div>
+1148:    <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 animate-in fade-in duration-1000 relative">
+1150:      <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+1151:        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)]"></div>
+1152:        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] opacity-50"></div>
+1153:        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse"></div>
+1154:        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }}></div>
+1157:      <Toaster theme="dark" position="top-center" toastOptions={{ className: 'bg-black border border-white/10 text-white font-mono text-[10px] uppercase tracking-widest' }} />
+1158:      <div className="fixed top-0 left-0 right-0 z-[1000] h-8 bg-black/60 backdrop-blur-xl border-b border-white/5 flex items-center overflow-hidden">
+1161:          <span className="text-[7px] font-black uppercase text-emerald-400 tracking-widest">NETWORK_PULSE</span>
+1164:          <div className="whitespace-nowrap animate-marquee text-[7px] text-emerald-500/80 font-mono font-black uppercase tracking-widest">
+1172:          className="fixed inset-0 z-[240] bg-black/50 backdrop-blur-sm lg:hidden"
+1177:      <div className={`fixed top-8 left-0 bottom-0 z-[250] bg-black/90 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 overflow-y-auto custom-scrollbar ${isSidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'} ${isMobileMenuOpen ? 'w-80 translate-x-0' : ''}`}>
+1186:                 <p className="text-[6px] text-slate-500 font-black uppercase tracking-0.4em mt-1 italic">Registry</p>
+1196:                {(isSidebarOpen || isMobileMenuOpen) && <p className={`px-4 text-[7px] font-black uppercase tracking-0.3em text-slate-700 italic`}>{group.category}</p>}
+1201:                      {(isSidebarOpen || isMobileMenuOpen) && <span className="text-[8px] font-black uppercase tracking-[0.2em] text-left leading-none">{item.name}</span>}
+1211:        <div className="fixed top-8 left-0 right-0 z-[200] h-0.5 pointer-events-none">
+1212:          <div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}></div>
+1215:        <header className="flex justify-between items-center mb-6 md:mb-8 sticky top-0 bg-[#050706]/90 backdrop-blur-xl py-3 md:py-4 z-[150] px-2 -mx-2 border-b border-emerald-500/10 shadow-lg">
+1219:              <div className="space-y-0.5 truncate max-w-[120px] sm:max-w-none">
+1220:                 <div className="flex items-center gap-1.5 sm:gap-2 text-[8px] sm:text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
+1236:                 <p className="text-[6px] sm:text-[8px] text-slate-600 font-mono tracking-widest uppercase truncate font-bold">STATUS: {user ? 'ANCHORED' : 'OBSERVER_MODE'}</p>
+1245:                       <span className="text-[8px] font-black uppercase tracking-widest">Search Multi-Ledger Registry...</span>
+1248:                       <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">⌘</span>
+1249:                       <span className="px-1.5 py-0.5 bg-white/10 rounded text-[7px] font-mono">K</span>
+1257:                   <span className="text-[7px] font-black uppercase tracking-widest text-rose-500">Control Active</span>
+1265:                className={`p-2.5 rounded-xl border transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
+1281:                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[7px] font-black flex items-center justify-center rounded-full border border-black animate-in zoom-in">
+1288:                    <div className="absolute top-14 right-0 w-80 md:w-96 glass-card rounded-3xl border border-white/10 bg-[#050706] shadow-3xl overflow-hidden animate-in slide-in-from-top-4 z-[500]">
+1290:                          <span className="text-[8px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+1296:                              className="text-[7px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-1.5 transition-colors"
+1302:                       <div className="max-h-[400px] overflow-y-auto custom-scrollbar divide-y divide-white/5">
+1304:                            <div className="p-10 text-center opacity-30 italic text-[10px] uppercase font-black">No active shards.</div>
+1314:                                       <span className="text-7px font-mono text-slate-700">{new Date(sig.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+1315:                                       <span className={`text-[6px] font-black uppercase px-1.5 py-0.5 rounded ${sig.priority === 'critical' ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-600'}`}>{sig.priority}</span>
+1324:                                 <h5 className="text-[10px] font-black text-white uppercase italic truncate">{sig.title}</h5>
+1325:                                 <p className="text-[9px] text-slate-500 mt-1 line-clamp-1 italic">"{sig.message}"</p>
+1330:                       <button onClick={() => navigate('explorer', 'terminal')} className="w-full py-3 bg-indigo-600/10 text-indigo-400 text-[8px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">Go to Signal Terminal</button>
+1337:              {user && <button onClick={() => navigate('wallet')} className="px-3 py-2 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={12} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[8px] sm:text-[10px] font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
+1339:                 {user ? (<><div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" referrerPolicy="no-referrer" /> : <UserIcon size={12} className="text-slate-500 m-auto mt-1.5" />}</div><span className="text-[8px] font-black text-white hidden sm:block truncate max-w-[60px] uppercase italic">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={14} className="text-emerald-400" /><span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Sync</span></>)}
+1354:                 <div className="flex flex-col items-start text-left hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">Prev_Vector</span></div>
+1356:              <div className="flex p-1 glass-card rounded-[24px] bg-black/40 border border-white/5 shadow-3xl">
+1357:                 {[ { id: 'dashboard', label: 'Command', icon: LayoutGrid }, { id: 'mesh_protocol', label: 'Mesh', icon: NetworkIcon }, { id: 'economy', label: 'Market', icon: Globe }, { id: 'wallet', label: 'Treasury', icon: Coins }, { id: 'intelligence', label: 'Science', icon: Microscope }, { id: 'sitemap', label: 'Matrix', icon: MapIcon } ].map(shard => (
+1359:                      <shard.icon size={16} /><div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[7px] font-black uppercase tracking-widest rounded border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">{shard.label}</div>
+1364:                 <div className="flex flex-col items-end text-right hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 transition-all">Advance</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">Next_Vector</span></div>
+1369:              <div className="flex items-center gap-4"><SycamoreLogo size={20} className="text-emerald-500" /><div className="text-left"><p className="text-9px font-black text-white uppercase italic tracking-widest leading-none">Enviros<span className="text-emerald-400">Agro</span></p><p className="text-[6px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">Planetary_Regeneration_Grid</p></div></div>
+1370:              <div className="flex items-center gap-8"><div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div><span className="text-7px text-slate-700 font-mono uppercase font-black">MATRIX_SYNC_OK</span></div><p className="text-7px text-slate-700 font-mono uppercase tracking-widest">© 2025 EA_ROOT_NODE</p><button onClick={() => navigate('info')} className="text-7px font-black text-slate-600 hover:text-white uppercase tracking-[0.4em]">SAFETY_REGISTRY</button></div>
+1373:        {showZenithButton && <button onClick={scrollToTop} className="fixed bottom-32 right-6 sm:right-10 p-3.5 sm:p-4 agro-gradient rounded-xl sm:rounded-2xl text-white shadow-3xl hover:scale-110 active:scale-95 transition-all z-[400] border border-white/20 animate-in fade-in zoom-in duration-300"><LucideIcons.ArrowUp size={20} /></button>}
+1376:      <div className="fixed top-24 right-4 sm:right-10 z-[500] space-y-4 max-w-[280px] sm:max-w-sm w-full pointer-events-none">
+1380:            <div className="flex-1 space-y-0.5"><h5 className="text-[9px] font-black uppercase tracking-widest">{n.title}</h5><p className="text-[9px] italic text-slate-300 leading-tight">{n.message}</p></div>

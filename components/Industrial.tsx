@@ -191,8 +191,8 @@ const Industrial: React.FC<IndustrialProps> = ({
           { label: 'Supply Shards', val: registryNodes.length.toLocaleString(), unit: 'NODES', icon: Box, color: 'text-emerald-400' },
           { label: 'Quorum Integrity', val: '99.98', unit: '%', icon: ShieldCheck, color: 'text-blue-400' },
           { label: 'Chain Latency', val: '14', unit: 'ms', icon: Zap, color: 'text-amber-400' },
-        ].map((m, i) => (
-          <div key={i} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 flex flex-col justify-between relative overflow-hidden group shadow-2xl min-h-[260px]">
+        ].map((m) => (
+          <div key={m.label} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 flex flex-col justify-between relative overflow-hidden group shadow-2xl min-h-[260px]">
              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><m.icon size={120} /></div>
              <div className="space-y-4 relative z-10">
                 <p className={`text-[10px] ${m.color} font-black uppercase tracking-[0.5em] text-nowrap`}>{m.label}</p>
@@ -264,8 +264,8 @@ const Industrial: React.FC<IndustrialProps> = ({
         {activeTab === 'bridge' && (
            <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                 {registryNodes.map((node, i) => (
-                    <div key={i} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden min-h-[400px]">
+                 {registryNodes.map((node) => (
+                    <div key={node.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden min-h-[400px]">
                        <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:scale-110 transition-transform duration-[12s]"><node.bridgeIcon size={300} /></div>
                        
                        <div className="flex justify-between items-start relative z-10">
