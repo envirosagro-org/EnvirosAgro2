@@ -1,23 +1,39 @@
 import React, { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
+import { useAppStore } from '../store';
+import { ViewState } from '../types';
 
 interface ShareButtonProps {
   title: string;
   text: string;
   url?: string;
+  view?: ViewState;
+  section?: string | null;
+  id?: string | null;
   className?: string;
   iconSize?: number;
   label?: string;
 }
 
-export const ShareButton: React.FC<ShareButtonProps> = ({ title, text, url, className = '', iconSize = 16, label }) => {
+export const ShareButton: React.FC<ShareButtonProps> = ({ 
+  title, 
+  text, 
+  url, 
+  view,
+  section,
+  id,
+  className = '', 
+  iconSize = 16, 
+  label 
+}) => {
   const [copied, setCopied] = useState(false);
+  const generateShareUrl = useAppStore(state => state.generateShareUrl);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     
-    const shareUrl = url || window.location.href;
+    const shareUrl = url || generateShareUrl(view, section, id);
     
     if (navigator.share) {
       try {

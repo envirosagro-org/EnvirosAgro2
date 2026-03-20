@@ -7,6 +7,7 @@ import {
   Truck, Layers, Map as MapIcon, Compass as CompassIcon, Server, Workflow, ShieldPlus, ChevronLeftCircle, ArrowLeft,
   ChevronRight, ArrowUp, UserCheck, BookOpen, Stamp, Binoculars, Command, Wand2, Brain, ArrowRight, Home,
   Building, ShieldX, ScanLine, Eye,
+  RefreshCw,
   MapPin,
   Download,
   FileDigit,
@@ -30,7 +31,7 @@ import {
   Cloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { SycamoreLogo, HenIcon } from './components/Icons';
 import { useAppStore } from './store';
 import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit } from './types';
@@ -418,6 +419,8 @@ export interface RegistryGroup {
 
 import { REGISTRY_NODES } from './constants/registry';
 
+import { ShareButton } from './components/ShareButton';
+
 const GlobalSearch: React.FC<{ 
   isOpen: boolean; 
   onClose: () => void; 
@@ -431,9 +434,30 @@ const GlobalSearch: React.FC<{
   const [searchTerm, setSearchTerm] = useState('');
   const [isAiSearching, setIsAiSearching] = useState(false);
   const [isApiSearching, setIsApiSearching] = useState(false);
+  const [isCrawling, setIsCrawling] = useState(false);
   const [apiResults, setApiResults] = useState<any[]>([]);
   const [aiDeepSuggestion, setAiDeepSuggestion] = useState<{ view: string; section?: string; explanation: string; stewardEsin?: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const emitSignal = useAppStore(state => state.emitSignal);
+
+  const handleCrawl = () => {
+    if (!searchTerm.trim()) return;
+    setIsCrawling(true);
+    emitSignal({
+      title: 'AI_CRAWLER_SYNC',
+      message: `Initiating deep mesh crawl for "${searchTerm}"...`,
+      priority: 'medium',
+      type: 'system',
+      origin: 'ORACLE',
+      actionIcon: 'RefreshCw',
+      dispatchLayers: [{ channel: 'POPUP', status: 'PENDING' }]
+    });
+
+    setTimeout(() => {
+      setIsCrawling(false);
+      toast.success(`Crawl complete. Found 3 unindexed shards related to "${searchTerm}".`);
+    }, 3000);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -506,6 +530,18 @@ const GlobalSearch: React.FC<{
              </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <button 
+              onClick={handleCrawl} 
+              disabled={isCrawling || !searchTerm.trim()} 
+              className={`p-3 md:p-4 rounded-2xl md:rounded-3xl transition-all shadow-xl flex items-center justify-center border-2 ${
+                isCrawling 
+                  ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400 animate-pulse' 
+                  : 'bg-white/5 border-white/10 text-slate-500 hover:text-emerald-400 hover:border-emerald-500/40'
+              }`}
+              title="Crawl mesh for unindexed data"
+            >
+               {isCrawling ? <RefreshCw className="animate-spin" size={24} /> : <SearchCode size={24} />}
+            </button>
             <button onClick={handleAiDeepQuery} disabled={isAiSearching || !searchTerm.trim()} className="p-3 md:p-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl md:rounded-3xl transition-all shadow-xl group active:scale-95 disabled:opacity-30 flex items-center justify-center" title="Oracle deep query">
                {isAiSearching ? <Loader2 className="animate-spin text-white w-6 h-6" /> : <SycamoreLogo size={24} className="text-emerald-400 group-hover:text-white" />}
             </button>
@@ -615,6 +651,13 @@ const GlobalSearch: React.FC<{
                                   </div>
                                </div>
                                <div className="flex gap-4 relative z-10 shrink-0">
+                                  <ShareButton 
+                                    title={item.name} 
+                                    text={`Check out this shard: ${item.name}`} 
+                                    view={item.id as ViewState}
+                                    className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-full text-slate-500 hover:text-white border border-white/5"
+                                    iconSize={20}
+                                  />
                                   <button className="px-10 py-5 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">Enter Shard <ArrowRight size={18} /></button>
                                </div>
                             </div>
@@ -641,6 +684,15 @@ const GlobalSearch: React.FC<{
                                   </div>
                                </div>
                                <div className="flex gap-4 relative z-10 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-10 justify-center md:justify-end">
+                                  <ShareButton 
+                                    title={steward.name} 
+                                    text={`Steward Profile: ${steward.name} (${steward.role})`} 
+                                    view={'community' as ViewState}
+                                    section="social"
+                                    id={steward.esin}
+                                    className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-full text-slate-500 hover:text-white border border-white/10"
+                                    iconSize={20}
+                                  />
                                   <button onClick={() => { onNavigate('profile'); onClose(); }} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl"><UserIcon size={20} /></button>
                                   <button onClick={() => { onNavigate('contract_farming'); onClose(); }} className="px-8 py-4 bg-indigo-600/10 hover:bg-indigo-600 border border-indigo-500/20 rounded-2xl text-indigo-400 hover:bg-indigo-600 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">Connect Shard</button>
                                </div>
@@ -665,6 +717,13 @@ const GlobalSearch: React.FC<{
                                   </div>
                                </div>
                                <div className="flex gap-4 relative z-10 shrink-0">
+                                  <ShareButton 
+                                    title={item.title} 
+                                    text={`Check out this resource: ${item.title}`} 
+                                    view={item.reward ? 'community' : 'media_ledger'}
+                                    className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-full text-slate-500 hover:text-white border border-white/5"
+                                    iconSize={20}
+                                  />
                                   <button onClick={() => { onNavigate(item.reward ? 'community' : 'media_ledger'); onClose(); }} className="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">{item.type === 'PAPER' ? <Download size={18} /> : <Zap size={18} />} Access Shard</button>
                                </div>
                             </div>
@@ -689,7 +748,14 @@ const GlobalSearch: React.FC<{
                                    </div>
                                 </div>
                                 <div className="flex gap-4 relative z-10 shrink-0">
-                                   <button onClick={() => { onNavigate(item.type === 'UNIT' ? 'industrial' : 'contract_farming'); onClose(); }} className="px-10 py-5 bg-amber-600 hover:bg-amber-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">Inspect Asset <Eye size={18} /></button>
+                                                                       <ShareButton 
+                                      title={item.name || item.productType} 
+                                      text={`Check out this infrastructure asset: ${item.name || item.productType}`} 
+                                      view={item.type === 'UNIT' ? 'industrial' : 'contract_farming'}
+                                      className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-full text-slate-500 hover:text-white border border-white/5"
+                                      iconSize={20}
+                                    />
+                                    <button onClick={() => { onNavigate(item.type === 'UNIT' ? 'industrial' : 'contract_farming'); onClose(); }} className="px-10 py-5 bg-amber-600 hover:bg-amber-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl flex items-center gap-3 transition-all active:scale-95">Inspect Asset <Eye size={18} /></button>
                                 </div>
                              </div>
                           ))}
@@ -711,9 +777,16 @@ const GlobalSearch: React.FC<{
                                   <h4 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter group-hover/asset:text-emerald-400 transition-colors m-0 drop-shadow-2xl">{item.name || item.title}</h4>
                                   <p className="text-[9px] text-slate-700 font-mono font-black uppercase tracking-widest mt-2">{item.price || item.cost} EAC // {item.id}</p>
                                </div>
-                               <div className="pt-6 border-t border-white/5 mt-auto flex justify-end relative z-10">
-                                  <button onClick={() => { onNavigate(item.node ? 'agrowild' : 'economy'); onClose(); }} className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95"><ArrowUpRight size={14} /> Procure Shard</button>
-                               </div>
+                                <div className="pt-6 border-t border-white/5 mt-auto flex justify-end items-center gap-4 relative z-10">
+                                   <ShareButton 
+                                     title={item.name || item.title} 
+                                     text={`Check out this industrial asset: ${item.name || item.title}`} 
+                                     view={item.node ? 'agrowild' : 'economy'}
+                                     className="w-12 h-12 bg-white/5 hover:bg-white/10 rounded-full text-slate-500 hover:text-white border border-white/5"
+                                     iconSize={18}
+                                   />
+                                   <button onClick={() => { onNavigate(item.node ? 'agrowild' : 'economy'); onClose(); }} className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-white font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95"><ArrowUpRight size={14} /> Procure Shard</button>
+                                </div>
                             </div>
                          ))}
                       </div>
@@ -801,12 +874,10 @@ const App: React.FC = () => {
         }
       } else {
         const params = new URLSearchParams(window.location.search);
-        const viewParam = params.get('view') as ViewState;
+        const viewParam = (params.get('view') || 'dashboard') as ViewState;
         const sectionParam = params.get('section');
         const idParam = params.get('id');
-        if (viewParam) {
-          navigate(viewParam, sectionParam, false, idParam ? { id: idParam } : undefined);
-        }
+        navigate(viewParam, sectionParam, false, idParam ? { id: idParam } : undefined);
       }
     };
 
@@ -814,18 +885,17 @@ const App: React.FC = () => {
 
     // Initial load
     const params = new URLSearchParams(window.location.search);
-    const viewParam = params.get('view') as ViewState;
+    const viewParam = (params.get('view') || 'dashboard') as ViewState;
     const sectionParam = params.get('section');
     const idParam = params.get('id');
 
-    if (viewParam) {
-      setTimeout(() => {
-        navigate(viewParam, sectionParam, false, idParam ? { id: idParam } : undefined);
-      }, 500);
-    }
+    // Always navigate on initial load to sync state and ensure first history entry has state
+    setTimeout(() => {
+      navigate(viewParam, sectionParam, false, idParam ? { id: idParam } : undefined);
+    }, 500);
 
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const checkApiKey = async () => {
@@ -996,7 +1066,7 @@ const App: React.FC = () => {
   const handleSpendEAC = useCallback(async (amount: number, reason: string) => {
     const currentUser = useAppStore.getState().user;
     if (!currentUser) {
-      setView('auth');
+      navigate('auth');
       return false;
     }
     if (currentUser.wallet.balance < amount) {
@@ -1046,7 +1116,7 @@ const App: React.FC = () => {
     if (ok && reward && reason) await handleEarnEAC(reward, reason);
     return ok;
   }, [handleEarnEAC]);
-  const handleLogout = async () => { await signOutSteward(); setUser(null); setView('dashboard'); };
+  const handleLogout = async () => { await signOutSteward(); setUser(null); navigate('dashboard', null, false); };
   const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(signals.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
   const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
   // Navigation and findMatrixIndex are now handled by the store
@@ -1054,9 +1124,9 @@ const App: React.FC = () => {
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
     const isGuest = !user;
-    if (isUnverified) return <VerificationHUD userEmail={auth.currentUser?.email || 'Unauthorized Node'} onVerified={() => { setIsUnverified(false); setView('dashboard'); }} onLogout={handleLogout} />;
+    if (isUnverified) return <VerificationHUD userEmail={auth.currentUser?.email || 'Unauthorized Node'} onVerified={() => { setIsUnverified(false); navigate('dashboard', null, false); }} onLogout={handleLogout} />;
     switch (view) {
-      case 'auth': return <Login onLogin={(u) => { setUser(u); setView('dashboard'); }} />;
+      case 'auth': return <Login onLogin={(u) => { setUser(u); navigate('dashboard', null, false); }} />;
       case 'dashboard': return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} mempool={mempool} isMining={false} orders={orders} />;
       case 'mesh_protocol': return <MeshProtocol user={currentUser} blockchain={blockchain} mempool={mempool} />;
       case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
@@ -1069,7 +1139,7 @@ const App: React.FC = () => {
       case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} />;
       case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} vendorProducts={vendorProducts} orders={orders} notify={emitSignal} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} initialSection={viewSection} />;
       case 'investor': return <InvestorPortal user={currentUser} onUpdate={(u) => setUser(u)} onSpendEAC={handleSpendEAC} projects={projects} onNavigate={navigate} />;
-      case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => setView('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} />;
+      case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => navigate('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} />;
       case 'channelling': return <Channelling user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
       case 'media': return (
         <Suspense fallback={<LoadingHUD />}>

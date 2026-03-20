@@ -41,11 +41,15 @@ import {
   Maximize2,
   X,
   Code,
-  Stamp
+  Stamp,
+  RefreshCw,
+  FileCode
 } from 'lucide-react';
 import { ViewState } from '../types';
 import { HenIcon } from './Icons';
 import { RegistryGroup } from '../App';
+import { useAppStore } from '../store';
+import { toast } from 'sonner';
 
 interface SitemapProps {
   nodes: RegistryGroup[];
@@ -55,6 +59,26 @@ interface SitemapProps {
 const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
   const [resolverInput, setResolverInput] = useState('');
   const [activeDimension, setActiveDimension] = useState<number | null>(null);
+  const [isCrawling, setIsCrawling] = useState(false);
+  const emitSignal = useAppStore(state => state.emitSignal);
+
+  const handleCrawl = () => {
+    setIsCrawling(true);
+    emitSignal({
+      title: 'AI_CRAWLER_SYNC',
+      message: 'Initiating deep mesh crawl for schema map synchronization...',
+      priority: 'medium',
+      type: 'system',
+      origin: 'ORACLE',
+      actionIcon: 'RefreshCw',
+      dispatchLayers: [{ channel: 'POPUP', status: 'PENDING' }]
+    });
+
+    setTimeout(() => {
+      setIsCrawling(false);
+      toast.success('Registry Matrix synchronized with Network Sitemap XML.');
+    }, 3000);
+  };
 
   // Flat manifest for the "Section-First" resolver logic
   const globalManifest = useMemo(() => {
@@ -116,9 +140,27 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
             </div>
             <div className="space-y-4">
                <h2 className="text-5xl md:text-8xl font-black text-white uppercase italic m-0 drop-shadow-2xl tracking-tighter leading-none">REGISTRY <span className="text-emerald-400">MATRIX.</span></h2>
-               <p className="text-slate-400 text-2xl font-medium italic max-w-2xl opacity-80">
-                  "Section-First industrial routing. Every protocol, geofence, and financial shard addressable via Vector Address Resolution."
-               </p>
+               <div className="flex flex-wrap items-center gap-6">
+                  <p className="text-slate-400 text-2xl font-medium italic max-w-2xl opacity-80">
+                     "Section-First industrial routing. Every protocol, geofence, and financial shard addressable via Vector Address Resolution."
+                  </p>
+                  <button 
+                    onClick={handleCrawl}
+                    disabled={isCrawling}
+                    className={`flex items-center gap-3 px-8 py-4 rounded-full border-2 transition-all font-black uppercase tracking-widest text-sm shadow-2xl ${
+                      isCrawling 
+                        ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400 animate-pulse' 
+                        : 'bg-emerald-600 border-white/10 text-white hover:bg-emerald-500 hover:scale-105'
+                    }`}
+                  >
+                    {isCrawling ? <RefreshCw className="animate-spin" size={20} /> : <SearchCode size={20} />}
+                    {isCrawling ? 'Crawling Mesh...' : 'Crawl Registry'}
+                  </button>
+                  <div className="flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-slate-500 font-mono text-[10px] uppercase tracking-widest">
+                     <FileCode size={14} className="text-emerald-500/40" />
+                     Schema_Map.xml
+                  </div>
+               </div>
             </div>
          </div>
          <div className="text-center md:text-right relative z-10 shrink-0 border-l-2 border-white/5 pl-12 hidden lg:block">

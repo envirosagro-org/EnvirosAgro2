@@ -102,6 +102,8 @@ interface AppState {
   multimediaParams: { prompt?: string; type?: string; autoGenerate?: boolean } | null;
   setMultimediaParams: (params: { prompt?: string; type?: string; autoGenerate?: boolean } | null) => void;
 
+  generateShareUrl: (v?: ViewState, section?: string | null, id?: string | null) => string;
+
   // Ecosystem Synchronization State
   ecosystemState: {
     p1: number;
@@ -270,6 +272,19 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   multimediaParams: null,
   setMultimediaParams: (params) => set({ multimediaParams: params }),
+  
+  generateShareUrl: (v, section, id) => {
+    const state = get();
+    const view = v || state.view;
+    const sec = section !== undefined ? section : state.viewSection;
+    
+    const url = new URL(window.location.origin);
+    url.searchParams.set('view', view);
+    if (sec) url.searchParams.set('section', sec);
+    if (id) url.searchParams.set('id', id);
+    
+    return url.toString();
+  },
 
   ecosystemState: {
     p1: 1.2,
