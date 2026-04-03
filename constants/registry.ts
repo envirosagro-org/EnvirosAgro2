@@ -8,7 +8,7 @@ import {
   Monitor, ClipboardCheck, HeartHandshake, Recycle, Wrench, Bot, 
   PawPrint, TreePine, Droplets, Mountain, Wind, ShieldPlus, Siren, 
   History, Scale, CalendarDays, Palette, Zap, Dna, Compass, BoxSelect, 
-  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu
+  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu, Landmark
 } from 'lucide-react';
 
 export const REGISTRY_NODES: RegistryGroup[] = [
@@ -82,6 +82,7 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'intranet', name: 'Intranet Hub', icon: ShieldPlus },
       { id: 'emergency_portal', name: 'Emergency Command', icon: Siren },
       { id: 'agro_regency', name: 'Agro Regency', icon: History },
+      { id: 'governance', name: 'Governance DAO', icon: Landmark },
       { id: 'code_of_laws', name: 'Code of Laws', icon: Scale },
       { id: 'agro_calendar', name: 'Liturgical Calendar', icon: CalendarDays },
       { id: 'chroma_system', name: 'Chroma-SEHTI', icon: Palette },

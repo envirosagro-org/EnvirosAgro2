@@ -34,11 +34,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
 import { SycamoreLogo, HenIcon } from './components/Icons';
 import { useAppStore } from './store';
-import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit } from './types';
+import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit, StewardPosition } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
 import ErrorBoundary from './components/ErrorBoundary';
 import { NavigationLink } from './components/NavigationLink';
+import { getComponentForView } from './components/Router';
+import { useDataSync } from './hooks/useDataSync';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const Sustainability = React.lazy(() => import('./components/Sustainability'));
@@ -838,6 +840,47 @@ const App: React.FC = () => {
   const navigate = useAppStore(state => state.navigate);
   const goBack = useAppStore(state => state.goBack);
   const goForward = useAppStore(state => state.goForward);
+  const stewardPositions = useAppStore(state => state.stewardPositions);
+  const setStewardPositions = useAppStore(state => state.setStewardPositions);
+  
+  useEffect(() => {
+    const defaultPositions: StewardPosition[] = [
+      {
+        id: 'POS-CSO',
+        title: 'Chief Sustainability Officer',
+        description: 'Oversees long-term ecological health and ensures all operations align with sustainability principles.',
+        requirements: ['Proven track record in ecological management', 'Deep understanding of regenerative agriculture'],
+        termDurationMonths: 12
+      },
+      {
+        id: 'POS-RES-ARCH',
+        title: 'Resilience Architect',
+        description: 'Manages infrastructure, system adaptability, and disaster preparedness to ensure the network remains resilient.',
+        requirements: ['Experience in systems engineering', 'Knowledge of decentralized infrastructure'],
+        termDurationMonths: 12
+      },
+      {
+        id: 'POS-RES-STEW',
+        title: 'Resource Allocation Steward',
+        description: 'Manages the DAO treasury, oversees budget allocations, and ensures fair distribution of resources.',
+        requirements: ['Financial literacy', 'Experience in DAO governance'],
+        termDurationMonths: 6
+      },
+      {
+        id: 'POS-COMM-LIAISON',
+        title: 'Community Liaison',
+        description: 'Facilitates communication within the glocal network, manages community feedback, and ensures transparency.',
+        requirements: ['Excellent communication skills', 'Ability to bridge diverse community groups'],
+        termDurationMonths: 6
+      }
+    ];
+    setStewardPositions(defaultPositions);
+  }, [setStewardPositions]);
+  const elections = useAppStore(state => state.elections);
+  const setElections = useAppStore(state => state.setElections);
+  const applyForElection = useAppStore(state => state.applyForElection);
+  const voteInElection = useAppStore(state => state.voteInElection);
+  const updateProposalStatus = useAppStore(state => state.updateProposalStatus);
 
   const [isBooting, setIsBooting] = useState(true);
   const [isUnverified, setIsUnverified] = useState(false);
@@ -935,27 +978,34 @@ const App: React.FC = () => {
   const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   useEffect(() => { const handleResize = () => { const isLg = window.innerWidth >= 1024; setIsSidebarOpen(isLg); if (isLg) setIsMobileMenuOpen(false); }; handleResize(); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
   useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { if (fbUser) { const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); if (isVerified) { setIsUnverified(false); const profile = await getStewardProfile(fbUser.uid); if (profile) setUser(profile); } else { setIsUnverified(true); setUser(null); } } else { setIsUnverified(false); setUser(null); } }); }, []);
+  const setters = useMemo(() => ({
+    setProjects, setContracts, setOrders, setVendorProducts, setIndustrialUnits, setLiveProducts, setTransactions, setSignals, setMediaShards, setBlockchain, setMempool, setTasks, setBlueprints, setProposals, setVotes, setCarbonCredits
+  }), [setProjects, setContracts, setOrders, setVendorProducts, setIndustrialUnits, setLiveProducts, setTransactions, setSignals, setMediaShards, setBlockchain, setMempool, setTasks, setBlueprints, setProposals, setVotes, setCarbonCredits]);
+
+  const collections = useMemo(() => [
+    { name: 'projects', setter: 'setProjects', isGlobal: true },
+    { name: 'contracts', setter: 'setContracts', isGlobal: true },
+    { name: 'orders', setter: 'setOrders' },
+    { name: 'products', setter: 'setVendorProducts', isGlobal: true },
+    { name: 'industrial_units', setter: 'setIndustrialUnits' },
+    { name: 'live_products', setter: 'setLiveProducts', isGlobal: true },
+    { name: 'transactions', setter: 'setTransactions' },
+    { name: 'signals', setter: 'setSignals' },
+    { name: 'media_ledger', setter: 'setMediaShards', isGlobal: true },
+    { name: 'blocks', setter: 'setBlockchain', isGlobal: true },
+    { name: 'mempool', setter: 'setMempool', isGlobal: true },
+    { name: 'tasks', setter: 'setTasks' },
+    { name: 'blueprints', setter: 'setBlueprints' },
+    { name: 'proposals', setter: 'setProposals', isGlobal: true },
+    { name: 'votes', setter: 'setVotes', isGlobal: true },
+    { name: 'carbon_credits', setter: 'setCarbonCredits', isGlobal: true },
+  ], []);
+
+  useDataSync(user, setters as any, collections);
+
   useEffect(() => { 
-    const unsubProjects = listenToCollection('projects', setProjects, true); 
-    const unsubContracts = listenToCollection('contracts', setContracts, true); 
-    const unsubOrders = listenToCollection('orders', setOrders); 
-    const unsubProducts = listenToCollection('products', setVendorProducts, true); 
-    const unsubUnits = listenToCollection('industrial_units', setIndustrialUnits); 
-    const unsubLive = listenToCollection('live_products', setLiveProducts, true); 
-    const unsubTx = listenToCollection('transactions', setTransactions); 
-    const unsubSignals = listenToCollection('signals', setSignals); 
-    const unsubMedia = listenToCollection('media_ledger', setMediaShards, true); 
-    const unsubBlocks = listenToCollection('blocks', setBlockchain, true); 
-    const unsubMempool = listenToCollection('mempool', setMempool, true);
-    const unsubTasks = listenToCollection('tasks', setTasks); 
-    const unsubBlueprints = listenToCollection('blueprints', setBlueprints); 
-    const unsubProposals = listenToCollection('proposals', setProposals, true);
-    const unsubVotes = listenToCollection('votes', setVotes, true);
-    const unsubCarbonCredits = listenToCollection('carbon_credits', setCarbonCredits, true);
     const unsubPulse = listenToPulse(setPulseMessage); 
-    return () => { 
-      unsubProjects(); unsubContracts(); unsubOrders(); unsubProducts(); unsubUnits(); unsubLive(); unsubTx(); unsubSignals(); unsubPulse(); unsubMedia(); unsubBlocks(); unsubMempool(); unsubTasks(); unsubBlueprints(); unsubProposals(); unsubVotes(); unsubCarbonCredits();
-    }; 
+    return () => { unsubPulse(); };
   }, [user]);
   const hookHoodRef = useRef<any>(null);
   const emitSignalRef = useRef<any>(null);
@@ -1157,7 +1207,7 @@ const App: React.FC = () => {
       case 'internal_control': 
         const role = (currentUser.role as string) === 'OBSERVER' ? 'GUEST' : (currentUser.role as UserRole);
         return <InternalControlDashboard userRole={role} currentPath={view} />;
-      case 'governance': return <Governance user={currentUser} proposals={proposals} onSaveProposal={(p) => saveCollectionItem('proposals', p)} onSaveVote={(v) => saveCollectionItem('votes', v)} notify={emitSignal} />;
+      case 'governance': return <Governance user={currentUser} proposals={proposals} stewardPositions={stewardPositions} elections={elections} onSaveProposal={(p) => saveCollectionItem('proposals', p)} onSaveVote={(v) => saveCollectionItem('votes', v)} onApplyForElection={(id, esin, name, manifesto) => { applyForElection(id, esin, name, manifesto); saveCollectionItem('elections', elections.find(e => e.id === id)); }} onVoteInElection={(id, cid, esin) => { voteInElection(id, cid, esin); saveCollectionItem('elections', elections.find(e => e.id === id)); }} onUpdateProposalStatus={(id, status) => { updateProposalStatus(id, status); saveCollectionItem('proposals', proposals.find(p => p.id === id)); }} notify={emitSignal} />;
       case 'carbon_credits': return <CarbonCredits user={currentUser} credits={carbonCredits} products={liveProducts} onVerifyCredit={(id) => saveCollectionItem('carbon_credits', { id, verificationStatus: 'VERIFIED', verifierEsin: currentUser.esin })} notify={emitSignal} />;
       case 'traceability': return <Traceability product={liveProducts[0]} />;
       case 'marketplace': return <Marketplace />;

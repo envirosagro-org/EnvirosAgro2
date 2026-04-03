@@ -466,7 +466,7 @@ export type ViewState =
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
   | 'sitemap' | 'auth' | 'agro_lang_analyst' | 'settings' | 'temporal_video' | 'robot'
-  | 'multimedia_generator' | 'cost_accounting' | 'internal_control' | 'governance' | 'carbon_credits' | 'traceability' | 'marketplace'
+  | 'multimedia_generator' | 'cost_accounting' | 'internal_control' | 'governance' | 'carbon_credits' | 'traceability' | 'marketplace' | 'live_voice_bridge'
   | 'mesh_protocol' | 'registry_handshake' | 'educational_resources' | 'hardware_registry' | 'device_control';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -736,10 +736,11 @@ export interface Proposal {
   description: string;
   authorEsin: string;
   authorName: string;
-  status: 'PROPOSED' | 'ACTIVE' | 'PASSED' | 'REJECTED';
+  status: 'DISCUSSION' | 'VOTING' | 'PASSED' | 'REJECTED' | 'EXECUTED';
   timestamp: string;
   votes: Vote[];
   thrust: string;
+  fundingRequest?: number;
 }
 
 export interface Vote {
@@ -758,4 +759,32 @@ export interface CarbonCredit {
   verificationStatus: 'PENDING' | 'VERIFIED' | 'REVOKED';
   timestamp: string;
   verifierEsin?: string;
+}
+
+export interface StewardPosition {
+  id: string;
+  title: string;
+  description: string;
+  requirements: string[]; // e.g., "Must be a worker in industry X"
+  termDurationMonths: number;
+}
+
+export interface Election {
+  id: string;
+  positionId: string;
+  status: 'OPEN' | 'VOTING' | 'CLOSED';
+  candidates: Candidate[];
+  startDate: string;
+  endDate: string;
+}
+
+export interface Candidate {
+  id: string;
+  stewardEsin: string;
+  stewardName: string;
+  manifesto: string;
+  votes: number;
+  reputation: number;
+  contributions: string[];
+  skills: string[];
 }

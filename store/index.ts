@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, ViewState, AgroTransaction, AgroProject, ShardCostCalibration, SignalShard, RegistryGroup, RegistryItem, AgroBlock } from '../types';
+import { User, ViewState, AgroTransaction, AgroProject, ShardCostCalibration, SignalShard, RegistryGroup, RegistryItem, AgroBlock, StewardPosition, Election, Proposal } from '../types';
 import { REGISTRY_NODES } from '../constants/registry';
 
 const findMatrixIndex = (v: ViewState, section: string | null): string | undefined => {
@@ -98,6 +98,19 @@ interface AppState {
   
   costAudit: ShardCostCalibration | null;
   setCostAudit: (audit: ShardCostCalibration | null) => void;
+
+  stewardPositions: StewardPosition[];
+  setStewardPositions: (positions: StewardPosition[]) => void;
+
+  elections: Election[];
+  setElections: (elections: Election[]) => void;
+  applyForElection: (electionId: string, stewardEsin: string, stewardName: string, manifesto: string) => void;
+  voteInElection: (electionId: string, candidateId: string, stewardEsin: string) => void;
+
+  proposals: Proposal[];
+  setProposals: (proposals: Proposal[]) => void;
+  createProposal: (proposal: Proposal) => void;
+  updateProposalStatus: (proposalId: string, status: Proposal['status']) => void;
 
   multimediaParams: { prompt?: string; type?: string; autoGenerate?: boolean } | null;
   setMultimediaParams: (params: { prompt?: string; type?: string; autoGenerate?: boolean } | null) => void;
@@ -269,6 +282,31 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   costAudit: null,
   setCostAudit: (audit) => set({ costAudit: audit }),
+
+  stewardPositions: [],
+  setStewardPositions: (positions) => set({ stewardPositions: positions }),
+
+  elections: [],
+  setElections: (elections) => set({ elections }),
+  applyForElection: (electionId, stewardEsin, stewardName, manifesto) => set((state) => ({
+    elections: state.elections.map(e => e.id === electionId ? {
+      ...e,
+      candidates: [...e.candidates, { id: `CAND-${Date.now()}`, stewardEsin, stewardName, manifesto, votes: 0, reputation: 0, contributions: [], skills: [] }]
+    } : e)
+  })),
+  voteInElection: (electionId, candidateId, stewardEsin) => set((state) => ({
+    elections: state.elections.map(e => e.id === electionId ? {
+      ...e,
+      candidates: e.candidates.map(c => c.id === candidateId ? { ...c, votes: c.votes + 1 } : c)
+    } : e)
+  })),
+
+  proposals: [],
+  setProposals: (proposals) => set({ proposals }),
+  createProposal: (proposal) => set((state) => ({ proposals: [...state.proposals, proposal] })),
+  updateProposalStatus: (proposalId, status) => set((state) => ({
+    proposals: state.proposals.map(p => p.id === proposalId ? { ...p, status } : p)
+  })),
 
   multimediaParams: null,
   setMultimediaParams: (params) => set({ multimediaParams: params }),
