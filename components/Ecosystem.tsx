@@ -51,6 +51,7 @@ import { HenIcon } from './Icons';
 import { runSpecialistDiagnostic, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
+import { SEO } from './SEO';
 
 interface EcosystemProps {
   user: User;
@@ -537,6 +538,7 @@ ${auditResult.text}
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-16 overflow-x-hidden relative">
+      <SEO title="Ecosystem" description="EnvirosAgro Ecosystem: Explore interconnected portals, from biotech to permaculture, and expand your network." />
       
       <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none overflow-hidden z-0">
          <div className="w-full h-[1px] bg-emerald-500/10 absolute top-0 animate-scan"></div>

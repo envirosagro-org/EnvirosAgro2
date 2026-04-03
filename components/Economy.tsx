@@ -24,6 +24,7 @@ import { HenIcon } from './Icons';
 import { predictMarketSentiment, AgroLangResponse, chatWithAgroLang } from '../services/agroLangService';
 import { listenToCollection } from '../services/firebaseService';
 import { generateQuickHash } from '../systemFunctions';
+import { SEO } from './SEO';
 
 interface EconomyProps {
   user: User;
@@ -312,6 +313,7 @@ const Economy: React.FC<EconomyProps> = ({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-24 max-w-[1700px] mx-auto px-4 relative">
+      <SEO title="Economy" description="EnvirosAgro Economy: Participate in the decentralized agricultural market, trade assets, and monitor global commerce." />
       
       {/* 1. Global Commerce HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">

@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Tag, TrendingUp, Search, Filter, ShoppingBag, Zap, Award, X } from 'lucide-react';
 import { ShareButton } from './ShareButton';
+import { SEO } from './SEO';
 
 const Marketplace: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +31,7 @@ const Marketplace: React.FC = () => {
 
   return (
     <div className="space-y-8">
+      <SEO title="Marketplace" description="EnvirosAgro Marketplace: Trade data, courses, carbon credits, and agricultural services." />
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />

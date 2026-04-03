@@ -38,6 +38,7 @@ import { generateAgroExam, getGroundedAgroResources, chatWithAgroLang, AgroLangR
 import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
 import { ShareButton } from './ShareButton';
+import { SEO } from './SEO';
 
 interface CommunityProps {
   user: User;
@@ -320,6 +321,7 @@ const Community: React.FC<CommunityProps> = ({
 
   return (
     <div className="space-y-16 md:space-y-24 animate-in fade-in duration-500 pb-48 max-w-[1700px] mx-auto px-4 relative">
+      <SEO title="Community" description="Connect with the EnvirosAgro community: Collaborate with stewards, share insights, and build the future of agriculture." />
       
       {/* 1. Community HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

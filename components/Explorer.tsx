@@ -71,6 +71,7 @@ import { AgroBlock, User, AgroTransaction, SignalShard, ViewState } from '../typ
 import { HenIcon } from './Icons';
 import { settleRegistryBatch, AgroLangResponse, auditMeshStability, probeValidatorNode } from '../services/agroLangService';
 import { SycamoreLogo } from './Icons';
+import { SEO } from './SEO';
 
 interface ExplorerProps {
   blockchain?: AgroBlock[];
@@ -201,6 +202,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1600px] mx-auto px-4">
+      <SEO title="Explorer" description="EnvirosAgro Block Explorer: View real-time blockchain transactions, network signals, and system telemetry." />
       
       {/* 1. Monitoring HUD */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

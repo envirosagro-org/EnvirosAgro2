@@ -18,6 +18,8 @@ import { ShareButton } from './ShareButton';
 import { NavigationLink } from './NavigationLink';
 
 import { useAppNavigation } from '../hooks/useAppNavigation';
+import { SEO } from './SEO';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardProps {
   user: User;
@@ -68,6 +70,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
 
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700 w-full overflow-x-hidden pb-32 px-2 max-w-[1700px] mx-auto">
+      <SEO title="Dashboard" description="EnvirosAgro Dashboard: Monitor your agricultural projects, blockchain transactions, and sustainability metrics in real-time." />
       
       {/* Network Pulse Ticker */}
       <div className="glass-card p-2 rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shadow-[0_0_30px_rgba(16,185,129,0.2)] shrink-0 relative">
@@ -221,6 +224,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                 <SycamoreLogo size={20} className="fill-current animate-pulse" /> INITIALIZE INGEST
              </button>
           </div>
+        </div>
+      </div>
+
+      {/* Blockchain Activity */}
+      <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-6">
+        <h3 className="text-base font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-4 italic">
+          BLOCKCHAIN ACTIVITY <Activity className="w-5 h-5 text-emerald-500" />
+        </h3>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={blockchain.slice(0, 10).reverse()}>
+              <XAxis dataKey="index" stroke="#666" fontSize={10} />
+              <YAxis stroke="#666" fontSize={10} />
+              <Tooltip contentStyle={{ backgroundColor: '#050706', border: '1px solid #333' }} />
+              <Bar dataKey="transactions.length" fill="#10b981" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 

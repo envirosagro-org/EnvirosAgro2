@@ -4,6 +4,7 @@ import { ThumbsUp, ThumbsDown, MinusCircle, PlusCircle, Play, CheckCircle, XCirc
 import ElectionDashboard from './ElectionDashboard';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { draftProposal, calculateImpactScore } from '../services/geminiService';
+import { SEO } from './SEO';
 
 interface GovernanceProps {
   user: User;
@@ -65,6 +66,7 @@ const Governance: React.FC<GovernanceProps> = ({ user, proposals, stewardPositio
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-24 max-w-[1400px] mx-auto px-4">
+      <SEO title="Governance" description="Participate in EnvirosAgro DAO governance: Submit proposals, vote on community initiatives, and shape the future of sustainable agriculture." />
       <ElectionDashboard 
         user={user} 
         positions={stewardPositions} 

@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { User, Order } from '../types';
 import { HenIcon } from './Icons';
+import { SEO } from './SEO';
 
 interface EnvirosAgroStoreProps {
   user: User;
@@ -216,6 +217,7 @@ const EnvirosAgroStore: React.FC<EnvirosAgroStoreProps> = ({ user, onSpendEAC, o
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto px-4">
+      <SEO title="EnvirosAgro Store" description="EnvirosAgro Store: Access organizational services, structural blueprints, and mission-critical assets." />
       {/* Institutional Branding Header */}
       <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
          <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform pointer-events-none">

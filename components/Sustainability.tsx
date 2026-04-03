@@ -18,6 +18,7 @@ import {
   FileDigit, ChevronRight, Menu, Search, UserPlus, ChevronUp
 } from 'lucide-react';
 import { analyzeSustainability, AgroLangResponse } from '../services/agroLangService';
+import { SEO } from './SEO';
 import { saveCollectionItem } from '../services/firebaseService';
 import { calculateMConstant, generateQuickHash } from '../systemFunctions';
 
@@ -197,6 +198,7 @@ ${oracleVerdict.text}
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 relative max-w-2xl mx-auto px-4 md:px-0">
+      <SEO title="Sustainability" description="EnvirosAgro Sustainability: Monitor environmental impact, carbon credits, and ecological resonance in real-time." />
       <ImpactAnalyticsDashboard />
       
       {/* Omega Equilibrium Card */}

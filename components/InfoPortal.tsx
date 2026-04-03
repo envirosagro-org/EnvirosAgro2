@@ -16,6 +16,7 @@ import {
 import { User, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import { SycamoreLogo } from './Icons';
+import { SEO } from './SEO';
 
 interface InfoPortalProps {
   user: User;
@@ -553,6 +554,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
 
   return (
     <div className="flex flex-col lg:flex-row gap-12 animate-in fade-in duration-700 max-w-[1700px] mx-auto pb-40 relative px-4">
+      <SEO title="Information Portal" description="EnvirosAgro Information Portal: Access legal frameworks, privacy policies, and system documentation." />
       
       {/* Background Decor FX */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.01]">

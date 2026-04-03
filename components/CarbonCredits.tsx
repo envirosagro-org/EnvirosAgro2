@@ -1,6 +1,7 @@
 import React from 'react';
 import { CarbonCredit, User, LiveAgroProduct } from '../types';
 import { Leaf, CheckCircle2, AlertCircle } from 'lucide-react';
+import { SEO } from './SEO';
 
 interface CarbonCreditsProps {
   user: User;
@@ -13,6 +14,7 @@ interface CarbonCreditsProps {
 const CarbonCredits: React.FC<CarbonCreditsProps> = ({ user, credits, products, onVerifyCredit, notify }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-24 max-w-[1400px] mx-auto px-4">
+      <SEO title="Carbon Credits" description="EnvirosAgro Carbon Credits: Manage, verify, and trade carbon credits generated through sustainable practices." />
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Carbon <span className="text-emerald-400">Credits</span></h2>
       </div>

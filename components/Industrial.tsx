@@ -75,6 +75,7 @@ import {
 import { User, RegisteredUnit, ViewState, WorkerProfile, AgroProject, VendorProduct, Order } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
+import { SEO } from './SEO';
 
 interface IndustrialProps {
   user: User;
@@ -183,6 +184,7 @@ const Industrial: React.FC<IndustrialProps> = ({
 
   return (
     <div className="space-y-16 md:space-y-24 animate-in fade-in duration-700 pb-48 max-w-[1700px] mx-auto px-4 relative">
+      <SEO title="Industrial" description="EnvirosAgro Industrial Hub: Manage supply chains, monitor machinery, and oversee large-scale agricultural operations." />
       
       {/* 1. Supply Chain Resonance HUD */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">

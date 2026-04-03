@@ -27,6 +27,8 @@ import {
 } from 'recharts';
 import { User, ViewState, SignalShard } from '../types';
 import IdentityCard from './IdentityCard';
+import { StewardJourney } from './StewardJourney';
+import { SEO } from './SEO';
 
 interface UserProfileProps {
   user: User;
@@ -237,6 +239,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-12 animate-in fade-in duration-700 pb-32 px-4 lg:px-0">
+      <SEO title="Steward Profile" description="EnvirosAgro Steward Profile: Manage your identity, view your dossier, and track your contributions." />
       
       <div className="glass-card p-10 md:p-14 rounded-[80px] bg-black/60 border border-white/5 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-3xl">
          <div className="absolute inset-0 opacity-[0.03] pointer-events-none flex items-center justify-center">
@@ -326,8 +329,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                        </div>
                     </div>
                  </div>
-
-                 <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-8 shadow-3xl relative overflow-hidden group">
+                  <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-8 shadow-3xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Microscope size={200} className="text-blue-400" /></div>
                     <h3 className="text-base font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-4 italic px-4 relative z-10">
                        SKILLS RESONANCE <Dna className="w-5 h-5 text-blue-400" />
@@ -343,9 +345,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                        </ResponsiveContainer>
                     </div>
                  </div>
+                 <StewardJourney user={user} />
               </div>
            </div>
          )}
+
 
          {activeTab === 'card' && (
            <div className="animate-in zoom-in duration-500 flex flex-col items-center space-y-12">

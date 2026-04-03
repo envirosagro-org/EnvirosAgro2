@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { LiveAgroProduct } from '../types';
 import { CheckCircle2, AlertCircle, Clock, Search, Package, ArrowRight } from 'lucide-react';
+import { SEO } from './SEO';
 
 interface TraceabilityProps {
   product?: LiveAgroProduct;
@@ -29,6 +30,7 @@ const Traceability: React.FC<TraceabilityProps> = ({ product: initialProduct }) 
 
   return (
     <div className="space-y-8">
+      <SEO title="Traceability" description="EnvirosAgro Traceability: Verify the origin, journey, and authenticity of agricultural products." />
       {/* Search Bar */}
       <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40 shadow-2xl flex flex-col md:flex-row gap-6 items-center justify-between">
         <div className="flex items-center gap-4">

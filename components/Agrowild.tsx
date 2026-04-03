@@ -51,6 +51,7 @@ import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 
 import ShareButton from './ShareButton';
+import { SEO } from './SEO';
 
 interface AgrowildProps {
   user: User;
@@ -184,6 +185,7 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20 max-w-[1700px] mx-auto px-4 relative overflow-hidden flex flex-col min-h-screen">
+      <SEO title="Agrowild" description="Explore EnvirosAgro Agrowild: Discover and document biodiversity, track wildlife, and contribute to ecological preservation." />
       
       {/* 1. Biological Finality HUD */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10 shrink-0 mt-4">
