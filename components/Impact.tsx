@@ -58,6 +58,7 @@ import {
 } from 'recharts';
 import { User, ViewState } from '../types';
 import { HenIcon } from './Icons';
+import { toast } from 'sonner';
 
 interface ImpactProps {
   user: User;
@@ -116,7 +117,7 @@ const Impact: React.FC<ImpactProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
   const handleAuditRequest = async () => {
     const fee = 100;
     if (await onSpendEAC(fee, 'GLOBAL_IMPACT_VERIFICATION_AUDIT')) {
-       alert("AUDIT_INITIALIZED: EnvirosAgro physical verification node dispatched to shard your impact metrics.");
+       toast.success("AUDIT_INITIALIZED: EnvirosAgro physical verification node dispatched to shard your impact metrics.");
     }
   };
 

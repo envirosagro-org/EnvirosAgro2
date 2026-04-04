@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { db, auth } from '../src/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { SEO } from './SEO';
 
 export const HardwareRegistry: React.FC = () => {
   const [deviceId, setDeviceId] = useState('');
@@ -16,14 +18,16 @@ export const HardwareRegistry: React.FC = () => {
         status: 'Registered',
         registeredAt: serverTimestamp(),
       });
-      alert('Hardware registered successfully!');
+      toast.success('Hardware registered successfully!');
     } catch (error) {
       console.error('Registration error:', error);
+      toast.error('Registration failed. Check node connection.');
     }
   };
 
   return (
     <div className="p-4 border rounded-xl">
+      <SEO title="Hardware Registry" description="EnvirosAgro Hardware Registry: Register and manage your agricultural hardware devices." />
       <h2 className="text-lg font-semibold">Hardware Registry</h2>
       <input 
         value={deviceId}

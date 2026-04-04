@@ -80,6 +80,7 @@ import { toast } from 'sonner';
 
 import { TriggerButton } from './TriggerButton';
 import CostAccountingDashboard from './CostAccountingDashboard';
+import { SEO } from './SEO';
 
 interface AgroWalletProps {
   user: User;
@@ -235,7 +236,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
         await initiatePayPalPayout(selectedProvider.accountFragment, usdValue);
         setGatewayStep('sign');
       } catch (err: any) {
-        alert(`PAYPAL HANDSHAKE ERROR: ${err.message}`);
+        toast.error(`PAYPAL HANDSHAKE ERROR: ${err.message}`);
         setGatewayStep('config');
       }
     } else {
@@ -249,7 +250,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   const finalizeSettlement = () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
@@ -297,7 +298,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   const handleExecuteStake = async () => {
     const amount = Number(stakingAmount);
     if (amount < selectedTier.min) {
-      alert(`Minimum stake for ${selectedTier.label} is ${selectedTier.min} EAT.`);
+      toast.error(`Minimum stake for ${selectedTier.label} is ${selectedTier.min} EAT.`);
       return;
     }
     notify({ 
@@ -317,6 +318,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+      <SEO title="Wallet" description="EnvirosAgro Wallet: Manage your EAC and EAT balances, stake assets, and track your financial resonance." />
       
       {/* 1. Wallet Status HUD */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

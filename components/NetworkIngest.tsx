@@ -64,11 +64,15 @@ import {
   ArrowLeftCircle,
   Database
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, ViewState, AgroResource, MediaShard } from '../types';
+import { useEvidenceIngest } from '../hooks/useEvidenceIngest';
 import { HenIcon } from './Icons';
+
 import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
 import { saveCollectionItem, uploadMediaShard } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
+import { SEO } from './SEO';
 
 interface LogEntry {
   id: string;
@@ -134,6 +138,7 @@ const INITIAL_KEYS: APIKey[] = [
 const PROVISIONING_FEE = 500;
 
 const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpdateUser, onSpendEAC, onNavigate, onExecuteToShell, initialSection }) => {
+  const { ingestEvidence, isUploading, uploadProgress } = useEvidenceIngest(user);
   const [activeTab, setActiveTab] = useState<'overview' | 'handshake' | 'vault' | 'api' | 'analyzer'>('overview');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [keys, setKeys] = useState<APIKey[]>(INITIAL_KEYS);
@@ -160,8 +165,7 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpda
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
   // Evidence Vault States
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // Removed duplicate state declarations
 
   // Implement missing handleStartProvision handler
   const handleStartProvision = () => {
@@ -270,38 +274,12 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpda
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    setIsUploading(true);
-    try {
-      const downloadUrl = await uploadMediaShard(file, (p) => setUploadProgress(p));
-      const type = file.type.startsWith('video/') ? 'VIDEO' : file.type.startsWith('audio/') ? 'AUDIO' : 'PAPER';
-      
-      const newShard: Partial<MediaShard> = {
-        title: file.name.split('.')[0],
-        type: type as any,
-        source: 'VAULT_INGEST',
-        author: user.name,
-        authorEsin: user.esin,
-        timestamp: new Date().toISOString(),
-        hash: Math.random().toString(16).substring(2, 10).toUpperCase(),
-        mImpact: (Math.random() * 5).toFixed(2),
-        size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-        downloadUrl
-      };
-      
-      await saveCollectionItem('media_ledger', newShard);
-      alert("Evidence Shard successfully anchored to the Vault.");
-    } catch (err) {
-      console.error(err);
-      alert("Vault Ingest failed. Check network stability.");
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
+    await ingestEvidence(file, 'VAULT_INGEST');
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+      <SEO title="Network Ingest" description="EnvirosAgro Network Ingest: Monitor API endpoints, manage data streams, and oversee system integrations." />
       
       {/* 1. Master Inflow HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">

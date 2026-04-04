@@ -46,6 +46,7 @@ import {
   Box,
   Maximize2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, ViewState, MediaShard } from '../types';
 import { HenIcon } from './Icons';
 import { runSpecialistDiagnostic, AgroLangResponse } from '../services/agroLangService';
@@ -201,7 +202,7 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
       setIsArchived(true);
       onDeposit(10, 'BRAND_MISSION_LEDGER_ANCHOR');
     } catch (e) {
-      alert("LEDGER_FAILURE: Finality check failed.");
+      toast.error("LEDGER_FAILURE: Finality check failed.");
     } finally {
       setIsArchiving(false);
     }

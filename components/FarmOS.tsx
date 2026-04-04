@@ -25,7 +25,8 @@ import {
   Code,
   Library,
   Languages,
-  Braces
+  Braces,
+  Map
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Editor from 'react-simple-code-editor';
@@ -52,6 +53,7 @@ import { rtdb, db } from '../src/firebase';
 import { ref, get } from 'firebase/database';
 import { collection, getDocs } from 'firebase/firestore';
 import DeviceControl from './DeviceControl';
+import GISPortal from './GISPortal';
 
 interface FarmOSProps {
   user: User;
@@ -125,7 +127,7 @@ const SNIPPETS = [
 ];
 
 const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialCode, clearInitialCode, initialSection }) => {
-  const [activeTab, setActiveTab] = useState<'kernel' | 'ide' | 'hardware' | 'scheduler' | 'shell'>('kernel');
+  const [activeTab, setActiveTab] = useState<'kernel' | 'ide' | 'hardware' | 'scheduler' | 'shell' | 'gis'>('kernel');
   const [bootStatus, setBootStatus] = useState<'OFF' | 'POST' | 'ON'>('ON');
   const [bootProgress, setBootProgress] = useState(100);
   const [shellInput, setShellInput] = useState('');
@@ -468,6 +470,7 @@ SEQUENCE Optimize_Cycle_882 {
           { id: 'shell', label: 'System Shell', icon: Terminal },
           { id: 'hardware', label: 'Asset Monitor', icon: CpuIcon },
           { id: 'scheduler', label: 'Thrust Load', icon: Gauge },
+          { id: 'gis', label: 'GIS Portal', icon: Map },
         ].map(tab => (
           <button 
             key={tab.id} 
@@ -512,6 +515,19 @@ SEQUENCE Optimize_Cycle_882 {
                    ))}
                 </div>
              </div>
+          </div>
+        )}
+
+        {/* VIEW: GIS PORTAL */}
+        {activeTab === 'gis' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700">
+            <div className="flex items-center gap-6 px-10 mb-6">
+              <div className="p-4 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 shadow-xl">
+                <Map className="w-8 h-8 text-indigo-400" />
+              </div>
+              <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">GIS <span className="text-indigo-400">Portal</span></h3>
+            </div>
+            <GISPortal user={user} />
           </div>
         )}
 

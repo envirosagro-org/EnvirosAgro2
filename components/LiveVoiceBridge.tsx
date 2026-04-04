@@ -3,6 +3,7 @@ import { Mic, MicOff, X, Loader2, ShieldCheck, Activity } from 'lucide-react';
 import { HenIcon } from './Icons';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
 import { encode, decode } from '../services/agroLangService';
+import { SEO } from './SEO';
 
 interface LiveVoiceBridgeProps {
   isOpen: boolean;
@@ -146,6 +147,7 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
 
   return (
     <div className="fixed bottom-24 right-10 z-[300] w-80 animate-in slide-in-from-bottom-10 duration-500">
+      <SEO title="Live Voice Bridge" description="EnvirosAgro Live Voice Bridge: Real-time voice communication for agricultural operations." />
       <div className="glass-card rounded-[32px] border-emerald-500/40 bg-[#050706] shadow-2xl overflow-hidden flex flex-col border-2">
         <div className="p-6 bg-emerald-600/10 flex items-center justify-between border-b border-white/5">
           <div className="flex items-center gap-3">

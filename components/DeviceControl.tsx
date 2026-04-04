@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { rtdb } from '../src/firebase';
 import { ref, onValue, set, push } from 'firebase/database';
+import { SEO } from './SEO';
 
 interface DeviceControlProps {
   deviceId: string;
@@ -29,6 +30,7 @@ export const DeviceControl: React.FC<DeviceControlProps> = ({ deviceId }) => {
 
   return (
     <div className="p-4 border rounded-xl space-y-4">
+      <SEO title="Device Control" description="EnvirosAgro Device Control: Monitor and send commands to your agricultural devices." />
       <h2 className="text-lg font-semibold">Device: {deviceId}</h2>
       <p>Status: <span className="font-bold">{status}</span></p>
       <div className="flex gap-2">

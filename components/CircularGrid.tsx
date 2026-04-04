@@ -45,6 +45,7 @@ import {
   Info,
   Maximize2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, Order, VendorProduct, ViewState, SignalShard } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
@@ -143,24 +144,24 @@ const CircularGrid: React.FC<CircularGridProps> = ({
   };
 
   const buyRefurbished = (item: VendorProduct) => {
-    if (confirm(`INITIALIZE PROCUREMENT: Anchor ${item.name} into the second-life ledger for ${item.price} EAC?`)) {
-      onPlaceOrder({
-        itemId: item.id,
-        itemName: item.name,
-        itemType: 'Refurbished ' + item.category,
-        itemImage: item.image || 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400',
-        cost: item.price,
-        supplierEsin: item.supplierEsin,
-        sourceTab: 'circular'
-      });
-      notify({ 
-        title: 'PROCUREMENT_INJECTED', 
-        message: `Shard ${item.id} registered via Circular Grid. Monitor finality in TQM.`,
-        type: 'success',
-        priority: 'medium',
-        actionIcon: 'ShoppingCart'
-      });
-    }
+    // Note: confirm is replaced with a direct action for now as per guidelines to avoid window.confirm in iframes
+    onPlaceOrder({
+      itemId: item.id,
+      itemName: item.name,
+      itemType: 'Refurbished ' + item.category,
+      itemImage: item.image || 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400',
+      cost: item.price,
+      supplierEsin: item.supplierEsin,
+      sourceTab: 'circular'
+    });
+    toast.success(`PROCUREMENT_SUCCESS: ${item.name} anchored into the second-life ledger.`);
+    notify({ 
+      title: 'PROCUREMENT_INJECTED', 
+      message: `Shard ${item.id} registered via Circular Grid. Monitor finality in TQM.`,
+      type: 'success',
+      priority: 'medium',
+      actionIcon: 'ShoppingCart'
+    });
   };
 
   return (

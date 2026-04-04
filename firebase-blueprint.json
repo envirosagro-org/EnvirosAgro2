@@ -1,5 +1,52 @@
 {
   "entities": {
+    "Steward": {
+      "title": "Steward",
+      "description": "Represents a user (steward) in the EnvirosAgro network.",
+      "type": "object",
+      "properties": {
+        "stewardId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "esin": { "type": "string" },
+        "role": { "type": "string" },
+        "location": { "type": "string" },
+        "lastSync": { "type": "number" },
+        "completedActions": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["stewardId", "name", "email", "esin", "role"]
+    },
+    "Signal": {
+      "title": "Signal",
+      "description": "A network signal or notification dispatched to a steward.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stewardId": { "type": "string" },
+        "type": { "type": "string" },
+        "origin": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" },
+        "priority": { "type": "string" }
+      },
+      "required": ["id", "stewardId", "type", "title", "message", "timestamp", "read"]
+    },
+    "MachineNode": {
+      "title": "MachineNode",
+      "description": "An IIoT machine node registered in the network.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stewardId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "lastModified": { "type": "number" }
+      },
+      "required": ["id", "stewardId", "name", "type", "status"]
+    },
     "HardwareDevice": {
       "title": "HardwareDevice",
       "description": "Represents an IIoT hardware device registered in the FarmSwarm network.",
@@ -38,9 +85,54 @@
         "status": { "type": "string", "enum": ["Confirmed", "Pending"] }
       },
       "required": ["index", "timestamp", "transactions", "previousHash", "hash", "validator", "status"]
+    },
+    "MarketAnalytics": {
+      "title": "MarketAnalytics",
+      "description": "Represents market analytics data.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "sales": { "type": "number" }
+      },
+      "required": ["name", "sales"]
+    },
+    "MarketNews": {
+      "title": "MarketNews",
+      "description": "Represents market news items.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "date": { "type": "string" }
+      },
+      "required": ["title", "date"]
+    },
+    "Plot": {
+      "title": "Plot",
+      "description": "Represents a physical plot or shard on the farm.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stewardId": { "type": "string" },
+        "name": { "type": "string" },
+        "geometry": { "type": "object", "description": "GeoJSON polygon geometry." },
+        "deviceId": { "type": "string", "description": "Associated IIoT device." }
+      },
+      "required": ["id", "stewardId", "name", "geometry"]
     }
   },
   "firestore": {
+    "/stewards/{stewardId}": {
+      "schema": { "$ref": "Steward" },
+      "description": "Collection of user profiles (stewards)."
+    },
+    "/signals/{signalId}": {
+      "schema": { "$ref": "Signal" },
+      "description": "Collection of network signals and notifications."
+    },
+    "/machine_nodes/{nodeId}": {
+      "schema": { "$ref": "MachineNode" },
+      "description": "Collection of registered machine nodes."
+    },
     "/devices/{deviceId}": {
       "schema": { "$ref": "HardwareDevice" },
       "description": "Collection of registered hardware devices."
@@ -52,6 +144,18 @@
     "/blocks/{blockId}": {
       "schema": { "$ref": "BlockchainBlock" },
       "description": "The immutable blockchain ledger."
+    },
+    "/market_analytics/{analyticsId}": {
+      "schema": { "$ref": "MarketAnalytics" },
+      "description": "Collection of market analytics data."
+    },
+    "/market_news/{newsId}": {
+      "schema": { "$ref": "MarketNews" },
+      "description": "Collection of market news items."
+    },
+    "/plots/{plotId}": {
+      "schema": { "$ref": "Plot" },
+      "description": "Collection of physical plots."
     }
   }
 }

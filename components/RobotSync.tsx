@@ -36,6 +36,7 @@ import {
   FileJson,
   Braces
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { SycamoreLogo, HenIcon } from './Icons';
 import { User, ViewState } from '../types';
 import { chatWithAgroLang } from '../services/agroLangService';
@@ -125,7 +126,7 @@ const RobotSync: React.FC<RobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, onNa
     setTimeout(() => {
       setIsBroadcasting(false);
       setBroadcastMessage('');
-      alert("SIGNAL_BROADCAST_SUCCESS: Information propagated to external AI clusters.");
+      toast.success("SIGNAL_BROADCAST_SUCCESS: Information propagated to external AI clusters.");
     }, 2000);
   };
 

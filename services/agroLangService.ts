@@ -3,6 +3,100 @@ import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclarati
 
 const API_KEY = process.env.EA_AI_API_KEY || process.env.API_KEY || "";
 
+// --- EOS v6.5 Mathematical Models ---
+
+/**
+ * 1. The Core Growth Matrix: C(a)™ Agro Code
+ * Formula: C(a) = x * ((r^n - 1) / (r - 1)) + 1
+ */
+export const calculateAgroCode = (x: number, r: number, n: number): number => {
+  if (r === 1) return x * n + 1;
+  return x * ((Math.pow(r, n) - 1) / (r - 1)) + 1;
+};
+
+/**
+ * 2. The Time-Impact Signature: m™ Constant
+ * Formula: m = sqrt((Dn * In * C(a)) / S)
+ */
+export const calculateSustainabilityConstant = (Dn: number, In: number, Ca: number, S: number): number => {
+  if (S === 0) return 0;
+  return Math.sqrt((Dn * In * Ca) / S);
+};
+
+/**
+ * 3. The Five Thrusts™ Vector (SEHTI)
+ * Formula: Stotal = sum(Ws * S) + (We * E) + (Wh * H) + (Wt * T) + (Wi * I)
+ */
+export const calculateSehtiTotal = (
+  s: number, e: number, h: number, t: number, i: number,
+  weights: { ws: number; we: number; wh: number; wt: number; wi: number }
+): number => {
+  return (weights.ws * s) + (weights.we * e) + (weights.wh * h) + (weights.wt * t) + (weights.wi * i);
+};
+
+/**
+ * 4. DigitalMRV: Carbon Mining Equation
+ * Formula: Cnet = (Cseq + Coffset) - (Cemissions + Cleach)
+ */
+export const calculateNetCarbon = (Cseq: number, Coffset: number, Cemissions: number, Cleach: number): number => {
+  return (Cseq + Coffset) - (Cemissions + Cleach);
+};
+
+/**
+ * 5. CircularGrid™: Waste-to-Resource Efficiency
+ * Formula: eta_circular = (Rrecovered / Ototal) * (1 / Einput)
+ */
+export const calculateCircularEfficiency = (Rrecovered: number, Ototal: number, Einput: number): number => {
+  if (Ototal === 0 || Einput === 0) return 0;
+  return (Rrecovered / Ototal) * (1 / Einput);
+};
+
+/**
+ * 6. Bio-NFT Valuation (Genetic NFTs)
+ * Simplified integral: Vnft = (YieldStability + ResistanceBiotic) * timeRange + ScarcityFactor
+ */
+export const calculateBioNftValuation = (
+  yieldStability: number,
+  resistanceBiotic: number,
+  scarcityFactor: number,
+  timeRange: number
+): number => {
+  return (yieldStability + resistanceBiotic) * timeRange + scarcityFactor;
+};
+
+/**
+ * 7. TQMGrid: Chroma Grading Equation
+ * Formula: Qgrade = (Ndensity + Bbrix) / (Presidue * sigma)
+ */
+export const calculateChromaGrade = (Ndensity: number, Bbrix: number, Presidue: number, sigma: number): number => {
+  const denominator = Presidue * sigma;
+  if (denominator === 0) return (Ndensity + Bbrix) * 100; // High quality if residue/variance is zero
+  return (Ndensity + Bbrix) / denominator;
+};
+
+/**
+ * 8. Economic Resilience: Treasury Buffer (AgroWallet)
+ * Formula: Rfin = (Tbalance + Caliquid) / (Ocost * Riskclimate)
+ */
+export const calculateEconomicResilience = (Tbalance: number, Caliquid: number, Ocost: number, Riskclimate: number): number => {
+  const denominator = Ocost * Riskclimate;
+  if (denominator === 0) return Infinity;
+  return (Tbalance + Caliquid) / denominator;
+};
+
+/**
+ * 9. Unified SEHTI Impact Equation
+ * Simplified integral: Psi = (S * E * H * T * I) * exp(m * Ca) * timeRange
+ */
+export const calculateUnifiedSehtiImpact = (
+  s: number, e: number, h: number, t: number, i: number,
+  m: number, Ca: number, timeRange: number
+): number => {
+  const baseImpact = s * e * h * t * i;
+  const growthFactor = Math.exp(m * Ca);
+  return baseImpact * growthFactor * timeRange;
+};
+
 export const callBackendEA = async (params: { model: string; contents: any; config?: any }) => {
   if (!API_KEY) {
     throw new Error("API_KEY missing");

@@ -70,10 +70,12 @@ import {
   Tooltip, 
   ResponsiveContainer
 } from 'recharts';
+import { toast } from 'sonner';
 import { User, Order, LogisticProvider, VendorProduct, ViewState, SignalShard, LiveAgroProduct } from '../types';
 import { HenIcon } from './Icons';
 import { runSpecialistDiagnostic, analyzeDemandForecast } from '../services/agroLangService';
 import AssetAssociationTool from './AssetAssociationTool';
+import { SEO } from './SEO';
 
 interface VendorPortalProps {
   user: User;
@@ -225,7 +227,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       setOracleVerdict(res.text);
       setRegStep('verification');
     } catch (e) {
-      alert("Audit protocol failure.");
+      toast.error("Audit protocol failure.");
     } finally {
       setIsProcessing(false);
     }
@@ -245,7 +247,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
   const handleFinalizeRegistry = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
@@ -374,6 +376,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+      <SEO title="Vendor Portal" description="EnvirosAgro Vendor Portal: Manage inventory, process orders, and track supplier metrics." />
       
       {/* HUD: Supplier Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
@@ -969,10 +972,10 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                                    if (navigator.geolocation) {
                                      navigator.geolocation.getCurrentPosition(
                                        (pos) => setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                                       (err) => alert("Could not get location: " + err.message)
+                                       (err) => toast.error("Could not get location: " + err.message)
                                      );
                                    } else {
-                                     alert("Geolocation is not supported by this browser.");
+                                     toast.error("Geolocation is not supported by this browser.");
                                    }
                                  }}
                                  className="px-8 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-[40px] font-black text-xs uppercase tracking-widest hover:bg-blue-600/40 transition-all flex items-center justify-center"
@@ -1046,7 +1049,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
                           <button 
                             onClick={() => {
                               if (user.wallet.balance < regFee) {
-                                alert("Insufficient EAC balance.");
+                                toast.error("Insufficient EAC balance.");
                                 return;
                               }
                               onSpendEAC(regFee, `REG_FEE_${itemName}`);

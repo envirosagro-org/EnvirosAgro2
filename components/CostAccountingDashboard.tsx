@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { ShardCostCalibration } from '../types';
 import { HenIcon } from './Icons';
+import { SEO } from './SEO';
 
 interface FinancialReport {
   totalRevenue: number;
@@ -96,6 +97,7 @@ const CostAccountingDashboard: React.FC<CostAccountingDashboardProps> = ({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
+      <SEO title="Cost Accounting" description="EnvirosAgro Cost Accounting: Real-time managerial accounting and cost optimization engine." />
       {/* Header */}
       <div className="glass-card p-12 rounded-[56px] border-emerald-500/10 bg-black/40 relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-8 shadow-2xl">
         <div className="space-y-4 relative z-10 text-center md:text-left">

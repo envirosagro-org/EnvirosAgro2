@@ -10,6 +10,8 @@ import {
 import { User, AgroResource, ViewState, SignalShard, HandshakeStep } from '../types';
 import { HenIcon } from './Icons';
 import { generateHandshakeAgroLang } from '../services/agroLangService';
+import { toast } from 'sonner';
+import GISPortal from './GISPortal';
 
 interface RegistryHandshakeProps {
   user: User;
@@ -42,7 +44,7 @@ const LAND_PROTOCOL_STEPS: Partial<HandshakeStep>[] = [
 const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ 
   user, onUpdateUser, onSpendEAC, onNavigate, onEmitSignal, onExecuteToShell 
 }) => {
-  const { handshakeRegistrationState, setHandshakeRegistrationState } = useAppStore();
+  const { handshakeRegistrationState, setHandshakeRegistrationState, selectedPlot } = useAppStore();
   const [showResumePrompt, setShowResumePrompt] = useState(!!handshakeRegistrationState);
   const [mode, setMode] = useState<'HARDWARE' | 'LAND' | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -50,11 +52,17 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
   const [statusMsg, setStatusMsg] = useState('');
   
   // Data collection
-  const [assetName, setAssetName] = useState('');
+  const [assetName, setAssetName] = useState(selectedPlot ? selectedPlot.name : '');
   const [assetType, setAssetType] = useState('Moisture Array');
   const [evidenceFile, setEvidenceFile] = useState<string | null>(null);
   const [esinSign, setEsinSign] = useState('');
   const [agroLangShard, setAgroLangShard] = useState<any>(null);
+
+  useEffect(() => {
+    if (selectedPlot && mode === 'LAND') {
+      setAssetName(selectedPlot.name);
+    }
+  }, [selectedPlot, mode]);
 
   const isSuccessRef = useRef(false);
   const stateRef = useRef({ mode, currentStep, assetName, assetType, evidenceFile, esinSign, agroLangShard });
@@ -159,7 +167,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
         setCurrentStep(steps.length);
       }
     } catch (err) {
-      alert("HANDSHAKE ERROR: Protocol sync failed.");
+      toast.error("HANDSHAKE ERROR: Protocol sync failed.");
     } finally {
       setIsProcessing(false);
     }
@@ -167,7 +175,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
 
   const handleFinalize = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
@@ -311,7 +319,18 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
                                    className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-stone-900 shadow-inner italic" 
                                 />
                              </div>
-                             <button onClick={handleNextStep} disabled={!assetName} className="w-full py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-xl flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-white/5 active:scale-95 disabled:opacity-30">
+                             {mode === 'LAND' && (
+                               <div className="space-y-3 px-4 text-left">
+                                 <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4">Select Plot from GIS Portal</label>
+                                 <div className="w-full rounded-[32px] overflow-hidden border-2 border-white/10">
+                                   <GISPortal user={user} />
+                                 </div>
+                                 {selectedPlot && (
+                                   <p className="text-emerald-400 text-sm font-bold mt-2">Selected Plot: {selectedPlot.name}</p>
+                                 )}
+                               </div>
+                             )}
+                             <button onClick={handleNextStep} disabled={!assetName || (mode === 'LAND' && !selectedPlot)} className="w-full py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-xl flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-white/5 active:scale-95 disabled:opacity-30">
                                 INITIALIZE HANDSHAKE <ArrowRight size={20} />
                              </button>
                           </div>

@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { User, ViewState, Collective, SocialPost, PostComment, StewardConnection } from '../types';
 import { HenIcon } from './Icons';
+import { toast } from 'sonner';
 import { generateAgroExam, getGroundedAgroResources, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
@@ -141,7 +142,7 @@ const Community: React.FC<CommunityProps> = ({
 
   const handleCreateCollective = async () => {
     if (!isAgroWorker) {
-      alert("ROLE_RESTRICTION: Only verified Agro Workers can initialize Collective Nodes.");
+      toast.error("ROLE_RESTRICTION: Only verified Agro Workers can initialize Collective Nodes.");
       return;
     }
     const fee = 250;
@@ -203,7 +204,7 @@ const Community: React.FC<CommunityProps> = ({
       setCurrentQuestion(0);
       setUserAnswers({});
     } catch (e) {
-      alert("Oracle link interrupted.");
+      toast.error("Oracle link interrupted.");
     } finally {
       setIsGeneratingExam(false);
     }
@@ -305,10 +306,10 @@ const Community: React.FC<CommunityProps> = ({
           priority: 'medium'
         });
         setForgeTopic('');
-        alert("Knowledge Shard successfully committed to the Learning Ledger.");
+        toast.success("Knowledge Shard successfully committed to the Learning Ledger.");
       }
     } catch (e) {
-      alert("Forge synchronization failed.");
+      toast.error("Forge synchronization failed.");
     } finally {
       setIsForging(false);
     }

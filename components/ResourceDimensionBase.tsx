@@ -32,6 +32,7 @@ import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
 import { useAppStore } from '../store';
+import { toast } from 'sonner';
 
 export interface ResourceMeta {
   title: string;
@@ -167,7 +168,7 @@ ${content}
 
   const handleForgeShard = async () => {
     if (esinSign !== user.esin) {
-      alert("ESIN_MISMATCH: Signature rejected by registry.");
+      toast.error("ESIN_MISMATCH: Signature rejected by registry.");
       return;
     }
     setIsForging(true);

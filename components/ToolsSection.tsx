@@ -120,6 +120,7 @@ import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { MediaShard, Task } from '../types';
 import { HenIcon } from './Icons';
+import { SEO } from './SEO';
 
 interface ToolsSectionProps {
   user: any; 
@@ -413,6 +414,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+      <SEO title="Tools" description="EnvirosAgro Tools: Access specialized agricultural tools, task management, and operational controls." />
       <div className="absolute top-0 right-0 p-40 opacity-[0.01] pointer-events-none rotate-12">
         <Wrench size={1000} className="text-emerald-500" />
       </div>

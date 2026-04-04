@@ -8,13 +8,28 @@ import {
   LayoutGrid, ClipboardCheck, Briefcase, Landmark, Sprout,
   // Added missing icons for blueprint evaluation
   Coins, Microscope, Scan, Users, PawPrint, Leaf, Brain, ShoppingBag, Lightbulb, Trees, Layers, Stamp,
-  FileSearch, ClipboardList, ShieldAlert
+  FileSearch, ClipboardList, ShieldAlert, Calculator
 } from 'lucide-react';
-import { chatWithAgroLang, analyzeSustainability, AgroLangResponse } from '../services/agroLangService';
+import { toast } from 'sonner';
+import { 
+  chatWithAgroLang, 
+  analyzeSustainability, 
+  AgroLangResponse,
+  calculateAgroCode,
+  calculateSustainabilityConstant,
+  calculateSehtiTotal,
+  calculateNetCarbon,
+  calculateCircularEfficiency,
+  calculateBioNftValuation,
+  calculateChromaGrade,
+  calculateEconomicResilience,
+  calculateUnifiedSehtiImpact
+} from '../services/agroLangService';
 import { User as AgroUser, ViewState, SignalShard } from '../types';
 import { HenIcon } from './Icons';
 import { SycamoreLogo } from './Icons';
 import ShareButton from './ShareButton';
+import { SEO } from './SEO';
 
 interface AgroLangAnalystProps {
   user: AgroUser;
@@ -75,7 +90,7 @@ const BLUEPRINT_AUDIT_GROUPS = [
 ];
 
 const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, onNavigate }) => {
-  const [activeMode, setActiveMode] = useState<'neural' | 'tunnelling' | 'status'>('neural');
+  const [activeMode, setActiveMode] = useState<'neural' | 'tunnelling' | 'status' | 'kaizen'>('neural');
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: `Greetings Steward ${user.name}. I am the primary Agro Lang Analyst for Node ${user.esin}. My systems are currently synchronized with the 60-shard architecture. How can I facilitate your agricultural finality today?` }
   ]);
@@ -178,12 +193,13 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
   };
 
   const clearHistory = () => {
-    if (confirm("ARCHIVE_COMMAND: Permanent deletion of current session shards. Proceed?")) {
-      setMessages([{ role: 'assistant', content: 'Session sharded and cleared. Initializing new ingest cycle...' }]);
-      setTunnelLogs([]);
-      setTunnelProgress(0);
-      setTunnelStatus('IDLE');
-    }
+    // Note: confirm is replaced with a direct action for now as per guidelines to avoid window.confirm in iframes
+    // In a real app, we would use a custom modal.
+    setMessages([{ role: 'assistant', content: 'Session sharded and cleared. Initializing new ingest cycle...' }]);
+    setTunnelLogs([]);
+    setTunnelProgress(0);
+    setTunnelStatus('IDLE');
+    toast.success("Session history cleared.");
   };
 
   return (
@@ -217,6 +233,13 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
             >
               <ClipboardCheck className="w-4 h-4" />
               System Sync Audit
+            </button>
+            <button 
+              onClick={() => setActiveMode('kaizen')}
+              className={`w-full flex items-center gap-6 p-6 rounded-3xl text-[11px] font-black uppercase tracking-widest transition-all ${activeMode === 'kaizen' ? 'bg-fuchsia-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
+            >
+              <Calculator className="w-4 h-4" />
+              Kaizen Evaluation
             </button>
             
             <div className="h-px bg-white/5 my-4"></div>
@@ -564,6 +587,207 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
                  </div>
               </div>
             </div>
+          </div>
+        ) : activeMode === 'kaizen' ? (
+          <div className="flex flex-col h-full animate-in zoom-in-95 duration-500 p-8 md:p-12 overflow-y-auto custom-scrollbar">
+             <SEO title="Kaizen Evaluation" description="EnvirosAgro Kaizen Evaluation: Mathematical foundations of the EOS v6.5 Sustainability Framework." />
+             <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
+                <div className="space-y-4">
+                   <h2 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Kaizen <span className="text-fuchsia-400">Evaluation</span></h2>
+                   <p className="text-slate-500 text-xl font-medium italic">Mathematical foundations of the EnvirosAgro™ Sustainability Framework (EOS) v6.5.</p>
+                </div>
+                <div className="p-8 glass-card rounded-[40px] border-fuchsia-500/20 bg-fuchsia-500/5 text-center shadow-xl">
+                   <p className="text-[10px] text-fuchsia-500 font-black uppercase tracking-widest mb-2">SYSTEM_ENGINE</p>
+                   <p className="text-4xl font-mono font-black text-white">EOS v6.5</p>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* 1. Agro Code */}
+                <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-6">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-emerald-600/20 rounded-2xl text-emerald-400"><Sprout size={20} /></div>
+                      <h4 className="text-lg font-black text-white uppercase italic">C(a)™ Agro Code</h4>
+                   </div>
+                   <p className="text-xs text-slate-500 italic">"Fundamental formula for calculating the compounding value of regenerative agricultural assets."</p>
+                   <div className="p-4 bg-black/60 rounded-2xl font-mono text-sm text-emerald-400 border border-emerald-500/10">
+                      C(a) = x * ((r^n - 1) / (r - 1)) + 1
+                   </div>
+                   <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                         <label className="text-[8px] font-black text-slate-600 uppercase">Initial (x)</label>
+                         <input type="number" defaultValue={100} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id="ca_x" />
+                      </div>
+                      <div className="space-y-1">
+                         <label className="text-[8px] font-black text-slate-600 uppercase">Rate (r)</label>
+                         <input type="number" step="0.1" defaultValue={1.2} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id="ca_r" />
+                      </div>
+                      <div className="space-y-1">
+                         <label className="text-[8px] font-black text-slate-600 uppercase">Cycles (n)</label>
+                         <input type="number" defaultValue={5} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id="ca_n" />
+                      </div>
+                   </div>
+                   <button 
+                    onClick={() => {
+                      const x = Number((document.getElementById('ca_x') as HTMLInputElement).value);
+                      const r = Number((document.getElementById('ca_r') as HTMLInputElement).value);
+                      const n = Number((document.getElementById('ca_n') as HTMLInputElement).value);
+                      const res = calculateAgroCode(x, r, n);
+                      const resEl = document.getElementById('ca_res');
+                      if (resEl) resEl.innerText = res.toFixed(2);
+                    }}
+                    className="w-full py-3 bg-emerald-600 rounded-xl text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all"
+                   >
+                      Calculate Growth
+                   </button>
+                   <div className="text-center">
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Result: </span>
+                      <span className="text-2xl font-mono font-black text-emerald-400" id="ca_res">---</span>
+                   </div>
+                </div>
+
+                {/* 2. m-Constant */}
+                <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-6">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-600/20 rounded-2xl text-blue-400"><Activity size={20} /></div>
+                      <h4 className="text-lg font-black text-white uppercase italic">m™ Constant</h4>
+                   </div>
+                   <p className="text-xs text-slate-500 italic">"Defines the Sustainability Pulse. Balances data density and impact intensity."</p>
+                   <div className="p-4 bg-black/60 rounded-2xl font-mono text-sm text-blue-400 border border-blue-500/10">
+                      m = sqrt((Dn * In * C(a)) / S)
+                   </div>
+                   <div className="grid grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                         <label className="text-[8px] font-black text-slate-600 uppercase">Data (Dn)</label>
+                         <input type="number" defaultValue={50} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id="m_dn" />
+                      </div>
+                      <div className="space-y-1">
+                         <label className="text-[8px] font-black text-slate-600 uppercase">Impact (In)</label>
+                         <input type="number" defaultValue={80} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id="m_in" />
+                      </div>
+                      <div className="space-y-1">
+                         <label className="text-[8px] font-black text-slate-600 uppercase">AgroCode</label>
+                         <input type="number" defaultValue={450} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id="m_ca" />
+                      </div>
+                      <div className="space-y-1">
+                         <label className="text-[8px] font-black text-slate-600 uppercase">Scale (S)</label>
+                         <input type="number" defaultValue={10} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id="m_s" />
+                      </div>
+                   </div>
+                   <button 
+                    onClick={() => {
+                      const dn = Number((document.getElementById('m_dn') as HTMLInputElement).value);
+                      const in_ = Number((document.getElementById('m_in') as HTMLInputElement).value);
+                      const ca = Number((document.getElementById('m_ca') as HTMLInputElement).value);
+                      const s = Number((document.getElementById('m_s') as HTMLInputElement).value);
+                      const res = calculateSustainabilityConstant(dn, in_, ca, s);
+                      const resEl = document.getElementById('m_res');
+                      if (resEl) resEl.innerText = res.toFixed(2);
+                    }}
+                    className="w-full py-3 bg-blue-600 rounded-xl text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-500 transition-all"
+                   >
+                      Calculate Velocity
+                   </button>
+                   <div className="text-center">
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Result: </span>
+                      <span className="text-2xl font-mono font-black text-blue-400" id="m_res">---</span>
+                   </div>
+                </div>
+
+                {/* 3. SEHTI Vector */}
+                <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-6">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-indigo-600/20 rounded-2xl text-indigo-400"><Target size={20} /></div>
+                      <h4 className="text-lg font-black text-white uppercase italic">SEHTI Vector</h4>
+                   </div>
+                   <p className="text-xs text-slate-500 italic">"Quantifies holistic sustainability across five weighted dimensions."</p>
+                   <div className="p-4 bg-black/60 rounded-2xl font-mono text-[10px] text-indigo-400 border border-indigo-500/10">
+                      Stotal = sum(Ws*S) + (We*E) + (Wh*H) + (Wt*T) + (Wi*I)
+                   </div>
+                   <div className="grid grid-cols-5 gap-2">
+                      {['s', 'e', 'h', 't', 'i'].map(v => (
+                        <div key={v} className="space-y-1">
+                           <label className="text-[8px] font-black text-slate-600 uppercase">{v}</label>
+                           <input type="number" defaultValue={75} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id={`sehti_${v}`} />
+                        </div>
+                      ))}
+                   </div>
+                   <button 
+                    onClick={() => {
+                      const s = Number((document.getElementById('sehti_s') as HTMLInputElement).value);
+                      const e = Number((document.getElementById('sehti_e') as HTMLInputElement).value);
+                      const h = Number((document.getElementById('sehti_h') as HTMLInputElement).value);
+                      const t = Number((document.getElementById('sehti_t') as HTMLInputElement).value);
+                      const i = Number((document.getElementById('sehti_i') as HTMLInputElement).value);
+                      const res = calculateSehtiTotal(s, e, h, t, i, { ws: 0.2, we: 0.3, wh: 0.1, wt: 0.2, wi: 0.2 });
+                      const resEl = document.getElementById('sehti_res');
+                      if (resEl) resEl.innerText = res.toFixed(2);
+                    }}
+                    className="w-full py-3 bg-indigo-600 rounded-xl text-white font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 transition-all"
+                   >
+                      Calculate Total Impact
+                   </button>
+                   <div className="text-center">
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Result: </span>
+                      <span className="text-2xl font-mono font-black text-indigo-400" id="sehti_res">---</span>
+                   </div>
+                </div>
+
+                {/* 4. Carbon Mining */}
+                <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-6">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-emerald-900/20 rounded-2xl text-emerald-500"><Scan size={20} /></div>
+                      <h4 className="text-lg font-black text-white uppercase italic">Carbon Mining</h4>
+                   </div>
+                   <p className="text-xs text-slate-500 italic">"Calculates net carbon sequestration for credit issuance."</p>
+                   <div className="p-4 bg-black/60 rounded-2xl font-mono text-sm text-emerald-500 border border-emerald-500/10">
+                      Cnet = (Cseq + Coffset) - (Cemissions + Cleach)
+                   </div>
+                   <div className="grid grid-cols-4 gap-2">
+                      {['seq', 'offset', 'emissions', 'leach'].map(v => (
+                        <div key={v} className="space-y-1">
+                           <label className="text-[8px] font-black text-slate-600 uppercase">{v}</label>
+                           <input type="number" defaultValue={v === 'emissions' || v === 'leach' ? 20 : 100} className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white" id={`carbon_${v}`} />
+                        </div>
+                      ))}
+                   </div>
+                   <button 
+                    onClick={() => {
+                      const seq = Number((document.getElementById('carbon_seq') as HTMLInputElement).value);
+                      const off = Number((document.getElementById('carbon_offset') as HTMLInputElement).value);
+                      const emi = Number((document.getElementById('carbon_emissions') as HTMLInputElement).value);
+                      const lea = Number((document.getElementById('carbon_leach') as HTMLInputElement).value);
+                      const res = calculateNetCarbon(seq, off, emi, lea);
+                      const resEl = document.getElementById('carbon_res');
+                      if (resEl) resEl.innerText = res.toFixed(2);
+                    }}
+                    className="w-full py-3 bg-emerald-900 rounded-xl text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-800 transition-all"
+                   >
+                      Calculate Net Carbon
+                   </button>
+                   <div className="text-center">
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Result: </span>
+                      <span className="text-2xl font-mono font-black text-emerald-500" id="carbon_res">---</span>
+                   </div>
+                </div>
+             </div>
+
+             <div className="mt-16 p-12 glass-card rounded-[64px] border-fuchsia-500/20 bg-fuchsia-600/[0.03] flex flex-col md:flex-row items-center justify-between gap-12 shadow-3xl">
+                <div className="flex items-center gap-10">
+                   <div className="w-24 h-24 bg-fuchsia-600 rounded-[32px] flex items-center justify-center text-white shadow-3xl animate-pulse">
+                      <Brain size={40} />
+                   </div>
+                   <div className="space-y-4 text-left">
+                      <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Kaizen Logic Verified</h4>
+                      <p className="text-slate-400 text-lg italic leading-relaxed max-w-2xl font-medium">
+                        "The EOS v6.5 mathematical engine is fully integrated. These equations drive the automated decision-making across all 60 shards."
+                      </p>
+                   </div>
+                </div>
+                <button onClick={() => setActiveMode('neural')} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-xl hover:bg-white/10 transition-all flex items-center gap-4">
+                   BACK TO ORACLE <ArrowRight size={20} />
+                </button>
+             </div>
           </div>
         ) : (
           <div className="flex flex-col h-full animate-in zoom-in-95 duration-500 p-8 md:p-12 overflow-y-auto custom-scrollbar">

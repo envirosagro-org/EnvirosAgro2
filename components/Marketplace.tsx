@@ -1,13 +1,27 @@
 
-import React, { useState, useMemo } from 'react';
-import { Tag, TrendingUp, Search, Filter, ShoppingBag, Zap, Award, X } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Tag, TrendingUp, Search, Filter, ShoppingBag, Zap, Award, X, Newspaper, BarChart3, Info } from 'lucide-react';
 import { ShareButton } from './ShareButton';
 import { SEO } from './SEO';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { listenToCollection } from '../services/firebaseService';
 
 const Marketplace: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showMyListings, setShowMyListings] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any[]>([]);
+  const [marketNews, setMarketNews] = useState<any[]>([]);
+  const [selectedNews, setSelectedNews] = useState<any | null>(null);
+
+  useEffect(() => {
+    const unsubAnalytics = listenToCollection('market_analytics', (data) => setAnalyticsData(data), true);
+    const unsubNews = listenToCollection('market_news', (data) => setMarketNews(data), true);
+    return () => {
+      unsubAnalytics();
+      unsubNews();
+    };
+  }, []);
 
   const products = [
     { id: 1, name: 'Premium Soil Report (US-NE)', price: 450, category: 'Data', rating: 4.8, isMine: false },
@@ -31,7 +45,82 @@ const Marketplace: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <SEO title="Marketplace" description="EnvirosAgro Marketplace: Trade data, courses, carbon credits, and agricultural services." />
+      <SEO title="Market Center" description="EnvirosAgro Market Center: Analytics, market news, and trade." />
+      
+      {/* Market Center Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Market Information */}
+        <div className="glass-card rounded-3xl p-6 border border-white/10 bg-black/40">
+          <div className="flex items-center gap-3 mb-6">
+            <Info className="w-6 h-6 text-emerald-400" />
+            <h3 className="text-lg font-bold text-white">Market Information</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-between">
+              <span className="text-slate-400 text-sm">Total Active Listings</span>
+              <span className="text-white font-bold">{products.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400 text-sm">Avg. Listing Price</span>
+              <span className="text-white font-bold">500 EAC</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400 text-sm">Market Trend</span>
+              <span className="text-emerald-400 font-bold flex items-center gap-1"><TrendingUp className="w-4 h-4" /> +12%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Analytics */}
+        <div className="glass-card rounded-3xl p-6 border border-white/10 bg-black/40 lg:col-span-2">
+          <div className="flex items-center gap-3 mb-6">
+            <BarChart3 className="w-6 h-6 text-indigo-400" />
+            <h3 className="text-lg font-bold text-white">Market Analytics</h3>
+          </div>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={analyticsData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
+                <YAxis stroke="#94a3b8" fontSize={12} />
+                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155' }} />
+                <Area type="monotone" dataKey="sales" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Market Paper */}
+      <div className="glass-card rounded-3xl p-6 border border-white/10 bg-black/40">
+        <div className="flex items-center gap-3 mb-6">
+          <Newspaper className="w-6 h-6 text-amber-400" />
+          <h3 className="text-lg font-bold text-white">Market Paper</h3>
+        </div>
+        <div className="space-y-4">
+          {marketNews.map(news => (
+            <button key={news.id} onClick={() => setSelectedNews(news)} className="w-full flex justify-between items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all">
+              <span className="text-white font-medium">{news.title}</span>
+              <span className="text-slate-500 text-xs">{news.date}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {selectedNews && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedNews(null)}>
+          <div className="glass-card rounded-3xl p-8 max-w-lg w-full border border-white/10 bg-black/90" onClick={e => e.stopPropagation()}>
+            <h3 className="text-2xl font-bold text-white mb-4">{selectedNews.title}</h3>
+            <p className="text-slate-400 mb-6">{selectedNews.date}</p>
+            <p className="text-slate-300">Detailed information about {selectedNews.title} will be available here.</p>
+            <button onClick={() => setSelectedNews(null)} className="mt-8 w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Existing Marketplace Content */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />

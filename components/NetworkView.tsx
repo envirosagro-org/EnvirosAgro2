@@ -12,6 +12,7 @@ import {
   Siren,
   LineChart
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { HenIcon } from './Icons';
 import { auditMeshStability, AgroLangResponse } from '../services/agroLangService';
@@ -157,7 +158,7 @@ const NetworkView: React.FC = () => {
       });
       setAuditVerdict(res);
     } catch (e) {
-      alert("Oracle Handshake Timeout.");
+      toast.error("Oracle Handshake Timeout.");
     } finally {
       setIsAuditing(false);
     }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Proposal, Vote, User, StewardPosition, Election } from '../types';
 import { ThumbsUp, ThumbsDown, MinusCircle, PlusCircle, Play, CheckCircle, XCircle, Zap } from 'lucide-react';
 import ElectionDashboard from './ElectionDashboard';
@@ -138,7 +139,7 @@ const Governance: React.FC<GovernanceProps> = ({ user, proposals, stewardPositio
             }} className="w-full py-2 bg-purple-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-purple-500">AI Draft</button>
             <button type="button" onClick={async () => {
               const score = await calculateImpactScore(newProposal.title, newProposal.description, newProposal.fundingRequest);
-              alert(`Impact Score: ${score}/100`);
+              toast.info(`Impact Score: ${score}/100`);
             }} className="w-full py-2 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-500">Calculate Impact Score</button>
             <input type="text" required value={newProposal.title} onChange={e => setNewProposal({...newProposal, title: e.target.value})} placeholder="Title" className="w-full bg-slate-900 border border-white/10 rounded-xl py-3 px-4 text-white" />
             <textarea required value={newProposal.description} onChange={e => setNewProposal({...newProposal, description: e.target.value})} placeholder="Description" className="w-full bg-slate-900 border border-white/10 rounded-xl py-3 px-4 text-white h-32" />

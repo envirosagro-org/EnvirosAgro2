@@ -9,6 +9,7 @@ import {
   // Added missing ClipboardList icon
   ClipboardList
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, ValueBlueprint, AgroResource, AssetGuarantee, ValueProcessStep } from '../types';
 import { HenIcon } from './Icons';
 import { generateValueBlueprint, activateLiveSequence } from '../services/agroLangService';
@@ -87,7 +88,7 @@ const AgroValueEnhancement: React.FC<AgroValueEnhancementProps> = ({
   const handleGoLive = async () => {
     if (!selectedBlueprint || selectedAssets.size === 0) return;
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 

@@ -4,6 +4,7 @@ import {
   Download, Clock, Database, ShieldCheck, RefreshCw, 
   Key, Globe, Binary, TrendingUp, X
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { generateTemporalVideo, getTemporalVideoOperation } from '../services/agroLangService';
 import { User } from '../types';
 import { HenIcon } from './Icons';
@@ -73,7 +74,7 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
       if (err.message?.includes("Requested entity was not found")) {
         setHasKey(false);
       }
-      alert("TEMPORAL_ERROR: Link interrupted.");
+      toast.error("TEMPORAL_ERROR: Link interrupted.");
     } finally {
       setIsGenerating(false);
     }

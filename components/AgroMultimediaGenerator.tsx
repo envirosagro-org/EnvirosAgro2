@@ -23,6 +23,7 @@ import {
   Fingerprint,
   Cpu
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { 
   generateTemporalVideo, 
   getTemporalVideoOperation, 
@@ -36,6 +37,7 @@ import MultimediaPlayer from './MultimediaPlayer';
 import ShareButton from './ShareButton';
 import { saveCollectionItem } from '../services/firebaseService';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
+import { SEO } from './SEO';
 
 interface AgroMultimediaGeneratorProps {
   user: User;
@@ -115,7 +117,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
       onEarnEAC(50, 'MULTIMEDIA_GENERATION_REWARD');
     } catch (err) {
       console.error(err);
-      alert("GENERATION_ERROR: Neural link interrupted.");
+      toast.error("GENERATION_ERROR: Neural link interrupted.");
     } finally {
       setIsGenerating(false);
     }
@@ -174,7 +176,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
     };
 
     await saveCollectionItem('media_ledger', shard);
-    alert("SHARD_ANCHORED: Media successfully committed to the industrial ledger.");
+    toast.success("SHARD_ANCHORED: Media successfully committed to the industrial ledger.");
   };
 
   if (hasKey === false) {
@@ -201,6 +203,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 max-w-7xl mx-auto pb-20">
+      <SEO title="Multimedia Generator" description="EnvirosAgro Multimedia Generator: Create high-fidelity agricultural media, videos, and documents using AI." />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="space-y-4">

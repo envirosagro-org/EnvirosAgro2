@@ -22,6 +22,7 @@ import {
   Wind,
   RefreshCw
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { User } from '../types';
 import { HenIcon } from './Icons';
@@ -73,7 +74,7 @@ const CEA: React.FC<CEAProps> = ({ user, onEarnEAC, onSpendEAC }) => {
     setTimeout(() => {
       setIsSyncing(false);
       onEarnEAC(5, 'CEA_LIGHT_SPECTRUM_OPTIMIZATION');
-      alert("SPECTRUM SHARD ANCHORED: Photobiomodulation adjusted for current crop stage.");
+      toast.success("SPECTRUM SHARD ANCHORED: Photobiomodulation adjusted for current crop stage.");
     }, 1500);
   };
 

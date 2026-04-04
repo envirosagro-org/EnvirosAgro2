@@ -43,6 +43,7 @@ import {
   // Added BadgeCheck to fix the "Cannot find name 'BadgeCheck'" error on line 396
   BadgeCheck
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { User, SignalShard } from '../types';
 import { HenIcon } from './Icons';
@@ -91,7 +92,7 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
 
   const handleBroadcastSOS = () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     setIsBroadcasting(true);

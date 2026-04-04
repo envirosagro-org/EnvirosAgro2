@@ -67,6 +67,7 @@ import {
   FlaskConical,
   Atom
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, ViewState, MediaShard } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
@@ -155,7 +156,7 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
       setArchivedShards(prev => new Set(prev).add(shardKey));
       onEarnEAC(20, `LEDGER_ANCHOR_${type.toUpperCase()}_SUCCESS`);
     } catch (e) {
-      alert("LEDGER_FAILURE: Registry handshake failed.");
+      toast.error("LEDGER_FAILURE: Registry handshake failed.");
     } finally {
       setIsArchiving(null);
     }
@@ -231,11 +232,11 @@ ${content}
       if (foundImage) {
         onEarnEAC(5, 'AESTHETIC_VITALITY_INGEST');
       } else {
-        alert("Consensus Failure: No image shard returned.");
+        toast.error("Consensus Failure: No image shard returned.");
       }
     } catch (err) {
       console.error(err);
-      alert("Oracle synthesis interrupted. Check node connectivity.");
+      toast.error("Oracle synthesis interrupted. Check node connectivity.");
     } finally {
       setIsGenerating(false);
     }

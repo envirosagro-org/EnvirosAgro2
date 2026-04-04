@@ -9,10 +9,12 @@ import {
   Globe2, Info, Paperclip, ChevronRight, Fingerprint, Stamp, ShieldAlert, SearchCode, 
   ShieldPlus, Terminal, Key, Target, Activity
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { generateAlphanumericId } from '../systemFunctions';
+import { SEO } from './SEO';
 
 interface ChannellingProps {
   user: User;
@@ -101,7 +103,7 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC, onSpendEAC }
   // Fix: handleAuthorizeSettlement made async and awaits onSpendEAC to resolve Promise<boolean>
   const handleAuthorizeSettlement = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     const currentFee = CONTENT_FEES[subType] || 50;
@@ -137,6 +139,7 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC, onSpendEAC }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-[1600px] mx-auto min-h-screen px-4">
+      <SEO title="Channelling" description="EnvirosAgro Channelling: Distribute agricultural content, manage media shards, and track engagement." />
       {/* HUD Header */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3 glass-card p-12 rounded-[56px] border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-2xl">

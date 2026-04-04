@@ -18,6 +18,7 @@ import {
   FileDigit, ChevronRight, Menu, Search, UserPlus, ChevronUp
 } from 'lucide-react';
 import { analyzeSustainability, AgroLangResponse } from '../services/agroLangService';
+import { toast } from 'sonner';
 import { SEO } from './SEO';
 import { saveCollectionItem } from '../services/firebaseService';
 import { calculateMConstant, generateQuickHash } from '../systemFunctions';
@@ -162,7 +163,7 @@ const Sustainability: React.FC<SustainabilityProps> = ({ user, onMintEAT, onNavi
       setIsArchived(true);
       if (onMintEAT) onMintEAT(20, 'DIAGNOSTIC_LEDGER_ANCHOR_SUCCESS');
     } catch (e) {
-      alert("LEDGER_FAILURE: Verification node timeout.");
+      toast.error("LEDGER_FAILURE: Verification node timeout.");
     } finally {
       setIsArchiving(false);
     }

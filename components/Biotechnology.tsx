@@ -57,6 +57,7 @@ import {
   ShieldAlert,
   Compass
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import { decodeAgroGenetics, chatWithAgroLang } from '../services/agroLangService';
@@ -137,7 +138,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
       setDecodedData(result);
       onEarnEAC(15, `${decoderMode.toUpperCase()}_DNA_DECODED`);
     } catch (err) {
-      alert("Oracle Consensus Error: Handshake interrupted.");
+      toast.error("Oracle Consensus Error: Handshake interrupted.");
     } finally {
       setIsDecoding(false);
     }
@@ -146,13 +147,13 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
   const handleActionShard = async () => {
     const fee = 50;
     if (!await onSpendEAC(fee, `MEDICAG_PROTOCOL_ACTION_${auraZone.id.toUpperCase()}`)) return;
-    alert(`ACTION_COMMITTED: ${auraZone.action}`);
+    toast.success(`ACTION_COMMITTED: ${auraZone.action}`);
     onEarnEAC(10, 'PROTOCOL_COMPLIANCE_BONUS');
   };
 
   const handleForgeGenome = async () => {
     if (!genomeTitle.trim() || esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     
@@ -170,7 +171,7 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
         setForgeResult(res.text);
         setIsForging(false);
       } catch (e) {
-        alert("Oracle disconnected. Shard lost in void.");
+        toast.error("Oracle disconnected. Shard lost in void.");
         setForgeStep('config');
         setIsForging(false);
       }

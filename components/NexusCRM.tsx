@@ -50,6 +50,8 @@ import {
 import { User, VendorProduct, ViewState, Order } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
+import { SEO } from './SEO';
+import { toast } from 'sonner';
 
 interface NexusCRMProps {
   user: User;
@@ -140,7 +142,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
     setIsSyncing(true);
     setTimeout(() => {
       setIsSyncing(false);
-      alert("CRM_LEDGER_SYNC: Industrial resolution shards synchronized with TQM Registry.");
+      toast.success("CRM_LEDGER_SYNC: Industrial resolution shards synchronized with TQM Registry.");
     }, 2000);
   };
 
@@ -150,6 +152,7 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500 pb-20 max-w-[1400px] mx-auto px-4">
+      <SEO title="Nexus CRM" description="EnvirosAgro Nexus CRM: Manage customer relationships, support tickets, and service requests." />
       
       {/* 1. Steward Support Rank Card */}
       <div className="flex justify-center">

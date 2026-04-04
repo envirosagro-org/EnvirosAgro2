@@ -19,11 +19,14 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { chatWithAgroLang, analyzeSustainability, AgroLangResponse, searchAgroTrends, runSimulationAnalysis, analyzeMedia } from '../services/agroLangService';
 import { User, AgroResource, ViewState, MediaShard } from '../types';
+import { useEvidenceIngest } from '../hooks/useEvidenceIngest';
 import { HenIcon } from './Icons';
+
 // Fixed: Removed non-existent exports backupTelemetryShard and fetchTelemetryBackup
 import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
+import { SEO } from './SEO';
 
 interface IntelligenceProps {
   user: User;
@@ -59,6 +62,7 @@ const SID_STEPS = [
 ];
 
 const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC, onOpenEvidence, onNavigate, initialSection }) => {
+  const { ingestEvidence, isUploading, uploadProgress } = useEvidenceIngest(user);
   const [activeTab, setActiveTab] = useState<TabState>(initialSection as TabState || 'hub');
   const [archivedShards, setArchivedShards] = useState<Set<string>>(new Set());
   const [isArchiving, setIsArchiving] = useState<string | null>(null);
@@ -260,6 +264,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
   return (
     <div className="space-y-16 md:space-y-24 animate-in fade-in duration-500 pb-48 max-w-[1600px] mx-auto px-4 relative">
+      <SEO title="Intelligence" description="EnvirosAgro Intelligence: Access AI-driven insights, analyze sustainability metrics, and run agricultural simulations." />
       {/* HUD Header */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 glass-card p-10 md:p-14 rounded-[64px] border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-10 group shadow-3xl">
@@ -562,7 +567,15 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
         {activeTab === 'evidence' && (
            <div className="space-y-10 animate-in zoom-in duration-700">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                 <div className="lg:col-span-1 glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-2xl"><div className="flex items-center gap-4 border-b border-white/5 pb-8"><div className="p-4 bg-emerald-600 rounded-3xl shadow-xl text-white"><CloudUpload size={28} /></div><h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Vault <span className="text-emerald-400">Control</span></h3></div><button onClick={onOpenEvidence} className="w-full py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 hover:scale-105 transition-all">New Field Proof</button></div>
+                 <div className="lg:col-span-1 glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-500/5 space-y-8 shadow-2xl"><div className="flex items-center gap-4 border-b border-white/5 pb-8"><div className="p-4 bg-emerald-600 rounded-3xl shadow-xl text-white"><CloudUpload size={28} /></div><h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Vault <span className="text-emerald-400">Control</span></h3></div><label className={`w-full py-5 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 hover:scale-105 transition-all cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {isUploading ? <Zap className="animate-spin" size={20} /> : <CloudUpload size={20} />}
+                    {isUploading ? `UPLOADING ${uploadProgress.toFixed(0)}%` : 'New Field Proof'}
+                    <input type="file" className="hidden" onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      await ingestEvidence(file, 'SCIENCE_ORACLE_FIELD_PROOF');
+                    }} />
+                 </label></div>
                  <div className="lg:col-span-3 glass-card rounded-[64px] overflow-hidden border-2 border-white/5 bg-black/40 shadow-3xl min-h-[600px] flex flex-col"><div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center gap-6"><Database size={24} className="text-emerald-400" /><h4 className="text-xl font-black text-white uppercase italic tracking-widest m-0">Biological Evidence Ledger</h4></div><div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-white/5 bg-[#050706] p-4 text-center opacity-40 py-20 flex flex-col items-center gap-6"><ImageIcon size={80} /><p className="text-2xl font-black uppercase tracking-[0.4em]">VAULT_PENDING_INGEST</p></div></div>
               </div>
            </div>

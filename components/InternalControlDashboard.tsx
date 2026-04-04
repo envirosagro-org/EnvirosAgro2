@@ -13,6 +13,7 @@ import {
 import { InternalControlState, UserRole } from '../types';
 import { HenIcon } from './Icons';
 import { dispatchInternalControls } from '../services/internalControlService';
+import { SEO } from './SEO';
 
 interface InternalControlDashboardProps {
   userRole: UserRole;
@@ -83,6 +84,7 @@ const InternalControlDashboard: React.FC<InternalControlDashboardProps> = ({ use
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto pb-32">
+      <SEO title="Internal Controls" description="EnvirosAgro Internal Controls: Monitor system integrity, balance of powers, and security protocols." />
       {/* Sub-Navigation */}
       <div className="flex justify-center mb-12">
         <div className="flex items-center gap-1 bg-black/40 p-1.5 rounded-2xl border border-white/10 backdrop-blur-3xl shadow-2xl">

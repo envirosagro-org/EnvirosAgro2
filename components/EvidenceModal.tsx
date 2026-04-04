@@ -9,6 +9,7 @@ import {
   Target,
   Trello
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import { diagnoseCropIssue } from '../services/agroLangService';
@@ -76,7 +77,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
       setMintedValue(Math.floor(Math.random() * 50) + 40); 
       setStep('settlement');
     } catch (err) {
-      alert("Registry Audit Failed. Check node connection.");
+      toast.error("Registry Audit Failed. Check node connection.");
       setStep('upload');
     } finally {
       setIsAuditing(false);

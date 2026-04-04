@@ -1,20 +1,11 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# EnvirosAgro
 
-# Run and deploy your AI Studio app
+Decentralized Agricultural Blockchain
 
-This contains everything you need to run your app locally.
+## Overview
+EnvirosAgro is a decentralized platform leveraging blockchain technology to enhance agricultural processes, transparency, and supply chain management.
 
-View your app in AI Studio: https://ai.studio/apps/624ee10b-2d35-46d7-a6a5-bf63e5d72daa
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Key Features
+- Blockchain-based tracking
+- Decentralized data management
+- Agricultural supply chain optimization

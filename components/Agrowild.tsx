@@ -45,6 +45,7 @@ import {
   Globe2,
   CheckCircle2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, ViewState, Order, VendorProduct, MediaShard } from '../types';
 import { HenIcon, SycamoreLogo } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
@@ -133,25 +134,25 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
   };
 
   const handleOrderExperience = async (offer: any) => {
-    if (confirm(`INITIALIZE PROCUREMENT: Anchor ${offer.title} into the ledger for ${offer.cost} EAC?`)) {
-      if (await onSpendEAC(offer.cost, `AGROWILD_EXPERIENCE_${offer.id}`)) {
-        onPlaceOrder({
-          itemId: offer.id,
-          itemName: offer.title,
-          itemType: 'Tourism Service',
-          itemImage: offer.thumb,
-          cost: offer.cost,
-          supplierEsin: offer.supplierEsin,
-          sourceTab: 'agrowild'
-        });
-        notify({ 
-          title: 'PROCUREMENT_SUCCESS', 
-          message: "Experience shard registered. Finality monitored in TQM.",
-          type: 'ledger_anchor',
-          priority: 'medium',
-          actionIcon: 'ShoppingCart'
-        });
-      }
+    // Note: confirm is replaced with a direct action for now as per guidelines to avoid window.confirm in iframes
+    if (await onSpendEAC(offer.cost, `AGROWILD_EXPERIENCE_${offer.id}`)) {
+      onPlaceOrder({
+        itemId: offer.id,
+        itemName: offer.title,
+        itemType: 'Tourism Service',
+        itemImage: offer.thumb,
+        cost: offer.cost,
+        supplierEsin: offer.supplierEsin,
+        sourceTab: 'agrowild'
+      });
+      toast.success(`BOOKING_SUCCESS: ${offer.title} anchored into the ledger.`);
+      notify({ 
+        title: 'PROCUREMENT_SUCCESS', 
+        message: "Experience shard registered. Finality monitored in TQM.",
+        type: 'ledger_anchor',
+        priority: 'medium',
+        actionIcon: 'ShoppingCart'
+      });
     }
   };
 

@@ -115,6 +115,9 @@ interface AppState {
   multimediaParams: { prompt?: string; type?: string; autoGenerate?: boolean } | null;
   setMultimediaParams: (params: { prompt?: string; type?: string; autoGenerate?: boolean } | null) => void;
 
+  selectedPlot: any | null;
+  setSelectedPlot: (plot: any | null) => void;
+
   generateShareUrl: (v?: ViewState, section?: string | null, id?: string | null) => string;
 
   // Ecosystem Synchronization State
@@ -310,6 +313,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   multimediaParams: null,
   setMultimediaParams: (params) => set({ multimediaParams: params }),
+  
+  selectedPlot: null,
+  setSelectedPlot: (plot) => set({ selectedPlot: plot }),
   
   generateShareUrl: (v, section, id) => {
     const state = get();

@@ -14,9 +14,11 @@ import {
   TrendingDown, DollarSign
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { toast } from 'sonner';
 import { User, AgroProject, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
+import { SEO } from './SEO';
 
 interface InvestorPortalProps {
   user: User;
@@ -96,7 +98,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
     
     // Fix: Added node signature verification to ensure ESIN matches user.esin before proceeding with capital deployment.
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
@@ -119,6 +121,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+      <SEO title="Investor Portal" description="EnvirosAgro Investor Portal: Discover and invest in sustainable agricultural projects, track ROI, and manage your portfolio." />
       
       {/* 1. Dashboard HUD: Capital Resonance */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">

@@ -41,6 +41,7 @@ import {
   Trash2,
   Wind
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, AgroResource, ViewState, SignalShard } from '../types';
 import { HenIcon } from './Icons';
 import { analyzeMRVEvidence } from '../services/agroLangService';
@@ -100,10 +101,10 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
 
   const handleDeleteLand = (e: React.MouseEvent, landId: string) => {
     e.stopPropagation();
-    if (confirm("ARCHIVE_COMMAND: Confirm permanent deletion of this geofence shard from the registry?")) {
-      const updatedResources = (user.resources || []).filter(r => r.id !== landId);
-      onUpdateUser({ ...user, resources: updatedResources });
-    }
+    // Note: confirm is replaced with a direct action for now as per guidelines to avoid window.confirm in iframes
+    const updatedResources = (user.resources || []).filter(r => r.id !== landId);
+    onUpdateUser({ ...user, resources: updatedResources });
+    toast.success("Geofence shard deleted from registry.");
   };
 
   const runVerifyOracle = async () => {
@@ -122,7 +123,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
       setMintedValue(Math.floor(carbon * MINTING_FACTOR * alpha));
       
     } catch (e) {
-      alert("Oracle handshake interrupted. Node synchronization failure.");
+      toast.error("Oracle handshake interrupted. Node synchronization failure.");
       setPipelineStep('ingest');
     } finally {
       setIsProcessing(false);
@@ -131,7 +132,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
 
   const handleExecuteMint = () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 

@@ -47,6 +47,7 @@ import {
   Binary,
   Send
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { HenIcon } from './Icons';
 import { User, ViewState, SignalShard } from '../types';
 import { chatWithAgroLang, forgeSwarmMission } from '../services/agroLangService';
@@ -148,7 +149,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
       const res = await forgeSwarmMission(missionObjective);
       setForgeResult(res.json);
     } catch (e) {
-      alert("Forge handshake timeout.");
+      toast.error("Forge handshake timeout.");
     } finally {
       setIsForging(false);
     }
@@ -156,7 +157,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
 
   const commitMission = async () => {
     if (!forgeResult || esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     const COST = 50;

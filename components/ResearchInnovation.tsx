@@ -64,6 +64,7 @@ import {
   // Added PencilRuler to fix "Cannot find name 'PencilRuler'" error on line 720
   PencilRuler
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { User, ResearchPaper, AgroBook, ChapterShard, VendorProduct } from '../types';
 import { HenIcon } from './Icons';
 import { generateAgroResearch, analyzeMedia, chatWithAgroLang } from '../services/agroLangService';
@@ -190,7 +191,10 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
   };
 
   const runSynthesis = async () => {
-    if (!researchTitle) return alert("Title required.");
+    if (!researchTitle) {
+      toast.error("Title required.");
+      return;
+    }
     const fee = 50;
     if (!await onSpendEAC(fee, 'RESEARCH_SYNTHESIS_FEE')) return;
     setIsSynthesizing(true);
@@ -268,7 +272,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       setChapterPile(prev => [...prev, newChapter]);
       setTopicPrompt('');
     } catch (e) {
-      alert("Oracle congestion. Topic lost.");
+      toast.error("Oracle congestion. Topic lost.");
     } finally {
       setIsGeneratingTopic(false);
     }
@@ -328,7 +332,7 @@ const ResearchInnovation: React.FC<ResearchInnovationProps> = ({ user, onEarnEAC
       setChapterPile([]);
       setActiveTab('archive');
     } catch (e) {
-      alert("Publishing handshake failed.");
+      toast.error("Publishing handshake failed.");
     } finally {
       setIsPublishing(false);
     }

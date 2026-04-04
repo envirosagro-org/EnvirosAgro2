@@ -36,6 +36,7 @@ import { spatialService } from '../services/spatialService';
 import { telemetryService } from '../services/telemetryService';
 import { User, ViewState, WebRTCCall, BroadcastSession, BroadcastComment, SpatialTransform, DroneTelemetry, TelemetryBatch, AgroBlock } from '../types';
 import { useAppStore } from '../store';
+import { SEO } from './SEO';
 
 interface MediaHubProps {
   user: User;
@@ -369,6 +370,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
 
   return (
     <div className="flex flex-col min-h-[150vh] bg-[#050505] text-white p-6 md:p-12 font-sans pb-32 max-w-7xl mx-auto w-full relative">
+      <SEO title="Media Hub" description="EnvirosAgro Media Hub: Access agricultural broadcasts, real-time communications, and spatial data." />
       {/* Background Atmosphere */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 blur-[120px] rounded-full" />

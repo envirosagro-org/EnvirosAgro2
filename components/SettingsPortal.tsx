@@ -28,13 +28,8 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
     onUpdateUser({
       ...user,
       settings: {
-        ...(user.settings || {
-          notificationsEnabled: true,
-          privacyMode: 'Public',
-          autoSync: true,
-          biometricLogin: false,
-          theme: 'Dark'
-        }),
+        ...defaultSettings,
+        ...(user.settings || {}),
         ...newSettings
       } as User['settings']
     });
@@ -47,19 +42,24 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
     }, 2000);
   };
 
-  const currentSettings = user.settings || {
+  const defaultSettings = {
     notificationsEnabled: true,
-    privacyMode: 'Public',
+    privacyMode: 'Public' as const,
     autoSync: true,
     biometricLogin: false,
-    theme: 'Dark',
+    theme: 'Dark' as const,
     fontSize: 14,
-    units: 'Metric',
-    locationAccuracy: 'High',
-    connectivityMode: 'Cellular',
+    units: 'Metric' as const,
+    locationAccuracy: 'High' as const,
+    connectivityMode: 'Cellular' as const,
     anonymizedSharing: true,
     geofenceSecurity: false,
-    dataRefreshRate: '5m'
+    dataRefreshRate: '5m' as const
+  };
+
+  const currentSettings = {
+    ...defaultSettings,
+    ...(user.settings || {})
   };
 
   const toggleLumiScale = () => {

@@ -70,6 +70,7 @@ import {
   Leaf,
   LayoutGrid
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   ComposedChart, Bar, Cell 
@@ -160,7 +161,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
       setEntropyLevel(prev => Math.max(0.05, prev - 0.4));
       setIsRemediating(false);
       onEarnEAC(25, 'ENTROPY_RESTORED_RITUAL_SUCCESS');
-      alert("ENTROPY_REMEDIATION_COMPLETE: The sacrifice has been accepted by the registry. Aggressive entropy levels have been suppressed. Mugumo resonance restored.");
+      toast.success("ENTROPY_REMEDIATION_COMPLETE: The sacrifice has been accepted by the registry. Aggressive entropy levels have been suppressed. Mugumo resonance restored.");
     }, 4000);
   };
 
@@ -327,7 +328,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
       setIsArchived(true);
       onEarnEAC(20, 'REGENCY_SHARD_ANCHOR_SUCCESS');
     } catch (e) {
-      alert("LEDGER_FAILURE: Finality check failed.");
+      toast.error("LEDGER_FAILURE: Finality check failed.");
     } finally {
       setIsArchiving(false);
     }
@@ -335,7 +336,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
 
   const handleAuthorizeFallow = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
-      alert("SIGNATURE ERROR: Node ESIN mismatch.");
+      toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
     
@@ -345,7 +346,7 @@ const AgroRegency: React.FC<AgroRegencyProps> = ({ user, onEarnEAC, onSpendEAC }
       setProductionCycles(0);
       setIsRecalibrating(false);
       onEarnEAC(100, 'SABBATH_REGENERATION_INITIATED');
-      alert("SABBATH_YAJNA_PROTOCOL_ACTIVE: Industrial production halted. Node m-constant recalibrating to high-resonance state.");
+      toast.success("SABBATH_YAJNA_PROTOCOL_ACTIVE: Industrial production halted. Node m-constant recalibrating to high-resonance state.");
     }, 3000);
   };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   FileStack, 
@@ -35,7 +34,8 @@ import { User, MediaShard, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import MultimediaPlayer from './MultimediaPlayer';
 import { ShareButton } from './ShareButton';
-import { uploadMediaShard, saveCollectionItem } from '../services/firebaseService';
+import { useEvidenceIngest } from '../hooks/useEvidenceIngest';
+import { toast } from 'sonner';
 
 interface MediaLedgerProps {
   user: User;
@@ -62,11 +62,10 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate }) => {
+  const { ingestEvidence, isUploading, uploadProgress } = useEvidenceIngest(user);
   const [activeTab, setActiveTab] = useState<'all' | 'video' | 'audio' | 'papers' | 'oracle'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShard, setSelectedShard] = useState<MediaShard | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Multimedia Player State
   const [playerOpen, setPlayerOpen] = useState(false);
@@ -202,34 +201,7 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  
-                  setIsUploading(true);
-                  try {
-                    const downloadUrl = await uploadMediaShard(file, (p) => setUploadProgress(p));
-                    const type = file.type.startsWith('video/') ? 'VIDEO' : file.type.startsWith('audio/') ? 'AUDIO' : 'PAPER';
-                    
-                    const newShard: Partial<MediaShard> = {
-                      title: file.name.split('.')[0],
-                      type: type as any,
-                      source: 'CLOUD_STORAGE_INGEST',
-                      author: user.name,
-                      authorEsin: user.esin,
-                      timestamp: new Date().toISOString(),
-                      hash: Math.random().toString(16).substring(2, 10).toUpperCase(),
-                      mImpact: (Math.random() * 5).toFixed(2),
-                      size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-                      downloadUrl
-                    };
-                    
-                    await saveCollectionItem('media_ledger', newShard);
-                    alert("Media Shard successfully anchored to Cloud Storage.");
-                  } catch (err) {
-                    console.error(err);
-                    alert("Ingest failed. Check network stability.");
-                  } finally {
-                    setIsUploading(false);
-                    setUploadProgress(0);
-                  }
+                  await ingestEvidence(file, 'CLOUD_STORAGE_INGEST');
                 }}
               />
             </label>

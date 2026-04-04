@@ -126,6 +126,7 @@ import {
 } from './services/firebaseService';
 import { chatWithAgroLang } from './services/agroLangService';
 import { getFullCostAudit } from './services/costAccountingService';
+import { runMathEngineTick } from './services/mathEngineService';
 import { generateAlphanumericId } from './systemFunctions';
 
 const LoadingHUD: React.FC = () => (
@@ -207,6 +208,7 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
   const [verifStatus, setVerifStatus] = useState('PENDING_HANDSHAKE');
 
   useEffect(() => {
+    console.log("Phase changed:", phase);
     if (phase === 'falling') {
       const timer = setTimeout(() => setPhase('scratching'), 3000);
       return () => clearTimeout(timer);
@@ -223,14 +225,17 @@ const InitializationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete
   useEffect(() => {
     if (phase !== 'booting') return;
     const runHandshake = async () => {
+      console.log("Starting handshake...");
       await new Promise(r => setTimeout(r, 1000));
       const success = await verifyAppCheckHandshake();
+      console.log("Handshake result:", success);
       if (success) {
         setVerifStatus('SECURITY_VERIFIED');
       } else {
         setVerifStatus('OFFLINE_RECOVERY_MODE');
       }
       await new Promise(r => setTimeout(r, 1000));
+      console.log("Handshake complete, setting isVerifying to false");
       setIsVerifying(false);
     };
     runHandshake();
@@ -958,17 +963,21 @@ const App: React.FC = () => {
   useEffect(() => {
     const unsubSync = startBackgroundDataSync();
     
-    // Background Cost Calibration Loop
-    const costInterval = setInterval(() => {
+    // Background Cost Calibration & Math Engine Loop
+    const engineInterval = setInterval(() => {
       if (user) {
+        // 1. Run Cost Audit
         const auditResult = getFullCostAudit(100, user.metrics);
         setCostAudit(auditResult);
+
+        // 2. Run Automated Mathematical Engine
+        runMathEngineTick(user, setUser);
       }
     }, 15000); // Calibrate every 15s
 
     return () => {
       unsubSync();
-      clearInterval(costInterval);
+      clearInterval(engineInterval);
     };
   }, [user]);
 
@@ -977,7 +986,25 @@ const App: React.FC = () => {
   const handleScroll = (target: HTMLElement) => { setScrollProgress((target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100); setShowZenithButton(target.scrollTop > 400); };
   const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   useEffect(() => { const handleResize = () => { const isLg = window.innerWidth >= 1024; setIsSidebarOpen(isLg); if (isLg) setIsMobileMenuOpen(false); }; handleResize(); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
-  useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { if (fbUser) { const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); if (isVerified) { setIsUnverified(false); const profile = await getStewardProfile(fbUser.uid); if (profile) setUser(profile); } else { setIsUnverified(true); setUser(null); } } else { setIsUnverified(false); setUser(null); } }); }, []);
+  useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { 
+    console.log("Auth state changed:", fbUser ? fbUser.uid : "no user");
+    if (fbUser) { 
+      const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); 
+      if (isVerified) { 
+        setIsUnverified(false); 
+        console.log("Fetching steward profile...");
+        const profile = await getStewardProfile(fbUser.uid); 
+        console.log("Profile fetched:", profile);
+        if (profile) setUser(profile); 
+      } else { 
+        setIsUnverified(true); 
+        setUser(null); 
+      } 
+    } else { 
+      setIsUnverified(false); 
+      setUser(null); 
+    } 
+  }); }, []);
   const setters = useMemo(() => ({
     setProjects, setContracts, setOrders, setVendorProducts, setIndustrialUnits, setLiveProducts, setTransactions, setSignals, setMediaShards, setBlockchain, setMempool, setTasks, setBlueprints, setProposals, setVotes, setCarbonCredits
   }), [setProjects, setContracts, setOrders, setVendorProducts, setIndustrialUnits, setLiveProducts, setTransactions, setSignals, setMediaShards, setBlockchain, setMempool, setTasks, setBlueprints, setProposals, setVotes, setCarbonCredits]);
