@@ -47,7 +47,7 @@ import { User as AgroUser, SignalShard, DispatchChannel, MachineNode } from "../
 import { generateAlphanumericId } from '../systemFunctions';
 import { handleFirestoreError, OperationType } from "./errorHandling";
 
-import firebaseConfig from "../firebase-applet-config.json" assert { type: "json" };
+import firebaseConfig from "../firebase-applet-config.json";
 
 // --- APP CHECK DEBUG TOKEN INITIALIZATION ---
 if (typeof window !== "undefined") {
@@ -209,7 +209,7 @@ export const requestPhoneCode = async (phone: string, appVerifier: any): Promise
 };
 
 // --- SIGNAL TERMINAL CORE ---
-export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): Promise<SignalShard | null> => {
+export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>, stewardId?: string): Promise<SignalShard | null> => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
   const id = `SIG-${generateAlphanumericId(7)}`;
@@ -234,7 +234,7 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>): P
     read: false,
     priority: signalData.priority || 'low',
     dispatchLayers: layers,
-    stewardId: userId,
+    stewardId: stewardId || userId,
     actionIcon: signalData.actionIcon || 'MessageSquare',
     aiRemark: signalData.aiRemark || "Analyzing signal impact...",
     meta: signalData.meta || {},
@@ -328,7 +328,7 @@ export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
   if (!userId) return false;
   try {
     const cleanUserData = cleanObject(userData);
-    await setDoc(doc(db, "stewards", userId), { ...cleanUserData, lastSync: Date.now(), stewardId: userId }, { merge: true });
+    await setDoc(doc(db, "stewards", userId), { ...cleanUserData, lastSync: Date.now(), stewardId: userData.esin || userId }, { merge: true });
     return true;
   } catch (e) { 
     handleFirestoreError(e, OperationType.WRITE, `stewards/${userId}`);
@@ -339,7 +339,7 @@ export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
 export const getStewardProfile = async (uid: string): Promise<AgroUser | null> => {
   try {
     const snap = await getDoc(doc(db, "stewards", uid));
-    return snap.exists() ? snap.data() as AgroUser : null;
+    return snap.exists() ? { ...snap.data(), uid } as AgroUser : null;
   } catch (e) {
     handleFirestoreError(e, OperationType.GET, `stewards/${uid}`);
     return null;
@@ -358,11 +358,11 @@ export const markPermanentAction = async (actionKey: string) => {
   }
 };
 
-export const saveCollectionItem = async (collectionName: string, item: any) => {
+export const saveCollectionItem = async (collectionName: string, item: any, stewardId?: string) => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
   const cleanItem = cleanObject(item);
-  const data = { ...cleanItem, stewardId: userId, lastModified: Date.now() };
+  const data = { ...cleanItem, stewardId: stewardId || userId, lastModified: Date.now() };
   const docRef = item.id ? doc(db, collectionName, item.id) : doc(collection(db, collectionName));
   try {
     await setDoc(docRef, data, { merge: true });

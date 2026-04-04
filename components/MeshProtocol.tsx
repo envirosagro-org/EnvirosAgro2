@@ -43,6 +43,8 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain, mempool }
   const [latency, setLatency] = useState(14);
   const [dcStatus, setDcStatus] = useState('RELATIONAL_SHARD_OPTIMIZED');
   const [shardsInFlight, setShardsInFlight] = useState<{ id: string; from: string; to: string; progress: number }[]>([]);
+  const [tracingShard, setTracingShard] = useState<string | null>(null);
+  const [tracePath, setTracePath] = useState<string[]>([]);
 
   // Background Data Sync
   useEffect(() => {
@@ -101,6 +103,24 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain, mempool }
     } finally {
       setIsAuditing(false);
     }
+  };
+
+  const handleTraceShard = async () => {
+    if (tracingShard) return;
+    const shardId = `SHD-${generateAlphanumericId(8)}`;
+    setTracingShard(shardId);
+    setTracePath([]);
+    
+    const path = ['NODE-ROOT', 'AFRI-4', 'ASIA-91', 'EURO-82', 'AMER-12'];
+    for (const nodeId of path) {
+      setTracePath(prev => [...prev, nodeId]);
+      await new Promise(r => setTimeout(r, 800));
+    }
+    
+    setTimeout(() => {
+      setTracingShard(null);
+      setTracePath([]);
+    }, 3000);
   };
 
   const selectedNode = useMemo(() => nodes.find(n => n.id === selectedNodeId), [nodes, selectedNodeId]);
@@ -297,6 +317,52 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain, mempool }
                           {oracleVerdict && (
                              <div className="p-8 bg-black/60 rounded-[48px] border border-indigo-500/20 shadow-inner text-left animate-in slide-in-from-bottom-2 relative z-10">
                                 <p className="text-slate-300 text-sm leading-loose italic">{oracleVerdict}</p>
+                             </div>
+                          )}
+                       </div>
+
+                       <div className="glass-card p-10 rounded-[64px] border-2 border-emerald-500/20 bg-emerald-950/10 flex flex-col space-y-8 shadow-3xl relative overflow-hidden group/trace">
+                          <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
+                             <Search size={300} className="text-emerald-400" />
+                          </div>
+                          <div className="flex items-center gap-6">
+                             <div className="w-16 h-16 rounded-[24px] bg-emerald-600 flex items-center justify-center text-white shadow-xl">
+                                <Workflow size={32} />
+                             </div>
+                             <div>
+                                <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Data Traceability</h4>
+                                <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">SHARD_PATH_EXPLORER</p>
+                             </div>
+                          </div>
+                          <p className="text-slate-400 text-sm italic leading-relaxed">
+                             Visualize the movement of GIS data shards across the mesh network in real-time.
+                          </p>
+                          <button 
+                             onClick={handleTraceShard}
+                             disabled={!!tracingShard}
+                             className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 rounded-[28px] text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl transition-all active:scale-95 disabled:opacity-30"
+                          >
+                             {tracingShard ? 'TRACING_SHARD...' : 'TRACE_DATA_SHARD'}
+                          </button>
+
+                          {tracingShard && (
+                             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="flex items-center justify-between px-2">
+                                   <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Shard ID: {tracingShard}</span>
+                                   <span className="text-[9px] font-black text-white uppercase tracking-widest">{tracePath.length}/5 NODES</span>
+                                </div>
+                                <div className="flex gap-2">
+                                   {[1, 2, 3, 4, 5].map((i) => (
+                                      <div 
+                                         key={i}
+                                         className={`h-2 flex-1 rounded-full transition-all duration-500 ${i <= tracePath.length ? 'bg-emerald-400 shadow-[0_0_10px_#10b981]' : 'bg-white/5'}`}
+                                      />
+                                   ))}
+                                </div>
+                                <div className="p-4 bg-black/40 rounded-2xl border border-white/5">
+                                   <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">Current Hop:</p>
+                                   <p className="text-xs font-black text-white uppercase italic mt-1">{tracePath[tracePath.length - 1] || 'INITIALIZING...'}</p>
+                                </div>
                              </div>
                           )}
                        </div>

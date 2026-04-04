@@ -35,6 +35,7 @@ interface IntelligenceProps {
   onOpenEvidence?: () => void;
   onNavigate: (view: ViewState) => void;
   initialSection?: string | null;
+  onEmitSignal?: (signal: any) => void;
 }
 
 type TabState = 'hub' | 'twin' | 'simulator' | 'trends' | 'telemetry' | 'eos_agro_lang' | 'sid' | 'evidence';
@@ -61,7 +62,7 @@ const SID_STEPS = [
   "Calculating SID Saturation..."
 ];
 
-const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC, onOpenEvidence, onNavigate, initialSection }) => {
+const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC, onOpenEvidence, onNavigate, initialSection, onEmitSignal }) => {
   const { ingestEvidence, isUploading, uploadProgress } = useEvidenceIngest(user);
   const [activeTab, setActiveTab] = useState<TabState>(initialSection as TabState || 'hub');
   const [archivedShards, setArchivedShards] = useState<Set<string>>(new Set());
@@ -151,6 +152,16 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       const response = await chatWithAgroLang(prompt, []);
       setMasterVerdict(response.text);
       onEarnEAC(100, 'MASTER_INTELLIGENCE_QUORUM_SYNC_YIELD');
+      
+      if (onEmitSignal) {
+        onEmitSignal({
+          type: 'ledger_anchor',
+          origin: 'INTELLIGENCE_HUB',
+          title: 'MASTER_QUORUM_SYNC',
+          message: 'Master intelligence synthesis complete. Strategic directive broadcasted.',
+          priority: 'high'
+        });
+      }
     } catch (e) {
       setMasterVerdict("MASTER_SYNC_ERROR: Quorum not reached.");
     } finally {
@@ -200,6 +211,16 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     try {
       const res = await runSimulationAnalysis({ m: simProjectionData[12].m, stress: s_stress });
       setSimulationReport(res.text);
+      
+      if (onEmitSignal) {
+        onEmitSignal({
+          type: 'ledger_anchor',
+          origin: 'EOS_SIMULATOR',
+          title: 'SIMULATION_COMPLETE',
+          message: `Sustainability simulation finalized with score: ${simProjectionData[12].score.toFixed(1)}%`,
+          priority: 'medium'
+        });
+      }
     } catch (e: any) {
       setSimulationReport("SIMULATION_ERROR: Handshake interrupted.");
     } finally {

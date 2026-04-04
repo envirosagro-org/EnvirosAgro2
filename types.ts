@@ -50,10 +50,11 @@ export interface RegistryGroup {
 }
 
 export interface User {
+  uid?: string;
   name: string;
   email: string;
   gender?: 'Male' | 'Female' | 'Non-Binary' | 'Not Specified';
-  esin: string;
+  esin: string; // Also used as stewardId
   mnemonic: string;
   regDate: string;
   avatar?: string;
@@ -320,6 +321,7 @@ export interface FarmingContract {
   milestones: MissionMilestone[];
   streamingRequirement?: boolean;
   associatedPrograms?: string[];
+  stakeAmount?: number;
 }
 
 export interface ContractApplication {
@@ -346,7 +348,8 @@ export interface RegisteredUnit {
 }
 
 export interface LiveAgroProduct {
-  id: string;
+  id: string; // Also referred to as landId in GIS contexts
+  stewardId?: string; // Equivalent to steward ESIN
   stewardEsin: string;
   stewardName: string;
   productType: string;
@@ -355,6 +358,7 @@ export interface LiveAgroProduct {
   progress: number;
   votes: number;
   location: string;
+  plotId?: string;
   timestamp: string;
   lastUpdate: string;
   isAuthentic: boolean;
@@ -787,4 +791,15 @@ export interface Candidate {
   reputation: number;
   contributions: string[];
   skills: string[];
+}
+
+export interface Mission {
+  id: string;
+  stewardId: string;
+  title: string;
+  objective: string;
+  status: 'ACTIVE' | 'COMPLETED' | 'ABORTED';
+  plotId?: string;
+  requiredUnits?: number;
+  timestamp: string;
 }

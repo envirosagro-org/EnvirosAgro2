@@ -124,6 +124,13 @@ const SNIPPETS = [
     icon: Database,
     code: `COMMIT_SHARD(registry: "GLOBAL_L3", finality: ZK_PROVEN);`
   },
+  {
+    id: 'GIS-1',
+    title: 'GIS_SWARM_TARGETING',
+    desc: 'Deploy swarm to specific GIS plot.',
+    icon: MapPin,
+    code: `IMPORT EOS.Swarm AS Fleet;\nIMPORT EOS.GIS AS Spatial;\n\nSEQUENCE Precision_Sweep {\n  Fleet.deploy(target: Spatial.get_plot("PLOT_ID"), mode: "SPECTRAL_ANALYSIS");\n}`
+  }
 ];
 
 const FarmOS: React.FC<FarmOSProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialCode, clearInitialCode, initialSection }) => {

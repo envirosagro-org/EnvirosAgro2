@@ -1038,7 +1038,8 @@ const App: React.FC = () => {
   const emitSignalRef = useRef<any>(null);
 
   const emitSignal = useCallback(async (signalData: Partial<SignalShard>) => { 
-    const signal = await dispatchNetworkSignal(signalData); 
+    const currentUser = useAppStore.getState().user;
+    const signal = await dispatchNetworkSignal(signalData, currentUser?.esin); 
     if (signal) { 
       // Multi-channel routing
       const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP'); 
@@ -1092,7 +1093,7 @@ const App: React.FC = () => {
       value: amount,
       unit: 'EAC'
     };
-    await saveCollectionItem('transactions', newTx);
+    await saveCollectionItem('transactions', newTx, currentUser.esin);
   }, [setUser]);
 
   useEffect(() => {
@@ -1174,7 +1175,7 @@ const App: React.FC = () => {
       value: -amount,
       unit: 'EAC'
     };
-    await saveCollectionItem('transactions', newTx);
+    await saveCollectionItem('transactions', newTx, currentUser.esin);
     emitSignal({
       title: 'TREASURY_SETTLEMENT',
       message: `Node sharded ${amount} EAC for ${reason}.`,
@@ -1209,7 +1210,7 @@ const App: React.FC = () => {
       case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
       case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} liveProducts={liveProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} blueprints={blueprints} onUpdateUser={(u) => setUser(u)} initialSection={viewSection} />;
       case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={(u) => setUser(u)} onSwap={async () => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={emitSignal} transactions={transactions} initialSection={viewSection} costAudit={costAudit} />;
-      case 'intelligence': return <Intelligence user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onOpenEvidence={() => setIsEvidenceOpen(true)} initialSection={viewSection} />;
+      case 'intelligence': return <Intelligence user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onOpenEvidence={() => setIsEvidenceOpen(true)} initialSection={viewSection} onEmitSignal={emitSignal} />;
       case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} hoodConnections={hoodConnections} onHookHood={hookHood} />;
       case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection={viewSection} onNavigate={navigate} />;
       case 'network_signals': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection="terminal" onNavigate={navigate} />;
@@ -1236,7 +1237,7 @@ const App: React.FC = () => {
         return <InternalControlDashboard userRole={role} currentPath={view} />;
       case 'governance': return <Governance user={currentUser} proposals={proposals} stewardPositions={stewardPositions} elections={elections} onSaveProposal={(p) => saveCollectionItem('proposals', p)} onSaveVote={(v) => saveCollectionItem('votes', v)} onApplyForElection={(id, esin, name, manifesto) => { applyForElection(id, esin, name, manifesto); saveCollectionItem('elections', elections.find(e => e.id === id)); }} onVoteInElection={(id, cid, esin) => { voteInElection(id, cid, esin); saveCollectionItem('elections', elections.find(e => e.id === id)); }} onUpdateProposalStatus={(id, status) => { updateProposalStatus(id, status); saveCollectionItem('proposals', proposals.find(p => p.id === id)); }} notify={emitSignal} />;
       case 'carbon_credits': return <CarbonCredits user={currentUser} credits={carbonCredits} products={liveProducts} onVerifyCredit={(id) => saveCollectionItem('carbon_credits', { id, verificationStatus: 'VERIFIED', verifierEsin: currentUser.esin })} notify={emitSignal} />;
-      case 'traceability': return <Traceability product={liveProducts[0]} />;
+      case 'traceability': return <Traceability product={liveProducts[0]} liveProducts={liveProducts} />;
       case 'marketplace': return <Marketplace />;
       case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} initialSection={viewSection} />;
       case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} />;
@@ -1271,7 +1272,7 @@ const App: React.FC = () => {
       case 'sitemap': return <Sitemap nodes={REGISTRY_NODES} onNavigate={navigate} />;
       case 'agro_lang_analyst': return <AgroLangAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
       case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} liveProducts={liveProducts} onSaveLiveProduct={(p) => saveCollectionItem('live_products', p)} />;
-      case 'ingest': return <NetworkIngest user={currentUser} shards={mediaShards} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} />;
+      case 'ingest': return <NetworkIngest user={currentUser} shards={mediaShards} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} onEmitSignal={emitSignal} />;
       case 'info': return <InfoPortal user={currentUser} onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} onPermanentAction={handlePerformPermanentAction} />;
       case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} />;
       case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;

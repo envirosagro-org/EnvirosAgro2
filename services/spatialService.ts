@@ -14,11 +14,14 @@ export interface Plot {
 class SpatialService {
   private userPath = 'spatial_users';
 
-  public async updateTransform(transform: Omit<SpatialTransform, 'lastUpdate'>) {
+  private robotPath = 'spatial_robots';
+
+  public async updateTransform(transform: Omit<SpatialTransform, 'lastUpdate'>, stewardId?: string) {
     const userId = auth.currentUser?.uid;
     if (!userId) return;
 
-    const transformRef = ref(rtdb, `${this.userPath}/${userId}`);
+    const idToUse = stewardId || userId;
+    const transformRef = ref(rtdb, `${this.userPath}/${idToUse}`);
     const data: SpatialTransform = {
       ...transform,
       lastUpdate: Date.now()
@@ -30,9 +33,28 @@ class SpatialService {
     onDisconnect(transformRef).remove();
   }
 
+  public async updateRobotTransform(robotId: string, transform: Omit<SpatialTransform, 'lastUpdate'>) {
+    const transformRef = ref(rtdb, `${this.robotPath}/${robotId}`);
+    const data: SpatialTransform = {
+      ...transform,
+      lastUpdate: Date.now()
+    };
+
+    await set(transformRef, data);
+    onDisconnect(transformRef).remove();
+  }
+
   public listenToUsers(callback: (users: Record<string, SpatialTransform>) => void) {
     const usersRef = ref(rtdb, this.userPath);
     onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      callback(data || {});
+    });
+  }
+
+  public listenToRobots(callback: (robots: Record<string, SpatialTransform>) => void) {
+    const robotsRef = ref(rtdb, this.robotPath);
+    onValue(robotsRef, (snapshot) => {
       const data = snapshot.val();
       callback(data || {});
     });
@@ -60,6 +82,11 @@ class SpatialService {
     const q = query(collection(db, 'plots'), where('stewardId', '==', stewardId));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Plot));
+  }
+
+  public async deletePlot(plotId: string) {
+    const plotRef = doc(db, 'plots', plotId);
+    await deleteDoc(plotRef);
   }
 }
 

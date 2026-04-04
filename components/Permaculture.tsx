@@ -17,6 +17,7 @@ import { User, ViewState, MediaShard, SignalShard } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
+import GISPortal from './GISPortal';
 
 interface PermacultureProps {
   user: User;
@@ -54,7 +55,7 @@ const generateZoneTelemetry = (zoneId: number) => {
 };
 
 const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC, onNavigate, onEmitSignal, notify, initialSection }) => {
-  const [activeTab, setActiveTab] = useState<'zonation' | 'ethics' | 'lilies' | 'companion' | 'home_agro'>(
+  const [activeTab, setActiveTab] = useState<'zonation' | 'zonation_map' | 'ethics' | 'lilies' | 'companion' | 'home_agro'>(
     (initialSection as any) || 'zonation'
   );
   const [selectedZone, setSelectedZone] = useState(ZONE_SHARDS[1]);
@@ -97,6 +98,7 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
       <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[36px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-6 mx-auto lg:mx-0 relative z-20">
         {[
           { id: 'zonation', label: 'Zonation Shards', icon: Layers },
+          { id: 'zonation_map', label: 'GIS Map', icon: MapIcon },
           { id: 'home_agro', label: 'Home Agro Hub', icon: Home },
           { id: 'lilies', label: 'Lilies Around', icon: Flower2 },
           { id: 'ethics', label: 'Ethical Forge', icon: Scale },
@@ -113,6 +115,21 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       <div className="min-h-[750px] relative z-10">
+        {activeTab === 'zonation_map' && (
+          <div className="animate-in slide-in-from-left-4 duration-700 space-y-8">
+             <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-10 shadow-2xl">
+                <div className="flex items-center gap-4 border-b border-white/5 pb-8">
+                   <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400">
+                      <MapIcon size={24} />
+                   </div>
+                   <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">GIS Zonation <span className="text-emerald-400">Map</span></h3>
+                </div>
+                <p className="text-slate-400 text-sm font-medium">Use the GIS portal to visualize zonation shards, acquire GPS lock, and automate telemetry mapping.</p>
+                <GISPortal user={user} />
+             </div>
+          </div>
+        )}
+
         {activeTab === 'zonation' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-left-4 duration-700">
              <div className="lg:col-span-5 space-y-8">

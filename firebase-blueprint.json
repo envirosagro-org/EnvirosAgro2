@@ -118,6 +118,22 @@
         "deviceId": { "type": "string", "description": "Associated IIoT device." }
       },
       "required": ["id", "stewardId", "name", "geometry"]
+    },
+    "Mission": {
+      "title": "Mission",
+      "description": "Represents a swarm mission forged by the Oracle.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stewardId": { "type": "string" },
+        "title": { "type": "string" },
+        "objective": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "COMPLETED", "ABORTED"] },
+        "plotId": { "type": "string" },
+        "requiredUnits": { "type": "integer" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "stewardId", "title", "objective", "status", "timestamp"]
     }
   },
   "firestore": {
@@ -156,6 +172,10 @@
     "/plots/{plotId}": {
       "schema": { "$ref": "Plot" },
       "description": "Collection of physical plots."
+    },
+    "/missions/{missionId}": {
+      "schema": { "$ref": "Mission" },
+      "description": "Collection of swarm missions."
     }
   }
 }

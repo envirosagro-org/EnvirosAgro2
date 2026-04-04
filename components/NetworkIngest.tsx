@@ -105,6 +105,7 @@ interface NetworkIngestProps {
   onNavigate: (view: ViewState) => void;
   onExecuteToShell?: (code: string) => void;
   initialSection?: string | null;
+  onEmitSignal?: (signal: any) => Promise<void>;
 }
 
 const INITIAL_KEYS: APIKey[] = [
@@ -137,7 +138,7 @@ const INITIAL_KEYS: APIKey[] = [
 
 const PROVISIONING_FEE = 500;
 
-const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpdateUser, onSpendEAC, onNavigate, onExecuteToShell, initialSection }) => {
+const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpdateUser, onSpendEAC, onNavigate, onExecuteToShell, initialSection, onEmitSignal }) => {
   const { ingestEvidence, isUploading, uploadProgress } = useEvidenceIngest(user);
   const [activeTab, setActiveTab] = useState<'overview' | 'handshake' | 'vault' | 'api' | 'analyzer'>('overview');
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -353,6 +354,48 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpda
                     <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Inbound <span className="text-emerald-400">Stream Ingest</span></h3>
                  </div>
                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => {
+                        toast.success('GIS Mappings Broadcasted to Network');
+                        if (onEmitSignal) {
+                          onEmitSignal({
+                            type: 'ledger_anchor',
+                            origin: 'GIS_PORTAL',
+                            title: 'BROADCAST_GIS_MAPPINGS',
+                            message: 'Precision GIS mappings acquired by external networks for traceability.',
+                            priority: 'high'
+                          });
+                        }
+                        
+                        // Add to mempool
+                        const txId = generateAlphanumericId(16);
+                        saveCollectionItem('mempool', {
+                          id: txId,
+                          stewardId: user.esin,
+                          timestamp: new Date().toISOString(),
+                          data: {
+                            id: txId,
+                            type: 'GIS_MAPPING',
+                            farmId: user.esin,
+                            details: 'Precision GIS mappings broadcasted',
+                            value: 1,
+                            unit: 'SHARD'
+                          }
+                        });
+
+                        setLogs(prev => [{
+                          id: Date.now().toString(),
+                          timestamp: new Date().toLocaleTimeString(),
+                          source: 'GIS_PORTAL',
+                          event: 'BROADCAST_GIS_MAPPINGS',
+                          data: 'Precision GIS mappings acquired by external networks for traceability.',
+                          status: 'SUCCESS'
+                        }, ...prev]);
+                      }}
+                      className="px-6 py-2 bg-emerald-600/20 border border-emerald-500/50 rounded-full text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest hover:bg-emerald-600/40 transition-all shadow-xl"
+                    >
+                      Broadcast GIS Mappings
+                    </button>
                     <div className="px-6 py-2 bg-black/60 border border-white/10 rounded-full">
                        <span className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest">ACTIVE_SHARDS: 8</span>
                     </div>

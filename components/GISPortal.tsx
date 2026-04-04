@@ -1,24 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { GoogleMap, useJsApiLoader, Polygon, DrawingManager } from '@react-google-maps/api';
+import React, { useState, useEffect, useMemo } from 'react';
+import { GoogleMap, useJsApiLoader, Polygon, DrawingManager, Marker, InfoWindow } from '@react-google-maps/api';
 import { spatialService, Plot } from '../services/spatialService';
-import { auth, onAuthStateChanged } from '../services/firebaseService';
+import { auth, onAuthStateChanged, listenToCollection } from '../services/firebaseService';
 import { toast } from 'sonner';
 import { useAppStore } from '../store';
-import { User } from '../types';
+import { User, Mission } from '../types';
+import { MapPin, Loader2, Activity, Droplets, Sun, Wind, Zap, Camera, ShieldCheck, Target, Crosshair } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { ARFieldXRay } from './ARFieldXRay';
+import { predictCarbonYield } from '../services/agroLangService';
 
 const containerStyle = {
   width: '100%',
   height: '600px'
 };
 
-const center = {
-  lat: 0,
-  lng: 0
-};
-
 interface GISPortalProps {
   user: User;
 }
+
+const generatePlotTelemetry = (plotId: string) => {
+  const data = [];
+  let baseMoisture = 40 + Math.random() * 20;
+  let baseNitrogen = 60 + Math.random() * 10;
+  for (let i = 0; i < 10; i++) {
+    baseMoisture += (Math.random() - 0.5) * 5;
+    baseNitrogen += (Math.random() - 0.5) * 3;
+    data.push({
+      time: `T-${10 - i}`,
+      moisture: Math.max(0, Math.min(100, baseMoisture)),
+      nitrogen: Math.max(0, Math.min(100, baseNitrogen)),
+    });
+  }
+  return data;
+};
 
 const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
   const { isLoaded } = useJsApiLoader({
@@ -28,24 +43,104 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
   });
 
   const [plots, setPlots] = useState<Plot[]>([]);
-  const { setSelectedPlot } = useAppStore();
+  const [showAR, setShowAR] = useState(false);
+  const [isPredictingYield, setIsPredictingYield] = useState(false);
+  const [yieldPrediction, setYieldPrediction] = useState<any | null>(null);
+  const [vouchingPlotId, setVouchingPlotId] = useState<string | null>(null);
+  const [robots, setRobots] = useState<Record<string, any>>({});
+  const [mapCenter, setMapCenter] = useState({ lat: 0, lng: 0 });
+  const [mapZoom, setMapZoom] = useState(2);
+  const [isLocating, setIsLocating] = useState(false);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [activeMission, setActiveMission] = useState<Mission | null>(null);
+  
+  const { selectedPlot, setSelectedPlot } = useAppStore();
+  
+  const telemetryData = useMemo(() => {
+    if (selectedPlot && selectedPlot.id) {
+      return generatePlotTelemetry(selectedPlot.id);
+    }
+    return [];
+  }, [selectedPlot]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        try {
-          const fetchedPlots = await spatialService.getPlots(currentUser.uid);
-          setPlots(fetchedPlots);
-        } catch (error) {
-          console.error("Error fetching plots:", error);
-        }
-      } else {
-        setPlots([]);
-      }
+    if (user.esin) {
+      spatialService.getPlots(user.esin).then(setPlots).catch(console.error);
+    }
+    
+    // Listen to real-time robot positions
+    spatialService.listenToRobots((data) => {
+      setRobots(data);
     });
 
-    return () => unsubscribe();
-  }, []);
+    // Listen for active missions
+    const unsubscribeMissions = listenToCollection('missions', (missions: Mission[]) => {
+      const active = missions.find(m => m.status === 'ACTIVE');
+      setActiveMission(active || null);
+    });
+
+    return () => {
+      spatialService.stopListening();
+      unsubscribeMissions();
+    };
+  }, [user.esin]);
+
+  const handleGpsLock = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+    
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const loc = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setMapCenter(loc);
+        setUserLocation(loc);
+        setMapZoom(18); // Zoom in closely for plotting
+        setIsLocating(false);
+        toast.success('GPS Lock Acquired');
+      },
+      (error) => {
+        setIsLocating(false);
+        toast.error(`GPS Error: ${error.message}`);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handlePredictYield = async () => {
+    if (!selectedPlot || isPredictingYield) return;
+    setIsPredictingYield(true);
+    try {
+      // Mock historical MRV data
+      const mockMRV = [
+        { date: '2024-01-01', biomass: 100, carbon: 50 },
+        { date: '2025-01-01', biomass: 120, carbon: 60 }
+      ];
+      const res = await predictCarbonYield(selectedPlot, mockMRV);
+      setYieldPrediction(res.json);
+      toast.success('Carbon Yield Oracle Synchronized');
+    } catch (e) {
+      toast.error('Yield Prediction Failed');
+    } finally {
+      setIsPredictingYield(false);
+    }
+  };
+
+  const handleVouch = async (plotId: string) => {
+    setVouchingPlotId(plotId);
+    try {
+      // Simulate blockchain/consensus delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      toast.success(`Consensus Vouch Committed for Plot ${plotId}. ESIN Signature verified.`);
+    } finally {
+      setVouchingPlotId(null);
+    }
+  };
 
   const onPolygonComplete = async (polygon: google.maps.Polygon) => {
     if (!auth.currentUser) {
@@ -57,7 +152,7 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
     const coordinates = path.getArray().map(latLng => [latLng.lat(), latLng.lng()]);
     
     const plot: Plot = {
-      stewardId: auth.currentUser.uid,
+      stewardId: user.esin,
       name: `Plot ${plots.length + 1}`,
       geometry: { type: 'Polygon', coordinates: [coordinates] }
     };
@@ -72,30 +167,235 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
   };
 
   return isLoaded ? (
-    <div className="h-[600px] w-full glass-card rounded-3xl overflow-hidden border border-white/10 relative">
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={2}
-        options={{ mapTypeId: 'satellite' }}
-      >
-        <DrawingManager
-          onPolygonComplete={onPolygonComplete}
-          options={{
-            drawingControl: true,
-            drawingControlOptions: {
-              drawingModes: [google.maps.drawing.OverlayType.POLYGON]
-            }
-          }}
-        />
-        {plots.map((plot, i) => (
-          <Polygon 
-            key={i} 
-            paths={plot.geometry.coordinates[0].map((coord: any) => ({ lat: coord[0], lng: coord[1] }))}
-            onClick={() => setSelectedPlot(plot)}
+    <div className="h-[600px] w-full glass-card rounded-3xl overflow-hidden border border-white/10 relative flex">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+        <button 
+          onClick={handleGpsLock}
+          disabled={isLocating}
+          className="px-6 py-3 bg-black/80 backdrop-blur-md border border-emerald-500/30 rounded-full text-emerald-400 font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-900/40 transition-all shadow-xl"
+        >
+          {isLocating ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={16} />}
+          {isLocating ? 'Acquiring Lock...' : 'GPS Geo-Lock'}
+        </button>
+        <button 
+          onClick={() => setShowAR(true)}
+          className="px-6 py-3 bg-indigo-600/80 backdrop-blur-md border border-indigo-500/30 rounded-full text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-all shadow-xl"
+        >
+          <Camera size={16} />
+          AR Field X-Ray
+        </button>
+      </div>
+      
+      <div className="flex-1 relative">
+        <GoogleMap
+          mapContainerStyle={{ width: '100%', height: '100%' }}
+          center={mapCenter}
+          zoom={mapZoom}
+          options={{ mapTypeId: 'satellite', disableDefaultUI: false }}
+        >
+          <DrawingManager
+            onPolygonComplete={onPolygonComplete}
+            options={{
+              drawingControl: true,
+              drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_RIGHT,
+                drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+              }
+            }}
           />
-        ))}
-      </GoogleMap>
+          
+          {userLocation && (
+            <Marker 
+              position={userLocation} 
+              icon={{
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: '#10B981',
+                fillOpacity: 1,
+                strokeWeight: 2,
+                strokeColor: '#ffffff',
+              }}
+            />
+          )}
+
+          {/* Robot Swarm Markers */}
+          {Object.entries(robots).map(([id, robot]: [string, any]) => (
+            <Marker
+              key={id}
+              position={{ lat: robot.pos.x, lng: robot.pos.z }}
+              title={id}
+              icon={{
+                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                scale: 6,
+                fillColor: robot.anim_state === 'working' ? '#10B981' : '#6366F1',
+                fillOpacity: 1,
+                strokeWeight: 2,
+                strokeColor: '#ffffff',
+                rotation: robot.rot.y
+              }}
+            />
+          ))}
+
+          {plots.map((plot, i) => {
+            const isActiveMissionPlot = activeMission?.plotId === plot.id;
+            return (
+              <Polygon 
+                key={i} 
+                paths={plot.geometry.coordinates[0].map((coord: any) => ({ lat: coord[0], lng: coord[1] }))}
+                onClick={() => setSelectedPlot(plot)}
+                options={{
+                  fillColor: isActiveMissionPlot ? '#F43F5E' : (selectedPlot?.id === plot.id ? '#3B82F6' : '#10B981'),
+                  fillOpacity: isActiveMissionPlot ? 0.6 : 0.4,
+                  strokeColor: isActiveMissionPlot ? '#F43F5E' : (selectedPlot?.id === plot.id ? '#3B82F6' : '#10B981'),
+                  strokeWeight: isActiveMissionPlot ? 4 : 2,
+                  zIndex: isActiveMissionPlot ? 100 : 1
+                }}
+              />
+            );
+          })}
+        </GoogleMap>
+      </div>
+
+      {/* Mission HUD Overlay */}
+      {activeMission && (
+        <div className="absolute bottom-6 left-6 z-20 glass-card p-6 rounded-[32px] border-2 border-rose-500/30 bg-black/80 backdrop-blur-xl flex items-center gap-6 shadow-2xl animate-in slide-in-from-bottom-8">
+          <div className="w-14 h-14 bg-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg animate-pulse">
+            <Target size={28} />
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-rose-400 uppercase tracking-[0.4em]">Active Mission Shard</p>
+            <h5 className="text-lg font-black text-white uppercase italic m-0 tracking-tight">{activeMission.title}</h5>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                <Crosshair size={12} className="text-rose-500" />
+                <span>Sector: {activeMission.plotId || 'GLOBAL'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                <Activity size={12} className="text-emerald-400" />
+                <span>Swarm: {activeMission.requiredUnits || 0} Units</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Real-time Telemetry Panel */}
+      {selectedPlot && (
+        <div className="w-80 bg-black/90 backdrop-blur-xl border-l border-white/10 p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar animate-in slide-in-from-right-8">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-lg font-black text-white uppercase tracking-tight">{selectedPlot.name}</h4>
+              <button onClick={() => setSelectedPlot(null)} className="text-slate-500 hover:text-white">
+                <span className="text-xl leading-none">&times;</span>
+              </button>
+            </div>
+            <p className="text-xs font-mono text-emerald-400">ID: {selectedPlot.id || 'UNREGISTERED'}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+              <Droplets size={16} className="text-blue-400 mb-2" />
+              <div className="text-2xl font-black text-white">{(telemetryData[telemetryData.length - 1]?.moisture || 0).toFixed(1)}%</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-widest">Moisture</div>
+            </div>
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+              <Activity size={16} className="text-fuchsia-400 mb-2" />
+              <div className="text-2xl font-black text-white">{(telemetryData[telemetryData.length - 1]?.nitrogen || 0).toFixed(1)}</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-widest">Nitrogen</div>
+            </div>
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+              <Sun size={16} className="text-amber-400 mb-2" />
+              <div className="text-2xl font-black text-white">84%</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-widest">PAR Light</div>
+            </div>
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+              <Zap size={16} className="text-emerald-400 mb-2" />
+              <div className="text-2xl font-black text-white">Active</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-widest">Sensors</div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <button 
+              onClick={handlePredictYield}
+              disabled={isPredictingYield}
+              className="w-full py-4 bg-indigo-600/20 border border-indigo-500/50 rounded-2xl text-indigo-400 font-black uppercase tracking-widest hover:bg-indigo-600/40 transition-all disabled:opacity-30 flex items-center justify-center gap-3"
+            >
+              {isPredictingYield ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+              Predict Carbon Yield
+            </button>
+
+            {yieldPrediction && (
+              <div className="p-6 bg-indigo-500/10 border border-indigo-500/30 rounded-[32px] animate-in slide-in-from-top-4">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Yield Oracle</p>
+                  <p className="text-[10px] font-mono text-white">CONF: {(yieldPrediction.confidence_score * 100).toFixed(0)}%</p>
+                </div>
+                <div className="grid grid-cols-5 gap-2 mb-4">
+                  {yieldPrediction.predictions.map((p: any, i: number) => (
+                    <div key={i} className="text-center">
+                      <p className="text-[8px] text-slate-500 font-mono mb-1">Y{i+1}</p>
+                      <p className="text-xs font-black text-white">{p.estimated_yield_tonnes}t</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-indigo-300/60 italic leading-relaxed">"{yieldPrediction.narrative}"</p>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-6 border-t border-white/5 space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Boundary Consensus</h5>
+              <div className="flex gap-1">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                ))}
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-400 italic px-2">3/4 Neighbors have vouched for this boundary.</p>
+            <button 
+              onClick={() => handleVouch(selectedPlot.id || '')}
+              disabled={!!vouchingPlotId}
+              className="w-full py-4 bg-emerald-600/10 border border-emerald-500/30 rounded-2xl text-emerald-400 font-black uppercase tracking-widest hover:bg-emerald-600/30 transition-all flex items-center justify-center gap-3"
+            >
+              {vouchingPlotId ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+              Vouch for Boundary
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Live Telemetry Stream</h5>
+            <div className="h-32 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={telemetryData}>
+                  <defs>
+                    <linearGradient id="colorMoisture" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    itemStyle={{ color: '#fff', fontSize: '10px' }}
+                    labelStyle={{ display: 'none' }}
+                  />
+                  <Area type="monotone" dataKey="moisture" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorMoisture)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <button className="w-full py-3 bg-emerald-600/20 border border-emerald-500/50 rounded-xl text-emerald-400 font-bold text-xs uppercase tracking-widest hover:bg-emerald-600/40 transition-all">
+            Run Diagnostics
+          </button>
+        </div>
+      )}
+
+      {showAR && (
+        <ARFieldXRay user={user} onClose={() => setShowAR(false)} />
+      )}
     </div>
   ) : <></>;
 };

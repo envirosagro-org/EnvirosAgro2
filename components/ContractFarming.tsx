@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Landmark, Briefcase, ShieldCheck, ChevronRight, Loader2, CheckCircle2, X, 
   Coins, Zap, PlusCircle, Search, Globe, Clock, Activity, MapPin, Users2, 
@@ -49,6 +50,8 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
   const [activeMission, setActiveMission] = useState<FarmingContract | null>(null);
   const [isLinkingResource, setIsLinkingResource] = useState<string | null>(null);
   const [isSourcing, setIsSourcing] = useState(false);
+  const [isSettling, setIsSettling] = useState(false);
+  const [settlementResult, setSettlementResult] = useState<any | null>(null);
 
   // New Task Form
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -195,6 +198,33 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
     
     setIsSourcing(false);
     notify({ title: 'PROCESS_INGESTED', message: `${bp.value_process_steps.length} tasks sharded to Kanban.`, type: 'success' });
+  };
+
+  const handleAutoSettlement = async () => {
+    if (!activeMission || isSettling) return;
+    setIsSettling(true);
+    setSettlementResult(null);
+    try {
+      // Simulate DigitalMRV verification
+      await new Promise(r => setTimeout(r, 3000));
+      const biomassIncrease = 15.4; // Mocked from MRV
+      const eacPayout = (activeMission?.stakeAmount || 0) * 0.1; // 10% payout on milestone
+      
+      setSettlementResult({
+        biomassIncrease,
+        eacPayout,
+        status: 'SETTLED',
+        txHash: `0x${Math.random().toString(16).substr(2, 40)}`
+      });
+      
+      notify({ 
+        title: 'CONTRACT_SETTLED', 
+        message: `Biomass verified (+${biomassIncrease}%). ${eacPayout} EAC released to ${user.esin}.`, 
+        type: 'success' 
+      });
+    } finally {
+      setIsSettling(false);
+    }
   };
 
   const notify = (data: any) => {
@@ -364,6 +394,60 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
                                    </button>
                                 ))}
                              </div>
+                          </div>
+
+                          <div className="mt-16 space-y-8 relative z-10 pt-10 border-t border-white/10">
+                             <div className="flex items-center justify-between px-4">
+                                <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.6em] italic m-0">SMART_CONTRACT_SETTLEMENT</h4>
+                                <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                                   <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest">MRV_ORACLE_CONNECTED</span>
+                                </div>
+                             </div>
+
+                             <div className="p-10 bg-indigo-500/5 border-2 border-indigo-500/20 rounded-[56px] flex flex-col md:flex-row items-center gap-10 relative overflow-hidden group/settle">
+                                <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover/settle:scale-110 transition-transform duration-700 pointer-events-none">
+                                   <Gavel size={200} />
+                                </div>
+                                <div className="w-24 h-24 bg-indigo-600 rounded-[32px] flex items-center justify-center text-white shadow-2xl shrink-0">
+                                   <Scale size={40} />
+                                </div>
+                                <div className="flex-1 space-y-2 text-center md:text-left">
+                                   <h5 className="text-xl font-black text-white uppercase italic leading-none">Auto-Settlement Terminal</h5>
+                                   <p className="text-xs text-slate-400 italic leading-relaxed">
+                                      Link DigitalMRV biomass milestones to automatic EAC payouts. Current verification threshold: <span className="text-emerald-400 font-bold">+10% Biomass Increase</span>.
+                                   </p>
+                                </div>
+                                <button 
+                                   onClick={handleAutoSettlement}
+                                   disabled={isSettling}
+                                   className="px-10 py-5 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-xl transition-all active:scale-95 disabled:opacity-30 shrink-0"
+                                >
+                                   {isSettling ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'TRIGGER_SETTLEMENT'}
+                                </button>
+                             </div>
+
+                             {settlementResult && (
+                                <motion.div 
+                                   initial={{ opacity: 0, y: 20 }}
+                                   animate={{ opacity: 1, y: 0 }}
+                                   className="p-10 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-[56px] grid grid-cols-1 md:grid-cols-3 gap-8 relative overflow-hidden"
+                                >
+                                   <div className="absolute top-0 right-0 p-6 opacity-[0.05]"><CheckCircle size={100} className="text-emerald-400" /></div>
+                                   <div className="space-y-1">
+                                      <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Biomass Verified</p>
+                                      <p className="text-3xl font-black text-white">+{settlementResult.biomassIncrease}%</p>
+                                   </div>
+                                   <div className="space-y-1">
+                                      <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">EAC Released</p>
+                                      <p className="text-3xl font-black text-white">{settlementResult.eacPayout} EAC</p>
+                                   </div>
+                                   <div className="space-y-1">
+                                      <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Ledger Hash</p>
+                                      <p className="text-[10px] font-mono text-emerald-400 truncate">{settlementResult.txHash}</p>
+                                   </div>
+                                </motion.div>
+                             )}
                           </div>
 
                           <div className="mt-16 space-y-10 relative z-10 pt-10 border-t border-white/10">

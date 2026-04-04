@@ -252,7 +252,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
           pos: { x: Math.random() * 10, y: 1.2, z: Math.random() * 10 },
           rot: { x: 0, y: Math.random() * 360, z: 0 },
           anim_state: 'walking'
-        });
+        }, currentUser?.esin);
       }, 1000);
     }
   };

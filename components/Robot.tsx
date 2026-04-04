@@ -49,9 +49,10 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { HenIcon } from './Icons';
-import { User, ViewState, SignalShard } from '../types';
-import { chatWithAgroLang, forgeSwarmMission } from '../services/agroLangService';
-import { saveCollectionItem } from '../services/firebaseService';
+import { User, ViewState, SignalShard, Mission } from '../types';
+import { chatWithAgroLang, forgeSwarmMission, suggestZonationShards } from '../services/agroLangService';
+import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
+import { spatialService, Plot } from '../services/spatialService';
 import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
 
@@ -89,17 +90,97 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
     if (initialSection === 'registry') setActiveTab('registry');
     else if (initialSection === 'security') setActiveTab('terminal');
   }, [initialSection]);
-  const [fleet, setFleet] = useState<Crawler[]>(INITIAL_FLEET);
+
+  // Initialize fleet with user coordinates if available
+  useEffect(() => {
+    const baseLat = user.coords?.lat || 0;
+    const baseLng = user.coords?.lng || 0;
+    
+    setFleet(INITIAL_FLEET.map(bot => ({
+      ...bot,
+      pos: {
+        x: baseLat + (Math.random() - 0.5) * 0.005,
+        y: baseLng + (Math.random() - 0.5) * 0.005
+      }
+    })));
+  }, [user.coords]);
+
+  const [fleet, setFleet] = useState<Crawler[]>([]);
   const [packetLogs, setPacketLogs] = useState<any[]>([]);
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditReport, setAuditReport] = useState<string | null>(null);
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
   const [esinSign, setEsinSign] = useState('');
+  const [activeMission, setActiveMission] = useState<Mission | null>(null);
 
   // Mission Forge States
   const [missionObjective, setMissionObjective] = useState('');
   const [isForging, setIsForging] = useState(false);
+  const [isSuggestingShards, setIsSuggestingShards] = useState(false);
+  const [suggestedShards, setSuggestedShards] = useState<any[]>([]);
   const [forgeResult, setForgeResult] = useState<any | null>(null);
+  const [plots, setPlots] = useState<Plot[]>([]);
+  const [selectedPlotId, setSelectedPlotId] = useState<string>('');
+
+  useEffect(() => {
+    if (user.esin) {
+      spatialService.getPlots(user.esin).then(setPlots).catch(console.error);
+    }
+  }, [user.esin]);
+
+  // Listen for active missions
+  useEffect(() => {
+    if (!user.esin) return;
+    const unsubscribe = listenToCollection('missions', (missions: Mission[]) => {
+      const active = missions.find(m => m.status === 'ACTIVE');
+      setActiveMission(active || null);
+    });
+    return () => unsubscribe();
+  }, [user.esin]);
+
+  // Robot Movement Simulation & RTDB Sync
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFleet(prev => prev.map(bot => {
+        if (bot.status !== 'ACTIVE') return bot;
+        
+        let dx = (Math.random() - 0.5) * 0.0001;
+        let dy = (Math.random() - 0.5) * 0.0001;
+
+        // If there's an active mission with a plot, move towards it
+        if (activeMission?.plotId) {
+          const targetPlot = plots.find(p => p.id === activeMission.plotId);
+          if (targetPlot && targetPlot.geometry?.coordinates?.[0]?.[0]) {
+            // Simple attraction to plot center (approximate)
+            const targetLat = targetPlot.geometry.coordinates[0][0][0];
+            const targetLng = targetPlot.geometry.coordinates[0][0][1];
+            
+            // Map percentage pos to real coords for movement logic if needed, 
+            // but here we assume bot.pos is already in coordinate space for RTDB sync
+            // Let's initialize bot.pos with user.coords if they are at 0,0
+            
+            dx += (targetLat - bot.pos.x) * 0.05;
+            dy += (targetLng - bot.pos.y) * 0.05;
+          }
+        }
+        
+        const newPos = {
+          x: bot.pos.x + dx,
+          y: bot.pos.y + dy
+        };
+
+        // Update RTDB for GISPortal visibility
+        spatialService.updateRobotTransform(bot.id, {
+          pos: { x: newPos.x, y: 0, z: newPos.y }, // Mapping 2D to 3D space (Lat/Lng)
+          rot: { x: 0, y: Math.atan2(dy, dx) * (180 / Math.PI), z: 0 },
+          anim_state: 'working'
+        });
+
+        return { ...bot, pos: newPos };
+      }));
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [fleet.length, activeMission, plots]);
 
   // Packet Stream Simulation
   useEffect(() => {
@@ -146,12 +227,43 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
     setIsForging(true);
     setForgeResult(null);
     try {
-      const res = await forgeSwarmMission(missionObjective);
+      let finalObjective = missionObjective;
+      if (selectedPlotId) {
+        const plot = plots.find(p => p.id === selectedPlotId);
+        if (plot) {
+          finalObjective += `\n\nTarget GIS Plot Context: ${plot.name} (ID: ${plot.id}). Apply swarm intelligence to this specific spatial boundary.`;
+        }
+      }
+      const res = await forgeSwarmMission(finalObjective);
       setForgeResult(res.json);
     } catch (e) {
       toast.error("Forge handshake timeout.");
     } finally {
       setIsForging(false);
+    }
+  };
+
+  const handleSuggestShards = async () => {
+    if (!selectedPlotId || isSuggestingShards) return;
+    const plot = plots.find(p => p.id === selectedPlotId);
+    if (!plot) return;
+
+    setIsSuggestingShards(true);
+    try {
+      // Mock telemetry for the suggestion
+      const mockTelemetry = [
+        { lat: 0.1, lng: 0.1, moisture: 30, ph: 6.5 },
+        { lat: 0.2, lng: 0.2, moisture: 60, ph: 7.2 }
+      ];
+      const res = await suggestZonationShards(mockTelemetry, plot);
+      if (res.json?.suggested_shards) {
+        setSuggestedShards(res.json.suggested_shards);
+        toast.success(`Oracle suggested ${res.json.suggested_shards.length} new zonation shards.`);
+      }
+    } catch (e) {
+      toast.error("Zonation Oracle sync failed.");
+    } finally {
+      setIsSuggestingShards(false);
     }
   };
 
@@ -162,6 +274,18 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
     }
     const COST = 50;
     if (await onSpendEAC(COST, `COMMIT_MISSION_${forgeResult.mission_title}`)) {
+      const missionData: Partial<Mission> = {
+        stewardId: user.esin,
+        title: forgeResult.mission_title,
+        objective: missionObjective,
+        status: 'ACTIVE',
+        plotId: selectedPlotId || undefined,
+        requiredUnits: forgeResult.required_units,
+        timestamp: new Date().toISOString()
+      };
+
+      await saveCollectionItem('missions', missionData);
+
       onEmitSignal({
         type: 'task',
         origin: 'ORACLE',
@@ -175,6 +299,24 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
       setEsinSign('');
       setActiveTab('terminal');
       onEarnEAC(20, 'MISSION_FORGE_CONTRIBUTION');
+    }
+  };
+
+  const abortMission = async () => {
+    if (!activeMission) return;
+    try {
+      await saveCollectionItem('missions', { ...activeMission, status: 'ABORTED' });
+      toast.success("MISSION_ABORTED: Swarm returning to base.");
+      onEmitSignal({
+        type: 'emergency',
+        origin: 'ORACLE',
+        title: `MISSION_ABORTED: ${activeMission.title}`,
+        message: `Swarm mission terminated by steward.`,
+        priority: 'high',
+        actionIcon: 'ShieldAlert'
+      });
+    } catch (e) {
+      toast.error("Failed to abort mission.");
     }
   };
 
@@ -417,7 +559,53 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
                          </div>
                       </div>
 
+                      {activeMission && (
+                        <div className="p-8 bg-rose-600/10 border-2 border-rose-500/30 rounded-[48px] space-y-6 animate-in slide-in-from-top-4">
+                           <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                 <div className="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg animate-pulse">
+                                    <Target size={24} />
+                                 </div>
+                                 <div>
+                                    <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Active Mission</p>
+                                    <h5 className="text-xl font-black text-white uppercase italic">{activeMission.title}</h5>
+                                 </div>
+                              </div>
+                              <button 
+                                onClick={abortMission}
+                                className="p-4 bg-rose-600 hover:bg-rose-500 rounded-2xl text-white transition-all shadow-xl active:scale-95"
+                              >
+                                 <ShieldAlert size={20} />
+                              </button>
+                           </div>
+                           <p className="text-xs text-slate-400 italic leading-relaxed px-2">
+                              "{activeMission.objective}"
+                           </p>
+                           <div className="flex items-center gap-4 pt-2">
+                              <div className="px-4 py-2 bg-black/40 rounded-full border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                 Units: {activeMission.requiredUnits}
+                              </div>
+                              <div className="px-4 py-2 bg-black/40 rounded-full border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                 Plot: {activeMission.plotId || 'Global'}
+                              </div>
+                           </div>
+                        </div>
+                      )}
+
                       <div className="space-y-8">
+                         <div className="space-y-4">
+                            <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-4">Target GIS Plot (Optional)</label>
+                            <select
+                              value={selectedPlotId}
+                              onChange={e => setSelectedPlotId(e.target.value)}
+                              className="w-full bg-black/80 border-2 border-white/10 rounded-full px-8 py-4 text-white text-sm font-medium focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-inner appearance-none"
+                            >
+                              <option value="">-- Select a GIS Plot for Precision Targeting --</option>
+                              {plots.map(plot => (
+                                <option key={plot.id} value={plot.id}>{plot.name} ({plot.id})</option>
+                              ))}
+                            </select>
+                         </div>
                          <div className="space-y-4">
                             <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-4">Mission Objective</label>
                             <textarea 
@@ -427,14 +615,57 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
                                className="w-full bg-black/80 border-2 border-white/10 rounded-[40px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-indigo-500/5 transition-all outline-none h-48 resize-none shadow-inner placeholder:text-stone-900"
                             />
                          </div>
-                         <button 
-                           onClick={handleForgeMission}
-                           disabled={isForging || !missionObjective.trim()}
-                           className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5 disabled:opacity-30"
-                         >
-                            {isForging ? <Loader2 size={32} className="animate-spin mx-auto" /> : <Binary size={32} className="mx-auto" />}
-                            <p className="mt-4">{isForging ? 'SYNTHESIZING_MISSION...' : 'FORGE MISSION SHARD'}</p>
-                         </button>
+                         <div className="flex flex-col gap-4">
+                            <button 
+                              onClick={handleForgeMission}
+                              disabled={isForging || !missionObjective.trim()}
+                              className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5 disabled:opacity-30"
+                            >
+                               {isForging ? <Loader2 size={32} className="animate-spin mx-auto" /> : <Binary size={32} className="mx-auto" />}
+                               <p className="mt-4">{isForging ? 'SYNTHESIZING_MISSION...' : 'FORGE MISSION SHARD'}</p>
+                            </button>
+                            {selectedPlotId && (
+                              <button 
+                                onClick={handleSuggestShards}
+                                disabled={isSuggestingShards}
+                                className="w-full py-10 bg-indigo-600/20 border-4 border-indigo-500/30 rounded-full text-indigo-400 font-black text-sm uppercase tracking-[0.4em] hover:bg-indigo-600/40 transition-all disabled:opacity-30"
+                              >
+                                {isSuggestingShards ? <Loader2 size={32} className="animate-spin mx-auto" /> : <Radar size={32} className="mx-auto text-indigo-400" />}
+                                <p className="mt-4">Suggest Zonation Shards</p>
+                              </button>
+                            )}
+                         </div>
+
+                         {suggestedShards.length > 0 && (
+                            <div className="space-y-4 animate-in slide-in-from-bottom-4 pt-8">
+                              <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Suggested Autonomous Shards</h5>
+                              <div className="grid grid-cols-1 gap-4">
+                                {suggestedShards.map((shard, idx) => (
+                                  <div key={idx} className="p-6 bg-indigo-500/10 border border-indigo-500/30 rounded-[32px] flex items-center justify-between group">
+                                    <div>
+                                      <p className="text-white font-black uppercase italic">{shard.name}</p>
+                                      <p className="text-[10px] text-indigo-400/60 mt-1">{shard.reason}</p>
+                                    </div>
+                                    <button 
+                                      onClick={async () => {
+                                        const newPlot: Plot = {
+                                          stewardId: user.esin,
+                                          name: shard.name,
+                                          geometry: shard.geometry
+                                        };
+                                        await spatialService.savePlot(newPlot);
+                                        toast.success(`Shard ${shard.name} anchored to registry.`);
+                                        setSuggestedShards(prev => prev.filter((_, i) => i !== idx));
+                                      }}
+                                      className="p-4 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-500 transition-all"
+                                    >
+                                      <PlusCircle size={20} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                       </div>
                    </div>
                 </div>

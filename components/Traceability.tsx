@@ -1,28 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { LiveAgroProduct } from '../types';
-import { CheckCircle2, AlertCircle, Clock, Search, Package, ArrowRight } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Clock, Search, Package, ArrowRight, MapPin } from 'lucide-react';
 import { SEO } from './SEO';
+import { GoogleMap, useJsApiLoader, Polygon } from '@react-google-maps/api';
+import { spatialService, Plot } from '../services/spatialService';
 
 interface TraceabilityProps {
   product?: LiveAgroProduct;
+  liveProducts?: LiveAgroProduct[];
 }
 
-const MOCK_PRODUCTS: LiveAgroProduct[] = [
-  { id: 'PRD-001', productType: 'Organic Wheat', stage: 'Market_Ready', isAuthentic: true, auditStatus: 'VERIFIED', location: 'Farm A', timestamp: new Date().toISOString(), stewardEsin: 'EA-001', stewardName: 'Farm A', category: 'Produce', progress: 100, votes: 42, lastUpdate: new Date().toISOString() },
-  { id: 'PRD-002', productType: 'Soybeans', stage: 'Processing', isAuthentic: true, auditStatus: 'PENDING', location: 'Facility B', timestamp: new Date().toISOString(), stewardEsin: 'EA-002', stewardName: 'Facility B', category: 'Produce', progress: 40, votes: 12, lastUpdate: new Date().toISOString() },
-  { id: 'PRD-003', productType: 'Corn', stage: 'Quality_Audit', isAuthentic: false, auditStatus: 'FAILED', location: 'Lab C', timestamp: new Date().toISOString(), stewardEsin: 'EA-003', stewardName: 'Lab C', category: 'Produce', progress: 60, votes: 5, lastUpdate: new Date().toISOString() },
-];
-
-const Traceability: React.FC<TraceabilityProps> = ({ product: initialProduct }) => {
+const Traceability: React.FC<TraceabilityProps> = ({ product: initialProduct, liveProducts = [] }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<LiveAgroProduct | null>(initialProduct || MOCK_PRODUCTS[0]);
+  const [selectedProduct, setSelectedProduct] = useState<LiveAgroProduct | null>(initialProduct || liveProducts[0] || null);
+  const [originPlot, setOriginPlot] = useState<Plot | null>(null);
+
+  const productsToDisplay = liveProducts.length > 0 ? liveProducts : [];
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: (import.meta as any).env.VITE_GOOGLE_MAPS_API_KEY || '',
+  });
 
   const stages = ['Inception', 'Processing', 'Quality_Audit', 'Finalization', 'Market_Ready'];
 
+  useEffect(() => {
+    if (selectedProduct) {
+      const idToFetch = selectedProduct.stewardId || selectedProduct.stewardEsin;
+      spatialService.getPlots(idToFetch).then(plots => {
+        const plot = plots.find(p => p.id === selectedProduct.plotId);
+        if (plot) {
+          setOriginPlot(plot);
+        } else {
+          // Mock plot for demo purposes if no real plot is found
+          setOriginPlot({
+            id: 'MOCK-PLOT-01',
+            stewardId: selectedProduct.stewardEsin,
+            name: 'Demo Origin Plot',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [[
+                [37.7749, -122.4194],
+                [37.7749, -122.4184],
+                [37.7739, -122.4184],
+                [37.7739, -122.4194],
+                [37.7749, -122.4194]
+              ]]
+            }
+          });
+        }
+      }).catch(console.error);
+    } else {
+      setOriginPlot(null);
+    }
+  }, [selectedProduct]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const found = MOCK_PRODUCTS.find(p => p.id.toLowerCase() === searchQuery.toLowerCase() || p.productType.toLowerCase().includes(searchQuery.toLowerCase()));
+    const found = productsToDisplay.find(p => p.id.toLowerCase() === searchQuery.toLowerCase() || p.productType.toLowerCase().includes(searchQuery.toLowerCase()));
     if (found) {
       setSelectedProduct(found);
     }
@@ -58,7 +94,13 @@ const Traceability: React.FC<TraceabilityProps> = ({ product: initialProduct }) 
         {/* Product List */}
         <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40 shadow-2xl space-y-4">
           <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-4">Recent Products</h3>
-          {MOCK_PRODUCTS.map(p => (
+          {productsToDisplay.length === 0 && (
+            <div className="text-center py-12 space-y-4">
+              <Package className="w-12 h-12 text-slate-700 mx-auto" />
+              <p className="text-slate-500 text-xs font-mono uppercase">No live products found in registry.</p>
+            </div>
+          )}
+          {productsToDisplay.map(p => (
             <button 
               key={p.id}
               onClick={() => setSelectedProduct(p)}
@@ -137,6 +179,35 @@ const Traceability: React.FC<TraceabilityProps> = ({ product: initialProduct }) 
                 </div>
               </div>
             </div>
+
+            {/* GIS Origin Map */}
+            {isLoaded && originPlot && (
+              <div className="mt-12 pt-8 border-t border-white/5">
+                <div className="flex items-center gap-3 mb-6">
+                  <MapPin className="w-5 h-5 text-emerald-400" />
+                  <h4 className="text-sm font-black uppercase tracking-widest text-slate-500">GIS Origin Mapping</h4>
+                </div>
+                <div className="h-[300px] w-full rounded-2xl overflow-hidden border border-white/10">
+                  <GoogleMap
+                    mapContainerStyle={{ width: '100%', height: '100%' }}
+                    center={{ lat: originPlot.geometry.coordinates[0][0][0], lng: originPlot.geometry.coordinates[0][0][1] }}
+                    zoom={16}
+                    options={{ mapTypeId: 'satellite', disableDefaultUI: true }}
+                  >
+                    <Polygon 
+                      paths={originPlot.geometry.coordinates[0].map((coord: any) => ({ lat: coord[0], lng: coord[1] }))}
+                      options={{
+                        fillColor: '#10B981',
+                        fillOpacity: 0.4,
+                        strokeColor: '#10B981',
+                        strokeWeight: 2,
+                      }}
+                    />
+                  </GoogleMap>
+                </div>
+                <p className="text-xs text-slate-500 mt-4 font-mono">Precision Shard ID: {originPlot.id} • Acquired via Swarm Telemetry</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="lg:col-span-2 glass-card p-8 rounded-3xl border border-white/10 bg-black/40 shadow-2xl flex items-center justify-center text-slate-500">

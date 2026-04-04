@@ -1,5 +1,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
+import { Plot } from "./spatialService";
 
 const API_KEY = process.env.EA_AI_API_KEY || process.env.API_KEY || "";
 
@@ -903,6 +904,86 @@ export const generateValueEnhancementStrategy = async (material: string, weight:
     });
   } catch (err) {
     throw err;
+  }
+};
+
+export const suggestZonationShards = async (telemetry: any[], currentPlot: Plot): Promise<AgroLangResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const response = await callBackendEA({
+        model: 'gemini-3-flash-preview',
+        contents: `Analyze robot telemetry: ${JSON.stringify(telemetry)} within Plot: ${JSON.stringify(currentPlot)}. 
+        Identify soil transitions (moisture, pH, etc.) and suggest new autonomous zonation boundaries (shards). 
+        Return a JSON object with suggested shards (polygons).`,
+        config: {
+          systemInstruction: `You are the EnvirosAgro Zonation Oracle. You analyze spatial telemetry to suggest optimal land zonation.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              suggested_shards: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    name: { type: Type.STRING },
+                    reason: { type: Type.STRING },
+                    geometry: {
+                      type: Type.OBJECT,
+                      properties: {
+                        type: { type: Type.STRING },
+                        coordinates: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.NUMBER } } } } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+    });
+  } catch (err) {
+    return handleAIError(err);
+  }
+};
+
+export const predictCarbonYield = async (plotData: any, historicalMRV: any[]): Promise<AgroLangResponse> => {
+  try {
+    return await callOracleWithRetry(async () => {
+      const response = await callBackendEA({
+        model: 'gemini-3-flash-preview',
+        contents: `Analyze GIS Plot: ${JSON.stringify(plotData)} and Historical MRV Data: ${JSON.stringify(historicalMRV)}. 
+        Predict the carbon yield for the next 5 years based on current permaculture strategies. 
+        Return a JSON object with predictions (year-by-year) and a confidence score.`,
+        config: {
+          systemInstruction: `You are the EnvirosAgro Yield Oracle. You predict carbon sequestration and biomass growth using historical MRV data and spatial context.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              predictions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    year: { type: Type.NUMBER },
+                    estimated_yield_tonnes: { type: Type.NUMBER },
+                    biomass_increase_pct: { type: Type.NUMBER }
+                  }
+                }
+              },
+              confidence_score: { type: Type.NUMBER },
+              narrative: { type: Type.STRING }
+            }
+          }
+        }
+      });
+      return { text: response.text || "", json: JSON.parse(response.text || "{}") };
+    });
+  } catch (err) {
+    return handleAIError(err);
   }
 };
 
