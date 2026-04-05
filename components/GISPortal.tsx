@@ -5,7 +5,7 @@ import { auth, onAuthStateChanged, listenToCollection } from '../services/fireba
 import { toast } from 'sonner';
 import { useAppStore } from '../store';
 import { User, Mission } from '../types';
-import { MapPin, Loader2, Activity, Droplets, Sun, Wind, Zap, Camera, ShieldCheck, Target, Crosshair } from 'lucide-react';
+import { MapPin, Loader2, Activity, Droplets, Sun, Wind, Zap, Camera, ShieldCheck, Target, Crosshair, X } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { ARFieldXRay } from './ARFieldXRay';
 import { predictCarbonYield } from '../services/agroLangService';
@@ -168,22 +168,30 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
 
   return isLoaded ? (
     <div className="h-[600px] w-full glass-card rounded-3xl overflow-hidden border border-white/10 relative flex">
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+      <div className="absolute top-6 left-6 z-10 flex flex-col gap-3">
         <button 
           onClick={handleGpsLock}
           disabled={isLocating}
-          className="px-6 py-3 bg-black/80 backdrop-blur-md border border-emerald-500/30 rounded-full text-emerald-400 font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-900/40 transition-all shadow-xl"
+          className="px-6 py-4 bg-black/80 backdrop-blur-md border border-emerald-500/30 rounded-2xl text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 hover:bg-emerald-900/40 transition-all shadow-2xl active:scale-95"
         >
           {isLocating ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={16} />}
-          {isLocating ? 'Acquiring Lock...' : 'GPS Geo-Lock'}
+          {isLocating ? 'Locating...' : 'GPS Geo-Lock'}
         </button>
         <button 
           onClick={() => setShowAR(true)}
-          className="px-6 py-3 bg-indigo-600/80 backdrop-blur-md border border-indigo-500/30 rounded-full text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-all shadow-xl"
+          className="px-6 py-4 bg-indigo-600/90 backdrop-blur-md border border-indigo-500/30 rounded-2xl text-white font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 hover:bg-indigo-500 transition-all shadow-2xl active:scale-95"
         >
           <Camera size={16} />
           AR Field X-Ray
         </button>
+      </div>
+      
+      <div className="absolute top-6 right-6 z-10 flex flex-col gap-3">
+        <div className="bg-black/80 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex flex-col gap-2">
+          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2">Map Layers</p>
+          <button className="px-4 py-2 bg-white/10 rounded-lg text-[10px] font-bold text-white uppercase tracking-widest hover:bg-white/20 transition-all">Satellite</button>
+          <button className="px-4 py-2 bg-white/5 rounded-lg text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:bg-white/10 transition-all">Roadmap</button>
+        </div>
       </div>
       
       <div className="flex-1 relative">
@@ -281,37 +289,24 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
 
       {/* Real-time Telemetry Panel */}
       {selectedPlot && (
-        <div className="w-80 bg-black/90 backdrop-blur-xl border-l border-white/10 p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar animate-in slide-in-from-right-8">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-lg font-black text-white uppercase tracking-tight">{selectedPlot.name}</h4>
-              <button onClick={() => setSelectedPlot(null)} className="text-slate-500 hover:text-white">
-                <span className="text-xl leading-none">&times;</span>
-              </button>
-            </div>
-            <p className="text-xs font-mono text-emerald-400">ID: {selectedPlot.id || 'UNREGISTERED'}</p>
+        <div className="w-96 bg-black/95 backdrop-blur-2xl border-l border-white/10 p-8 flex flex-col gap-8 overflow-y-auto custom-scrollbar animate-in slide-in-from-right-8 shadow-2xl">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xl font-black text-white uppercase tracking-tighter">{selectedPlot.name}</h4>
+            <button onClick={() => setSelectedPlot(null)} className="p-2 bg-white/5 rounded-full text-slate-500 hover:text-white hover:bg-white/10 transition-all">
+              <X size={16} />
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <Droplets size={16} className="text-blue-400 mb-2" />
-              <div className="text-2xl font-black text-white">{(telemetryData[telemetryData.length - 1]?.moisture || 0).toFixed(1)}%</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest">Moisture</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white/5 p-5 rounded-2xl border border-white/5 flex flex-col gap-1">
+              <Droplets size={16} className="text-blue-400 mb-1" />
+              <div className="text-3xl font-black text-white">{(telemetryData[telemetryData.length - 1]?.moisture || 0).toFixed(1)}<span className="text-sm text-slate-500">%</span></div>
+              <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Moisture</div>
             </div>
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <Activity size={16} className="text-fuchsia-400 mb-2" />
-              <div className="text-2xl font-black text-white">{(telemetryData[telemetryData.length - 1]?.nitrogen || 0).toFixed(1)}</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest">Nitrogen</div>
-            </div>
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <Sun size={16} className="text-amber-400 mb-2" />
-              <div className="text-2xl font-black text-white">84%</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest">PAR Light</div>
-            </div>
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <Zap size={16} className="text-emerald-400 mb-2" />
-              <div className="text-2xl font-black text-white">Active</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest">Sensors</div>
+            <div className="bg-white/5 p-5 rounded-2xl border border-white/5 flex flex-col gap-1">
+              <Activity size={16} className="text-fuchsia-400 mb-1" />
+              <div className="text-3xl font-black text-white">{(telemetryData[telemetryData.length - 1]?.nitrogen || 0).toFixed(1)}<span className="text-sm text-slate-500">mg</span></div>
+              <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Nitrogen</div>
             </div>
           </div>
 
@@ -319,17 +314,17 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
             <button 
               onClick={handlePredictYield}
               disabled={isPredictingYield}
-              className="w-full py-4 bg-indigo-600/20 border border-indigo-500/50 rounded-2xl text-indigo-400 font-black uppercase tracking-widest hover:bg-indigo-600/40 transition-all disabled:opacity-30 flex items-center justify-center gap-3"
+              className="w-full py-5 bg-indigo-600/20 border border-indigo-500/50 rounded-2xl text-indigo-400 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-600/40 transition-all disabled:opacity-30 flex items-center justify-center gap-3 active:scale-95"
             >
               {isPredictingYield ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
               Predict Carbon Yield
             </button>
 
             {yieldPrediction && (
-              <div className="p-6 bg-indigo-500/10 border border-indigo-500/30 rounded-[32px] animate-in slide-in-from-top-4">
+              <div className="p-6 bg-indigo-500/10 border border-indigo-500/30 rounded-3xl animate-in fade-in slide-in-from-top-2">
                 <div className="flex justify-between items-center mb-4">
-                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Yield Oracle</p>
-                  <p className="text-[10px] font-mono text-white">CONF: {(yieldPrediction.confidence_score * 100).toFixed(0)}%</p>
+                  <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Yield Oracle</p>
+                  <p className="text-[9px] font-mono text-white">CONF: {(yieldPrediction.confidence_score * 100).toFixed(0)}%</p>
                 </div>
                 <div className="grid grid-cols-5 gap-2 mb-4">
                   {yieldPrediction.predictions.map((p: any, i: number) => (
