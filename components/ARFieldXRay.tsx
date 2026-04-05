@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Box, Info, Map as MapIcon, Database, Zap, X, Crosshair, Layers } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Camera, Box, Info, Map as MapIcon, Database, Zap, X, Crosshair, Layers, Bot, Target } from 'lucide-react';
 import { Plot, spatialService } from '../services/spatialService';
-import { User } from '../types';
+import { User, SpatialTransform, Mission } from '../types';
+import { listenToCollection } from '../services/firebaseService';
 
 interface ARFieldXRayProps {
   user: User;
@@ -11,10 +12,21 @@ interface ARFieldXRayProps {
 
 export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
   const [plots, setPlots] = useState<Plot[]>([]);
+  const [robots, setRobots] = useState<Record<string, SpatialTransform>>({});
+  const [activeMission, setActiveMission] = useState<Mission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeLayer, setActiveLayer] = useState<'boundaries' | 'soil' | 'gps'>('boundaries');
+  const [activeLayer, setActiveLayer] = useState<'boundaries' | 'soil' | 'gps' | 'robots'>('boundaries');
   const [detectedAnchors, setDetectedAnchors] = useState<any[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (!user.esin) return;
+    const unsubscribe = listenToCollection('missions', (missions: Mission[]) => {
+      const active = missions.find(m => m.status === 'ACTIVE');
+      setActiveMission(active || null);
+    });
+    return () => unsubscribe();
+  }, [user.esin]);
 
   useEffect(() => {
     const loadPlots = async () => {
@@ -23,6 +35,8 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
       setIsLoading(false);
     };
     loadPlots();
+
+    spatialService.listenToRobots(setRobots);
 
     // Request camera access
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -48,7 +62,10 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
       });
     }, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+        clearInterval(interval);
+        spatialService.stopListening();
+    };
   }, [user.esin]);
 
   return (
@@ -132,6 +149,22 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
             ))}
           </div>
         )}
+
+        {/* Robot Layer */}
+        {activeLayer === 'robots' && Object.entries(robots).map(([id, robot]) => (
+          <motion.div
+            key={id}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{ left: `${(robot.pos.x % 100)}%`, top: `${(robot.pos.y % 100)}%` }}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+          >
+            <div className="bg-indigo-600/80 p-3 rounded-full border border-indigo-400 backdrop-blur-sm">
+                <Bot size={20} className="text-white" />
+            </div>
+            <p className="text-[8px] font-black text-indigo-300 uppercase tracking-widest mt-1 text-center bg-black/50 px-2 py-0.5 rounded-full">{id.slice(0, 8)}</p>
+          </motion.div>
+        ))}
       </div>
 
       {/* UI Controls */}
@@ -177,12 +210,23 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
 
         {/* Footer Controls */}
         <div className="space-y-6 pointer-events-auto">
+          {/* Active Mission Overlay */}
+          {activeMission && (
+            <div className="bg-indigo-900/80 backdrop-blur-md p-6 rounded-3xl border border-indigo-500/30 text-white shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-center gap-4 mb-3">
+                <Target className="text-indigo-400" size={24} />
+                <h3 className="font-black uppercase tracking-widest">{activeMission.title}</h3>
+              </div>
+              <p className="text-xs text-indigo-200/80 italic">"{activeMission.objective}"</p>
+            </div>
+          )}
           {/* Layer Selector */}
           <div className="flex gap-2 bg-black/60 p-2 rounded-[32px] border border-white/10 backdrop-blur-xl">
             {[
               { id: 'boundaries', icon: MapIcon, label: 'Boundaries' },
               { id: 'soil', icon: Database, label: 'Soil Data' },
-              { id: 'gps', icon: Zap, label: 'GPS Locks' }
+              { id: 'gps', icon: Zap, label: 'GPS Locks' },
+              { id: 'robots', icon: Bot, label: 'Swarm' }
             ].map((layer) => (
               <button
                 key={layer.id}

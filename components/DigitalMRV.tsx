@@ -28,6 +28,11 @@ import { toast } from 'sonner';
 
 interface DigitalMRVProps {
   user: User;
+  onEarnEAC: (amount: number, reason: string) => Promise<void>;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
+  onUpdateUser: (u: User) => void;
+  onNavigate: (view: any, action?: string | null) => void;
+  onEmitSignal: (signal: any) => void;
 }
 
 interface Settlement {
@@ -39,7 +44,7 @@ interface Settlement {
   evidenceHash: string;
 }
 
-const DigitalMRV: React.FC<DigitalMRVProps> = ({ user }) => {
+const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, onUpdateUser, onNavigate, onEmitSignal }) => {
   const [plots, setPlots] = useState<Plot[]>([]);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [settlements, setSettlements] = useState<Settlement[]>([]);

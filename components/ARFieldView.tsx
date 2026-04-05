@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { spatialService, ARAnchor } from '../services/spatialService';
-import { User } from '../types';
+import { spatialService } from '../services/spatialService';
+import { User, ARAnchor } from '../types';
 import { Camera, MapPin, Info, ShieldCheck, Loader2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 

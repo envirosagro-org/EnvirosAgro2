@@ -16,6 +16,8 @@ class SpatialService {
 
   private robotPath = 'spatial_robots';
 
+  private anchorPath = 'spatial_anchors';
+
   public async updateTransform(transform: Omit<SpatialTransform, 'lastUpdate'>, stewardId?: string) {
     const userId = auth.currentUser?.uid;
     if (!userId) return;
@@ -55,6 +57,14 @@ class SpatialService {
   public listenToRobots(callback: (robots: Record<string, SpatialTransform>) => void) {
     const robotsRef = ref(rtdb, this.robotPath);
     onValue(robotsRef, (snapshot) => {
+      const data = snapshot.val();
+      callback(data || {});
+    });
+  }
+
+  public listenToARAnchors(stewardId: string, callback: (anchors: Record<string, any>) => void) {
+    const anchorsRef = ref(rtdb, `${this.anchorPath}/${stewardId}`);
+    onValue(anchorsRef, (snapshot) => {
       const data = snapshot.val();
       callback(data || {});
     });

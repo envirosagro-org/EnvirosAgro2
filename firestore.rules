@@ -142,17 +142,34 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && isDocOwner();
     }
 
+    function isValidMission(data) {
+      let userEsin = get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin;
+      return data.stewardId is string && (data.stewardId == request.auth.uid || data.stewardId == userEsin) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
+             data.status in ['PENDING', 'ACTIVE', 'COMPLETED', 'ABORTED'] &&
+             data.targetPlotId is string && data.targetPlotId.size() > 0;
+    }
+
+    function isValidAnchor(data) {
+      let userEsin = get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin;
+      return data.stewardId is string && (data.stewardId == request.auth.uid || data.stewardId == userEsin) &&
+             data.type in ['GRAFFITI', 'MARKER', 'INFOPANEL'] &&
+             data.spatialPos is map && data.spatialPos.keys().hasAll(['x', 'y', 'z']);
+    }
+
     match /ar_anchors/{anchorId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource.data.stewardId == request.auth.uid || 
+                   get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin == resource.data.stewardId);
+      allow create: if isAuthenticated() && isValidAnchor(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidAnchor(request.resource.data);
+      allow delete: if isAuthenticated() && isDocOwner();
     }
 
     match /missions/{missionId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && 
-                    (request.resource.data.stewardId == request.auth.uid || 
-                     get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin == request.resource.data.stewardId);
-      allow update: if isAuthenticated() && isDocOwner();
+      allow read: if isAuthenticated() && (resource.data.stewardId == request.auth.uid || 
+                   get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin == resource.data.stewardId);
+      allow create: if isAuthenticated() && isValidMission(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidMission(request.resource.data);
       allow delete: if isAuthenticated() && isDocOwner();
     }
   }
