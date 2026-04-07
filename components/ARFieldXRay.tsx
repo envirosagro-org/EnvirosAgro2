@@ -167,10 +167,9 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
         ))}
       </div>
 
-      {/* UI Controls */}
-      <div className="relative z-10 flex flex-col h-full p-6 justify-between pointer-events-none">
-        {/* Header */}
-        <div className="flex justify-between items-start pointer-events-auto">
+      {/* Header (Headbar) */}
+      <div className="absolute top-0 left-0 right-0 z-50 p-6 pointer-events-auto">
+        <div className="flex justify-between items-start bg-black/40 backdrop-blur-md p-4 rounded-3xl border border-white/10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
               <Camera size={24} />
@@ -187,7 +186,12 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
             <X size={24} />
           </button>
         </div>
+      </div>
 
+      {/* UI Controls */}
+      <div className="absolute inset-0 p-6 flex flex-col justify-between pointer-events-none">
+        <div className="h-24"></div> {/* Spacer for header */}
+        
         {/* Center Reticle */}
         <div className="flex-1 flex items-center justify-center">
           <div className="relative w-64 h-64">
