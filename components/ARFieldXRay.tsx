@@ -95,14 +95,14 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
               className="absolute -translate-x-1/2 -translate-y-1/2"
             >
               <div className="relative">
-                <div className="w-8 h-8 border-2 border-indigo-500 rounded-full animate-ping absolute inset-0" />
-                <div className="w-8 h-8 bg-indigo-500/20 border border-indigo-500 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <Zap size={12} className="text-indigo-400" />
+                <div className="w-10 h-10 border-2 border-indigo-400 rounded-full animate-ping absolute inset-0" />
+                <div className="w-10 h-10 bg-indigo-600/40 border border-indigo-400 rounded-full flex items-center justify-center backdrop-blur-md">
+                  <Zap size={16} className="text-white" />
                 </div>
-                <div className="absolute left-10 top-0 bg-black/80 border border-indigo-500/30 p-2 rounded-lg backdrop-blur-md min-w-[120px]">
-                  <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{anchor.type}</p>
-                  <p className="text-[10px] text-white font-mono mt-1">ACC: {anchor.data.accuracy}</p>
-                  <p className="text-[10px] text-white font-mono">SAT: {anchor.data.satellites}</p>
+                <div className="absolute left-12 top-0 bg-black/90 border border-indigo-500/50 p-3 rounded-2xl backdrop-blur-xl min-w-[150px] shadow-2xl">
+                  <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">{anchor.type}</p>
+                  <p className="text-xs text-white font-mono mt-1.5">ACC: {anchor.data.accuracy}</p>
+                  <p className="text-xs text-white font-mono">SAT: {anchor.data.satellites}</p>
                 </div>
               </div>
             </motion.div>
@@ -212,16 +212,16 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
         <div className="space-y-6 pointer-events-auto">
           {/* Active Mission Overlay */}
           {activeMission && (
-            <div className="bg-indigo-900/80 backdrop-blur-md p-6 rounded-3xl border border-indigo-500/30 text-white shadow-2xl animate-in fade-in slide-in-from-bottom-4">
-              <div className="flex items-center gap-4 mb-3">
-                <Target className="text-indigo-400" size={24} />
-                <h3 className="font-black uppercase tracking-widest">{activeMission.title}</h3>
+            <div className="bg-indigo-950/90 backdrop-blur-2xl p-8 rounded-[40px] border border-indigo-500/50 text-white shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-center gap-5 mb-4">
+                <Target className="text-indigo-400" size={32} />
+                <h3 className="text-xl font-black uppercase tracking-widest">{activeMission.title}</h3>
               </div>
-              <p className="text-xs text-indigo-200/80 italic">"{activeMission.objective}"</p>
+              <p className="text-sm text-indigo-100 italic">"{activeMission.objective}"</p>
             </div>
           )}
           {/* Layer Selector */}
-          <div className="flex gap-2 bg-black/60 p-2 rounded-[32px] border border-white/10 backdrop-blur-xl">
+          <div className="flex gap-3 bg-black/80 p-3 rounded-[40px] border border-white/20 backdrop-blur-2xl shadow-2xl">
             {[
               { id: 'boundaries', icon: MapIcon, label: 'Boundaries' },
               { id: 'soil', icon: Database, label: 'Soil Data' },
@@ -231,25 +231,25 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
               <button
                 key={layer.id}
                 onClick={() => setActiveLayer(layer.id as any)}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-full transition-all ${
+                className={`flex-1 flex flex-col items-center justify-center gap-3 py-6 rounded-[32px] transition-all ${
                   activeLayer === layer.id 
-                    ? 'bg-indigo-600 text-white shadow-lg' 
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-indigo-600 text-white shadow-lg scale-105' 
+                    : 'text-slate-400 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <layer.icon size={16} />
-                <span className="text-[10px] font-black uppercase tracking-widest">{layer.label}</span>
+                <layer.icon size={24} />
+                <span className="text-[11px] font-black uppercase tracking-widest">{layer.label}</span>
               </button>
             ))}
           </div>
 
           {/* Status Bar */}
-          <div className="flex items-center justify-between px-4 py-3 bg-indigo-600 rounded-2xl text-white shadow-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <p className="text-[10px] font-black uppercase tracking-widest">System Online: RTK_FIX_LOCKED</p>
+          <div className="flex items-center justify-between px-8 py-6 bg-indigo-600/90 rounded-[32px] text-white shadow-2xl border border-white/10 backdrop-blur-xl">
+            <div className="flex items-center gap-4">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_#34d399]" />
+              <p className="text-xs font-black uppercase tracking-widest">System Online: RTK_FIX_LOCKED</p>
             </div>
-            <p className="text-[10px] font-mono">LAT: -1.2833 | LNG: 36.8167</p>
+            <p className="text-xs font-mono font-bold tracking-widest">LAT: -1.2833 | LNG: 36.8167</p>
           </div>
         </div>
       </div>
