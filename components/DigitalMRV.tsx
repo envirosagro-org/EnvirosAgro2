@@ -20,7 +20,8 @@ import {
   Network, 
   ArrowRightLeft,
   FileCheck2,
-  Coins
+  Coins,
+  Gauge
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
@@ -48,7 +49,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
   const [plots, setPlots] = useState<Plot[]>([]);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [settlements, setSettlements] = useState<Settlement[]>([]);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SETTLEMENTS' | 'NETWORK'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SETTLEMENTS' | 'NETWORK' | 'DASHBOARD'>('OVERVIEW');
 
   useEffect(() => {
     if (user.esin) {
@@ -128,6 +129,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
               <div className="flex bg-black/40 border border-white/10 rounded-2xl p-1 w-fit">
                 {[
                   { id: 'OVERVIEW', label: 'Overview', icon: Activity },
+                  { id: 'DASHBOARD', label: 'Live Dashboard', icon: Gauge },
                   { id: 'SETTLEMENTS', label: 'Auto-Settlements', icon: FileCheck2 },
                   { id: 'NETWORK', label: 'Data Mesh', icon: Network },
                 ].map(tab => (
@@ -186,6 +188,85 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'DASHBOARD' && (
+                  <motion.div
+                    key="dashboard"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="space-y-8"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="bg-black/60 border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="w-20 h-20 rounded-full border-4 border-emerald-500/20 flex items-center justify-center relative">
+                          <Activity className="text-emerald-400 animate-pulse" size={32} />
+                          <svg className="absolute inset-0 w-full h-full -rotate-90">
+                            <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="4" className="text-emerald-500/10" />
+                            <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="226" strokeDashoffset={226 * (1 - 0.84)} className="text-emerald-500" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-3xl font-black text-white">84%</p>
+                          <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Resonance Sync</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-black/60 border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="w-20 h-20 rounded-full border-4 border-blue-500/20 flex items-center justify-center relative">
+                          <Zap className="text-blue-400" size={32} />
+                          <svg className="absolute inset-0 w-full h-full -rotate-90">
+                            <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="4" className="text-blue-500/10" />
+                            <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="226" strokeDashoffset={226 * (1 - 0.92)} className="text-blue-500" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-3xl font-black text-white">92%</p>
+                          <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Efficiency α</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-black/60 border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="w-20 h-20 rounded-full border-4 border-amber-500/20 flex items-center justify-center relative">
+                          <TrendingUp className="text-amber-400" size={32} />
+                          <svg className="absolute inset-0 w-full h-full -rotate-90">
+                            <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="4" className="text-amber-500/10" />
+                            <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="226" strokeDashoffset={226 * (1 - 0.76)} className="text-amber-500" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-3xl font-black text-white">76%</p>
+                          <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Yield Momentum</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/40">
+                      <h4 className="text-sm font-black text-white uppercase tracking-widest mb-6">Live Telemetry Shards</h4>
+                      <div className="space-y-4">
+                        {[
+                          { node: 'INGEST_01', val: '42.4 kg/m²', status: 'NOMINAL', time: '2s ago' },
+                          { node: 'MESH_NODE_7', val: '12.1% Moisture', status: 'NOMINAL', time: '5s ago' },
+                          { node: 'ORACLE_SYNC', val: '0.02 Drift', status: 'OPTIMIZING', time: '12s ago' }
+                        ].map((log, i) => (
+                          <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <div className="flex items-center gap-4">
+                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                              <div>
+                                <p className="text-[10px] font-mono text-white tracking-widest">{log.node}</p>
+                                <p className="text-xs font-bold text-slate-400">{log.val}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">{log.status}</p>
+                              <p className="text-[8px] font-mono text-slate-600 mt-1">{log.time}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </motion.div>

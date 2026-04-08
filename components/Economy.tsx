@@ -75,7 +75,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 const Economy: React.FC<EconomyProps> = ({ 
   user, isGuest, onSpendEAC, onNavigate, vendorProducts = [], liveProducts = [], onPlaceOrder, industrialUnits = [], contracts = [], blueprints = [], notify, initialSection 
 }) => {
-  const [activeTab, setActiveTab] = useState<'catalogue' | 'infrastructure' | 'forecasting' | 'checkout'>('catalogue');
+  const [activeTab, setActiveTab] = useState<'catalogue' | 'infrastructure' | 'forecasting' | 'analytics' | 'checkout'>('catalogue');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [cart, setCart] = useState<any[]>([]);
@@ -93,7 +93,7 @@ const Economy: React.FC<EconomyProps> = ({
   // Vector Routing Logic
   useEffect(() => {
     if (initialSection) {
-      if (['catalogue', 'infrastructure', 'forecasting', 'checkout'].includes(initialSection)) {
+      if (['catalogue', 'infrastructure', 'forecasting', 'analytics', 'checkout'].includes(initialSection)) {
         setActiveTab(initialSection as any);
       }
     }
@@ -373,6 +373,7 @@ const Economy: React.FC<EconomyProps> = ({
              { id: 'catalogue', label: 'Universal Catalogue', icon: LayoutGrid },
              { id: 'infrastructure', label: 'Industrial Nodes', icon: Building },
              { id: 'forecasting', label: 'Demand Matrix', icon: LineChartIcon },
+             { id: 'analytics', label: 'EAC Analytics', icon: BarChart3 },
            ].map(tab => (
              <button 
                key={tab.id} 
@@ -618,6 +619,58 @@ const Economy: React.FC<EconomyProps> = ({
         )}
 
         {/* --- VIEW: DEMAND MATRIX (Forecasting) --- */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-4 text-center">
+                <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.4em]">Total EAC Yield</p>
+                <p className="text-5xl font-black text-white italic tracking-tighter">12.4k <span className="text-indigo-400 text-xl">EAC</span></p>
+                <div className="flex items-center justify-center gap-2 text-emerald-400 text-[10px] font-bold">
+                  <TrendingUp size={12} /> +14.2% THIS_CYCLE
+                </div>
+              </div>
+              <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-4 text-center">
+                <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.4em]">Burn Rate</p>
+                <p className="text-5xl font-black text-white italic tracking-tighter">2.1k <span className="text-rose-400 text-xl">EAC</span></p>
+                <div className="flex items-center justify-center gap-2 text-rose-400 text-[10px] font-bold">
+                  <Activity size={12} /> NOMINAL_CONSUMPTION
+                </div>
+              </div>
+              <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-4 text-center">
+                <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.4em]">Staking Resonance</p>
+                <p className="text-5xl font-black text-white italic tracking-tighter">88 <span className="text-amber-400 text-xl">%</span></p>
+                <div className="flex items-center justify-center gap-2 text-amber-400 text-[10px] font-bold">
+                  <Zap size={12} /> HIGH_LIQUIDITY
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-8">
+              <h4 className="text-xl font-black text-white uppercase italic tracking-widest">EAC Emission Velocity</h4>
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={FORECAST_DATA}>
+                    <defs>
+                      <linearGradient id="colorEac" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="cycle" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }}
+                      itemStyle={{ color: '#fff', fontSize: '10px', fontWeight: 'bold' }}
+                    />
+                    <Area type="monotone" dataKey="actual" stroke="#6366f1" strokeWidth={4} fill="url(#colorEac)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'forecasting' && (
            <div className="space-y-12 animate-in zoom-in duration-700 px-4 md:px-0">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">

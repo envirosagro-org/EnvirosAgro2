@@ -21,7 +21,8 @@ import {
   BookOpen,
   Stamp,
   Fingerprint,
-  Cpu
+  Cpu,
+  FlaskConical
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -54,7 +55,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
   prefilledParams,
   clearParams
 }) => {
-  const [activeTab, setActiveTab] = useState<'video' | 'audio' | 'document'>('video');
+  const [activeTab, setActiveTab] = useState<'video' | 'audio' | 'document' | 'lab'>('video');
   const [prompt, setPrompt] = useState('');
   const [docType, setDocType] = useState('Research Paper');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -234,7 +235,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
           <div className="glass-card p-10 rounded-[56px] border-2 border-white/5 bg-black/40 space-y-10 shadow-3xl">
             {/* Tab Selection */}
             <div className="flex p-2 bg-black/60 rounded-[32px] border border-white/10">
-              {(['video', 'audio', 'document'] as const).map(t => (
+              {(['video', 'audio', 'document', 'lab'] as const).map(t => (
                 <button
                   key={t}
                   id={`multimedia-tab-${t}`}
@@ -244,6 +245,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
                   {t === 'video' && <Video id="multimedia-tab-video-icon" size={16} className={`transition-all duration-500 ${activeTab === 'video' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
                   {t === 'audio' && <Music id="multimedia-tab-audio-icon" size={16} className={`transition-all duration-500 ${activeTab === 'audio' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
                   {t === 'document' && <FileText id="multimedia-tab-document-icon" size={16} className={`transition-all duration-500 ${activeTab === 'document' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
+                  {t === 'lab' && <FlaskConical id="multimedia-tab-lab-icon" size={16} className={`transition-all duration-500 ${activeTab === 'lab' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
                   {t}
                 </button>
               ))}
@@ -251,23 +253,92 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
 
             {/* Input Area */}
             <div className="space-y-6">
-              {activeTab === 'document' && (
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-4 italic">DOCUMENT_TYPE</label>
-                  <select 
-                    value={docType}
-                    onChange={e => setDocType(e.target.value)}
-                    className="w-full bg-black/60 border-2 border-white/5 rounded-3xl p-5 text-white font-black uppercase text-xs focus:border-indigo-500 transition-all outline-none appearance-none cursor-pointer"
-                  >
-                    <option>Research Paper</option>
-                    <option>Value Blueprint</option>
-                    <option>Institutional Book</option>
-                    <option>Transaction Receipt</option>
-                    <option>Architectural Design</option>
-                    <option>Paint with Nature Guide</option>
-                  </select>
+              {activeTab === 'lab' && (
+            <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[28px] bg-rose-600/10 border border-rose-500/20 flex items-center justify-center text-rose-500 shadow-xl">
+                      <FlaskConical size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Live <span className="text-rose-500">Lab.</span></h3>
+                      <p className="text-[10px] text-rose-500 font-black uppercase tracking-[0.4em] mt-1">REAL_TIME_EXPERIMENTATION</p>
+                    </div>
+                  </div>
+                  <div className="space-y-6">
+                    <p className="text-slate-400 text-lg font-medium italic leading-relaxed">
+                      "Simulate biological experiments, test nutrient mesh combinations, and generate synthetic growth data."
+                    </p>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Experiment Parameters</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                          <p className="text-[8px] text-slate-600 uppercase font-black mb-1">Humidity α</p>
+                          <input type="range" className="w-full accent-rose-500" />
+                        </div>
+                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                          <p className="text-[8px] text-slate-600 uppercase font-black mb-1">Nutrient Mesh</p>
+                          <select className="bg-transparent text-xs text-white w-full outline-none">
+                            <option>Standard NPK</option>
+                            <option>Regenerative Bio-Mix</option>
+                            <option>Industrial Growth Shard</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <button className="w-full py-6 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all">
+                      INITIATE SIMULATION
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-8 shadow-3xl relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                  </div>
+                  <div className="relative z-10 space-y-8">
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest">Simulation Output</h4>
+                    <div className="h-64 bg-black/60 rounded-[40px] border border-white/10 flex items-center justify-center text-center p-8">
+                      <div className="space-y-4 opacity-20">
+                        <RotateCcw size={48} className="mx-auto text-slate-600 animate-spin-slow" />
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Awaiting Neural Handshake...</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        { label: 'Yield Est.', val: '0.0', unit: 't/ha' },
+                        { label: 'Resonance', val: '0.0', unit: '%' },
+                        { label: 'EAC Cost', val: '0', unit: 'EAC' }
+                      ].map((stat, i) => (
+                        <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 text-center">
+                          <p className="text-[8px] text-slate-600 uppercase font-black mb-1">{stat.label}</p>
+                          <p className="text-xl font-mono font-black text-white">{stat.val}<span className="text-[10px] text-slate-700 ml-1">{stat.unit}</span></p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {activeTab === 'document' && (
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-4 italic">DOCUMENT_TYPE</label>
+              <select 
+                value={docType}
+                onChange={e => setDocType(e.target.value)}
+                className="w-full bg-black/60 border-2 border-white/5 rounded-3xl p-5 text-white font-black uppercase text-xs focus:border-indigo-500 transition-all outline-none appearance-none cursor-pointer"
+              >
+                <option>Research Paper</option>
+                <option>Value Blueprint</option>
+                <option>Institutional Book</option>
+                <option>Transaction Receipt</option>
+                <option>Architectural Design</option>
+                <option>Paint with Nature Guide</option>
+              </select>
+            </div>
+          )}
 
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-4 italic">NEURAL_PROMPT_INGEST</label>

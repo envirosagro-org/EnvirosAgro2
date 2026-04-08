@@ -111,7 +111,7 @@ const ANALYTICS_DATA = [
 const Industrial: React.FC<IndustrialProps> = ({ 
   user, onSpendEAC, onSaveProject, industrialUnits, onNavigate, vendorProducts = [], orders = [], notify, initialSection 
 }) => {
-  const [activeTab, setActiveTab] = useState<'bridge' | 'sync' | 'path' | 'tenders' | 'workers'>('bridge');
+  const [activeTab, setActiveTab] = useState<'bridge' | 'sync' | 'path' | 'tenders' | 'workers' | 'mesh'>('bridge');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [oracleAdvice, setOracleAdvice] = useState<string | null>(null);
@@ -119,7 +119,7 @@ const Industrial: React.FC<IndustrialProps> = ({
   // Sync with initialSection for Vector Routing
   useEffect(() => {
     if (initialSection) {
-      if (['bridge', 'sync', 'path', 'tenders', 'workers'].includes(initialSection)) {
+      if (['bridge', 'sync', 'path', 'tenders', 'workers', 'mesh'].includes(initialSection)) {
         setActiveTab(initialSection as any);
       }
     }
@@ -216,6 +216,7 @@ const Industrial: React.FC<IndustrialProps> = ({
          <div className="flex flex-wrap gap-2 p-1.5 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-xl px-4 md:px-6 overflow-x-auto scrollbar-hide">
            {[
              { id: 'bridge', label: 'Registry Bridge', icon: Route },
+             { id: 'mesh', label: 'Mesh Visualization', icon: Network },
              { id: 'sync', label: 'Process Sync', icon: RefreshCw },
              { id: 'path', label: 'Path Analyzer', icon: Workflow },
              { id: 'tenders', label: 'Bounty Manifest', icon: Hammer },
@@ -261,6 +262,118 @@ const Industrial: React.FC<IndustrialProps> = ({
 
       {/* 3. Main Operational Viewport */}
       <div className="min-h-[70vh] md:min-h-[80vh] relative z-10 space-y-16 md:space-y-24">
+        
+        {/* --- VIEW: MESH VISUALIZATION --- */}
+        {activeTab === 'mesh' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="lg:col-span-2 glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 relative overflow-hidden min-h-[600px] flex items-center justify-center">
+                <div className="absolute inset-0 opacity-20">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500/20 via-transparent to-transparent"></div>
+                  <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                </div>
+                
+                <div className="relative z-10 w-full h-full flex items-center justify-center">
+                  {/* Simulated Mesh Nodes */}
+                  <div className="relative w-96 h-96">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-indigo-600/20 rounded-full border-2 border-indigo-500 flex items-center justify-center animate-pulse shadow-[0_0_100px_rgba(79,70,229,0.3)]">
+                      <Cpu size={48} className="text-white" />
+                      <div className="absolute -bottom-8 text-[10px] font-black text-indigo-400 uppercase tracking-widest">MASTER_NODE_01</div>
+                    </div>
+                    
+                    {[0, 60, 120, 180, 240, 300].map((angle, i) => (
+                      <div 
+                        key={i} 
+                        className="absolute w-16 h-16 bg-emerald-500/10 border border-emerald-500/40 rounded-2xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer group"
+                        style={{
+                          top: `calc(50% + ${Math.sin(angle * Math.PI / 180) * 180}px)`,
+                          left: `calc(50% + ${Math.cos(angle * Math.PI / 180) * 180}px)`,
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                      >
+                        <Network size={24} className="text-emerald-400 group-hover:rotate-45 transition-transform" />
+                        <div className="absolute -bottom-6 opacity-0 group-hover:opacity-100 transition-opacity text-[8px] font-mono text-slate-500 whitespace-nowrap">NODE_SYNC_{i+1}</div>
+                        
+                        {/* Connection Lines */}
+                        <div 
+                          className="absolute bg-gradient-to-r from-indigo-500/40 to-emerald-500/40 h-0.5 origin-left"
+                          style={{
+                            width: '120px',
+                            top: '50%',
+                            left: '50%',
+                            transform: `rotate(${angle + 180}deg) translateX(32px)`
+                          }}
+                        ></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="absolute bottom-10 left-10 right-10 flex justify-between items-end">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></div>
+                      <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Live Mesh Active</span>
+                    </div>
+                    <p className="text-slate-500 text-xs font-medium italic max-w-xs">Real-time visualization of industrial node synchronization and asset sharding pathways.</p>
+                  </div>
+                  <div className="flex gap-4">
+                    <button className="p-4 bg-white/5 rounded-2xl text-slate-400 hover:text-white transition-all"><Maximize2 size={20} /></button>
+                    <button className="p-4 bg-white/5 rounded-2xl text-slate-400 hover:text-white transition-all"><RefreshCw size={20} /></button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
+                  <h3 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-4">
+                    <Activity size={24} className="text-indigo-400" />
+                    Mesh <span className="text-indigo-400">Health.</span>
+                  </h3>
+                  <div className="space-y-6">
+                    {[
+                      { label: 'Synchronization', val: 98.4, color: 'bg-emerald-500' },
+                      { label: 'Packet Integrity', val: 99.9, color: 'bg-blue-500' },
+                      { label: 'Node Uptime', val: 100, color: 'bg-indigo-500' },
+                      { label: 'Encryption Strength', val: 92.1, color: 'bg-amber-500' }
+                    ].map((stat, i) => (
+                      <div key={i} className="space-y-2">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                          <span className="text-slate-500">{stat.label}</span>
+                          <span className="text-white">{stat.val}%</span>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div className={`h-full ${stat.color} rounded-full`} style={{ width: `${stat.val}%` }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-500/[0.03] space-y-6 shadow-3xl">
+                  <h4 className="text-sm font-black text-white uppercase tracking-widest">Active Shards</h4>
+                  <div className="space-y-4">
+                    {[
+                      { id: 'SH-992', type: 'DATA_SYNC', status: 'COMPLETED' },
+                      { id: 'SH-993', type: 'ASSET_TRANSFER', status: 'IN_PROGRESS' },
+                      { id: 'SH-994', type: 'QUORUM_VOTE', status: 'PENDING' }
+                    ].map((shard, i) => (
+                      <div key={i} className="p-4 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-mono text-emerald-400">{shard.id}</p>
+                          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">{shard.type}</p>
+                        </div>
+                        <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-full ${shard.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400' : shard.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-500/10 text-slate-500'}`}>
+                          {shard.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* --- VIEW: REGISTRY BRIDGE (Unified Nodes) --- */}
         {activeTab === 'bridge' && (

@@ -40,6 +40,7 @@ import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '.
 import { generateAlphanumericId } from '../systemFunctions';
 import { ShareButton } from './ShareButton';
 import { SEO } from './SEO';
+import WorkerCloud from './WorkerCloud';
 
 interface CommunityProps {
   user: User;
@@ -95,7 +96,7 @@ const Community: React.FC<CommunityProps> = ({
   hoodConnections = [], 
   onHookHood 
 }) => {
-  const [activeTab, setActiveTab] = useState<'social' | 'shards' | 'lms' | 'network'>('social');
+  const [activeTab, setActiveTab] = useState<'social' | 'shards' | 'lms' | 'network' | 'workers' | 'bounties'>('social');
   const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams' | 'forge'>('modules');
   
   const [collectives, setCollectives] = useState<Collective[]>(INITIAL_COLLECTIVES);
@@ -369,6 +370,8 @@ const Community: React.FC<CommunityProps> = ({
           { id: 'network', label: 'Steward Network', icon: Globe },
           { id: 'shards', label: 'Collective Shards', icon: Users2 },
           { id: 'lms', label: 'Knowledge Base', icon: Library },
+          { id: 'workers', label: 'Worker Cloud', icon: LucideIcons.Briefcase },
+          { id: 'bounties', label: 'Bounty Shards', icon: Target },
         ].map(t => (
           <button 
             key={t.id} 
@@ -906,6 +909,13 @@ const Community: React.FC<CommunityProps> = ({
 
       </div>
 
+      {/* --- VIEW: WORKER CLOUD --- */}
+      {activeTab === 'workers' && (
+         <div className="space-y-12 animate-in slide-in-from-bottom-10 duration-700 max-w-[1600px] mx-auto">
+            <WorkerCloud currentUser={user} />
+         </div>
+      )}
+
       {/* --- MODAL: CREATE COLLECTIVE NODE --- */}
       {showCreateCollective && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -995,6 +1005,61 @@ const Community: React.FC<CommunityProps> = ({
                  </div>
               </div>
            </div>
+        </div>
+      )}
+
+      {/* --- VIEW: BOUNTY SHARDS --- */}
+      {activeTab === 'bounties' && (
+        <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="space-y-2 text-center md:text-left">
+              <h3 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter m-0">Bounty <span className="text-amber-400">Shards.</span></h3>
+              <p className="text-xl text-slate-400 font-medium italic opacity-80">"Accept industrial tasks, solve mesh anomalies, and earn EAC rewards."</p>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="bg-black/60 border border-white/10 rounded-[32px] px-8 py-4 flex items-center gap-4 shadow-inner">
+                <Search size={18} className="text-slate-500" />
+                <input type="text" placeholder="Filter bounties..." className="bg-transparent border-none text-sm text-white focus:outline-none w-48 font-medium italic" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {[
+              { title: "Soil pH Remediation", reward: 450, difficulty: "Medium", type: "Field Task", location: "Sector 7G", icon: Sprout },
+              { title: "Drone Mesh Calibration", reward: 800, difficulty: "High", type: "Technical", location: "Remote", icon: Radio },
+              { title: "Seed Cataloging", reward: 120, difficulty: "Low", type: "Data", location: "Digital Hub", icon: Library },
+              { title: "Water Valve Repair", reward: 300, difficulty: "Medium", type: "Hardware", location: "North Farm", icon: CircleDot },
+              { title: "AI Model Training", reward: 1200, difficulty: "Expert", type: "Intelligence", location: "Remote", icon: BrainCircuit }
+            ].map((bounty, i) => (
+              <div key={i} className="glass-card p-10 rounded-[56px] border border-amber-500/20 bg-amber-500/[0.03] hover:translate-y-[-8px] transition-all group shadow-2xl hover:border-amber-500/40">
+                <div className="flex justify-between items-start mb-8">
+                  <div className="w-16 h-16 rounded-[28px] bg-amber-500/20 flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform">
+                    <bounty.icon size={28} className="text-amber-400" />
+                  </div>
+                  <span className="text-[10px] font-black text-amber-400 uppercase tracking-[0.3em] bg-amber-500/10 px-4 py-2 rounded-full border border-amber-500/20 shadow-inner">
+                    {bounty.difficulty}
+                  </span>
+                </div>
+                <h4 className="text-2xl font-black text-white uppercase italic tracking-tight mb-2 group-hover:text-amber-400 transition-colors">{bounty.title}</h4>
+                <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mb-8">{bounty.type} • {bounty.location}</p>
+                <div className="flex items-center justify-between pt-8 border-t border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                      <Coins size={18} className="text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-white m-0 leading-none">{bounty.reward}</p>
+                      <p className="text-[10px] text-slate-600 font-mono font-bold uppercase tracking-widest mt-1">EAC_YIELD</p>
+                    </div>
+                  </div>
+                  <button className="px-8 py-4 bg-white/5 hover:bg-amber-600 text-white rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl group-hover:shadow-amber-500/20 active:scale-95">
+                    ACCEPT_TASK
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
