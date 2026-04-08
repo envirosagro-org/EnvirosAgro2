@@ -323,7 +323,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
                                <div className="space-y-3 px-4 text-left">
                                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4">Select Plot from GIS Portal</label>
                                  <div className="w-full rounded-[32px] overflow-hidden border-2 border-white/10">
-                                   <GISPortal user={user} />
+                                   <GISPortal user={user} onEmitSignal={onEmitSignal} />
                                  </div>
                                  {selectedPlot && (
                                    <p className="text-emerald-400 text-sm font-bold mt-2">Selected Plot: {selectedPlot.name}</p>

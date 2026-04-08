@@ -67,6 +67,7 @@ export interface User {
   skills: Record<string, number>;
   isReadyForHire: boolean;
   completedActions?: string[]; 
+  achievements?: string[];
   settings?: {
     notificationsEnabled: boolean;
     privacyMode: 'Public' | 'Private' | 'Consensus_Only';

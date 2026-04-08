@@ -5,8 +5,15 @@ import { ShareButton } from './ShareButton';
 import { SEO } from './SEO';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { listenToCollection } from '../services/firebaseService';
+import { User, ViewState } from '../types';
 
-const Marketplace: React.FC = () => {
+interface MarketplaceProps {
+  user: User;
+  vendorProducts: any[];
+  onNavigate: (view: ViewState) => void;
+}
+
+const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showMyListings, setShowMyListings] = useState(false);
@@ -23,25 +30,37 @@ const Marketplace: React.FC = () => {
     };
   }, []);
 
-  const products = [
-    { id: 1, name: 'Premium Soil Report (US-NE)', price: 450, category: 'Data', rating: 4.8, isMine: false },
-    { id: 2, name: 'Hydroponics Master Course', price: 1200, category: 'Education', rating: 4.9, isMine: false },
-    { id: 3, name: 'Verified Carbon Credits (10t)', price: 850, category: 'Assets', rating: 5.0, isMine: true },
-    { id: 4, name: 'Profile Boost (7 Days)', price: 150, category: 'Service', rating: 4.5, isMine: false },
-    { id: 5, name: 'Drone Imagery Dataset (Q3)', price: 300, category: 'Data', rating: 4.7, isMine: true },
-    { id: 6, name: 'Smart Irrigation Setup Guide', price: 50, category: 'Education', rating: 4.2, isMine: false },
+  const mockProducts = [
+    { id: 'mock-1', name: 'Premium Soil Report (US-NE)', priceEAC: 450, category: 'Data', rating: 4.8, stewardId: 'SYS-001' },
+    { id: 'mock-2', name: 'Hydroponics Master Course', priceEAC: 1200, category: 'Education', rating: 4.9, stewardId: 'SYS-002' },
+    { id: 'mock-3', name: 'Verified Carbon Credits (10t)', priceEAC: 850, category: 'Assets', rating: 5.0, stewardId: user.esin },
+    { id: 'mock-4', name: 'Profile Boost (7 Days)', priceEAC: 150, category: 'Service', rating: 4.5, stewardId: 'SYS-003' },
+    { id: 'mock-5', name: 'Drone Imagery Dataset (Q3)', priceEAC: 300, category: 'Data', rating: 4.7, stewardId: user.esin },
+    { id: 'mock-6', name: 'Smart Irrigation Setup Guide', priceEAC: 50, category: 'Education', rating: 4.2, stewardId: 'SYS-004' },
   ];
 
-  const categories = Array.from(new Set(products.map(p => p.category)));
+  const allProducts = useMemo(() => {
+    const mappedVendorProducts = vendorProducts.map(p => ({
+      id: p.id,
+      name: p.name,
+      priceEAC: p.priceEAC || p.price || 100,
+      category: p.category || 'Product',
+      rating: p.rating || 5.0,
+      stewardId: p.stewardId || p.vendorId || 'UNKNOWN'
+    }));
+    return [...mappedVendorProducts, ...mockProducts];
+  }, [vendorProducts, user.esin]);
+
+  const categories = Array.from(new Set(allProducts.map(p => p.category)));
 
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
+    return allProducts.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.category.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = activeCategory ? p.category === activeCategory : true;
-      const matchesMyListings = showMyListings ? p.isMine : true;
+      const matchesMyListings = showMyListings ? p.stewardId === user.esin : true;
       return matchesSearch && matchesCategory && matchesMyListings;
     });
-  }, [products, searchQuery, activeCategory, showMyListings]);
+  }, [allProducts, searchQuery, activeCategory, showMyListings, user.esin]);
 
   return (
     <div className="space-y-8">
@@ -58,7 +77,7 @@ const Marketplace: React.FC = () => {
           <div className="space-y-4">
             <div className="flex justify-between">
               <span className="text-slate-400 text-sm">Total Active Listings</span>
-              <span className="text-white font-bold">{products.length}</span>
+              <span className="text-white font-bold">{allProducts.length}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400 text-sm">Avg. Listing Price</span>
@@ -190,7 +209,7 @@ const Marketplace: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded">
                   {item.category}
                 </span>
-                {item.isMine && (
+                {item.stewardId === user.esin && (
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
                     Yours
                   </span>
@@ -210,14 +229,14 @@ const Marketplace: React.FC = () => {
                 <div>
                   <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Price</p>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xl font-mono font-bold text-white">{item.price}</span>
+                    <span className="text-xl font-mono font-bold text-white">{item.priceEAC}</span>
                     <span className="text-xs font-bold text-emerald-400">EAC</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <ShareButton 
                     title={`Marketplace: ${item.name}`}
-                    text={`Check out ${item.name} for ${item.price} EAC!`}
+                    text={`Check out ${item.name} for ${item.priceEAC} EAC!`}
                     className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400"
                     iconSize={20}
                   />

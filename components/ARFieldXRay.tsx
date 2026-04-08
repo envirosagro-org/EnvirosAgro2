@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Camera, Box, Info, Map as MapIcon, Database, Zap, X, Crosshair, Layers, Bot, Target } from 'lucide-react';
+import { toast } from 'sonner';
 import { Plot, spatialService } from '../services/spatialService';
 import { User, SpatialTransform, Mission } from '../types';
 import { listenToCollection } from '../services/firebaseService';
@@ -17,6 +18,7 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeLayer, setActiveLayer] = useState<'boundaries' | 'soil' | 'gps' | 'robots'>('boundaries');
   const [detectedAnchors, setDetectedAnchors] = useState<any[]>([]);
+  const [detectedRobots, setDetectedRobots] = useState<any[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -49,24 +51,44 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
         .catch(err => console.error("Camera access denied:", err));
     }
 
-    // Simulate anchor detection
-    const interval = setInterval(() => {
-      setDetectedAnchors(prev => {
-        const newAnchor = {
-          id: Math.random().toString(36).substr(2, 9),
-          type: 'GPS_LOCK',
-          pos: { x: Math.random() * 80 + 10, y: Math.random() * 80 + 10 },
-          data: { accuracy: '0.02m', satellites: 12 }
-        };
-        return [...prev.slice(-5), newAnchor];
-      });
-    }, 3000);
+    // Listen for real AR Anchors
+    const unsubscribeAnchors = listenToCollection('ar_anchors', (anchors: any[]) => {
+      // Map real spatial coordinates to screen percentages (simulated AR projection)
+      const mappedAnchors = anchors.map(a => ({
+        id: a.id,
+        type: a.type || 'GPS_LOCK',
+        pos: { 
+          // Simple hash/modulo to scatter them on screen based on their real lat/lng
+          x: (Math.abs(a.spatialPos.x * 10000) % 80) + 10, 
+          y: (Math.abs(a.spatialPos.z * 10000) % 80) + 10 
+        },
+        data: a.data || { accuracy: '0.01m', satellites: 14 }
+      }));
+      setDetectedAnchors(mappedAnchors);
+    });
+
+    // Listen for Robots
+    spatialService.listenToRobots((data) => {
+      const robotArray = Object.entries(data).map(([id, robot]) => ({
+        id,
+        pos: {
+          x: (Math.abs((robot.pos?.x || 0) * 1000) % 80) + 10,
+          y: (Math.abs((robot.pos?.z || 0) * 1000) % 80) + 10
+        },
+        status: robot.anim_state
+      }));
+      setDetectedRobots(robotArray);
+    });
 
     return () => {
-        clearInterval(interval);
+        unsubscribeAnchors();
         spatialService.stopListening();
     };
   }, [user.esin]);
+
+  const handleAnchorClick = (anchor: any) => {
+    toast.success(`Anchor Data: ${anchor.type} | ACC: ${anchor.data.accuracy}`);
+  };
 
   return (
     <div className="fixed inset-0 z-[100] bg-black overflow-hidden flex flex-col font-sans">
@@ -92,17 +114,43 @@ export const ARFieldXRay: React.FC<ARFieldXRayProps> = ({ user, onClose }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
               style={{ left: `${anchor.pos.x}%`, top: `${anchor.pos.y}%` }}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
+              className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer"
+              onClick={() => handleAnchorClick(anchor)}
             >
               <div className="relative">
                 <div className="w-10 h-10 border-2 border-indigo-400 rounded-full animate-ping absolute inset-0" />
                 <div className="w-10 h-10 bg-indigo-600/40 border border-indigo-400 rounded-full flex items-center justify-center backdrop-blur-md">
                   <Zap size={16} className="text-white" />
                 </div>
-                <div className="absolute left-12 top-0 bg-black/90 border border-indigo-500/50 p-3 rounded-2xl backdrop-blur-xl min-w-[150px] shadow-2xl">
+                <div className="absolute left-12 top-0 bg-black/90 border border-indigo-500/50 p-3 rounded-2xl backdrop-blur-xl min-w-[150px] shadow-2xl pointer-events-none">
                   <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">{anchor.type}</p>
                   <p className="text-xs text-white font-mono mt-1.5">ACC: {anchor.data.accuracy}</p>
                   <p className="text-xs text-white font-mono">SAT: {anchor.data.satellites}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {/* Detected Robots */}
+        <AnimatePresence>
+          {detectedRobots.map((robot) => (
+            <motion.div
+              key={robot.id}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              style={{ left: `${robot.pos.x}%`, top: `${robot.pos.y}%` }}
+              className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+            >
+              <div className="relative">
+                <div className="w-12 h-12 border-2 border-rose-400 rounded-full animate-pulse absolute inset-0" />
+                <div className="w-12 h-12 bg-rose-600/40 border border-rose-400 rounded-full flex items-center justify-center backdrop-blur-md">
+                  <Bot size={20} className="text-white" />
+                </div>
+                <div className="absolute left-14 top-0 bg-black/90 border border-rose-500/50 p-3 rounded-2xl backdrop-blur-xl min-w-[120px] shadow-2xl pointer-events-none">
+                  <p className="text-[10px] font-black text-rose-300 uppercase tracking-widest">ROBOT: {robot.id}</p>
+                  <p className="text-xs text-white font-mono mt-1.5">STATUS: {robot.status}</p>
                 </div>
               </div>
             </motion.div>

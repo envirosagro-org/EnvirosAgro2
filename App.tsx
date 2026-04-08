@@ -1214,7 +1214,7 @@ const App: React.FC = () => {
       case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} hoodConnections={hoodConnections} onHookHood={hookHood} />;
       case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection={viewSection} onNavigate={navigate} />;
       case 'network_signals': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection="terminal" onNavigate={navigate} />;
-      case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} />;
+      case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} onEmitSignal={emitSignal} />;
       case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} vendorProducts={vendorProducts} orders={orders} notify={emitSignal} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} initialSection={viewSection} />;
       case 'investor': return <InvestorPortal user={currentUser} onUpdate={(u) => setUser(u)} onSpendEAC={handleSpendEAC} projects={projects} onNavigate={navigate} />;
       case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => navigate('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} />;
@@ -1238,7 +1238,7 @@ const App: React.FC = () => {
       case 'governance': return <Governance user={currentUser} proposals={proposals} stewardPositions={stewardPositions} elections={elections} onSaveProposal={(p) => saveCollectionItem('proposals', p)} onSaveVote={(v) => saveCollectionItem('votes', v)} onApplyForElection={(id, esin, name, manifesto) => { applyForElection(id, esin, name, manifesto); saveCollectionItem('elections', elections.find(e => e.id === id)); }} onVoteInElection={(id, cid, esin) => { voteInElection(id, cid, esin); saveCollectionItem('elections', elections.find(e => e.id === id)); }} onUpdateProposalStatus={(id, status) => { updateProposalStatus(id, status); saveCollectionItem('proposals', proposals.find(p => p.id === id)); }} notify={emitSignal} />;
       case 'carbon_credits': return <CarbonCredits user={currentUser} credits={carbonCredits} products={liveProducts} onVerifyCredit={(id) => saveCollectionItem('carbon_credits', { id, verificationStatus: 'VERIFIED', verifierEsin: currentUser.esin })} notify={emitSignal} />;
       case 'traceability': return <Traceability product={liveProducts[0]} liveProducts={liveProducts} />;
-      case 'marketplace': return <Marketplace />;
+      case 'marketplace': return <Marketplace user={currentUser} vendorProducts={vendorProducts} onNavigate={navigate} />;
       case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} initialSection={viewSection} />;
       case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} />;
       case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} liveProducts={liveProducts} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
@@ -1301,7 +1301,7 @@ const App: React.FC = () => {
       case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onEmitSignal={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} />;
       case 'hardware_registry': return <HardwareRegistry />;
       case 'device_control': return <DeviceControl deviceId="test-device-1" />;
-      case 'educational_resources': return <EducationalResources onNavigate={navigate} />;
+      case 'educational_resources': return <EducationalResources user={currentUser} onNavigate={navigate} onUpdateUser={(u) => setUser(u)} onEmitSignal={emitSignal} />;
       default: return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
     }
   };

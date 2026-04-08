@@ -1,4 +1,4 @@
-import { ref, onValue, set, onDisconnect, off } from 'firebase/database';
+import { ref, onValue, set, onDisconnect, off, update } from 'firebase/database';
 import { rtdb, auth, db } from './firebaseService';
 import { SpatialTransform } from '../types';
 import { collection, addDoc, updateDoc, doc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
@@ -62,6 +62,17 @@ class SpatialService {
     });
   }
 
+  public async sendRobotCommand(robotId: string, command: string) {
+    const commandRef = ref(rtdb, `spatial_robots_commands/${robotId}`);
+    await set(commandRef, {
+      command,
+      timestamp: Date.now()
+    });
+    
+    const transformRef = ref(rtdb, `${this.robotPath}/${robotId}`);
+    await update(transformRef, { anim_state: command, lastUpdate: Date.now() });
+  }
+
   public listenToARAnchors(stewardId: string, callback: (anchors: Record<string, any>) => void) {
     const anchorsRef = ref(rtdb, `${this.anchorPath}/${stewardId}`);
     onValue(anchorsRef, (snapshot) => {
@@ -97,6 +108,12 @@ class SpatialService {
   public async deletePlot(plotId: string) {
     const plotRef = doc(db, 'plots', plotId);
     await deleteDoc(plotRef);
+  }
+
+  public async saveAnchor(anchor: any) {
+    const anchorsRef = collection(db, 'ar_anchors');
+    const docRef = await addDoc(anchorsRef, anchor);
+    return docRef.id;
   }
 }
 

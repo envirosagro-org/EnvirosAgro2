@@ -44,21 +44,27 @@ import {
   LayoutGrid,
   Database,
   Box,
-  Maximize2
+  Maximize2,
+  HeartHandshake,
+  Bot
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { User, ViewState, MediaShard } from '../types';
+import { User, ViewState, MediaShard, SignalShard } from '../types';
 import { HenIcon } from './Icons';
-import { runSpecialistDiagnostic, AgroLangResponse } from '../services/agroLangService';
-import { saveCollectionItem } from '../services/firebaseService';
+import { runSpecialistDiagnostic, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
+import { saveCollectionItem, listenToCollection, db } from '../services/firebaseService';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 import { generateQuickHash, generateAlphanumericId } from '../systemFunctions';
 import { SEO } from './SEO';
+import { spatialService } from '../services/spatialService';
 
 interface EcosystemProps {
   user: User;
   onDeposit: (amount: number, reason: string) => void;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onUpdateUser: (user: User) => void;
   onNavigate: (view: ViewState, action?: string | null) => void;
+  onEmitSignal: (signal: Partial<SignalShard>) => void;
 }
 
 type ThrustType = 'societal' | 'environmental' | 'human' | 'technological' | 'industry';
@@ -104,7 +110,7 @@ const PORTAL_TABS = [
   { id: 'shards', label: 'REGISTRY ASSETS', icon: Database },
 ];
 
-const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, onNavigate }) => {
+const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onSpendEAC, onUpdateUser, onNavigate, onEmitSignal }) => {
   const [activeBrand, setActiveBrand] = useState<Brand | null>(null);
   const [filter, setFilter] = useState<'all' | ThrustType>('all');
   const [portalTab, setPortalTab] = useState<string>('home');
@@ -118,9 +124,151 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
 
+  // AI Processing states
+  const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState<string>('');
+
+  // New Feature States
+  const [shards, setShards] = useState<any[]>([]);
+  const [stewards, setStewards] = useState<any[]>([]);
+  const [soilNutrients, setSoilNutrients] = useState({ n: 50, p: 50, k: 50 });
+  const [agroJuniorScore, setAgroJuniorScore] = useState(0);
+  const [agroJuniorLevel, setAgroJuniorLevel] = useState(1);
+  const [robots, setRobots] = useState<any[]>([]);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const filteredBrands = filter === 'all' ? BRANDS : BRANDS.filter(b => b.thrust === filter);
+
+  const handleAIProcessing = async (promptType: string) => {
+    setIsProcessingAI(true);
+    setAiResult(null);
+    try {
+      let prompt = '';
+      if (promptType === 'recipe') {
+        prompt = `Generate a sustainable agricultural food recipe based on food nutrition, MedicAg, AgroMusika quality, and environmental taste. Feature different meals, dishes, or drinks with sustainability and resilience to facilitate a healthy living style, Love4Agro, and health benefits.`;
+      } else if (promptType === 'medicine') {
+        prompt = `Synthesize a natural healing profile using natural resources, biochemistry (medicine), and acoustic healing with AgroMusika to address diseases and pests. Detail the symbiotic relationship between natural healing and agricultural food in promoting human health, resilience, and wellness.`;
+      } else if (promptType === 'agromusika') {
+        prompt = `Generate specific bio-electric sound frequencies and acoustic remediation plans for crop stress. Include time signatures and frequency ranges (Hz) for soil molecular repair.`;
+      } else if (promptType === 'lilies') {
+        prompt = `Generate botanical architecture and aesthetic terra-mapping plans for regenerative floriculture. Focus on merging aesthetic beauty with celestial planting cycles.`;
+      } else if (promptType === 'custom') {
+        prompt = aiPrompt;
+      }
+      
+      const response = await chatWithAgroLang(prompt, []);
+      setAiResult(response.text);
+    } catch (error) {
+      toast.error("AI Processing Failed");
+    } finally {
+      setIsProcessingAI(false);
+    }
+  };
+
+  const handleMintAIShard = async () => {
+    if (!aiResult || !activeBrand) return;
+    const fee = 50;
+    if (await onSpendEAC(fee, `MINT_AI_SHARD_${activeBrand.id.toUpperCase()}`)) {
+      try {
+        await saveCollectionItem('media_ledger', {
+          stewardId: user.esin,
+          type: 'AI_SHARD',
+          brand: activeBrand.id,
+          content: aiResult,
+          timestamp: new Date().toISOString()
+        });
+        toast.success(`AI Shard Minted! -${fee} EAC`);
+        onEmitSignal({ type: 'system', title: 'AI Shard Minted', message: `AI Shard Minted for ${activeBrand.name} by ${user.esin}` });
+        setAiResult(null);
+      } catch (e) {
+        toast.error("Failed to mint shard on ledger.");
+      }
+    }
+  };
+
+  const handleVouch = async (stewardId: string, displayName: string) => {
+    try {
+      const stewardRef = doc(db, 'stewards', stewardId);
+      await updateDoc(stewardRef, {
+        resonance: increment(1)
+      });
+      toast.success(`Vouched for ${displayName}! Resonance increased.`);
+      onEmitSignal({ type: 'engagement', title: 'Steward Vouched', message: `Vouched for ${displayName} by ${user.esin}` });
+    } catch (error) {
+      toast.error("Failed to vouch for steward.");
+    }
+  };
+
+  const handleAnalyzeSoil = async () => {
+    const { n, p, k } = soilNutrients;
+    // Level 1: N:40, P:30, K:30
+    // Level 2: N:60, P:20, K:20
+    // Level 3: N:30, P:40, K:30
+    let targetN = 40, targetP = 30, targetK = 30;
+    if (agroJuniorLevel === 2) { targetN = 60; targetP = 20; targetK = 20; }
+    if (agroJuniorLevel === 3) { targetN = 30; targetP = 40; targetK = 30; }
+
+    const isPerfect = n === targetN && p === targetP && k === targetK;
+    const isClose = Math.abs(n - targetN) <= 10 && Math.abs(p - targetP) <= 10 && Math.abs(k - targetK) <= 10;
+
+    if (isPerfect) {
+      toast.success(`Perfect Soil Resonance for Level ${agroJuniorLevel}!`);
+      setAgroJuniorScore(prev => prev + 100);
+      setAgroJuniorLevel(prev => prev < 3 ? prev + 1 : 1);
+      try {
+        await saveCollectionItem('media_ledger', {
+          stewardId: user.esin,
+          type: 'STEM_BADGE',
+          brand: 'agrojunior',
+          content: `Master of Soil Resonance Lvl ${agroJuniorLevel}`,
+          timestamp: new Date().toISOString()
+        });
+        toast.success("STEM Badge Minted to Registry!");
+        onEmitSignal({ type: 'system', title: 'STEM Badge Earned', message: `Earned STEM Badge: Master of Soil Resonance Lvl ${agroJuniorLevel} by ${user.esin}` });
+      } catch (e) {
+        toast.error("Failed to mint badge.");
+      }
+    } else if (isClose) {
+      toast.info("Close! Adjust the nutrients slightly.");
+      setAgroJuniorScore(prev => prev + 10);
+    } else {
+      toast.error(`Imbalanced. Try N:${targetN}, P:${targetP}, K:${targetK} for perfect resonance.`);
+      setAgroJuniorScore(prev => Math.max(0, prev - 5));
+    }
+  };
+
+  const handleManufactureProduct = async (shard: any) => {
+    const fee = 100;
+    if (await onSpendEAC(fee, `MANUFACTURE_PRODUCT_${shard.id}`)) {
+      try {
+        await saveCollectionItem('vendor_products', {
+          stewardId: user.esin,
+          name: `Synthesized ${shard.brand} Product`,
+          description: `Manufactured from AI Shard SH_${shard.id.substring(0, 8)}. ${shard.content.substring(0, 100)}...`,
+          priceEAC: 250,
+          stock: 10,
+          category: shard.brand,
+          timestamp: new Date().toISOString()
+        });
+        toast.success(`Product Manufactured & Listed! -${fee} EAC`);
+        onEmitSignal({ type: 'commerce', title: 'Product Manufactured', message: `Manufactured Product from ${shard.brand} Shard by ${user.esin}` });
+      } catch (e) {
+        toast.error("Failed to manufacture product.");
+      }
+    }
+  };
+
+  const handleRobotCommand = async (robotId: string, command: string) => {
+    try {
+      await spatialService.sendRobotCommand(robotId, command);
+      toast.success(`Command '${command}' sent to ${robotId}`);
+      onEmitSignal({ type: 'system', title: 'Robot Command', message: `Command '${command}' dispatched to ${robotId} by ${user.esin}` });
+    } catch (e) {
+      toast.error(`Failed to send command to ${robotId}`);
+    }
+  };
 
   useEffect(() => {
     if (activeBrand) {
@@ -133,6 +281,32 @@ const Ecosystem: React.FC<EcosystemProps> = ({ user, onDeposit, onUpdateUser, on
       return () => clearInterval(interval);
     }
   }, [activeBrand]);
+
+  useEffect(() => {
+    const unsubShards = listenToCollection('media_ledger', (data) => {
+      setShards(data.filter(d => d.type === 'AI_SHARD' || d.type === 'STEM_BADGE'));
+    }, true); // global listen for now to see all shards
+
+    const unsubStewards = listenToCollection('stewards', (data) => {
+      setStewards(data);
+    }, true);
+
+    spatialService.listenToRobots((data) => {
+      const robotArray = Object.entries(data).map(([id, robot]) => ({
+        id,
+        status: robot.anim_state === 'working' ? 'ACTIVE' : 'IDLE',
+        battery: Math.floor(Math.random() * 40) + 60, // Simulated battery
+        task: robot.anim_state === 'working' ? 'Field Ops' : 'Standby'
+      }));
+      setRobots(robotArray);
+    });
+
+    return () => {
+      unsubShards();
+      unsubStewards();
+      spatialService.stopListening();
+    };
+  }, []);
 
   const handlePortalLaunch = (brand: Brand) => {
     setIsSyncing(true);
@@ -358,6 +532,268 @@ ${auditResult.text}
                       </div>
                    </div>
 
+                   {activeBrand.id === 'juizzycookiez' && (
+                     <div className="glass-card p-8 md:p-10 rounded-[48px] border border-orange-500/20 bg-orange-900/10 space-y-6 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none"><Cookie size={200} /></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                           <div className="w-14 h-14 rounded-2xl bg-orange-600 flex items-center justify-center shadow-lg">
+                              <Cookie size={28} className="text-white" />
+                           </div>
+                           <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0">Agricultural <span className="text-orange-400">Food</span></h3>
+                        </div>
+                        <p className="text-orange-100/90 text-lg md:text-xl font-medium italic leading-relaxed relative z-10">
+                           This food is processed through recipe generation based on food nutrition, MedicAg, AgroMusika quality, and environmental taste. The on-take dishes made should be featuring different meals, dishes, or drinks with sustainability and resilience. The outcomes should facilitate a healthy living style, Love4Agro, and health benefits.
+                        </p>
+                        <div className="pt-6 border-t border-orange-500/20 relative z-10">
+                           <button 
+                             onClick={() => handleAIProcessing('recipe')}
+                             disabled={isProcessingAI}
+                             className="flex items-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-full font-black uppercase tracking-widest text-xs transition-all disabled:opacity-50"
+                           >
+                             {isProcessingAI ? <Loader2 size={16} className="animate-spin" /> : <ChefHat size={16} />}
+                             Generate Agro Recipe
+                           </button>
+                        </div>
+                     </div>
+                   )}
+
+                   {activeBrand.id === 'medicag' && (
+                     <div className="glass-card p-8 md:p-10 rounded-[48px] border border-teal-500/20 bg-teal-900/10 space-y-6 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none"><HeartPulse size={200} /></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                           <div className="w-14 h-14 rounded-2xl bg-teal-600 flex items-center justify-center shadow-lg">
+                              <HeartPulse size={28} className="text-white" />
+                           </div>
+                           <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0">Natural <span className="text-teal-400">Healing</span></h3>
+                        </div>
+                        <p className="text-teal-100/90 text-lg md:text-xl font-medium italic leading-relaxed relative z-10">
+                           Natural resources with natural healing, Biochemistry (medicine), and Acoustic for healing with AgroMusika. Addresses diseases, pests, etc.
+                        </p>
+                        <div className="p-6 bg-black/40 rounded-[32px] border border-white/5 relative z-10">
+                           <h4 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-2">Symbiotic Relationship</h4>
+                           <p className="text-slate-300 text-sm italic">
+                              Relationship bearing from Natural healing and agricultural food in promoting human health, resilience, and wellness.
+                           </p>
+                        </div>
+                        <div className="pt-6 border-t border-teal-500/20 relative z-10">
+                           <button 
+                             onClick={() => handleAIProcessing('medicine')}
+                             disabled={isProcessingAI}
+                             className="flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-full font-black uppercase tracking-widest text-xs transition-all disabled:opacity-50"
+                           >
+                             {isProcessingAI ? <Loader2 size={16} className="animate-spin" /> : <Stethoscope size={16} />}
+                             Synthesize Healing Profile
+                           </button>
+                        </div>
+                     </div>
+                   )}
+
+                   {/* AI Processing Result Display */}
+                   {aiResult && (
+                     <div className={`glass-card p-8 rounded-[40px] border border-${accentColor}-500/30 bg-black/60 shadow-2xl animate-in fade-in slide-in-from-bottom-4`}>
+                        <div className="flex items-center gap-3 mb-6">
+                           <BrainCircuit size={24} className={activeBrand.color} />
+                           <h3 className="text-xl font-black text-white uppercase italic tracking-tighter m-0">EnvirosAgro <span className={activeBrand.color}>AI Synthesis</span></h3>
+                        </div>
+                        <div className="prose prose-invert max-w-none text-slate-300">
+                           <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed bg-white/5 p-6 rounded-3xl border border-white/10">
+                              {aiResult}
+                           </div>
+                        </div>
+                        <div className="mt-6 flex justify-end gap-4">
+                           <button 
+                             onClick={() => setAiResult(null)}
+                             className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-black uppercase tracking-widest transition-all"
+                           >
+                             Dismiss
+                           </button>
+                           <button 
+                             onClick={handleMintAIShard}
+                             className={`px-6 py-3 bg-${accentColor}-600 hover:bg-${accentColor}-500 text-white rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg`}
+                           >
+                             <Gem size={16} />
+                             Mint as Shard (50 EAC)
+                           </button>
+                        </div>
+                     </div>
+                   )}
+
+                   {activeBrand.id === 'agromusika' && (
+                     <div className="glass-card p-8 md:p-10 rounded-[48px] border border-emerald-500/20 bg-emerald-900/10 space-y-6 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none"><Music size={200} /></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                           <div className="w-14 h-14 rounded-2xl bg-emerald-600 flex items-center justify-center shadow-lg">
+                              <Music size={28} className="text-white" />
+                           </div>
+                           <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0">Acoustic <span className="text-emerald-400">Remediation</span></h3>
+                        </div>
+                        <p className="text-emerald-100/90 text-lg md:text-xl font-medium italic leading-relaxed relative z-10">
+                           Generate specific bio-electric sound frequencies and acoustic remediation plans for crop stress, including time signatures and frequency ranges (Hz) for soil molecular repair.
+                        </p>
+                        <div className="pt-6 border-t border-emerald-500/20 relative z-10">
+                           <button 
+                             onClick={() => handleAIProcessing('agromusika')}
+                             disabled={isProcessingAI}
+                             className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-black uppercase tracking-widest text-xs transition-all disabled:opacity-50"
+                           >
+                             {isProcessingAI ? <Loader2 size={16} className="animate-spin" /> : <AudioWaveform size={16} />}
+                             Generate Acoustic Plan
+                           </button>
+                        </div>
+                     </div>
+                   )}
+
+                   {activeBrand.id === 'lilies' && (
+                     <div className="glass-card p-8 md:p-10 rounded-[48px] border border-fuchsia-500/20 bg-fuchsia-900/10 space-y-6 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none"><Flower2 size={200} /></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                           <div className="w-14 h-14 rounded-2xl bg-fuchsia-600 flex items-center justify-center shadow-lg">
+                              <Flower2 size={28} className="text-white" />
+                           </div>
+                           <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0">Botanical <span className="text-fuchsia-400">Architecture</span></h3>
+                        </div>
+                        <p className="text-fuchsia-100/90 text-lg md:text-xl font-medium italic leading-relaxed relative z-10">
+                           Generate botanical architecture and aesthetic terra-mapping plans for regenerative floriculture, merging aesthetic beauty with celestial planting cycles.
+                        </p>
+                        <div className="pt-6 border-t border-fuchsia-500/20 relative z-10">
+                           <button 
+                             onClick={() => handleAIProcessing('lilies')}
+                             disabled={isProcessingAI}
+                             className="flex items-center gap-2 px-6 py-3 bg-fuchsia-600 hover:bg-fuchsia-500 text-white rounded-full font-black uppercase tracking-widest text-xs transition-all disabled:opacity-50"
+                           >
+                             {isProcessingAI ? <Loader2 size={16} className="animate-spin" /> : <Palette size={16} />}
+                             Generate Terra-Map
+                           </button>
+                        </div>
+                     </div>
+                   )}
+
+                   {activeBrand.id === 'agroboto' && (
+                     <div className="glass-card p-8 md:p-10 rounded-[48px] border border-blue-500/20 bg-blue-900/10 space-y-6 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none"><Bot size={200} /></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                           <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg">
+                              <Bot size={28} className="text-white" />
+                           </div>
+                           <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0">Swarm <span className="text-blue-400">Command</span></h3>
+                        </div>
+                        <p className="text-blue-100/90 text-lg md:text-xl font-medium italic leading-relaxed relative z-10">
+                           Manage autonomous robot swarms. Assign plots, view individual telemetry, and monitor efficiency.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 relative z-10">
+                           {robots.map((robot) => (
+                             <div key={robot.id} className="p-4 bg-black/40 rounded-3xl border border-white/5 flex flex-col gap-2">
+                               <div className="flex justify-between items-center">
+                                 <span className="text-xs font-black text-white">{robot.id}</span>
+                                 <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-full ${robot.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{robot.status}</span>
+                               </div>
+                               <div className="flex items-center gap-2 text-slate-400 text-xs">
+                                 <Battery size={12} /> {robot.battery}%
+                               </div>
+                               <div className="text-[10px] text-slate-500 font-mono uppercase truncate">{robot.task}</div>
+                               <div className="flex gap-2 mt-2">
+                                 <button 
+                                   onClick={() => handleRobotCommand(robot.id, 'deploy')}
+                                   className="flex-1 py-1 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded text-[8px] font-black uppercase transition-all"
+                                 >
+                                   Deploy
+                                 </button>
+                                 <button 
+                                   onClick={() => handleRobotCommand(robot.id, 'return')}
+                                   className="flex-1 py-1 bg-slate-500/20 hover:bg-slate-500/40 text-slate-400 rounded text-[8px] font-black uppercase transition-all"
+                                 >
+                                   Return
+                                 </button>
+                               </div>
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                   )}
+
+                   {activeBrand.id === 'agrojunior' && (
+                     <div className="glass-card p-8 md:p-10 rounded-[48px] border border-green-500/20 bg-green-900/10 space-y-6 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none"><Sprout size={200} /></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                           <div className="w-14 h-14 rounded-2xl bg-green-600 flex items-center justify-center shadow-lg">
+                              <Sprout size={28} className="text-white" />
+                           </div>
+                           <div className="flex-1">
+                             <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0">Virtual <span className="text-green-400">Garden Twin</span></h3>
+                             <div className="flex gap-4 mt-1">
+                               <span className="text-xs font-black text-green-400 uppercase tracking-widest">Level {agroJuniorLevel}</span>
+                               <span className="text-xs font-black text-white uppercase tracking-widest">Score: {agroJuniorScore}</span>
+                             </div>
+                           </div>
+                        </div>
+                        <p className="text-green-100/90 text-lg md:text-xl font-medium italic leading-relaxed relative z-10">
+                           Balance the soil nutrients (N-P-K) to achieve perfect resonance and earn your STEM badge.
+                        </p>
+                        <div className="space-y-4 pt-4 relative z-10">
+                           {['n', 'p', 'k'].map((nutrient) => (
+                             <div key={nutrient} className="flex items-center gap-4">
+                               <span className="text-xs font-black text-white uppercase w-4">{nutrient}</span>
+                               <input 
+                                 type="range" 
+                                 min="0" max="100" 
+                                 value={soilNutrients[nutrient as keyof typeof soilNutrients]} 
+                                 onChange={(e) => setSoilNutrients(prev => ({ ...prev, [nutrient]: parseInt(e.target.value) }))}
+                                 className="flex-1 accent-green-500"
+                               />
+                               <span className="text-xs font-mono text-green-400 w-8">{soilNutrients[nutrient as keyof typeof soilNutrients]}%</span>
+                             </div>
+                           ))}
+                           <div className="pt-4 flex justify-end">
+                             <button 
+                               onClick={handleAnalyzeSoil}
+                               className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-full text-xs font-black uppercase tracking-widest transition-all"
+                             >
+                               Analyze Soil
+                             </button>
+                           </div>
+                        </div>
+                     </div>
+                   )}
+
+                   {activeBrand.id === 'love4agro' && (
+                     <div className="glass-card p-8 md:p-10 rounded-[48px] border border-rose-500/20 bg-rose-900/10 space-y-6 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none"><HeartHandshake size={200} /></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                           <div className="w-14 h-14 rounded-2xl bg-rose-600 flex items-center justify-center shadow-lg">
+                              <HeartHandshake size={28} className="text-white" />
+                           </div>
+                           <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter m-0">Steward <span className="text-rose-400">Trust Network</span></h3>
+                        </div>
+                        <p className="text-rose-100/90 text-lg md:text-xl font-medium italic leading-relaxed relative z-10">
+                           Peer-to-peer vouching. Increase the resonance score of fellow stewards by verifying their regenerative practices.
+                        </p>
+                        <div className="space-y-3 pt-4 relative z-10 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
+                           {stewards.slice(0, 5).map((steward, idx) => (
+                             <div key={idx} className="p-4 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-between">
+                               <div className="flex items-center gap-3">
+                                 <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 font-black text-xs">
+                                   {steward.displayName?.charAt(0) || 'S'}
+                                 </div>
+                                 <div>
+                                   <div className="text-sm font-bold text-white">{steward.displayName || steward.esin || 'Unknown Steward'}</div>
+                                   <div className="text-[10px] text-slate-500 font-mono">Resonance: {steward.resonance || 0}</div>
+                                 </div>
+                               </div>
+                               <button 
+                                 onClick={() => handleVouch(steward.id, steward.displayName || 'Steward')}
+                                 className="px-4 py-2 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/30 rounded-full text-[10px] font-black uppercase tracking-widest transition-all"
+                               >
+                                 Vouch
+                               </button>
+                             </div>
+                           ))}
+                           {stewards.length === 0 && (
+                             <div className="text-center text-slate-500 text-sm italic py-4">No stewards found in network.</div>
+                           )}
+                        </div>
+                     </div>
+                   )}
+
                    <div className={`p-10 rounded-[56px] border border-${accentColor}-500/20 bg-${accentColor}-500/[0.03] flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl group/action`}>
                       <div className="flex items-center gap-8 text-center md:text-left flex-col md:flex-row">
                          <div className={`w-16 h-16 rounded-3xl bg-${accentColor}-600 flex items-center justify-center shadow-xl animate-pulse ring-8 ring-white/5`}>
@@ -504,29 +940,41 @@ ${auditResult.text}
                       </button>
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                         <div key={i} className="p-8 glass-card rounded-[40px] border border-white/5 hover:border-white/20 bg-black/40 flex flex-col justify-between min-h-[300px] relative overflow-hidden group shadow-xl transition-all">
-                            <div className="absolute top-0 right-0 p-6 opacity-[0.01] group-hover:scale-110 transition-transform"><Database size={150} /></div>
-                            <div className="flex justify-between items-start mb-6 relative z-10">
-                               <div className={`p-3 rounded-xl bg-white/5 border border-white/10 ${activeBrand.color} shadow-inner`}>
-                                  <Box size={20} />
-                               </div>
-                               <span className="text-[9px] font-mono text-slate-800 font-black uppercase">SH_0x{generateQuickHash(4)}</span>
-                            </div>
-                            <div className="space-y-2 relative z-10">
-                               <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors">Resource Unit #0{i}</h4>
-                               <p className="text-[10px] text-slate-600 font-medium italic leading-relaxed">"Verified biological asset provisioned for the ${activeBrand.name} cycle."</p>
-                            </div>
-                            <div className="pt-6 border-t border-white/5 mt-auto relative z-10 flex justify-between items-center">
-                               <div className="flex items-center gap-2">
-                                  <Activity size={12} className="text-emerald-500" />
-                                  <span className="text-[9px] font-mono font-black text-emerald-500">SYNC_OK</span>
-                               </div>
-                               <button className={`p-3 bg-white/5 rounded-xl text-slate-700 hover:${activeBrand.color} transition-colors`}><Maximize2 size={16} /></button>
-                            </div>
-                         </div>
-                      ))}
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {shards.length === 0 ? (
+                        <div className="col-span-full p-12 text-center text-slate-500 italic">No AI Shards minted yet. Generate and mint them in the Operational Hub.</div>
+                      ) : (
+                        shards.map((shard, i) => (
+                           <div key={shard.id || i} className="p-8 glass-card rounded-[40px] border border-white/5 hover:border-white/20 bg-black/40 flex flex-col justify-between min-h-[300px] relative overflow-hidden group shadow-xl transition-all">
+                              <div className="absolute top-0 right-0 p-6 opacity-[0.01] group-hover:scale-110 transition-transform"><Database size={150} /></div>
+                              <div className="flex justify-between items-start mb-6 relative z-10">
+                                 <div className={`p-3 rounded-xl bg-white/5 border border-white/10 ${activeBrand.color} shadow-inner`}>
+                                    <Gem size={20} />
+                                 </div>
+                                 <span className="text-[9px] font-mono text-slate-800 font-black uppercase">SH_{shard.id ? shard.id.substring(0, 8) : generateQuickHash(4)}</span>
+                              </div>
+                              <div className="space-y-2 relative z-10 flex-1">
+                                 <h4 className="text-xl font-black text-white uppercase italic tracking-tighter m-0 leading-tight group-hover:text-emerald-400 transition-colors">AI Shard: {shard.brand}</h4>
+                                 <p className="text-[10px] text-slate-400 font-medium italic leading-relaxed line-clamp-4">{shard.content}</p>
+                              </div>
+                              <div className="pt-6 border-t border-white/5 mt-4 relative z-10 flex justify-between items-center">
+                                 <div className="flex items-center gap-2">
+                                    <Activity size={12} className="text-emerald-500" />
+                                    <span className="text-[9px] font-mono font-black text-emerald-500">VERIFIED</span>
+                                 </div>
+                                 <div className="flex gap-2">
+                                   <button 
+                                     onClick={() => handleManufactureProduct(shard)}
+                                     className={`px-3 py-1 bg-${accentColor}-600/20 hover:bg-${accentColor}-600/40 text-${accentColor}-400 border border-${accentColor}-500/30 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all`}
+                                   >
+                                     Manufacture (100 EAC)
+                                   </button>
+                                   <span className="text-[8px] text-slate-600 font-mono self-center">{new Date(shard.timestamp).toLocaleDateString()}</span>
+                                 </div>
+                              </div>
+                           </div>
+                        ))
+                      )}
                    </div>
                 </div>
               </section>

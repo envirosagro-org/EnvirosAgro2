@@ -125,7 +125,7 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
                    <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">GIS Zonation <span className="text-emerald-400">Map</span></h3>
                 </div>
                 <p className="text-slate-400 text-sm font-medium">Use the GIS portal to visualize zonation shards, acquire GPS lock, and automate telemetry mapping.</p>
-                <GISPortal user={user} />
+                <GISPortal user={user} onEmitSignal={onEmitSignal} />
              </div>
           </div>
         )}

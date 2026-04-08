@@ -534,7 +534,7 @@ SEQUENCE Optimize_Cycle_882 {
               </div>
               <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">GIS <span className="text-indigo-400">Portal</span></h3>
             </div>
-            <GISPortal user={user} />
+            <GISPortal user={user} onEmitSignal={onEmitSignal} />
           </div>
         )}
 

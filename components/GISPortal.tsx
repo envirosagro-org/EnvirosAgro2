@@ -4,7 +4,7 @@ import { spatialService, Plot } from '../services/spatialService';
 import { auth, onAuthStateChanged, listenToCollection } from '../services/firebaseService';
 import { toast } from 'sonner';
 import { useAppStore } from '../store';
-import { User, Mission } from '../types';
+import { User, Mission, SignalShard } from '../types';
 import { MapPin, Loader2, Activity, Droplets, Sun, Wind, Zap, Camera, ShieldCheck, Target, Crosshair, X } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { ARFieldXRay } from './ARFieldXRay';
@@ -17,6 +17,7 @@ const containerStyle = {
 
 interface GISPortalProps {
   user: User;
+  onEmitSignal?: (signal: Partial<SignalShard>) => void;
 }
 
 const generatePlotTelemetry = (plotId: string) => {
@@ -35,7 +36,7 @@ const generatePlotTelemetry = (plotId: string) => {
   return data;
 };
 
-const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
+const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: (import.meta as any).env.VITE_GOOGLE_MAPS_API_KEY || '', // Placeholder
@@ -53,6 +54,8 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
   const [isLocating, setIsLocating] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
+  const [isDroppingAnchor, setIsDroppingAnchor] = useState(false);
+  const [anchors, setAnchors] = useState<any[]>([]);
   
   const { selectedPlot, setSelectedPlot } = useAppStore();
   
@@ -79,9 +82,15 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
       setActiveMission(active || null);
     });
 
+    // Listen for AR Anchors
+    const unsubscribeAnchors = listenToCollection('ar_anchors', (data: any[]) => {
+      setAnchors(data);
+    });
+
     return () => {
       spatialService.stopListening();
       unsubscribeMissions();
+      unsubscribeAnchors();
     };
   }, [user.esin]);
 
@@ -166,6 +175,28 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
     }
   };
 
+  const onMapClick = async (e: google.maps.MapMouseEvent) => {
+    if (!isDroppingAnchor || !e.latLng) return;
+    
+    const newAnchor = {
+      stewardId: user.esin,
+      type: 'MARKER',
+      spatialPos: { x: e.latLng.lat(), y: 0, z: e.latLng.lng() },
+      data: { title: 'User Dropped Anchor', timestamp: new Date().toISOString(), accuracy: '0.01m', satellites: 14 }
+    };
+    
+    try {
+      await spatialService.saveAnchor(newAnchor);
+      toast.success('AR Anchor Dropped Successfully!');
+      if (onEmitSignal) {
+        onEmitSignal({ type: 'ledger_anchor', title: 'AR Anchor Dropped', message: `Dropped AR Anchor at ${e.latLng.lat().toFixed(4)}, ${e.latLng.lng().toFixed(4)} by ${user.esin}` });
+      }
+      setIsDroppingAnchor(false);
+    } catch (error: any) {
+      toast.error(`Failed to drop anchor: ${error.message}`);
+    }
+  };
+
   return isLoaded ? (
     <div className="h-[600px] w-full glass-card rounded-3xl overflow-hidden border border-white/10 relative flex">
       <div className="absolute top-6 left-6 z-10 flex flex-col gap-3">
@@ -184,6 +215,13 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
           <Camera size={16} />
           AR Field X-Ray
         </button>
+        <button 
+          onClick={() => setIsDroppingAnchor(!isDroppingAnchor)}
+          className={`px-6 py-4 backdrop-blur-md border rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all shadow-2xl active:scale-95 ${isDroppingAnchor ? 'bg-fuchsia-600/90 border-fuchsia-500/50 text-white' : 'bg-black/80 border-fuchsia-500/30 text-fuchsia-400 hover:bg-fuchsia-900/40'}`}
+        >
+          <Target size={16} />
+          {isDroppingAnchor ? 'Click Map to Drop' : 'Drop AR Anchor'}
+        </button>
       </div>
       
       <div className="absolute top-6 right-6 z-10 flex flex-col gap-3">
@@ -199,7 +237,8 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
           mapContainerStyle={{ width: '100%', height: '100%' }}
           center={mapCenter}
           zoom={mapZoom}
-          options={{ mapTypeId: 'satellite', disableDefaultUI: false }}
+          options={{ mapTypeId: 'satellite', disableDefaultUI: false, draggableCursor: isDroppingAnchor ? 'crosshair' : 'default' }}
+          onClick={onMapClick}
         >
           <DrawingManager
             onPolygonComplete={onPolygonComplete}
@@ -240,6 +279,23 @@ const GISPortal: React.FC<GISPortalProps> = ({ user }) => {
                 strokeWeight: 2,
                 strokeColor: '#ffffff',
                 rotation: robot.rot.y
+              }}
+            />
+          ))}
+
+          {/* AR Anchor Markers */}
+          {anchors.map((anchor) => (
+            <Marker
+              key={anchor.id}
+              position={{ lat: anchor.spatialPos.x, lng: anchor.spatialPos.z }}
+              title={anchor.data?.title || 'AR Anchor'}
+              icon={{
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 6,
+                fillColor: '#d946ef', // fuchsia-500
+                fillOpacity: 0.8,
+                strokeWeight: 2,
+                strokeColor: '#ffffff',
               }}
             />
           ))}
