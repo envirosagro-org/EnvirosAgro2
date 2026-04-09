@@ -38,48 +38,63 @@ class CostAccountingEngine {
   }
 
   public recordTransaction(transaction: Omit<Transaction, 'id' | 'timestamp'>): Transaction {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: `TX-${generateAlphanumericId(7)}`,
-      timestamp: Date.now()
-    };
-    
-    this.transactions.push(newTransaction);
-    
-    if (newTransaction.type === 'REVENUE') {
-      this.walletBalance += newTransaction.amount;
-    } else {
-      this.walletBalance -= newTransaction.amount;
+    try {
+      const newTransaction: Transaction = {
+        ...transaction,
+        id: `TX-${generateAlphanumericId(7)}`,
+        timestamp: Date.now()
+      };
+      
+      this.transactions.push(newTransaction);
+      
+      if (newTransaction.type === 'REVENUE') {
+        this.walletBalance += newTransaction.amount;
+      } else {
+        this.walletBalance -= newTransaction.amount;
+      }
+      
+      return newTransaction;
+    } catch (error) {
+      console.error("Error recording transaction:", error);
+      throw new Error("Failed to record transaction");
     }
-    
-    return newTransaction;
   }
 
   public async accountAIUsage(tokens: number, model: string) {
-    const cost = (tokens / 1000) * this.AI_COST_PER_1K_TOKENS;
-    this.aiUsage.tokens += tokens;
-    this.aiUsage.cost += cost;
-    
-    this.recordTransaction({
-      type: 'COST',
-      category: 'EA_AI_API',
-      amount: cost,
-      description: `Agro Lang Usage: ${model} (${tokens} tokens)`,
-      metadata: { tokens, model }
-    });
+    try {
+      const cost = (tokens / 1000) * this.AI_COST_PER_1K_TOKENS;
+      this.aiUsage.tokens += tokens;
+      this.aiUsage.cost += cost;
+      
+      this.recordTransaction({
+        type: 'COST',
+        category: 'EA_AI_API',
+        amount: cost,
+        description: `Agro Lang Usage: ${model} (${tokens} tokens)`,
+        metadata: { tokens, model }
+      });
+    } catch (error) {
+      console.error("Error accounting AI usage:", error);
+      throw new Error("Failed to account AI usage");
+    }
   }
 
   public generatePayment(category: Transaction['category'], baseAmount: number, description: string) {
-    // Cost Optimization Logic
-    const optimizedAmount = this.optimizeCost(baseAmount, category);
-    
-    return this.recordTransaction({
-      type: 'PAYMENT',
-      category,
-      amount: optimizedAmount,
-      description: `System Payment: ${description}`,
-      metadata: { originalAmount: baseAmount }
-    });
+    try {
+      // Cost Optimization Logic
+      const optimizedAmount = this.optimizeCost(baseAmount, category);
+      
+      return this.recordTransaction({
+        type: 'PAYMENT',
+        category,
+        amount: optimizedAmount,
+        description: `System Payment: ${description}`,
+        metadata: { originalAmount: baseAmount }
+      });
+    } catch (error) {
+      console.error("Error generating payment:", error);
+      throw new Error("Failed to generate payment");
+    }
   }
 
   private optimizeCost(amount: number, category: Transaction['category']): number {
@@ -94,6 +109,7 @@ class CostAccountingEngine {
   }
 
   public getFinancialReport(): FinancialReport {
+    try {
     const totalRevenue = this.transactions
       .filter(t => t.type === 'REVENUE')
       .reduce((sum, t) => sum + t.amount, 0);
@@ -117,12 +133,21 @@ class CostAccountingEngine {
       breakEvenPoint,
       costOptimizationScore: 85 // Simulated score
     };
+    } catch (error) {
+      console.error("Error generating financial report:", error);
+      throw new Error("Failed to generate financial report");
+    }
   }
 
   public async runAIOptimization() {
-    // This would call Agro Lang to analyze transactions and suggest optimizations
-    // For now, we simulate the background process
-    console.log("Running Agro Lang Cost Optimization...");
+    try {
+      // This would call Agro Lang to analyze transactions and suggest optimizations
+      // For now, we simulate the background process
+      console.log("Running Agro Lang Cost Optimization...");
+    } catch (error) {
+      console.error("Error running AI optimization:", error);
+      throw new Error("Failed to run AI optimization");
+    }
   }
 
   public getTransactions() {

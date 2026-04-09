@@ -46,7 +46,7 @@ const CATEGORY_META: Record<MissionCategory, { label: string, icon: any, color: 
 
 const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate, contracts, setContracts, onSaveContract, blueprints, onSaveTask, industrialUnits, liveProducts = [], onSaveProduct }) => {
   const { missionRegistrationState, setMissionRegistrationState } = useAppStore();
-  const [activeTab, setActiveTab] = useState<'manifest' | 'terminal' | 'archive'>('manifest');
+  const [activeTab, setActiveTab] = useState<'manifest' | 'terminal' | 'archive' | 'forge'>('manifest');
   const [activeMission, setActiveMission] = useState<FarmingContract | null>(null);
   const [isLinkingResource, setIsLinkingResource] = useState<string | null>(null);
   const [isSourcing, setIsSourcing] = useState(false);
@@ -267,6 +267,7 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
       <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
         {[
           { id: 'manifest', label: 'Mission Manifest', icon: LayoutGrid },
+          { id: 'forge', label: 'Contract Forge', icon: Gavel },
           { id: 'terminal', label: 'Management Terminal', icon: Monitor },
           { id: 'archive', label: 'Resolution Archive', icon: History },
         ].map(tab => (
@@ -481,6 +482,77 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
               </div>
            </div>
         )}
+        {/* --- VIEW: CONTRACT FORGE --- */}
+        {activeTab === 'forge' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[28px] bg-amber-600/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-xl">
+                    <Gavel size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Contract <span className="text-amber-400">Forge.</span></h3>
+                    <p className="text-[10px] text-amber-400 font-black uppercase tracking-[0.4em] mt-1">AI_POWERED_AGRO_LEGAL_DRAFTING</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="px-4 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] font-black text-amber-400 uppercase tracking-widest">SEHTI_COMPLIANT</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Drafting Intent</label>
+                    <textarea 
+                      placeholder="Describe the agreement terms in natural language... e.g., 'Draft a 3-cycle soil remediation contract with 15% yield-share and ESIN-anchored finality.'"
+                      className="w-full h-64 bg-black/60 border border-white/10 rounded-[40px] p-8 text-white font-medium italic outline-none focus:border-amber-500/40 transition-all resize-none"
+                    ></textarea>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <button className="py-6 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+                      <FileSearch size={16} /> SCAN_TEMPLATES
+                    </button>
+                    <button className="py-6 agro-gradient rounded-3xl text-white font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3">
+                      <Zap size={16} /> FORGE_CONTRACT
+                    </button>
+                  </div>
+                </div>
+
+                <div className="glass-card p-10 rounded-[48px] border border-white/10 bg-black/60 space-y-8 relative overflow-hidden">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest">Legal Integrity Audit</h4>
+                    <span className="text-xs font-mono text-amber-400">94.2%</span>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    {[
+                      { label: 'SEHTI Compliance', status: 'VERIFIED', color: 'text-emerald-400' },
+                      { label: 'Risk Mitigation', status: 'OPTIMAL', color: 'text-emerald-400' },
+                      { label: 'Ledger Anchoring', status: 'READY', color: 'text-blue-400' }
+                    ].map((audit, i) => (
+                      <div key={i} className="flex justify-between items-center p-5 bg-white/5 rounded-2xl border border-white/5">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{audit.label}</span>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${audit.color}`}>{audit.status}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-3xl space-y-3">
+                    <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                      <ShieldAlert size={12} /> AI_LEGAL_ADVISORY
+                    </p>
+                    <p className="text-xs text-slate-400 italic leading-relaxed">
+                      "The yield-share clause is currently set to 15%. Based on current market resonance, a 12.5% share would increase steward willingness by 24%."
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'manifest' && (
           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
              <div className="col-span-full py-32 text-center opacity-20 flex flex-col items-center gap-10">

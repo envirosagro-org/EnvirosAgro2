@@ -472,7 +472,9 @@ export type ViewState =
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
   | 'sitemap' | 'auth' | 'agro_lang_analyst' | 'settings' | 'temporal_video' | 'robot'
   | 'multimedia_generator' | 'cost_accounting' | 'internal_control' | 'governance' | 'carbon_credits' | 'traceability' | 'marketplace' | 'live_voice_bridge'
-  | 'mesh_protocol' | 'registry_handshake' | 'educational_resources' | 'hardware_registry' | 'device_control';
+  | 'mesh_protocol' | 'registry_handshake' | 'educational_resources' | 'hardware_registry' | 'device_control'
+  | 'impact_dashboard' | 'traceability_map' | 'telemetry_hub'
+  | 'swarm_orchestrator' | 'mrv_engine' | 'reputation_dashboard' | 'escrow_portal';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -792,6 +794,41 @@ export interface Candidate {
   reputation: number;
   contributions: string[];
   skills: string[];
+}
+
+export interface DroneMission {
+  id: string;
+  droneIds: string[];
+  zone: string;
+  path: { lat: number; lng: number }[];
+  status: 'IDLE' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  batteryThreshold: number;
+}
+
+export interface MRVReport {
+  id: string;
+  assetId: string;
+  dataPoints: SensorReading[];
+  carbonCreditsMinted: number;
+  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  timestamp: string;
+}
+
+export interface ReputationEvent {
+  id: string;
+  stewardEsin: string;
+  type: 'PROPOSAL_VOTE' | 'AUDIT_SUCCESS' | 'DATA_INGEST';
+  points: number;
+  timestamp: string;
+}
+
+export interface EscrowContract {
+  id: string;
+  buyerEsin: string;
+  sellerEsin: string;
+  amount: number;
+  milestones: { id: string; description: string; completed: boolean }[];
+  status: 'LOCKED' | 'RELEASED' | 'DISPUTED';
 }
 
 export interface Mission {

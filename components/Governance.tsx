@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Proposal, Vote, User, StewardPosition, Election } from '../types';
-import { ThumbsUp, ThumbsDown, MinusCircle, PlusCircle, Play, CheckCircle, XCircle, Zap } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MinusCircle, PlusCircle, Play, CheckCircle, XCircle, Zap, ShieldCheck, FileText, Vote as LucideVote } from 'lucide-react';
 import ElectionDashboard from './ElectionDashboard';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { draftProposal, calculateImpactScore } from '../services/geminiService';
@@ -21,6 +21,7 @@ interface GovernanceProps {
 }
 
 const Governance: React.FC<GovernanceProps> = ({ user, proposals, stewardPositions, elections, onSaveProposal, onSaveVote, onApplyForElection, onVoteInElection, onUpdateProposalStatus, notify }) => {
+  const [activeTab, setActiveTab] = useState<'proposals' | 'elections' | 'guilds'>('proposals');
   const [showProposalModal, setShowProposalModal] = useState(false);
   const [newProposal, setNewProposal] = useState({ title: '', description: '', thrust: 'Industry', fundingRequest: 0 });
 
@@ -68,16 +69,36 @@ const Governance: React.FC<GovernanceProps> = ({ user, proposals, stewardPositio
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-24 max-w-[1400px] mx-auto px-4">
       <SEO title="Governance" description="Participate in EnvirosAgro DAO governance: Submit proposals, vote on community initiatives, and shape the future of sustainable agriculture." />
-      <ElectionDashboard 
-        user={user} 
-        positions={stewardPositions} 
-        elections={elections} 
-        onApply={onApplyForElection} 
-        onVote={onVoteInElection} 
-        notify={notify} 
-      />
+      
+      <div className="flex bg-black/40 p-1 rounded-2xl border border-white/5 w-fit">
+        {[
+          { id: 'proposals', label: 'Proposals', icon: FileText },
+          { id: 'elections', label: 'Elections', icon: LucideVote },
+          { id: 'guilds', label: 'Stewardship Guilds', icon: ShieldCheck }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+          >
+            <tab.icon size={14} /> {tab.label}
+          </button>
+        ))}
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {activeTab === 'elections' && (
+        <ElectionDashboard 
+          user={user} 
+          positions={stewardPositions} 
+          elections={elections} 
+          onApply={onApplyForElection} 
+          onVote={onVoteInElection} 
+          notify={notify} 
+        />
+      )}
+
+      {activeTab === 'proposals' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-8">
           <div className="flex justify-between items-center">
             <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Governance <span className="text-indigo-400">DAO</span></h2>
@@ -128,6 +149,39 @@ const Governance: React.FC<GovernanceProps> = ({ user, proposals, stewardPositio
           </div>
         </div>
       </div>
+    )}
+
+    {activeTab === 'guilds' && (
+        <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { name: 'Soil Sentinels', members: 124, reputation: 4.8, color: 'text-emerald-400', desc: 'Focus on regenerative soil health and carbon sequestration.' },
+              { name: 'Water Weavers', members: 89, reputation: 4.5, color: 'text-blue-400', desc: 'Managing local water resources and irrigation efficiency.' },
+              { name: 'Genetic Guardians', members: 56, reputation: 4.9, color: 'text-purple-400', desc: 'Preserving heirloom seeds and genetic biodiversity.' }
+            ].map((guild, i) => (
+              <div key={i} className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-6 group hover:border-indigo-500/30 transition-all">
+                <div className="flex justify-between items-start">
+                  <div className={`w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center ${guild.color}`}>
+                    <ShieldCheck size={28} />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-500 uppercase font-black">Reputation</p>
+                    <p className={`text-xl font-black ${guild.color}`}>{guild.reputation}</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-xl font-black text-white uppercase italic">{guild.name}</h4>
+                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">{guild.desc}</p>
+                </div>
+                <div className="pt-6 border-t border-white/5 flex justify-between items-center">
+                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{guild.members} Stewards</span>
+                  <button className="px-6 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[8px] font-black text-white uppercase tracking-widest border border-white/10 transition-all">STAKE_REPUTATION</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showProposalModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">

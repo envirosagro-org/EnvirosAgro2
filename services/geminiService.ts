@@ -27,3 +27,15 @@ export async function calculateImpactScore(title: string, description: string, f
   });
   return parseInt(response.text || '0', 10);
 }
+
+export async function predictYield(cropType: string, soilData: any, weatherData: any): Promise<string> {
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: `Predict the yield for ${cropType} based on the following:
+    Soil Data: ${JSON.stringify(soilData)}
+    Weather Data: ${JSON.stringify(weatherData)}
+    
+    Provide a predicted yield range and recommendations for optimization.`,
+  });
+  return response.text || '';
+}

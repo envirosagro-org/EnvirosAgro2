@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { GoogleMap, useJsApiLoader, Polygon, DrawingManager, Marker, InfoWindow } from '@react-google-maps/api';
+import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibregl from 'maplibre-gl';
 import { spatialService, Plot } from '../services/spatialService';
-import { auth, onAuthStateChanged, listenToCollection } from '../services/firebaseService';
+import { auth, listenToCollection } from '../services/firebaseService';
 import { toast } from 'sonner';
 import { useAppStore } from '../store';
 import { User, Mission, SignalShard } from '../types';
@@ -37,20 +39,13 @@ const generatePlotTelemetry = (plotId: string) => {
 };
 
 const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: (import.meta as any).env.VITE_GOOGLE_MAPS_API_KEY || '', // Placeholder
-    libraries: ['drawing']
-  });
-
   const [plots, setPlots] = useState<Plot[]>([]);
   const [showAR, setShowAR] = useState(false);
   const [isPredictingYield, setIsPredictingYield] = useState(false);
   const [yieldPrediction, setYieldPrediction] = useState<any | null>(null);
   const [vouchingPlotId, setVouchingPlotId] = useState<string | null>(null);
   const [robots, setRobots] = useState<Record<string, any>>({});
-  const [mapCenter, setMapCenter] = useState({ lat: 0, lng: 0 });
-  const [mapZoom, setMapZoom] = useState(2);
+  const [mapViewState, setMapViewState] = useState({ longitude: 0, latitude: 0, zoom: 2 });
   const [isLocating, setIsLocating] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [activeMission, setActiveMission] = useState<Mission | null>(null);
@@ -107,9 +102,8 @@ const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
-        setMapCenter(loc);
+        setMapViewState({ longitude: loc.lng, latitude: loc.lat, zoom: 18 });
         setUserLocation(loc);
-        setMapZoom(18); // Zoom in closely for plotting
         setIsLocating(false);
         toast.success('GPS Lock Acquired');
       },
@@ -151,37 +145,13 @@ const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
     }
   };
 
-  const onPolygonComplete = async (polygon: google.maps.Polygon) => {
-    if (!auth.currentUser) {
-      toast.error('You must be logged in to save plots.');
-      return;
-    }
-
-    const path = polygon.getPath();
-    const coordinates = path.getArray().map(latLng => [latLng.lat(), latLng.lng()]);
-    
-    const plot: Plot = {
-      stewardId: user.esin,
-      name: `Plot ${plots.length + 1}`,
-      geometry: { type: 'Polygon', coordinates: [coordinates] }
-    };
-    
-    try {
-      const id = await spatialService.savePlot(plot);
-      setPlots([...plots, { ...plot, id }]);
-      toast.success('Plot saved successfully');
-    } catch (error: any) {
-      toast.error(`Failed to save plot: ${error.message}`);
-    }
-  };
-
-  const onMapClick = async (e: google.maps.MapMouseEvent) => {
-    if (!isDroppingAnchor || !e.latLng) return;
+  const onMapClick = async (e: any) => {
+    if (!isDroppingAnchor || !e.lngLat) return;
     
     const newAnchor = {
       stewardId: user.esin,
       type: 'MARKER',
-      spatialPos: { x: e.latLng.lat(), y: 0, z: e.latLng.lng() },
+      spatialPos: { x: e.lngLat.lat, y: 0, z: e.lngLat.lng },
       data: { title: 'User Dropped Anchor', timestamp: new Date().toISOString(), accuracy: '0.01m', satellites: 14 }
     };
     
@@ -189,7 +159,7 @@ const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
       await spatialService.saveAnchor(newAnchor);
       toast.success('AR Anchor Dropped Successfully!');
       if (onEmitSignal) {
-        onEmitSignal({ type: 'ledger_anchor', title: 'AR Anchor Dropped', message: `Dropped AR Anchor at ${e.latLng.lat().toFixed(4)}, ${e.latLng.lng().toFixed(4)} by ${user.esin}` });
+        onEmitSignal({ type: 'ledger_anchor', title: 'AR Anchor Dropped', message: `Dropped AR Anchor at ${e.lngLat.lat.toFixed(4)}, ${e.lngLat.lng.toFixed(4)} by ${user.esin}` });
       }
       setIsDroppingAnchor(false);
     } catch (error: any) {
@@ -197,7 +167,7 @@ const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
     }
   };
 
-  return isLoaded ? (
+  return (
     <div className="h-[600px] w-full glass-card rounded-3xl overflow-hidden border border-white/10 relative flex">
       <div className="absolute top-6 left-6 z-10 flex flex-col gap-3">
         <button 
@@ -233,53 +203,34 @@ const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
       </div>
       
       <div className="flex-1 relative">
-        <GoogleMap
-          mapContainerStyle={{ width: '100%', height: '100%' }}
-          center={mapCenter}
-          zoom={mapZoom}
-          options={{ mapTypeId: 'satellite', disableDefaultUI: false, draggableCursor: isDroppingAnchor ? 'crosshair' : 'default' }}
-          onClick={onMapClick}
-        >
-          <DrawingManager
-            onPolygonComplete={onPolygonComplete}
-            options={{
-              drawingControl: true,
-              drawingControlOptions: {
-                position: google.maps.ControlPosition.TOP_RIGHT,
-                drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+        <Map
+          {...mapViewState}
+          onMove={evt => setMapViewState(evt.viewState)}
+          mapStyle="https://demotiles.maplibre.org/style.json"
+          onClick={(e) => {
+            if (e.features && e.features.length > 0) {
+              const feature = e.features[0];
+              const plotId = feature.properties?.id;
+              if (plotId) {
+                const plot = plots.find(p => p.id === plotId);
+                if (plot) setSelectedPlot(plot);
               }
-            }}
-          />
-          
+            }
+            onMapClick(e);
+          }}
+          interactiveLayerIds={plots.map((_, i) => `plot-${i}`)}
+        >
           {userLocation && (
-            <Marker 
-              position={userLocation} 
-              icon={{
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: '#10B981',
-                fillOpacity: 1,
-                strokeWeight: 2,
-                strokeColor: '#ffffff',
-              }}
-            />
+            <Marker longitude={userLocation.lng} latitude={userLocation.lat} color="#10B981" />
           )}
 
           {/* Robot Swarm Markers */}
           {Object.entries(robots).map(([id, robot]: [string, any]) => (
             <Marker
               key={id}
-              position={{ lat: robot.pos.x, lng: robot.pos.z }}
-              title={id}
-              icon={{
-                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                scale: 6,
-                fillColor: robot.anim_state === 'working' ? '#10B981' : '#6366F1',
-                fillOpacity: 1,
-                strokeWeight: 2,
-                strokeColor: '#ffffff',
-                rotation: robot.rot.y
-              }}
+              longitude={robot.pos.z}
+              latitude={robot.pos.x}
+              color={robot.anim_state === 'working' ? '#10B981' : '#6366F1'}
             />
           ))}
 
@@ -287,37 +238,36 @@ const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
           {anchors.map((anchor) => (
             <Marker
               key={anchor.id}
-              position={{ lat: anchor.spatialPos.x, lng: anchor.spatialPos.z }}
-              title={anchor.data?.title || 'AR Anchor'}
-              icon={{
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 6,
-                fillColor: '#d946ef', // fuchsia-500
-                fillOpacity: 0.8,
-                strokeWeight: 2,
-                strokeColor: '#ffffff',
-              }}
+              longitude={anchor.spatialPos.z}
+              latitude={anchor.spatialPos.x}
+              color="#d946ef"
             />
           ))}
 
           {plots.map((plot, i) => {
             const isActiveMissionPlot = activeMission?.plotId === plot.id;
+            const polygonData = {
+              type: 'Feature',
+              properties: { id: plot.id },
+              geometry: {
+                type: 'Polygon',
+                coordinates: [plot.geometry.coordinates[0].map((coord: any) => [coord[1], coord[0]])]
+              }
+            };
             return (
-              <Polygon 
-                key={i} 
-                paths={plot.geometry.coordinates[0].map((coord: any) => ({ lat: coord[0], lng: coord[1] }))}
-                onClick={() => setSelectedPlot(plot)}
-                options={{
-                  fillColor: isActiveMissionPlot ? '#F43F5E' : (selectedPlot?.id === plot.id ? '#3B82F6' : '#10B981'),
-                  fillOpacity: isActiveMissionPlot ? 0.6 : 0.4,
-                  strokeColor: isActiveMissionPlot ? '#F43F5E' : (selectedPlot?.id === plot.id ? '#3B82F6' : '#10B981'),
-                  strokeWeight: isActiveMissionPlot ? 4 : 2,
-                  zIndex: isActiveMissionPlot ? 100 : 1
-                }}
-              />
+              <Source key={i} id={`plot-source-${i}`} type="geojson" data={polygonData as any}>
+                <Layer
+                  id={`plot-${i}`}
+                  type="fill"
+                  paint={{
+                    'fill-color': isActiveMissionPlot ? '#F43F5E' : (selectedPlot?.id === plot.id ? '#3B82F6' : '#10B981'),
+                    'fill-opacity': isActiveMissionPlot ? 0.6 : 0.4
+                  }}
+                />
+              </Source>
             );
           })}
-        </GoogleMap>
+        </Map>
       </div>
 
       {/* Mission HUD Overlay */}
@@ -448,7 +398,7 @@ const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
         <ARFieldXRay user={user} onClose={() => setShowAR(false)} />
       )}
     </div>
-  ) : <></>;
+  );
 };
 
 export default GISPortal;

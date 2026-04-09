@@ -30,6 +30,13 @@ const NexusCRM = React.lazy(() => import('./NexusCRM'));
 const AgroMultimediaGenerator = React.lazy(() => import('./AgroMultimediaGenerator'));
 const CostAccountingDashboard = React.lazy(() => import('./CostAccountingDashboard'));
 const InternalControlDashboard = React.lazy(() => import('./InternalControlDashboard'));
+const ImpactDashboard = React.lazy(() => import('./ImpactDashboard'));
+const TraceabilityMap = React.lazy(() => import('./TraceabilityMap'));
+const TelemetryHub = React.lazy(() => import('./TelemetryHub'));
+const SwarmOrchestrator = React.lazy(() => import('./SwarmOrchestrator'));
+const MRVEngine = React.lazy(() => import('./MRVEngine'));
+const ReputationDashboard = React.lazy(() => import('./ReputationDashboard'));
+const EscrowPortal = React.lazy(() => import('./EscrowPortal'));
 
 export const getComponentForView = (
   view: ViewState,
@@ -65,6 +72,13 @@ export const getComponentForView = (
     case 'multimedia_generator': return <AgroMultimediaGenerator {...props} />;
     case 'cost_accounting': return <CostAccountingDashboard {...props} />;
     case 'internal_control': return <InternalControlDashboard {...props} />;
+    case 'impact_dashboard': return <ImpactDashboard {...props} />;
+    case 'traceability_map': return <TraceabilityMap {...props} />;
+    case 'telemetry_hub': return <TelemetryHub {...props} />;
+    case 'swarm_orchestrator': return <SwarmOrchestrator {...props} />;
+    case 'mrv_engine': return <MRVEngine {...props} />;
+    case 'reputation_dashboard': return <ReputationDashboard {...props} />;
+    case 'escrow_portal': return <EscrowPortal {...props} />;
     default: return <Dashboard {...props} />;
   }
 };

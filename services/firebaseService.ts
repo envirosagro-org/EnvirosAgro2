@@ -16,7 +16,8 @@ import {
 } from "firebase/auth";
 import { 
   initializeFirestore,
-  memoryLocalCache,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   doc, 
   setDoc, 
   getDoc, 
@@ -99,10 +100,11 @@ export const verifyAppCheckHandshake = async (): Promise<boolean> => {
 // 3. Initialize services
 export const auth = getAuth(app);
 
-// FORCED RESILIENCE CONFIG: Using auto-detect long polling for maximum cross-environment compatibility
-// Removed useFetchHandler to prevent potential "Illegal constructor" issues in specific browser sandboxes
+// FORCED RESILIENCE CONFIG: Using persistent local cache for offline support
 export const db = initializeFirestore(app, {
-  localCache: memoryLocalCache()
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
 }); 
 
 export const rtdb = getDatabase(app);
@@ -409,6 +411,19 @@ export const uploadMediaShard = (
       }
     );
   });
+};
+
+export const getCollection = async (collectionName: string, isGlobal: boolean = false) => {
+  const userId = auth.currentUser?.uid;
+  if (!userId && !isGlobal) return [];
+  let q = isGlobal ? query(collection(db, collectionName)) : query(collection(db, collectionName), where("stewardId", "==", userId));
+  try {
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ ...d.data(), id: d.id }));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.LIST, collectionName);
+    return [];
+  }
 };
 
 export const listenToCollection = (collectionName: string, callback: (items: any[]) => void, isGlobal: boolean = false) => {

@@ -21,7 +21,14 @@ import {
   ArrowRightLeft,
   FileCheck2,
   Coins,
-  Gauge
+  Gauge,
+  Camera,
+  Globe,
+  Layers,
+  X,
+  Loader2,
+  BrainCircuit,
+  Search
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
@@ -49,13 +56,31 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
   const [plots, setPlots] = useState<Plot[]>([]);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [settlements, setSettlements] = useState<Settlement[]>([]);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SETTLEMENTS' | 'NETWORK' | 'DASHBOARD'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SETTLEMENTS' | 'NETWORK' | 'DASHBOARD' | 'SCOUT' | 'SENTINEL'>('OVERVIEW');
+  const [scoutImage, setScoutImage] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [scoutResult, setScoutResult] = useState<string | null>(null);
 
   useEffect(() => {
     if (user.esin) {
       spatialService.getPlots(user.esin).then(setPlots).catch(console.error);
     }
   }, [user.esin]);
+
+  const handleScoutAnalysis = async () => {
+    if (!scoutImage) return;
+    setIsAnalyzing(true);
+    try {
+      // Simulate AI Analysis
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      setScoutResult("ANALYSIS COMPLETE: Detected early-stage Nitrogen deficiency in Sector 4. Recommendation: Apply 2.5kg of organic compost tea. Mesh Sync: 94%.");
+      toast.success("FIELD_SCOUT_ANALYSIS_SUCCESS");
+    } catch (e) {
+      toast.error("ANALYSIS_FAILED");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   // Mock Settlements
   useEffect(() => {
@@ -130,8 +155,10 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                 {[
                   { id: 'OVERVIEW', label: 'Overview', icon: Activity },
                   { id: 'DASHBOARD', label: 'Live Dashboard', icon: Gauge },
+                  { id: 'SCOUT', label: 'Field Scout', icon: Camera },
                   { id: 'SETTLEMENTS', label: 'Auto-Settlements', icon: FileCheck2 },
                   { id: 'NETWORK', label: 'Data Mesh', icon: Network },
+                  { id: 'SENTINEL', label: 'Sentinel HUD', icon: Globe },
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -324,6 +351,106 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                   </motion.div>
                 )}
 
+                {activeTab === 'SCOUT' && (
+                  <motion.div
+                    key="scout"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="space-y-8"
+                  >
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                      <div className="lg:col-span-7 glass-card p-10 rounded-[48px] border border-emerald-500/20 bg-emerald-500/[0.02] flex flex-col items-center justify-center min-h-[500px] relative overflow-hidden">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.1)_0%,transparent_70%)] pointer-events-none"></div>
+                        
+                        {!scoutImage ? (
+                          <div className="text-center space-y-6 relative z-10">
+                            <div className="w-24 h-24 rounded-[32px] bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto shadow-2xl">
+                              <Camera size={40} />
+                            </div>
+                            <div>
+                              <h4 className="text-2xl font-black text-white uppercase italic">Ingest Field Imagery</h4>
+                              <p className="text-xs text-slate-500 max-w-xs mx-auto mt-2 font-medium">Upload crop or soil photos for real-time Gemini-powered diagnostic analysis.</p>
+                            </div>
+                            <button 
+                              onClick={() => setScoutImage('https://picsum.photos/seed/crop/800/600')}
+                              className="px-10 py-4 agro-gradient text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                            >
+                              SELECT_IMAGE_SHARD
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full relative group">
+                            <img src={scoutImage} alt="Scout" className="w-full h-full object-cover rounded-[32px] border-2 border-emerald-500/20" referrerPolicy="no-referrer" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[32px]">
+                              <button onClick={() => setScoutImage(null)} className="p-4 bg-rose-600 text-white rounded-full shadow-2xl"><X size={24} /></button>
+                            </div>
+                            {isAnalyzing && (
+                              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-[32px] backdrop-blur-sm">
+                                <Loader2 className="w-12 h-12 text-emerald-400 animate-spin mb-4" />
+                                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.4em] animate-pulse">Analyzing_Neural_Patterns...</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="lg:col-span-5 space-y-8">
+                        <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-8 min-h-[500px] flex flex-col">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                              <BrainCircuit size={24} />
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-black text-white uppercase italic">Diagnostic Output</h4>
+                              <p className="text-[8px] text-emerald-400 font-black uppercase tracking-widest">GEMINI_VISION_v1.5_PRO</p>
+                            </div>
+                          </div>
+
+                          <div className="flex-1 bg-black/60 border border-white/5 rounded-3xl p-8 font-mono text-xs leading-relaxed text-slate-400 overflow-y-auto custom-scrollbar-terminal">
+                            {scoutResult ? (
+                              <div className="space-y-6 animate-in fade-in duration-500">
+                                <p className="text-white font-bold border-b border-white/10 pb-4">{scoutResult}</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Confidence</p>
+                                    <p className="text-lg font-black text-emerald-400">98.2%</p>
+                                  </div>
+                                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Urgency</p>
+                                    <p className="text-lg font-black text-amber-500">MEDIUM</p>
+                                  </div>
+                                </div>
+                                <div className="space-y-3">
+                                  <p className="text-[8px] text-slate-500 uppercase font-black">Recommended Actions</p>
+                                  <ul className="space-y-2">
+                                    <li className="flex items-center gap-2 text-[10px] text-slate-300"><CheckCircle2 size={12} className="text-emerald-500" /> Apply Nitrogen-rich organic tea</li>
+                                    <li className="flex items-center gap-2 text-[10px] text-slate-300"><CheckCircle2 size={12} className="text-emerald-500" /> Increase irrigation frequency by 15%</li>
+                                    <li className="flex items-center gap-2 text-[10px] text-slate-300"><CheckCircle2 size={12} className="text-emerald-500" /> Monitor Sector 4 for next 72h</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                                <Search size={48} className="text-slate-700" />
+                                <p className="text-[10px] font-black uppercase tracking-widest">Awaiting_Input_Shard...</p>
+                              </div>
+                            )}
+                          </div>
+
+                          <button 
+                            disabled={!scoutImage || isAnalyzing}
+                            onClick={handleScoutAnalysis}
+                            className="w-full py-5 agro-gradient text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl disabled:opacity-50 disabled:grayscale transition-all"
+                          >
+                            {isAnalyzing ? 'PROCESSING...' : 'RUN_DIAGNOSTIC_SUITE'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {activeTab === 'NETWORK' && (
                   <motion.div
                     key="network"
@@ -383,6 +510,88 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                           <div className="text-xs font-black text-white uppercase tracking-tight">Throughput</div>
                           <div className="text-[10px] text-slate-500">1.2 MB/s Evidence Stream</div>
                         </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                {activeTab === 'SENTINEL' && (
+                  <motion.div
+                    key="sentinel"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="space-y-10"
+                  >
+                    <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-8 shadow-3xl relative overflow-hidden">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-6">
+                          <div className="w-14 h-14 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                            <Globe size={28} />
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Satellite <span className="text-blue-400">Sentinel HUD.</span></h3>
+                            <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.4em] mt-1">MULTI_SPECTRAL_ORBITAL_SURVEILLANCE</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          {['NDVI', 'Moisture', 'Biomass', 'Thermal'].map(layer => (
+                            <button key={layer} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+                              {layer}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="h-[500px] bg-slate-900 rounded-[40px] border border-white/10 relative overflow-hidden group">
+                        {/* Simulated Satellite Map */}
+                        <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/satellite/1920/1080')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-[20s]"></div>
+                        <div className="absolute inset-0 bg-blue-500/10 mix-blend-overlay"></div>
+                        
+                        {/* Grid Overlay */}
+                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
+                        {/* Heatmap Simulation */}
+                        <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-emerald-500/30 rounded-full blur-[100px] animate-pulse"></div>
+                        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-amber-500/20 rounded-full blur-[80px]"></div>
+
+                        {/* HUD Elements */}
+                        <div className="absolute top-10 left-10 space-y-4">
+                          <div className="p-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl space-y-1">
+                            <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Orbital Position</p>
+                            <p className="text-xs font-mono text-white">LAT: 14.224 | LON: -92.118</p>
+                          </div>
+                          <div className="p-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl space-y-1">
+                            <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">NDVI Index</p>
+                            <p className="text-xs font-mono text-white">0.84 (Optimal)</p>
+                          </div>
+                        </div>
+
+                        <div className="absolute bottom-10 right-10 flex gap-4">
+                          <div className="p-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-4">
+                            <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Sentinel-2 Sync: OK</span>
+                          </div>
+                        </div>
+
+                        {/* Scanning Line */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-blue-500/40 shadow-[0_0_20px_#3b82f6] animate-[scan_4s_linear_infinite]"></div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        {[
+                          { label: 'Cloud Cover', val: '12', unit: '%', icon: Info },
+                          { label: 'Resolution', val: '10', unit: 'm/px', icon: Target },
+                          { label: 'Revisit Time', val: '3', unit: 'days', icon: Clock },
+                          { label: 'Spectral Bands', val: '13', unit: 'ch', icon: Layers }
+                        ].map((stat, i) => (
+                          <div key={i} className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-2">
+                            <div className="flex items-center gap-2 text-slate-500">
+                              <stat.icon size={14} />
+                              <span className="text-[10px] font-black uppercase tracking-widest">{stat.label}</span>
+                            </div>
+                            <p className="text-2xl font-black text-white">{stat.val}<span className="text-xs text-slate-700 ml-1">{stat.unit}</span></p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </motion.div>

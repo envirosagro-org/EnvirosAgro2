@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { LiveAgroProduct } from '../types';
 import { CheckCircle2, AlertCircle, Clock, Search, Package, ArrowRight, MapPin } from 'lucide-react';
 import { SEO } from './SEO';
-import { GoogleMap, useJsApiLoader, Polygon } from '@react-google-maps/api';
+import Map, { Source, Layer } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { spatialService, Plot } from '../services/spatialService';
 
 interface TraceabilityProps {
@@ -15,13 +16,19 @@ const Traceability: React.FC<TraceabilityProps> = ({ product: initialProduct, li
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<LiveAgroProduct | null>(initialProduct || liveProducts[0] || null);
   const [originPlot, setOriginPlot] = useState<Plot | null>(null);
+  const polygonData = useMemo(() => {
+    if (!originPlot) return null;
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [originPlot.geometry.coordinates[0].map((coord: any) => [coord[1], coord[0]])]
+      }
+    };
+  }, [originPlot]);
 
   const productsToDisplay = liveProducts.length > 0 ? liveProducts : [];
-
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: (import.meta as any).env.VITE_GOOGLE_MAPS_API_KEY || '',
-  });
 
   const stages = ['Inception', 'Processing', 'Quality_Audit', 'Finalization', 'Market_Ready'];
 
@@ -181,29 +188,33 @@ const Traceability: React.FC<TraceabilityProps> = ({ product: initialProduct, li
             </div>
 
             {/* GIS Origin Map */}
-            {isLoaded && originPlot && (
+            {originPlot && (
               <div className="mt-12 pt-8 border-t border-white/5">
                 <div className="flex items-center gap-3 mb-6">
                   <MapPin className="w-5 h-5 text-emerald-400" />
                   <h4 className="text-sm font-black uppercase tracking-widest text-slate-500">GIS Origin Mapping</h4>
                 </div>
                 <div className="h-[300px] w-full rounded-2xl overflow-hidden border border-white/10">
-                  <GoogleMap
-                    mapContainerStyle={{ width: '100%', height: '100%' }}
-                    center={{ lat: originPlot.geometry.coordinates[0][0][0], lng: originPlot.geometry.coordinates[0][0][1] }}
-                    zoom={16}
-                    options={{ mapTypeId: 'satellite', disableDefaultUI: true }}
+                  <Map
+                    initialViewState={{
+                      longitude: originPlot.geometry.coordinates[0][0][1],
+                      latitude: originPlot.geometry.coordinates[0][0][0],
+                      zoom: 16
+                    }}
+                    mapStyle="https://demotiles.maplibre.org/style.json"
                   >
-                    <Polygon 
-                      paths={originPlot.geometry.coordinates[0].map((coord: any) => ({ lat: coord[0], lng: coord[1] }))}
-                      options={{
-                        fillColor: '#10B981',
-                        fillOpacity: 0.4,
-                        strokeColor: '#10B981',
-                        strokeWeight: 2,
-                      }}
-                    />
-                  </GoogleMap>
+                    {polygonData && (
+                      <Source type="geojson" data={polygonData as any}>
+                        <Layer
+                          type="fill"
+                          paint={{
+                            'fill-color': '#10B981',
+                            'fill-opacity': 0.4
+                          }}
+                        />
+                      </Source>
+                    )}
+                  </Map>
                 </div>
                 <p className="text-xs text-slate-500 mt-4 font-mono">Precision Shard ID: {originPlot.id} • Acquired via Swarm Telemetry</p>
               </div>

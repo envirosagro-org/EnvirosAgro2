@@ -254,8 +254,9 @@ interface EducationalResourcesProps {
 }
 
 const EducationalResources: React.FC<EducationalResourcesProps> = ({ user, onNavigate, onUpdateUser, onEmitSignal }) => {
-  const [activeTab, setActiveTab] = useState<'resources' | 'elearning' | 'industrial' | 'tutor' | 'teacher'>('resources');
+  const [activeTab, setActiveTab] = useState<'resources' | 'elearning' | 'industrial' | 'tutor' | 'teacher' | 'tree'>('resources');
   const [activeCategory, setActiveCategory] = useState<'all' | 'sustainable_ag' | 'blockchain' | 'platform_usage'>('all');
+  const [knowledgeProgress, setKnowledgeProgress] = useState(42); // Percentage for tree growth
   
   // E-Learning State
   const [isRegistered, setIsRegistered] = useState(false);
@@ -500,8 +501,99 @@ const EducationalResources: React.FC<EducationalResourcesProps> = ({ user, onNav
           >
             Teacher Dashboard
           </button>
+          <button
+            onClick={() => setActiveTab('tree')}
+            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'tree' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          >
+            Knowledge Tree
+          </button>
         </div>
       </div>
+
+      {/* --- VIEW: KNOWLEDGE TREE --- */}
+      {activeTab === 'tree' && (
+        <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="glass-card p-12 rounded-[64px] border border-emerald-500/20 bg-emerald-500/[0.02] relative overflow-hidden min-h-[600px] flex flex-col items-center justify-center">
+            <div className="absolute top-12 left-12">
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Tree of <span className="text-emerald-400">Knowledge.</span></h3>
+              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.4em] mt-1">SEHTI_EDUCATIONAL_EVOLUTION</p>
+            </div>
+
+            <div className="relative w-full max-w-3xl aspect-square flex items-center justify-center">
+              {/* Visual Tree Representation */}
+              <div className="relative">
+                {/* Trunk */}
+                <div className="w-8 h-64 bg-emerald-900/40 border-x border-emerald-500/20 rounded-t-full relative z-10">
+                  <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>
+                </div>
+                
+                {/* Branches & Leaves (Growth based on progress) */}
+                {[
+                  { angle: -45, scale: 0.8, level: 'Primary', color: 'bg-emerald-500' },
+                  { angle: 45, scale: 0.9, level: 'Junior', color: 'bg-emerald-400' },
+                  { angle: -30, scale: 1.1, level: 'Senior', color: 'bg-teal-500' },
+                  { angle: 30, scale: 1.2, level: 'Pro', color: 'bg-blue-500' }
+                ].map((branch, i) => {
+                  const isUnlocked = knowledgeProgress > (i * 25);
+                  return (
+                    <div 
+                      key={i} 
+                      className={`absolute top-1/4 left-1/2 origin-bottom transition-all duration-1000 ${isUnlocked ? 'opacity-100 scale-100' : 'opacity-20 scale-50'}`}
+                      style={{ transform: `translateX(-50%) rotate(${branch.angle}deg) scale(${branch.scale})` }}
+                    >
+                      <div className={`w-2 h-32 ${branch.color}/20 border-x border-white/10 rounded-t-full`}></div>
+                      <div className={`absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 ${branch.color} rounded-full blur-2xl opacity-20 animate-pulse`}></div>
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 px-3 py-1 rounded-full text-[8px] font-black text-white uppercase whitespace-nowrap">
+                        {branch.level}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Root System */}
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-4">
+                  <div className="w-1 h-12 bg-emerald-900/40 rounded-full rotate-12"></div>
+                  <div className="w-1 h-16 bg-emerald-900/40 rounded-full -rotate-6"></div>
+                  <div className="w-1 h-10 bg-emerald-900/40 rounded-full rotate-45"></div>
+                </div>
+              </div>
+
+              {/* Growth HUD */}
+              <div className="absolute bottom-0 right-0 glass-card p-8 rounded-3xl border border-white/5 bg-black/60 space-y-4 shadow-2xl">
+                <div className="flex justify-between items-center gap-10">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Evolution</p>
+                  <p className="text-xl font-mono font-black text-emerald-400">{knowledgeProgress}%</p>
+                </div>
+                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${knowledgeProgress}%` }}></div>
+                </div>
+                <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest">342 / 800 Modules Mastered</p>
+              </div>
+            </div>
+
+            <div className="absolute bottom-12 left-12 flex gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <Award size={20} />
+                </div>
+                <div>
+                  <p className="text-[8px] text-slate-500 uppercase font-black">Current Rank</p>
+                  <p className="text-xs font-bold text-white uppercase italic">Senior Steward</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <RefreshCw size={20} />
+                </div>
+                <div>
+                  <p className="text-[8px] text-slate-500 uppercase font-black">Next Milestone</p>
+                  <p className="text-xs font-bold text-white uppercase italic">Industrial Pro</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'resources' && (
         <div className="space-y-8 animate-in fade-in">

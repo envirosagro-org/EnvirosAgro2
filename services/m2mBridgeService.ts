@@ -7,23 +7,33 @@ import { AgroResource } from '../types';
  */
 
 export const initiateHardwareHandshake = async (asset: AgroResource) => {
-  // M2M handshake logic: 
-  // 1. Ensure asset has IOT_HANDSHAKE verification meta
-  // 2. Save to Firebase
-  const handshakeAsset = {
-    ...asset,
-    status: 'AUDITING', // Initial handshake status
-    verificationMeta: {
-      ...asset.verificationMeta,
-      method: 'IOT_HANDSHAKE',
-      verifiedAt: new Date().toISOString(),
-    }
-  };
-  
-  return await saveCollectionItem('hardware_assets', handshakeAsset);
+  try {
+    // M2M handshake logic: 
+    // 1. Ensure asset has IOT_HANDSHAKE verification meta
+    // 2. Save to Firebase
+    const handshakeAsset = {
+      ...asset,
+      status: 'AUDITING', // Initial handshake status
+      verificationMeta: {
+        ...asset.verificationMeta,
+        method: 'IOT_HANDSHAKE',
+        verifiedAt: new Date().toISOString(),
+      }
+    };
+    
+    return await saveCollectionItem('hardware_assets', handshakeAsset);
+  } catch (error) {
+    console.error("Error initiating hardware handshake:", error);
+    throw new Error("Failed to initiate hardware handshake");
+  }
 };
 
 export const listenToHandshakedAssets = (callback: (assets: AgroResource[]) => void) => {
-  // Network ingest: Listen for all handshaked assets
-  return listenToCollection('hardware_assets', callback, true);
+  try {
+    // Network ingest: Listen for all handshaked assets
+    return listenToCollection('hardware_assets', callback, true);
+  } catch (error) {
+    console.error("Error listening to handshaked assets:", error);
+    return () => {};
+  }
 };

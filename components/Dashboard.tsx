@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDeviceSensors } from '../hooks/useDeviceSensors';
 import { iotService } from '../services/iotService';
 import { SycamoreLogo } from './Icons';
 // Added missing icons for environmental thrust, human heart resonance, registry connectivity, system config and ledger layers
@@ -31,11 +32,16 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], blockchain = [], mempool = [], isMining = false }) => {
+  const { batteryLevel, isCharging, connectionType, isOnline } = useDeviceSensors();
   const { navigate } = useAppNavigation();
   const onNavigate = navigate;
   const [showIdentityCard, setShowIdentityCard] = useState(false);
   const [networkDrift, setNetworkDrift] = useState(0.02);
   const [isIoTActive, setIsIoTActive] = useState(false);
+  const [alerts, setAlerts] = useState<any[]>([
+    { id: 'alt-1', type: 'CRITICAL', msg: 'Node EA-42 reporting 15% drop in Resonance', time: '2m ago' },
+    { id: 'alt-2', type: 'INFO', msg: 'New Bounty Shard: 500 EAC for Sonic Soil Repair', time: '15m ago' },
+  ]);
   const totalBalance = user.wallet.balance + (user.wallet.bonusBalance || 0);
 
   const toggleIoT = () => {
@@ -277,41 +283,69 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
         </div>
       </div>
 
-      {/* Strategic Path Execution */}
-      <div className="space-y-6 pt-10">
-        <div className="flex items-center gap-6 px-10 mb-6">
-           <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20"><AlertCircle className="text-amber-500" /></div>
-           <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">STRATEGIC <span className="text-amber-500">QUORUM</span></h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-           {RECOMMENDATIONS.map((rec) => (
-             <div key={rec.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/60 shadow-3xl group hover:border-indigo-500/40 transition-all flex flex-col justify-between min-h-[320px] relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><rec.icon size={250} /></div>
-                <div className="space-y-6 relative z-10">
-                   <div className="flex justify-between items-start">
-                      <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${rec.col} shadow-inner group-hover:rotate-6 transition-all`}>
-                         <rec.icon size={32} />
-                      </div>
-                      <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl transition-all ${
-                         rec.priority === 'High' ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 
-                         rec.priority === 'Critical' ? 'bg-rose-600/10 text-rose-500 border-rose-500/20 animate-pulse' : 
-                         'bg-emerald-600/10 text-emerald-400 border-emerald-500/20'
-                      }`}>
-                         {rec.priority} PRIORITY
-                      </span>
-                   </div>
-                   <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none m-0 drop-shadow-2xl">{rec.title}</h4>
-                   <p className="text-base text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity font-medium">"{rec.desc}"</p>
+      {/* Mesh Alerts & Recommendations */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-10 px-4">
+        <div className="lg:col-span-1 space-y-8">
+          <div className="glass-card p-10 rounded-[56px] border border-rose-500/20 bg-rose-500/[0.02] space-y-8 shadow-3xl">
+            <div className="flex justify-between items-center">
+              <h4 className="text-sm font-black text-white uppercase tracking-widest italic flex items-center gap-3">
+                <ShieldAlert className="text-rose-500" size={20} />
+                Mesh Alerts
+              </h4>
+              <span className="px-3 py-1 bg-rose-500/20 border border-rose-500/40 rounded-full text-[8px] font-black text-rose-400 uppercase">2 ACTIVE</span>
+            </div>
+            <div className="space-y-4">
+              {alerts.map(alert => (
+                <div key={alert.id} className="p-6 bg-black/40 rounded-3xl border border-white/5 flex justify-between items-center group hover:border-rose-500/40 transition-all cursor-pointer">
+                  <div className="space-y-1">
+                    <p className={`text-[10px] font-black uppercase ${alert.type === 'CRITICAL' ? 'text-rose-500' : 'text-blue-400'}`}>{alert.type}</p>
+                    <p className="text-xs font-bold text-white">{alert.msg}</p>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-600">{alert.time}</span>
                 </div>
-                <button 
-                  onClick={() => onNavigate(rec.target as ViewState)}
-                  className="w-full py-6 mt-10 bg-white/5 border-2 border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white hover:bg-emerald-600 hover:border-emerald-400 transition-all flex items-center justify-center gap-4 active:scale-95 shadow-xl relative z-10"
-                >
-                   EXECUTE_STRATEGY <ArrowRight size={18} />
-                </button>
-             </div>
-           ))}
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2 space-y-6">
+          {/* Strategic Path Execution */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-6 px-10 mb-6">
+               <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20"><AlertCircle className="text-amber-500" /></div>
+               <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">STRATEGIC <span className="text-amber-500">QUORUM</span></h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
+               {RECOMMENDATIONS.map((rec) => (
+                 <div key={rec.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/60 shadow-3xl group hover:border-indigo-500/40 transition-all flex flex-col justify-between min-h-[320px] relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><rec.icon size={250} /></div>
+                    <div className="space-y-6 relative z-10">
+                       <div className="flex justify-between items-start">
+                          <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 ${rec.col} shadow-inner group-hover:rotate-6 transition-all`}>
+                             <rec.icon size={32} />
+                          </div>
+                          <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl transition-all ${
+                             rec.priority === 'High' ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 
+                             rec.priority === 'Critical' ? 'bg-rose-600/10 text-rose-500 border-rose-500/20 animate-pulse' : 
+                             'bg-emerald-600/10 text-emerald-400 border-emerald-500/20'
+                          }`}>
+                             {rec.priority} PRIORITY
+                          </span>
+                       </div>
+                       <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none m-0 drop-shadow-2xl">{rec.title}</h4>
+                       <p className="text-base text-slate-500 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity font-medium">"{rec.desc}"</p>
+                    </div>
+                    <button 
+                      onClick={() => onNavigate(rec.target as ViewState)}
+                      className="w-full py-6 mt-10 bg-white/5 border-2 border-white/10 rounded-full text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 hover:text-white hover:bg-emerald-600 hover:border-emerald-400 transition-all flex items-center justify-center gap-4 active:scale-95 shadow-xl relative z-10"
+                    >
+                       EXECUTE_STRATEGY <ArrowRight size={18} />
+                    </button>
+                 </div>
+               ))}
+            </div>
+          </div>
         </div>
       </div>
 

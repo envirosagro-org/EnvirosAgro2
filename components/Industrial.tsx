@@ -111,7 +111,7 @@ const ANALYTICS_DATA = [
 const Industrial: React.FC<IndustrialProps> = ({ 
   user, onSpendEAC, onSaveProject, industrialUnits, onNavigate, vendorProducts = [], orders = [], notify, initialSection 
 }) => {
-  const [activeTab, setActiveTab] = useState<'bridge' | 'sync' | 'path' | 'tenders' | 'workers' | 'mesh'>('bridge');
+  const [activeTab, setActiveTab] = useState<'bridge' | 'sync' | 'path' | 'tenders' | 'workers' | 'mesh' | 'twin'>('bridge');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [oracleAdvice, setOracleAdvice] = useState<string | null>(null);
@@ -119,7 +119,7 @@ const Industrial: React.FC<IndustrialProps> = ({
   // Sync with initialSection for Vector Routing
   useEffect(() => {
     if (initialSection) {
-      if (['bridge', 'sync', 'path', 'tenders', 'workers', 'mesh'].includes(initialSection)) {
+      if (['bridge', 'sync', 'path', 'tenders', 'workers', 'mesh', 'twin'].includes(initialSection)) {
         setActiveTab(initialSection as any);
       }
     }
@@ -217,6 +217,7 @@ const Industrial: React.FC<IndustrialProps> = ({
            {[
              { id: 'bridge', label: 'Registry Bridge', icon: Route },
              { id: 'mesh', label: 'Mesh Visualization', icon: Network },
+             { id: 'twin', label: 'Digital Twin', icon: Box },
              { id: 'sync', label: 'Process Sync', icon: RefreshCw },
              { id: 'path', label: 'Path Analyzer', icon: Workflow },
              { id: 'tenders', label: 'Bounty Manifest', icon: Hammer },
@@ -263,6 +264,130 @@ const Industrial: React.FC<IndustrialProps> = ({
       {/* 3. Main Operational Viewport */}
       <div className="min-h-[70vh] md:min-h-[80vh] relative z-10 space-y-16 md:space-y-24">
         
+        {/* --- VIEW: DIGITAL TWIN --- */}
+        {activeTab === 'twin' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+              <div className="lg:col-span-8 glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 relative overflow-hidden min-h-[700px] flex flex-col">
+                <div className="flex justify-between items-center mb-10 relative z-10">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[28px] bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-xl">
+                      <Box size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Industrial <span className="text-indigo-400">Twin.</span></h3>
+                      <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.4em] mt-1">REAL_TIME_HARDWARE_REPLICA</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all">CALIBRATE_SENSORS</button>
+                    <button className="px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">INIT_DIAGNOSTIC</button>
+                  </div>
+                </div>
+
+                <div className="flex-1 relative flex items-center justify-center">
+                  {/* Schematic Representation */}
+                  <div className="relative w-full max-w-2xl aspect-square">
+                    <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-[80px] bg-indigo-500/[0.02] shadow-inner"></div>
+                    <div className="absolute inset-10 border border-indigo-500/10 rounded-[60px] border-dashed"></div>
+                    
+                    {/* Core Reactor Mockup */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-black/60 border-4 border-indigo-500/40 rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(79,70,229,0.2)] group cursor-pointer">
+                      <div className="absolute inset-0 bg-indigo-500/10 rounded-full animate-ping opacity-20"></div>
+                      <Cpu size={80} className="text-indigo-400 group-hover:scale-110 transition-transform" />
+                      
+                      {/* Sensor Overlays */}
+                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-black/80 border border-emerald-500/40 px-4 py-2 rounded-xl shadow-2xl">
+                        <p className="text-[8px] text-emerald-400 font-black uppercase tracking-widest">TEMP_CORE</p>
+                        <p className="text-xl font-mono font-black text-white">24.2°C</p>
+                      </div>
+                      <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-black/80 border border-blue-500/40 px-4 py-2 rounded-xl shadow-2xl">
+                        <p className="text-[8px] text-blue-400 font-black uppercase tracking-widest">FLOW_RATE</p>
+                        <p className="text-xl font-mono font-black text-white">1.2 L/s</p>
+                      </div>
+                    </div>
+
+                    {/* Peripheral Modules */}
+                    {[
+                      { label: 'NUTRIENT_PUMP', pos: 'top-10 left-10', icon: Zap, val: '98%' },
+                      { label: 'LIGHT_ARRAY', pos: 'top-10 right-10', icon: Monitor, val: '84%' },
+                      { label: 'HUMIDITY_CTRL', pos: 'bottom-10 left-10', icon: Activity, val: '62%' },
+                      { label: 'MESH_RELAY', pos: 'bottom-10 right-10', icon: Radio, val: 'SYNC' }
+                    ].map((mod, i) => (
+                      <div key={i} className={`absolute ${mod.pos} w-24 h-24 bg-black/40 border border-white/10 rounded-3xl flex flex-col items-center justify-center space-y-2 hover:border-indigo-500/40 transition-all cursor-pointer group shadow-xl`}>
+                        <mod.icon size={24} className="text-slate-500 group-hover:text-indigo-400 transition-colors" />
+                        <p className="text-[8px] font-black text-white">{mod.val}</p>
+                        <div className="absolute -bottom-6 opacity-0 group-hover:opacity-100 transition-opacity text-[6px] font-mono text-slate-600 whitespace-nowrap">{mod.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="absolute bottom-10 left-10 right-10 flex justify-between items-center">
+                  <div className="flex gap-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hardware Online</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mesh Linked</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-mono text-slate-700 uppercase tracking-widest">ESIN: {user.esin}_TWIN_v1.0</p>
+                </div>
+              </div>
+
+              <div className="lg:col-span-4 space-y-8">
+                <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
+                  <h4 className="text-sm font-black text-white uppercase tracking-widest italic">Diagnostic Logs</h4>
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar-terminal">
+                    {[
+                      { time: '12:04:22', msg: 'Core temperature stabilized at 24.2°C', type: 'INFO' },
+                      { time: '12:04:15', msg: 'Nutrient pump α pressure nominal', type: 'INFO' },
+                      { time: '12:03:58', msg: 'Mesh relay handshake successful', type: 'SUCCESS' },
+                      { time: '12:03:42', msg: 'Minor drift detected in Sector 4 sensors', type: 'WARN' },
+                      { time: '12:03:10', msg: 'Initializing digital twin sync sequence', type: 'SYSTEM' }
+                    ].map((log, i) => (
+                      <div key={i} className="flex gap-4 items-start font-mono">
+                        <span className="text-[10px] text-slate-700 shrink-0">{log.time}</span>
+                        <p className={`text-[10px] ${log.type === 'WARN' ? 'text-amber-500' : log.type === 'SUCCESS' ? 'text-emerald-500' : 'text-slate-400'}`}>
+                          <span className="font-black">[{log.type}]</span> {log.msg}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-500/[0.03] space-y-6 shadow-3xl">
+                  <h4 className="text-sm font-black text-white uppercase tracking-widest">Maintenance Forecast</h4>
+                  <div className="space-y-4">
+                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs font-bold text-white uppercase italic">Filter Replacement</p>
+                        <span className="text-[10px] font-mono text-amber-500">12 DAYS</span>
+                      </div>
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full" style={{ width: '85%' }}></div>
+                      </div>
+                    </div>
+                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs font-bold text-white uppercase italic">Sensor Recalibration</p>
+                        <span className="text-[10px] font-mono text-emerald-500">42 DAYS</span>
+                      </div>
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: '30%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">SCHEDULE_ALL_TASKS</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* --- VIEW: MESH VISUALIZATION --- */}
         {activeTab === 'mesh' && (
           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
@@ -376,6 +501,77 @@ const Industrial: React.FC<IndustrialProps> = ({
         )}
         
         {/* --- VIEW: REGISTRY BRIDGE (Unified Nodes) --- */}
+        {/* --- VIEW: DIGITAL TWIN --- */}
+        {activeTab === 'twin' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-12 rounded-[64px] border border-indigo-500/20 bg-indigo-500/[0.02] space-y-10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-20 opacity-[0.03] pointer-events-none">
+                <Box size={400} className="text-indigo-500" />
+              </div>
+
+              <div className="flex flex-col md:flex-row justify-between items-start gap-10">
+                <div className="space-y-6 max-w-xl">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[28px] bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-2xl">
+                      <Box size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Industrial <span className="text-indigo-400">Digital Twin.</span></h3>
+                      <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.4em] mt-1">REAL_TIME_SIMULATION_SHARD</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-400 leading-relaxed font-medium">
+                    Interactive replica of the Sector 7 Core Reactor. Monitor thermal resonance, pressure drift, and energy sharding in real-time.
+                  </p>
+                  <div className="flex gap-4">
+                    <div className="px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[10px] font-black text-emerald-400 uppercase tracking-widest">STATUS: OPTIMAL</div>
+                    <div className="px-6 py-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl text-[10px] font-black text-indigo-400 uppercase tracking-widest">SYNC: 99.9%</div>
+                  </div>
+                </div>
+
+                <div className="flex-1 w-full glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 min-h-[400px] flex items-center justify-center relative">
+                  {/* Mock Twin Visualization */}
+                  <div className="relative w-64 h-64">
+                    <div className="absolute inset-0 border-4 border-indigo-500/20 rounded-[40px] animate-pulse"></div>
+                    <div className="absolute inset-4 border-2 border-indigo-500/40 rounded-[32px] rotate-45 animate-spin duration-[10s]"></div>
+                    <div className="absolute inset-10 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-12 h-12 bg-indigo-500 rounded-xl shadow-[0_0_40px_rgba(99,102,241,0.8)]"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating Data Points */}
+                  <div className="absolute top-10 left-10 p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                    <p className="text-[8px] text-slate-500 uppercase font-black">Thermal Resonance</p>
+                    <p className="text-lg font-mono font-black text-white">1,422°C</p>
+                  </div>
+                  <div className="absolute bottom-10 right-10 p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                    <p className="text-[8px] text-slate-500 uppercase font-black">Pressure Drift</p>
+                    <p className="text-lg font-mono font-black text-white">0.024 psi</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[
+                  { label: 'Energy Output', val: '4.2 GW', trend: '+2.1%', col: 'text-emerald-400' },
+                  { label: 'Coolant Flow', val: '840 L/s', trend: 'STABLE', col: 'text-blue-400' },
+                  { label: 'Sharding Velocity', val: '142/m', trend: '+14%', col: 'text-indigo-400' },
+                  { label: 'Maintenance', val: '12d', trend: 'SCHEDULED', col: 'text-amber-400' }
+                ].map((stat, i) => (
+                  <div key={i} className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-2">
+                    <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest">{stat.label}</p>
+                    <div className="flex justify-between items-end">
+                      <p className="text-xl font-black text-white">{stat.val}</p>
+                      <p className={`text-[8px] font-black uppercase ${stat.col}`}>{stat.trend}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'bridge' && (
            <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">

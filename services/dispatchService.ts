@@ -42,64 +42,84 @@ export async function dispatchAgroProcess({ instruction, actor, payload }: { ins
 }
 
 async function executeMinting(header: any, payload: any) {
-    const { value, unit } = mintCarbonShard(payload.amount || 0, payload.confidence || 0.85);
-    
-    const shardId = await saveCollectionItem('transactions', {
-        type: 'TokenzMint',
-        farmId: header.actor,
-        details: `Carbon Mint: ${payload.amount || 0} tCO2e [Nonce: ${header.nonce}]`,
-        value: value,
-        unit: unit
-    });
-    
-    await dispatchNetworkSignal({
-        type: 'ledger_anchor',
-        origin: 'CARBON',
-        title: 'MINT_FINALITY_REACHED',
-        message: `Carbon shard ${header.nonce} successfully minted to ledger. Yield: ${value} EAC.`,
-        priority: 'high',
-        actionIcon: 'Zap'
-    });
-    
-    return { status: 'SUCCESS', shardId, header, value };
+    try {
+        const { value, unit } = mintCarbonShard(payload.amount || 0, payload.confidence || 0.85);
+        
+        const shardId = await saveCollectionItem('transactions', {
+            type: 'TokenzMint',
+            farmId: header.actor,
+            details: `Carbon Mint: ${payload.amount || 0} tCO2e [Nonce: ${header.nonce}]`,
+            value: value,
+            unit: unit
+        });
+        
+        await dispatchNetworkSignal({
+            type: 'ledger_anchor',
+            origin: 'CARBON',
+            title: 'MINT_FINALITY_REACHED',
+            message: `Carbon shard ${header.nonce} successfully minted to ledger. Yield: ${value} EAC.`,
+            priority: 'high',
+            actionIcon: 'Zap'
+        });
+        
+        return { status: 'SUCCESS', shardId, header, value };
+    } catch (error) {
+        console.error("Error executing minting:", error);
+        throw new Error("Failed to execute minting process");
+    }
 }
 
 async function executePayment(header: any, payload: any) {
-    const shardId = await saveCollectionItem('transactions', {
-        type: 'Transfer',
-        farmId: header.actor,
-        details: `Payment: ${payload.reason || 'General Settlement'} [Nonce: ${header.nonce}]`,
-        value: -(payload.amount || 0),
-        unit: 'EAC'
-    });
-    
-    return { status: 'SUCCESS', shardId, header };
+    try {
+        const shardId = await saveCollectionItem('transactions', {
+            type: 'Transfer',
+            farmId: header.actor,
+            details: `Payment: ${payload.reason || 'General Settlement'} [Nonce: ${header.nonce}]`,
+            value: -(payload.amount || 0),
+            unit: 'EAC'
+        });
+        
+        return { status: 'SUCCESS', shardId, header };
+    } catch (error) {
+        console.error("Error executing payment:", error);
+        throw new Error("Failed to execute payment process");
+    }
 }
 
 async function executeDataLog(header: any, payload: any) {
-    const shardId = await saveCollectionItem('media_ledger', {
-        title: `LOG_${(payload.brand || 'GENERIC').toUpperCase()}_${header.nonce}`,
-        type: 'INGEST',
-        source: payload.brand || 'System',
-        author: payload.stewardName || 'System',
-        authorEsin: header.actor,
-        timestamp: new Date().toISOString(),
-        hash: header.nonce,
-        mImpact: payload.mImpact || "1.42",
-        content: payload.data || ""
-    });
-    
-    return { status: 'SUCCESS', shardId, header };
+    try {
+        const shardId = await saveCollectionItem('media_ledger', {
+            title: `LOG_${(payload.brand || 'GENERIC').toUpperCase()}_${header.nonce}`,
+            type: 'INGEST',
+            source: payload.brand || 'System',
+            author: payload.stewardName || 'System',
+            authorEsin: header.actor,
+            timestamp: new Date().toISOString(),
+            hash: header.nonce,
+            mImpact: payload.mImpact || "1.42",
+            content: payload.data || ""
+        });
+        
+        return { status: 'SUCCESS', shardId, header };
+    } catch (error) {
+        console.error("Error executing data log:", error);
+        throw new Error("Failed to execute data log process");
+    }
 }
 
 async function executeSupplyUpdate(header: any, payload: any) {
-    const shardId = await saveCollectionItem('orders', {
-        ...payload,
-        trackingHash: header.nonce,
-        lastModified: header.timestamp
-    });
-    
-    return { status: 'SUCCESS', shardId, header };
+    try {
+        const shardId = await saveCollectionItem('orders', {
+            ...payload,
+            trackingHash: header.nonce,
+            lastModified: header.timestamp
+        });
+        
+        return { status: 'SUCCESS', shardId, header };
+    } catch (error) {
+        console.error("Error executing supply update:", error);
+        throw new Error("Failed to execute supply update process");
+    }
 }
 
 function handleProcessFailure(header: any, error: any) {

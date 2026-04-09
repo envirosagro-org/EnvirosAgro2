@@ -662,7 +662,8 @@ export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
       return JSON.parse(response.text || "{}");
     });
   } catch (err) {
-    throw err;
+    console.error("Error decoding agro genetics:", err);
+    throw new Error("Failed to decode agro genetics");
   }
 };
 
@@ -789,7 +790,8 @@ export const generateAgroExam = async (topic: string): Promise<any[]> => {
       return JSON.parse(response.text || "[]");
     });
   } catch (err) {
-    throw err;
+    console.error(`Error generating exam for ${topic}:`, err);
+    throw new Error(`Failed to generate exam for ${topic}`);
   }
 };
 

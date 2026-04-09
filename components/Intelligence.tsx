@@ -4,11 +4,11 @@ import {
   AlertCircle, TrendingUp, Droplets, Wind, Sprout, Database, Upload, 
   MapPin, X, Loader2, Leaf, Gauge, Fingerprint, SearchCode, History, 
   ChevronRight, LineChart, HeartPulse, Radar, 
-  CheckCircle2, Info, ArrowUpRight, BrainCircuit, 
+  CheckCircle2, Info, ArrowUpRight, BrainCircuit, Clock,
   Terminal, Atom, ImageIcon, FileSearch, 
   Coins, ShieldAlert, CloudUpload, 
   ClipboardCheck, Dna, Workflow, Target, Waves, 
-  RefreshCw, Radiation, BoxSelect, Maximize2, Smartphone, Send,
+  RefreshCw, Radiation, BoxSelect, Maximize2, Smartphone, Send, Languages,
   Brain, Network, FileDigit, Settings, Download, Globe, Camera,
   Box, Database as Disk, Globe2, ExternalLink,
   ScanLine, BadgeCheck, LayoutGrid, ClipboardList,
@@ -38,7 +38,7 @@ interface IntelligenceProps {
   onEmitSignal?: (signal: any) => void;
 }
 
-type TabState = 'hub' | 'twin' | 'simulator' | 'trends' | 'telemetry' | 'eos_agro_lang' | 'sid' | 'evidence';
+type TabState = 'hub' | 'twin' | 'simulator' | 'trends' | 'telemetry' | 'eos_agro_lang' | 'sid' | 'evidence' | 'acoustic' | 'yield_matrix' | 'relay';
 type OracleMode = 'BIO_DIAGNOSTIC' | 'SPECTRAL_AUDIT' | 'GENOMIC_INQUIRY' | 'SOIL_REMEDIATION';
 
 const ORACLE_QUERY_COST = 25;
@@ -60,6 +60,17 @@ const SID_STEPS = [
   "Detecting Dissonant Frequencies...",
   "Mapping Viral Footprint...",
   "Calculating SID Saturation..."
+];
+
+const FORECAST_DATA = [
+  { cycle: 'C1', actual: 45, predicted: 48 },
+  { cycle: 'C2', actual: 52, predicted: 55 },
+  { cycle: 'C3', actual: 48, predicted: 50 },
+  { cycle: 'C4', actual: 61, predicted: 65 },
+  { cycle: 'C5', actual: 55, predicted: 58 },
+  { cycle: 'C6', actual: 67, predicted: 72 },
+  { cycle: 'C7', predicted: 78 },
+  { cycle: 'C8', predicted: 84 },
 ];
 
 const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC, onOpenEvidence, onNavigate, initialSection, onEmitSignal }) => {
@@ -322,9 +333,12 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
           { id: 'twin', name: 'Digital Twin', icon: Box },
           { id: 'simulator', name: 'EOS Simulator', icon: Cpu },
           { id: 'trends', name: 'Trend Ingest', icon: TrendingUp },
+          { id: 'acoustic', name: 'Acoustic Monitor', icon: Waves },
+          { id: 'yield_matrix', name: 'Yield Matrix', icon: LayoutGrid },
           { id: 'telemetry', name: 'IoT Telemetry', icon: Wifi },
           { id: 'eos_agro_lang', name: 'Science Oracle', icon: HenIcon },
           { id: 'sid', name: 'SID Scanner', icon: Radiation },
+          { id: 'relay', name: 'Agro-Lang Relay', icon: Languages },
           { id: 'evidence', name: 'Evidence Vault', icon: CloudUpload },
         ].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t.id ? 'bg-emerald-600 text-white shadow-lg scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
@@ -336,6 +350,96 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
       {/* Viewport */}
       <div className="min-h-[70vh] md:min-h-[80vh] space-y-16 md:space-y-24">
         {/* HUB */}
+        {/* --- VIEW: AGRO-LANG RELAY --- */}
+        {activeTab === 'relay' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[28px] bg-fuchsia-600/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-500 shadow-xl">
+                    <Languages size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Agro-Lang <span className="text-fuchsia-400">Relay.</span></h3>
+                    <p className="text-[10px] text-fuchsia-400 font-black uppercase tracking-[0.4em] mt-1">REAL_TIME_LINGUISTIC_SYNCHRONIZATION</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex -space-x-3">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="w-10 h-10 rounded-full border-2 border-black bg-slate-800 flex items-center justify-center text-[10px] font-black text-white">
+                        {String.fromCharCode(64 + i)}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">4 Stewards Syncing</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="h-[400px] bg-black/60 rounded-[48px] border border-white/10 p-8 flex flex-col justify-end space-y-4 overflow-y-auto custom-scrollbar">
+                    {[
+                      { user: 'Steward_A', msg: 'Soil moisture at Plot 4 is dropping. Initiating irrigation?', lang: 'EN' },
+                      { user: 'Steward_B', msg: 'La humedad del suelo en la Parcela 4 está bajando. ¿Iniciando el riego?', lang: 'ES', translated: true },
+                      { user: 'Steward_C', msg: 'A umidade do solo no Talhão 4 está caindo. Iniciando irrigação?', lang: 'PT', translated: true }
+                    ].map((chat, i) => (
+                      <div key={i} className={`p-5 rounded-3xl border ${chat.translated ? 'bg-fuchsia-500/5 border-fuchsia-500/10' : 'bg-white/5 border-white/10'} space-y-2`}>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black text-fuchsia-400 uppercase tracking-widest">{chat.user}</span>
+                          <span className="text-[8px] font-mono text-slate-600">{chat.lang}</span>
+                        </div>
+                        <p className="text-sm text-white italic">{chat.msg}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="relative">
+                    <input 
+                      placeholder="Type a message to relay across the mesh..."
+                      className="w-full py-6 px-10 bg-black/80 border border-white/10 rounded-full text-white font-medium italic outline-none focus:border-fuchsia-500/40 transition-all"
+                    />
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 p-4 bg-fuchsia-600 rounded-full text-white shadow-xl hover:scale-110 active:scale-95 transition-all">
+                      <Send size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="p-8 bg-fuchsia-500/5 border border-fuchsia-500/20 rounded-[40px] space-y-6">
+                    <h4 className="text-xs font-black text-white uppercase tracking-widest">Relay Metrics</h4>
+                    <div className="space-y-4">
+                      {[
+                        { label: 'Translation Latency', val: '42ms', icon: Clock },
+                        { label: 'Semantic Accuracy', val: '98.4%', icon: Target },
+                        { label: 'Mesh Coverage', val: 'Global', icon: Globe }
+                      ].map((metric, i) => (
+                        <div key={i} className="flex justify-between items-center">
+                          <div className="flex items-center gap-3 text-slate-500">
+                            <metric.icon size={14} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">{metric.label}</span>
+                          </div>
+                          <span className="text-xs font-black text-white">{metric.val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="glass-card p-8 rounded-[40px] border border-white/5 space-y-4">
+                    <h4 className="text-xs font-black text-white uppercase tracking-widest">Active Dialects</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {['English', 'Spanish', 'Portuguese', 'Swahili', 'Hindi'].map(lang => (
+                        <span key={lang} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          {lang}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'hub' && (
           <div className="space-y-12 animate-in fade-in duration-700">
              <div className="p-10 md:p-14 glass-card rounded-[64px] border-indigo-500/20 bg-indigo-950/5 flex flex-col md:flex-row items-center justify-between gap-10 shadow-3xl relative overflow-hidden group">
@@ -480,6 +584,181 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                 </div>
              )}
            </div>
+        )}
+
+        {/* --- VIEW: ACOUSTIC MONITOR --- */}
+        {activeTab === 'acoustic' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="lg:col-span-2 glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-10 shadow-3xl relative overflow-hidden">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[28px] bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shadow-xl">
+                      <Waves size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Acoustic <span className="text-indigo-400">Resonance.</span></h3>
+                      <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.4em] mt-1">BIO_SONIC_SURVEILLANCE</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400 uppercase tracking-widest animate-pulse">LIVE_FEED</span>
+                  </div>
+                </div>
+
+                <div className="h-80 bg-black/60 rounded-[48px] border border-white/10 relative overflow-hidden flex items-center justify-center">
+                  {/* Simulated Spectrogram */}
+                  <div className="absolute inset-0 flex items-end justify-around px-10 pb-10 gap-1">
+                    {Array.from({ length: 40 }).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className="w-full bg-indigo-500/40 rounded-t-sm animate-pulse"
+                        style={{ 
+                          height: `${20 + Math.random() * 60}%`,
+                          animationDelay: `${i * 0.05}s`,
+                          animationDuration: `${0.5 + Math.random()}s`
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+                  <div className="relative z-10 text-center space-y-4">
+                    <div className="w-20 h-20 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin mx-auto"></div>
+                    <p className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Analyzing Soundscape...</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { label: 'Acoustic Health', val: '94.2', unit: '%', icon: HeartPulse, color: 'text-emerald-400' },
+                    { label: 'Pest Signature', val: '0.02', unit: 'Hz', icon: ShieldAlert, color: 'text-rose-400' },
+                    { label: 'Pollinator Sync', val: '88.5', unit: '%', icon: Zap, color: 'text-amber-400' }
+                  ].map((stat, i) => (
+                    <div key={i} className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-3">
+                      <div className="flex items-center gap-3 text-slate-500">
+                        <stat.icon size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{stat.label}</span>
+                      </div>
+                      <p className={`text-3xl font-mono font-black ${stat.color}`}>{stat.val}<span className="text-xs text-slate-700 ml-1">{stat.unit}</span></p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
+                <h4 className="text-sm font-black text-white uppercase tracking-widest">Detected Signatures</h4>
+                <div className="space-y-4">
+                  {[
+                    { name: 'Apis Mellifera', confidence: 98, status: 'OPTIMAL', time: '2m ago' },
+                    { name: 'Gryllidae Pulse', confidence: 82, status: 'NORMAL', time: '5m ago' },
+                    { name: 'Unknown Anomaly', confidence: 12, status: 'FILTERED', time: '12m ago' }
+                  ].map((sig, i) => (
+                    <div key={i} className="p-5 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center group hover:bg-white/10 transition-all">
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-white uppercase italic">{sig.name}</p>
+                        <p className="text-[8px] text-slate-600 font-mono uppercase tracking-widest">{sig.time}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-black text-indigo-400">{sig.confidence}%</p>
+                        <p className="text-[8px] text-slate-700 font-black uppercase tracking-widest">{sig.status}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button className="w-full py-4 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl text-[10px] font-black text-indigo-400 uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">DOWNLOAD_SONIC_LOGS</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- VIEW: YIELD MATRIX --- */}
+        {activeTab === 'yield_matrix' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[28px] bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-xl">
+                    <LayoutGrid size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Yield <span className="text-emerald-400">Matrix.</span></h3>
+                    <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.4em] mt-1">PREDICTIVE_HARVEST_FORECASTING</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="px-6 py-3 bg-white/5 rounded-2xl border border-white/10 flex items-center gap-4">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Scenario:</span>
+                    <select className="bg-transparent text-xs font-black text-white outline-none uppercase">
+                      <option>Standard Growth</option>
+                      <option>Optimized Mesh</option>
+                      <option>Climate Stress</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+                <div className="lg:col-span-3 h-[500px] bg-black/60 rounded-[48px] border border-white/10 p-10 relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={FORECAST_DATA}>
+                      <defs>
+                        <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                      <XAxis dataKey="cycle" stroke="#ffffff20" fontSize={10} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#ffffff20" fontSize={10} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff10', borderRadius: '16px' }}
+                        itemStyle={{ color: '#10b981', fontWeight: 'bold' }}
+                      />
+                      <Area type="monotone" dataKey="actual" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorYield)" />
+                      <Area type="monotone" dataKey="predicted" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 5" fill="transparent" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="p-8 bg-emerald-500/5 border border-emerald-500/20 rounded-[40px] space-y-4">
+                    <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Projected Yield (C14)</p>
+                    <h4 className="text-5xl font-black text-white italic">1,442<span className="text-xl text-slate-600 ml-2">t/ha</span></h4>
+                    <div className="flex items-center gap-2 text-emerald-400">
+                      <TrendingUp size={16} />
+                      <span className="text-xs font-black">+12.4% vs C13</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4">
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-2">What-if Adjustments</p>
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-[8px] font-black text-slate-600 uppercase">
+                          <span>Nutrient Mesh</span>
+                          <span>+15%</span>
+                        </div>
+                        <input type="range" className="w-full accent-emerald-500" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-[8px] font-black text-slate-600 uppercase">
+                          <span>Hydration α</span>
+                          <span>-5%</span>
+                        </div>
+                        <input type="range" className="w-full accent-blue-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button className="w-full py-6 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all mt-6">
+                    COMMIT_FORECAST
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* TELEMETRY */}

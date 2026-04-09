@@ -18,8 +18,9 @@ import {
   Eye,
   ToggleLeft,
   ToggleRight,
-  /* Added RefreshCw to fix the 'Cannot find name' error on line 410 */
-  RefreshCw
+  RefreshCw,
+  Network,
+  Cpu
 } from 'lucide-react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
@@ -60,7 +61,7 @@ const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string
 };
 
 const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onNavigate, onLogout, onPermanentAction, notify, signals }) => {
-  const [activeTab, setActiveTab] = useState<'dossier' | 'card' | 'celestial' | 'edit' | 'settings' | 'sharing' | 'signals'>('dossier');
+  const [activeTab, setActiveTab] = useState<'dossier' | 'card' | 'celestial' | 'edit' | 'settings' | 'sharing' | 'signals' | 'mastery'>('dossier');
   const [isMintingCert, setIsMintingCert] = useState(false);
   
   const initialMonth = (user.zodiacFlower?.month?.substring(0, 3).toUpperCase()) || 'MAR';
@@ -206,6 +207,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
     { id: 'celestial', label: 'Celestial Vault', icon: Flower2 },
     { id: 'edit', label: 'Edit Node', icon: Pencil },
     { id: 'signals', label: 'Signals', icon: Bell },
+    { id: 'mastery', label: 'Path of Mastery', icon: Network },
     { id: 'sharing', label: 'Sharing', icon: Share2 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -304,7 +306,94 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
       </div>
 
       <div className="min-h-[600px] relative">
-         {activeTab === 'dossier' && (
+         {/* --- VIEW: PATH OF MASTERY --- */}
+        {activeTab === 'mastery' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[28px] bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shadow-xl">
+                    <Network size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Path of <span className="text-indigo-400">Mastery.</span></h3>
+                    <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.4em] mt-1">STEWARD_EVOLUTION_MAP</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Mastery Level</p>
+                    <p className="text-xl font-black text-white">LVL 14 <span className="text-xs text-slate-500 italic">/ 20</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-[600px] bg-black/60 rounded-[48px] border border-white/10 relative overflow-hidden flex items-center justify-center">
+                {/* Simulated 3D Skill Tree */}
+                <div className="absolute inset-0 opacity-20">
+                  <div className="w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500/20 via-transparent to-transparent"></div>
+                </div>
+                
+                <div className="relative z-10 w-full h-full flex items-center justify-center">
+                  <svg width="100%" height="100%" viewBox="0 0 800 600">
+                    {/* Connections */}
+                    <line x1="400" y1="500" x2="400" y2="350" stroke="#6366f1" strokeWidth="2" strokeDasharray="5,5" />
+                    <line x1="400" y1="350" x2="250" y2="200" stroke="#6366f1" strokeWidth="2" />
+                    <line x1="400" y1="350" x2="550" y2="200" stroke="#6366f1" strokeWidth="2" />
+                    <line x1="250" y1="200" x2="150" y2="100" stroke="#6366f1" strokeWidth="2" strokeOpacity="0.3" />
+                    <line x1="550" y1="200" x2="650" y2="100" stroke="#6366f1" strokeWidth="2" />
+
+                    {/* Nodes */}
+                    <circle cx="400" cy="500" r="40" fill="#6366f1" className="animate-pulse" />
+                    <text x="400" y="505" fill="white" fontSize="10" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Origin</text>
+
+                    <circle cx="400" cy="350" r="30" fill="#6366f1" />
+                    <text x="400" y="355" fill="white" fontSize="8" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Steward</text>
+
+                    <circle cx="250" cy="200" r="25" fill="#6366f1" fillOpacity="0.5" />
+                    <text x="250" y="205" fill="white" fontSize="8" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Botics</text>
+
+                    <circle cx="550" cy="200" r="25" fill="#10b981" />
+                    <text x="550" y="205" fill="white" fontSize="8" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Bio-MRV</text>
+
+                    <circle cx="650" cy="100" r="20" fill="#6366f1" fillOpacity="0.2" stroke="#6366f1" strokeWidth="1" />
+                    <text x="650" y="105" fill="#6366f1" fontSize="6" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Oracle</text>
+                  </svg>
+                </div>
+
+                <div className="absolute bottom-10 right-10 glass-card p-6 rounded-3xl border border-white/10 space-y-4 w-64">
+                  <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Active Mastery Shards</h4>
+                  <div className="space-y-2">
+                    {['Spectral Audit α', 'Genomic Shard', 'Mesh Sync II'].map((shard, i) => (
+                      <div key={i} className="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/5">
+                        <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{shard}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[
+                  { label: 'Technical Shards', val: 142, icon: Cpu },
+                  { label: 'Guild Reputation', val: 840, icon: ShieldCheck },
+                  { label: 'Knowledge Nodes', val: 24, icon: Network }
+                ].map((stat, i) => (
+                  <div key={i} className="p-8 bg-white/5 rounded-[40px] border border-white/5 space-y-4">
+                    <div className="flex items-center gap-4 text-slate-500">
+                      <stat.icon size={20} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">{stat.label}</span>
+                    </div>
+                    <p className="text-4xl font-black text-white italic">{stat.val}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'dossier' && (
            <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-12">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                  <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/20 space-y-10 shadow-3xl flex flex-col justify-between overflow-hidden relative group">

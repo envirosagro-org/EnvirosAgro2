@@ -12,7 +12,7 @@ import {
   Scale, Signature, FileSignature, Clock, BookOpen, Eye, Star, Download, 
   CreditCard, ChevronDown, Warehouse, Factory, PackageSearch, Receipt, 
   Music, Palette, Map as MapIcon,
-  Database, Calculator, FlaskConical
+  Database, Calculator, FlaskConical, RefreshCw
 } from 'lucide-react';
 import { ShareButton } from './ShareButton';
 import { 
@@ -75,7 +75,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 const Economy: React.FC<EconomyProps> = ({ 
   user, isGuest, onSpendEAC, onNavigate, vendorProducts = [], liveProducts = [], onPlaceOrder, industrialUnits = [], contracts = [], blueprints = [], notify, initialSection 
 }) => {
-  const [activeTab, setActiveTab] = useState<'catalogue' | 'infrastructure' | 'forecasting' | 'analytics' | 'checkout'>('catalogue');
+  const [activeTab, setActiveTab] = useState<'catalogue' | 'infrastructure' | 'forecasting' | 'analytics' | 'checkout' | 'simulator' | 'logistics' | 'loop'>('catalogue');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [cart, setCart] = useState<any[]>([]);
@@ -93,7 +93,7 @@ const Economy: React.FC<EconomyProps> = ({
   // Vector Routing Logic
   useEffect(() => {
     if (initialSection) {
-      if (['catalogue', 'infrastructure', 'forecasting', 'analytics', 'checkout'].includes(initialSection)) {
+      if (['catalogue', 'infrastructure', 'forecasting', 'analytics', 'checkout', 'simulator', 'logistics'].includes(initialSection)) {
         setActiveTab(initialSection as any);
       }
     }
@@ -372,6 +372,9 @@ const Economy: React.FC<EconomyProps> = ({
            {[
              { id: 'catalogue', label: 'Universal Catalogue', icon: LayoutGrid },
              { id: 'infrastructure', label: 'Industrial Nodes', icon: Building },
+             { id: 'logistics', label: 'Logistics Map', icon: MapIcon },
+             { id: 'loop', label: 'The Loop', icon: RefreshCw },
+             { id: 'simulator', label: 'Resonance Simulator', icon: Zap },
              { id: 'forecasting', label: 'Demand Matrix', icon: LineChartIcon },
              { id: 'analytics', label: 'EAC Analytics', icon: BarChart3 },
            ].map(tab => (
@@ -414,6 +417,238 @@ const Economy: React.FC<EconomyProps> = ({
       <div className="min-h-[850px] relative z-10 px-4 md:px-0">
         
         {/* --- VIEW: UNIVERSAL CATALOGUE (With Glocalization) --- */}
+        {/* --- VIEW: THE LOOP (CIRCULAR LEDGER) --- */}
+        {activeTab === 'loop' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[28px] bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-xl">
+                    <RefreshCw size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">The <span className="text-emerald-400">Loop.</span></h3>
+                    <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.4em] mt-1">CIRCULAR_RESOURCE_LEDGER</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Circular Resonance</p>
+                    <p className="text-2xl font-black text-emerald-400">1.84 <span className="text-xs text-slate-700">Φ</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div className="lg:col-span-2 h-[500px] bg-black/60 rounded-[48px] border border-white/10 p-10 relative overflow-hidden flex items-center justify-center">
+                  {/* Simulated Sankey / Flow Diagram */}
+                  <svg width="100%" height="100%" viewBox="0 0 800 400" className="opacity-80">
+                    <defs>
+                      <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
+                        <stop offset="50%" stopColor="#10b981" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.2" />
+                      </linearGradient>
+                    </defs>
+                    {/* Nodes */}
+                    <rect x="50" y="150" width="120" height="100" rx="20" fill="#10b98120" stroke="#10b98140" />
+                    <text x="110" y="205" fill="white" fontSize="12" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Harvest</text>
+                    
+                    <rect x="340" y="50" width="120" height="100" rx="20" fill="#6366f120" stroke="#6366f140" />
+                    <text x="400" y="105" fill="white" fontSize="12" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Process</text>
+
+                    <rect x="340" y="250" width="120" height="100" rx="20" fill="#f59e0b20" stroke="#f59e0b40" />
+                    <text x="400" y="305" fill="white" fontSize="12" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Waste</text>
+
+                    <rect x="630" y="150" width="120" height="100" rx="20" fill="#10b98120" stroke="#10b98140" />
+                    <text x="690" y="205" fill="white" fontSize="12" fontWeight="900" textAnchor="middle" className="uppercase tracking-widest">Nutrient</text>
+
+                    {/* Flows */}
+                    <path d="M 170 200 Q 255 200 340 100" fill="none" stroke="url(#flowGrad)" strokeWidth="20" strokeDasharray="10,5" className="animate-pulse" />
+                    <path d="M 170 200 Q 255 200 340 300" fill="none" stroke="url(#flowGrad)" strokeWidth="10" strokeDasharray="10,5" />
+                    <path d="M 460 100 Q 545 200 630 200" fill="none" stroke="url(#flowGrad)" strokeWidth="15" strokeDasharray="10,5" />
+                    <path d="M 460 300 Q 545 200 630 200" fill="none" stroke="url(#flowGrad)" strokeWidth="25" strokeDasharray="10,5" className="animate-pulse" />
+                  </svg>
+                  <div className="absolute top-10 left-10 space-y-2">
+                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Resource Flow Matrix</p>
+                    <p className="text-xs text-slate-500 italic">Visualizing biological material lifecycle.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="p-8 bg-emerald-500/5 border border-emerald-500/20 rounded-[40px] space-y-6">
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest">Loop Efficiency</h4>
+                    <div className="space-y-4">
+                      {[
+                        { label: 'Waste Recovery', val: 92, color: 'bg-emerald-500' },
+                        { label: 'Nutrient Return', val: 78, color: 'bg-blue-500' },
+                        { label: 'Energy Offset', val: 45, color: 'bg-amber-500' }
+                      ].map((bar, i) => (
+                        <div key={i} className="space-y-2">
+                          <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            <span>{bar.label}</span>
+                            <span>{bar.val}%</span>
+                          </div>
+                          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div className={`h-full ${bar.color} transition-all duration-1000`} style={{ width: `${bar.val}%` }}></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="glass-card p-8 rounded-[40px] border border-white/5 space-y-4">
+                    <h4 className="text-xs font-black text-white uppercase tracking-widest">Recent Conversions</h4>
+                    <div className="space-y-3">
+                      {[
+                        { from: 'Biomass', to: 'Compost', qty: '420kg', time: '1h ago' },
+                        { from: 'Greywater', to: 'Irrigation', qty: '1.2kL', time: '3h ago' }
+                      ].map((conv, i) => (
+                        <div key={i} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500"><RefreshCw size={12} /></div>
+                            <div>
+                              <p className="text-[10px] font-black text-white uppercase">{conv.from} → {conv.to}</p>
+                              <p className="text-[8px] text-slate-600 font-mono">{conv.time}</p>
+                            </div>
+                          </div>
+                          <span className="text-xs font-black text-emerald-400">{conv.qty}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- VIEW: RESONANCE SIMULATOR --- */}
+        {activeTab === 'simulator' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-12 rounded-[64px] border border-amber-500/20 bg-amber-500/[0.02] space-y-10">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-[28px] bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Zap size={32} />
+                </div>
+                <div>
+                  <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Supply Chain <span className="text-amber-400">Resonance Simulator.</span></h3>
+                  <p className="text-[10px] text-amber-400 font-black uppercase tracking-[0.4em] mt-1">PREDICTIVE_ECONOMIC_IMPACT_MODEL</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">ASSET_TYPE</label>
+                    <select className="w-full bg-black/60 border border-white/10 rounded-2xl p-5 text-white font-bold uppercase text-xs outline-none focus:border-amber-500/40 transition-all">
+                      <option>Industrial Hardware Shards</option>
+                      <option>Soil Remediation Inputs</option>
+                      <option>Genetic Knowledge Shards</option>
+                      <option>Biomass Energy Units</option>
+                    </select>
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">ORDER_VOLUME (EAC)</label>
+                    <input type="range" min="100" max="50000" className="w-full accent-amber-500" />
+                    <div className="flex justify-between text-[10px] font-mono text-slate-600">
+                      <span>100 EAC</span>
+                      <span>50,000 EAC</span>
+                    </div>
+                  </div>
+                  <button className="w-full py-5 bg-amber-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-amber-500/20 active:scale-95 transition-all">RUN_SIMULATION_SEQUENCE</button>
+                </div>
+
+                <div className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 flex flex-col justify-between">
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest italic">Predicted Outcomes</h4>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Local Mesh Resonance</span>
+                        <span className="text-sm font-black text-emerald-400">+12.4%</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Supply Scarcity Risk</span>
+                        <span className="text-sm font-black text-amber-500">LOW</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Regional GDP Alpha</span>
+                        <span className="text-sm font-black text-blue-400">1.42x</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pt-6 border-t border-white/5">
+                    <p className="text-[8px] text-slate-600 font-mono leading-relaxed uppercase">Simulation based on current registry drift and historical EAC velocity in Sector 7.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- VIEW: LOGISTICS MAP --- */}
+        {activeTab === 'logistics' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-12 rounded-[64px] border border-blue-500/20 bg-blue-500/[0.02] min-h-[600px] flex flex-col">
+              <div className="flex justify-between items-center mb-10">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[28px] bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                    <MapIcon size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Glocalized <span className="text-blue-400">Logistics.</span></h3>
+                    <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.4em] mt-1">REAL_TIME_ASSET_FLOW_TRACKING</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="px-6 py-3 bg-black/40 border border-white/10 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest">ACTIVE_SHIPMENTS: 14</div>
+                  <div className="px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">OPTIMIZE_ROUTES</div>
+                </div>
+              </div>
+
+              <div className="flex-1 relative bg-black/40 border border-white/5 rounded-[48px] overflow-hidden">
+                {/* Mock Map Visualization */}
+                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_30%,#3b82f6_0%,transparent_50%),radial-gradient(circle_at_80%_70%,#3b82f6_0%,transparent_50%)]"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative w-full max-w-4xl h-96">
+                    {/* Nodes */}
+                    {[
+                      { pos: 'top-10 left-20', label: 'Nairobi Hub' },
+                      { pos: 'bottom-20 left-40', label: 'Sector 7 Registry' },
+                      { pos: 'top-40 right-20', label: 'Industrial Node Alpha' },
+                      { pos: 'bottom-10 right-40', label: 'Omaha Supply' }
+                    ].map((node, i) => (
+                      <div key={i} className={`absolute ${node.pos} flex flex-col items-center gap-2`}>
+                        <div className="w-4 h-4 bg-blue-500 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.8)] animate-pulse"></div>
+                        <span className="text-[8px] font-black text-white uppercase tracking-widest whitespace-nowrap">{node.label}</span>
+                      </div>
+                    ))}
+                    {/* Flow Lines */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                      <path d="M 100 50 Q 250 150 400 250" stroke="rgba(59,130,246,0.2)" strokeWidth="2" fill="none" strokeDasharray="5,5" />
+                      <path d="M 400 250 Q 600 100 800 50" stroke="rgba(59,130,246,0.2)" strokeWidth="2" fill="none" strokeDasharray="5,5" />
+                    </svg>
+                  </div>
+                </div>
+                
+                <div className="absolute bottom-8 left-8 right-8 flex justify-between items-center">
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <span className="text-[8px] font-black text-slate-500 uppercase">Hardware Flow</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <span className="text-[8px] font-black text-slate-500 uppercase">Knowledge Shards</span>
+                    </div>
+                  </div>
+                  <p className="text-[8px] font-mono text-slate-700 uppercase">Global Logistics Sync: 99.8%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'catalogue' && (
           <div className="space-y-12 animate-in slide-in-from-bottom-8 duration-1000 px-4">
              <div className="flex justify-between items-center gap-4 border-b border-white/5 pb-4 overflow-x-auto scrollbar-hide">

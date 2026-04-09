@@ -37,7 +37,9 @@ import { useAppStore } from './store';
 import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit, StewardPosition } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from './components/ErrorBoundary';
+import { CommandPalette } from './components/CommandPalette';
 import { NavigationLink } from './components/NavigationLink';
 import { getComponentForView } from './components/Router';
 import { useDataSync } from './hooks/useDataSync';
@@ -99,6 +101,13 @@ const Robot = React.lazy(() => import('./components/Robot'));
 const RobotSync = React.lazy(() => import('./components/RobotSync'));
 const MeshProtocol = React.lazy(() => import('./components/MeshProtocol'));
 const RegistryHandshake = React.lazy(() => import('./components/RegistryHandshake'));
+const ImpactDashboard = React.lazy(() => import('./components/ImpactDashboard'));
+const TraceabilityMap = React.lazy(() => import('./components/TraceabilityMap'));
+const TelemetryHub = React.lazy(() => import('./components/TelemetryHub'));
+const SwarmOrchestrator = React.lazy(() => import('./components/SwarmOrchestrator'));
+const MRVEngine = React.lazy(() => import('./components/MRVEngine'));
+const ReputationDashboard = React.lazy(() => import('./components/ReputationDashboard'));
+const EscrowPortal = React.lazy(() => import('./components/EscrowPortal'));
 const EducationalResources = React.lazy(() => import('./components/EducationalResources'));
 const CostAccountingDashboard = React.lazy(() => import('./components/CostAccountingDashboard'));
 const InternalControlDashboard = React.lazy(() => import('./components/InternalControlDashboard'));
@@ -811,6 +820,8 @@ const GlobalSearch: React.FC<{
   );
 };
 
+const queryClient = new QueryClient();
+
 const App: React.FC = () => {
   const user = useAppStore(state => state.user);
   const setUser = useAppStore(state => state.setUser);
@@ -1298,6 +1309,13 @@ const App: React.FC = () => {
             )}
           </Suspense>
         );
+      case 'impact_dashboard': return <ImpactDashboard user={currentUser} metrics={currentUser.metrics} />;
+      case 'traceability_map': return <TraceabilityMap />;
+      case 'telemetry_hub': return <TelemetryHub />;
+      case 'swarm_orchestrator': return <SwarmOrchestrator />;
+      case 'mrv_engine': return <MRVEngine />;
+      case 'reputation_dashboard': return <ReputationDashboard />;
+      case 'escrow_portal': return <EscrowPortal />;
       case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onEmitSignal={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} />;
       case 'hardware_registry': return <HardwareRegistry />;
       case 'device_control': return <DeviceControl deviceId="test-device-1" />;
@@ -1346,8 +1364,10 @@ const App: React.FC = () => {
   }
 
   return (
-    <ErrorBoundary>
-    <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 animate-in fade-in duration-1000 relative">
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <CommandPalette />
+        <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 animate-in fade-in duration-1000 relative">
       {/* Quantum Energy Background */}
       <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)]"></div>
@@ -1600,6 +1620,7 @@ const App: React.FC = () => {
       <RegistrationResumePopup />
     </div>
     </ErrorBoundary>
+    </QueryClientProvider>
   );
 };
 

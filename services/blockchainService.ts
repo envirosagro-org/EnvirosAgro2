@@ -13,6 +13,17 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { ref, push, remove, onValue, set } from 'firebase/database';
+import { generateAlphanumericId } from '../systemFunctions';
+import { z } from 'zod';
+
+const AgroTransactionSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  farmId: z.string(),
+  details: z.string(),
+  value: z.number(),
+  unit: z.string(),
+});
 
 /**
  * ENVIROSAGRO BLOCKCHAIN SERVICE (V2)
@@ -26,29 +37,34 @@ export const calculateHash = (block: Partial<AgroBlock>): string => {
 };
 
 export const createGenesisBlock = async (): Promise<AgroBlock> => {
-  const genesis: AgroBlock = {
-    index: 0,
-    timestamp: new Date().toISOString(),
-    transactions: [{
-      id: 'TX-GENESIS',
-      type: 'TokenzMint',
-      farmId: 'CORE-HQ',
-      details: 'EnvirosAgro Network Genesis Sequence',
-      value: 1000000,
-      unit: 'EAC'
-    }],
-    previousHash: '0x0000_VOID',
-    hash: '',
-    validator: 'EA-ORACLE-01',
-    status: 'Confirmed'
-  };
+  try {
+    const genesis: AgroBlock = {
+      index: 0,
+      timestamp: new Date().toISOString(),
+      transactions: [{
+        id: 'TX-GENESIS',
+        type: 'TokenzMint',
+        farmId: 'CORE-HQ',
+        details: 'EnvirosAgro Network Genesis Sequence',
+        value: 1000000,
+        unit: 'EAC'
+      }],
+      previousHash: '0x0000_VOID',
+      hash: '',
+      validator: 'EA-ORACLE-01',
+      status: 'Confirmed'
+    };
 
-  genesis.hash = calculateHash(genesis);
-  
-  // Use setDoc for genesis if it doesn't exist
-  const genesisRef = doc(db, 'blocks', '0');
-  await setDoc(genesisRef, genesis);
-  return genesis;
+    genesis.hash = calculateHash(genesis);
+    
+    // Use setDoc for genesis if it doesn't exist
+    const genesisRef = doc(db, 'blocks', '0');
+    await setDoc(genesisRef, genesis);
+    return genesis;
+  } catch (error) {
+    console.error("Error creating genesis block:", error);
+    throw new Error("Failed to create genesis block");
+  }
 };
 
 /**
@@ -57,9 +73,12 @@ export const createGenesisBlock = async (): Promise<AgroBlock> => {
  */
 export const mineBlock = async (transactions: AgroTransaction[], validator: string): Promise<AgroBlock | null> => {
   const userId = auth.currentUser?.uid;
-  if (!userId) throw new Error("Authentication required for mining.");
+  if (!userId) return null; // Silently fail if not authenticated
 
   try {
+    // Validate transactions
+    const validatedTransactions = z.array(AgroTransactionSchema).parse(transactions);
+
     return await runTransaction(db, async (transaction) => {
       // 1. Get the latest block to find the next index and previous hash
       const blocksQuery = query(collection(db, 'blocks'), orderBy('index', 'desc'), limit(1));
@@ -78,7 +97,7 @@ export const mineBlock = async (transactions: AgroTransaction[], validator: stri
       const newBlock: AgroBlock = {
         index: nextIndex,
         timestamp: new Date().toISOString(),
-        transactions,
+        transactions: validatedTransactions as AgroTransaction[],
         previousHash: prevHash,
         hash: '',
         validator,
@@ -93,9 +112,13 @@ export const mineBlock = async (transactions: AgroTransaction[], validator: stri
 
       return newBlock;
     });
-  } catch (error) {
-    console.error("Mining failed (Transaction Conflict):", error);
-    return null;
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      console.error('Validation error mining block:', (error as any).errors);
+    } else {
+      console.error("Mining failed (Transaction Conflict):", error);
+    }
+    throw new Error("Failed to mine block");
   }
 };
 
@@ -128,7 +151,7 @@ export const verifyChain = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Verification error:", error);
-    return false;
+    throw new Error("Failed to verify chain");
   }
 };
 
@@ -136,22 +159,49 @@ export const verifyChain = async (): Promise<boolean> => {
  * MEMPOOL (RTDB): High-frequency unconfirmed transactions.
  */
 export const addToMempool = async (transaction: AgroTransaction) => {
-  const userId = auth.currentUser?.uid;
-  if (!userId) return;
+  try {
+    const userId = auth.currentUser?.uid;
+    if (!userId) throw new Error("Authentication required for mempool access.");
 
-  const mempoolRef = ref(rtdb, 'mempool');
-  const newTxRef = push(mempoolRef);
-  await set(newTxRef, {
-    id: newTxRef.key,
-    data: transaction,
-    timestamp: new Date().toISOString(),
-    stewardId: userId
-  });
+    const mempoolRef = ref(rtdb, 'mempool');
+    const newTxRef = push(mempoolRef);
+    await set(newTxRef, {
+      id: newTxRef.key,
+      data: transaction,
+      timestamp: new Date().toISOString(),
+      stewardId: userId
+    });
+  } catch (error) {
+    console.error("Error adding to mempool:", error);
+    throw new Error("Failed to add transaction to mempool");
+  }
 };
 
 export const clearMempool = async () => {
-  const mempoolRef = ref(rtdb, 'mempool');
-  await remove(mempoolRef);
+  try {
+    const mempoolRef = ref(rtdb, 'mempool');
+    await remove(mempoolRef);
+  } catch (error) {
+    console.error("Error clearing mempool:", error);
+    throw new Error("Failed to clear mempool");
+  }
+};
+
+export const recordComplianceEvent = async (event: { type: string, details: string, farmId: string }) => {
+  try {
+    const transaction: AgroTransaction = {
+      id: `TX-${generateAlphanumericId(10)}`,
+      type: 'ComplianceRecord',
+      farmId: event.farmId,
+      details: event.details,
+      value: 0,
+      unit: 'N/A'
+    };
+    await addToMempool(transaction);
+  } catch (error) {
+    console.error("Error recording compliance event:", error);
+    throw new Error("Failed to record compliance event");
+  }
 };
 
 export const VALIDATORS = [

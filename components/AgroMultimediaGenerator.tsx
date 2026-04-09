@@ -246,7 +246,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
                   {t === 'audio' && <Music id="multimedia-tab-audio-icon" size={16} className={`transition-all duration-500 ${activeTab === 'audio' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
                   {t === 'document' && <FileText id="multimedia-tab-document-icon" size={16} className={`transition-all duration-500 ${activeTab === 'document' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
                   {t === 'lab' && <FlaskConical id="multimedia-tab-lab-icon" size={16} className={`transition-all duration-500 ${activeTab === 'lab' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
-                  {t}
+                  {t === 'lab' ? 'Live Lab' : t}
                 </button>
               ))}
             </div>
@@ -254,9 +254,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
             {/* Input Area */}
             <div className="space-y-6">
               {activeTab === 'lab' && (
-            <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
+                <div className="space-y-8 animate-in fade-in duration-500">
                   <div className="flex items-center gap-6">
                     <div className="w-16 h-16 rounded-[28px] bg-rose-600/10 border border-rose-500/20 flex items-center justify-center text-rose-500 shadow-xl">
                       <FlaskConical size={32} />
@@ -267,12 +265,12 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
                     </div>
                   </div>
                   <div className="space-y-6">
-                    <p className="text-slate-400 text-lg font-medium italic leading-relaxed">
+                    <p className="text-slate-400 text-sm font-medium italic leading-relaxed">
                       "Simulate biological experiments, test nutrient mesh combinations, and generate synthetic growth data."
                     </p>
                     <div className="space-y-4">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Experiment Parameters</label>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4">
                         <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
                           <p className="text-[8px] text-slate-600 uppercase font-black mb-1">Humidity α</p>
                           <input type="range" className="w-full accent-rose-500" />
@@ -287,41 +285,9 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
                         </div>
                       </div>
                     </div>
-                    <button className="w-full py-6 agro-gradient rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all">
-                      INITIATE SIMULATION
-                    </button>
                   </div>
                 </div>
-
-                <div className="glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 space-y-8 shadow-3xl relative overflow-hidden">
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-                  </div>
-                  <div className="relative z-10 space-y-8">
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest">Simulation Output</h4>
-                    <div className="h-64 bg-black/60 rounded-[40px] border border-white/10 flex items-center justify-center text-center p-8">
-                      <div className="space-y-4 opacity-20">
-                        <RotateCcw size={48} className="mx-auto text-slate-600 animate-spin-slow" />
-                        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Awaiting Neural Handshake...</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      {[
-                        { label: 'Yield Est.', val: '0.0', unit: 't/ha' },
-                        { label: 'Resonance', val: '0.0', unit: '%' },
-                        { label: 'EAC Cost', val: '0', unit: 'EAC' }
-                      ].map((stat, i) => (
-                        <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 text-center">
-                          <p className="text-[8px] text-slate-600 uppercase font-black mb-1">{stat.label}</p>
-                          <p className="text-xl font-mono font-black text-white">{stat.val}<span className="text-[10px] text-slate-700 ml-1">{stat.unit}</span></p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+              )}
           {activeTab === 'document' && (
             <div className="space-y-4">
               <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-4 italic">DOCUMENT_TYPE</label>
@@ -378,7 +344,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
         {/* Result Area */}
         <div className="lg:col-span-7">
           <div className="glass-card h-full min-h-[600px] rounded-[72px] border-2 border-white/5 bg-black/40 overflow-hidden flex flex-col shadow-3xl relative">
-            {!resultUrl && !resultText && !isGenerating ? (
+            {!resultUrl && !resultText && !isGenerating && activeTab !== 'lab' ? (
               <div className="flex-1 flex flex-col items-center justify-center p-20 text-center space-y-10 opacity-20">
                 <div className="relative">
                   <Waves size={160} className="text-slate-600 animate-pulse" />
@@ -387,6 +353,36 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
                 <div className="space-y-4">
                   <h3 className="text-4xl font-black text-white uppercase italic tracking-[0.4em]">OUTPUT_VOID</h3>
                   <p className="text-slate-500 font-bold uppercase tracking-widest italic">Awaiting neural synthesis from AgroMusika core</p>
+                </div>
+              </div>
+            ) : activeTab === 'lab' ? (
+              <div className="flex-1 flex flex-col p-12 space-y-12 animate-in fade-in duration-700">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-2xl font-black text-white uppercase italic tracking-widest">Simulation Output</h4>
+                  <span className="px-4 py-1 bg-rose-500/20 border border-rose-500/40 rounded-full text-[10px] font-black text-rose-400 uppercase tracking-widest">LIVE_SYNC</span>
+                </div>
+                
+                <div className="flex-1 glass-card rounded-[48px] border border-white/5 bg-black/60 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                  </div>
+                  <div className="relative z-10 text-center space-y-6">
+                    <RotateCcw size={80} className="mx-auto text-rose-500/40 animate-spin-slow" />
+                    <p className="text-sm font-black uppercase tracking-[0.3em] text-slate-500">Awaiting Neural Handshake...</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-8">
+                  {[
+                    { label: 'Yield Est.', val: '0.0', unit: 't/ha', col: 'text-emerald-400' },
+                    { label: 'Resonance', val: '0.0', unit: '%', col: 'text-blue-400' },
+                    { label: 'EAC Cost', val: '0', unit: 'EAC', col: 'text-rose-400' }
+                  ].map((stat, i) => (
+                    <div key={i} className="glass-card p-8 rounded-3xl border border-white/5 bg-black/40 text-center space-y-2">
+                      <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{stat.label}</p>
+                      <p className={`text-3xl font-mono font-black ${stat.col}`}>{stat.val}<span className="text-xs text-slate-700 ml-2">{stat.unit}</span></p>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : isGenerating ? (

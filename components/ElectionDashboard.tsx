@@ -96,8 +96,11 @@ const ElectionDashboard: React.FC<ElectionDashboardProps> = ({ user, positions, 
               {election.status === 'VOTING' && (
                 <div className="space-y-8 relative z-10 pt-8 border-t border-white/5">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest">Live Quorum Results</h4>
-                    <span className="text-[10px] font-mono text-emerald-400">{totalVotes} TOTAL_SIGNALS</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+                      <h4 className="text-sm font-black text-white uppercase tracking-widest">Live Quorum Results</h4>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400 font-black px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">{totalVotes} TOTAL_SIGNALS</span>
                   </div>
                   
                   <div className="space-y-6">

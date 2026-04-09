@@ -97,7 +97,9 @@ const Community: React.FC<CommunityProps> = ({
   onHookHood 
 }) => {
   const [activeTab, setActiveTab] = useState<'social' | 'shards' | 'lms' | 'network' | 'workers' | 'bounties'>('social');
-  const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams' | 'forge'>('modules');
+  const [lmsSubTab, setLmsSubTab] = useState<'modules' | 'exams' | 'forge' | 'collab'>('modules');
+  const [collabContent, setCollabContent] = useState('');
+  const [isSealing, setIsSealing] = useState(false);
   
   const [collectives, setCollectives] = useState<Collective[]>(INITIAL_COLLECTIVES);
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -366,7 +368,7 @@ const Community: React.FC<CommunityProps> = ({
       {/* 2. Unified Community Navigation */}
       <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
         {[
-          { id: 'social', label: 'Steward Feed', icon: HeartPulse },
+          { id: 'social', label: 'Resonance Feed', icon: HeartPulse },
           { id: 'network', label: 'Steward Network', icon: Globe },
           { id: 'shards', label: 'Collective Shards', icon: Users2 },
           { id: 'lms', label: 'Knowledge Base', icon: Library },
@@ -705,7 +707,8 @@ const Community: React.FC<CommunityProps> = ({
                     {[
                       { id: 'modules', label: 'Modules', icon: Library },
                       { id: 'exams', label: 'Certifications', icon: GraduationCap },
-                      { id: 'forge', label: 'Forge Knowledge', icon: BrainCircuit }
+                      { id: 'forge', label: 'Forge Knowledge', icon: BrainCircuit },
+                      { id: 'collab', label: 'Collab Editor', icon: PenTool }
                     ].map(st => (
                        <button 
                          key={st.id} 
@@ -718,7 +721,69 @@ const Community: React.FC<CommunityProps> = ({
                  </div>
               </div>
               
-              {lmsSubTab === 'modules' && (
+              {lmsSubTab === 'collab' && (
+              <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+                <div className="glass-card p-10 rounded-[48px] border border-emerald-500/20 bg-emerald-500/[0.02] space-y-8">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <PenTool size={24} />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-black text-white uppercase italic">Collaborative Research Forge</h4>
+                        <p className="text-[8px] text-emerald-400 font-black uppercase tracking-widest">REAL_TIME_KNOWLEDGE_SHARDING</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex -space-x-3">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="w-8 h-8 rounded-full border-2 border-[#050706] bg-slate-800 flex items-center justify-center text-[8px] font-black text-white">S{i}</div>
+                        ))}
+                        <div className="w-8 h-8 rounded-full border-2 border-[#050706] bg-emerald-500 flex items-center justify-center text-[8px] font-black text-white">+2</div>
+                      </div>
+                      <button 
+                        onClick={() => { setIsSealing(true); setTimeout(() => { setIsSealing(false); toast.success("SHARD_SEALED_SUCCESSFULLY"); }, 2000); }}
+                        disabled={isSealing}
+                        className="px-6 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2"
+                      >
+                        {isSealing ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck size={14} />}
+                        {isSealing ? 'SEALING...' : 'SEAL_SHARD'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <textarea 
+                      value={collabContent}
+                      onChange={e => setCollabContent(e.target.value)}
+                      placeholder="Start co-authoring the next agricultural breakthrough..."
+                      className="w-full h-[400px] bg-black/60 border border-white/10 rounded-3xl p-8 text-slate-300 font-mono text-sm focus:outline-none focus:border-emerald-500/40 transition-all resize-none custom-scrollbar-terminal shadow-inner"
+                    />
+                    <div className="absolute top-8 right-8 flex flex-col gap-2">
+                      <div className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 rounded-full text-[8px] font-black text-emerald-400 uppercase">Live: 5 Stewards</div>
+                      <div className="px-3 py-1 bg-blue-500/20 border border-blue-500/40 rounded-full text-[8px] font-black text-blue-400 uppercase">Sync: 1.42x</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-2">
+                      <p className="text-[8px] text-slate-500 uppercase font-black">Knowledge Domain</p>
+                      <p className="text-xs font-bold text-white">Regenerative Mycology</p>
+                    </div>
+                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-2">
+                      <p className="text-[8px] text-slate-500 uppercase font-black">Target Registry</p>
+                      <p className="text-xs font-bold text-white">Industrial Shard v6.2</p>
+                    </div>
+                    <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-2">
+                      <p className="text-[8px] text-slate-500 uppercase font-black">EAC Royalty Split</p>
+                      <p className="text-xs font-bold text-white">Dynamic (Resonance-Based)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {lmsSubTab === 'modules' && (
                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                     {LMS_MODULES.map(mod => (
                        <div key={mod.id} className="glass-card p-12 rounded-[64px] border-2 border-white/5 hover:border-indigo-500/40 transition-all group flex flex-col justify-between min-h-[400px] bg-black/40 shadow-3xl relative overflow-hidden active:scale-[0.99]">
@@ -1168,6 +1233,44 @@ const Community: React.FC<CommunityProps> = ({
            </div>
         </div>
       )}
+
+        {/* --- VIEW: BOUNTY SHARDS --- */}
+        {activeTab === 'bounties' && (
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                { title: 'Soil Carbon Mapping', reward: '500 EAC', difficulty: 'HARD', category: 'Digital MRV', desc: 'Collect high-fidelity biomass evidence shards for Sector 7.' },
+                { title: 'Pest Identification', reward: '200 EAC', difficulty: 'MEDIUM', category: 'Field Scout', desc: 'Identify and shard 50 unique pest signatures using the AI scout.' },
+                { title: 'Mesh Optimization', reward: '1000 EAC', difficulty: 'EXPERT', category: 'Industrial', desc: 'Optimize the local network resonance for the Neo-Hydroponic Guild.' }
+              ].map((bounty, i) => (
+                <div key={i} className="glass-card p-10 rounded-[48px] border border-white/5 bg-black/40 space-y-6 group hover:border-amber-500/30 transition-all">
+                  <div className="flex justify-between items-start">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-xl">
+                      <Target size={28} />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-slate-500 uppercase font-black">Reward</p>
+                      <p className="text-xl font-black text-amber-400 italic">{bounty.reward}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest">{bounty.category}</span>
+                      <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                        bounty.difficulty === 'HARD' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                        bounty.difficulty === 'MEDIUM' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
+                        'bg-purple-500/10 text-purple-500 border border-purple-500/20'
+                      }`}>{bounty.difficulty}</span>
+                    </div>
+                    <h4 className="text-xl font-black text-white uppercase italic">{bounty.title}</h4>
+                    <p className="text-xs text-slate-500 mt-2 leading-relaxed">{bounty.desc}</p>
+                  </div>
+                  <button className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest border border-white/10 transition-all">ACCEPT_BOUNTY</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       <style>{`
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }

@@ -35,50 +35,55 @@ export class BroadcastService {
   private sequence = 0;
 
   public async startBroadcast(title: string, type: 'LIVE_STREAM' | 'PODCAST' | 'DRONE', stream: MediaStream): Promise<string> {
-    const userId = auth.currentUser?.uid;
-    const userName = auth.currentUser?.displayName || 'Steward';
-    if (!userId) throw new Error("Authentication required");
+    try {
+      const userId = auth.currentUser?.uid;
+      const userName = auth.currentUser?.displayName || 'Steward';
+      if (!userId) throw new Error("Authentication required");
 
-    const sessionId = `BRC-${generateAlphanumericId(10)}`;
-    this.currentSessionId = sessionId;
-    this.sequence = 0;
+      const sessionId = `BRC-${generateAlphanumericId(10)}`;
+      this.currentSessionId = sessionId;
+      this.sequence = 0;
 
-    const sessionData: BroadcastSession = {
-      id: sessionId,
-      hostId: userId,
-      hostName: userName,
-      title,
-      type,
-      status: 'LIVE',
-      startTime: new Date().toISOString(),
-      listenerCount: 0,
-    };
+      const sessionData: BroadcastSession = {
+        id: sessionId,
+        hostId: userId,
+        hostName: userName,
+        title,
+        type,
+        status: 'LIVE',
+        startTime: new Date().toISOString(),
+        listenerCount: 0,
+      };
 
-    // 1. Create session in Firestore
-    await setDoc(doc(db, 'broadcasts', sessionId), sessionData);
+      // 1. Create session in Firestore
+      await setDoc(doc(db, 'broadcasts', sessionId), sessionData);
 
-    // 2. Initialize RTDB metadata
-    const rtdbSessionRef = ref(rtdb, `broadcasts/${sessionId}`);
-    await set(rtdbSessionRef, { 
-      status: 'LIVE', 
-      listenerCount: 0, 
-      lastUpdate: rtdbTimestamp() 
-    });
+      // 2. Initialize RTDB metadata
+      const rtdbSessionRef = ref(rtdb, `broadcasts/${sessionId}`);
+      await set(rtdbSessionRef, { 
+        status: 'LIVE', 
+        listenerCount: 0, 
+        lastUpdate: rtdbTimestamp() 
+      });
 
-    // 3. Start Media Recording and Chunking
-    this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
-    
-    this.mediaRecorder.ondataavailable = async (event) => {
-      if (event.data.size > 0) {
-        await this.uploadSegment(event.data);
-      }
-    };
+      // 3. Start Media Recording and Chunking
+      this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+      
+      this.mediaRecorder.ondataavailable = async (event) => {
+        if (event.data.size > 0) {
+          await this.uploadSegment(event.data);
+        }
+      };
 
-    // Chunk every 2 seconds for DRONE (low latency), 5 for others
-    const interval = type === 'DRONE' ? 2000 : 5000;
-    this.mediaRecorder.start(interval);
+      // Chunk every 2 seconds for DRONE (low latency), 5 for others
+      const interval = type === 'DRONE' ? 2000 : 5000;
+      this.mediaRecorder.start(interval);
 
-    return sessionId;
+      return sessionId;
+    } catch (error) {
+      console.error("Error starting broadcast:", error);
+      throw new Error("Failed to start broadcast");
+    }
   }
 
   private async uploadSegment(blob: Blob) {
@@ -116,76 +121,99 @@ export class BroadcastService {
 
     } catch (e) {
       console.error("Failed to upload broadcast segment:", e);
+      // We don't throw here to avoid stopping the broadcast on a single segment failure
     }
   }
 
   public async stopBroadcast() {
-    if (this.mediaRecorder) {
-      this.mediaRecorder.stop();
-    }
-    if (this.currentSessionId) {
-      await updateDoc(doc(db, 'broadcasts', this.currentSessionId), { 
-        status: 'ENDED',
-        endTime: new Date().toISOString()
-      });
-      await set(ref(rtdb, `broadcasts/${this.currentSessionId}/status`), 'ENDED');
-      
-      // Generate Proof of Broadcast (Mock for now, would be a hash of all segments)
-      const finalHash = `POB-${generateAlphanumericId(32)}`;
-      await updateDoc(doc(db, 'broadcasts', this.currentSessionId), { hash: finalHash });
-      
-      this.currentSessionId = null;
+    try {
+      if (this.mediaRecorder) {
+        this.mediaRecorder.stop();
+      }
+      if (this.currentSessionId) {
+        await updateDoc(doc(db, 'broadcasts', this.currentSessionId), { 
+          status: 'ENDED',
+          endTime: new Date().toISOString()
+        });
+        await set(ref(rtdb, `broadcasts/${this.currentSessionId}/status`), 'ENDED');
+        
+        // Generate Proof of Broadcast (Mock for now, would be a hash of all segments)
+        const finalHash = `POB-${generateAlphanumericId(32)}`;
+        await updateDoc(doc(db, 'broadcasts', this.currentSessionId), { hash: finalHash });
+        
+        this.currentSessionId = null;
+      }
+    } catch (error) {
+      console.error("Error stopping broadcast:", error);
+      throw new Error("Failed to stop broadcast");
     }
   }
 
   public listenToSegments(sessionId: string, onNewSegment: (segment: any) => void) {
-    const segmentsRef = rtdbQuery(ref(rtdb, `broadcast_segments/${sessionId}`), limitToLast(5));
-    onValue(segmentsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const latestKey = Object.keys(data).sort().pop();
-        if (latestKey) {
-          onNewSegment(data[latestKey]);
+    try {
+      const segmentsRef = rtdbQuery(ref(rtdb, `broadcast_segments/${sessionId}`), limitToLast(5));
+      onValue(segmentsRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const latestKey = Object.keys(data).sort().pop();
+          if (latestKey) {
+            onNewSegment(data[latestKey]);
+          }
         }
-      }
-    });
-    return () => off(segmentsRef);
+      });
+      return () => off(segmentsRef);
+    } catch (error) {
+      console.error("Error listening to segments:", error);
+      // Cannot throw from event listener
+      return () => {};
+    }
   }
 
   public async sendComment(sessionId: string, text: string) {
-    const userId = auth.currentUser?.uid;
-    const userName = auth.currentUser?.displayName || 'Steward';
-    if (!userId) return;
+    try {
+      const userId = auth.currentUser?.uid;
+      const userName = auth.currentUser?.displayName || 'Steward';
+      if (!userId) throw new Error("Authentication required");
 
-    const comment: BroadcastComment = {
-      id: generateAlphanumericId(10),
-      sessionId,
-      authorId: userId,
-      authorName: userName,
-      text,
-      timestamp: new Date().toISOString()
-    };
+      const comment: BroadcastComment = {
+        id: generateAlphanumericId(10),
+        sessionId,
+        authorId: userId,
+        authorName: userName,
+        text,
+        timestamp: new Date().toISOString()
+      };
 
-    // RTDB for real-time
-    const commentsRef = ref(rtdb, `broadcast_comments/${sessionId}`);
-    await push(commentsRef, { ...comment, rtdbTimestamp: rtdbTimestamp() });
+      // RTDB for real-time
+      const commentsRef = ref(rtdb, `broadcast_comments/${sessionId}`);
+      await push(commentsRef, { ...comment, rtdbTimestamp: rtdbTimestamp() });
 
-    // Firestore for history
-    await addDoc(collection(db, `broadcasts/${sessionId}/comments`), comment);
+      // Firestore for history
+      await addDoc(collection(db, `broadcasts/${sessionId}/comments`), comment);
+    } catch (error) {
+      console.error("Error sending comment:", error);
+      throw new Error("Failed to send comment");
+    }
   }
 
   public listenToComments(sessionId: string, onNewComment: (comment: any) => void) {
-    const commentsRef = rtdbQuery(ref(rtdb, `broadcast_comments/${sessionId}`), limitToLast(10));
-    onValue(commentsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const latestKey = Object.keys(data).sort().pop();
-        if (latestKey) {
-          onNewComment(data[latestKey]);
+    try {
+      const commentsRef = rtdbQuery(ref(rtdb, `broadcast_comments/${sessionId}`), limitToLast(10));
+      onValue(commentsRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const latestKey = Object.keys(data).sort().pop();
+          if (latestKey) {
+            onNewComment(data[latestKey]);
+          }
         }
-      }
-    });
-    return () => off(commentsRef);
+      });
+      return () => off(commentsRef);
+    } catch (error) {
+      console.error("Error listening to comments:", error);
+      // Cannot throw from event listener
+      return () => {};
+    }
   }
 }
 

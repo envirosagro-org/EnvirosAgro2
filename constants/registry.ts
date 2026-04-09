@@ -8,7 +8,7 @@ import {
   Monitor, ClipboardCheck, HeartHandshake, Recycle, Wrench, Bot, 
   PawPrint, TreePine, Droplets, Mountain, Wind, ShieldPlus, Siren, 
   History, Scale, CalendarDays, Palette, Zap, Dna, Compass, BoxSelect, 
-  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu, Landmark
+  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu, Landmark, Plane, Award, Lock, Radio
 } from 'lucide-react';
 
 export const REGISTRY_NODES: RegistryGroup[] = [
@@ -25,6 +25,7 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'explorer', name: 'Monitoring Hub', icon: Database, sections: [{id: 'terminal', label: 'Signal Terminal'}, {id: 'blocks', label: 'Blocks'}, {id: 'ledger', label: 'Tx Ledger'}, {id: 'consensus', label: 'Quorum'}, {id: 'settlement', label: 'Finality'}] },
       { id: 'farm_os', name: 'Farm OS', icon: Binary, sections: [{id: 'kernel', label: 'Kernel Stack'}, {id: 'ide', label: 'AgroLang IDE'}, {id: 'shell', label: 'System Shell'}] },
       { id: 'impact', name: 'Network Impact', icon: TrendingUp, sections: [{id: 'whole', label: 'Vitality'}, {id: 'carbon', label: 'Carbon Ledger'}, {id: 'thrusts', label: 'Resonance'}] },
+      { id: 'impact_dashboard', name: 'Impact Dashboard', icon: TrendingUp },
       { id: 'intelligence', name: 'Science Oracle', icon: Microscope, sections: [{id: 'twin', label: 'Digital Twin'}, {id: 'simulator', label: 'EOS Physics'}, {id: 'eos_agro_lang', label: 'Expert Oracle'}] },
       { id: 'sitemap', name: 'Registry Matrix', icon: MapIcon },
       { id: 'info', name: 'Hub Info', icon: Info, sections: [{id: 'about', label: 'About'}, {id: 'security', label: 'Security'}, {id: 'legal', label: 'Legal'}, {id: 'faq', label: 'FAQ'}] }
@@ -59,6 +60,12 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'ingest', name: 'Data Inflow Hub', icon: Cable, sections: [{id: 'handshake', label: 'Node Pairing'}, {id: 'streams', label: 'Registry Keys'}, {id: 'vault', label: 'Evidence Vault'}] },
       { id: 'live_farming', name: 'Inflow Control', icon: Monitor, sections: [{id: 'lifecycle', label: 'Pipeline'}] },
       { id: 'tqm', name: 'TQM Trace Hub', icon: ClipboardCheck, sections: [{id: 'orders', label: 'Shipments'}, {id: 'trace', label: 'Traceability'}] },
+      { id: 'traceability_map', name: 'Traceability Map', icon: MapIcon },
+      { id: 'telemetry_hub', name: 'Telemetry Hub', icon: Radio },
+      { id: 'swarm_orchestrator', name: 'Swarm Orchestrator', icon: Plane },
+      { id: 'mrv_engine', name: 'MRV Engine', icon: Leaf },
+      { id: 'reputation_dashboard', name: 'Reputation Dashboard', icon: Award },
+      { id: 'escrow_portal', name: 'Escrow Portal', icon: Lock },
       { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake, sections: [{id: 'directory', label: 'Directory'}, {id: 'support', label: 'Support'}] },
       { id: 'circular', name: 'Circular Grid', icon: Recycle, sections: [{id: 'market', label: 'Refurbished Store'}] },
       { id: 'tools', name: 'Industrial Tools', icon: Wrench, sections: [{id: 'kanban', label: 'Kanban'}, {id: 'sigma', label: 'Six Sigma'}] },

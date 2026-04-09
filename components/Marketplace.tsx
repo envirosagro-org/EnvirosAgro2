@@ -1,10 +1,10 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Tag, TrendingUp, Search, Filter, ShoppingBag, Zap, Award, X, Newspaper, BarChart3, Info } from 'lucide-react';
 import { ShareButton } from './ShareButton';
 import { SEO } from './SEO';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { listenToCollection } from '../services/firebaseService';
+import { useMarketplaceProducts, useMarketplaceAnalytics, useMarketplaceNews } from '../hooks/useMarketplaceProducts';
 import { User, ViewState } from '../types';
 
 interface MarketplaceProps {
@@ -17,18 +17,11 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showMyListings, setShowMyListings] = useState(false);
-  const [analyticsData, setAnalyticsData] = useState<any[]>([]);
-  const [marketNews, setMarketNews] = useState<any[]>([]);
   const [selectedNews, setSelectedNews] = useState<any | null>(null);
 
-  useEffect(() => {
-    const unsubAnalytics = listenToCollection('market_analytics', (data) => setAnalyticsData(data), true);
-    const unsubNews = listenToCollection('market_news', (data) => setMarketNews(data), true);
-    return () => {
-      unsubAnalytics();
-      unsubNews();
-    };
-  }, []);
+  const { data: fetchedVendorProducts = [] } = useMarketplaceProducts(user);
+  const { data: analyticsData = [] } = useMarketplaceAnalytics();
+  const { data: marketNews = [] } = useMarketplaceNews();
 
   const mockProducts = [
     { id: 'mock-1', name: 'Premium Soil Report (US-NE)', priceEAC: 450, category: 'Data', rating: 4.8, stewardId: 'SYS-001' },
@@ -40,7 +33,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
   ];
 
   const allProducts = useMemo(() => {
-    const mappedVendorProducts = vendorProducts.map(p => ({
+    const combinedVendorProducts = [...vendorProducts, ...fetchedVendorProducts];
+    const mappedVendorProducts = combinedVendorProducts.map(p => ({
       id: p.id,
       name: p.name,
       priceEAC: p.priceEAC || p.price || 100,
@@ -49,7 +43,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
       stewardId: p.stewardId || p.vendorId || 'UNKNOWN'
     }));
     return [...mappedVendorProducts, ...mockProducts];
-  }, [vendorProducts, user.esin]);
+  }, [vendorProducts, fetchedVendorProducts, user.esin]);
 
   const categories = Array.from(new Set(allProducts.map(p => p.category)));
 
@@ -117,7 +111,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
           <h3 className="text-lg font-bold text-white">Market Paper</h3>
         </div>
         <div className="space-y-4">
-          {marketNews.map(news => (
+          {(marketNews as any[]).map(news => (
             <button key={news.id} onClick={() => setSelectedNews(news)} className="w-full flex justify-between items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all">
               <span className="text-white font-medium">{news.title}</span>
               <span className="text-slate-500 text-xs">{news.date}</span>
