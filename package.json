@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "deploy": "npx wrangler deploy"
+    "deploy": "npx wrangler deploy",
+    "test": "vitest"
   },
   "engines": {
     "node": ">=20"
@@ -22,6 +23,8 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@tanstack/react-query": "^5.96.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/leaflet": "^1.9.21",
     "clsx": "^2.1.1",
     "crypto-js": "^4.2.0",
@@ -32,7 +35,9 @@
     "firebase-functions": "^7.2.3",
     "googleapis": "^171.4.0",
     "html2canvas": "^1.4.1",
+    "jsdom": "^29.0.2",
     "leaflet": "^1.9.4",
+    "localforage": "^1.10.0",
     "lucide-react": "^0.475.0",
     "maplibre-gl": "^5.22.0",
     "motion": "^12.38.0",
@@ -53,6 +58,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "three": "^0.183.2",
+    "vitest": "^4.1.4",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },

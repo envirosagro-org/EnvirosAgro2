@@ -34,6 +34,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
 import { SycamoreLogo, HenIcon } from './components/Icons';
 import { useAppStore } from './store';
+import { useOnline } from './hooks/useOnline';
 import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit, StewardPosition } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
@@ -846,6 +847,7 @@ const App: React.FC = () => {
   const costAudit = useAppStore(state => state.costAudit);
   const setCostAudit = useAppStore(state => state.setCostAudit);
   const registrationState = useAppStore(state => state.registrationState);
+  const isOnline = useOnline();
   
   const blockchain = useAppStore(state => state.blockchain);
   const setBlockchain = useAppStore(state => state.setBlockchain);
@@ -1556,6 +1558,14 @@ const App: React.FC = () => {
               )}
 
               <button onClick={() => setIsGlobalSearchOpen(true)} className="md:hidden p-2.5 bg-white/5 rounded-xl hover:bg-white/10 transition-all"><Search size={16} className="text-slate-400" /></button>
+              
+              {!isOnline && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 glass-card rounded-xl border border-rose-500/20 bg-rose-500/10">
+                  <AlertCircle size={12} className="text-rose-400" />
+                  <span className="text-[8px] font-black uppercase tracking-widest text-rose-400">OFFLINE</span>
+                </div>
+              )}
+
               {user && <button onClick={() => navigate('wallet')} className="px-3 py-2 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={12} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[8px] sm:text-[10px] font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
               <button onClick={() => navigate('profile')} className={`flex items-center gap-2 px-2 py-1.5 rounded-xl border transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
                  {user ? (<><div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" referrerPolicy="no-referrer" /> : <UserIcon size={12} className="text-slate-500 m-auto mt-1.5" />}</div><span className="text-[8px] font-black text-white hidden sm:block truncate max-w-[60px] uppercase italic">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={14} className="text-emerald-400" /><span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Sync</span></>)}

@@ -27,6 +27,7 @@ import { saveCollectionItem } from '../services/firebaseService';
 import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
 import { SEO } from './SEO';
+import { AIAssistant } from './AIAssistant';
 
 interface IntelligenceProps {
   user: User;
@@ -891,6 +892,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
         .animate-scan { animation: scan 3s linear infinite; }
         .perspective-1000 { perspective: 1000px; }
       `}</style>
+      <AIAssistant userEsin={user.esin} />
     </div>
   );
 };

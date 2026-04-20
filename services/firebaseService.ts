@@ -47,6 +47,7 @@ import { getDataConnect, connectDataConnectEmulator } from 'firebase/data-connec
 import { User as AgroUser, SignalShard, DispatchChannel, MachineNode } from "../types";
 import { generateAlphanumericId } from '../systemFunctions';
 import { handleFirestoreError, OperationType } from "./errorHandling";
+import { persistItem, queueAction } from "./persistenceService";
 
 import firebaseConfig from "../firebase-applet-config.json";
 
@@ -243,6 +244,12 @@ export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>, st
     actionLabel: signalData.actionLabel || ''
   };
   const cleanSignal = cleanObject(rawSignal);
+  
+  if (!navigator.onLine) {
+    await queueAction({ type: 'SIGNAL', data: cleanSignal });
+    return cleanSignal as SignalShard;
+  }
+
   try {
     await setDoc(doc(db, "signals", id), cleanSignal);
     const pulseRef = ref(rtdb, 'network_pulse');
