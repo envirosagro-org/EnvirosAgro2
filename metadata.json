@@ -2,6 +2,8 @@
   "name": "EnvirosAgro ",
   "description": "Decentralized Agricultural Blockchain ",
   "requestFramePermissions": [
-    "geolocation"
+    "geolocation",
+    "camera",
+    "microphone"
   ]
 }

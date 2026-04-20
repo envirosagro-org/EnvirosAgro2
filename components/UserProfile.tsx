@@ -604,6 +604,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                   <div className="space-y-6">
                      {[
                         { id: 'notif', label: 'Signal Dispatch', desc: 'Enable real-time push sharding for network alerts.', val: user.settings?.notificationsEnabled, icon: BellRing },
+                        { id: 'whatsapp', label: 'WhatsApp Notifications', desc: 'Sync account alerts to your linked WhatsApp device.', val: user.settings?.whatsappNotifications, icon: MessageSquare },
+                        { id: 'tfa_enable', label: '2-Factor Auth', desc: 'Enable secondary authentication for your node.', val: user.tfaEnabled, icon: ShieldCheck },
+                        { id: 'tfa_type', label: 'Recovery Method', desc: `Select your primary recovery channel: ${user.tfaType || 'email'}`, val: true, icon: Key, isToggle: false },
                         { id: 'sync', label: 'Autonomous Ingest', desc: 'Allow kernel to automatically resync with regional relay nodes.', val: user.settings?.autoSync, icon: RefreshCw },
                         { id: 'bio', label: 'Biometric Handshake', icon: Fingerprint, desc: 'Use local biometric shard for rapid ESIN authorization.', val: user.settings?.biometricLogin },
                      ].map(setting => (
@@ -618,7 +621,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                            <button 
                               className={`p-2 transition-all ${setting.val ? 'text-emerald-500' : 'text-slate-800'}`}
                            >
-                              {setting.val ? <ToggleRight size={48} /> : <ToggleLeft size={48} />}
+                              {setting.isToggle === false ? null : setting.val ? <ToggleRight size={48} /> : <ToggleLeft size={48} />}
                            </button>
                         </div>
                      ))}

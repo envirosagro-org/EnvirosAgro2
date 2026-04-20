@@ -68,6 +68,9 @@ export interface User {
   isReadyForHire: boolean;
   completedActions?: string[]; 
   achievements?: string[];
+  phone?: string;
+  tfaEnabled?: boolean;
+  tfaType?: 'email' | 'phone';
   settings?: {
     notificationsEnabled: boolean;
     privacyMode: 'Public' | 'Private' | 'Consensus_Only';
@@ -81,6 +84,7 @@ export interface User {
     anonymizedSharing?: boolean;
     geofenceSecurity?: boolean;
     dataRefreshRate?: 'Real-time' | '5m' | '1h';
+    whatsappNotifications?: boolean;
   };
   resources?: AgroResource[];
   zodiacFlower?: {

@@ -40,6 +40,7 @@ import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorP
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ConsentManager } from './components/ConsentManager';
 import { CommandPalette } from './components/CommandPalette';
 import { NavigationLink } from './components/NavigationLink';
 import { getComponentForView } from './components/Router';
@@ -1366,10 +1367,11 @@ const App: React.FC = () => {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <CommandPalette />
-        <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 animate-in fade-in duration-1000 relative">
+    <ConsentManager>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <CommandPalette />
+          <div className="min-h-screen bg-[#050706] text-slate-200 font-sans selection:bg-emerald-500/30 animate-in fade-in duration-1000 relative">
       {/* Quantum Energy Background */}
       <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)]"></div>
@@ -1631,6 +1633,7 @@ const App: React.FC = () => {
     </div>
     </ErrorBoundary>
     </QueryClientProvider>
+    </ConsentManager>
   );
 };
 
