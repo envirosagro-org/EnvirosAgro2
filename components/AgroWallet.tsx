@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { 
   Wallet, 
   ArrowUpRight, 
@@ -657,38 +658,42 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                     <span>Time Shard</span>
                     <span className="text-right">Settlement</span>
                  </div>
-                 <div className="divide-y divide-white/5 bg-[#050706] relative z-10 min-h-[500px]">
+                 <div className="bg-[#050706] relative z-10 h-[500px]">
                     {transactions.length === 0 ? (
                        <div className="h-full flex flex-col items-center justify-center py-40 opacity-10 space-y-8">
                           <History size={120} />
                           <p className="text-3xl font-black uppercase tracking-[0.5em]">No shards finalized</p>
                        </div>
                     ) : (
-                       transactions.map((tx, i) => (
-                          <div key={tx.id} className="grid grid-cols-5 p-12 hover:bg-white/[0.02] transition-all items-center group cursor-pointer animate-in fade-in" style={{ animationDelay: `${i * 80}ms` }}>
-                             <div className="col-span-2 flex items-center gap-10">
-                                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border-2 border-white/10 group-hover:scale-110 group-hover:border-indigo-500 transition-all shadow-inner">
-                                   <Database size={28} className="text-indigo-400" />
-                                </div>
-                                <div>
-                                   <p className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:text-indigo-400 transition-colors m-0">{tx.details}</p>
-                                   <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase font-black tracking-widest italic">{tx.id}</p>
-                                </div>
-                             </div>
-                             <div>
-                                <span className={`px-5 py-2 bg-indigo-600/10 text-indigo-400 text-[10px] font-black uppercase rounded-full border border-indigo-500/20 tracking-widest`}>{tx.type.toUpperCase()}</span>
-                             </div>
-                             <div className="text-sm text-slate-500 font-mono italic opacity-70 group-hover:opacity-100 transition-opacity">
-                                SYNC_PAYPAL
-                             </div>
-                             <div className="flex justify-end pr-8 items-center gap-6">
-                                <p className={`text-3xl font-mono font-black ${tx.value >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>{tx.value > 0 ? '+' : ''}{tx.value}<span className="text-xs ml-1 font-sans opacity-40">EAC</span></p>
-                                <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-2xl text-emerald-400 shadow-xl group-hover:shadow-emerald-500/40 group-hover:scale-110 transition-all active:scale-95">
-                                   <ShieldCheck size={20} />
-                                </div>
-                             </div>
-                          </div>
-                       ))
+                       <Virtuoso
+                         style={{ height: '100%' }}
+                         data={transactions}
+                         itemContent={(i, tx) => (
+                           <div key={tx.id} className="grid grid-cols-5 p-12 hover:bg-white/[0.02] transition-all items-center group cursor-pointer border-b border-white/5">
+                              <div className="col-span-2 flex items-center gap-10">
+                                 <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border-2 border-white/10 group-hover:scale-110 group-hover:border-indigo-500 transition-all shadow-inner">
+                                    <Database size={28} className="text-indigo-400" />
+                                 </div>
+                                 <div>
+                                    <p className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none group-hover:text-indigo-400 transition-colors m-0">{tx.details}</p>
+                                    <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase font-black tracking-widest italic">{tx.id}</p>
+                                 </div>
+                              </div>
+                              <div>
+                                 <span className={`px-5 py-2 bg-indigo-600/10 text-indigo-400 text-[10px] font-black uppercase rounded-full border border-indigo-500/20 tracking-widest`}>{tx.type.toUpperCase()}</span>
+                              </div>
+                              <div className="text-sm text-slate-500 font-mono italic opacity-70 group-hover:opacity-100 transition-opacity">
+                                 SYNC_PAYPAL
+                              </div>
+                              <div className="flex justify-end pr-8 items-center gap-6">
+                                 <p className={`text-3xl font-mono font-black ${tx.value >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>{tx.value > 0 ? '+' : ''}{tx.value}<span className="text-xs ml-1 font-sans opacity-40">EAC</span></p>
+                                 <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-2xl text-emerald-400 shadow-xl group-hover:shadow-emerald-500/40 group-hover:scale-110 transition-all active:scale-95">
+                                    <ShieldCheck size={20} />
+                                 </div>
+                              </div>
+                           </div>
+                         )}
+                       />
                     )}
                  </div>
               </div>

@@ -46,6 +46,86 @@ service cloud.firestore {
              data.status in ['Registered', 'Active', 'Offline'];
     }
 
+    match /proposals/{proposalId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // Should be restricted in prod
+    }
+
+    match /votes/{voteId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /elections/{electionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /industrial_units/{unitId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /live_products/{productId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /transactions/{txId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /media_ledger/{mediaId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /mempool/{txId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /blueprints/{blueprintId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /carbon_credits/{creditId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /hood_connections/{connId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /projects/{projectId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /contracts/{contractId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
     match /stewards/{stewardId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isOwner(stewardId) && isValidSteward(request.resource.data);
@@ -118,9 +198,30 @@ service cloud.firestore {
       }
     }
 
+    function isValidSensorReading(data) {
+      let userEsin = get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin;
+      return data.stewardId is string && (data.stewardId == request.auth.uid || data.stewardId == userEsin) &&
+             data.sensorType is string && data.sensorType.size() > 0 &&
+             data.value is number &&
+             data.unit is string &&
+             data.timestamp is string;
+    }
+
+    function isValidTelemetryBatch(data) {
+      return data.droneId is string && data.droneId.size() > 0 &&
+             data.hash is string && data.hash.size() <= 64; // Max hash size
+    }
+
+    match /sensor_readings/{readingId} {
+      allow read: if isAuthenticated() && isDocOwner();
+      allow create: if isAuthenticated() && isValidSensorReading(request.resource.data);
+      allow update, delete: if false; // Sensor facts are immutable
+    }
+
     match /telemetry_batches/{batchId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidTelemetryBatch(request.resource.data);
+      allow update, delete: if false;
     }
 
     match /market_analytics/{analyticsId} {

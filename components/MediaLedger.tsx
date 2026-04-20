@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { 
   FileStack, 
   Search, 
@@ -218,66 +219,71 @@ const MediaLedger: React.FC<MediaLedgerProps> = ({ user, shards = [], onNavigate
                <span>m-Resonance Impact</span>
                <span className="text-right">Ledger Actions</span>
             </div>
-            <div className="divide-y divide-white/5 min-h-[600px] bg-[#050706]">
-               {filteredShards.map((shard, i) => {
-                  const Icon = TYPE_ICONS[shard.type] || FileStack;
-                  const color = TYPE_COLORS[shard.type] || 'text-slate-400';
-                  return (
-                    <div key={shard.id} className="grid grid-cols-6 p-12 hover:bg-white/[0.02] transition-all items-center group animate-in fade-in" style={{ animationDelay: `${i * 50}ms` }}>
-                        <div className="col-span-2 flex items-center gap-10">
-                           <div className={`w-20 h-20 rounded-[28px] bg-black/60 border border-white/10 flex items-center justify-center shadow-3xl group-hover:rotate-6 group-hover:scale-110 transition-all ${color}`}>
-                              <Icon size={40} />
-                           </div>
-                           <div className="space-y-2">
-                              <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-indigo-400 transition-colors">{shard.title}</h4>
-                              <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">{shard.id} // BLCK_COMMIT_{shard.hash}</p>
-                           </div>
-                        </div>
-                        <div className="space-y-2">
-                           <span className={`px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest ${color}`}>{shard.type}</span>
-                           <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">{shard.source}</p>
-                        </div>
-                        <div className="space-y-1">
-                           <p className="text-sm font-black text-slate-300 uppercase italic tracking-tight">{shard.author}</p>
-                           <p className="text-[9px] text-slate-600 font-mono font-black uppercase tracking-widest">{shard.authorEsin}</p>
-                        </div>
-                        <div>
-                           <div className="flex items-center gap-3">
-                              <Activity size={16} className="text-emerald-500 animate-pulse" />
-                              <span className="text-2xl font-mono font-black text-white">{shard.mImpact}</span>
-                           </div>
-                        </div>
-                         <div className="flex justify-end gap-6 pr-8">
-                            {(shard.type === 'VIDEO' || shard.type === 'AUDIO') && (
-                              <button onClick={() => openPlayer(shard)} className="p-5 bg-emerald-600 rounded-2xl text-white shadow-3xl hover:bg-emerald-500 transition-all active:scale-90 border border-white/10" title="Play Shard">
-                                 <CirclePlay size={24} />
-                              </button>
-                            )}
-                            <button onClick={() => setSelectedShard(shard)} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-indigo-400 transition-all shadow-xl active:scale-90" title="Inspect Shard">
-                               <Eye size={24} />
-                            </button>
-                            <ShareButton 
-                              title={`EnvirosAgro Media Ledger: ${shard.title}`}
-                              text={`Check out this ${shard.type} shard by ${shard.author} on EnvirosAgro!`}
-                              className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-emerald-400 transition-all shadow-xl active:scale-90"
-                              iconSize={24}
-                            />
-                            <button 
-                              onClick={() => (onNavigate as any)('multimedia_generator', null, true, { prompt: `Process and prepare download for shard: ${shard.title} (${shard.id}). Type: ${shard.type}`, type: shard.type === 'PAPER' ? 'document' : shard.type.toLowerCase() })}
-                              className="p-5 bg-indigo-600 rounded-2xl text-white shadow-3xl hover:bg-indigo-500 transition-all active:scale-90 border border-white/10" 
-                              title="Download to Buffer via Agro Multimedia"
-                            >
-                               <Download size={24} />
-                            </button>
-                         </div>
-                    </div>
-                  );
-               })}
-               {filteredShards.length === 0 && (
+            <div className="bg-[#050706] h-[600px]">
+               {filteredShards.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-40 opacity-10">
                      <FileStack size={140} className="mb-8" />
                      <p className="text-4xl font-black uppercase tracking-[0.5em]">No matching shards found</p>
                   </div>
+               ) : (
+                 <Virtuoso
+                   style={{ height: '100%' }}
+                   data={filteredShards}
+                   itemContent={(i, shard) => {
+                     const Icon = TYPE_ICONS[shard.type] || FileStack;
+                     const color = TYPE_COLORS[shard.type] || 'text-slate-400';
+                     return (
+                       <div key={shard.id} className="grid grid-cols-6 p-12 hover:bg-white/[0.02] transition-all items-center group border-b border-white/5">
+                           <div className="col-span-2 flex items-center gap-10">
+                              <div className={`w-20 h-20 rounded-[28px] bg-black/60 border border-white/10 flex items-center justify-center shadow-3xl group-hover:rotate-6 group-hover:scale-110 transition-all ${color}`}>
+                                 <Icon size={40} />
+                              </div>
+                              <div className="space-y-2">
+                                 <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-indigo-400 transition-colors">{shard.title}</h4>
+                                 <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">{shard.id} // BLCK_COMMIT_{shard.hash}</p>
+                              </div>
+                           </div>
+                           <div className="space-y-2">
+                              <span className={`px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest ${color}`}>{shard.type}</span>
+                              <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">{shard.source}</p>
+                           </div>
+                           <div className="space-y-1">
+                              <p className="text-sm font-black text-slate-300 uppercase italic tracking-tight">{shard.author}</p>
+                              <p className="text-[9px] text-slate-600 font-mono font-black uppercase tracking-widest">{shard.authorEsin}</p>
+                           </div>
+                           <div>
+                              <div className="flex items-center gap-3">
+                                 <Activity size={16} className="text-emerald-500 animate-pulse" />
+                                 <span className="text-2xl font-mono font-black text-white">{shard.mImpact}</span>
+                              </div>
+                           </div>
+                            <div className="flex justify-end gap-6 pr-8">
+                               {(shard.type === 'VIDEO' || shard.type === 'AUDIO') && (
+                                 <button onClick={() => openPlayer(shard)} className="p-5 bg-emerald-600 rounded-2xl text-white shadow-3xl hover:bg-emerald-500 transition-all active:scale-90 border border-white/10" title="Play Shard">
+                                    <CirclePlay size={24} />
+                                 </button>
+                               )}
+                               <button onClick={() => setSelectedShard(shard)} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-indigo-400 transition-all shadow-xl active:scale-90" title="Inspect Shard">
+                                  <Eye size={24} />
+                               </button>
+                               <ShareButton 
+                                 title={`EnvirosAgro Media Ledger: ${shard.title}`}
+                                 text={`Check out this ${shard.type} shard by ${shard.author} on EnvirosAgro!`}
+                                 className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-500 hover:text-emerald-400 transition-all shadow-xl active:scale-90"
+                                 iconSize={24}
+                               />
+                               <button 
+                                 onClick={() => (onNavigate as any)('multimedia_generator', null, true, { prompt: `Process and prepare download for shard: ${shard.title} (${shard.id}). Type: ${shard.type}`, type: shard.type === 'PAPER' ? 'document' : shard.type.toLowerCase() })}
+                                 className="p-5 bg-indigo-600 rounded-2xl text-white shadow-3xl hover:bg-indigo-500 transition-all active:scale-90 border border-white/10" 
+                                 title="Download to Buffer via Agro Multimedia"
+                               >
+                                  <Download size={24} />
+                               </button>
+                            </div>
+                       </div>
+                     );
+                   }}
+                 />
                )}
             </div>
             <div className="p-10 border-t border-white/10 bg-black/80 flex justify-between items-center text-[10px] font-black text-slate-700 uppercase tracking-widest">

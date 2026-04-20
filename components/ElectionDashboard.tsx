@@ -48,7 +48,8 @@ const ElectionDashboard: React.FC<ElectionDashboardProps> = ({ user, positions, 
           const position = positions.find(p => p.id === election.positionId);
           if (!position) return null;
           
-          const totalVotes = election.candidates.reduce((acc, c) => acc + c.votes, 0);
+          const candidates = election.candidates || [];
+          const totalVotes = candidates.reduce((acc, c) => acc + c.votes, 0);
 
           return (
             <div key={election.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 space-y-8 shadow-3xl hover:border-emerald-500/20 transition-all group overflow-hidden relative">
@@ -104,7 +105,7 @@ const ElectionDashboard: React.FC<ElectionDashboardProps> = ({ user, positions, 
                   </div>
                   
                   <div className="space-y-6">
-                    {election.candidates.map(candidate => {
+                    {candidates.map(candidate => {
                       const votePercent = totalVotes > 0 ? (candidate.votes / totalVotes) * 100 : 0;
                       return (
                         <div key={candidate.id} className="p-8 bg-black/60 border border-white/10 rounded-[40px] space-y-6 hover:border-indigo-500/30 transition-all shadow-xl group/cand">

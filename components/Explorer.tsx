@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { 
   Search, 
   SearchCode,
@@ -591,24 +592,28 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                     <span>Value</span>
                     <span className="text-right">Finality</span>
                  </div>
-                 <div className="divide-y divide-white/5 h-[600px] overflow-y-auto custom-scrollbar bg-[#050706]">
-                    {allTransactions.map((tx, i) => (
-                       <div key={i} className="grid grid-cols-6 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer animate-in fade-in">
-                          <div className="col-span-2 flex items-center gap-8">
-                             <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 shadow-inner">
-                                <Database size={24} />
-                             </div>
-                             <div>
-                                <p className="text-xl font-black text-white uppercase italic leading-none m-0">{tx.details}</p>
-                                <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase font-black">{tx.id}</p>
-                             </div>
-                          </div>
-                          <div><span className={`px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[9px] font-black uppercase rounded-lg border border-blue-500/20`}>{tx.type}</span></div>
-                          <div className="text-xs text-slate-500 font-mono italic">{tx.farmId}</div>
-                          <div className="text-2xl font-mono font-black text-white tracking-tighter">{tx.value} <span className="text-[10px] text-slate-700 font-sans uppercase">{tx.unit}</span></div>
-                          <div className="flex justify-end pr-4"><ShieldCheck size={20} className="text-emerald-400" /></div>
-                       </div>
-                    ))}
+                 <div className="h-[600px] bg-[#050706]">
+                    <Virtuoso
+                      style={{ height: '100%' }}
+                      data={allTransactions}
+                      itemContent={(i, tx) => (
+                        <div key={i} className="grid grid-cols-6 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer border-b border-white/5">
+                           <div className="col-span-2 flex items-center gap-8">
+                              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 shadow-inner">
+                                 <Database size={24} />
+                              </div>
+                              <div>
+                                 <p className="text-xl font-black text-white uppercase italic leading-none m-0">{tx.details}</p>
+                                 <p className="text-[10px] text-slate-700 font-mono mt-3 uppercase font-black">{tx.id}</p>
+                              </div>
+                           </div>
+                           <div><span className={`px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[9px] font-black uppercase rounded-lg border border-blue-500/20`}>{tx.type}</span></div>
+                           <div className="text-xs text-slate-500 font-mono italic">{tx.farmId}</div>
+                           <div className="text-2xl font-mono font-black text-white tracking-tighter">{tx.value} <span className="text-[10px] text-slate-700 font-sans uppercase">{tx.unit}</span></div>
+                           <div className="flex justify-end pr-4"><ShieldCheck size={20} className="text-emerald-400" /></div>
+                        </div>
+                      )}
+                    />
                  </div>
               </div>
            </div>

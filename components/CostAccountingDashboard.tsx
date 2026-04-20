@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { 
   TrendingUp, TrendingDown, DollarSign, PieChart, Activity, 
   ShieldCheck, Zap, Database, RefreshCw, ArrowUpRight, 
@@ -316,26 +317,30 @@ const CostAccountingDashboard: React.FC<CostAccountingDashboardProps> = ({
                 <th className="pb-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
-              {transactions.slice().reverse().map((tx) => (
-                <tr key={tx.id} className="group hover:bg-white/[0.02] transition-colors">
-                  <td className="py-6 px-4 font-mono text-[10px] text-slate-500">{tx.id}</td>
-                  <td className="py-6 px-4">
-                    <span className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-white uppercase tracking-widest border border-white/5">
-                      {tx.category}
-                    </span>
-                  </td>
-                  <td className="py-6 px-4 text-xs text-slate-400 italic">{tx.description}</td>
-                  <td className={`py-6 px-4 text-right font-mono font-black ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {tx.type === 'REVENUE' ? '+' : '-'}${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                  </td>
-                  <td className="py-6 px-4 text-right">
-                    <span className="flex items-center justify-end gap-2 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
-                      <ShieldCheck size={12} /> ANCHORED
-                    </span>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-white/5 block h-[400px]">
+              <Virtuoso
+                style={{ height: '100%', width: '100%' }}
+                data={transactions.slice().reverse()}
+                itemContent={(i, tx) => (
+                  <tr key={tx.id} className="group hover:bg-white/[0.02] transition-colors flex w-full">
+                    <td className="py-6 px-4 font-mono text-[10px] text-slate-500 w-1/5">{tx.id}</td>
+                    <td className="py-6 px-4 w-1/5">
+                      <span className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-white uppercase tracking-widest border border-white/5">
+                        {tx.category}
+                      </span>
+                    </td>
+                    <td className="py-6 px-4 text-xs text-slate-400 italic w-1/5">{tx.description}</td>
+                    <td className={`py-6 px-4 text-right font-mono font-black w-1/5 ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {tx.type === 'REVENUE' ? '+' : '-'}${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                    </td>
+                    <td className="py-6 px-4 text-right w-1/5">
+                      <span className="flex items-center justify-end gap-2 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
+                        <ShieldCheck size={12} /> ANCHORED
+                      </span>
+                    </td>
+                  </tr>
+                )}
+              />
             </tbody>
           </table>
         </div>

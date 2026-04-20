@@ -137,16 +137,23 @@ const Governance: React.FC<GovernanceProps> = ({ user, proposals, stewardPositio
 
         <div className="glass-card p-8 rounded-3xl border border-white/5 bg-black/40 space-y-4">
           <h3 className="text-xl font-bold text-white">Proposal Analytics</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={proposalStatusData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                  {proposalStatusData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {proposals.length > 0 ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={proposalStatusData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    {proposalStatusData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index]} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex flex-col items-center justify-center text-slate-500 space-y-4 opacity-50">
+              <FileText size={48} className="animate-pulse" />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em]">NO_PROPOSALS_SYNCED</p>
+            </div>
+          )}
         </div>
       </div>
     )}

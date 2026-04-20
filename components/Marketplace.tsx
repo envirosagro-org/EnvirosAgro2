@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { Tag, TrendingUp, Search, Filter, ShoppingBag, Zap, Award, X, Newspaper, BarChart3, Info } from 'lucide-react';
 import { ShareButton } from './ShareButton';
 import { SEO } from './SEO';
@@ -192,55 +193,60 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((item) => (
-            <div key={item.id} className="glass-card rounded-3xl p-6 group hover:border-emerald-500/30 transition-all relative overflow-hidden flex flex-col h-full">
-              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ShoppingBag className="w-5 h-5 text-emerald-400" />
-              </div>
-              
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded">
-                  {item.category}
-                </span>
-                {item.stewardId === user.esin && (
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
-                    Yours
+        <div className="h-[600px]">
+          <Virtuoso
+            style={{ height: '100%' }}
+            data={filteredProducts}
+            className="custom-scrollbar"
+            itemContent={(i, item) => (
+              <div key={item.id} className="glass-card rounded-3xl p-6 group hover:border-emerald-500/30 transition-all relative overflow-hidden flex flex-col mb-4 mx-2">
+                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ShoppingBag className="w-5 h-5 text-emerald-400" />
+                </div>
+                
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded">
+                    {item.category}
                   </span>
-                )}
-              </div>
-              
-              <h4 className="text-white font-bold mb-2 group-hover:text-emerald-400 transition-colors flex-1">{item.name}</h4>
-              
-              <div className="flex items-center gap-1 mb-6">
-                {[...Array(5)].map((_, i) => (
-                  <Award key={i} className={`w-3 h-3 ${i < Math.floor(item.rating) ? 'text-amber-400' : 'text-slate-700'}`} />
-                ))}
-                <span className="text-[10px] text-slate-500 font-bold ml-1">{item.rating}</span>
-              </div>
-
-              <div className="flex items-end justify-between mt-auto">
-                <div>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Price</p>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xl font-mono font-bold text-white">{item.priceEAC}</span>
-                    <span className="text-xs font-bold text-emerald-400">EAC</span>
+                  {item.stewardId === user.esin && (
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
+                      Yours
+                    </span>
+                  )}
+                </div>
+                
+                <h4 className="text-white font-bold mb-2 group-hover:text-emerald-400 transition-colors flex-1">{item.name}</h4>
+                
+                <div className="flex items-center gap-1 mb-6">
+                  {[...Array(5)].map((_, i) => (
+                    <Award key={i} className={`w-3 h-3 ${i < Math.floor(item.rating) ? 'text-amber-400' : 'text-slate-700'}`} />
+                  ))}
+                  <span className="text-[10px] text-slate-500 font-bold ml-1">{item.rating}</span>
+                </div>
+  
+                <div className="flex items-end justify-between mt-auto">
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Price</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xl font-mono font-bold text-white">{item.priceEAC}</span>
+                      <span className="text-xs font-bold text-emerald-400">EAC</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <ShareButton 
+                      title={`Marketplace: ${item.name}`}
+                      text={`Check out ${item.name} for ${item.priceEAC} EAC!`}
+                      className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400"
+                      iconSize={20}
+                    />
+                    <button className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400">
+                      <ShoppingBag className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <ShareButton 
-                    title={`Marketplace: ${item.name}`}
-                    text={`Check out ${item.name} for ${item.priceEAC} EAC!`}
-                    className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400"
-                    iconSize={20}
-                  />
-                  <button className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400">
-                    <ShoppingBag className="w-5 h-5" />
-                  </button>
-                </div>
               </div>
-            </div>
-          ))}
+            )}
+          />
         </div>
       )}
 

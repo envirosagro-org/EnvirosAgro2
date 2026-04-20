@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { 
   Globe, Server, Activity, ShieldCheck, Network, Zap, 
   Box, Loader2, Signal, Radio, Terminal, Database, 
@@ -580,15 +581,18 @@ const NetworkView: React.FC = () => {
                    <div className="col-span-2 text-center">Value</div>
                    <div className="col-span-2 text-right">Status</div>
                 </div>
-                <div className="divide-y divide-white/5 bg-[#050706] relative z-10 min-h-[600px]">
+                <div className="bg-[#050706] relative z-10 h-[600px]">
                    {mempool.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center py-40 opacity-10 space-y-8">
                          <Loader2 size={120} className="animate-spin" />
                          <p className="text-3xl font-black uppercase tracking-[0.5em]">BUFFERING_STREAM...</p>
                       </div>
                    ) : (
-                      mempool.map((tx, i) => (
-                         <div key={tx.hash} className="grid grid-cols-12 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer animate-in fade-in" style={{ animationDelay: `${i * 80}ms` }}>
+                      <Virtuoso
+                        style={{ height: '100%' }}
+                        data={mempool}
+                        itemContent={(i, tx) => (
+                         <div key={tx.hash} className="grid grid-cols-12 p-10 hover:bg-white/[0.02] transition-all items-center group cursor-pointer border-b border-white/5">
                             <div className="col-span-5 flex items-center gap-8">
                                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center border-2 border-amber-500/20 text-amber-400 group-hover:scale-110 transition-all shadow-inner">
                                   <Binary size={24} />
@@ -612,7 +616,8 @@ const NetworkView: React.FC = () => {
                                <button className="p-4 bg-white/5 rounded-2xl text-slate-800 hover:text-white transition-all"><ArrowUpRight size={18}/></button>
                             </div>
                          </div>
-                      ))
+                        )}
+                      />
                    )}
                 </div>
              </div>
