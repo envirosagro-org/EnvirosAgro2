@@ -27,6 +27,7 @@ import {
   ResponsiveContainer, Radar as RechartsRadar, Tooltip 
 } from 'recharts';
 import { User, ViewState, SignalShard } from '../types';
+import { SectionTabs } from './SectionTabs';
 import IdentityCard from './IdentityCard';
 import { StewardJourney } from './StewardJourney';
 import { SEO } from './SEO';
@@ -291,18 +292,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
          </div>
       </div>
 
-      <div className="flex justify-center">
-         <div className="flex flex-wrap justify-center gap-3 p-2 glass-card rounded-full bg-black/40 border border-white/5 shadow-3xl overflow-x-auto scrollbar-hide">
-            {tabs.map(tab => (
-              <button 
-                key={tab.id} 
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-3 px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-              >
-                <tab.icon size={14} /> {tab.label}
-              </button>
-            ))}
-         </div>
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={tabs as any}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="glass"
+          className="w-full lg:w-auto"
+        />
       </div>
 
       <div className="min-h-[600px] relative">

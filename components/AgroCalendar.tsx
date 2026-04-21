@@ -38,6 +38,7 @@ import {
   Factory
 } from 'lucide-react';
 import { User, SignalShard, ViewState } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { getWeatherForecast, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 
@@ -273,22 +274,17 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       {/* 2. Mode Navigation */}
-      <div className="flex justify-center">
-         <div className="flex p-2 glass-card rounded-[32px] bg-black/40 border border-white/5 shadow-2xl">
-            {[
-              { id: 'daily', label: 'DAILY OFFICE' },
-              { id: 'seasonal', label: 'SEASONAL SYNC' },
-              { id: 'jit', label: 'JIT TERMINAL' }
-            ].map((mode) => (
-              <button 
-                key={mode.id} 
-                onClick={() => setActiveTab(mode.id as any)}
-                className={`px-12 py-4 rounded-full text-[11px] font-black uppercase tracking-[0.4em] transition-all ${activeTab === mode.id ? 'bg-emerald-600 text-white shadow-xl scale-105' : 'text-slate-500 hover:text-white'}`}
-              >
-                {mode.label}
-              </button>
-            ))}
-         </div>
+      <div className="flex justify-center mb-8 w-full">
+        <SectionTabs 
+          tabs={[
+            { id: 'daily', label: 'DAILY OFFICE' },
+            { id: 'seasonal', label: 'SEASONAL SYNC' },
+            { id: 'jit', label: 'JIT TERMINAL' }
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="glass"
+        />
       </div>
 
       <div className="min-h-[700px]">

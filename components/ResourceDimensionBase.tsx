@@ -31,7 +31,7 @@ import { User, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
-import { useAppStore } from '../store';
+import { useDataStore } from '../store/dataStore';
 import { toast } from 'sonner';
 
 export interface ResourceMeta {
@@ -63,7 +63,7 @@ interface ResourceDimensionBaseProps {
 const ResourceDimensionBase: React.FC<ResourceDimensionBaseProps> = ({ 
   user, type, meta, onEarnEAC, onSpendEAC, onNavigate, initialSection 
 }) => {
-  const { ecosystemState, updateEcosystemState } = useAppStore();
+  const { ecosystemState, updateEcosystemState } = useDataStore();
   const [activeInternalTab, setActiveInternalTab] = useState<'overview' | 'ledger' | 'oracle' | 'forge' | 'sim'>(
     (initialSection as any) || 'overview'
   );

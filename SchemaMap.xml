@@ -124,10 +124,10 @@
             <Section id="kanban" vector="[4.8.1]" label="Kanban" url="https://envirosagro.org/tools/kanban" />
             <Section id="sigma" vector="[4.8.2]" label="Six Sigma" url="https://envirosagro.org/tools/sigma" />
         </Domain>
-        <Domain id="robot" vector="[4.9]" label="Swarm Command" componentPath="components/Robot.tsx" url="https://envirosagro.org/robot">
-            <Section id="registry" vector="[4.9.1]" label="Fleet Registry" url="https://envirosagro.org/robot/registry" />
-            <Section id="security" vector="[4.9.2]" label="Intranet Security" url="https://envirosagro.org/robot/security" />
-            <Section id="sync" vector="[4.9.3]" label="AI Crawler Sync" url="https://envirosagro.org/robot/sync" />
+        <Domain id="agrobot" vector="[4.9]" label="Swarm Command" componentPath="components/Agrobot.tsx" url="https://envirosagro.org/agrobot">
+            <Section id="registry" vector="[4.9.1]" label="Fleet Registry" url="https://envirosagro.org/agrobot/registry" />
+            <Section id="security" vector="[4.9.2]" label="Intranet Security" url="https://envirosagro.org/agrobot/security" />
+            <Section id="sync" vector="[4.9.3]" label="AI Crawler Sync" url="https://envirosagro.org/agrobot/sync" />
         </Domain>
     </Dimension>
 

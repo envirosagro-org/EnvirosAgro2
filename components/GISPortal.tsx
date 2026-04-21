@@ -5,7 +5,7 @@ import maplibregl from 'maplibre-gl';
 import { spatialService, Plot } from '../services/spatialService';
 import { auth, listenToCollection } from '../services/firebaseService';
 import { toast } from 'sonner';
-import { useAppStore } from '../store';
+import { useUiStore } from '../store/uiStore';
 import { User, Mission, SignalShard } from '../types';
 import { MapPin, Loader2, Activity, Droplets, Sun, Wind, Zap, Camera, ShieldCheck, Target, Crosshair, X } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -52,7 +52,7 @@ const GISPortal: React.FC<GISPortalProps> = ({ user, onEmitSignal }) => {
   const [isDroppingAnchor, setIsDroppingAnchor] = useState(false);
   const [anchors, setAnchors] = useState<any[]>([]);
   
-  const { selectedPlot, setSelectedPlot } = useAppStore();
+  const { selectedPlot, setSelectedPlot } = useUiStore();
   
   const telemetryData = useMemo(() => {
     if (selectedPlot && selectedPlot.id) {

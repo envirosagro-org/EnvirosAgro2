@@ -72,6 +72,7 @@ import { AgroBlock, User, AgroTransaction, SignalShard, ViewState } from '../typ
 import { HenIcon } from './Icons';
 import { settleRegistryBatch, AgroLangResponse, auditMeshStability, probeValidatorNode } from '../services/agroLangService';
 import { SycamoreLogo } from './Icons';
+import { SectionTabs } from './SectionTabs';
 import { SEO } from './SEO';
 
 interface ExplorerProps {
@@ -183,13 +184,13 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
     }
   };
 
-  const filteredBlocks = blockchain.filter(b => 
+  const filteredBlocks = (blockchain || []).filter(b => 
     b.hash.toLowerCase().includes(searchTerm.toLowerCase()) || 
     b.validator.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const allTransactions = useMemo(() => {
-    return blockchain.flatMap(b => b.transactions.map(t => ({ ...t, blockHash: b.hash, validator: b.validator, timestamp: b.timestamp })));
+    return (blockchain || []).flatMap(b => (b.transactions || []).map(t => ({ ...t, blockHash: b.hash, validator: b.validator, timestamp: b.timestamp })));
   }, [blockchain]);
 
   const filteredSignals = useMemo(() => {
@@ -250,7 +251,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                <p className="text-[10px] text-amber-400 font-black uppercase tracking-[0.5em]">Signal Queue</p>
                <Radio className="w-5 h-5 text-amber-500 animate-pulse" />
             </div>
-            <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none relative z-10">{signals.filter(s=>!s.read).length} <span className="text-xl text-amber-500 italic ml-1">SHRD</span></h4>
+            <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none relative z-10">{(signals || []).filter(s=>!s.read).length} <span className="text-xl text-amber-500 italic ml-1">SHRD</span></h4>
             <button onClick={handleRunPulseAnalysis} className="text-[10px] font-black text-amber-500 hover:text-white transition-colors uppercase tracking-[0.4em] flex items-center gap-2 relative z-10 border border-amber-500/20 bg-amber-500/5 px-4 py-1.5 rounded-full shadow-inner w-fit">
                <Zap size={12} fill="currentColor" /> Analyze Pulse
             </button>
@@ -258,24 +259,25 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
       </div>
 
       {/* 2. Primary Navigation Shards */}
-      <div className="flex flex-wrap justify-center lg:justify-start gap-4 p-2 glass-card rounded-[40px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'overview', label: 'Master Overview', icon: LayoutGrid },
           { id: 'terminal', label: 'Signal Terminal', icon: Terminal },
           { id: 'blocks', label: 'Block Shards', icon: Box },
           { id: 'ledger', label: 'Tx Shards', icon: Binary },
           { id: 'settlement', label: 'Institutional Finality', icon: Gavel },
           { id: 'consensus', label: 'Validator Quorum', icon: Network },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => { setActiveTab(tab.id as any); setPulseVerdict(null); setProbeResult(null); setProbingNode(null); }}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon className="w-5 h-5" /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => {
+          setActiveTab(id);
+          setPulseVerdict(null);
+          setProbeResult(null);
+          setProbingNode(null);
+        }}
+        variant="industrial"
+        className="mb-10"
+      />
 
       {/* 3. Main Viewport */}
       <div className="min-h-[750px]">

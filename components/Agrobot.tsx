@@ -48,6 +48,7 @@ import {
   Send
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { User, ViewState, SignalShard, Mission } from '../types';
 import { chatWithAgroLang, forgeSwarmMission, suggestZonationShards } from '../services/agroLangService';
@@ -56,7 +57,7 @@ import { spatialService, Plot } from '../services/spatialService';
 import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
 
-interface RobotProps {
+interface AgrobotProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
@@ -83,7 +84,7 @@ const INITIAL_FLEET: Crawler[] = [
   { id: 'BOT-4420', name: 'Harvester Core', type: 'HarvesterBot', status: 'MAINTENANCE', handshake: 'PENDING', load: 0, battery: 12, threatLevel: 0, pos: { x: 50, y: 75 } },
 ];
 
-const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialSection }) => {
+const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialSection }) => {
   const [activeTab, setActiveTab] = useState<'registry' | 'forge' | 'terminal' | 'radar'>('registry');
 
   useEffect(() => {
@@ -349,7 +350,7 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
                  <div className="flex flex-wrap justify-center md:justify-start gap-3">
                     <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[9px] font-black uppercase rounded-full border border-indigo-500/20 shadow-inner italic tracking-widest">SWARM_COMMAND_v6.5</span>
                  </div>
-                 <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">Robotic <span className="text-indigo-400">Swarm.</span></h2>
+                 <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">AgroBot <span className="text-indigo-400">Swarm.</span></h2>
               </div>
               <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl opacity-80 group-hover:opacity-100 transition-opacity">
                  "Executing autonomous telemetry sweeps and precision sharding missions. Powered by the EnvirosAgro Swarm Oracle."
@@ -370,23 +371,21 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
       </div>
 
       {/* 2. Primary Navigation */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
-        {[
-          { id: 'registry', label: 'Fleet Registry', icon: Database },
-          { id: 'radar', label: 'Tactical Radar', icon: Radar },
-          { id: 'forge', label: 'Mission Forge', icon: Wand2 },
-          { id: 'terminal', label: 'Execution Shell', icon: Terminal },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={18} /> {tab.label}
-          </button>
-        ))}
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-6 relative z-20">
+        <SectionTabs 
+          tabs={[
+            { id: 'registry', label: 'Fleet Registry', icon: Database },
+            { id: 'radar', label: 'Tactical Radar', icon: Radar },
+            { id: 'forge', label: 'Mission Forge', icon: Wand2 },
+            { id: 'terminal', label: 'Execution Shell', icon: Terminal },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id)}
+          variant="industrial"
+          className="flex-1"
+        />
         <button 
-          onClick={() => onNavigate('robot', 'sync')}
+          onClick={() => onNavigate('agrobot', 'sync')}
           className="flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap text-rose-500 bg-rose-600/10 border border-rose-600/20 hover:bg-rose-600/20"
         >
           <Globe size={18} /> AI Crawler Sync
@@ -829,4 +828,4 @@ const Robot: React.FC<RobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, 
   );
 };
 
-export default Robot;
+export default Agrobot;

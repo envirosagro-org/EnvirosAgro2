@@ -57,6 +57,7 @@ import {
   Bar
 } from 'recharts';
 import { User, ViewState } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { toast } from 'sonner';
 
@@ -194,21 +195,17 @@ const Impact: React.FC<ImpactProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate
 
       {/* 2. Strategy Navigation */}
       <div className="flex flex-col lg:flex-row justify-between items-center gap-10 relative z-20">
-         <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-xl px-6">
-           {[
+         <SectionTabs 
+           tabs={[
              { id: 'whole', label: 'Network Vitality', icon: Globe },
              { id: 'carbon', label: 'Carbon Ledger', icon: Wind },
              { id: 'thrusts', label: 'Thrust Resonance', icon: TargetIcon },
-           ].map(tab => (
-             <button 
-               key={tab.id}
-               onClick={() => setActiveTab(tab.id as any)}
-               className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-2xl scale-105 border-b-4 border-emerald-400 ring-8 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-             >
-               <tab.icon size={18} /> {tab.label}
-             </button>
-           ))}
-         </div>
+           ]}
+           activeTab={activeTab}
+           onTabChange={(id) => setActiveTab(id)}
+           variant="industrial"
+           className="w-full lg:w-auto"
+         />
          
          <div className="flex items-center gap-6">
             <button 

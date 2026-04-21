@@ -2,7 +2,7 @@ import React from 'react';
 import { Wind, Activity, Binary, Waves } from 'lucide-react';
 import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
-import { useAppStore } from '../../store';
+import { useDataStore } from '../../store/dataStore';
 
 interface AirPortalProps {
   user: User;
@@ -13,7 +13,7 @@ interface AirPortalProps {
 }
 
 const AirPortal: React.FC<AirPortalProps> = (props) => {
-  const { ecosystemState, updateEcosystemState } = useAppStore();
+  const { ecosystemState, updateEcosystemState } = useDataStore();
 
   const meta: ResourceMeta = {
     title: 'AIR PORTAL',

@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { User, Order } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { SEO } from './SEO';
 
@@ -240,21 +241,19 @@ const EnvirosAgroStore: React.FC<EnvirosAgroStoreProps> = ({ user, onSpendEAC, o
       </div>
 
       {/* Tabs & Search */}
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
-        <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-xl overflow-x-auto scrollbar-hide snap-x">
-          {[
-            { id: 'products', label: 'Org Hardware', icon: Cpu },
-            { id: 'services', label: 'Org Services', icon: ShieldPlus },
-            { id: 'finance', label: 'Org Finance', icon: Landmark },
-          ].map(tab => (
-            <button 
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap snap-start ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-            >
-              <tab.icon className="w-4 h-4" /> {tab.label}
-            </button>
-          ))}
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-8">
+        <div className="w-full lg:w-auto">
+          <SectionTabs 
+            tabs={[
+              { id: 'products', label: 'Org Hardware', icon: Cpu },
+              { id: 'services', label: 'Org Services', icon: ShieldPlus },
+              { id: 'finance', label: 'Org Finance', icon: Landmark },
+            ]}
+            activeTab={activeTab}
+            onTabChange={(id) => setActiveTab(id as any)}
+            variant="glass"
+            className="w-full"
+          />
         </div>
         
         <div className="relative group w-full lg:w-96 shrink-0">

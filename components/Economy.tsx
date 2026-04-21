@@ -14,6 +14,7 @@ import {
   Music, Palette, Map as MapIcon,
   Database, Calculator, FlaskConical, RefreshCw
 } from 'lucide-react';
+import { SectionTabs } from './SectionTabs';
 import { ShareButton } from './ShareButton';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, 
@@ -368,8 +369,8 @@ const Economy: React.FC<EconomyProps> = ({
 
       {/* 2. Navigation Shards & Glocal Search */}
       <div className="flex flex-col lg:flex-row justify-between items-center gap-10 px-4 sticky top-4 z-40">
-         <div className="flex flex-wrap gap-2 p-1.5 glass-card rounded-[32px] border border-white/10 bg-black/80 backdrop-blur-3xl shadow-3xl px-10">
-           {[
+         <SectionTabs 
+           tabs={[
              { id: 'catalogue', label: 'Universal Catalogue', icon: LayoutGrid },
              { id: 'infrastructure', label: 'Industrial Nodes', icon: Building },
              { id: 'logistics', label: 'Logistics Map', icon: MapIcon },
@@ -377,16 +378,12 @@ const Economy: React.FC<EconomyProps> = ({
              { id: 'simulator', label: 'Resonance Simulator', icon: Zap },
              { id: 'forecasting', label: 'Demand Matrix', icon: LineChartIcon },
              { id: 'analytics', label: 'EAC Analytics', icon: BarChart3 },
-           ].map(tab => (
-             <button 
-               key={tab.id} 
-               onClick={() => setActiveTab(tab.id as any)}
-               className={`flex items-center gap-3 px-10 py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105' : 'text-slate-500 hover:text-white'}`}
-             >
-               <tab.icon size={16} /> {tab.label}
-             </button>
-           ))}
-         </div>
+           ]}
+           activeTab={activeTab}
+           onTabChange={(id) => setActiveTab(id)}
+           variant="industrial"
+           className="w-full lg:w-auto"
+         />
 
          <div className="flex items-center gap-6 w-full md:w-auto">
             <div className="relative flex-1 md:w-[450px] group">

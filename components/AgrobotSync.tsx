@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { SectionTabs } from './SectionTabs';
 import { 
   Network, 
   Globe, 
@@ -42,7 +43,7 @@ import { User, ViewState } from '../types';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
 
-interface RobotSyncProps {
+interface AgrobotSyncProps {
   user: User;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
@@ -66,7 +67,7 @@ const EXTERNAL_BOTS: ExternalBot[] = [
   { id: 'BOT-CLAUDE-3', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', status: 'CONNECTED', lastSync: '12m ago', trustScore: 99, capabilities: ['Constitutional AI', 'Analysis'] },
 ];
 
-const RobotSync: React.FC<RobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate }) => {
+const AgrobotSync: React.FC<AgrobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'manifest' | 'sync' | 'broadcast' | 'logs'>('sync');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
@@ -147,7 +148,7 @@ const RobotSync: React.FC<RobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, onNa
             <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[9px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest">AI_CRAWLER_SYNC_v1.0</span>
             <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[9px] font-black uppercase rounded-full border border-blue-500/20 tracking-widest">CROSS_MODEL_HANDSHAKE</span>
           </div>
-          <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">Robot <span className="text-emerald-400">Sync.</span></h2>
+          <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">AgroBot <span className="text-emerald-400">Sync.</span></h2>
           <p className="text-slate-400 text-lg font-medium italic leading-relaxed max-w-2xl">
             Synchronize EnvirosAgro Blockchain metadata with global AI providers. Ensure Grok, Gemini, and GPT models are updated with real-time registry state.
           </p>
@@ -159,22 +160,18 @@ const RobotSync: React.FC<RobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, onNa
       </div>
 
       {/* Navigation */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 mx-auto lg:mx-0">
-        {[
+      <SectionTabs
+        tabs={[
           { id: 'sync', label: 'Bot Handshake', icon: Handshake },
-          { id: 'manifest', label: 'Robot Manifest', icon: FileJson },
+          { id: 'manifest', label: 'AgroBot Manifest', icon: FileJson },
           { id: 'broadcast', label: 'Signal Broadcast', icon: Radio },
           { id: 'logs', label: 'Crawl Logs', icon: Activity },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-8 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={16} /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        variant="glass"
+        className="mx-auto lg:mx-0 w-fit"
+      />
 
       <div className="min-h-[600px]">
         {activeTab === 'sync' && (
@@ -273,7 +270,7 @@ const RobotSync: React.FC<RobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, onNa
               <div className="w-20 h-20 rounded-[32px] bg-black/40 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-2xl">
                 <FileJson size={40} className="text-emerald-400" />
               </div>
-              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Robot <span className="text-emerald-400">Manifest</span></h3>
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">AgroBot <span className="text-emerald-400">Manifest</span></h3>
               <p className="text-slate-500 text-lg font-medium italic">
                 Generate and expose structured JSON-LD metadata for AI models to index the EnvirosAgro Blockchain.
               </p>
@@ -422,4 +419,4 @@ const RobotSync: React.FC<RobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, onNa
   );
 };
 
-export default RobotSync;
+export default AgrobotSync;

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { auditMeshStability, AgroLangResponse } from '../services/agroLangService';
 import { SycamoreLogo } from './Icons';
@@ -204,22 +205,21 @@ const NetworkView: React.FC = () => {
       </div>
 
       {/* 2. Primary Navigation */}
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-10 relative z-20">
-         <div className="flex p-1.5 glass-card rounded-[32px] border border-white/10 bg-black/80 backdrop-blur-3xl shadow-3xl px-8 overflow-x-auto scrollbar-hide w-full lg:w-auto">
-           {[
-             { id: 'map', label: 'Industrial Map', icon: Globe },
-             { id: 'topology', label: 'Topology Shards', icon: Network },
-             { id: 'mempool', label: 'Inbound Mempool', icon: Terminal },
-           ].map(tab => (
-             <button 
-               key={tab.id} 
-               onClick={() => setActiveTab(tab.id as any)}
-               className={`flex items-center gap-3 px-10 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white'}`}
-             >
-               <tab.icon size={16} /> {tab.label}
-             </button>
-           ))}
+      <div className="flex flex-col xl:flex-row justify-between items-center gap-10 relative z-20 mb-8">
+         <div className="w-full xl:w-auto">
+           <SectionTabs 
+             tabs={[
+               { id: 'map', label: 'Industrial Map', icon: Globe },
+               { id: 'topology', label: 'Topology Shards', icon: Network },
+               { id: 'mempool', label: 'Inbound Mempool', icon: Terminal },
+             ]}
+             activeTab={activeTab}
+             onTabChange={(id) => setActiveTab(id as any)}
+             variant="industrial"
+             className="w-full"
+           />
          </div>
+
 
          <div className="flex items-center gap-6">
             <button 

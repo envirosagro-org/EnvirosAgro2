@@ -77,6 +77,7 @@ import {
   ComposedChart, Bar, Cell 
 } from 'recharts';
 import { User, MediaShard } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon, SycamoreLogo } from './Icons';
 import { chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
@@ -408,23 +409,19 @@ ${content}
          </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'calculus', label: 'dy/dx Calculus', icon: Infinity },
           { id: 'compliance', label: 'Sabbath-Yajna Monitor', icon: Gavel },
           { id: 'travel', label: 'Agro Travel Hub', icon: PlaneTakeoff },
           { id: 'retrieval', label: 'Shard Retrieval', icon: FileSearch },
           { id: 'oracle', label: 'Regency Oracle', icon: HenIcon },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => { setActiveTab(tab.id as any); setRestoredShard(null); setOracleReport(null); setTravelForecast(null); }}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-slate-200'}`}
-          >
-            <tab.icon size={14} /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => { setActiveTab(id as any); setRestoredShard(null); setOracleReport(null); setTravelForecast(null); }}
+        variant="industrial"
+        className="mb-10"
+      />
 
       <div className="min-h-[750px]">
         

@@ -61,6 +61,7 @@ import { toast } from 'sonner';
 import { User, ViewState } from '../types';
 import { HenIcon } from './Icons';
 import { decodeAgroGenetics, chatWithAgroLang } from '../services/agroLangService';
+import { SectionTabs } from './SectionTabs';
 
 interface BiotechnologyProps {
   user: User;
@@ -244,21 +245,19 @@ const Biotechnology: React.FC<BiotechnologyProps> = ({ user, onEarnEAC, onSpendE
       </div>
 
       {/* 2. Main Navigation Tabs */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-4 p-2 glass-card rounded-[36px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-2xl px-6 mx-auto lg:mx-4 relative z-20">
-        {[
-          { id: 'decoder', label: 'Biometric Decoder', icon: Scan },
-          { id: 'medicag', label: 'MedicAg Aura Hub', icon: HeartPulse },
-          { id: 'forge', label: 'DNA Shard Forge', icon: FlaskConical },
-          { id: 'archive', label: 'Genomic Archive', icon: Database },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-xl scale-105 ring-4 ring-white/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={18} /> {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={[
+            { id: 'decoder', label: 'Biometric Decoder', icon: Scan },
+            { id: 'medicag', label: 'MedicAg Aura Hub', icon: HeartPulse },
+            { id: 'forge', label: 'DNA Shard Forge', icon: FlaskConical },
+            { id: 'archive', label: 'Genomic Archive', icon: Database },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="industrial"
+          className="w-full sm:w-auto"
+        />
       </div>
 
       <div className="min-h-[750px] px-4 relative z-10">

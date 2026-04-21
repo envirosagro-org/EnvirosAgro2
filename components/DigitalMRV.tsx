@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { spatialService, Plot } from '../services/spatialService';
 import { User } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { 
   TrendingUp, 
   Leaf, 
@@ -151,23 +152,21 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
           {selectedPlot ? (
             <div className="space-y-8">
               {/* Tabs */}
-              <div className="flex bg-black/40 border border-white/10 rounded-2xl p-1 w-fit">
-                {[
-                  { id: 'OVERVIEW', label: 'Overview', icon: Activity },
-                  { id: 'DASHBOARD', label: 'Live Dashboard', icon: Gauge },
-                  { id: 'SCOUT', label: 'Field Scout', icon: Camera },
-                  { id: 'SETTLEMENTS', label: 'Auto-Settlements', icon: FileCheck2 },
-                  { id: 'NETWORK', label: 'Data Mesh', icon: Network },
-                  { id: 'SENTINEL', label: 'Sentinel HUD', icon: Globe },
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-white text-black shadow-xl' : 'text-slate-500 hover:text-white'}`}
-                  >
-                    <tab.icon size={14} /> {tab.label}
-                  </button>
-                ))}
+              <div className="mb-4">
+                <SectionTabs 
+                  tabs={[
+                    { id: 'OVERVIEW', label: 'Overview', icon: Activity },
+                    { id: 'DASHBOARD', label: 'Live Dashboard', icon: Gauge },
+                    { id: 'SCOUT', label: 'Field Scout', icon: Camera },
+                    { id: 'SETTLEMENTS', label: 'Auto-Settlements', icon: FileCheck2 },
+                    { id: 'NETWORK', label: 'Data Mesh', icon: Network },
+                    { id: 'SENTINEL', label: 'Sentinel HUD', icon: Globe },
+                  ]}
+                  activeTab={activeTab}
+                  onTabChange={(id) => setActiveTab(id as any)}
+                  variant="glass"
+                  className="w-full"
+                />
               </div>
 
               <AnimatePresence mode="wait">

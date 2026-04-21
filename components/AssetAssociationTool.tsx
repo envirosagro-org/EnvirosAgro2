@@ -57,8 +57,8 @@ const AssetAssociationTool: React.FC<AssetAssociationToolProps> = ({
   linkerContext,
   onNavigate,
   onLinkResource,
-  industrialUnits,
-  blueprints,
+  industrialUnits = [],
+  blueprints = [],
   contracts = [],
   liveProducts = [],
   user

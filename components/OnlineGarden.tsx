@@ -14,6 +14,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip 
 } from 'recharts';
 import { User, ViewState, AgroResource } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { analyzeMiningYield } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
@@ -354,22 +355,18 @@ const OnlineGarden: React.FC<OnlineGardenProps> = ({ user, onEarnEAC, onSpendEAC
       </div>
 
       {/* 2. Management Shards Navigation */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 overflow-x-auto scrollbar-hide snap-x mx-auto lg:mx-0 relative z-20">
-          {[
+      <SectionTabs 
+          tabs={[
             { id: 'bridge', label: 'Telemetry Bridge', icon: Monitor },
             { id: 'shards', label: 'Shard Manager', icon: BoxesIcon },
             { id: 'roadmap', label: 'Super-Agro Path', icon: Compass },
             { id: 'mining', label: 'Extraction Node', icon: Zap },
-          ].map(tab => (
-            <button 
-              key={tab.id} 
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-            >
-              <tab.icon size={14} /> {tab.label}
-            </button>
-          ))}
-      </div>
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id)}
+          variant="industrial"
+          className="mb-10"
+      />
 
       <div className="min-h-[800px] relative z-10">
         

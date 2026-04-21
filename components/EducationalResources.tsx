@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Video, FileText, ChevronRight, PlayCircle, ExternalLink, GraduationCap, Link as LinkIcon, Calendar, Mic, MessageSquare, Award, CheckCircle2, Volume2, VolumeX, RefreshCw, Radio, ShieldCheck, Loader2 } from 'lucide-react';
 import { User, ViewState } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { ShareButton } from './ShareButton';
 import { toast } from 'sonner';
 
@@ -470,44 +471,19 @@ const EducationalResources: React.FC<EducationalResourcesProps> = ({ user, onNav
           </p>
         </div>
         
-        <div className="flex bg-black/40 p-1 rounded-full border border-white/10">
-          <button
-            onClick={() => setActiveTab('resources')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'resources' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'}`}
-          >
-            Resources
-          </button>
-          <button
-            onClick={() => setActiveTab('elearning')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'elearning' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'}`}
-          >
-            E-Learning Portal
-          </button>
-          <button
-            onClick={() => setActiveTab('tutor')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'tutor' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-          >
-            AI SEHTI Tutor
-          </button>
-          <button
-            onClick={() => setActiveTab('industrial')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'industrial' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'}`}
-          >
-            Industrial Learning
-          </button>
-          <button
-            onClick={() => setActiveTab('teacher')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'teacher' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'}`}
-          >
-            Teacher Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('tree')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'tree' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'}`}
-          >
-            Knowledge Tree
-          </button>
-        </div>
+        <SectionTabs 
+          tabs={[
+            { id: 'resources', label: 'Resources' },
+            { id: 'elearning', label: 'E-Learning Portal' },
+            { id: 'tutor', label: 'AI SEHTI Tutor' },
+            { id: 'industrial', label: 'Industrial Learning' },
+            { id: 'teacher', label: 'Teacher Dashboard' },
+            { id: 'tree', label: 'Knowledge Tree' },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="industrial"
+        />
       </div>
 
       {/* --- VIEW: KNOWLEDGE TREE --- */}

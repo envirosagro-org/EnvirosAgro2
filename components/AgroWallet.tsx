@@ -74,6 +74,7 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { User, AgroTransaction, ViewState, LinkedProvider, AgroProject, ShardCostCalibration } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { analyzeInstitutionalRisk, consultFinancialOracle, AgroLangResponse, chatWithAgroLang } from '../services/agroLangService';
 import { initiatePayPalPayout } from '../services/paymentService';
@@ -343,24 +344,20 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       </div>
 
       {/* 2. Navigation Shards */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 mx-auto lg:mx-0 relative z-20">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'treasury', label: 'Treasury Hub', icon: Wallet },
           { id: 'accounting', label: 'Cost Management', icon: Calculator },
           { id: 'gateway', label: 'PayPal Bridge', icon: Link2 },
           { id: 'staking', label: 'Staking', icon: Layers },
           { id: 'swap', label: 'Sharding', icon: ArrowRightLeft },
           { id: 'ledger', label: 'History', icon: History },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveSubTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={16} /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeSubTab}
+        onTabChange={(id) => setActiveSubTab(id as any)}
+        variant="industrial"
+        className="mb-10"
+      />
 
       <div className="min-h-[850px] relative z-10">
         
@@ -750,7 +747,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                              <div className="relative group">
                                 <select 
                                   value={selectedProvider?.id || ''}
-                                  onChange={e => setSelectedProvider(user.wallet.linkedProviders.find(p => p.id === e.target.value) || null)}
+                                  onChange={e => setSelectedProvider(user.wallet.linkedProviders?.find(p => p.id === e.target.value) || null)}
                                   className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all appearance-none cursor-pointer italic"
                                 >
                                    {paypalProviders.length > 0 ? (

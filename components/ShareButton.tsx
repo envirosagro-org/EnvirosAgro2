@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
-import { useAppStore } from '../store';
+import { useUiStore } from '../store/uiStore';
+import { useDataStore } from '../store/dataStore';
 import { ViewState } from '../types';
 
 interface ShareButtonProps {
@@ -27,7 +28,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   label 
 }) => {
   const [copied, setCopied] = useState(false);
-  const generateShareUrl = useAppStore(state => state.generateShareUrl);
+  const generateShareUrl = useUiStore(state => state.generateShareUrl);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();

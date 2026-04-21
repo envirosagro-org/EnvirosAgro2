@@ -2,7 +2,7 @@ import React from 'react';
 import { PawPrint, Users, Brain, Activity } from 'lucide-react';
 import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
-import { useAppStore } from '../../store';
+import { useDataStore } from '../../store/dataStore';
 
 interface AnimalWorldProps {
   user: User;
@@ -13,7 +13,7 @@ interface AnimalWorldProps {
 }
 
 const AnimalWorld: React.FC<AnimalWorldProps> = (props) => {
-  const { ecosystemState, updateEcosystemState } = useAppStore();
+  const { ecosystemState, updateEcosystemState } = useDataStore();
 
   const meta: ResourceMeta = {
     title: 'ANIMAL WORLD',

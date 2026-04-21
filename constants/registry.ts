@@ -69,7 +69,7 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'crm', name: 'Nexus CRM', icon: HeartHandshake, sections: [{id: 'directory', label: 'Directory'}, {id: 'support', label: 'Support'}] },
       { id: 'circular', name: 'Circular Grid', icon: Recycle, sections: [{id: 'market', label: 'Refurbished Store'}] },
       { id: 'tools', name: 'Industrial Tools', icon: Wrench, sections: [{id: 'kanban', label: 'Kanban'}, {id: 'sigma', label: 'Six Sigma'}] },
-      { id: 'robot', name: 'Swarm Command', icon: HenIcon, sections: [{id: 'registry', label: 'Fleet Registry'}, {id: 'security', label: 'Intranet Security'}, {id: 'sync', label: 'AI Crawler Sync'}] },
+      { id: 'agrobot', name: 'Swarm Command', icon: HenIcon, sections: [{id: 'registry', label: 'Fleet Registry'}, {id: 'security', label: 'Intranet Security'}, {id: 'sync', label: 'AI Crawler Sync'}] },
       { id: 'device_control', name: 'Device Control', icon: Cpu }
     ]
   },

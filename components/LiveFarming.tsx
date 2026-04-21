@@ -12,6 +12,7 @@ import {
   ArrowDownCircle, SearchCode
 } from 'lucide-react';
 import { User, LiveAgroProduct, ViewState, AgroResource, ValueBlueprint, Task, RegisteredUnit, FarmingContract, VendorProduct } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import AssetAssociationTool from './AssetAssociationTool';
 import Traceability from './Traceability';
@@ -34,10 +35,10 @@ interface LiveFarmingProps {
   vendorProducts: VendorProduct[];
 }
 
-import { useAppStore } from '../store';
+import { useRegistrationStore } from '../store/registrationStore';
 
 const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct, onNavigate, notify, initialSection, onSaveTask, blueprints, industrialUnits, contracts, onSaveContract, vendorProducts }) => {
-  const { liveFarmingRegistrationState, setLiveFarmingRegistrationState } = useAppStore();
+  const { liveFarmingRegistrationState, setLiveFarmingRegistrationState } = useRegistrationStore();
   const [activeTab, setActiveTab] = useState<'ledger' | 'terminal'>('ledger');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [isProcessingAction, setIsProcessingAction] = useState<string | null>(null);
@@ -102,11 +103,11 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
   };
 
   // Filter products where the user is the owner
-  const myAssets = useMemo(() => products.filter(p => p.stewardEsin === user.esin), [products, user.esin]);
+  const myAssets = useMemo(() => (products || []).filter(p => p.stewardEsin === user.esin), [products, user.esin]);
   
   // Currently selected asset in Management Terminal
   const selectedAsset = useMemo(() => 
-    products.find(p => p.id === selectedAssetId), 
+    (products || []).find(p => p.id === selectedAssetId), 
   [products, selectedAssetId]);
 
   useEffect(() => {
@@ -227,7 +228,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
       };
       
       if (onSaveContract) {
-        const contractToUpdate = contracts.find(c => c.id === resId);
+        const contractToUpdate = (contracts || []).find(c => c.id === resId);
         if (contractToUpdate) {
           onSaveContract({
             ...contractToUpdate,
@@ -364,7 +365,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
   };
 
   const handleVouch = (id: string) => {
-    const asset = products.find(p => p.id === id);
+    const asset = (products || []).find(p => p.id === id);
     if (!asset) return;
     const updated = { ...asset, votes: asset.votes + 1 };
     onSaveProduct(updated);
@@ -386,27 +387,23 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
           </div>
         </div>
 
-        <div className="flex p-1.5 glass-card bg-black/40 rounded-3xl border border-white/5">
-          <button 
-            onClick={() => setActiveTab('ledger')}
-            className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'ledger' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}
-          >
-            Processing Ledger
-          </button>
-          <button 
-            onClick={() => setActiveTab('terminal')}
-            className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'terminal' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}
-          >
-            Management Terminal
-          </button>
-        </div>
+        <SectionTabs 
+          tabs={[
+            { id: 'ledger', label: 'Processing Ledger', icon: LayoutGrid },
+            { id: 'terminal', label: 'Management Terminal', icon: Monitor },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id)}
+          variant="industrial"
+          className="w-full lg:w-auto"
+        />
       </div>
 
       <div className="min-h-[700px] px-4">
         {activeTab === 'ledger' ? (
           <div className="space-y-10">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {products.map(asset => (
+              {(products || []).map(asset => (
                 <div key={asset.id} className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 shadow-3xl group relative overflow-hidden flex flex-col h-[520px]">
                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-[12s]"><Database size={250} /></div>
                   <div className="flex justify-between items-start mb-8 relative z-10">
@@ -473,7 +470,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                 </div>
               </div>
 
-              {selectedAsset && blueprints.length > 0 && (
+              {selectedAsset && (blueprints || []).length > 0 && (
                 <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-blue-900/5 space-y-8 shadow-xl animate-in fade-in">
                    <div className="flex items-center gap-4 border-b border-white/5 pb-6">
                       <Zap className="text-blue-400" />
@@ -481,7 +478,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                    </div>
                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-2">Ingest from Value Forge</p>
                    <div className="space-y-3">
-                      {blueprints.map(bp => (
+                      {(blueprints || []).map(bp => (
                         <button 
                           key={bp.blueprint_id}
                           onClick={() => handleSourceBlueprint(bp)}

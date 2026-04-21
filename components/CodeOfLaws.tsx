@@ -115,7 +115,7 @@ const LAWS: Law[] = [
     anchor: '0X6A8',
     principle: 'Technology must serve life, not war or destruction.',
     precedents: ['ISAIAH 2:4', 'AGROBOTO SERVANT LOGIC'],
-    statute: "The Agroboto division is prohibited from developing dual-use technologies that can be weaponized. Robotics must be 'servants of the Githaka', designed to reduce physical burden (S) on the human worker, not replace the connection to the land.",
+    statute: "The AgroBot division is prohibited from developing dual-use technologies that can be weaponized. Robotics must be 'servants of the Githaka', designed to reduce physical burden (S) on the human worker, not replace the connection to the land.",
     icon: HenIcon,
     color: 'text-blue-500',
     bg: 'bg-blue-500/10'

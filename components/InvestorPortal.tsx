@@ -16,6 +16,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { toast } from 'sonner';
 import { User, AgroProject, ViewState } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { SEO } from './SEO';
@@ -158,21 +159,19 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpend
       </div>
 
       {/* 2. Navigation Shards */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
-        {[
-          { id: 'dashboard', label: 'Portfolio HUD', icon: LayoutGrid },
-          { id: 'marketplace', label: 'Discovery Feed', icon: TargetIcon },
-          { id: 'portfolio', label: 'Mission Manager', icon: Briefcase },
-          { id: 'harvest', label: 'ROI Terminal', icon: Sprout },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon className="w-5 h-5" /> {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={[
+            { id: 'dashboard', label: 'Portfolio HUD', icon: LayoutGrid },
+            { id: 'marketplace', label: 'Discovery Feed', icon: TargetIcon },
+            { id: 'portfolio', label: 'Mission Manager', icon: Briefcase },
+            { id: 'harvest', label: 'ROI Terminal', icon: Sprout },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="industrial"
+          className="w-full lg:w-auto"
+        />
       </div>
 
       <div className="min-h-[850px] relative z-10">

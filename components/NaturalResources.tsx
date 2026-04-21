@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Loader2, Globe, Layers, ShieldCheck } from 'lucide-react';
 import { User, ViewState } from '../types';
-import { useAppStore } from '../store';
+import { useDataStore } from '../store/dataStore';
 
 // Lazy load each dimension
 const AnimalWorld = lazy(() => import('./natural_resources/AnimalWorld'));
@@ -20,7 +20,7 @@ interface NaturalResourcesProps {
 }
 
 const NaturalResources: React.FC<NaturalResourcesProps> = (props) => {
-  const { ecosystemState } = useAppStore();
+  const { ecosystemState } = useDataStore();
 
   const renderDimension = () => {
     switch (props.type) {

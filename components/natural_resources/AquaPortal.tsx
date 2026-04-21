@@ -2,7 +2,7 @@ import React from 'react';
 import { Droplets, Gauge, FlaskConical, Database } from 'lucide-react';
 import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
-import { useAppStore } from '../../store';
+import { useDataStore } from '../../store/dataStore';
 
 interface AquaPortalProps {
   user: User;
@@ -13,7 +13,8 @@ interface AquaPortalProps {
 }
 
 const AquaPortal: React.FC<AquaPortalProps> = (props) => {
-  const { ecosystemState, updateEcosystemState } = useAppStore();
+  const ecosystemState = useDataStore(state => state.ecosystemState);
+  const updateEcosystemState = useDataStore(state => state.updateEcosystemState);
 
   const meta: ResourceMeta = {
     title: 'AQUA PORTAL',

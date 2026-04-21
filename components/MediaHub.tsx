@@ -35,7 +35,7 @@ import { onSnapshot, collection, query, where, orderBy, limit } from 'firebase/f
 import { spatialService } from '../services/spatialService';
 import { telemetryService } from '../services/telemetryService';
 import { User, ViewState, WebRTCCall, BroadcastSession, BroadcastComment, SpatialTransform, DroneTelemetry, TelemetryBatch, AgroBlock } from '../types';
-import { useAppStore } from '../store';
+import { useDataStore } from '../store/dataStore';
 import { SEO } from './SEO';
 
 interface MediaHubProps {
@@ -60,7 +60,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
     setBlockchain,
     ecosystemState,
     updateEcosystemState
-  } = useAppStore();
+  } = useDataStore();
 
   const [activeTab, setActiveTab] = useState<'calls' | 'streams' | 'podcasts' | 'ledger' | 'spatial' | 'drone'>(
     initialSection === 'video' ? 'calls' : 

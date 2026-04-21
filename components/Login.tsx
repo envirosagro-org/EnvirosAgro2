@@ -37,7 +37,7 @@ import {
   /* Added Stamp import to fix error on line 436 */
   Stamp
 } from 'lucide-react';
-import { useAppStore } from '../store';
+import { useRegistrationStore } from '../store/registrationStore';
 import { 
   syncUserToCloud,
   createUserWithEmailAndPassword,
@@ -65,7 +65,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
     updateRegistrationData, 
     nextRegistrationStep, 
     prevRegistrationStep 
-  } = useAppStore();
+  } = useRegistrationStore();
 
   const [loading, setLoading] = useState(false);
   const [showResumePrompt, setShowResumePrompt] = useState(!!registrationState);

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { User, MeshNode, AgroBlock, MempoolTransaction } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { auditMeshStability } from '../services/agroLangService';
 import { SycamoreLogo, HenIcon } from './Icons';
 import { startBackgroundDataSync } from '../services/firebaseService';
@@ -197,22 +198,17 @@ const MeshProtocol: React.FC<MeshProtocolProps> = ({ user, blockchain, mempool }
         </div>
       </div>
       
-      <div className="flex justify-center w-full">
-        <div className="flex flex-wrap justify-center gap-4 p-2 glass-card rounded-full w-fit border border-white/5 bg-black/40 shadow-xl px-12 relative z-20">
-          {[
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={[
             { id: 'topology', label: 'Network Topology', icon: Network },
             { id: 'commits', label: 'Block Commits', icon: Binary },
             { id: 'mempool', label: 'Inbound Mempool', icon: Terminal },
-          ].map(tab => (
-            <button 
-              key={tab.id} 
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-4 px-12 py-6 rounded-full text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white'}`}
-            >
-              <tab.icon size={20} /> {tab.label}
-            </button>
-          ))}
-        </div>
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="industrial"
+        />
       </div>
 
       <AnimatePresence mode="wait">

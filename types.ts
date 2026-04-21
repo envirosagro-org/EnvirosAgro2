@@ -474,7 +474,7 @@ export type ViewState =
   | 'agro_regency' | 'code_of_laws' | 'agro_calendar' | 'chroma_system'
   | 'envirosagro_store' | 'agro_value_enhancement' | 'digital_mrv'
   | 'online_garden' | 'farm_os' | 'network_signals' | 'media_ledger'
-  | 'sitemap' | 'auth' | 'agro_lang_analyst' | 'settings' | 'temporal_video' | 'robot'
+  | 'sitemap' | 'auth' | 'agro_lang_analyst' | 'ai_analyst' | 'settings' | 'temporal_video' | 'agrobot'
   | 'multimedia_generator' | 'cost_accounting' | 'internal_control' | 'governance' | 'carbon_credits' | 'traceability' | 'marketplace' | 'live_voice_bridge'
   | 'mesh_protocol' | 'registry_handshake' | 'educational_resources' | 'hardware_registry' | 'device_control'
   | 'impact_dashboard' | 'traceability_map' | 'telemetry_hub'

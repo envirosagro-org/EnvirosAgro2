@@ -2,7 +2,7 @@ import React from 'react';
 import { TreePine, Target, Heart, Binary } from 'lucide-react';
 import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
-import { useAppStore } from '../../store';
+import { useDataStore } from '../../store/dataStore';
 
 interface PlantsWorldProps {
   user: User;
@@ -13,7 +13,7 @@ interface PlantsWorldProps {
 }
 
 const PlantsWorld: React.FC<PlantsWorldProps> = (props) => {
-  const { ecosystemState, updateEcosystemState } = useAppStore();
+  const { ecosystemState, updateEcosystemState } = useDataStore();
 
   const meta: ResourceMeta = {
     title: 'PLANTS WORLD',

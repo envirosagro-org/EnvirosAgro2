@@ -46,6 +46,7 @@ import {
 import { toast } from 'sonner';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { User, SignalShard } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 
@@ -173,21 +174,19 @@ const EmergencyPortal: React.FC<EmergencyProps> = ({ user, onEarnEAC, onSpendEAC
          </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4">
-        {[
-          { id: 'alerts', label: 'Hazard Feed', icon: Radio },
-          { id: 'sos', label: 'Signal Broadcast', icon: Siren },
-          { id: 'remediation', label: 'Remediation Oracle', icon: HenIcon },
-          { id: 'safety', label: 'Safety Vault', icon: ShieldCheck },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-rose-600 text-white shadow-xl shadow-rose-900/40' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon className="w-4 h-4" /> {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={[
+            { id: 'alerts', label: 'Hazard Feed', icon: Radio },
+            { id: 'sos', label: 'Signal Broadcast', icon: Siren },
+            { id: 'remediation', label: 'Remediation Oracle', icon: HenIcon },
+            { id: 'safety', label: 'Safety Vault', icon: ShieldCheck },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="glass"
+          className="w-full lg:w-auto"
+        />
       </div>
 
       <div className="min-h-[700px]">

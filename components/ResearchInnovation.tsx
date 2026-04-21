@@ -71,6 +71,7 @@ import { generateAgroResearch, analyzeMedia, chatWithAgroLang } from '../service
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
 import ShareButton from './ShareButton';
+import { SectionTabs } from './SectionTabs';
 
 interface ResearchInnovationProps {
   user: User;
@@ -383,28 +384,24 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-4 pt-4 relative z-10">
-          <button 
-            onClick={() => setActiveTab('archive')}
-            className={`px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'archive' ? 'bg-emerald-600 text-white shadow-xl border border-emerald-400/50' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            Invention Archive
-          </button>
-          <button 
-            onClick={() => setActiveTab('forge')}
-            className={`px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'forge' ? 'bg-indigo-600 text-white shadow-xl border border-indigo-400/50' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            Research Forge
-          </button>
-          <button 
-            onClick={() => setActiveTab('book_forge')}
-            className={`px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'book_forge' ? 'bg-fuchsia-600 text-white shadow-xl border border-fuchsia-400/50' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            Book Forge (AgroInPDF)
-          </button>
+        <div className="flex justify-center w-full mt-4 relative z-10">
+          <SectionTabs 
+            tabs={[
+              { id: 'archive', label: 'Invention Archive', icon: Library },
+              { id: 'forge', label: 'Research Forge', icon: FlaskConical },
+              { id: 'book_forge', label: 'Book Forge (AgroInPDF)', icon: BookOpen },
+            ]}
+            activeTab={activeTab}
+            onTabChange={(id: string) => setActiveTab(id as any)}
+            variant="glass"
+            className="w-full lg:w-auto"
+          />
+        </div>
+        
+        <div className="flex justify-center mt-4">
           <button 
             onClick={() => onNavigate('multimedia_generator')}
-            className="px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white shadow-xl flex items-center gap-3"
+            className="px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white shadow-xl flex items-center gap-3 relative z-10"
           >
             <Leaf size={14} /> Multimedia Forge
           </button>

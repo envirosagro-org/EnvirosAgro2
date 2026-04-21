@@ -1,11 +1,13 @@
 import React from 'react';
-import { useAppStore } from '../store';
+import { useRegistrationStore } from '../store/registrationStore';
+import { useUiStore } from '../store/uiStore';
 import { useAppNavigation } from '../hooks/useAppNavigation';
 import { UserPlus, ArrowRight, X } from 'lucide-react';
 import { NavigationLink } from './NavigationLink';
 
 export const RegistrationResumePopup: React.FC = () => {
-  const { registrationState, setRegistrationState, view } = useAppStore();
+  const { registrationState, setRegistrationState } = useRegistrationStore();
+  const view = useUiStore(state => state.view);
   const { navigate } = useAppNavigation();
 
   if (!registrationState || view === 'auth') return null;

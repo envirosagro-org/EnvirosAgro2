@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { SectionTabs } from './SectionTabs';
 import { 
   Video, 
   Music, 
@@ -234,21 +235,19 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
         <div className="lg:col-span-5 space-y-8">
           <div className="glass-card p-10 rounded-[56px] border-2 border-white/5 bg-black/40 space-y-10 shadow-3xl">
             {/* Tab Selection */}
-            <div className="flex p-2 bg-black/60 rounded-[32px] border border-white/10">
-              {(['video', 'audio', 'document', 'lab'] as const).map(t => (
-                <button
-                  key={t}
-                  id={`multimedia-tab-${t}`}
-                  onClick={() => { setActiveTab(t); setResultUrl(null); setResultText(null); }}
-                  className={`flex-1 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === t ? 'bg-indigo-600 text-white shadow-2xl' : 'text-slate-500 hover:text-slate-300'}`}
-                >
-                  {t === 'video' && <Video id="multimedia-tab-video-icon" size={16} className={`transition-all duration-500 ${activeTab === 'video' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
-                  {t === 'audio' && <Music id="multimedia-tab-audio-icon" size={16} className={`transition-all duration-500 ${activeTab === 'audio' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
-                  {t === 'document' && <FileText id="multimedia-tab-document-icon" size={16} className={`transition-all duration-500 ${activeTab === 'document' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
-                  {t === 'lab' && <FlaskConical id="multimedia-tab-lab-icon" size={16} className={`transition-all duration-500 ${activeTab === 'lab' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] scale-110' : 'opacity-40 group-hover:opacity-100'}`} />}
-                  {t === 'lab' ? 'Live Lab' : t}
-                </button>
-              ))}
+            <div className="mb-10 w-full flex justify-center">
+              <SectionTabs 
+                tabs={[
+                  { id: 'video', label: 'VIDEO', icon: Video },
+                  { id: 'audio', label: 'AUDIO', icon: Music },
+                  { id: 'document', label: 'DOCUMENT', icon: FileText },
+                  { id: 'lab', label: 'LIVE LAB', icon: FlaskConical },
+                ]}
+                activeTab={activeTab}
+                onTabChange={(id) => { setActiveTab(id as any); setResultUrl(null); setResultText(null); }}
+                variant="glass"
+                className="w-full"
+              />
             </div>
 
             {/* Input Area */}

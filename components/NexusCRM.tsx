@@ -48,6 +48,7 @@ import {
   Gavel
 } from 'lucide-react';
 import { User, VendorProduct, ViewState, Order } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { SEO } from './SEO';
@@ -175,23 +176,19 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
       </div>
 
       {/* 2. Navigation Shards */}
-      <div className="flex flex-wrap justify-center gap-4">
-        <div className="flex flex-wrap gap-2 md:gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10">
-          {[
+      <div className="flex flex-wrap justify-center gap-4 mb-10">
+        <SectionTabs 
+          tabs={[
             { id: 'directory', label: 'Service Registry', icon: Globe },
             { id: 'after_sales', label: 'Active Engagements', icon: Clock },
             { id: 'support', label: 'Support Terminal', icon: ShoppingBag },
             { id: 'ledger', label: 'Resolution Ledger', icon: RotateCcw },
-          ].map(tab => (
-            <button 
-              key={tab.id} 
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-3 px-10 py-5 rounded-[24px] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-            >
-              <tab.icon className="w-4 h-4" /> {tab.label}
-            </button>
-          ))}
-        </div>
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="industrial"
+          className="w-full sm:w-auto"
+        />
       </div>
 
       <div className="min-h-[850px] relative z-10">

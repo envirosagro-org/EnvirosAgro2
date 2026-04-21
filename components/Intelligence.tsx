@@ -337,7 +337,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
           { id: 'acoustic', name: 'Acoustic Monitor', icon: Waves },
           { id: 'yield_matrix', name: 'Yield Matrix', icon: LayoutGrid },
           { id: 'telemetry', name: 'IoT Telemetry', icon: Wifi },
-          { id: 'eos_agro_lang', name: 'Science Oracle', icon: HenIcon },
+          { id: 'eos_agro_lang', name: 'AgroBot Intelligence', icon: HenIcon },
           { id: 'sid', name: 'SID Scanner', icon: Radiation },
           { id: 'relay', name: 'Agro-Lang Relay', icon: Languages },
           { id: 'evidence', name: 'Evidence Vault', icon: CloudUpload },
@@ -479,7 +479,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                 </div>
                 <div onClick={() => setActiveTab('eos_agro_lang')} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 hover:border-indigo-500/30 transition-all group flex flex-col justify-between shadow-xl cursor-pointer">
                    <div className="flex justify-between items-start"><div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition-transform"><HenIcon size={24} /></div><span className="text-[9px] font-black text-slate-700 uppercase">NEURAL_HUB</span></div>
-                   <h4 className="text-xl font-black text-white uppercase italic">Science Oracle</h4>
+                   <h4 className="text-xl font-black text-white uppercase italic">AgroBot Intelligence</h4>
                    <p className="text-[10px] text-slate-500 italic">"Expert audit ready for ingest."</p>
                 </div>
              </div>
@@ -820,11 +820,32 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                           </div>
                        )}
                        {aiThinking && (
-                          <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in"><div className="w-48 h-48 rounded-full border-t-4 border-indigo-500 animate-spin"></div><p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic m-0">ANALYZING SPECTRAL SHARD...</p></div>
+                          <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in">
+                             <div className="relative">
+                                <div className="w-48 h-48 rounded-full border-t-4 border-indigo-500 animate-spin"></div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                   <HenIcon size={80} className="text-indigo-400 animate-pulse" />
+                                </div>
+                                <SycamoreLogo size={40} className="absolute -top-4 -right-4 text-emerald-500 animate-spin-slow" />
+                                <SycamoreLogo size={24} className="absolute -bottom-2 -left-2 text-emerald-400 animate-bounce" />
+                             </div>
+                             <p className="text-indigo-400 font-black text-2xl uppercase tracking-[0.6em] animate-pulse italic m-0">ANALYZING SPECTRAL SHARD...</p>
+                          </div>
                        )}
                        {aiResult && (
                           <div className="animate-in slide-in-from-bottom-10 duration-700 space-y-12 pb-10 flex-1">
-                             <div className="p-10 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 border border-indigo-500/20 shadow-3xl"><div className="prose prose-invert max-w-none text-slate-300 text-xl md:text-2xl italic leading-relaxed whitespace-pre-line font-medium">{aiResult.text}</div></div>
+                             <div className="relative">
+                                <div className="absolute -top-10 -right-10 opacity-10 pointer-events-none">
+                                   <SycamoreLogo size={300} className="text-emerald-500 animate-spin-slow" />
+                                </div>
+                                <div className="p-10 md:p-16 bg-black/80 rounded-[64px] border-l-[16px] border-l-indigo-600 border border-indigo-500/20 shadow-3xl relative z-10">
+                                   <div className="flex items-center gap-3 mb-8">
+                                      <SycamoreLogo size={24} className="text-emerald-400 animate-pulse" />
+                                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">Oracle_Verdict_v6.5</span>
+                                   </div>
+                                   <div className="prose prose-invert max-w-none text-slate-300 text-xl md:text-2xl italic leading-relaxed whitespace-pre-line font-medium">{aiResult.text}</div>
+                                </div>
+                             </div>
                              <div className="flex justify-center gap-6"><button onClick={() => setAiResult(null)} className="px-12 py-6 bg-white/5 border border-white/10 rounded-full text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white shadow-xl transition-all">New Inquiry</button><button onClick={() => anchorToLedger(aiResult.text, 'Oracle', 'AgroLang_Inquiry')} className="px-16 py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-widest shadow-xl transition-all"><Stamp size={18} className="mr-2" /> Anchor to Ledger</button></div>
                           </div>
                        )}

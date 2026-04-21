@@ -38,6 +38,7 @@ import { toast } from 'sonner';
 import { generateAgroExam, getGroundedAgroResources, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
 import { listenToCollection, saveCollectionItem, dispatchNetworkSignal } from '../services/firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
+import { SectionTabs } from './SectionTabs';
 import { ShareButton } from './ShareButton';
 import { SEO } from './SEO';
 import WorkerCloud from './WorkerCloud';
@@ -231,7 +232,7 @@ const Community: React.FC<CommunityProps> = ({
       onHookHood(targetEsin, type);
       return;
     }
-    const existing = connections.find(c => (c.fromEsin === user.esin && c.toEsin === targetEsin) || (c.fromEsin === targetEsin && c.toEsin === user.esin));
+    const existing = (connections || []).find(c => (c.fromEsin === user.esin && c.toEsin === targetEsin) || (c.fromEsin === targetEsin && c.toEsin === user.esin));
     if (existing) return;
     const newConn: StewardConnection = {
       id: `CON-${Date.now()}`,
@@ -268,7 +269,7 @@ const Community: React.FC<CommunityProps> = ({
   };
 
   const handleVouch = async (postId: string) => {
-    const post = posts.find(p => p.id === postId);
+    const post = (posts || []).find(p => p.id === postId);
     if (!post) return;
     const updatedPost = { ...post, vouchCount: (post.vouchCount || 0) + 1 };
     await saveCollectionItem('social_posts', updatedPost);
@@ -277,7 +278,7 @@ const Community: React.FC<CommunityProps> = ({
 
   const handleAddComment = async (postId: string, commentText: string) => {
     if (!commentText.trim()) return;
-    const post = posts.find(p => p.id === postId);
+    const post = (posts || []).find(p => p.id === postId);
     if (!post) return;
     const newComment: PostComment = {
       id: `COM-${Date.now()}`,
@@ -286,7 +287,7 @@ const Community: React.FC<CommunityProps> = ({
       text: commentText,
       timestamp: new Date().toISOString()
     };
-    const updatedPost = { ...post, comments: [...post.comments, newComment] };
+    const updatedPost = { ...post, comments: [...(post.comments || []), newComment] };
     await saveCollectionItem('social_posts', updatedPost);
     onEarnEAC(10, 'SOCIAL_ECHO_REWARD');
   };
@@ -366,24 +367,20 @@ const Community: React.FC<CommunityProps> = ({
       </div>
 
       {/* 2. Unified Community Navigation */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'social', label: 'Resonance Feed', icon: HeartPulse },
           { id: 'network', label: 'Steward Network', icon: Globe },
           { id: 'shards', label: 'Collective Shards', icon: Users2 },
           { id: 'lms', label: 'Knowledge Base', icon: Library },
           { id: 'workers', label: 'Worker Cloud', icon: LucideIcons.Briefcase },
           { id: 'bounties', label: 'Bounty Shards', icon: Target },
-        ].map(t => (
-          <button 
-            key={t.id} 
-            onClick={() => setActiveTab(t.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <t.icon className="w-4 h-4" /> {t.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id)}
+        variant="industrial"
+        className="mb-10"
+      />
 
       <div className="min-h-[850px] relative z-10">
         
@@ -474,7 +471,7 @@ const Community: React.FC<CommunityProps> = ({
                                 <ThumbsUp size={18} /> {post.vouchCount || 0} Vouches
                              </button>
                              <button className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-blue-400 transition-all uppercase tracking-widest">
-                                <MessageSquare size={18} /> {post.comments.length} Echoes
+                                <MessageSquare size={18} /> {(post.comments || []).length} Echoes
                              </button>
                              <div className="flex items-center gap-3 text-[11px] font-black text-slate-600 hover:text-indigo-400 transition-all uppercase tracking-widest cursor-pointer">
                                 <ShareButton 
@@ -512,9 +509,9 @@ const Community: React.FC<CommunityProps> = ({
                           </div>
 
                           {/* Comments List */}
-                          {post.comments.length > 0 && (
+                          {(post.comments || []).length > 0 && (
                              <div className="space-y-4 pt-6">
-                                {post.comments.slice(0, 3).map(comment => (
+                                {(post.comments || []).slice(0, 3).map(comment => (
                                    <div key={comment.id} className="flex gap-4 items-start pl-4 border-l-2 border-white/5">
                                       <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-600 shrink-0">
                                          <UserIcon size={12} />
@@ -702,23 +699,19 @@ const Community: React.FC<CommunityProps> = ({
                  <div className="space-y-2">
                     <h3 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Learning <span className="text-indigo-400">Ledger.</span></h3>
                     <p className="text-slate-500 text-lg font-medium italic opacity-70">"Master the EOS framework and earn EAC through verified knowledge sharding."</p>
-                 </div>
-                 <div className="flex p-1.5 glass-card bg-black/40 rounded-2xl border border-white/5 shadow-inner">
-                    {[
+                 </div>                  <SectionTabs 
+                    tabs={[
                       { id: 'modules', label: 'Modules', icon: Library },
                       { id: 'exams', label: 'Certifications', icon: GraduationCap },
                       { id: 'forge', label: 'Forge Knowledge', icon: BrainCircuit },
                       { id: 'collab', label: 'Collab Editor', icon: PenTool }
-                    ].map(st => (
-                       <button 
-                         key={st.id} 
-                         onClick={() => setLmsSubTab(st.id as any)}
-                         className={`px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${lmsSubTab === st.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-                       >
-                          <st.icon size={14} /> {st.label}
-                       </button>
-                    ))}
-                 </div>
+                    ]}
+                    activeTab={lmsSubTab}
+                    onTabChange={(id) => setLmsSubTab(id)}
+                    variant="glass"
+                    className="w-full lg:w-auto"
+                  />
+
               </div>
               
               {lmsSubTab === 'collab' && (

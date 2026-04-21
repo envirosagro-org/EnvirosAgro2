@@ -22,7 +22,8 @@ interface RegistryHandshakeProps {
   onExecuteToShell?: (code: string) => void;
 }
 
-import { useAppStore } from '../store';
+import { useRegistrationStore } from '../store/registrationStore';
+import { useUiStore } from '../store/uiStore';
 import { generateAlphanumericId } from '../systemFunctions';
 
 const HARDWARE_PROTOCOL_STEPS: Partial<HandshakeStep>[] = [
@@ -44,7 +45,8 @@ const LAND_PROTOCOL_STEPS: Partial<HandshakeStep>[] = [
 const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ 
   user, onUpdateUser, onSpendEAC, onNavigate, onEmitSignal, onExecuteToShell 
 }) => {
-  const { handshakeRegistrationState, setHandshakeRegistrationState, selectedPlot } = useAppStore();
+  const { handshakeRegistrationState, setHandshakeRegistrationState } = useRegistrationStore();
+  const selectedPlot = useUiStore(state => state.selectedPlot);
   const [showResumePrompt, setShowResumePrompt] = useState(!!handshakeRegistrationState);
   const [mode, setMode] = useState<'HARDWARE' | 'LAND' | null>(null);
   const [currentStep, setCurrentStep] = useState(0);

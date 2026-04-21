@@ -72,6 +72,7 @@ import {
   ShoppingBag as CRMIcon
 } from 'lucide-react';
 import { User, Order, LiveAgroProduct, ViewState, SignalShard } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { generateQuickHash } from '../systemFunctions';
@@ -241,21 +242,19 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
       </div>
 
       {/* 2. TQM Sub-Navigation */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-10 relative z-20">
-        {[
-          { id: 'pipeline', label: 'Inbound Pipeline', icon: Workflow },
-          { id: 'trace', label: 'Trace & Track', icon: History },
-          { id: 'auditor', label: 'Agro Lang Oracle Audit', icon: HenIcon },
-          { id: 'sourcing', label: 'Sourcing Map', icon: Globe },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-2xl scale-105 border-b-4 border-emerald-400 ring-8 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={18} /> {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={[
+            { id: 'pipeline', label: 'Inbound Pipeline', icon: Workflow },
+            { id: 'trace', label: 'Trace & Track', icon: History },
+            { id: 'auditor', label: 'Agro Lang Oracle Audit', icon: HenIcon },
+            { id: 'sourcing', label: 'Sourcing Map', icon: Globe },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="industrial"
+          className="w-full lg:w-auto"
+        />
       </div>
 
       {/* 3. Operational Shard Views */}

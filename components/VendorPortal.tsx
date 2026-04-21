@@ -72,6 +72,7 @@ import {
 } from 'recharts';
 import { toast } from 'sonner';
 import { User, Order, LogisticProvider, VendorProduct, ViewState, SignalShard, LiveAgroProduct } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { runSpecialistDiagnostic, analyzeDemandForecast } from '../services/agroLangService';
 import AssetAssociationTool from './AssetAssociationTool';
@@ -99,7 +100,7 @@ const FORECAST_DATA = [
   { cycle: 'C13', demand: 84, supply: 62 },
 ];
 
-import { useAppStore } from '../store';
+import { useRegistrationStore } from '../store/registrationStore';
 import { generateAlphanumericId } from '../systemFunctions';
 
 const ASSET_CATEGORIES = [
@@ -109,7 +110,7 @@ const ASSET_CATEGORIES = [
 const VendorPortal: React.FC<VendorPortalProps> = ({ 
   user, onSpendEAC, orders = [], onUpdateOrderStatus, vendorProducts = [], onRegisterProduct, onNavigate, initialSection, onUpdateProduct, onEmitSignal, liveProducts = [], onSaveLiveProduct
 }) => {
-  const { vendorRegistrationState, setVendorRegistrationState } = useAppStore();
+  const { vendorRegistrationState, setVendorRegistrationState } = useRegistrationStore();
   const [activeTab, setActiveTab] = useState<'inventory' | 'shipments' | 'live_terminal' | 'ledger'>('inventory');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showCategoryLinker, setShowCategoryLinker] = useState(false);
@@ -429,22 +430,18 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
       </div>
 
       {/* Primary Navigation Tabs */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'inventory', label: 'Local Registry', icon: Package },
           { id: 'live_terminal', label: 'Live Processing', icon: ZapIcon },
           { id: 'shipments', label: 'Inbound Signals', icon: ShoppingCart },
           { id: 'ledger', label: 'Financial Ledger', icon: History },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-amber-600 text-white shadow-2xl scale-105 border-b-4 border-amber-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={18} /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id)}
+        variant="industrial"
+        className="mb-10"
+      />
 
       {/* Main Tab Content */}
       <div className="min-h-[800px] relative z-10">

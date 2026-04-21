@@ -120,6 +120,7 @@ import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
 import { MediaShard, Task } from '../types';
 import { HenIcon } from './Icons';
+import { SectionTabs } from './SectionTabs';
 import { SEO } from './SEO';
 
 interface ToolsSectionProps {
@@ -465,22 +466,18 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 relative z-20 mx-auto lg:mx-0">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'kanban', label: 'Kanban Matrix', icon: LayoutGrid },
           { id: 'resources', label: 'Asset Monitor', icon: Monitor },
           { id: 'sigma', label: 'Sigma Optimizer', icon: Target },
           { id: 'kpis', label: 'KPI Ledger', icon: BarChart4 },
-        ].map(t => (
-          <button 
-            key={t.id} 
-            onClick={() => setActiveTool(t.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTool === t.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <t.icon className="w-4 h-4" /> {t.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTool}
+        onTabChange={(id) => setActiveTool(id)}
+        variant="industrial"
+        className="mb-10"
+      />
 
       <div className="min-h-[700px] relative z-10">
         {activeTool === 'kanban' && (

@@ -46,6 +46,7 @@ Prism.languages.agrolang = {
 };
 
 import { User, SignalShard } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { auditAgroLangCode, chatWithAgroLang } from '../services/agroLangService';
 import { sendDeviceCommand } from '../services/deviceService';
@@ -470,24 +471,20 @@ SEQUENCE Optimize_Cycle_882 {
       </div>
 
       {/* Primary Navigation */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-8 relative z-20 mx-auto lg:mx-0">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'kernel', label: 'Kernel Hub', icon: Layers },
           { id: 'ide', label: 'Logic Forge', icon: Code2 },
           { id: 'shell', label: 'System Shell', icon: Terminal },
           { id: 'hardware', label: 'Asset Monitor', icon: CpuIcon },
           { id: 'scheduler', label: 'Thrust Load', icon: Gauge },
           { id: 'gis', label: 'GIS Portal', icon: Map },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={16} /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id)}
+        variant="industrial"
+        className="mb-10"
+      />
 
       <div className="min-h-[850px] relative z-10">
         

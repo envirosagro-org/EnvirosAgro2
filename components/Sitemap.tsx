@@ -45,10 +45,9 @@ import {
   RefreshCw,
   FileCode
 } from 'lucide-react';
-import { ViewState } from '../types';
+import { ViewState, RegistryGroup } from '../types';
 import { HenIcon } from './Icons';
-import { RegistryGroup } from '../App';
-import { useAppStore } from '../store';
+import { useDataStore } from '../store/dataStore';
 import { toast } from 'sonner';
 
 interface SitemapProps {
@@ -60,11 +59,11 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
   const [resolverInput, setResolverInput] = useState('');
   const [activeDimension, setActiveDimension] = useState<number | null>(null);
   const [isCrawling, setIsCrawling] = useState(false);
-  const emitSignal = useAppStore(state => state.emitSignal);
+  const dispatchSignal = useDataStore(state => state.dispatchSignal);
 
   const handleCrawl = () => {
     setIsCrawling(true);
-    emitSignal({
+    dispatchSignal({
       title: 'AI_CRAWLER_SYNC',
       message: 'Initiating deep mesh crawl for schema map synchronization...',
       priority: 'medium',

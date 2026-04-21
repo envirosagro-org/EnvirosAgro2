@@ -2,7 +2,8 @@ import React from 'react';
 import { Mountain, Sprout, Layers, Thermometer } from 'lucide-react';
 import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
-import { useAppStore } from '../../store';
+import { useUiStore } from '../../store/uiStore';
+import { useDataStore } from '../../store/dataStore';
 
 interface SoilPortalProps {
   user: User;
@@ -13,7 +14,8 @@ interface SoilPortalProps {
 }
 
 const SoilPortal: React.FC<SoilPortalProps> = (props) => {
-  const { ecosystemState, updateEcosystemState } = useAppStore();
+  const ecosystemState = useDataStore(state => state.ecosystemState);
+  const updateEcosystemState = useDataStore(state => state.updateEcosystemState);
 
   const meta: ResourceMeta = {
     title: 'SOIL PORTAL',

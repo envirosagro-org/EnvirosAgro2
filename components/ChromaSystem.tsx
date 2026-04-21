@@ -69,6 +69,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { User, ViewState, MediaShard } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
@@ -351,22 +352,20 @@ ${content}
       </div>
 
       {/* Main Navigation Tabs */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-full lg:w-fit border border-white/5 bg-black/40 shadow-xl px-6 mx-auto lg:mx-0 relative z-20">
-        {[
-          { id: 'mapping', label: 'Spectral Registry', icon: Binary },
-          { id: 'paint', label: 'Paint with Nature', icon: Wand2 },
-          { id: 'design', label: 'Lilies Forge', icon: Flower2 },
-          { id: 'macro', label: 'Architectural Sc', icon: Box },
-          { id: 'micro', label: 'Chromatography', icon: Microscope },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-xl scale-105 border-b-4 border-emerald-400 ring-8 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={18} /> {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={[
+            { id: 'mapping', label: 'Spectral Registry', icon: Binary },
+            { id: 'paint', label: 'Paint with Nature', icon: Wand2 },
+            { id: 'design', label: 'Lilies Forge', icon: Flower2 },
+            { id: 'macro', label: 'Architectural Sc', icon: Box },
+            { id: 'micro', label: 'Chromatography', icon: Microscope },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="industrial"
+          className="w-full lg:w-auto"
+        />
       </div>
 
       <div className="min-h-[800px] relative z-10">

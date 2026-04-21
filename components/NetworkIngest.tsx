@@ -67,6 +67,7 @@ import {
 import { toast } from 'sonner';
 import { User, ViewState, AgroResource, MediaShard } from '../types';
 import { useEvidenceIngest } from '../hooks/useEvidenceIngest';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 
 import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
@@ -324,23 +325,19 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpda
       </div>
 
       {/* 2. Secondary Navigation Tabs */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'overview', label: 'Data Streams', icon: Activity },
           { id: 'handshake', label: 'Node Handshake', icon: SmartphoneNfc },
           { id: 'vault', label: 'Evidence Vault', icon: CloudUpload },
           { id: 'api', label: 'Registry Keys', icon: Key },
           { id: 'analyzer', label: 'Stream Analyzer', icon: Leaf },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={18} /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id)}
+        variant="industrial"
+        className="mb-10"
+      />
 
       {/* 3. Operational Viewport */}
       <div className="min-h-[750px] relative z-10">

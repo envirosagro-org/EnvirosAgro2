@@ -75,6 +75,7 @@ import {
 import { User, RegisteredUnit, ViewState, WorkerProfile, AgroProject, VendorProduct, Order } from '../types';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
+import { SectionTabs } from './SectionTabs';
 import { SEO } from './SEO';
 
 interface IndustrialProps {
@@ -213,8 +214,8 @@ const Industrial: React.FC<IndustrialProps> = ({
 
       {/* 2. Unified Industrial Navigation */}
       <div className="flex flex-col lg:flex-row justify-between items-center gap-10 relative z-20">
-         <div className="flex flex-wrap gap-2 p-1.5 glass-card rounded-[32px] w-fit border border-white/5 bg-black/40 shadow-xl px-4 md:px-6 overflow-x-auto scrollbar-hide">
-           {[
+         <SectionTabs 
+           tabs={[
              { id: 'bridge', label: 'Registry Bridge', icon: Route },
              { id: 'mesh', label: 'Mesh Visualization', icon: Network },
              { id: 'twin', label: 'Digital Twin', icon: Box },
@@ -222,16 +223,12 @@ const Industrial: React.FC<IndustrialProps> = ({
              { id: 'path', label: 'Path Analyzer', icon: Workflow },
              { id: 'tenders', label: 'Bounty Manifest', icon: Hammer },
              { id: 'workers', label: 'Steward Cloud', icon: Users },
-           ].map(tab => (
-             <button 
-               key={tab.id}
-               onClick={() => { setActiveTab(tab.id as any); setSearchTerm(''); }}
-               className={`flex items-center gap-3 px-8 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl scale-105 border-b-2 border-indigo-400 ring-4 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-             >
-               <tab.icon size={16} /> {tab.label}
-             </button>
-           ))}
-         </div>
+           ]}
+           activeTab={activeTab}
+           onTabChange={(id) => { setActiveTab(id); setSearchTerm(''); }}
+           variant="industrial"
+           className="w-full lg:w-auto"
+         />
 
          <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="relative group flex-1 md:w-[350px]">

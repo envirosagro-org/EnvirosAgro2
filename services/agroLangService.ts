@@ -512,7 +512,7 @@ export const automateSupplyChain = async (assetData: any, vendorRegistry: any[])
         model: 'gemini-3-pro-preview',
         contents: `Automate the full supply chain and industrial operations for the following live farming asset:
         Asset: ${JSON.stringify(assetData)}
-        Vendor Registry: ${JSON.stringify(vendorRegistry.map(v => ({ id: v.id, name: v.name, type: v.supplierType, category: v.category })))}
+        Vendor Registry: ${JSON.stringify((vendorRegistry || []).map(v => ({ id: v.id, name: v.name, type: v.supplierType, category: v.category })))}
         
         Your goal is to provide a comprehensive automation plan covering:
         1. PROCUREMENT & SOURCING: Automatically identify and integrate the best vendors from the registry.
@@ -597,8 +597,8 @@ export const queryProgramAssets = async (assetData: any, programName: string, bl
         model: 'gemini-3-pro-preview',
         contents: `Analyze the live farming asset "${assetData.productType || assetData.name}" (ID: ${assetData.id}).
         The user wants to associate this asset with the "${programName}" program.
-        Available Blueprints: ${JSON.stringify(blueprints.map(b => ({ id: b.blueprint_id, name: b.input_material.name })))}
-        Available Industrial Units: ${JSON.stringify(industrialUnits.map(u => ({ id: u.id, name: u.name })))}
+        Available Blueprints: ${JSON.stringify((blueprints || []).map(b => ({ id: b.blueprint_id, name: b.input_material.name })))}
+        Available Industrial Units: ${JSON.stringify((industrialUnits || []).map(u => ({ id: u.id, name: u.name })))}
         
         Determine if there are any existing assets (blueprints or units) that fit this program and would optimize the production process for the given asset.
         Ensure effective and efficient routes.

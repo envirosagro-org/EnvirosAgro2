@@ -1,6 +1,13 @@
 import React from 'react';
 import { ViewState } from '../types';
 
+const ResearchInnovation = React.lazy(() => import('./ResearchInnovation'));
+const MeshProtocol = React.lazy(() => import('./MeshProtocol'));
+const Agrowild = React.lazy(() => import('./Agrowild'));
+const ContractFarming = React.lazy(() => import('./ContractFarming'));
+const TQMGrid = React.lazy(() => import('./TQMGrid'));
+const LiveFarming = React.lazy(() => import('./LiveFarming'));
+const CircularGrid = React.lazy(() => import('./CircularGrid'));
 const Dashboard = React.lazy(() => import('./Dashboard'));
 const Sustainability = React.lazy(() => import('./Sustainability'));
 const Economy = React.lazy(() => import('./Economy'));
@@ -36,7 +43,33 @@ const TelemetryHub = React.lazy(() => import('./TelemetryHub'));
 const SwarmOrchestrator = React.lazy(() => import('./SwarmOrchestrator'));
 const MRVEngine = React.lazy(() => import('./MRVEngine'));
 const ReputationDashboard = React.lazy(() => import('./ReputationDashboard'));
+const SettingsPortal = React.lazy(() => import('./SettingsPortal'));
 const EscrowPortal = React.lazy(() => import('./EscrowPortal'));
+const TemporalVideo = React.lazy(() => import('./TemporalVideo'));
+const Agrobot = React.lazy(() => import('./Agrobot'));
+const AgrobotSync = React.lazy(() => import('./AgrobotSync'));
+const AgroRegency = React.lazy(() => import('./AgroRegency'));
+const CodeOfLaws = React.lazy(() => import('./CodeOfLaws'));
+const AgroCalendar = React.lazy(() => import('./AgroCalendar'));
+const ChromaSystem = React.lazy(() => import('./ChromaSystem'));
+const EnvirosAgroStore = React.lazy(() => import('./EnvirosAgroStore'));
+const AgroValueEnhancement = React.lazy(() => import('./AgroValueEnhancement'));
+const DigitalMRV = React.lazy(() => import('./DigitalMRV'));
+const OnlineGarden = React.lazy(() => import('./OnlineGarden'));
+const FarmOS = React.lazy(() => import('./FarmOS'));
+const MediaLedger = React.lazy(() => import('./MediaLedger'));
+const Sitemap = React.lazy(() => import('./Sitemap'));
+const AgroLangAnalyst = React.lazy(() => import('./AgroLangAnalyst'));
+const AIAnalyst = React.lazy(() => import('./AIAnalyst'));
+const EducationalResources = React.lazy(() => import('./EducationalResources'));
+const RegistryHandshake = React.lazy(() => import('./RegistryHandshake'));
+const NaturalResources = React.lazy(() => import('./NaturalResources'));
+const IntranetPortal = React.lazy(() => import('./IntranetPortal'));
+const CEA = React.lazy(() => import('./CEA'));
+const Biotechnology = React.lazy(() => import('./Biotechnology'));
+const Permaculture = React.lazy(() => import('./Permaculture'));
+const EmergencyPortal = React.lazy(() => import('./EmergencyPortal'));
+const Impact = React.lazy(() => import('./Impact'));
 
 export const getComponentForView = (
   view: ViewState,
@@ -76,9 +109,50 @@ export const getComponentForView = (
     case 'traceability_map': return <TraceabilityMap {...props} />;
     case 'telemetry_hub': return <TelemetryHub {...props} />;
     case 'swarm_orchestrator': return <SwarmOrchestrator {...props} />;
+    case 'agrowild': return <Agrowild {...props} />;
+    case 'mesh_protocol': return <MeshProtocol {...props} />;
+    case 'contract_farming': return <ContractFarming {...props} />;
+    case 'tqm': return <TQMGrid {...props} />;
+    case 'live_farming': return <LiveFarming {...props} />;
+    case 'circular': return <CircularGrid {...props} />;
+    case 'research': return <ResearchInnovation {...props} />;
     case 'mrv_engine': return <MRVEngine {...props} />;
     case 'reputation_dashboard': return <ReputationDashboard {...props} />;
     case 'escrow_portal': return <EscrowPortal {...props} />;
+    case 'settings': return <SettingsPortal {...props} />;
+    case 'temporal_video': return <TemporalVideo {...props} />;
+    case 'agro_regency': return <AgroRegency {...props} />;
+    case 'code_of_laws': return <CodeOfLaws {...props} />;
+    case 'agro_calendar': return <AgroCalendar {...props} />;
+    case 'chroma_system': return <ChromaSystem {...props} />;
+    case 'envirosagro_store': return <EnvirosAgroStore {...props} />;
+    case 'agro_value_enhancement': return <AgroValueEnhancement {...props} />;
+    case 'digital_mrv': return <DigitalMRV {...props} />;
+    case 'online_garden': return <OnlineGarden {...props} />;
+    case 'farm_os': return <FarmOS {...props} />;
+    case 'media_ledger': return <MediaLedger {...props} />;
+    case 'sitemap': return <Sitemap {...props} />;
+    case 'agro_lang_analyst': return <AgroLangAnalyst {...props} />;
+    case 'ai_analyst': return <AIAnalyst {...props} />;
+    case 'educational_resources': return <EducationalResources {...props} />;
+    case 'registry_handshake': return <RegistryHandshake {...props} />;
+    case 'impact': return <Impact {...props} />;
+    case 'animal_world': return <NaturalResources {...props} type="animal_world" />;
+    case 'plants_world': return <NaturalResources {...props} type="plants_world" />;
+    case 'aqua_portal': return <NaturalResources {...props} type="aqua_portal" />;
+    case 'soil_portal': return <NaturalResources {...props} type="soil_portal" />;
+    case 'air_portal': return <NaturalResources {...props} type="air_portal" />;
+    case 'intranet': return <IntranetPortal {...props} />;
+    case 'cea_portal': return <CEA {...props} />;
+    case 'biotech_hub': return <Biotechnology {...props} />;
+    case 'permaculture_hub': return <Permaculture {...props} />;
+    case 'emergency_portal': return <EmergencyPortal {...props} />;
+    case 'agrobot': return (
+      <React.Suspense fallback={props.loadingFallback || <div>Loading...</div>}>
+         {props.viewSection === 'sync' ? <AgrobotSync {...props} /> : <Agrobot {...props} />}
+      </React.Suspense>
+    );
+
     default: return <Dashboard {...props} />;
   }
 };

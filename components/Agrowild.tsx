@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { User, ViewState, Order, VendorProduct, MediaShard } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon, SycamoreLogo } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
@@ -238,18 +239,14 @@ const Agrowild: React.FC<AgrowildProps> = ({ user, onSpendEAC, onEarnEAC, onNavi
       </div>
 
       {/* 2. Unified Navigation */}
-      <div className="px-4 shrink-0 flex justify-center">
-        <div className="flex flex-wrap gap-2 p-1.5 glass-card rounded-[32px] w-full sm:w-fit border border-white/5 bg-black/40 shadow-xl px-6 md:px-10 relative z-20 overflow-x-auto scrollbar-hide snap-x w-full md:w-auto">
-          {AGROWILD_TABS.map(tab => (
-            <button 
-              key={tab.id}
-              onClick={() => scrollToSection(tab.id)}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 md:px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-2xl scale-105 border-b-4 border-emerald-400 ring-4 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-            >
-              <tab.icon size={16} /> {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="px-4 shrink-0 flex justify-center mb-10">
+        <SectionTabs 
+          tabs={AGROWILD_TABS}
+          activeTab={activeTab}
+          onTabChange={scrollToSection}
+          variant="industrial"
+          className="w-full sm:w-auto"
+        />
       </div>
 
       {/* 3. Operational Viewport - Slider */}

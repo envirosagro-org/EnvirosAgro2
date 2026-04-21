@@ -16,6 +16,7 @@ import {
   TableProperties, SearchCode, Workflow, Layers, Wrench
 } from 'lucide-react';
 import { User, FarmingContract, ContractApplication, ViewState, AgroResource, MissionCategory, MissionMilestone, ValueBlueprint, Task, RegisteredUnit, LiveAgroProduct } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { analyzeBidHandshake, AgroLangResponse } from '../services/agroLangService';
 import AssetAssociationTool from './AssetAssociationTool';
@@ -34,7 +35,7 @@ interface ContractFarmingProps {
   onSaveProduct?: (product: LiveAgroProduct) => void;
 }
 
-import { useAppStore } from '../store';
+import { useRegistrationStore } from '../store/registrationStore';
 
 const CATEGORY_META: Record<MissionCategory, { label: string, icon: any, color: string, bg: string }> = {
   FUND_ACQUISITION: { label: 'Fund Acquisition', icon: Landmark, color: 'text-amber-500', bg: 'bg-amber-500/10' },
@@ -44,8 +45,8 @@ const CATEGORY_META: Record<MissionCategory, { label: string, icon: any, color: 
   INDUSTRIAL_LOGISTICS: { label: 'Industrial/Logistics', icon: Factory, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
 };
 
-const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate, contracts, setContracts, onSaveContract, blueprints, onSaveTask, industrialUnits, liveProducts = [], onSaveProduct }) => {
-  const { missionRegistrationState, setMissionRegistrationState } = useAppStore();
+const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onNavigate, contracts = [], setContracts, onSaveContract, blueprints = [], onSaveTask, industrialUnits = [], liveProducts = [], onSaveProduct }) => {
+  const { missionRegistrationState, setMissionRegistrationState } = useRegistrationStore();
   const [activeTab, setActiveTab] = useState<'manifest' | 'terminal' | 'archive' | 'forge'>('manifest');
   const [activeMission, setActiveMission] = useState<FarmingContract | null>(null);
   const [isLinkingResource, setIsLinkingResource] = useState<string | null>(null);
@@ -264,22 +265,18 @@ const ContractFarming: React.FC<ContractFarmingProps> = ({ user, onSpendEAC, onN
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'manifest', label: 'Mission Manifest', icon: LayoutGrid },
           { id: 'forge', label: 'Contract Forge', icon: Gavel },
           { id: 'terminal', label: 'Management Terminal', icon: Monitor },
           { id: 'archive', label: 'Resolution Archive', icon: History },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-2xl scale-105 border-b-4 border-indigo-400 ring-8 ring-indigo-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={18} /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id)}
+        variant="industrial"
+        className="mb-10"
+      />
 
       <div className="min-h-[850px] relative z-10">
         {activeTab === 'terminal' && (

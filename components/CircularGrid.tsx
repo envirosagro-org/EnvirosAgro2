@@ -48,6 +48,7 @@ import {
 import { toast } from 'sonner';
 import { User, Order, VendorProduct, ViewState, SignalShard } from '../types';
 import { HenIcon } from './Icons';
+import { SectionTabs } from './SectionTabs';
 import { chatWithAgroLang } from '../services/agroLangService';
 
 interface CircularGridProps {
@@ -217,20 +218,18 @@ const CircularGrid: React.FC<CircularGridProps> = ({
       </div>
 
       {/* 2. Primary Navigation */}
-      <div className="flex flex-wrap gap-4 p-2 glass-card rounded-[40px] w-fit border border-white/5 bg-black/40 shadow-xl px-10 relative z-20 mx-auto lg:mx-0">
-        {[
-          { id: 'market', label: 'Refurbished Hub', icon: PackageSearch },
-          { id: 'registry', label: 'Circular Ledger', icon: History },
-          { id: 'repair', label: 'Repair Diagnostics', icon: HenIcon },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-emerald-600 text-white shadow-2xl scale-105 border-b-4 border-emerald-400 ring-8 ring-emerald-500/5' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon size={18} /> {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={[
+            { id: 'market', label: 'Refurbished Hub', icon: PackageSearch },
+            { id: 'registry', label: 'Circular Ledger', icon: History },
+            { id: 'repair', label: 'Repair Diagnostics', icon: HenIcon },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="glass"
+          className="w-full lg:w-auto"
+        />
       </div>
 
       {/* 3. Main Operational Views */}

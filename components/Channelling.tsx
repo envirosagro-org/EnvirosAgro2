@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { User } from '../types';
+import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { generateAlphanumericId } from '../systemFunctions';
@@ -170,21 +171,19 @@ const Channelling: React.FC<ChannellingProps> = ({ user, onEarnEAC, onSpendEAC }
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-4 p-1.5 glass-card rounded-[32px] w-fit mx-auto lg:mx-0 border border-white/5 bg-black/40 shadow-xl px-4">
-        {[
-          { id: 'video', label: 'Cinema & Streaming', icon: Film },
-          { id: 'social', label: 'Social Shards', icon: Smartphone },
-          { id: 'knowledge', label: 'Knowledge Archive', icon: Library },
-          { id: 'official', label: 'Official Environments', icon: Globe2 },
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-          >
-            <tab.icon className="w-4 h-4" /> {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-center w-full mb-10">
+        <SectionTabs 
+          tabs={[
+            { id: 'video', label: 'Cinema & Streaming', icon: Film },
+            { id: 'social', label: 'Social Shards', icon: Smartphone },
+            { id: 'knowledge', label: 'Knowledge Archive', icon: Library },
+            { id: 'official', label: 'Official Environments', icon: Globe2 },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+          variant="glass"
+          className="w-full lg:w-auto"
+        />
       </div>
 
       {/* Grid */}

@@ -5,6 +5,7 @@ import { ThumbsUp, ThumbsDown, MinusCircle, PlusCircle, Play, CheckCircle, XCirc
 import ElectionDashboard from './ElectionDashboard';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { draftProposal, calculateImpactScore } from '../services/geminiService';
+import { SectionTabs } from './SectionTabs';
 import { SEO } from './SEO';
 
 interface GovernanceProps {
@@ -70,21 +71,17 @@ const Governance: React.FC<GovernanceProps> = ({ user, proposals, stewardPositio
     <div className="space-y-8 animate-in fade-in duration-700 pb-24 max-w-[1400px] mx-auto px-4">
       <SEO title="Governance" description="Participate in EnvirosAgro DAO governance: Submit proposals, vote on community initiatives, and shape the future of sustainable agriculture." />
       
-      <div className="flex bg-black/40 p-1 rounded-2xl border border-white/5 w-fit">
-        {[
+      <SectionTabs 
+        tabs={[
           { id: 'proposals', label: 'Proposals', icon: FileText },
           { id: 'elections', label: 'Elections', icon: LucideVote },
           { id: 'guilds', label: 'Stewardship Guilds', icon: ShieldCheck }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-          >
-            <tab.icon size={14} /> {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as any)}
+        variant="glass"
+        className="mb-8"
+      />
 
       {activeTab === 'elections' && (
         <ElectionDashboard 

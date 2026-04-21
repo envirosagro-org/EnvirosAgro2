@@ -33,7 +33,10 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
 import { SycamoreLogo, HenIcon } from './components/Icons';
-import { useAppStore } from './store';
+import { useUiStore } from './store/uiStore';
+import { useUserStore } from './store/userStore';
+import { useDataStore } from './store/dataStore';
+import { useRegistrationStore } from './store/registrationStore';
 import { useOnline } from './hooks/useOnline';
 import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit, StewardPosition } from './types';
 
@@ -46,77 +49,10 @@ import { NavigationLink } from './components/NavigationLink';
 import { getComponentForView } from './components/Router';
 import { useDataSync } from './hooks/useDataSync';
 
-const Dashboard = React.lazy(() => import('./components/Dashboard'));
-const Sustainability = React.lazy(() => import('./components/Sustainability'));
-const Economy = React.lazy(() => import('./components/Economy'));
-const Industrial = React.lazy(() => import('./components/Industrial'));
-const Intelligence = React.lazy(() => import('./components/Intelligence'));
-const Community = React.lazy(() => import('./components/Community'));
-const Explorer = React.lazy(() => import('./components/Explorer'));
-const Ecosystem = React.lazy(() => import('./components/Ecosystem'));
-const MediaHub = React.lazy(() => import('./components/MediaHub'));
-const InfoPortal = React.lazy(() => import('./components/InfoPortal'));
-const Login = React.lazy(() => import('./components/Login'));
-const AgroWallet = React.lazy(() => import('./components/AgroWallet'));
-const UserProfile = React.lazy(() => import('./components/UserProfile'));
-const InvestorPortal = React.lazy(() => import('./components/InvestorPortal'));
-const VendorPortal = React.lazy(() => import('./components/VendorPortal'));
-const NetworkIngest = React.lazy(() => import('./components/NetworkIngest'));
-const HardwareRegistry = React.lazy(() => import('./components/HardwareRegistry'));
-const DeviceControl = React.lazy(() => import('./components/DeviceControl'));
-const ToolsSection = React.lazy(() => import('./components/ToolsSection'));
-const LiveVoiceBridge = React.lazy(() => import('./components/LiveVoiceBridge'));
-const Channelling = React.lazy(() => import('./components/Channelling'));
-const EvidenceModal = React.lazy(() => import('./components/EvidenceModal'));
-const CircularGrid = React.lazy(() => import('./components/CircularGrid'));
-const NexusCRM = React.lazy(() => import('./components/NexusCRM'));
-const TQMGrid = React.lazy(() => import('./components/TQMGrid'));
-const ResearchInnovation = React.lazy(() => import('./components/ResearchInnovation'));
-const LiveFarming = React.lazy(() => import('./components/LiveFarming'));
-const ContractFarming = React.lazy(() => import('./components/ContractFarming'));
-const Agrowild = React.lazy(() => import('./components/Agrowild'));
-const FloatingConsultant = React.lazy(() => import('./components/FloatingConsultant'));
-const Impact = React.lazy(() => import('./components/Impact'));
-const NaturalResources = React.lazy(() => import('./components/NaturalResources'));
-const IntranetPortal = React.lazy(() => import('./components/IntranetPortal'));
-const EnvirosAgroStore = React.lazy(() => import('./components/EnvirosAgroStore'));
-const CEA = React.lazy(() => import('./components/CEA'));
-const Biotechnology = React.lazy(() => import('./components/Biotechnology'));
-const Permaculture = React.lazy(() => import('./components/Permaculture'));
-const EmergencyPortal = React.lazy(() => import('./components/EmergencyPortal'));
-const AgroRegency = React.lazy(() => import('./components/AgroRegency'));
-const CodeOfLaws = React.lazy(() => import('./components/CodeOfLaws'));
-const AgroCalendar = React.lazy(() => import('./components/AgroCalendar'));
-const ChromaSystem = React.lazy(() => import('./components/ChromaSystem'));
-const AgroValueEnhancement = React.lazy(() => import('./components/AgroValueEnhancement'));
-const DigitalMRV = React.lazy(() => import('./components/DigitalMRV'));
-const OnlineGarden = React.lazy(() => import('./components/OnlineGarden'));
-const FarmOS = React.lazy(() => import('./components/FarmOS'));
-const MediaLedger = React.lazy(() => import('./components/MediaLedger'));
-const AgroMultimediaGenerator = React.lazy(() => import('./components/AgroMultimediaGenerator'));
-const Sitemap = React.lazy(() => import('./components/Sitemap'));
-const AgroLangAnalyst = React.lazy(() => import('./components/AgroLangAnalyst'));
 const VerificationHUD = React.lazy(() => import('./components/VerificationHUD'));
-const SettingsPortal = React.lazy(() => import('./components/SettingsPortal'));
-const TemporalVideo = React.lazy(() => import('./components/TemporalVideo'));
-const Robot = React.lazy(() => import('./components/Robot'));
-const RobotSync = React.lazy(() => import('./components/RobotSync'));
-const MeshProtocol = React.lazy(() => import('./components/MeshProtocol'));
-const RegistryHandshake = React.lazy(() => import('./components/RegistryHandshake'));
-const ImpactDashboard = React.lazy(() => import('./components/ImpactDashboard'));
-const TraceabilityMap = React.lazy(() => import('./components/TraceabilityMap'));
-const TelemetryHub = React.lazy(() => import('./components/TelemetryHub'));
-const SwarmOrchestrator = React.lazy(() => import('./components/SwarmOrchestrator'));
-const MRVEngine = React.lazy(() => import('./components/MRVEngine'));
-const ReputationDashboard = React.lazy(() => import('./components/ReputationDashboard'));
-const EscrowPortal = React.lazy(() => import('./components/EscrowPortal'));
-const EducationalResources = React.lazy(() => import('./components/EducationalResources'));
-const CostAccountingDashboard = React.lazy(() => import('./components/CostAccountingDashboard'));
-const InternalControlDashboard = React.lazy(() => import('./components/InternalControlDashboard'));
-const Governance = React.lazy(() => import('./components/Governance'));
-const CarbonCredits = React.lazy(() => import('./components/CarbonCredits'));
-const Traceability = React.lazy(() => import('./components/Traceability'));
-const Marketplace = React.lazy(() => import('./components/Marketplace'));
+const EvidenceModal = React.lazy(() => import('./components/EvidenceModal'));
+const LiveVoiceBridge = React.lazy(() => import('./components/LiveVoiceBridge'));
+const FloatingConsultant = React.lazy(() => import('./components/FloatingConsultant'));
 
 import { 
   syncUserToCloud, 
@@ -170,7 +106,7 @@ const BOOT_LOGS = [
 const GLOBAL_STEWARD_REGISTRY = [
   { esin: 'EA-ALPH-8821', name: 'Steward Alpha', role: 'Soil Expert', location: 'Nairobi, Kenya', res: 98, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150', online: true, skills: ['Bantu Soil Sharding', 'Drought Mitigation'] },
   { esin: 'EA-GAIA-1104', name: 'Gaia Green', role: 'Genetics Analyst', location: 'Omaha, USA', res: 92, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150', online: false, skills: ['DNA Sequencing', 'Aura Ingest'] },
-  { esin: 'EA-ROBO-9214', name: 'Dr. Orion Bot', role: 'Automation Engineer', location: 'Tokyo Hub', res: 95, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150', online: true, skills: ['Agroboto Control', 'Mesh Stability'] },
+  { esin: 'EA-ROBO-9214', name: 'Dr. Orion Bot', role: 'Automation Engineer', location: 'Tokyo Hub', res: 95, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150', online: true, skills: ['AgroBot Control', 'Mesh Stability'] },
   { esin: 'EA-LILY-0042', name: 'Aesthetic Rose', role: 'Botanical Architect', location: 'Valencia Shard', res: 99, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150', online: true, skills: ['Lilies Design', 'Chroma Calibration'] },
 ];
 
@@ -456,12 +392,12 @@ const GlobalSearch: React.FC<{
   const [apiResults, setApiResults] = useState<any[]>([]);
   const [aiDeepSuggestion, setAiDeepSuggestion] = useState<{ view: string; section?: string; explanation: string; stewardEsin?: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const emitSignal = useAppStore(state => state.emitSignal);
+  const dispatchSignal = useDataStore(state => state.dispatchSignal);
 
   const handleCrawl = () => {
     if (!searchTerm.trim()) return;
     setIsCrawling(true);
-    emitSignal({
+    dispatchSignal({
       title: 'AI_CRAWLER_SYNC',
       message: `Initiating deep mesh crawl for "${searchTerm}"...`,
       priority: 'medium',
@@ -824,100 +760,81 @@ const GlobalSearch: React.FC<{
 
 const queryClient = new QueryClient();
 
+import { useRegistryStore } from './store/registryStore';
+
 const App: React.FC = () => {
-  const user = useAppStore(state => state.user);
-  const setUser = useAppStore(state => state.setUser);
-  const view = useAppStore(state => state.view);
-  const setView = useAppStore(state => state.setView);
-  const viewSection = useAppStore(state => state.viewSection);
-  const setViewSection = useAppStore(state => state.setViewSection);
-  const isSidebarOpen = useAppStore(state => state.isSidebarOpen);
-  const setIsSidebarOpen = useAppStore(state => state.setIsSidebarOpen);
-  const isMobileMenuOpen = useAppStore(state => state.isMobileMenuOpen);
-  const setIsMobileMenuOpen = useAppStore(state => state.setIsMobileMenuOpen);
-  const isGlobalSearchOpen = useAppStore(state => state.isGlobalSearchOpen);
-  const setIsGlobalSearchOpen = useAppStore(state => state.setIsGlobalSearchOpen);
-  const isInboxOpen = useAppStore(state => state.isInboxOpen);
-  const setIsInboxOpen = useAppStore(state => state.setIsInboxOpen);
-  const projects = useAppStore(state => state.projects);
-  const setProjects = useAppStore(state => state.setProjects);
-  const transactions = useAppStore(state => state.transactions);
-  const setTransactions = useAppStore(state => state.setTransactions);
-  const signals = useAppStore(state => state.signals);
-  const setSignals = useAppStore(state => state.setSignals);
-  const costAudit = useAppStore(state => state.costAudit);
-  const setCostAudit = useAppStore(state => state.setCostAudit);
-  const registrationState = useAppStore(state => state.registrationState);
+  const user = useUserStore(state => state.user);
+  const setUser = useUserStore(state => state.setUser);
+  const view = useUiStore(state => state.view);
+  const setView = useUiStore(state => state.setView);
+  const viewSection = useUiStore(state => state.viewSection);
+  const setViewSection = useUiStore(state => state.setViewSection);
+  const isSidebarOpen = useUiStore(state => state.isSidebarOpen);
+  const setIsSidebarOpen = useUiStore(state => state.setIsSidebarOpen);
+  const isMobileMenuOpen = useUiStore(state => state.isMobileMenuOpen);
+  const setIsMobileMenuOpen = useUiStore(state => state.setIsMobileMenuOpen);
+  const isGlobalSearchOpen = useUiStore(state => state.isGlobalSearchOpen);
+  const setIsGlobalSearchOpen = useUiStore(state => state.setIsGlobalSearchOpen);
+  const isInboxOpen = useUiStore(state => state.isInboxOpen);
+  const setIsInboxOpen = useUiStore(state => state.setIsInboxOpen);
+  const projects = useDataStore(state => state.projects);
+  const setProjects = useDataStore(state => state.setProjects);
+  const transactions = useDataStore(state => state.transactions);
+  const setTransactions = useDataStore(state => state.setTransactions);
+  const signals = useDataStore(state => state.signals);
+  const setSignals = useDataStore(state => state.setSignals);
+  const costAudit = useDataStore(state => state.costAudit);
+  const setCostAudit = useDataStore(state => state.setCostAudit);
+  const registrationState = useRegistrationStore(state => state.registrationState);
   const isOnline = useOnline();
   
-  const blockchain = useAppStore(state => state.blockchain);
-  const setBlockchain = useAppStore(state => state.setBlockchain);
-  const mempool = useAppStore(state => state.mempool);
-  const setMempool = useAppStore(state => state.setMempool);
-  const multimediaParams = useAppStore(state => state.multimediaParams);
-  const setMultimediaParams = useAppStore(state => state.setMultimediaParams);
-  const navigate = useAppStore(state => state.navigate);
-  const goBack = useAppStore(state => state.goBack);
-  const goForward = useAppStore(state => state.goForward);
-  const stewardPositions = useAppStore(state => state.stewardPositions);
-  const setStewardPositions = useAppStore(state => state.setStewardPositions);
-  
-  useEffect(() => {
-    const defaultPositions: StewardPosition[] = [
-      {
-        id: 'POS-CSO',
-        title: 'Chief Sustainability Officer',
-        description: 'Oversees long-term ecological health and ensures all operations align with sustainability principles.',
-        requirements: ['Proven track record in ecological management', 'Deep understanding of regenerative agriculture'],
-        termDurationMonths: 12
-      },
-      {
-        id: 'POS-RES-ARCH',
-        title: 'Resilience Architect',
-        description: 'Manages infrastructure, system adaptability, and disaster preparedness to ensure the network remains resilient.',
-        requirements: ['Experience in systems engineering', 'Knowledge of decentralized infrastructure'],
-        termDurationMonths: 12
-      },
-      {
-        id: 'POS-RES-STEW',
-        title: 'Resource Allocation Steward',
-        description: 'Manages the DAO treasury, oversees budget allocations, and ensures fair distribution of resources.',
-        requirements: ['Financial literacy', 'Experience in DAO governance'],
-        termDurationMonths: 6
-      },
-      {
-        id: 'POS-COMM-LIAISON',
-        title: 'Community Liaison',
-        description: 'Facilitates communication within the glocal network, manages community feedback, and ensures transparency.',
-        requirements: ['Excellent communication skills', 'Ability to bridge diverse community groups'],
-        termDurationMonths: 6
-      }
-    ];
-    setStewardPositions(defaultPositions);
-  }, [setStewardPositions]);
-  const elections = useAppStore(state => state.elections);
-  const setElections = useAppStore(state => state.setElections);
-  const applyForElection = useAppStore(state => state.applyForElection);
-  const voteInElection = useAppStore(state => state.voteInElection);
-  const updateProposalStatus = useAppStore(state => state.updateProposalStatus);
+  const blockchain = useDataStore(state => state.blockchain);
+  const setBlockchain = useDataStore(state => state.setBlockchain);
+  const mempool = useDataStore(state => state.mempool);
+  const setMempool = useDataStore(state => state.setMempool);
+  const multimediaParams = useUiStore(state => state.multimediaParams);
+  const setMultimediaParams = useUiStore(state => state.setMultimediaParams);
+  const navigate = useUiStore(state => state.navigate);
+  const goBack = useUiStore(state => state.goBack);
+  const goForward = useUiStore(state => state.goForward);
+  const stewardPositions = useDataStore(state => state.stewardPositions);
+  const setStewardPositions = useDataStore(state => state.setStewardPositions);
+  const elections = useDataStore(state => state.elections);
+  const setElections = useDataStore(state => state.setElections);
+  const applyForElection = useDataStore(state => state.applyForElection);
+  const voteInElection = useDataStore(state => state.voteInElection);
+  const updateProposalStatus = useDataStore(state => state.updateProposalStatus);
+
+  const contracts = useRegistryStore(state => state.contracts);
+  const setContracts = useRegistryStore(state => state.setContracts);
+  const orders = useRegistryStore(state => state.orders);
+  const setOrders = useRegistryStore(state => state.setOrders);
+  const vendorProducts = useRegistryStore(state => state.vendorProducts);
+  const setVendorProducts = useRegistryStore(state => state.setVendorProducts);
+  const industrialUnits = useRegistryStore(state => state.industrialUnits);
+  const setIndustrialUnits = useRegistryStore(state => state.setIndustrialUnits);
+  const liveProducts = useRegistryStore(state => state.liveProducts);
+  const setLiveProducts = useRegistryStore(state => state.setLiveProducts);
+  const mediaShards = useRegistryStore(state => state.mediaShards);
+  const setMediaShards = useRegistryStore(state => state.setMediaShards);
+  const tasks = useRegistryStore(state => state.tasks);
+  const setTasks = useRegistryStore(state => state.setTasks);
+  const blueprints = useRegistryStore(state => state.blueprints);
+  const setBlueprints = useRegistryStore(state => state.setBlueprints);
+  const proposals = useRegistryStore(state => state.proposals);
+  const setProposals = useRegistryStore(state => state.setProposals);
+  const votes = useRegistryStore(state => state.votes);
+  const setVotes = useRegistryStore(state => state.setVotes);
+  const carbonCredits = useRegistryStore(state => state.carbonCredits);
+  const setCarbonCredits = useRegistryStore(state => state.setCarbonCredits);
+  const hoodConnections = useRegistryStore(state => state.hoodConnections);
+  const setHoodConnections = useRegistryStore(state => state.setHoodConnections);
 
   const [isBooting, setIsBooting] = useState(true);
   const [isUnverified, setIsUnverified] = useState(false);
   const [isConsultantOpen, setIsConsultantOpen] = useState(false);
-  const [contracts, setContracts] = useState<FarmingContract[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
-  const [industrialUnits, setIndustrialUnits] = useState<RegisteredUnit[]>([]);
-  const [liveProducts, setLiveProducts] = useState<LiveAgroProduct[]>([]);
-  const [hoodConnections, setHoodConnections] = useState<HoodConnection[]>([]);
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
-  const [mediaShards, setMediaShards] = useState<MediaShard[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [blueprints, setBlueprints] = useState<ValueBlueprint[]>([]);
   const [pulseMessage, setPulseMessage] = useState('Registry synchronized. No anomalies detected.');
-  const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [votes, setVotes] = useState<Vote[]>([]);
-  const [carbonCredits, setCarbonCredits] = useState<CarbonCredit[]>([]);
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
   const [activeTaskForEvidence, setActiveTaskForEvidence] = useState<Task | null>(null);
   const [osInitialCode, setOsInitialCode] = useState<string | null>(null);
@@ -1049,14 +966,14 @@ const App: React.FC = () => {
     return () => { unsubPulse(); };
   }, [user]);
   const hookHoodRef = useRef<any>(null);
-  const emitSignalRef = useRef<any>(null);
+  const dispatchSignalRef = useRef<any>(null);
 
-  const emitSignal = useCallback(async (signalData: Partial<SignalShard>) => { 
-    const currentUser = useAppStore.getState().user;
+  const dispatchSignal = useCallback(async (signalData: Partial<SignalShard>) => { 
+    const currentUser = useUserStore.getState().user;
     const signal = await dispatchNetworkSignal(signalData, currentUser?.esin); 
     if (signal) { 
       // Multi-channel routing
-      const popupLayer = signal.dispatchLayers.find(l => l.channel === 'POPUP'); 
+      const popupLayer = (signal.dispatchLayers || []).find(l => l.channel === 'POPUP'); 
       if (popupLayer) { 
         const id = generateAlphanumericId(7).toLowerCase(); 
         setNotifications(prev => [{ 
@@ -1070,7 +987,7 @@ const App: React.FC = () => {
       }
 
       // Auto-connection logic for Stewards
-      const currentUser = useAppStore.getState().user;
+      const currentUser = useUserStore.getState().user;
       if (signal.meta?.payload?.senderEsin && currentUser && signal.meta.payload.senderEsin !== currentUser.esin) {
         const senderRole = signal.meta.payload.senderRole;
         if (senderRole === 'STEWARD' || senderRole === 'INVESTOR' || senderRole === 'AUDITOR') {
@@ -1086,7 +1003,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleEarnEAC = useCallback(async (amount: number, reason: string) => {
-    const currentUser = useAppStore.getState().user;
+    const currentUser = useUserStore.getState().user;
     if (!currentUser) return;
     const updatedUser = {
       ...currentUser,
@@ -1134,13 +1051,13 @@ const App: React.FC = () => {
       timestamp: new Date().toISOString()
     };
 
-    setHoodConnections(prev => [newConn, ...prev]);
+    setHoodConnections([newConn, ...hoodConnections]);
     await saveCollectionItem('hood_connections', newConn);
     
     // Reward for socialization/engagement
     handleEarnEAC(25, `HOOD_SYNC_${type}`);
 
-    emitSignalRef.current({
+    dispatchSignalRef.current({
       title: 'HOOD_HOOKED',
       message: `Direct ${type} link established with node ${targetEsin}. Efficiency synchronized.`,
       priority: 'medium',
@@ -1153,16 +1070,16 @@ const App: React.FC = () => {
     if (['VIDEO', 'PODCAST', 'LIVESTREAM'].includes(type)) {
       navigate('media', type.toLowerCase());
     }
-  }, [user, hoodConnections, navigate, handleEarnEAC, emitSignal]);
+  }, [user, hoodConnections, navigate, handleEarnEAC, dispatchSignal]);
 
   const handleSpendEAC = useCallback(async (amount: number, reason: string) => {
-    const currentUser = useAppStore.getState().user;
+    const currentUser = useUserStore.getState().user;
     if (!currentUser) {
       navigate('auth');
       return false;
     }
     if (currentUser.wallet.balance < amount) {
-      emitSignal({
+      dispatchSignal({
         title: 'INSUFFICIENT_FUNDS',
         message: `Need ${amount} EAC for ${reason}.`,
         priority: 'high',
@@ -1190,7 +1107,7 @@ const App: React.FC = () => {
       unit: 'EAC'
     };
     await saveCollectionItem('transactions', newTx, currentUser.esin);
-    emitSignal({
+    dispatchSignal({
       title: 'TREASURY_SETTLEMENT',
       message: `Node sharded ${amount} EAC for ${reason}.`,
       priority: 'medium',
@@ -1199,10 +1116,10 @@ const App: React.FC = () => {
       actionIcon: 'Coins'
     });
     return true;
-  }, [setUser, setView, emitSignal]);
+  }, [setUser, setView, dispatchSignal]);
 
   const handlePerformPermanentAction = useCallback(async (actionKey: string, reward?: number, reason?: string) => {
-    const currentUser = useAppStore.getState().user;
+    const currentUser = useUserStore.getState().user;
     if (!currentUser || currentUser.completedActions?.includes(actionKey)) return false;
     const ok = await markPermanentAction(actionKey);
     if (ok && reward && reason) await handleEarnEAC(reward, reason);
@@ -1210,121 +1127,81 @@ const App: React.FC = () => {
   }, [handleEarnEAC]);
   const handleLogout = async () => { await signOutSteward(); setUser(null); navigate('dashboard', null, false); };
   const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(signals.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
-  const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); emitSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
+  const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); dispatchSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
   // Navigation and findMatrixIndex are now handled by the store
 
   const renderView = () => {
     const currentUser = user || GUEST_STWD;
     const isGuest = !user;
     if (isUnverified) return <VerificationHUD userEmail={auth.currentUser?.email || 'Unauthorized Node'} onVerified={() => { setIsUnverified(false); navigate('dashboard', null, false); }} onLogout={handleLogout} />;
-    switch (view) {
-      case 'auth': return <Login onLogin={(u) => { setUser(u); navigate('dashboard', null, false); }} />;
-      case 'dashboard': return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} mempool={mempool} isMining={false} orders={orders} />;
-      case 'mesh_protocol': return <MeshProtocol user={currentUser} blockchain={blockchain} mempool={mempool} />;
-      case 'sustainability': return <Sustainability user={currentUser} onNavigate={navigate} onMintEAT={handleEarnEAC} />;
-      case 'economy': return <Economy user={currentUser} isGuest={isGuest} onSpendEAC={handleSpendEAC} onNavigate={navigate} vendorProducts={vendorProducts} liveProducts={liveProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} projects={projects} notify={emitSignal} contracts={contracts} industrialUnits={industrialUnits} blueprints={blueprints} onUpdateUser={(u) => setUser(u)} initialSection={viewSection} />;
-      case 'wallet': return <AgroWallet user={currentUser} isGuest={isGuest} onNavigate={navigate} onUpdateUser={(u) => setUser(u)} onSwap={async () => { handleEarnEAC(0, 'SWAP_EAT'); return true; }} onEarnEAC={handleEarnEAC} notify={emitSignal} transactions={transactions} initialSection={viewSection} costAudit={costAudit} />;
-      case 'intelligence': return <Intelligence user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onOpenEvidence={() => setIsEvidenceOpen(true)} initialSection={viewSection} onEmitSignal={emitSignal} />;
-      case 'community': return <Community user={currentUser} isGuest={isGuest} onContribution={() => {}} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} hoodConnections={hoodConnections} onHookHood={hookHood} />;
-      case 'explorer': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection={viewSection} onNavigate={navigate} />;
-      case 'network_signals': return <Explorer blockchain={blockchain} isMining={false} globalEchoes={[]} onPulse={() => {}} user={currentUser} signals={signals} setSignals={setSignals} initialSection="terminal" onNavigate={navigate} />;
-      case 'ecosystem': return <Ecosystem user={currentUser} onDeposit={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} onEmitSignal={emitSignal} />;
-      case 'industrial': return <Industrial user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} industrialUnits={industrialUnits} vendorProducts={vendorProducts} orders={orders} notify={emitSignal} collectives={[]} setCollectives={() => {}} onSaveProject={(p) => saveCollectionItem('projects', p)} setIndustrialUnits={() => {}} initialSection={viewSection} />;
-      case 'investor': return <InvestorPortal user={currentUser} onUpdate={(u) => setUser(u)} onSpendEAC={handleSpendEAC} projects={projects} onNavigate={navigate} />;
-      case 'profile': return <UserProfile user={currentUser} isGuest={isGuest} onUpdate={(u) => setUser(u)} onNavigate={navigate} signals={signals} setSignals={setSignals} notify={emitSignal} onLogin={() => navigate('auth')} onLogout={handleLogout} onPermanentAction={handlePerformPermanentAction} />;
-      case 'channelling': return <Channelling user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
-      case 'media': return (
-        <Suspense fallback={<LoadingHUD />}>
-          <MediaHub 
-            user={currentUser} 
-            onEarnEAC={handleEarnEAC} 
-            onSpendEAC={handleSpendEAC} 
-            onNavigate={navigate} 
-            onEmitSignal={emitSignal} 
-          />
-        </Suspense>
-      );
-      case 'multimedia_generator': return <AgroMultimediaGenerator user={currentUser} onNavigate={navigate} onEarnEAC={handleEarnEAC} prefilledParams={multimediaParams} clearParams={() => setMultimediaParams(null)} />;
-      case 'cost_accounting': return <CostAccountingDashboard />;
-      case 'internal_control': 
-        const role = (currentUser.role as string) === 'OBSERVER' ? 'GUEST' : (currentUser.role as UserRole);
-        return <InternalControlDashboard userRole={role} currentPath={view} />;
-      case 'governance': return <Governance user={currentUser} proposals={proposals} stewardPositions={stewardPositions} elections={elections} onSaveProposal={(p) => saveCollectionItem('proposals', p)} onSaveVote={(v) => saveCollectionItem('votes', v)} onApplyForElection={(id, esin, name, manifesto) => { applyForElection(id, esin, name, manifesto); saveCollectionItem('elections', elections.find(e => e.id === id)); }} onVoteInElection={(id, cid, esin) => { voteInElection(id, cid, esin); saveCollectionItem('elections', elections.find(e => e.id === id)); }} onUpdateProposalStatus={(id, status) => { updateProposalStatus(id, status); saveCollectionItem('proposals', proposals.find(p => p.id === id)); }} notify={emitSignal} />;
-      case 'carbon_credits': return <CarbonCredits user={currentUser} credits={carbonCredits} products={liveProducts} onVerifyCredit={(id) => saveCollectionItem('carbon_credits', { id, verificationStatus: 'VERIFIED', verifierEsin: currentUser.esin })} notify={emitSignal} />;
-      case 'traceability': return <Traceability product={liveProducts[0]} liveProducts={liveProducts} />;
-      case 'marketplace': return <Marketplace user={currentUser} vendorProducts={vendorProducts} onNavigate={navigate} />;
-      case 'crm': return <NexusCRM user={currentUser} onSpendEAC={handleSpendEAC} vendorProducts={vendorProducts} onNavigate={navigate} orders={orders} initialSection={viewSection} />;
-      case 'circular': return <CircularGrid user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} vendorProducts={vendorProducts} onPlaceOrder={(o) => saveCollectionItem('orders', o)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} />;
-      case 'tqm': return <TQMGrid user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} liveProducts={liveProducts} onNavigate={navigate} onEmitSignal={emitSignal} initialSection={viewSection} />;
-      case 'tools': return <ToolsSection user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onOpenEvidence={(t) => { setActiveTaskForEvidence(t); setIsEvidenceOpen(true); }} tasks={tasks} onSaveTask={(t) => saveCollectionItem('tasks', t)} notify={emitSignal} initialSection={viewSection} />;
-      case 'research': return <ResearchInnovation user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
-      case 'live_farming': return <LiveFarming user={currentUser} products={liveProducts} setProducts={setLiveProducts} onEarnEAC={handleEarnEAC} onSaveProduct={(p) => saveCollectionItem('live_products', p)} onNavigate={navigate} notify={emitSignal} initialSection={viewSection} onSaveTask={(t) => saveCollectionItem('tasks', t)} blueprints={blueprints} industrialUnits={industrialUnits} contracts={contracts} onSaveContract={(c) => saveCollectionItem('contracts', c)} vendorProducts={vendorProducts} />;
-      case 'contract_farming': return <ContractFarming user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} contracts={contracts} setContracts={setContracts} onSaveContract={(c) => saveCollectionItem('contracts', c)} blueprints={blueprints} onSaveTask={(t) => saveCollectionItem('tasks', t)} industrialUnits={industrialUnits} liveProducts={liveProducts} onSaveProduct={(p) => saveCollectionItem('live_products', p)} />;
-      case 'agrowild': return <Agrowild user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onPlaceOrder={(o) => saveCollectionItem('orders', o)} vendorProducts={vendorProducts} notify={emitSignal} />;
-      case 'impact': return <Impact user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
-      case 'animal_world': return <NaturalResources user={currentUser} type="animal_world" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
-      case 'plants_world': return <NaturalResources user={currentUser} type="plants_world" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
-      case 'aqua_portal': return <NaturalResources user={currentUser} type="aqua_portal" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
-      case 'soil_portal': return <NaturalResources user={currentUser} type="soil_portal" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
-      case 'air_portal': return <NaturalResources user={currentUser} type="air_portal" onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} initialSection={viewSection} />;
-      case 'intranet': return <IntranetPortal user={currentUser} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
-      case 'cea_portal': return <CEA user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
-      case 'biotech_hub': return <Biotechnology user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} />;
-      case 'permaculture_hub': return <Permaculture user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} onEmitSignal={emitSignal} notify={emitSignal} initialSection={viewSection} />;
-      case 'emergency_portal': return <EmergencyPortal user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onEmitSignal={emitSignal} />;
-      /* Corrected component name to resolve 'Agro' reference error */
-      case 'agro_regency': return <AgroRegency user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} />;
-      case 'code_of_laws': return <CodeOfLaws user={currentUser} />;
-      case 'agro_calendar': return <AgroCalendar user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onEmitSignal={emitSignal} onNavigate={navigate} signals={signals} />;
-      case 'chroma_system': return <ChromaSystem user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} />;
-      case 'envirosagro_store': return <EnvirosAgroStore user={currentUser} onSpendEAC={handleSpendEAC} onPlaceOrder={(o) => saveCollectionItem('orders', o)} />;
-      case 'agro_value_enhancement': return <AgroValueEnhancement user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} initialSection={viewSection} blueprints={blueprints} onSaveBlueprint={(b) => saveCollectionItem('blueprints', b)} />;
-      case 'digital_mrv': return <DigitalMRV user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onUpdateUser={(u: User) => setUser(u)} onNavigate={navigate} onEmitSignal={emitSignal} />;
-      case 'online_garden': return <OnlineGarden user={currentUser} onEarnEAC={handleEarnEAC} onSpendEAC={handleSpendEAC} onNavigate={navigate} notify={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} />;
-      case 'farm_os': return <FarmOS user={currentUser} onSpendEAC={handleSpendEAC} onEarnEAC={handleEarnEAC} onNavigate={navigate} onEmitSignal={emitSignal} initialCode={osInitialCode} clearInitialCode={() => setOsInitialCode(null)} initialSection={viewSection} />;
-      case 'media_ledger': return <MediaLedger user={currentUser} shards={mediaShards} onNavigate={navigate} />;
-      case 'sitemap': return <Sitemap nodes={REGISTRY_NODES} onNavigate={navigate} />;
-      case 'agro_lang_analyst': return <AgroLangAnalyst user={currentUser} onEmitSignal={emitSignal} onNavigate={navigate} />;
-      case 'vendor': return <VendorPortal user={currentUser} onSpendEAC={handleSpendEAC} orders={orders} onUpdateOrderStatus={(id, status, m) => { setOrders(o => o.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); }} vendorProducts={vendorProducts} onRegisterProduct={(p) => { setVendorProducts(prev => [p, ...prev]); saveCollectionItem('products', p); }} onNavigate={navigate} initialSection={viewSection} onUpdateProduct={(p) => { setVendorProducts(prev => prev.map(x => x.id === p.id ? p : x)); saveCollectionItem('products', p); }} onEmitSignal={emitSignal} liveProducts={liveProducts} onSaveLiveProduct={(p) => saveCollectionItem('live_products', p)} />;
-      case 'ingest': return <NetworkIngest user={currentUser} shards={mediaShards} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} initialSection={viewSection} onEmitSignal={emitSignal} />;
-      case 'info': return <InfoPortal user={currentUser} onNavigate={navigate} onAcceptAll={() => handlePerformPermanentAction('ACCEPT_ALL_AGREEMENTS', 50, 'AGREEMENT_QUORUM_SYNC')} onPermanentAction={handlePerformPermanentAction} />;
-      case 'settings': return <SettingsPortal user={currentUser} onUpdateUser={(u) => setUser(u)} onNavigate={navigate} />;
-      case 'temporal_video': return <TemporalVideo user={currentUser} onNavigate={navigate} />;
-      case 'robot': 
-        return (
-          <Suspense fallback={<LoadingHUD />}>
-            {viewSection === 'sync' ? (
-              <RobotSync 
-                user={currentUser} 
-                onSpendEAC={handleSpendEAC} 
-                onEarnEAC={handleEarnEAC} 
-                onNavigate={navigate} 
-              />
-            ) : (
-              <Robot 
-                user={currentUser} 
-                onSpendEAC={handleSpendEAC} 
-                onEarnEAC={handleEarnEAC} 
-                onNavigate={navigate} 
-                onEmitSignal={emitSignal}
-                initialSection={viewSection}
-              />
-            )}
-          </Suspense>
-        );
-      case 'impact_dashboard': return <ImpactDashboard user={currentUser} metrics={currentUser.metrics} />;
-      case 'traceability_map': return <TraceabilityMap />;
-      case 'telemetry_hub': return <TelemetryHub />;
-      case 'swarm_orchestrator': return <SwarmOrchestrator />;
-      case 'mrv_engine': return <MRVEngine />;
-      case 'reputation_dashboard': return <ReputationDashboard />;
-      case 'escrow_portal': return <EscrowPortal />;
-      case 'registry_handshake': return <RegistryHandshake user={currentUser} onUpdateUser={(u) => setUser(u)} onSpendEAC={handleSpendEAC} onNavigate={navigate} onEmitSignal={emitSignal} onExecuteToShell={(c) => { setOsInitialCode(c); navigate('farm_os'); }} />;
-      case 'hardware_registry': return <HardwareRegistry />;
-      case 'device_control': return <DeviceControl deviceId="test-device-1" />;
-      case 'educational_resources': return <EducationalResources user={currentUser} onNavigate={navigate} onUpdateUser={(u) => setUser(u)} onEmitSignal={emitSignal} />;
-      default: return <Dashboard user={currentUser} isGuest={isGuest} blockchain={blockchain} isMining={false} orders={orders} />;
-    }
+    
+    const routerProps = {
+      user: currentUser,
+      isGuest,
+      onNavigate: navigate,
+      onSpendEAC: handleSpendEAC,
+      onEarnEAC: handleEarnEAC,
+      dispatchSignal,
+      notify: dispatchSignal,
+      onEmitSignal: dispatchSignal,
+      orders,
+      setOrders,
+      projects,
+      setProjects,
+      vendorProducts,
+      setVendorProducts,
+      industrialUnits,
+      setIndustrialUnits,
+      liveProducts,
+      setLiveProducts,
+      contracts,
+      setContracts,
+      tasks,
+      setTasks,
+      blueprints,
+      setBlueprints,
+      proposals,
+      setProposals,
+      carbonCredits,
+      setCarbonCredits,
+      stewardPositions,
+      signals,
+      setSignals,
+      blockchain,
+      mempool,
+      isMining: false,
+      viewSection,
+      multimediaParams,
+      clearParams: () => setMultimediaParams(null),
+      onUpdateUser: (u: User) => setUser(u),
+      onLogout: handleLogout,
+      onPermanentAction: handlePerformPermanentAction,
+      onSaveProject: (p: any) => saveCollectionItem('projects', p),
+      onSaveProposal: (p: any) => saveCollectionItem('proposals', p),
+      onSaveVote: (v: any) => saveCollectionItem('votes', v),
+      onSaveProduct: (p: any) => saveCollectionItem('live_products', p),
+      onSaveLiveProduct: (p: any) => saveCollectionItem('live_products', p),
+      onSaveContract: (c: any) => saveCollectionItem('contracts', c),
+      onSaveTask: (t: any) => saveCollectionItem('tasks', t),
+      onSaveBlueprint: (b: any) => saveCollectionItem('blueprints', b),
+      onUpdateProposalStatus: (id: string, status: any) => { updateProposalStatus(id, status); saveCollectionItem('proposals', (proposals || []).find(p => p.id === id)); },
+      onUpdateOrderStatus: (id: string, status: any, m: any) => { setOrders(orders.map(x => x.id === id ? {...x, status, ...m} : x)); saveCollectionItem('orders', {id, status, ...m}); },
+      onExecuteToShell: (c: string) => { setOsInitialCode(c); navigate('farm_os'); },
+      initialCode: osInitialCode,
+      clearInitialCode: () => setOsInitialCode(null),
+      shards: mediaShards,
+      nodes: REGISTRY_NODES,
+      loadingFallback: <LoadingHUD />,
+      onOpenEvidence: (t: any) => { setActiveTaskForEvidence(t); setIsEvidenceOpen(true); },
+      applyForElection,
+      voteInElection,
+      elections,
+      blockchainContext: blockchain,
+      onHookHood: (id: string) => hookHood(id),
+      hoodConnections,
+    };
+
+    return getComponentForView(view, routerProps);
   };
 
   const unreadSignalsCount = useMemo(() => signals.filter(s => !s.read).length, [signals]);
