@@ -179,7 +179,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
       </div>
 
       {filteredProducts.length === 0 ? (
-        <div className="glass-card rounded-3xl p-12 flex flex-col items-center justify-center text-center border border-white/10 bg-black/40">
+        <div className="glass-card rounded-3xl p-12 flex flex-col items-center justify-center text-center border border-white/10 bg-black/40 flex-1">
           <ShoppingBag className="w-12 h-12 text-slate-600 mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">No products found</h3>
           <p className="text-slate-400 text-sm">Try adjusting your search or filters to find what you're looking for.</p>
@@ -193,7 +193,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
           )}
         </div>
       ) : (
-        <div className="h-[600px]">
+        <div className="flex-1 min-h-0">
           <Virtuoso
             style={{ height: '100%' }}
             data={filteredProducts}
@@ -250,7 +250,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
         </div>
       )}
 
-      <div className="glass-card rounded-3xl p-8 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border-emerald-500/20">
+      <div className="glass-card rounded-3xl p-8 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border-emerald-500/20 shrink-0">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-6">
             <div className="w-16 h-16 rounded-3xl bg-emerald-500 flex items-center justify-center shadow-2xl shadow-emerald-500/40 shrink-0">

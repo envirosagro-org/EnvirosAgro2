@@ -371,7 +371,7 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
       </div>
 
       {/* 2. Primary Navigation */}
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-6 relative z-20">
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-6 relative z-20 shrink-0">
         <SectionTabs 
           tabs={[
             { id: 'registry', label: 'Fleet Registry', icon: Database },
@@ -386,53 +386,53 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
         />
         <button 
           onClick={() => onNavigate('agrobot', 'sync')}
-          className="flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap text-rose-500 bg-rose-600/10 border border-rose-600/20 hover:bg-rose-600/20"
+          className="flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap text-rose-500 bg-rose-600/10 border border-rose-600/20 hover:bg-rose-600/20 shadow-xl"
         >
           <Globe size={18} /> AI Crawler Sync
         </button>
       </div>
 
-      <div className="min-h-[750px] relative z-10">
+      <div className="min-h-[750px] relative z-10 flex-1 flex flex-col min-h-0 h-full">
         
         {/* VIEW: FLEET REGISTRY */}
         {activeTab === 'registry' && (
-          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700 h-full w-full">
+             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10 h-full">
                 {fleet.map(bot => (
-                  <div key={bot.id} className={`glass-card p-10 rounded-[64px] border-2 transition-all group flex flex-col justify-between h-[580px] shadow-3xl relative overflow-hidden active:scale-[0.99] ${bot.status === 'SECURITY_LOCK' ? 'bg-rose-950/10 border-rose-500/40' : 'bg-black/40 border-white/5 hover:border-indigo-500/40'}`}>
+                  <div key={bot.id} className={`glass-card p-10 lg:p-14 rounded-[64px] border-2 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden active:scale-[0.99] min-h-[500px] h-full ${bot.status === 'SECURITY_LOCK' ? 'bg-rose-950/10 border-rose-500/40' : 'bg-black/40 border-white/5 hover:border-indigo-500/40'} flex-1`}>
                      <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><HenIcon size={300} /></div>
-                     <div className="flex justify-between items-start mb-8 relative z-10">
+                     <div className="flex justify-between items-start mb-8 relative z-10 shrink-0">
                         <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 shadow-inner group-hover:rotate-6 transition-all ${bot.status === 'SECURITY_LOCK' ? 'text-rose-500' : 'text-indigo-400'}`}>
                            <HenIcon size={32} />
                         </div>
                         <div className="text-right flex flex-col items-end gap-2">
-                           <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest shadow-xl ${
+                           <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase border tracking-[0.3em] shadow-xl ${
                              bot.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                              bot.status === 'MAINTENANCE' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                              'bg-rose-600/20 text-rose-500 border-rose-500/40 animate-pulse'
                            }`}>{bot.status}</span>
                         </div>
                      </div>
-                     <div className="space-y-4 relative z-10">
-                        <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-indigo-400 transition-colors drop-shadow-2xl">{bot.name}</h4>
-                        <p className="text-[10px] text-slate-700 font-mono font-black uppercase tracking-widest italic">{bot.id} // {bot.type}</p>
+                     <div className="space-y-4 relative z-10 flex-1">
+                        <h4 className="text-4xl lg:text-5xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-indigo-400 transition-colors drop-shadow-2xl">{bot.name}</h4>
+                        <p className="text-xs text-slate-500 font-mono font-black uppercase tracking-[0.4em] italic mt-2">{bot.id} // {bot.type}</p>
                      </div>
-                     <div className="space-y-6 pt-10 border-t border-white/5 relative z-10">
-                        <div className="space-y-3">
-                           <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600">
+                     <div className="space-y-6 pt-10 border-t border-white/5 relative z-10 shrink-0">
+                        <div className="space-y-4">
+                           <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-600 tracking-widest">
                               <span>Computational Load</span>
-                              <span className="text-indigo-400 font-mono">{bot.load}%</span>
+                              <span className="text-indigo-400 font-mono text-sm">{bot.load}%</span>
                            </div>
-                           <div className="h-1 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
-                              <div className={`h-full bg-indigo-500 transition-all duration-1000`} style={{ width: `${bot.load}%` }}></div>
+                           <div className="h-2 bg-white/5 rounded-full overflow-hidden p-0.5 shadow-inner">
+                              <div className={`h-full bg-indigo-500 transition-all duration-1000 shadow-[0_0_20px_#6366f1]`} style={{ width: `${bot.load}%` }}></div>
                            </div>
                         </div>
                      </div>
-                     <div className="mt-8 pt-8 border-t border-white/5 flex gap-4 relative z-10">
-                        <button onClick={() => toggleBotLock(bot.id)} className={`flex-1 py-5 rounded-[24px] text-[9px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 border-2 ${bot.status === 'SECURITY_LOCK' ? 'bg-indigo-600 text-white border-white/20' : 'bg-rose-950/20 text-rose-500 border-rose-500/20 hover:bg-rose-600 hover:text-white'}`}>
+                     <div className="mt-10 pt-10 border-t border-white/5 flex gap-6 relative z-10 shrink-0">
+                        <button onClick={() => toggleBotLock(bot.id)} className={`flex-1 py-6 rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-xl active:scale-95 border-4 ${bot.status === 'SECURITY_LOCK' ? 'bg-indigo-600 text-white border-indigo-500/50 hover:bg-indigo-500' : 'bg-rose-950/20 text-rose-500 border-rose-500/20 hover:bg-rose-600 hover:text-white'}`}>
                            {bot.status === 'SECURITY_LOCK' ? 'RELEASE_SHARD' : 'ISOLATE_NODE'}
                         </button>
-                        <button onClick={() => { setSelectedBotId(bot.id); setActiveTab('radar'); }} className="p-5 bg-white/5 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all"><Target size={20}/></button>
+                        <button onClick={() => { setSelectedBotId(bot.id); setActiveTab('radar'); }} className="p-6 bg-white/5 border-2 border-white/10 rounded-[32px] text-slate-500 hover:text-white hover:border-indigo-500/40 transition-all shadow-xl hover:scale-105 active:scale-95"><Target size={24}/></button>
                      </div>
                   </div>
                 ))}
@@ -442,235 +442,224 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
 
         {/* VIEW: TACTICAL RADAR */}
         {activeTab === 'radar' && (
-           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-700 h-full">
-              <div className="lg:col-span-8 glass-card rounded-[80px] border-2 border-white/5 bg-[#050706] relative overflow-hidden flex items-center justify-center min-h-[700px] shadow-3xl">
+           <div className="space-y-12 animate-in zoom-in duration-700 h-full w-full">
+              <div className="glass-card rounded-[80px] border-2 border-white/5 bg-[#050706] relative overflow-hidden flex flex-col xl:flex-row items-stretch justify-between min-h-[800px] shadow-3xl p-12 lg:p-20 flex-1">
                  <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none">
                     <div className="w-full h-full bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.2)_0%,_transparent_70%)]"></div>
                     <div className="w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
                  </div>
 
-                 {/* Tactical Radar SVG */}
-                 <div className="relative w-[500px] h-[500px] z-10">
+                 {/* Tactical Radar Visualization */}
+                 <div className="relative w-full max-w-[800px] flex-1 aspect-square z-10 flex items-center justify-center mx-auto xl:mx-0">
                     <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-full"></div>
-                    <div className="absolute inset-[100px] border-2 border-indigo-500/10 rounded-full"></div>
-                    <div className="absolute inset-[200px] border-2 border-indigo-500/5 rounded-full"></div>
-                    <div className="absolute top-1/2 left-1/2 w-1/2 h-[2px] bg-gradient-to-r from-indigo-500/40 to-transparent origin-left animate-spin-slow"></div>
+                    <div className="absolute inset-[15%] border-2 border-indigo-500/10 rounded-full"></div>
+                    <div className="absolute inset-[30%] border-2 border-indigo-500/5 rounded-full"></div>
+                    <div className="absolute top-1/2 left-1/2 w-1/2 h-[6px] bg-gradient-to-r from-indigo-500 to-transparent origin-left animate-spin-slow shadow-[0_0_30px_rgba(99,102,241,0.5)]"></div>
                     
-                    {fleet.map((bot, i) => (
+                    {fleet.map((bot) => (
                        <div 
                          key={bot.id} 
-                         /* Corrected setSelectedNodeId to setSelectedBotId */
                          onClick={() => setSelectedBotId(bot.id)}
-                         className={`absolute w-8 h-8 -ml-4 -mt-4 cursor-pointer transition-all duration-1000 ${selectedBotId === bot.id ? 'scale-150 z-50' : 'hover:scale-125 z-40'}`}
+                         className={`absolute w-16 h-16 -ml-8 -mt-8 cursor-pointer transition-all duration-700 ${selectedBotId === bot.id ? 'scale-150 z-50' : 'hover:scale-125 z-40'}`}
                          style={{ left: `${bot.pos.x}%`, top: `${bot.pos.y}%` }}
                        >
-                          <div className={`w-full h-full rounded-full border-2 border-white shadow-2xl flex items-center justify-center transition-all ${bot.status === 'SECURITY_LOCK' ? 'bg-rose-600' : selectedBotId === bot.id ? 'bg-indigo-600' : 'bg-emerald-600'}`}>
-                             <HenIcon size={14} className="text-white" />
+                          <div className={`w-full h-full rounded-full border-4 border-white shadow-2xl flex items-center justify-center transition-all ${bot.status === 'SECURITY_LOCK' ? 'bg-rose-600' : selectedBotId === bot.id ? 'bg-indigo-600' : 'bg-emerald-600'}`}>
+                             <HenIcon size={28} className="text-white" />
                           </div>
-                          {selectedBotId === bot.id && <div className="absolute inset-[-10px] rounded-full border-2 border-dashed border-indigo-400 animate-spin-slow"></div>}
+                          {selectedBotId === bot.id && <div className="absolute inset-[-20px] rounded-full border-4 border-dashed border-indigo-400 animate-spin-slow"></div>}
                        </div>
                     ))}
                     
-                    <div className="absolute inset-0 flex items-center justify-center">
-                       <div className="w-6 h-6 bg-white rounded-full shadow-[0_0_40px_#fff] z-10 animate-pulse border-4 border-white/20"></div>
-                       <p className="absolute mt-14 text-[8px] font-black text-white uppercase tracking-widest opacity-40">Steward_Node_#882A</p>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                       <div className="w-20 h-20 bg-white rounded-full shadow-[0_0_100px_#fff] z-10 animate-pulse border-[12px] border-white/20"></div>
+                       <p className="absolute mt-32 text-[12px] font-black text-white uppercase tracking-[0.6em] opacity-40 italic">EA_CORE_#882A</p>
+                    </div>
+                    
+                    <div className="absolute top-0 left-0 p-8 glass-card rounded-[32px] border border-white/10 bg-black/60 backdrop-blur-xl animate-float">
+                       <div className="flex items-center gap-4 mb-3">
+                          <Radio className="text-emerald-400 animate-pulse" size={24} />
+                          <span className="text-sm font-black text-white uppercase tracking-widest">Live Radar Ingest</span>
+                       </div>
+                       <p className="text-[11px] font-mono text-slate-500 uppercase tracking-widest">Sector_4 Range: 1.4km</p>
                     </div>
                  </div>
 
-                 <div className="absolute top-12 left-12 p-6 glass-card rounded-3xl border border-white/10 bg-black/80 backdrop-blur-xl">
-                    <div className="flex items-center gap-4 mb-4">
-                       <Radio className="text-emerald-400 animate-pulse" size={16} />
-                       <span className="text-[10px] font-black text-white uppercase tracking-widest">Live Radar Ingest</span>
-                    </div>
-                    <p className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">Coverage: 1.4km Radius</p>
+                 <div className="w-full xl:w-[600px] relative z-20 mt-16 xl:mt-0 flex flex-col justify-center border-t-2 xl:border-t-0 xl:border-l-2 border-white/5 pt-16 xl:pt-0 xl:pl-16">
+                    {selectedBot ? (
+                       <div className="glass-card p-12 lg:p-16 rounded-[80px] border-l-[32px] border-l-indigo-600 border border-white/10 bg-black/80 space-y-12 shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-in slide-in-from-right-10 duration-1000 backdrop-blur-3xl h-full flex flex-col justify-between">
+                          <div className="space-y-12">
+                             <div className="flex items-center gap-8 border-b border-white/5 pb-10">
+                                <div className="w-32 h-32 rounded-[48px] bg-indigo-600 flex items-center justify-center text-white shadow-3xl border-4 border-white/20">
+                                   <HenIcon size={64} />
+                                </div>
+                                <div>
+                                   <h4 className="text-4xl lg:text-5xl font-black text-white uppercase italic tracking-tighter m-0">{selectedBot.name}</h4>
+                                   <p className="text-sm font-mono font-black text-indigo-400 tracking-[0.4em] mt-3 uppercase opacity-60 m-0">{selectedBot.id}</p>
+                                </div>
+                             </div>
+
+                             <div className="grid grid-cols-2 gap-8">
+                                 <div className="space-y-4 p-10 bg-white/5 rounded-[48px] border border-white/10 text-center shadow-inner">
+                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest m-0">Resonance</p>
+                                    <p className="text-5xl font-black text-white italic tracking-tighter m-0">99.2<span className="text-xl text-slate-400">%</span></p>
+                                 </div>
+                                 <div className="space-y-4 p-10 bg-white/5 rounded-[48px] border border-white/10 text-center shadow-inner">
+                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest m-0">Threat_Load</p>
+                                    <p className={`text-5xl font-black italic tracking-tighter m-0 ${selectedBot.threatLevel > 3 ? 'text-rose-500' : 'text-emerald-400'}`}>{selectedBot.threatLevel}<span className="text-xl opacity-60">%</span></p>
+                                 </div>
+                             </div>
+
+                             <div className="p-12 bg-black/60 rounded-[48px] border border-white/5 space-y-8 shadow-inner">
+                                <div className="flex justify-between items-center"><span className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em] m-0">Live Context</span><Activity size={24} className="text-indigo-400 animate-pulse" /></div>
+                                <p className="text-2xl text-slate-300 italic leading-relaxed font-medium m-0">"Executing Sector 4 moisture sharding. Handshake synchronized."</p>
+                             </div>
+                          </div>
+
+                          <div className="space-y-6 pt-10 mt-auto">
+                             <button onClick={() => toggleBotLock(selectedBot.id)} className={`w-full py-12 rounded-full text-sm font-black uppercase tracking-[0.5em] transition-all shadow-3xl active:scale-95 border-4 ${selectedBot.status === 'SECURITY_LOCK' ? 'bg-indigo-600 text-white border-white/20 hover:bg-indigo-500' : 'bg-rose-950/20 text-rose-500 border-rose-500/20 hover:bg-rose-600 hover:text-white'}`}>
+                                {selectedBot.status === 'SECURITY_LOCK' ? 'RELEASE_SHARD' : 'ISOLATE_NODE'}
+                             </button>
+                             <button onClick={() => setSelectedBotId(null)} className="w-full py-6 text-xs font-black text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Deselect_Node</button>
+                          </div>
+                       </div>
+                    ) : (
+                       <div className="p-24 text-center space-y-12 opacity-30 border-4 border-dashed border-white/10 rounded-[80px] bg-white/[0.02] flex flex-col items-center justify-center h-full">
+                          <Radar size={200} className="mx-auto text-slate-600 animate-pulse" />
+                          <p className="text-6xl font-black text-white uppercase italic tracking-[0.6em]">SCAN_PENDING</p>
+                          <p className="text-lg font-bold text-slate-500 uppercase tracking-widest max-w-[400px] mx-auto leading-loose">Select a node on the tactical map to view real-time shard details and telemetry.</p>
+                       </div>
+                    )}
                  </div>
-              </div>
-
-              <div className="lg:col-span-4 space-y-8">
-                 {selectedBot ? (
-                    <div className="glass-card p-10 rounded-[64px] border-2 border-indigo-500/20 bg-indigo-950/10 h-full flex flex-col justify-between shadow-3xl animate-in slide-in-from-right-4 duration-700">
-                       <div className="space-y-10">
-                          <div className="flex items-center gap-6 border-b border-white/5 pb-8">
-                             <div className="w-16 h-16 rounded-[24px] bg-indigo-600 flex items-center justify-center text-white shadow-xl">
-                                <HenIcon size={32} />
-                             </div>
-                             <div>
-                                <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">{selectedBot.name}</h4>
-                                <p className="text-[10px] text-indigo-400/60 font-mono tracking-widest mt-2 uppercase">{selectedBot.id}</p>
-                             </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                             <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 text-center">
-                                <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Resonance</p>
-                                <p className="text-2xl font-mono font-black text-white">99.2%</p>
-                             </div>
-                             <div className={`p-6 bg-black/60 rounded-[32px] border border-white/5 text-center`}>
-                                <p className="text-[9px] text-slate-700 font-black uppercase mb-1">Threat</p>
-                                <p className={`text-2xl font-mono font-black ${selectedBot.threatLevel > 3 ? 'text-rose-500' : 'text-emerald-400'}`}>{selectedBot.threatLevel}%</p>
-                             </div>
-                          </div>
-
-                          <div className="p-8 bg-black/80 rounded-[40px] border border-white/5 space-y-6 shadow-inner">
-                             <div className="flex justify-between items-center px-2">
-                                <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Shard Context</h5>
-                                <BadgeCheck size={14} className="text-emerald-400" />
-                             </div>
-                             <p className="text-xs text-slate-400 italic leading-relaxed">
-                                "Executing Sector 4 moisture sharding. Registry handshake synchronized with Githaka mesh node."
-                             </p>
-                          </div>
-                       </div>
-                       
-                       <div className="pt-8 border-t border-white/5 space-y-4">
-                          <button onClick={() => toggleBotLock(selectedBot.id)} className="w-full py-6 bg-rose-600 hover:bg-rose-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl active:scale-95 transition-all">
-                             {selectedBot.status === 'SECURITY_LOCK' ? 'RELEASE_NODE' : 'EMERGENCY_ISOLATE'}
-                          </button>
-                          <button onClick={() => setSelectedBotId(null)} className="w-full py-4 text-[10px] font-black text-slate-700 uppercase tracking-widest hover:text-white">Deselect Node</button>
-                       </div>
-                    </div>
-                 ) : (
-                    <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/20 h-full flex flex-col items-center justify-center text-center space-y-8 opacity-20 group">
-                       <Radar size={100} className="text-slate-600 group-hover:text-indigo-400 transition-colors duration-1000" />
-                       <p className="text-2xl font-black uppercase tracking-[0.4em] text-white italic">RADAR_IDLE</p>
-                       <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">Select a node on the tactical map to view shard details</p>
-                    </div>
-                 )}
               </div>
            </div>
         )}
 
         {/* VIEW: MISSION FORGE */}
         {activeTab === 'forge' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-700">
-             <div className="lg:col-span-5 space-y-8">
-                <div className="glass-card p-10 md:p-14 rounded-[72px] border-2 border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden shadow-3xl group">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-700 w-full h-full">
+             <div className="lg:col-span-5 flex flex-col min-h-0 h-full">
+                <div className="glass-card p-10 md:p-14 rounded-[72px] border-2 border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden shadow-3xl group flex-1">
                    <div className="absolute top-0 right-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><Leaf size={400} className="text-indigo-400" /></div>
                    
-                   <div className="relative z-10 space-y-10">
-                      <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+                   <div className="relative z-10 space-y-10 flex flex-col h-full">
+                      <div className="flex items-center gap-6 border-b border-white/5 pb-8 shrink-0">
                          <div className="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-3xl group-hover:rotate-12 transition-transform duration-700">
                             <Wand2 size={40} className="animate-pulse" />
                          </div>
                          <div>
-                            <h3 className="text-3xl font-black text-white uppercase italic m-0">Mission <span className="text-indigo-400">Forge</span></h3>
+                            <h3 className="text-4xl font-black text-white uppercase italic m-0">Mission<br/><span className="text-indigo-400">Forge</span></h3>
                             <p className="text-indigo-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ORACLE_SYNTHESIS_v4</p>
                          </div>
                       </div>
 
-                      {activeMission && (
-                        <div className="p-8 bg-rose-600/10 border-2 border-rose-500/30 rounded-[48px] space-y-6 animate-in slide-in-from-top-4">
-                           <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg animate-pulse">
-                                    <Target size={24} />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Active Mission</p>
-                                    <h5 className="text-xl font-black text-white uppercase italic">{activeMission.title}</h5>
-                                 </div>
+                      <div className="flex-1 overflow-y-auto pr-6 -mr-6 space-y-10">
+                        {activeMission && (
+                          <div className="p-8 bg-rose-600/10 border-2 border-rose-500/30 rounded-[48px] space-y-6 animate-in slide-in-from-top-4">
+                             <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                   <div className="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg animate-pulse">
+                                      <Target size={24} />
+                                   </div>
+                                   <div>
+                                      <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Active Mission</p>
+                                      <h5 className="text-xl font-black text-white uppercase italic">{activeMission.title}</h5>
+                                   </div>
+                                </div>
+                                <button 
+                                  onClick={abortMission}
+                                  className="p-4 bg-rose-600 hover:bg-rose-500 rounded-2xl text-white transition-all shadow-xl active:scale-95"
+                                >
+                                   <ShieldAlert size={20} />
+                                </button>
+                             </div>
+                             <p className="text-xs text-slate-400 italic leading-relaxed px-2">
+                                "{activeMission.objective}"
+                             </p>
+                             <div className="flex items-center gap-4 pt-2">
+                                <div className="px-4 py-2 bg-black/40 rounded-full border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                   Units: {activeMission.requiredUnits}
+                                </div>
+                                <div className="px-4 py-2 bg-black/40 rounded-full border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                   Plot: {activeMission.plotId || 'Global'}
+                                </div>
+                             </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-8">
+                           <div className="space-y-4">
+                              <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-4">Target GIS Plot (Optional)</label>
+                              <div className="relative">
+                                <select
+                                  value={selectedPlotId}
+                                  onChange={e => setSelectedPlotId(e.target.value)}
+                                  className="w-full bg-black/80 border-2 border-white/10 rounded-full px-8 py-5 text-white text-sm font-medium focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-inner appearance-none cursor-pointer hover:border-white/20"
+                                >
+                                  <option value="">-- Select Target Coordinates --</option>
+                                  {plots.map(plot => (
+                                    <option key={plot.id} value={plot.id}>{plot.name} ({plot.id})</option>
+                                  ))}
+                                </select>
+                                <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none">
+                                  <ChevronRight size={20} className="text-slate-500 rotate-90" />
+                                </div>
                               </div>
-                              <button 
-                                onClick={abortMission}
-                                className="p-4 bg-rose-600 hover:bg-rose-500 rounded-2xl text-white transition-all shadow-xl active:scale-95"
-                              >
-                                 <ShieldAlert size={20} />
-                              </button>
                            </div>
-                           <p className="text-xs text-slate-400 italic leading-relaxed px-2">
-                              "{activeMission.objective}"
-                           </p>
-                           <div className="flex items-center gap-4 pt-2">
-                              <div className="px-4 py-2 bg-black/40 rounded-full border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                 Units: {activeMission.requiredUnits}
-                              </div>
-                              <div className="px-4 py-2 bg-black/40 rounded-full border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                 Plot: {activeMission.plotId || 'Global'}
-                              </div>
+                           <div className="space-y-4">
+                              <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-4">Mission Objective</label>
+                              <textarea 
+                                 value={missionObjective}
+                                 onChange={e => setMissionObjective(e.target.value)}
+                                 placeholder="Input command sequence..."
+                                 className="w-full bg-black/80 border-2 border-white/10 rounded-[48px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-indigo-500/5 transition-all outline-none h-48 resize-none shadow-inner placeholder:text-stone-800"
+                              />
                            </div>
                         </div>
-                      )}
 
-                      <div className="space-y-8">
-                         <div className="space-y-4">
-                            <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-4">Target GIS Plot (Optional)</label>
-                            <select
-                              value={selectedPlotId}
-                              onChange={e => setSelectedPlotId(e.target.value)}
-                              className="w-full bg-black/80 border-2 border-white/10 rounded-full px-8 py-4 text-white text-sm font-medium focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-inner appearance-none"
-                            >
-                              <option value="">-- Select a GIS Plot for Precision Targeting --</option>
-                              {plots.map(plot => (
-                                <option key={plot.id} value={plot.id}>{plot.name} ({plot.id})</option>
-                              ))}
-                            </select>
-                         </div>
-                         <div className="space-y-4">
-                            <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-4">Mission Objective</label>
-                            <textarea 
-                               value={missionObjective}
-                               onChange={e => setMissionObjective(e.target.value)}
-                               placeholder="Input objective (e.g. Optimize Sector 7 swarm for moisture sharding)..."
-                               className="w-full bg-black/80 border-2 border-white/10 rounded-[40px] p-10 text-white text-lg font-medium italic focus:ring-8 focus:ring-indigo-500/5 transition-all outline-none h-48 resize-none shadow-inner placeholder:text-stone-900"
-                            />
-                         </div>
-                         <div className="flex flex-col gap-4">
-                            <button 
-                              onClick={handleForgeMission}
-                              disabled={isForging || !missionObjective.trim()}
-                              className="w-full py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[16px] ring-white/5 disabled:opacity-30"
-                            >
-                               {isForging ? <Loader2 size={32} className="animate-spin mx-auto" /> : <Binary size={32} className="mx-auto" />}
-                               <p className="mt-4">{isForging ? 'SYNTHESIZING_MISSION...' : 'FORGE MISSION SHARD'}</p>
-                            </button>
-                            {selectedPlotId && (
-                              <button 
-                                onClick={handleSuggestShards}
-                                disabled={isSuggestingShards}
-                                className="w-full py-10 bg-indigo-600/20 border-4 border-indigo-500/30 rounded-full text-indigo-400 font-black text-sm uppercase tracking-[0.4em] hover:bg-indigo-600/40 transition-all disabled:opacity-30"
-                              >
-                                {isSuggestingShards ? <Loader2 size={32} className="animate-spin mx-auto" /> : <Radar size={32} className="mx-auto text-indigo-400" />}
-                                <p className="mt-4">Suggest Zonation Shards</p>
-                              </button>
-                            )}
-                         </div>
-
-                         {suggestedShards.length > 0 && (
-                            <div className="space-y-4 animate-in slide-in-from-bottom-4 pt-8">
-                              <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Suggested Autonomous Shards</h5>
-                              <div className="grid grid-cols-1 gap-4">
-                                {suggestedShards.map((shard, idx) => (
-                                  <div key={idx} className="p-6 bg-indigo-500/10 border border-indigo-500/30 rounded-[32px] flex items-center justify-between group">
-                                    <div>
-                                      <p className="text-white font-black uppercase italic">{shard.name}</p>
-                                      <p className="text-[10px] text-indigo-400/60 mt-1">{shard.reason}</p>
-                                    </div>
-                                    <button 
-                                      onClick={async () => {
-                                        const newPlot: Plot = {
-                                          stewardId: user.esin,
-                                          name: shard.name,
-                                          geometry: shard.geometry
-                                        };
-                                        await spatialService.savePlot(newPlot);
-                                        toast.success(`Shard ${shard.name} anchored to registry.`);
-                                        setSuggestedShards(prev => prev.filter((_, i) => i !== idx));
-                                      }}
-                                      className="p-4 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-500 transition-all"
-                                    >
-                                      <PlusCircle size={20} />
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                        {suggestedShards.length > 0 && (
+                           <div className="space-y-4 animate-in slide-in-from-bottom-4 pt-4 shrink-0">
+                             <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4">Suggested Autonomous Shards</h5>
+                             <div className="grid grid-cols-1 gap-4">
+                               {suggestedShards.map((shard, idx) => (
+                                 <div key={idx} className="p-6 bg-indigo-500/10 border border-indigo-500/30 rounded-[32px] flex items-center justify-between group cursor-pointer hover:bg-indigo-500/20 transition-colors" onClick={() => setMissionObjective(prev => prev ? prev + '\n' + shard.name : shard.name)}>
+                                   <div>
+                                     <p className="text-white font-black uppercase italic">{shard.name}</p>
+                                     <p className="text-[10px] text-indigo-400/60 mt-1">{shard.reason}</p>
+                                   </div>
+                                   <PlusCircle size={20} className="text-indigo-400 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                 </div>
+                               ))}
+                             </div>
+                           </div>
+                        )}
                       </div>
-                   </div>
-                </div>
-             </div>
 
-             <div className="lg:col-span-7">
+                       <div className="flex flex-col gap-4 mt-auto pt-8 shrink-0 border-t border-white/5">
+                        <button 
+                          onClick={handleForgeMission}
+                          disabled={isForging || !missionObjective.trim()}
+                          className="w-full py-10 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.6em] shadow-[0_40px_100px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all outline-none disabled:opacity-30 disabled:hover:scale-100 flex flex-col items-center justify-center gap-3 relative overflow-hidden group/btn shrink-0"
+                        >
+                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                           {isForging ? <Loader2 size={32} className="animate-spin relative z-10" /> : <Binary size={32} className="relative z-10" />}
+                           <span className="relative z-10">{isForging ? 'SYNTHESIZING_MISSION...' : 'FORGE MISSION SHARD'}</span>
+                        </button>
+                        {selectedPlotId && (
+                          <button 
+                            onClick={handleSuggestShards}
+                            disabled={isSuggestingShards}
+                            className="w-full py-6 bg-white/5 border-2 border-white/10 rounded-[32px] text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all outline-none disabled:opacity-30 shrink-0 flex items-center justify-center gap-2"
+                          >
+                            {isSuggestingShards ? <Loader2 size={16} className="animate-spin" /> : <Radar size={16} />}
+                            {isSuggestingShards ? 'SCANNING_CONTEXT...' : 'ORACLE_ZONATION_SCAN'}
+                          </button>
+                        )}
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+               <div className="lg:col-span-7 flex flex-col min-h-0 h-full">
                 <div className="glass-card rounded-[80px] min-h-[750px] border-2 border-white/5 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
                    <div className="p-10 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 px-14 relative z-20">
                       <div className="flex items-center gap-6 text-indigo-400">
@@ -756,8 +745,8 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
 
         {/* VIEW: EXECUTION SHELL (TERMINAL) */}
         {activeTab === 'terminal' && (
-           <div className="space-y-12 animate-in slide-in-from-right-4 duration-700">
-              <div className="glass-card rounded-[80px] min-h-[750px] border-2 border-white/5 bg-[#020403] flex flex-col relative overflow-hidden shadow-3xl">
+           <div className="space-y-12 animate-in slide-in-from-right-4 duration-700 h-full w-full flex flex-col min-h-0">
+              <div className="glass-card rounded-[80px] min-h-[850px] border-2 border-white/5 bg-[#020403] flex flex-col relative overflow-hidden shadow-3xl h-full flex-1">
                  <div className="p-12 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0 px-16 relative z-20">
                     <div className="flex items-center gap-10">
                        <div className="w-20 h-20 rounded-[32px] bg-indigo-600 flex items-center justify-center text-white shadow-xl relative overflow-hidden group/ico">
@@ -777,13 +766,13 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
                     </div>
                  </div>
 
-                 <div className="flex-1 overflow-y-auto p-12 md:p-16 space-y-8 font-mono text-lg text-slate-500 italic bg-black/40 relative z-10 custom-scrollbar">
+                 <div className="flex-1 overflow-y-auto p-12 md:p-16 space-y-8 font-mono text-lg text-slate-500 italic bg-black/40 relative z-10 custom-scrollbar h-full min-h-[500px]">
                     <div className="space-y-6">
                        <p className="text-emerald-400 font-black uppercase tracking-widest">{" >> Root Swarm Initialization Sequence [OK]"}</p>
                        <p className="text-indigo-400">{" >> Ingesting current AgroLang mission shards..."}</p>
                        <p className="text-slate-800">{" >> ZK-Handshake verified for all 42 local nodes."}</p>
                        <p className="text-white">{" >> Deploying pathfinding swarms to Sector 4 geofence."}</p>
-                       {packetLogs.slice(0, 15).map((pkt, i) => (
+                       {packetLogs.slice(0, 30).map((pkt, i) => (
                           <div key={i} className="flex gap-10 p-4 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group animate-in slide-in-from-left-2">
                              <span className="text-slate-800 w-24 shrink-0 font-bold">[{pkt.time}]</span>
                              <span className="text-indigo-500 w-32 shrink-0 truncate">@{pkt.src}</span>
@@ -793,7 +782,7 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
                     </div>
                  </div>
 
-                 <div className="p-12 border-t border-white/5 bg-black/95 relative z-20">
+                 <div className="p-12 border-t border-white/5 bg-black/95 relative z-20 shrink-0">
                     <div className="relative group max-w-6xl mx-auto">
                        <input 
                          type="text" 
@@ -812,18 +801,17 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
         )}
       </div>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{__html: `
         .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
-      `}</style>
+      `}} />
     </div>
   );
 };

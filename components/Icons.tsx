@@ -1,5 +1,27 @@
 import React from 'react';
 
+/**
+ * Resilient Icon Wrapper
+ * Applies EnvirosAgro transformation equations to component iconography.
+ */
+export const AgroResilienceIcon: React.FC<{ 
+  children: React.ReactNode; 
+  resilience?: number;
+  className?: string;
+}> = ({ children, resilience = 1.0, className = "" }) => (
+  <div 
+    className={`relative group inline-block ${className}`}
+    style={{ 
+      filter: `drop-shadow(0 0 ${2 * resilience}px rgba(74, 124, 89, 0.4))` 
+    }}
+  >
+    {children}
+    {/* Symbiotic Shard Accents */}
+    <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
+    <div className="absolute -bottom-0.5 -left-1 w-1 h-1 bg-indigo-500 rotate-45 opacity-0 group-hover:opacity-40 transition-opacity" />
+  </div>
+);
+
 export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => (
   <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className}`}>
     <path d="M100 180C100 180 95 160 100 145" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />

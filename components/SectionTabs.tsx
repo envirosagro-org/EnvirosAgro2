@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AGRO_EQUATIONS } from '../services/agroEquations';
 
 export interface TabItem {
   id: string | any;
@@ -27,6 +28,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
   sticky = false
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const symbioticScale = AGRO_EQUATIONS.getSymbioticScale(window.innerWidth, window.innerHeight);
 
   useEffect(() => {
     const activeEl = scrollRef.current?.querySelector(`[data-tab-id="${activeTab}"]`);
@@ -67,18 +69,19 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
       <div 
         ref={scrollRef}
         className="overflow-x-auto no-scrollbar snap-x"
+        style={{ scale: symbioticScale > 1.2 ? 1.05 : 1 }}
       >
-        <div className="flex gap-4 p-2 w-full lg:w-fit min-w-max mx-auto lg:mx-0">
+        <div className="flex gap-2 p-1.5 bg-black/20 border border-white/5 rounded-[32px] w-full mx-auto backdrop-blur-md">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <motion.button
                 key={tab.id}
                 data-tab-id={tab.id}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => onTabChange(tab.id)}
                 className={`
-                  flex items-center gap-4 px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap snap-center
+                  flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap snap-center
                   ${getTabStyles(isActive)}
                 `}
               >

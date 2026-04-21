@@ -32,7 +32,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
-import { SycamoreLogo, HenIcon } from './components/Icons';
+import { SycamoreLogo, HenIcon, AgroResilienceIcon } from './components/Icons';
+import { AGRO_EQUATIONS } from './services/agroEquations';
 import { useUiStore } from './store/uiStore';
 import { useUserStore } from './store/userStore';
 import { useDataStore } from './store/dataStore';
@@ -765,6 +766,29 @@ import { useRegistryStore } from './store/registryStore';
 const App: React.FC = () => {
   const user = useUserStore(state => state.user);
   const setUser = useUserStore(state => state.setUser);
+  const [telemetryTheme, setTelemetryTheme] = useState('theme-day-optimal');
+
+  // Telemetry-Driven UX: Dynamic Theme Shifting
+  useEffect(() => {
+    const checkTelemetry = () => {
+      const hour = new Date().getHours();
+      // Simulate soil stress/density from iotService or random for demo
+      const simulatedStress = Math.random(); 
+      
+      let theme = 'theme-day-optimal';
+      if (hour > 18 || hour < 6) {
+        theme = 'theme-night-calm';
+      } else if (simulatedStress > 0.85) {
+        theme = 'theme-remediation-amber'; // Trigger health remediation theme
+      }
+      
+      setTelemetryTheme(theme);
+    };
+
+    checkTelemetry();
+    const interval = setInterval(checkTelemetry, 300000); // Sync every 5 mins
+    return () => clearInterval(interval);
+  }, []);
   const view = useUiStore(state => state.view);
   const setView = useUiStore(state => state.setView);
   const viewSection = useUiStore(state => state.viewSection);
@@ -1310,7 +1334,7 @@ const App: React.FC = () => {
         </nav>
       </div>
 
-      <main ref={mainContentRef} onScroll={(e) => handleScroll(e.currentTarget)} className={`transition-all duration-500 pt-14 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'lg:pl-80 pr-4 lg:pr-10' : 'lg:pl-24 pr-4 lg:pr-10'} pl-4`}>
+      <main ref={mainContentRef} onScroll={(e) => handleScroll(e.currentTarget)} className={`transition-all duration-500 pt-14 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'lg:pl-80 pr-4 lg:pr-10' : 'lg:pl-24 pr-4 lg:pr-10'} pl-4 ${telemetryTheme}`}>
         <div className="fixed top-8 left-0 right-0 z-[200] h-0.5 pointer-events-none">
           <div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}></div>
         </div>
@@ -1452,7 +1476,13 @@ const App: React.FC = () => {
            </div>
         </header>
 
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <div 
+          className="animate-in fade-in slide-in-from-bottom-4 duration-500 relative flex-1 min-h-0 flex flex-col"
+          style={{ 
+            scale: AGRO_EQUATIONS.getSymbioticScale(window.innerWidth, window.innerHeight),
+            transformOrigin: 'top center' 
+          }}
+        >
           <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 text-emerald-500 animate-spin" /></div>}>
             {renderView()}
           </Suspense>
@@ -1467,7 +1497,10 @@ const App: React.FC = () => {
               <div className="flex p-1 glass-card rounded-[24px] bg-black/40 border border-white/5 shadow-3xl">
                  {[ { id: 'dashboard', label: 'Command', icon: LayoutGrid }, { id: 'mesh_protocol', label: 'Mesh', icon: NetworkIcon }, { id: 'economy', label: 'Market', icon: Globe }, { id: 'wallet', label: 'Treasury', icon: Coins }, { id: 'intelligence', label: 'Science', icon: Microscope }, { id: 'sitemap', label: 'Matrix', icon: MapIcon } ].map(shard => (
                    <NavigationLink key={shard.id} path={shard.id} className={`p-3 rounded-xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-600 hover:text-white hover:bg-white/5'}`} title={shard.label}>
-                      <shard.icon size={16} /><div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[7px] font-black uppercase tracking-widest rounded border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">{shard.label}</div>
+                      <AgroResilienceIcon resilience={view === shard.id ? 1.5 : 0.4}>
+                         <shard.icon size={16} />
+                      </AgroResilienceIcon>
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[7px] font-black uppercase tracking-widest rounded border border-white/10 opacity-0 group-hover/shard:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">{shard.label}</div>
                    </NavigationLink>
                  ))}
               </div>
