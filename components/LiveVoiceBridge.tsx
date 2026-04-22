@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Mic, MicOff, X, Loader2, ShieldCheck, Activity } from 'lucide-react';
 import { HenIcon } from './Icons';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
-import { encode, decode } from '../services/agroLangService';
+import { LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
+import { encode, decode, connectLiveAudioEA } from '../services/agroLangService';
 import { SEO } from './SEO';
 
 interface LiveVoiceBridgeProps {
@@ -56,8 +56,6 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
   const startSession = async () => {
     setIsConnecting(true);
     try {
-      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-      const ai = new GoogleGenAI({ apiKey });
       
       // Safeguard against non-constructor or missing AudioContext
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -73,8 +71,7 @@ const LiveVoiceBridge: React.FC<LiveVoiceBridgeProps> = ({ isOpen, isGuest, onCl
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
-      const sessionPromise = ai.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+      const sessionPromise = connectLiveAudioEA({
         callbacks: {
           onopen: () => {
             if (!inputAudioContextRef.current) return;

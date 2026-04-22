@@ -71,9 +71,8 @@ import { toast } from 'sonner';
 import { User, ViewState, MediaShard } from '../types';
 import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
-import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
+import { chatWithAgroLang, analyzeMedia, callBackendEA } from '../services/agroLangService';
 import { saveCollectionItem } from '../services/firebaseService';
-import { GoogleGenAI } from "@google/genai";
 import { generateQuickHash } from '../systemFunctions';
 
 interface ChromaSystemProps {
@@ -201,16 +200,14 @@ ${content}
     setGraphicAnchored(false);
 
     try {
-      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-      const ai = new GoogleGenAI({ apiKey });
       const technicalPrompt = `Professional architectural and agricultural render of ${imagePrompt}. 
       Brand Influence: Lilies Around Aesthetic Revolution.
       Framework Context: ${selectedThrust.thrust} sustainability. 
       Spectral Focus: ${selectedThrust.spectrum}. 
       Style: High-fidelity cinematic 8k architectural visualization, botanical precision, fuchsia highlights, industrial EOS aesthetic.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+      const response = await callBackendEA({
+        model: 'envirosagro-image-model',
         contents: { parts: [{ text: technicalPrompt }] },
         config: {
           imageConfig: {

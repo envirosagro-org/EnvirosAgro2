@@ -111,11 +111,25 @@ export const calculateUnifiedSehtiImpact = (
 
 export const callBackendEA = async (params: { model: string; contents: any; config?: any }) => {
   const ai = getAIClient();
+  let mappedModel = params.model;
+  
+  if (mappedModel === 'envirosagro-core-model') {
+    mappedModel = 'gemini-3.1-flash-lite-preview';
+  } else if (mappedModel === 'envirosagro-image-model') {
+    mappedModel = 'gemini-2.5-flash-image';
+  }
+
   return await ai.models.generateContent({
-    model: params.model,
+    model: mappedModel,
     contents: params.contents,
     config: params.config
   });
+};
+
+export const connectLiveAudioEA = (config: any) => {
+  const ai = getAIClient();
+  const modifiedConfig = { ...config, model: 'gemini-2.5-flash-native-audio-preview-12-2025' };
+  return ai.live.connect(modifiedConfig);
 };
 
 const FRAMEWORK_CONTEXT = `
@@ -215,7 +229,7 @@ export const generateHandshakeAgroLang = async (category: 'HARDWARE' | 'LAND', m
            Include geofence coordinates, geo-lock parameters, and ownership finality logic.`;
 
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: prompt,
         config: {
           systemInstruction: `You are the EnvirosAgro System Architect. Generate valid AgroLang code shards.`,
@@ -241,7 +255,7 @@ export const analyzeBidHandshake = async (investorReqs: string, farmerAssets: an
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Compare Investor Requirements: "${investorReqs}"
         Against Farmer Ingested Assets: ${JSON.stringify(farmerAssets)}
         Context: ${FRAMEWORK_CONTEXT}
@@ -271,7 +285,7 @@ export const generateValueBlueprint = async (material: string, volume: number): 
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Generate a Value Blueprint for: ${volume} tons of ${material}. 
         Apply SEHTI principles and EOS sustainability metrics.`,
         config: {
@@ -321,7 +335,7 @@ export const activateLiveSequence = async (blueprintId: string, assets: any[]): 
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Activate live sequence for blueprint ${blueprintId} using assets: ${JSON.stringify(assets)}.`,
         config: {
           systemInstruction: `You are the EnvirosAgro System Architect.`,
@@ -342,7 +356,7 @@ export const forgeSwarmMission = async (objective: string): Promise<AgroLangResp
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Objective: "${objective}". Forge a valid AgroLang code shard for the robot swarm. Return JSON.`,
         config: {
           systemInstruction: `You are the EnvirosAgro Swarm Architect. Your goal is to translate agricultural mission objectives into valid AgroLang industrial logic. 
@@ -378,7 +392,7 @@ export const analyzeDemandForecast = async (inventory: any[], currentCycle: stri
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Analyze inventory for Demand Forecasting: ${JSON.stringify(inventory)}. Cycle: ${currentCycle}.`,
         config: { systemInstruction: "You are the EnvirosAgro Demand Oracle." }
       });
@@ -393,7 +407,7 @@ export const forecastMarketReadiness = async (product: any): Promise<AgroLangRes
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Forecast market readiness for asset: ${product.productType}.`,
         config: { systemInstruction: "You are the EnvirosAgro Market Strategist." }
       });
@@ -408,7 +422,7 @@ export const consultFinancialOracle = async (query: string, context: any): Promi
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Process financial query: "${query}".`,
         config: { systemInstruction: "You are the EnvirosAgro Financial Oracle." }
       });
@@ -423,7 +437,7 @@ export const runSpecialistDiagnostic = async (category: string, description: str
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Perform a Specialist Diagnostic Audit. Category: ${category}, Observation: ${description}`,
       });
       return { text: response.text || "" };
@@ -437,7 +451,7 @@ export const predictMarketSentiment = async (echoes: any[]): Promise<AgroLangRes
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Perform a Sentiment Audit based on mesh echoes.`,
       });
       return { text: response.text || "", sentiment_alpha: 0.82 };
@@ -451,7 +465,7 @@ export const auditAgroLangCode = async (code: string): Promise<AgroLangResponse>
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Audit AgroLang: ${code}`,
       });
       return { text: response.text || "", is_compliant: true };
@@ -465,7 +479,7 @@ export const chatWithAgroLang = async (message: string, history: any[], useSearc
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: message, // Simplified for chat proxy
         config: {
           systemInstruction: `EnvirosAgro Agro Lang Expert. Use logic: ${FRAMEWORK_CONTEXT}`,
@@ -483,7 +497,7 @@ export const optimizeProductionProcess = async (assetData: any, tasks: any[], bl
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Analyze the following live farming asset and its current tasks to optimize the production process.
         Asset: ${JSON.stringify(assetData)}
         Tasks: ${JSON.stringify(tasks)}
@@ -517,7 +531,7 @@ export const automateSupplyChain = async (assetData: any, vendorRegistry: any[])
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Automate the full supply chain and industrial operations for the following live farming asset:
         Asset: ${JSON.stringify(assetData)}
         Vendor Registry: ${JSON.stringify((vendorRegistry || []).map(v => ({ id: v.id, name: v.name, type: v.supplierType, category: v.category })))}
@@ -602,7 +616,7 @@ export const queryProgramAssets = async (assetData: any, programName: string, bl
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Analyze the live farming asset "${assetData.productType || assetData.name}" (ID: ${assetData.id}).
         The user wants to associate this asset with the "${programName}" program.
         Available Blueprints: ${JSON.stringify((blueprints || []).map(b => ({ id: b.blueprint_id, name: b.input_material.name })))}
@@ -641,7 +655,7 @@ export const decodeAgroGenetics = async (telemetry: any): Promise<any> => {
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Decode: ${JSON.stringify(telemetry)}`,
         config: {
           responseMimeType: "application/json",
@@ -679,7 +693,7 @@ export const analyzeSustainability = async (farmData: any): Promise<AgroLangResp
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Run sustainability audit: ${JSON.stringify(farmData)}`,
       });
       return { text: response.text || "" };
@@ -693,7 +707,7 @@ export const analyzeMedia = async (base64: string, mime: string, prompt: string)
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: { parts: [{ inlineData: { data: base64, mimeType: mime } }, { text: prompt }] }
       });
       return response.text || "";
@@ -707,7 +721,7 @@ export const settleRegistryBatch = async (transactions: any[]): Promise<AgroLang
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Settle batch: ${JSON.stringify(transactions)}`,
       });
       return { text: response.text || "Batch verified.", finality_hash: "0x882A_FINAL" };
@@ -721,7 +735,7 @@ export const auditMeshStability = async (topologyData: any): Promise<AgroLangRes
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Audit mesh stability: ${JSON.stringify(topologyData)}`,
       });
       return { text: response.text || "Stability verified." };
@@ -735,7 +749,7 @@ export const probeValidatorNode = async (nodeData: any): Promise<AgroLangRespons
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Perform high-fidelity probe on validator node: ${JSON.stringify(nodeData)}.`,
       });
       return { text: response.text || "Probe successful." };
@@ -749,7 +763,7 @@ export const searchAgroTrends = async (query: string): Promise<AgroLangResponse>
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: query,
         config: { tools: [{ googleSearch: {} }] }
       });
@@ -764,7 +778,7 @@ export const runSimulationAnalysis = async (simData: any): Promise<AgroLangRespo
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Run simulation: ${JSON.stringify(simData)}`,
       });
       return { text: response.text || "Simulation finalized." };
@@ -778,7 +792,7 @@ export const generateAgroExam = async (topic: string): Promise<any[]> => {
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Generate exam for: ${topic}`,
         config: {
           responseMimeType: "application/json",
@@ -807,7 +821,7 @@ export const getGroundedAgroResources = async (query: string): Promise<AgroLangR
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: query,
         config: { tools: [{ googleSearch: {} }] }
       });
@@ -822,7 +836,7 @@ export const analyzeInstitutionalRisk = async (transactionData: any): Promise<Ag
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Risk audit: ${JSON.stringify(transactionData)}`,
       });
       return { text: response.text || "Risk assessment clear." };
@@ -839,7 +853,7 @@ export const diagnoseCropIssue = async (description: string, base64Image?: strin
         ? { parts: [{ inlineData: { data: base64Image, mimeType: 'image/jpeg' } }, { text: description }] }
         : { text: description };
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents,
       });
       return { text: response.text || "" };
@@ -853,7 +867,7 @@ export const auditProductQuality = async (productId: string, logs: any[]): Promi
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Audit quality for ${productId}`,
       });
       return { text: response.text || "Quality audit passed." };
@@ -867,7 +881,7 @@ export const generateAgroResearch = async (title: string, thrust: string, iotDat
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Generate research: ${title}`,
       });
       return { text: response.text || "" };
@@ -881,7 +895,7 @@ export const getWeatherForecast = async (location: string): Promise<AgroLangResp
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Weather for ${location}`,
         config: { tools: [{ googleSearch: {} }] }
       });
@@ -896,7 +910,7 @@ export const generateValueEnhancementStrategy = async (material: string, weight:
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Value strategy for ${weight} of ${material}`,
         config: {
           responseMimeType: "application/json",
@@ -921,7 +935,7 @@ export const suggestZonationShards = async (telemetry: any[], currentPlot: Plot)
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Analyze robot telemetry: ${JSON.stringify(telemetry)} within Plot: ${JSON.stringify(currentPlot)}. 
         Identify soil transitions (moisture, pH, etc.) and suggest new autonomous zonation boundaries (shards). 
         Return a JSON object with suggested shards (polygons).`,
@@ -963,7 +977,7 @@ export const predictCarbonYield = async (plotData: any, historicalMRV: any[]): P
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Analyze GIS Plot: ${JSON.stringify(plotData)} and Historical MRV Data: ${JSON.stringify(historicalMRV)}. 
         Predict the carbon yield for the next 5 years based on current permaculture strategies. 
         Return a JSON object with predictions (year-by-year) and a confidence score.`,
@@ -1004,7 +1018,7 @@ export const analyzeMRVEvidence = async (description: string, base64Image?: stri
         ? { parts: [{ inlineData: { data: base64Image, mimeType: 'image/jpeg' } }, { text: description }] }
         : { text: description };
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents,
         config: {
           responseMimeType: "application/json",
@@ -1036,7 +1050,7 @@ export const analyzeMiningYield = async (miningData: any): Promise<AgroLangRespo
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-flash-preview',
+        model: 'envirosagro-core-model',
         contents: `Analyze mining potential: ${JSON.stringify(miningData)}.`,
       });
       return { text: response.text || "Yield analysis finalized." };
@@ -1066,7 +1080,7 @@ export const generateAgroAcoustic = async (prompt: string): Promise<string | und
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: "gemini-2.5-flash-preview-tts",
+        model: 'envirosagro-core-model',
         contents: [{ parts: [{ text: `Generate a rhythmic agro-acoustic soundscape or beat based on: ${prompt}. Describe the rhythm and then synthesize the sound.` }] }],
         config: {
           responseModalities: [Modality.AUDIO],
@@ -1089,7 +1103,7 @@ export const generateAgroDocument = async (type: string, prompt: string): Promis
   try {
     return await callOracleWithRetry(async () => {
       const response = await callBackendEA({
-        model: 'gemini-3-pro-preview',
+        model: 'envirosagro-core-model',
         contents: `Generate a professional ${type} for EnvirosAgro Blockchain. 
         Context: ${FRAMEWORK_CONTEXT}
         Prompt: ${prompt}

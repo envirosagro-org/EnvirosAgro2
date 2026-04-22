@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { predictYield } from '../services/geminiService';
+import { predictYield } from '../services/aiService';
 import { Loader2, TrendingUp } from 'lucide-react';
 
 const PredictiveYieldModeling: React.FC = () => {

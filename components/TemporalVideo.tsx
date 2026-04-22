@@ -92,7 +92,7 @@ const TemporalVideo: React.FC<TemporalVideoProps> = ({ user, onNavigate }) => {
              "Bio-temporal video sharding requires a direct paid API key handshake for institutional resource allocation."
            </p>
            <div className="p-6 bg-black/40 rounded-3xl border border-white/5 text-xs text-slate-500 text-left">
-              Billing documentation and GCP project setup required. Visit <a href="https://ai.google.com/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">ai.google.dev/billing</a> for more info.
+              Billing documentation and project setup required. Visit <a href="#" onClick={(e) => { e.preventDefault(); toast.info("Please refer to EnvirosAgro enterprise API documentation."); }} className="text-blue-400 underline">docs.envirosagro.com/billing</a> for more info.
            </div>
         </div>
         <button 

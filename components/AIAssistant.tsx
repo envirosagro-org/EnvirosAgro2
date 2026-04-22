@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, X, Loader2, User } from 'lucide-react';
 import { HenIcon, SycamoreLogo } from './Icons';
+import { callBackendEA } from '../services/agroLangService';
 
 interface AIAssistantProps {
   userEsin: string;
@@ -20,17 +21,11 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ userEsin }) => {
     setIsLoading(true);
 
     try {
-      const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `You are AgroBot, a helpful assistant for EnvirosAgro. The current steward ESIN is ${userEsin}. Answer farming and sustainability questions concisely. Context: ${input}` }] }]
-        })
+      const response = await callBackendEA({
+        model: 'envirosagro-core-model',
+        contents: [{ parts: [{ text: `You are AgroBot, a helpful assistant for EnvirosAgro. The current steward ESIN is ${userEsin}. Answer farming and sustainability questions concisely. Context: ${input}` }] }]
       });
-      
-      const data = await response.json();
-      const assistantText = data.candidates[0].content.parts[0].text;
+      const assistantText = response.text || 'No response';
       setMessages(prev => [...prev, { role: 'assistant', text: assistantText }]);
     } catch (e) {
       setMessages(prev => [...prev, { role: 'assistant', text: 'Error interacting with AI.' }]);

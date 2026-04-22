@@ -58,7 +58,7 @@ export async function dispatchInternalControls(userRole: UserRole, currentPath: 
 
   try {
     const response = await callBackendEA({
-      model: "gemini-3-flash-preview",
+      model: "envirosagro-core-model",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
