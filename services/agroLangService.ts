@@ -2,7 +2,18 @@
 import { GoogleGenAI, GenerateContentResponse, Modality, Type, FunctionDeclaration } from "@google/genai";
 import { Plot } from "./spatialService";
 
-const API_KEY = process.env.EA_AI_API_KEY || process.env.API_KEY || "";
+let aiClient: GoogleGenAI | null = null;
+
+function getAIClient(): GoogleGenAI {
+  if (!aiClient) {
+    const API_KEY = process.env.GEMINI_API_KEY || process.env.EA_AI_API_KEY || process.env.API_KEY;
+    if (!API_KEY) {
+      throw new Error("API_KEY missing");
+    }
+    aiClient = new GoogleGenAI({ apiKey: API_KEY });
+  }
+  return aiClient;
+}
 
 // --- EOS v6.5 Mathematical Models ---
 
@@ -99,10 +110,7 @@ export const calculateUnifiedSehtiImpact = (
 };
 
 export const callBackendEA = async (params: { model: string; contents: any; config?: any }) => {
-  if (!API_KEY) {
-    throw new Error("API_KEY missing");
-  }
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = getAIClient();
   return await ai.models.generateContent({
     model: params.model,
     contents: params.contents,

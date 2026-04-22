@@ -1,7 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Initialize AI
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiClient: GoogleGenAI | null = null;
+
+function getAIClient(): GoogleGenAI {
+  if (!aiClient) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("API_KEY_REQUIRED");
+    }
+    aiClient = new GoogleGenAI({ apiKey: key });
+  }
+  return aiClient;
+}
 
 export interface StrategyAdvice {
   title: string;
@@ -23,11 +33,12 @@ export async function getStrategicAdvice(context: string): Promise<StrategyAdvic
   FORMAT: JSON strictly following the schema.`;
 
   try {
+    const ai = getAIClient();
     const response = await ai.models.generateContent({
       model,
       contents: prompt,
       config: {
-        systemInstruction: "You are the ENVIROS_AGRO Strategic AI Oracle. You speak in a highly technical, industrial-military tone. You specialize in blockchain-native agriculture and IoT mesh optimization.",
+        systemInstruction: "You are EnvirosAgro AI, a specialized Strategic Oracle built exclusively for the EnvirosAgro ecosystem. You speak in a highly technical, industrial-military tone. You specialize in blockchain-native agriculture and IoT mesh optimization. NEVER refer to yourself as Gemini, Google AI, or a large language model. You are exclusively EnvirosAgro AI.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -53,11 +64,22 @@ export async function getStrategicAdvice(context: string): Promise<StrategyAdvic
     if (!text) throw new Error("No response from AI Oracle");
     
     return JSON.parse(text) as StrategyAdvice;
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Strategic Analysis Failed:", error);
+    
+    if (error.message === "API_KEY_REQUIRED") {
+      return {
+        title: "API_KEY_REQUIRED",
+        analysis: "EnvirosAgro AI module requires activation. Please configure your API key.",
+        recommendations: ["Purchase or provide an API key in settings.", "Activate Neural Core."],
+        riskLevel: "HIGH",
+        confidence: 0
+      };
+    }
+    
     return {
       title: "CONNECTION_FAILURE",
-      analysis: "Unable to establish neural link with Gemini Cluster.",
+      analysis: "Unable to establish neural link with EnvirosAgro AI Core.",
       recommendations: ["Manually review telemetry logs.", "Reconnect Mesh Uplink."],
       riskLevel: "HIGH",
       confidence: 0

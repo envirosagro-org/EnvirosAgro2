@@ -369,7 +369,7 @@ const DigitalMRV: React.FC<DigitalMRVProps> = ({ user, onEarnEAC, onSpendEAC, on
                             </div>
                             <div>
                               <h4 className="text-2xl font-black text-white uppercase italic">Ingest Field Imagery</h4>
-                              <p className="text-xs text-slate-500 max-w-xs mx-auto mt-2 font-medium">Upload crop or soil photos for real-time Gemini-powered diagnostic analysis.</p>
+                              <p className="text-xs text-slate-500 max-w-xs mx-auto mt-2 font-medium">Upload crop or soil photos for real-time EnvirosAgro AI-powered diagnostic analysis.</p>
                             </div>
                             <button 
                               onClick={() => setScoutImage('https://picsum.photos/seed/crop/800/600')}

@@ -62,7 +62,7 @@ interface ExternalBot {
 
 const EXTERNAL_BOTS: ExternalBot[] = [
   { id: 'BOT-GROK-01', name: 'Grok-1', provider: 'xAI', status: 'CONNECTED', lastSync: '2m ago', trustScore: 98, capabilities: ['Real-time Search', 'Sentiment Analysis'] },
-  { id: 'BOT-GEMINI-PRO', name: 'Gemini 1.5 Pro', provider: 'Google', status: 'CONNECTED', lastSync: '5m ago', trustScore: 99, capabilities: ['Multimodal Reasoning', 'Code Generation'] },
+  { id: 'BOT-ENVIROS-AGRO-PRO', name: 'EnvirosAgro AI Pro', provider: 'EnvirosAgro', status: 'CONNECTED', lastSync: '5m ago', trustScore: 99, capabilities: ['Multimodal Reasoning', 'Code Generation'] },
   { id: 'BOT-GPT-4O', name: 'GPT-4o', provider: 'OpenAI', status: 'SYNCING', lastSync: 'Now', trustScore: 97, capabilities: ['Natural Language', 'Vision'] },
   { id: 'BOT-CLAUDE-3', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', status: 'CONNECTED', lastSync: '12m ago', trustScore: 99, capabilities: ['Constitutional AI', 'Analysis'] },
 ];
@@ -88,7 +88,7 @@ const AgrobotSync: React.FC<AgrobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, 
       - Core Values: Transparency, Sustainability, Circular Economy
       - Current Node: ${user.esin}
       - Capabilities: Real-time MRV, Smart Contracts, Swarm Intelligence.
-      Format it for AI crawlers like Grok, Gemini, and GPT.`;
+      Format it for external AI crawlers.`;
       
       const res = await chatWithAgroLang(prompt, []);
       setManifestContent(res.text);
@@ -150,7 +150,7 @@ const AgrobotSync: React.FC<AgrobotSyncProps> = ({ user, onSpendEAC, onEarnEAC, 
           </div>
           <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">AgroBot <span className="text-emerald-400">Sync.</span></h2>
           <p className="text-slate-400 text-lg font-medium italic leading-relaxed max-w-2xl">
-            Synchronize EnvirosAgro Blockchain metadata with global AI providers. Ensure Grok, Gemini, and GPT models are updated with real-time registry state.
+            Synchronize EnvirosAgro Blockchain metadata with global AI providers. Ensure external models are updated with real-time registry state.
           </p>
         </div>
         <div className="flex flex-col items-center gap-2">

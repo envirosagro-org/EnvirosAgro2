@@ -52,7 +52,7 @@ export const AIOracle: React.FC<AIOracleProps> = ({ telemetryContext = "Overall 
                 <h3 className="text-xl font-black text-white italic tracking-tighter uppercase leading-none">
                    Strategic <span className="text-indigo-400">Oracle</span>
                 </h3>
-                <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.4em] mt-1">Gemini_Neural_Core_v3.1</p>
+                <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.4em] mt-1">EnvirosAgro_Neural_Core_v3.1</p>
              </div>
           </div>
           

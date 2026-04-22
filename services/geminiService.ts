@@ -1,8 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+let aiClient: GoogleGenAI | null = null;
+
+function getAIClient(): GoogleGenAI {
+  if (!aiClient) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("API_KEY missing");
+    }
+    aiClient = new GoogleGenAI({ apiKey: key });
+  }
+  return aiClient;
+}
 
 export async function draftProposal(title: string, description: string, thrust: string): Promise<string> {
+  const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Draft a detailed proposal based on the following:
@@ -16,6 +28,7 @@ export async function draftProposal(title: string, description: string, thrust: 
 }
 
 export async function calculateImpactScore(title: string, description: string, fundingRequest: number): Promise<number> {
+  const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Calculate an impact score (0-100) for the following proposal:
@@ -29,6 +42,7 @@ export async function calculateImpactScore(title: string, description: string, f
 }
 
 export async function predictYield(cropType: string, soilData: any, weatherData: any): Promise<string> {
+  const ai = getAIClient();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Predict the yield for ${cropType} based on the following:
