@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { 
   ShoppingBag, Search, Filter, ShieldCheck, Activity, BadgeCheck, Globe, 
   Loader2, X, Plus, ShoppingCart, Trash2, Lock, Gem, TrendingUp, Building, 
@@ -12,7 +13,7 @@ import {
   Scale, Signature, FileSignature, Clock, BookOpen, Eye, Star, Download, 
   CreditCard, ChevronDown, Warehouse, Factory, PackageSearch, Receipt, 
   Music, Palette, Map as MapIcon,
-  Database, Calculator, FlaskConical, RefreshCw
+  Database, Calculator, FlaskConical, RefreshCw, QrCode, Scan
 } from 'lucide-react';
 import { SectionTabs } from './SectionTabs';
 import { ShareButton } from './ShareButton';
@@ -84,6 +85,7 @@ const Economy: React.FC<EconomyProps> = ({
   const [esinSign, setEsinSign] = useState('');
   const [books, setBooks] = useState<AgroBook[]>([]);
   const [sortMethod, setSortMethod] = useState<'price' | 'distance'>('distance');
+  const [selectedItemQR, setSelectedItemQR] = useState<any | null>(null);
 
   // Real-time sync of Knowledge Shards
   useEffect(() => {
@@ -313,71 +315,70 @@ const Economy: React.FC<EconomyProps> = ({
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-24 max-w-[1700px] mx-auto px-4 relative">
+    <div className="space-y-4 md:space-y-6 animate-in fade-in duration-700 pb-10 mx-auto px-2 md:px-3 relative w-full max-w-full">
       <SEO title="Economy" description="EnvirosAgro Economy: Participate in the decentralized agricultural market, trade assets, and monitor global commerce." />
       
       {/* 1. Global Commerce HUD */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
-        <div className="lg:col-span-8 glass-card p-10 rounded-[64px] border-emerald-500/20 bg-emerald-500/[0.02] relative overflow-hidden flex flex-col md:flex-row items-center gap-12 group shadow-3xl">
-           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform duration-[20s] pointer-events-none">
-              <Globe className="w-[800px] h-[800px] text-white" />
-           </div>
-           
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 relative z-10">
+        <div className="lg:col-span-8 glass-card p-6 md:p-8 rounded-3xl border-emerald-500/20 bg-emerald-500/[0.02] flex flex-col md:flex-row items-center gap-4 group shadow-lg">
            <div className="relative shrink-0">
-              <div className="w-36 h-36 md:w-44 md:h-44 rounded-[48px] bg-emerald-600 shadow-2xl flex items-center justify-center ring-8 ring-white/5 relative overflow-hidden group-hover:scale-105 transition-all">
-                 <ShoppingBag size={64} className="text-white animate-float" />
-                 <div className="absolute inset-0 border-2 border-dashed border-white/20 rounded-[48px] animate-spin-slow"></div>
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-emerald-600 shadow-xl flex items-center justify-center ring-4 ring-white/5 relative overflow-hidden shrink-0">
+                 <ShoppingBag size={32} className="text-white" />
               </div>
            </div>
 
-           <div className="space-y-4 relative z-10 text-center md:text-left flex-1">
-              <div className="space-y-2">
-                 <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                    <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-widest border border-emerald-500/20">GLOCAL_MARKET_v6.5</span>
-                    <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase rounded-full tracking-widest border border-blue-500/20 shadow-inner">NODE: {user.location.split(',')[0]}</span>
-                 </div>
-                 <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">Market <span className="text-emerald-400">Cloud.</span></h2>
+           <div className="space-y-1 relative z-10 text-center md:text-left flex-1">
+              <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                 <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase rounded-full tracking-widest border border-emerald-500/20">MARKET_CLOUD</span>
               </div>
-              <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-3xl opacity-80 group-hover:opacity-100 transition-opacity">
-                 "Glocalized industrial gateway for hardware, vendor provisions, and logic shards. Distance-weighted asset discovery ensures supply chain resonance."
+              <h2 className="text-3xl md:text-4xl font-black text-white uppercase italic m-0 tracking-tighter">Market <span className="text-emerald-400">Cloud.</span></h2>
+              <p className="text-slate-400 text-xs md:text-sm font-medium italic leading-relaxed max-w-2xl opacity-80">
+                 "Glocalized industrial gateway for hardware, vendor provisions, and logic shards."
               </p>
            </div>
         </div>
 
-        <div className="lg:col-span-4 glass-card p-10 rounded-[56px] border-2 border-indigo-500/20 bg-indigo-950/5 flex flex-col justify-between items-center text-center relative overflow-hidden shadow-xl group">
-           <div className="space-y-4 relative z-10 w-full">
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.6em] mb-2 italic">SENTIMENT_ALPHA</p>
-              <h4 className="text-7xl font-mono font-black text-indigo-400 tracking-tighter italic m-0">{sentimentAlpha.toFixed(2)}<span className="text-2xl text-indigo-800 ml-1">α</span></h4>
+        <div className="lg:col-span-4 glass-card p-4 md:p-6 rounded-3xl border border-indigo-500/20 bg-indigo-950/5 flex flex-col justify-between items-center text-center shadow-lg">
+           <div className="space-y-2 w-full">
+              <div className="flex justify-between items-center px-2">
+                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest italic">SENTIMENT_ALPHA</p>
+                <button 
+                  onClick={() => onNavigate('asset_verification', 'scanner')}
+                  className="flex items-center gap-1.5 text-[8px] font-black text-indigo-400 bg-indigo-400/10 border border-indigo-400/20 px-2 py-1 rounded-full hover:bg-indigo-400/20 transition-all"
+                >
+                  <Scan size={10} /> SCAN_VERIFY
+                </button>
+              </div>
+              <h4 className="text-3xl md:text-4xl font-mono font-black text-indigo-400 italic m-0">{sentimentAlpha.toFixed(2)}<span className="text-lg text-indigo-800 ml-1">α</span></h4>
               
-              <div className="px-6 py-4 bg-black/40 rounded-3xl border border-white/5 shadow-inner mt-4">
-                 <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">
-                    {sentimentReport ? `"${sentimentReport.substring(0, 80)}..."` : "Registry pricing stable. Sync with Oracle for real-time drift adjustments."}
+              <div className="px-3 py-2 bg-black/40 rounded-xl border border-white/5 my-1">
+                 <p className="text-[7px] text-slate-600 font-bold uppercase tracking-widest truncate">
+                    {sentimentReport ? `"${sentimentReport.substring(0, 50)}..."` : "Registry pricing stable."}
                  </p>
               </div>
 
               <button 
                 onClick={handleSyncSentiment}
                 disabled={isSyncingSentiment}
-                className="w-full py-5 mt-4 bg-indigo-600 hover:bg-indigo-500 rounded-[32px] text-white font-black text-[11px] uppercase tracking-[0.3em] flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 border-2 border-white/10 ring-8 ring-indigo-500/5"
+                className="w-full py-3 bg-indigo-600 rounded-xl text-white font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
               >
-                 {isSyncingSentiment ? <Loader2 size={18} className="animate-spin text-white" /> : <HenIcon size={18} className="text-white" />}
-                 RECALIBRATE RESONANCE
+                 {isSyncingSentiment ? <Loader2 size={12} className="animate-spin" /> : <HenIcon size={12} />}
+                 RECALIBRATE
               </button>
            </div>
         </div>
       </div>
 
-      {/* 2. Navigation Shards & Glocal Search */}
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-10 px-4 sticky top-4 z-40">
+      {/* 2. Navigation Shards */}
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-4 px-2 sticky top-0 md:top-4 z-40 bg-[#020503]/80 backdrop-blur-md py-2 -mx-2 px-2">
          <SectionTabs 
            tabs={[
-             { id: 'catalogue', label: 'Universal Catalogue', icon: LayoutGrid },
-             { id: 'infrastructure', label: 'Industrial Nodes', icon: Building },
-             { id: 'logistics', label: 'Logistics Map', icon: MapIcon },
-             { id: 'loop', label: 'The Loop', icon: RefreshCw },
-             { id: 'simulator', label: 'Resonance Simulator', icon: Zap },
-             { id: 'forecasting', label: 'Demand Matrix', icon: LineChartIcon },
-             { id: 'analytics', label: 'EAC Analytics', icon: BarChart3 },
+             { id: 'catalogue', label: 'Catalogue', icon: LayoutGrid },
+             { id: 'infrastructure', label: 'Nodes', icon: Building },
+             { id: 'logistics', label: 'Logistics', icon: MapIcon },
+             { id: 'loop', label: 'Loop', icon: RefreshCw },
+             { id: 'simulator', label: 'Sim', icon: Zap },
+             { id: 'forecasting', label: 'Demand', icon: LineChartIcon },
            ]}
            activeTab={activeTab}
            onTabChange={(id) => setActiveTab(id)}
@@ -385,28 +386,24 @@ const Economy: React.FC<EconomyProps> = ({
            className="w-full lg:w-auto"
          />
 
-         <div className="flex items-center gap-6 w-full md:w-auto">
-            <div className="relative flex-1 md:w-[450px] group">
-               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700 group-focus-within:text-emerald-400 transition-colors" />
+         <div className="flex items-center gap-3 w-full lg:w-auto">
+            <div className="relative flex-1 lg:w-[250px]">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                <input 
                  type="text" 
                  value={searchTerm} 
                  onChange={e => setSearchTerm(e.target.value)} 
-                 placeholder="Search registry shards..." 
-                 className="w-full bg-black/80 border-2 border-white/10 rounded-full py-6 pl-16 pr-8 text-sm text-white focus:outline-none focus:ring-8 focus:ring-emerald-500/10 transition-all font-mono italic" 
+                 placeholder="Search..." 
+                 className="w-full bg-black/80 border border-white/10 rounded-full py-3 pl-10 pr-4 text-[10px] text-white focus:outline-none transition-all font-mono" 
                />
             </div>
             
             <button 
               onClick={() => setActiveTab('checkout')}
-              className={`relative p-8 rounded-[36px] border-4 transition-all ${activeTab === 'checkout' ? 'bg-emerald-600 border-white text-white' : 'bg-black/60 border-white/10 text-slate-500 hover:border-emerald-500/40 hover:text-white'}`}
+              className={`relative p-3 rounded-xl border transition-all ${activeTab === 'checkout' ? 'bg-emerald-600 border-white text-white' : 'bg-black/60 border-white/10 text-slate-500'}`}
             >
-               <ShoppingCart size={32} />
-               {cart.length > 0 && (
-                 <span className="absolute -top-3 -right-3 w-10 h-10 bg-emerald-500 text-white text-base font-black flex items-center justify-center rounded-full border-4 border-black animate-in zoom-in">
-                    {cart.length}
-                 </span>
-               )}
+               <ShoppingCart size={20} />
+               {cart.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center rounded-full border border-black">{cart.length}</span>}
             </button>
          </div>
       </div>
@@ -416,16 +413,16 @@ const Economy: React.FC<EconomyProps> = ({
         {/* --- VIEW: UNIVERSAL CATALOGUE (With Glocalization) --- */}
         {/* --- VIEW: THE LOOP (CIRCULAR LEDGER) --- */}
         {activeTab === 'loop' && (
-          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-            <div className="glass-card p-12 rounded-[64px] border border-white/5 bg-black/40 space-y-12 shadow-3xl relative overflow-hidden">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-[28px] bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-xl">
-                    <RefreshCw size={32} />
+          <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-6 md:p-8 rounded-3xl border border-white/5 bg-black/40 space-y-8 shadow-2xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-xl">
+                    <RefreshCw size={24} />
                   </div>
                   <div>
-                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">The <span className="text-emerald-400">Loop.</span></h3>
-                    <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.4em] mt-1">CIRCULAR_RESOURCE_LEDGER</p>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">The <span className="text-emerald-400">Loop.</span></h3>
+                    <p className="text-[8px] text-emerald-400 font-black uppercase tracking-[0.3em] mt-1">CIRCULAR_RESOURCE_LEDGER</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
@@ -436,8 +433,8 @@ const Economy: React.FC<EconomyProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                <div className="lg:col-span-2 h-[500px] bg-black/60 rounded-[48px] border border-white/10 p-10 relative overflow-hidden flex items-center justify-center">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 h-[400px] bg-black/60 rounded-3xl border border-white/10 p-6 relative overflow-hidden flex items-center justify-center">
                   {/* Simulated Sankey / Flow Diagram */}
                   <svg width="100%" height="100%" viewBox="0 0 800 400" className="opacity-80">
                     <defs>
@@ -473,8 +470,8 @@ const Economy: React.FC<EconomyProps> = ({
                 </div>
 
                 <div className="space-y-6">
-                  <div className="p-8 bg-emerald-500/5 border border-emerald-500/20 rounded-[40px] space-y-6">
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest">Loop Efficiency</h4>
+                  <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl space-y-4">
+                    <h4 className="text-xs font-black text-white uppercase tracking-widest">Loop Efficiency</h4>
                     <div className="space-y-4">
                       {[
                         { label: 'Waste Recovery', val: 92, color: 'bg-emerald-500' },
@@ -494,8 +491,8 @@ const Economy: React.FC<EconomyProps> = ({
                     </div>
                   </div>
 
-                  <div className="glass-card p-8 rounded-[40px] border border-white/5 space-y-4">
-                    <h4 className="text-xs font-black text-white uppercase tracking-widest">Recent Conversions</h4>
+                  <div className="glass-card p-6 rounded-3xl border border-white/5 space-y-3">
+                    <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Recent Conversions</h4>
                     <div className="space-y-3">
                       {[
                         { from: 'Biomass', to: 'Compost', qty: '420kg', time: '1h ago' },
@@ -522,15 +519,15 @@ const Economy: React.FC<EconomyProps> = ({
 
         {/* --- VIEW: RESONANCE SIMULATOR --- */}
         {activeTab === 'simulator' && (
-          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-            <div className="glass-card p-12 rounded-[64px] border border-amber-500/20 bg-amber-500/[0.02] space-y-10">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-[28px] bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <Zap size={32} />
+          <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-6 md:p-10 rounded-3xl border border-amber-500/20 bg-amber-500/[0.02] space-y-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Zap size={24} />
                 </div>
                 <div>
-                  <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Supply Chain <span className="text-amber-400">Resonance Simulator.</span></h3>
-                  <p className="text-[10px] text-amber-400 font-black uppercase tracking-[0.4em] mt-1">PREDICTIVE_ECONOMIC_IMPACT_MODEL</p>
+                  <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Supply Chain <span className="text-amber-400">Resonance Simulator.</span></h3>
+                  <p className="text-[8px] text-amber-400 font-black uppercase tracking-[0.3em] mt-1">PREDICTIVE_ECONOMIC_IMPACT_MODEL</p>
                 </div>
               </div>
 
@@ -585,25 +582,25 @@ const Economy: React.FC<EconomyProps> = ({
 
         {/* --- VIEW: LOGISTICS MAP --- */}
         {activeTab === 'logistics' && (
-          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-            <div className="glass-card p-12 rounded-[64px] border border-blue-500/20 bg-blue-500/[0.02] min-h-[600px] flex flex-col">
-              <div className="flex justify-between items-center mb-10">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-[28px] bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                    <MapIcon size={32} />
+          <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="glass-card p-6 md:p-8 rounded-3xl border border-blue-500/20 bg-blue-500/[0.02] min-h-[500px] flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                    <MapIcon size={24} />
                   </div>
                   <div>
-                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Glocalized <span className="text-blue-400">Logistics.</span></h3>
-                    <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.4em] mt-1">REAL_TIME_ASSET_FLOW_TRACKING</p>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Glocalized <span className="text-blue-400">Logistics.</span></h3>
+                    <p className="text-[8px] text-blue-400 font-black uppercase tracking-[0.3em] mt-1">REAL_TIME_ASSET_FLOW_TRACKING</p>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <div className="px-6 py-3 bg-black/40 border border-white/10 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest">ACTIVE_SHIPMENTS: 14</div>
-                  <div className="px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">OPTIMIZE_ROUTES</div>
+                <div className="flex gap-2">
+                  <div className="px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-[8px] font-black text-slate-400 uppercase tracking-widest">SHIPMENTS: 14</div>
+                  <div className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">OPTIMIZE</div>
                 </div>
               </div>
 
-              <div className="flex-1 relative bg-black/40 border border-white/5 rounded-[48px] overflow-hidden">
+              <div className="flex-1 relative bg-black/40 border border-white/5 rounded-3xl overflow-hidden">
                 {/* Mock Map Visualization */}
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_30%,#3b82f6_0%,transparent_50%),radial-gradient(circle_at_80%_70%,#3b82f6_0%,transparent_50%)]"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -739,6 +736,12 @@ const Economy: React.FC<EconomyProps> = ({
                                  className="p-8 bg-white/5 border-2 border-white/10 rounded-[36px] text-slate-500 hover:text-emerald-400 transition-all shadow-xl active:scale-90 flex items-center justify-center"
                                  iconSize={24}
                               />
+                              <button 
+                                onClick={() => setSelectedItemQR(item)}
+                                className="p-8 bg-black/60 border-2 border-white/5 rounded-[36px] text-slate-500 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center group/qr"
+                              >
+                                <QrCode size={24} className="group-hover/qr:scale-110 transition-transform" />
+                              </button>
                               <button 
                                 onClick={() => handleAddToCart(item)}
                                 className={`p-8 rounded-[36px] transition-all shadow-3xl active:scale-90 border-2 border-white/10 group/buy relative overflow-hidden ${item.isUserGenerated ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-emerald-600 hover:bg-emerald-500'} text-white`}
@@ -1083,6 +1086,52 @@ const Economy: React.FC<EconomyProps> = ({
         @keyframes scan { from { top: -100%; } to { top: 100%; } }
         .animate-scan { animation: scan 3s linear infinite; }
       `}</style>
+
+      {/* Verification Overlays */}
+
+      {/* QR Details Modal */}
+      {selectedItemQR && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/90 backdrop-blur-3xl" onClick={() => setSelectedItemQR(null)}></div>
+           <div className="relative w-full max-w-md glass-card rounded-[64px] border-2 border-white/10 bg-[#050706] p-12 text-center space-y-10 shadow-3xl">
+              <div className="space-y-4">
+                 <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Shard <span className="text-emerald-400">Anchor.</span></h3>
+                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">REGISTRY_ID: {selectedItemQR.id}</p>
+              </div>
+
+              <div className="mx-auto p-12 bg-white rounded-[48px] shadow-2xl relative overflow-hidden group">
+                 <QRCodeSVG 
+                    value={JSON.stringify({ id: selectedItemQR.id, esin: selectedItemQR.supplierEsin, name: selectedItemQR.name })}
+                    size={250}
+                    level="H"
+                    includeMargin={false}
+                 />
+                 <div className="absolute inset-0 bg-emerald-500/5 group-hover:bg-transparent transition-all"></div>
+              </div>
+
+              <div className="space-y-6">
+                 <p className="text-slate-400 text-sm font-medium italic">"Physical identification shard for the {selectedItemQR.name} module."</p>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
+                       <p className="text-[8px] text-slate-600 font-black uppercase">TRUST_INDEX</p>
+                       <p className="text-xl font-mono font-black text-emerald-400">A+</p>
+                    </div>
+                    <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
+                       <p className="text-[8px] text-slate-600 font-black uppercase">REGION</p>
+                       <p className="text-xl font-mono font-black text-indigo-400">AF-E</p>
+                    </div>
+                 </div>
+              </div>
+
+              <button 
+                 onClick={() => setSelectedItemQR(null)}
+                 className="w-full py-6 agro-gradient rounded-full text-white font-black text-xs uppercase tracking-[0.4em] shadow-xl active:scale-95 transition-all"
+              >
+                 CLOSE_VIEW
+              </button>
+           </div>
+        </div>
+      )}
     </div>
   );
 };

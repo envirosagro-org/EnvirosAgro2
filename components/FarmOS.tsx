@@ -427,7 +427,7 @@ SEQUENCE Optimize_Cycle_882 {
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-32 mx-auto px-4 relative overflow-hidden w-full max-w-full">
       
       {/* HUD Header */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

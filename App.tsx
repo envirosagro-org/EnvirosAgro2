@@ -39,9 +39,10 @@ import { useUserStore } from './store/userStore';
 import { useDataStore } from './store/dataStore';
 import { useRegistrationStore } from './store/registrationStore';
 import { useOnline } from './hooks/useOnline';
-import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit, StewardPosition } from './types';
+import { ViewState, User, UserRole, AgroProject, FarmingContract, Order, VendorProduct, RegisteredUnit, LiveAgroProduct, AgroBlock, AgroTransaction, NotificationShard, NotificationType, MediaShard, SignalShard, ShardCostCalibration, Task, ValueBlueprint, DispatchChannel, HoodConnection, Proposal, Vote, CarbonCredit, StewardPosition, StakeInfo } from './types';
 
 import { RegistrationResumePopup } from './components/RegistrationResumePopup';
+import { ShardScanner } from './components/ShardScanner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ConsentManager } from './components/ConsentManager';
@@ -851,12 +852,17 @@ const App: React.FC = () => {
   const setVotes = useRegistryStore(state => state.setVotes);
   const carbonCredits = useRegistryStore(state => state.carbonCredits);
   const setCarbonCredits = useRegistryStore(state => state.setCarbonCredits);
+  const listCredit = useRegistryStore(state => state.listCredit);
+  const buyCredit = useRegistryStore(state => state.buyCredit);
+  const mintCredit = useRegistryStore(state => state.mintCredit);
   const hoodConnections = useRegistryStore(state => state.hoodConnections);
   const setHoodConnections = useRegistryStore(state => state.setHoodConnections);
 
   const [isBooting, setIsBooting] = useState(true);
   const [isUnverified, setIsUnverified] = useState(false);
   const [isConsultantOpen, setIsConsultantOpen] = useState(false);
+  const isScannerOpen = useUiStore(state => state.isScannerOpen);
+  const setIsScannerOpen = useUiStore(state => state.setIsScannerOpen);
   const [notifications, setNotifications] = useState<NotificationShard[]>([]);
   const [pulseMessage, setPulseMessage] = useState('Registry synchronized. No anomalies detected.');
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
@@ -1026,7 +1032,7 @@ const App: React.FC = () => {
     } 
   }, []);
 
-  const handleEarnEAC = useCallback(async (amount: number, reason: string) => {
+  const handleEarnEAC = useCallback(async (amount: number, reason: string, type: string = 'Inflow') => {
     const currentUser = useUserStore.getState().user;
     if (!currentUser) return;
     const updatedUser = {
@@ -1042,17 +1048,25 @@ const App: React.FC = () => {
     setUser(updatedUser);
     const newTx: AgroTransaction = {
       id: `TX-${Date.now()}`,
-      type: 'Reward',
+      type: type as any,
       farmId: currentUser.esin,
       details: reason,
       value: amount,
       unit: 'EAC'
     };
     await saveCollectionItem('transactions', newTx, currentUser.esin);
-  }, [setUser]);
+    dispatchSignal({
+      title: 'REGISTRY_CREDIT',
+      message: `Node accrued ${amount} EAC: ${reason}.`,
+      priority: 'low',
+      type: 'ledger_anchor',
+      origin: 'TREASURY',
+      actionIcon: 'Zap'
+    });
+  }, [setUser, dispatchSignal]);
 
   useEffect(() => {
-    iotService.startSimulation(handleEarnEAC);
+    iotService.startOldSimulation(handleEarnEAC);
     return () => iotService.stopSimulation();
   }, [handleEarnEAC]);
 
@@ -1096,7 +1110,7 @@ const App: React.FC = () => {
     }
   }, [user, hoodConnections, navigate, handleEarnEAC, dispatchSignal]);
 
-  const handleSpendEAC = useCallback(async (amount: number, reason: string) => {
+  const handleSpendEAC = useCallback(async (amount: number, reason: string, type: string = 'Outflow'): Promise<boolean> => {
     const currentUser = useUserStore.getState().user;
     if (!currentUser) {
       navigate('auth');
@@ -1124,7 +1138,7 @@ const App: React.FC = () => {
     setUser(updatedUser);
     const newTx: AgroTransaction = {
       id: `TX-${Date.now()}`,
-      type: 'Transfer',
+      type: type as any,
       farmId: currentUser.esin,
       details: reason,
       value: -amount,
@@ -1140,7 +1154,7 @@ const App: React.FC = () => {
       actionIcon: 'Coins'
     });
     return true;
-  }, [setUser, setView, dispatchSignal]);
+  }, [setUser, navigate, dispatchSignal]);
 
   const handlePerformPermanentAction = useCallback(async (actionKey: string, reward?: number, reason?: string) => {
     const currentUser = useUserStore.getState().user;
@@ -1149,6 +1163,80 @@ const App: React.FC = () => {
     if (ok && reward && reason) await handleEarnEAC(reward, reason);
     return ok;
   }, [handleEarnEAC]);
+
+  const handleSwapEAT = useCallback(async (eatAmount: number) => {
+    const currentUser = useUserStore.getState().user;
+    if (!currentUser || currentUser.wallet.eatBalance < eatAmount) return false;
+
+    const eacGain = eatAmount * currentUser.wallet.exchangeRate;
+    const updatedUser: User = {
+      ...currentUser,
+      wallet: {
+        ...currentUser.wallet,
+        eatBalance: currentUser.wallet.eatBalance - eatAmount,
+        balance: currentUser.wallet.balance + eacGain
+      }
+    };
+
+    const syncOk = await syncUserToCloud(updatedUser);
+    if (!syncOk) return false;
+
+    setUser(updatedUser);
+
+    const newTx: AgroTransaction = {
+      id: `TX-SWAP-${Date.now()}`,
+      type: 'Swap',
+      farmId: currentUser.esin,
+      details: `CONVERTED ${eatAmount} EAT TO ${eacGain.toFixed(2)} EAC`,
+      value: eacGain,
+      unit: 'EAC'
+    };
+    await saveCollectionItem('transactions', newTx, currentUser.esin);
+
+    return true;
+  }, [setUser]);
+
+  const handleStakeEAT = useCallback(async (amount: number, tierId: string, yieldRate: number) => {
+    const currentUser = useUserStore.getState().user;
+    if (!currentUser || currentUser.wallet.eatBalance < amount) return false;
+
+    const newStake: StakeInfo = {
+      id: `STAKE-${Date.now()}`,
+      tierId,
+      amount,
+      startTime: new Date().toISOString(),
+      yield: yieldRate,
+      lastClaim: new Date().toISOString()
+    };
+
+    const updatedUser: User = {
+      ...currentUser,
+      wallet: {
+        ...currentUser.wallet,
+        eatBalance: currentUser.wallet.eatBalance - amount,
+        stakedEat: (currentUser.wallet.stakedEat || 0) + amount,
+        stakes: [...(currentUser.wallet.stakes || []), newStake]
+      }
+    };
+
+    const syncOk = await syncUserToCloud(updatedUser);
+    if (!syncOk) return false;
+
+    setUser(updatedUser);
+
+    const newTx: AgroTransaction = {
+      id: `TX-STAKE-${Date.now()}`,
+      type: 'Staking',
+      farmId: currentUser.esin,
+      details: `LOCKED ${amount} EAT IN ${tierId.toUpperCase()}`,
+      value: -amount,
+      unit: 'EAT'
+    };
+    await saveCollectionItem('transactions', newTx, currentUser.esin);
+
+    return true;
+  }, [setUser]);
+
   const handleLogout = async () => { await signOutSteward(); setUser(null); navigate('dashboard', null, false); };
   const markSignalAsRead = async (id: string, e?: React.MouseEvent) => { if (e) e.stopPropagation(); setSignals(signals.map(s => s.id === id ? { ...s, read: true } : s)); await updateSignalReadStatus(id, true); };
   const markAllSignalsAsRead = async () => { const unreadIds = signals.filter(s => !s.read).map(s => s.id); if (unreadIds.length === 0) return; setSignals(signals.map(s => ({ ...s, read: true }))); await markAllSignalsAsReadInDb(unreadIds); dispatchSignal({ title: 'INBOX_SYNCHRONIZED', message: 'All unread network signals have been cleared and archived.', priority: 'low', type: 'system', origin: 'MANUAL', actionIcon: 'CheckCircle2' }); };
@@ -1161,10 +1249,13 @@ const App: React.FC = () => {
     
     const routerProps = {
       user: currentUser,
+      metrics: currentUser.metrics,
       isGuest,
       onNavigate: navigate,
       onSpendEAC: handleSpendEAC,
       onEarnEAC: handleEarnEAC,
+      onSwap: handleSwapEAT,
+      onStake: handleStakeEAT,
       dispatchSignal,
       notify: dispatchSignal,
       onEmitSignal: dispatchSignal,
@@ -1188,6 +1279,9 @@ const App: React.FC = () => {
       setProposals,
       carbonCredits,
       setCarbonCredits,
+      onListCredit: listCredit,
+      onBuyCredit: buyCredit,
+      onMintCredit: mintCredit,
       stewardPositions,
       signals,
       setSignals,
@@ -1334,7 +1428,7 @@ const App: React.FC = () => {
         </nav>
       </div>
 
-      <main ref={mainContentRef} onScroll={(e) => handleScroll(e.currentTarget)} className={`transition-all duration-500 pt-14 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'lg:pl-80 pr-4 lg:pr-10' : 'lg:pl-24 pr-4 lg:pr-10'} pl-4 ${telemetryTheme}`}>
+      <main ref={mainContentRef} onScroll={(e) => handleScroll(e.currentTarget)} className={`transition-all duration-500 pt-14 pb-32 h-screen overflow-y-auto custom-scrollbar relative ${isSidebarOpen ? 'lg:pl-80 pr-2 lg:pr-4' : 'lg:pl-24 pr-2 lg:pr-4'} pl-4 ${telemetryTheme}`}>
         <div className="fixed top-8 left-0 right-0 z-[200] h-0.5 pointer-events-none">
           <div className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-300 ease-out" style={{ width: `${scrollProgress}%`, marginLeft: isSidebarOpen ? '20rem' : '5rem' }}></div>
         </div>
@@ -1387,6 +1481,14 @@ const App: React.FC = () => {
            </div>
 
            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <button 
+                onClick={() => setIsScannerOpen(true)}
+                className="hidden sm:flex p-2.5 rounded-xl border border-white/5 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all items-center gap-2 group"
+                title="Scan Shard"
+              >
+                 <Scan size={18} className="group-hover:scale-110 transition-transform" />
+                 <span className="text-[8px] font-black uppercase tracking-widest overflow-hidden transition-all w-0 group-hover:w-10">SCAN</span>
+              </button>
               <button 
                 onClick={() => { setIsConsultantOpen(!isConsultantOpen); setIsGlobalSearchOpen(false); setIsInboxOpen(false); }}
                 className={`p-2.5 rounded-xl border transition-all flex items-center justify-center relative group ${isConsultantOpen ? 'bg-indigo-600 text-white border-white shadow-[0_0_20px_rgba(99,102,241,0.5)]' : 'bg-white/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}`}
@@ -1478,23 +1580,19 @@ const App: React.FC = () => {
 
         <div 
           className="animate-in fade-in slide-in-from-bottom-4 duration-500 relative flex-1 min-h-0 flex flex-col"
-          style={{ 
-            scale: AGRO_EQUATIONS.getSymbioticScale(window.innerWidth, window.innerHeight),
-            transformOrigin: 'top center' 
-          }}
         >
           <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 text-emerald-500 animate-spin" /></div>}>
             {renderView()}
           </Suspense>
         </div>
 
-        <footer className="mt-20 pt-8 border-t border-white/5 pb-12 flex flex-col items-center gap-10 opacity-60 hover:opacity-100 transition-opacity duration-500 px-4">
+        <footer className="mt-12 pt-6 border-t border-white/5 pb-10 flex flex-col items-center gap-6 opacity-60 hover:opacity-100 transition-opacity duration-500 px-4">
            <div className="flex w-full items-center justify-between gap-4">
               <button onClick={goBack} className="flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all active:scale-95 group/back" title="Vector Retrograde">
                  <ChevronLeft size={16} className="group-hover/back:-translate-x-1 transition-transform" />
                  <div className="flex flex-col items-start text-left hidden md:block"><span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none">Retrograde</span><span className="text-6px font-mono opacity-50 mt-1 uppercase">Prev_Vector</span></div>
               </button>
-              <div className="flex p-1 glass-card rounded-[24px] bg-black/40 border border-white/5 shadow-3xl">
+              <div className="flex p-1 glass-card rounded-3xl bg-black/40 border border-white/5 shadow-2xl">
                  {[ { id: 'dashboard', label: 'Command', icon: LayoutGrid }, { id: 'mesh_protocol', label: 'Mesh', icon: NetworkIcon }, { id: 'economy', label: 'Market', icon: Globe }, { id: 'wallet', label: 'Treasury', icon: Coins }, { id: 'intelligence', label: 'Science', icon: Microscope }, { id: 'sitemap', label: 'Matrix', icon: MapIcon } ].map(shard => (
                    <NavigationLink key={shard.id} path={shard.id} className={`p-3 rounded-xl transition-all group/shard relative ${view === shard.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-600 hover:text-white hover:bg-white/5'}`} title={shard.label}>
                       <AgroResilienceIcon resilience={view === shard.id ? 1.5 : 0.4}>
@@ -1539,6 +1637,23 @@ const App: React.FC = () => {
       <EvidenceModal isOpen={isEvidenceOpen} onClose={() => setIsEvidenceOpen(false)} user={user || GUEST_STWD} onMinted={(v) => handleEarnEAC(v, 'Evidence Minted')} onNavigate={navigate} taskToIngest={activeTaskForEvidence} />
       <LiveVoiceBridge isOpen={false} isGuest={!user} onClose={() => {}} />
       <FloatingConsultant isOpen={isConsultantOpen} onClose={() => setIsConsultantOpen(false)} user={user || GUEST_STWD} onNavigate={navigate} />
+      {user && (
+        <ShardScanner 
+          isOpen={isScannerOpen} 
+          onClose={() => setIsScannerOpen(false)} 
+          onVerified={(data) => {
+            setNotifications(prev => [{
+              id: `VER-${Date.now()}`,
+              type: 'success',
+              title: 'SHARD_VERIFIED',
+              message: `Asset ${data.id} has been anchored to your local registry.`,
+              duration: 5000,
+              actionIcon: 'BadgeCheck'
+            }, ...prev]);
+          }}
+          userEsin={user.esin}
+        />
+      )}
       <RegistrationResumePopup />
     </div>
     </ErrorBoundary>

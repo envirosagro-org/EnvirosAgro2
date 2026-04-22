@@ -1,277 +1,102 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAuthenticated() { return request.auth != null; }
-    function isOwner(ownerUid) { return isAuthenticated() && request.auth.uid == ownerUid; }
-    function isDocOwner() { 
-      return isAuthenticated() && 
-             (request.auth.uid == resource.data.stewardId || 
-              get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin == resource.data.stewardId); 
+    // 0. Global Safety Net
+    match /{document=**} { 
+      allow read, write: if false; 
     }
+
+    // Phase 3: Primitives
+    function isValidId(id) { 
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
     
-    // Validation
-    function isValidSteward(data) {
-      return data.stewardId is string && 
-             (data.stewardId == request.auth.uid || data.stewardId == data.esin) &&
-             data.name is string && data.name.size() > 0 &&
-             data.email is string && data.email.size() > 0 &&
-             data.esin is string && data.esin.size() > 0;
+    // User validation blueprint
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'esin', 'name', 'email', 'role']) &&
+             data.uid == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.esin is string && data.esin.size() > 0 && data.esin.size() <= 64;
     }
 
-    function isValidSignal(data) {
-      let userEsin = get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin;
-      return data.id is string &&
-             data.stewardId is string && (data.stewardId == request.auth.uid || data.stewardId == userEsin) &&
-             data.type is string &&
-             data.title is string && data.title.size() > 0 &&
-             data.message is string && data.message.size() > 0 &&
+    // Ledger Block validation blueprint
+    function isValidLedgerBlock(data) {
+      return data.keys().hasAll(['hash', 'previousHash', 'timestamp', 'index']) &&
+             data.hash is string && data.hash.size() <= 256 &&
+             data.previousHash is string && data.previousHash.size() <= 256 &&
              data.timestamp is string &&
-             data.read is bool;
+             data.index is number;
     }
 
-    function isValidMachineNode(data) {
-      let userEsin = get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin;
-      return data.id is string &&
-             data.stewardId is string && (data.stewardId == request.auth.uid || data.stewardId == userEsin) &&
-             data.name is string && data.name.size() > 0 &&
-             data.type is string &&
-             data.status is string;
+    // Signal validation blueprint
+    function isValidSignal(data) {
+      return data.keys().hasAll(['id', 'type', 'title', 'timestamp', 'priority']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.type is string && data.type.size() <= 64 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.timestamp is string &&
+             data.priority in ['low', 'medium', 'high', 'critical'];
     }
 
-    function isValidDevice(data) {
-      return data.deviceId is string && data.deviceId.size() > 0 && data.deviceId.size() < 100 &&
-             data.ownerUid is string && data.ownerUid == request.auth.uid &&
-             data.protocol in ['CAN', 'MQTT', 'HTTP', 'Modbus'] &&
-             data.status in ['Registered', 'Active', 'Offline'];
+    // Fleet validation blueprint
+    function isValidFleetNode(data) {
+      return data.keys().hasAll(['id', 'name', 'type', 'status']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.type is string && data.type.size() <= 100 &&
+             data.status in ['ONLINE', 'OFFLINE', 'MAINTENANCE'];
     }
 
-    match /proposals/{proposalId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated(); // Should be restricted in prod
+    // Transaction validation blueprint
+    function isValidTokenTransaction(data) {
+      return data.keys().hasAll(['id', 'type', 'farmId', 'details', 'value', 'unit', 'stewardId', 'lastModified']) &&
+             data.keys().size() == 8 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.type is string && data.type.size() <= 64 &&
+             data.farmId is string && data.farmId.size() <= 128 &&
+             data.farmId == request.auth.uid && 
+             data.details is string && data.details.size() <= 500 &&
+             data.value is number &&
+             data.unit is string && data.unit.size() <= 16 &&
+             data.stewardId is string && data.stewardId == request.auth.uid &&
+             data.lastModified is number;
     }
 
-    match /votes/{voteId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+    // Path rules
+    match /users/{userId} {
+      allow read: if isSignedIn(); // Users can view other stewards
+      allow create: if isVerified() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming());
+      allow update: if isVerified() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'bio', 'location', 'avatar', 'metrics', 'wallet', 'settings']);
     }
 
-    match /elections/{electionId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /products/{productId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /industrial_units/{unitId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /live_products/{productId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+    match /ledger/{blockHash} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn() && isValidId(blockHash);
+      allow create: if isVerified() && isValidId(blockHash) && isValidLedgerBlock(incoming());
+      allow update, delete: if false; // Immutable ledger
     }
 
     match /transactions/{txId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /media_ledger/{mediaId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /mempool/{txId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /tasks/{taskId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /blueprints/{blueprintId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /carbon_credits/{creditId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /orders/{orderId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /hood_connections/{connId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /projects/{projectId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /contracts/{contractId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /stewards/{stewardId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isOwner(stewardId) && isValidSteward(request.resource.data);
-      allow update: if isAuthenticated() && isOwner(stewardId) && isValidSteward(request.resource.data);
+      allow list: if isSignedIn() && resource.data.farmId == request.auth.uid;
+      allow get: if isSignedIn() && isValidId(txId) && resource.data.farmId == request.auth.uid;
+      allow create: if isVerified() && isValidId(txId) && isValidTokenTransaction(incoming());
+      allow update, delete: if false; // Immutable transactions
     }
 
     match /signals/{signalId} {
-      allow read: if isAuthenticated() && (resource.data.stewardId == request.auth.uid || resource.data.type == 'system');
-      allow create: if isAuthenticated() && isValidSignal(request.resource.data);
-      allow update: if isAuthenticated() && isDocOwner() && isValidSignal(request.resource.data);
-      allow delete: if isAuthenticated() && isDocOwner();
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(signalId) && isValidSignal(incoming());
+      allow update: if isVerified() && isValidId(signalId) && isValidSignal(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
     }
 
-    match /machine_nodes/{nodeId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidMachineNode(request.resource.data);
-      allow update: if isAuthenticated() && isDocOwner() && isValidMachineNode(request.resource.data);
-      allow delete: if isAuthenticated() && isDocOwner();
-    }
-
-    match /auditors/{auditorId} {
-      allow read: if isAuthenticated();
-      allow write: if false; // Managed via admin console
-    }
-
-    match /devices/{deviceId} {
-      // Only owner can read their device
-      allow read: if isAuthenticated() && isOwner(resource.data.ownerUid);
-      // Only authenticated user can create, and must set themselves as owner
-      allow create: if isAuthenticated() && isValidDevice(request.resource.data);
-      // Only owner can update
-      allow update: if isAuthenticated() && isOwner(resource.data.ownerUid) && isValidDevice(request.resource.data);
-      
-      match /telemetry/{telemetryId} {
-        // Only owner can read telemetry
-        allow read: if isAuthenticated() && isOwner(get(/databases/$(database)/documents/devices/$(deviceId)).data.ownerUid);
-        // Only owner can create telemetry
-        allow create: if isAuthenticated() && isOwner(get(/databases/$(database)/documents/devices/$(deviceId)).data.ownerUid);
-      }
-    }
-
-    match /blocks/{blockId} {
-      // Anyone authenticated can read the chain
-      allow read: if isAuthenticated();
-      // Only authenticated users can create a new block
-      // Immutability: deny update and delete
-      allow create: if isAuthenticated();
-      allow update, delete: if false;
-    }
-
-    match /calls/{callId} {
-      allow read, create, update: if isAuthenticated();
-      match /offerCandidates/{candidateId} {
-        allow read, create: if isAuthenticated();
-      }
-      match /answerCandidates/{candidateId} {
-        allow read, create: if isAuthenticated();
-      }
-    }
-
-    match /broadcasts/{sessionId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated();
-      match /segments/{segmentId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated();
-      }
-      match /comments/{commentId} {
-        allow read, create: if isAuthenticated();
-      }
-    }
-
-    function isValidSensorReading(data) {
-      let userEsin = get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin;
-      return data.stewardId is string && (data.stewardId == request.auth.uid || data.stewardId == userEsin) &&
-             data.sensorType is string && data.sensorType.size() > 0 &&
-             data.value is number &&
-             data.unit is string &&
-             data.timestamp is string;
-    }
-
-    function isValidTelemetryBatch(data) {
-      return data.droneId is string && data.droneId.size() > 0 &&
-             data.hash is string && data.hash.size() <= 64; // Max hash size
-    }
-
-    match /sensor_readings/{readingId} {
-      allow read: if isAuthenticated() && isDocOwner();
-      allow create: if isAuthenticated() && isValidSensorReading(request.resource.data);
-      allow update, delete: if false; // Sensor facts are immutable
-    }
-
-    match /telemetry_batches/{batchId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidTelemetryBatch(request.resource.data);
-      allow update, delete: if false;
-    }
-
-    match /market_analytics/{analyticsId} {
-      allow read: if isAuthenticated();
-      allow write: if false;
-    }
-
-    match /market_news/{newsId} {
-      allow read: if isAuthenticated();
-      allow write: if false;
-    }
-
-    match /plots/{plotId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && 
-                    (request.resource.data.stewardId == request.auth.uid || 
-                     get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin == request.resource.data.stewardId);
-      allow update: if isAuthenticated() && isDocOwner();
-      allow delete: if isAuthenticated() && isDocOwner();
-    }
-
-    function isValidMission(data) {
-      let userEsin = get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin;
-      return data.stewardId is string && (data.stewardId == request.auth.uid || data.stewardId == userEsin) &&
-             data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
-             data.status in ['PENDING', 'ACTIVE', 'COMPLETED', 'ABORTED'] &&
-             data.targetPlotId is string && data.targetPlotId.size() > 0;
-    }
-
-    function isValidAnchor(data) {
-      let userEsin = get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin;
-      return data.stewardId is string && (data.stewardId == request.auth.uid || data.stewardId == userEsin) &&
-             data.type in ['GRAFFITI', 'MARKER', 'INFOPANEL'] &&
-             data.spatialPos is map && data.spatialPos.keys().hasAll(['x', 'y', 'z']);
-    }
-
-    match /ar_anchors/{anchorId} {
-      allow read: if isAuthenticated() && (resource.data.stewardId == request.auth.uid || 
-                   get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin == resource.data.stewardId);
-      allow create: if isAuthenticated() && isValidAnchor(request.resource.data);
-      allow update: if isAuthenticated() && isDocOwner() && isValidAnchor(request.resource.data);
-      allow delete: if isAuthenticated() && isDocOwner();
-    }
-
-    match /missions/{missionId} {
-      allow read: if isAuthenticated() && (resource.data.stewardId == request.auth.uid || 
-                   get(/databases/$(database)/documents/stewards/$(request.auth.uid)).data.esin == resource.data.stewardId);
-      allow create: if isAuthenticated() && isValidMission(request.resource.data);
-      allow update: if isAuthenticated() && isDocOwner() && isValidMission(request.resource.data);
-      allow delete: if isAuthenticated() && isDocOwner();
+    match /fleet/{nodeId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(nodeId) && isValidFleetNode(incoming());
+      allow update: if isVerified() && isValidId(nodeId) && isValidFleetNode(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'lastModified']);
     }
   }
 }

@@ -6,19 +6,30 @@ class TelemetryService {
   private telemetryBuffer: DroneTelemetry[] = [];
   private batchInterval = 60000; // 1 minute
   private timer: NodeJS.Timeout | null = null;
+  private listeners: ((reading: DroneTelemetry) => void)[] = [];
+
+  public onLiveReading(callback: (reading: DroneTelemetry) => void) {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(cb => cb !== callback);
+    };
+  }
 
   public async addReading(reading: Omit<DroneTelemetry, 'id' | 'stewardId' | 'timestamp'>) {
     const userId = auth.currentUser?.uid;
-    if (!userId) return;
+    // We can still process even without userId for demo purposes, 
+    // but the backend requires it. Let's provide a fallback for demo:
+    const finalUserId = userId || 'demo-user';
 
     const data: DroneTelemetry = {
       ...reading,
       id: Math.random().toString(36).substr(2, 9),
-      stewardId: userId,
+      stewardId: finalUserId,
       timestamp: new Date().toISOString()
     };
 
     this.telemetryBuffer.push(data);
+    this.listeners.forEach(cb => cb(data));
 
     if (!this.timer) {
       this.timer = setTimeout(() => this.flushBatch(), this.batchInterval);

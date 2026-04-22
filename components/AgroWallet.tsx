@@ -79,6 +79,8 @@ import { HenIcon } from './Icons';
 import { analyzeInstitutionalRisk, consultFinancialOracle, AgroLangResponse, chatWithAgroLang } from '../services/agroLangService';
 import { initiatePayPalPayout } from '../services/paymentService';
 import { toast } from 'sonner';
+import { doc, getDocFromServer } from 'firebase/firestore';
+import { db } from '../src/firebase';
 
 import { TriggerButton } from './TriggerButton';
 import CostAccountingDashboard from './CostAccountingDashboard';
@@ -90,6 +92,7 @@ interface AgroWalletProps {
   onNavigate: (view: ViewState) => void;
   onUpdateUser: (updatedUser: User) => void;
   onSwap: (eatAmount: number) => Promise<boolean>;
+  onStake: (amount: number, tierId: string, yieldRate: number) => Promise<boolean>;
   onEarnEAC: (amount: number, reason: string) => void;
   onClaimSocialHarvest?: () => void;
   projects?: AgroProject[];
@@ -125,6 +128,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   onNavigate, 
   onUpdateUser, 
   onSwap, 
+  onStake,
   onEarnEAC, 
   onClaimSocialHarvest, 
   transactions = [],
@@ -160,8 +164,14 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   const [stakingAmount, setStakingAmount] = useState('100');
   const [selectedTier, setSelectedTier] = useState(STAKING_TIERS[0]);
 
-  // Routing Sync
+  // Routine Sync
   useEffect(() => {
+    // 1. Connection Test
+    getDocFromServer(doc(db, 'test', 'connection')).catch((e) => {
+      console.warn("Firestore might be offline, checking configuration.", e);
+    });
+
+    // 2. Routing Sync
     if (initialSection && ['treasury', 'staking', 'swap', 'gateway', 'ledger', 'accounting'].includes(initialSection)) {
       setActiveSubTab(initialSection as any);
     }
@@ -299,18 +309,37 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   const handleExecuteStake = async () => {
     const amount = Number(stakingAmount);
-    if (amount < selectedTier.min) {
+    if (isNaN(amount) || amount < selectedTier.min) {
       toast.error(`Minimum stake for ${selectedTier.label} is ${selectedTier.min} EAT.`);
       return;
     }
-    notify({ 
-      title: 'STAKING_COMMITTED', 
-      message: `${amount} EAT locked into ${selectedTier.label}.`, 
-      type: 'ledger_anchor', 
-      priority: 'medium',
-      actionIcon: 'Layers'
-    });
-    setStakingAmount(selectedTier.min.toString());
+
+    if (amount > user.wallet.eatBalance) {
+      toast.error("INSUFFICIENT_EAT: Node does not have enough equity shards.");
+      return;
+    }
+
+    setIsProcessingGateway(true);
+    try {
+      const ok = await onStake(amount, selectedTier.id, selectedTier.yield);
+      if (ok) {
+        notify({ 
+          title: 'STAKING_COMMITTED', 
+          message: `${amount} EAT locked into ${selectedTier.label}.`, 
+          type: 'ledger_anchor', 
+          priority: 'medium',
+          actionIcon: 'Layers'
+        });
+        toast.success("STAKE_LOCKED: Registry updated successfully.");
+        setStakingAmount(selectedTier.min.toString());
+      } else {
+        toast.error("STAKE_FAILED: Registry handshake rejected.");
+      }
+    } catch (err: any) {
+      toast.error(`STAKING ERROR: ${err.message || 'Unknown protocol drift.'}`);
+    } finally {
+      setIsProcessingGateway(false);
+    }
   };
 
   const paypalProviders = useMemo(() => 
@@ -319,118 +348,83 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+    <>
+      <div className="space-y-6 animate-in fade-in duration-700 pb-16 w-full max-w-full mx-auto px-4 md:px-6 relative overflow-hidden">
       <SEO title="Wallet" description="EnvirosAgro Wallet: Manage your EAC and EAT balances, stake assets, and track your financial resonance." />
       
-      {/* 1. Wallet Status HUD */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* 1. Wallet Status HUD - Optimized for grid density */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {[
-          { label: 'LIQUID UTILITY (EAC)', val: user.wallet.balance.toLocaleString(), color: 'text-emerald-500', icon: Coins },
-          { label: 'EQUITY ASSETS (EAT)', val: (user.wallet.eatBalance + (user.wallet.stakedEat || 0)).toFixed(4), color: 'text-amber-500', icon: Gem },
-          { label: 'RESONANCE FACTOR (m)', val: `x${user.wallet.exchangeRate.toFixed(2)}`, color: 'text-indigo-400', icon: Activity },
-          { label: 'CALIBRATED_PRICE', val: `${costAudit?.calibratedCost || 100} EAC`, color: 'text-rose-400', icon: Scale },
+          { label: 'LIQUID (EAC)', val: user.wallet.balance.toLocaleString(), color: 'text-emerald-500', icon: Coins },
+          { label: 'EQUITY (EAT)', val: (user.wallet.eatBalance + (user.wallet.stakedEat || 0)).toFixed(2), color: 'text-amber-500', icon: Gem },
+          { label: 'RESONANCE (m)', val: `x${user.wallet.exchangeRate.toFixed(1)}`, color: 'text-indigo-400', icon: Activity },
+          { label: 'MARKET PRICE', val: `${costAudit?.calibratedCost || 100} EAC`, color: 'text-rose-400', icon: Scale },
         ].map((m, i) => (
-          <div key={i} className="p-8 glass-card rounded-[48px] bg-black/40 border border-white/5 space-y-6 group hover:border-white/10 transition-all shadow-3xl relative overflow-hidden h-[220px] flex flex-col justify-between">
-             <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform"><m.icon size={120} className={m.color} /></div>
+          <div key={i} className="p-4 md:p-6 glass-card rounded-2xl md:rounded-[32px] bg-black/40 border border-white/5 space-y-2 md:space-y-4 group hover:border-white/10 transition-all shadow-lg relative overflow-hidden h-[120px] md:h-[160px] flex flex-col justify-between">
+             <div className="absolute top-0 right-0 p-4 opacity-[0.03]"><m.icon size={60} className={m.color} /></div>
              <div className="flex justify-between items-center relative z-10">
-                <p className={`text-[10px] ${m.color} font-black uppercase tracking-[0.4em] text-nowrap`}>{m.label}</p>
-                <div className={`p-2 rounded-xl bg-white/5 ${m.color}`}><m.icon size={16} /></div>
+                <p className={`text-[8px] md:text-[10px] ${m.color} font-black uppercase tracking-widest text-nowrap`}>{m.label}</p>
              </div>
              <div className="relative z-10">
-                <h4 className="text-5xl font-mono font-black text-white tracking-tighter leading-none">{m.val}</h4>
+                <h4 className="text-xl md:text-3xl font-mono font-black text-white tracking-tighter leading-none">{m.val}</h4>
              </div>
           </div>
         ))}
       </div>
 
-      {/* 2. Navigation Shards */}
-      <SectionTabs 
-        tabs={[
-          { id: 'treasury', label: 'Treasury Hub', icon: Wallet },
-          { id: 'accounting', label: 'Cost Management', icon: Calculator },
-          { id: 'gateway', label: 'PayPal Bridge', icon: Link2 },
-          { id: 'staking', label: 'Staking', icon: Layers },
-          { id: 'swap', label: 'Sharding', icon: ArrowRightLeft },
-          { id: 'ledger', label: 'History', icon: History },
-        ]}
-        activeTab={activeSubTab}
-        onTabChange={(id) => setActiveSubTab(id as any)}
-        variant="industrial"
-        className="mb-10"
-      />
+      {/* 2. Navigation Shards - Responsive */}
+      <div className="sticky top-0 z-20 bg-[#020503]/80 backdrop-blur-md pb-2 -mx-2 px-2">
+        <SectionTabs 
+          tabs={[
+            { id: 'treasury', label: 'Treasury', icon: Wallet },
+            { id: 'accounting', label: 'Costs', icon: Calculator },
+            { id: 'gateway', label: 'Bridge', icon: Link2 },
+            { id: 'staking', label: 'Stakes', icon: Layers },
+            { id: 'swap', label: 'Shards', icon: ArrowRightLeft },
+            { id: 'ledger', label: 'History', icon: History },
+          ]}
+          activeTab={activeSubTab}
+          onTabChange={(id) => setActiveSubTab(id as any)}
+          variant="industrial"
+        />
+      </div>
 
-      <div className="min-h-[850px] relative z-10">
-        
-        {/* --- VIEW: COST ACCOUNTING & CALIBRATION --- */}
-        {activeSubTab === 'accounting' && (
-          <CostAccountingDashboard 
-            costAudit={costAudit} 
-            onRunAudit={handleRunAudit}
-            oracleAdvice={oracleAdvice}
-          />
-        )}
+      {/* Main Content Area - Optimized single space for all sections */}
+      <div className="relative z-10 min-h-[50vh]">
+        <div className="transition-all duration-300 ease-in-out">
+          {/* Content rendered conditionally in this shared container */}
+          {activeSubTab === 'accounting' && (
+            <CostAccountingDashboard 
+              user={user}
+              transactions={transactions}
+              costAudit={costAudit} 
+              onRunAudit={handleRunAudit}
+              oracleAdvice={oracleAdvice}
+            />
+          )}
 
-        {/* --- VIEW: TREASURY HUB (Segregated) --- */}
-        {activeSubTab === 'treasury' && (
-          <div className="space-y-12 animate-in slide-in-from-left-4 duration-500">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div className="lg:col-span-8 glass-card p-12 md:p-16 rounded-[72px] border border-emerald-500/20 bg-emerald-500/[0.02] relative overflow-hidden flex flex-col justify-center min-h-[500px] shadow-3xl group">
-                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-6 transition-transform duration-[15s]"><Wallet size={500} /></div>
-                   <div className="relative z-10 space-y-12">
-                      <div className="text-center md:text-left">
-                         <span className="px-5 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full tracking-[0.5em] border border-emerald-500/20 shadow-inner italic">USER_TREASURY_SHARD</span>
-                         <div className="mt-10 flex flex-col md:flex-row items-baseline gap-6 justify-center md:justify-start">
-                            <h2 className="text-9xl md:text-[140px] font-black text-white tracking-tighter uppercase italic m-0 leading-none drop-shadow-[0_0_50px_rgba(16,185,129,0.2)]">
-                               {user.wallet.balance.toLocaleString()}
-                            </h2>
-                            <span className="text-4xl font-bold text-emerald-500 italic uppercase">EAC</span>
-                         </div>
+          {activeSubTab === 'treasury' && (
+             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                {/* Simplified Treasury View for smaller screens */}
+                <div className="glass-card p-6 md:p-10 rounded-[32px] md:rounded-[48px] border border-emerald-500/10 bg-emerald-500/[0.02] shadow-xl">
+                   <div className="text-center md:text-left space-y-4">
+                      <div className="flex flex-col items-center md:items-baseline gap-2">
+                         <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">
+                            {user.wallet.balance.toLocaleString()}
+                         </h2>
+                         <span className="text-2xl font-bold text-emerald-500 italic uppercase">EAC</span>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-6 max-w-2xl">
-                         <button 
-                           onClick={() => { setShowGatewayModal('deposit'); setGatewayStep('config'); }}
-                           className="flex-1 py-10 agro-gradient rounded-[36px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-[0_0_100px_rgba(16,185,129,0.3)] flex items-center justify-center gap-6 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-emerald-500/5 group"
-                         >
-                            <ArrowDownLeft size={32} /> INGEST PAYPAL
-                         </button>
-                         <button 
-                           onClick={() => { setShowGatewayModal('withdrawal'); setGatewayStep('config'); }}
-                           className="flex-1 py-10 bg-black/80 border-2 border-white/10 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.5em] shadow-2xl flex items-center justify-center gap-6 active:scale-95"
-                         >
-                            <ArrowUpRight size={32} className="text-blue-500" /> WITHDRAW PAYPAL
-                         </button>
-                      </div>
-                   </div>
-                </div>
-
-                <div className="lg:col-span-4 space-y-8">
-                   {/* Global Treasury View */}
-                   <div className="p-10 glass-card rounded-[56px] border border-indigo-500/20 bg-indigo-500/5 space-y-6 shadow-xl relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Globe2 size={160} className="text-indigo-400" /></div>
-                      <div className="relative z-10">
-                         <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">Global Network Treasury</p>
-                         <h4 className="text-5xl font-mono font-black text-white tracking-tighter italic mt-4">12.4M <span className="text-lg">EAC</span></h4>
-                         <p className="text-[10px] text-slate-500 font-medium italic mt-4 leading-relaxed">
-                            "Aggregated liquidity across all 4,214 active nodes in the EnvirosAgro ecosystem."
-                         </p>
-                      </div>
-                   </div>
-
-                   {/* Internal System Treasury */}
-                   <div className="p-10 glass-card rounded-[56px] border border-rose-500/20 bg-rose-500/5 space-y-6 shadow-xl relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform"><Database size={160} className="text-rose-400" /></div>
-                      <div className="relative z-10">
-                         <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest">Internal System Shard</p>
-                         <h4 className="text-5xl font-mono font-black text-white tracking-tighter italic mt-4">2.8M <span className="text-lg">EAC</span></h4>
-                         <p className="text-[10px] text-slate-500 font-medium italic mt-4 leading-relaxed">
-                            "Reserved for system-wide m-constant stabilization and EnvirosAgro Agro Lang resource anchoring."
-                         </p>
+                      <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                         <button onClick={() => { setShowGatewayModal('deposit'); setGatewayStep('config'); }} className="flex-1 py-4 bg-emerald-600 rounded-xl text-white font-black text-xs uppercase tracking-widest active:scale-95 transition-all">Ingest</button>
+                         <button onClick={() => { setShowGatewayModal('withdrawal'); setGatewayStep('config'); }} className="flex-1 py-4 bg-white/5 border border-white/10 rounded-xl text-white font-black text-xs uppercase tracking-widest active:scale-95 transition-all">Withdraw</button>
                       </div>
                    </div>
                 </div>
              </div>
-          </div>
-        )}
+          )}
+           {/* Other tab content follows same shared container approach */}
+        </div>
+      </div>
 
         {/* --- VIEW: PAYPAL BRIDGES --- */}
         {activeSubTab === 'gateway' && (
@@ -571,7 +565,13 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                             className="w-full bg-black border-2 border-white/10 rounded-2xl py-4 px-6 text-2xl font-mono font-black text-white outline-none focus:ring-4 focus:ring-indigo-500/20" 
                           />
                        </div>
-                       <button onClick={handleExecuteStake} className="py-5 px-10 agro-gradient rounded-2xl text-white font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 transition-all">STAKE SHARD</button>
+                       <button 
+                         onClick={handleExecuteStake} 
+                         disabled={isProcessingGateway}
+                         className="py-5 px-10 agro-gradient rounded-2xl text-white font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50"
+                       >
+                          {isProcessingGateway ? <Loader2 className="animate-spin" /> : 'STAKE SHARD'}
+                       </button>
                     </div>
                  </div>
                  <div className="w-px h-24 bg-white/5 hidden lg:block"></div>
@@ -583,54 +583,81 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
            </div>
         )}
 
-        {/* --- VIEW: SHARDING (SWAP) --- */}
-        {activeSubTab === 'swap' && (
-           <div className="max-w-4xl mx-auto space-y-12 animate-in zoom-in duration-700 px-4">
-              <div className="glass-card p-16 md:p-24 rounded-[80px] border-2 border-indigo-500/20 bg-[#020503] shadow-3xl text-center space-y-12 relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><ArrowRightLeft size={800} className="text-indigo-400" /></div>
-                 
-                 <div className="relative z-10 space-y-12">
-                    <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-[0_0_120px_rgba(99,102,241,0.3)] border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12">
-                       <Repeat size={64} className="text-white animate-spin-slow" />
-                    </div>
-                    <div className="space-y-4">
-                       <h3 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter m-0 leading-none drop-shadow-2xl">EQUITY <span className="text-indigo-400">SHARDING</span></h3>
-                       <p className="text-slate-500 text-2xl font-medium italic">"Liquidating equity assets into immediate utility shards."</p>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-10 py-16 border-y border-white/5 max-w-2xl mx-auto">
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full items-center">
-                          <div className="space-y-4 p-8 bg-black rounded-[48px] border border-white/5 shadow-inner">
-                             <p className="text-[10px] text-slate-500 uppercase font-black">FROM: EQUITY (EAT)</p>
-                             <input 
-                                type="number" value={swapAmount} onChange={e => setSwapAmount(e.target.value)}
-                                className="w-full bg-transparent border-none text-center text-5xl font-mono text-white outline-none focus:ring-0 font-black" 
-                             />
-                             <p className="text-xs text-slate-700 font-mono">Available: {user.wallet.eatBalance.toFixed(4)}</p>
-                          </div>
-                          <div className="relative flex justify-center">
-                             <div className="p-4 bg-indigo-600 rounded-2xl shadow-3xl relative z-10"><ArrowRight size={24} className="text-white" /></div>
-                          </div>
-                          <div className="space-y-4 p-8 bg-black rounded-[48px] border border-white/5 shadow-inner">
-                             <p className="text-[10px] text-slate-500 uppercase font-black">TO: UTILITY (EAC)</p>
-                             <p className="text-5xl font-mono font-black text-emerald-400">{(Number(swapAmount) * user.wallet.exchangeRate).toLocaleString()}</p>
-                             <p className="text-xs text-slate-700 font-mono">Rate: 1:{user.wallet.exchangeRate}</p>
-                          </div>
-                       </div>
-                    </div>
-
-                    <button 
-                       onClick={handleExecuteSwap}
-                       disabled={isSwapping || Number(swapAmount) <= 0 || Number(swapAmount) > user.wallet.eatBalance}
-                       className="w-full max-w-md py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-indigo-500/5 disabled:opacity-20"
-                    >
-                       {isSwapping ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : <RefreshCw size={24} className="mx-auto" />}
-                       <p className="mt-2">{isSwapping ? 'CONVERTING SHARDS...' : 'INITIALIZE SHARD CONVERSION'}</p>
-                    </button>
+        {/* --- VIEW: WITHDRAWAL --- */}
+        {activeSubTab === 'gateway' && (
+           <div className="max-w-2xl mx-auto glass-card p-16 rounded-[72px] border-2 border-emerald-500/20 bg-black/40 shadow-3xl text-center space-y-12">
+              <div className="space-y-4">
+                 <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Global <span className="text-emerald-400">Withdrawal</span></h4>
+                 <p className="text-slate-500 text-lg font-medium italic opacity-70">Transfer EAC liquidity to verified external gateways.</p>
+              </div>
+              <div className="space-y-6 text-left">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Withdrawal Amount (EAC)</label>
+                    <input 
+                      type="number" 
+                      className="w-full bg-black border-2 border-white/10 rounded-2xl py-6 px-8 text-3xl font-mono font-black text-white outline-none focus:ring-4 focus:ring-emerald-500/20" 
+                    />
                  </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4">Destination Gateway (PayPal/Wallet)</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g., steward@email.com or 0x..."
+                      className="w-full bg-black border-2 border-white/10 rounded-2xl py-6 px-8 text-lg font-mono text-white outline-none focus:ring-4 focus:ring-emerald-500/20" 
+                    />
+                 </div>
+                 <button className="w-full py-8 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-[0.3em] rounded-3xl shadow-xl active:scale-95 transition-all">
+                    INITIATE WITHDRAWAL
+                 </button>
               </div>
            </div>
         )}
+         {/* --- VIEW: SHARDING (SWAP) --- */}
+         {activeSubTab === 'swap' && (
+            <div className="glass-card p-16 md:p-24 rounded-[80px] border-2 border-indigo-500/20 bg-[#020503] shadow-3xl text-center space-y-12 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform duration-[15s] pointer-events-none"><ArrowRightLeft size={800} className="text-indigo-400" /></div>
+               
+               <div className="relative z-10 space-y-12">
+                  <div className="w-32 h-32 rounded-[44px] bg-indigo-600 flex items-center justify-center shadow-[0_0_120px_rgba(99,102,241,0.3)] border-4 border-white/10 mx-auto transition-transform duration-700 group-hover:rotate-12">
+                     <Repeat size={64} className="text-white animate-spin-slow" />
+                  </div>
+                  <div className="space-y-4">
+                     <h3 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter m-0 leading-none drop-shadow-2xl">EQUITY <span className="text-indigo-400">SHARDING</span></h3>
+                     <p className="text-slate-500 text-2xl font-medium italic">"Liquidating equity assets into immediate utility shards."</p>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-10 py-16 border-y border-white/5 max-w-2xl mx-auto">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full items-center">
+                        <div className="space-y-4 p-8 bg-black rounded-[48px] border border-white/5 shadow-inner">
+                           <p className="text-[10px] text-slate-500 uppercase font-black">FROM: EQUITY (EAT)</p>
+                           <input 
+                              type="number" value={swapAmount} onChange={e => setSwapAmount(e.target.value)}
+                              className="w-full bg-transparent border-none text-center text-5xl font-mono text-white outline-none focus:ring-0 font-black" 
+                           />
+                           <p className="text-xs text-slate-700 font-mono">Available: {user.wallet.eatBalance.toFixed(4)}</p>
+                        </div>
+                        <div className="relative flex justify-center">
+                           <div className="p-4 bg-indigo-600 rounded-2xl shadow-3xl relative z-10"><ArrowRight size={24} className="text-white" /></div>
+                        </div>
+                        <div className="space-y-4 p-8 bg-black rounded-[48px] border border-white/5 shadow-inner">
+                           <p className="text-[10px] text-slate-500 uppercase font-black">TO: UTILITY (EAC)</p>
+                           <p className="text-5xl font-mono font-black text-emerald-400">{(Number(swapAmount) * user.wallet.exchangeRate).toLocaleString()}</p>
+                           <p className="text-xs text-slate-700 font-mono">Rate: 1:{user.wallet.exchangeRate}</p>
+                        </div>
+                     </div>
+                  </div>
+
+                  <button 
+                     onClick={handleExecuteSwap}
+                     disabled={isSwapping || Number(swapAmount) <= 0 || Number(swapAmount) > user.wallet.eatBalance}
+                     className="w-full max-w-md py-10 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-indigo-500/5 disabled:opacity-20"
+                  >
+                     {isSwapping ? <Loader2 className="w-8 h-8 animate-spin mx-auto" /> : <RefreshCw size={24} className="mx-auto" />}
+                     <p className="mt-2">{isSwapping ? 'CONVERTING SHARDS...' : 'INITIALIZE SHARD CONVERSION'}</p>
+                  </button>
+               </div>
+            </div>
+         )}
 
         {/* --- VIEW: LEDGER HISTORY --- */}
         {activeSubTab === 'ledger' && (
@@ -698,7 +725,6 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
         )}
 
       </div>
-
       {/* --- GATEWAY FLOW MODAL --- */}
       {showGatewayModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -908,7 +934,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
         .animate-scan { animation: scan 3s linear infinite; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
-    </div>
+    </>
   );
 };
 

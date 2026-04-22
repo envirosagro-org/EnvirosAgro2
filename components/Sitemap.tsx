@@ -126,7 +126,7 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-1000 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+    <div className="space-y-12 animate-in fade-in duration-1000 pb-32 mx-auto px-4 relative overflow-hidden w-full max-w-full">
       
       {/* 1. Matrix Header HUD */}
       <div className="glass-card p-12 md:p-16 rounded-[80px] border-emerald-500/20 bg-emerald-600/[0.02] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-12 shadow-3xl z-10 backdrop-blur-3xl">

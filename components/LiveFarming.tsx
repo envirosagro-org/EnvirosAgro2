@@ -630,7 +630,7 @@ const LiveFarming: React.FC<LiveFarmingProps> = ({ user, products, onSaveProduct
                          </div>
                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Traceability <span className="text-indigo-400">Hub</span></h4>
                        </div>
-                       <Traceability product={selectedAsset} />
+                       <Traceability user={user} product={selectedAsset} />
                      </div>
 
                      <div className="mt-16 pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center relative z-10 gap-10">

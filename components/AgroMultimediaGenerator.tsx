@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SectionTabs } from './SectionTabs';
 import { 
   Video, 
@@ -23,7 +23,9 @@ import {
   Stamp,
   Fingerprint,
   Cpu,
-  FlaskConical
+  FlaskConical,
+  Activity,
+  Gauge
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -32,6 +34,7 @@ import {
   generateAgroAcoustic, 
   generateAgroDocument 
 } from '../services/agroLangService';
+import { iotService, TelemetryReading } from '../services/iotService';
 import { User, MediaShard } from '../types';
 import { HenIcon } from './Icons';
 import { SycamoreLogo } from './Icons';
@@ -65,6 +68,15 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
   const [resultText, setResultText] = useState<string | null>(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [hasKey, setHasKey] = useState<boolean | null>(null);
+  const [telemetry, setTelemetry] = useState<Record<string, TelemetryReading>>({});
+
+  useEffect(() => {
+    iotService.startSimulation();
+    const unsub = iotService.subscribe((reading) => {
+      setTelemetry(prev => ({ ...prev, [reading.channel]: reading }));
+    });
+    return () => { unsub(); };
+  }, []);
 
   const handleGenerate = async (overridePrompt?: string, overrideType?: string) => {
     const p = overridePrompt || prompt;
@@ -373,9 +385,9 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
 
                 <div className="grid grid-cols-3 gap-8">
                   {[
-                    { label: 'Yield Est.', val: '0.0', unit: 't/ha', col: 'text-emerald-400' },
-                    { label: 'Resonance', val: '0.0', unit: '%', col: 'text-blue-400' },
-                    { label: 'EAC Cost', val: '0', unit: 'EAC', col: 'text-rose-400' }
+                    { label: 'Yield Est.', val: (telemetry['ENERGY_OUTPUT']?.value || 4.2).toFixed(1), unit: 't/ha', col: 'text-emerald-400' },
+                    { label: 'Resonance', val: (telemetry['THERMAL_RESONANCE']?.value || 1400 / 10).toFixed(0), unit: '%', col: 'text-blue-400' },
+                    { label: 'EAC Cost', val: (telemetry['SHARD_VELOCITY']?.value || 142).toFixed(0), unit: 'EAC', col: 'text-rose-400' }
                   ].map((stat, i) => (
                     <div key={i} className="glass-card p-8 rounded-3xl border border-white/5 bg-black/40 text-center space-y-2">
                       <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{stat.label}</p>

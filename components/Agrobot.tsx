@@ -56,6 +56,15 @@ import { saveCollectionItem, listenToCollection } from '../services/firebaseServ
 import { spatialService, Plot } from '../services/spatialService';
 import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
+import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import L from 'leaflet';
+
+const customBotIcon = new L.DivIcon({
+  className: 'custom-bot-icon',
+  html: `<div style="width: 30px; height: 30px; background-color: #4f46e5; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(79, 70, 229, 0.5); display: flex; align-items: center; justify-content: center;"><span style="color: white; font-size: 14px;">🤖</span></div>`,
+  iconSize: [30, 30],
+  iconAnchor: [15, 15]
+});
 
 interface AgrobotProps {
   user: User;
@@ -92,19 +101,39 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
     else if (initialSection === 'security') setActiveTab('terminal');
   }, [initialSection]);
 
-  // Initialize fleet with user coordinates if available
   useEffect(() => {
-    const baseLat = user.coords?.lat || 0;
-    const baseLng = user.coords?.lng || 0;
-    
-    setFleet(INITIAL_FLEET.map(bot => ({
-      ...bot,
-      pos: {
-        x: baseLat + (Math.random() - 0.5) * 0.005,
-        y: baseLng + (Math.random() - 0.5) * 0.005
+    if (!user.uid) return;
+    const unsub = listenToCollection('fleet', (nodes: any[]) => {
+      if (nodes.length > 0) {
+        // Map from DB schema to Crawler UI schema
+        const mappedFleet: Crawler[] = nodes.map(n => ({
+          id: n.id,
+          name: n.name,
+          type: n.type as 'SoilProbe' | 'SpectralDrone' | 'HarvesterBot',
+          status: n.status as 'ACTIVE' | 'MAINTENANCE' | 'SECURITY_LOCK',
+          handshake: 'ZK_VERIFIED',
+          load: Math.floor(Math.random() * 100),
+          battery: Math.floor(Math.random() * 100),
+          threatLevel: Math.floor(Math.random() * 5),
+          pos: { x: user.coords?.lat || 0, y: user.coords?.lng || 0 } // In a prod env, this would be updated via IoT Service 
+        }));
+        setFleet(mappedFleet);
+      } else {
+        // Bootstrap mock data to Firebase
+        const baseLat = user.coords?.lat || 0;
+        const baseLng = user.coords?.lng || 0;
+        INITIAL_FLEET.forEach(bot => {
+          saveCollectionItem('fleet', {
+            id: bot.id,
+            name: bot.name,
+            type: bot.type,
+            status: bot.status
+          });
+        });
       }
-    })));
-  }, [user.coords]);
+    }, true);
+    return () => unsub();
+  }, [user.uid, user.coords]);
 
   const [fleet, setFleet] = useState<Crawler[]>([]);
   const [packetLogs, setPacketLogs] = useState<any[]>([]);
@@ -175,6 +204,22 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
           pos: { x: newPos.x, y: 0, z: newPos.y }, // Mapping 2D to 3D space (Lat/Lng)
           rot: { x: 0, y: Math.atan2(dy, dx) * (180 / Math.PI), z: 0 },
           anim_state: 'working'
+        });
+
+        // Send simulated telemetry to the telemetryService
+        import('../services/telemetryService').then(({ telemetryService }) => {
+          telemetryService.addReading({
+            droneId: bot.id,
+            battery: 100 - Math.random() * 20,
+            speed: Math.sqrt(dx*dx + dy*dy) * 10,
+            heading: Math.atan2(dy, dx) * (180 / Math.PI),
+            sensors: {},
+            gps: {
+              lat: newPos.x,
+              lng: newPos.y,
+              alt: 10
+            }
+          });
         });
 
         return { ...bot, pos: newPos };
@@ -332,7 +377,7 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-32 mx-auto px-4 relative overflow-hidden w-full max-w-full">
       
       {/* 1. Swarm HUD */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10">
@@ -450,37 +495,56 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
                  </div>
 
                  {/* Tactical Radar Visualization */}
-                 <div className="relative w-full max-w-[800px] flex-1 aspect-square z-10 flex items-center justify-center mx-auto xl:mx-0">
-                    <div className="absolute inset-0 border-2 border-indigo-500/20 rounded-full"></div>
-                    <div className="absolute inset-[15%] border-2 border-indigo-500/10 rounded-full"></div>
-                    <div className="absolute inset-[30%] border-2 border-indigo-500/5 rounded-full"></div>
-                    <div className="absolute top-1/2 left-1/2 w-1/2 h-[6px] bg-gradient-to-r from-indigo-500 to-transparent origin-left animate-spin-slow shadow-[0_0_30px_rgba(99,102,241,0.5)]"></div>
+                 <div className="relative w-full max-w-[800px] flex-1 aspect-[4/3] xl:aspect-square z-10 flex items-center justify-center mx-auto xl:mx-0 rounded-[48px] overflow-hidden border-4 border-indigo-500/20 shadow-[-20px_0_100px_rgba(99,102,241,0.15)]">
+                    <MapContainer 
+                      center={user.coords ? [user.coords.lat, user.coords.lng] : [0, 0]} 
+                      zoom={14} 
+                      className="w-full h-full"
+                      zoomControl={false}
+                    >
+                      <TileLayer
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                      />
+                      
+                      {/* Base Station Circle */}
+                      {user.coords && (
+                        <Circle 
+                          center={[user.coords.lat, user.coords.lng]} 
+                          radius={1400} 
+                          pathOptions={{ color: '#4f46e5', fillColor: '#4f46e5', fillOpacity: 0.1, dashArray: '10, 10' }} 
+                        />
+                      )}
+                      
+                      {fleet.map((bot) => (
+                        bot.pos ? (
+                        <Marker 
+                          key={bot.id}
+                          position={[bot.pos.x, bot.pos.y]}
+                          icon={customBotIcon}
+                          eventHandlers={{
+                            click: () => {
+                              setSelectedBotId(bot.id);
+                            },
+                          }}
+                        >
+                          <Popup className="agro-popup">
+                            <div className="bg-black/90 p-3 rounded-lg border border-indigo-500/30 font-mono text-[11px] shadow-2xl">
+                              <p className="text-white font-bold mb-2 uppercase text-indigo-400">{bot.name} [{bot.status}]</p>
+                              <div className="text-slate-400">Load: {bot.load}% | Bat: {bot.battery}%</div>
+                            </div>
+                          </Popup>
+                        </Marker>
+                        ) : null
+                      ))}
+                    </MapContainer>
                     
-                    {fleet.map((bot) => (
-                       <div 
-                         key={bot.id} 
-                         onClick={() => setSelectedBotId(bot.id)}
-                         className={`absolute w-16 h-16 -ml-8 -mt-8 cursor-pointer transition-all duration-700 ${selectedBotId === bot.id ? 'scale-150 z-50' : 'hover:scale-125 z-40'}`}
-                         style={{ left: `${bot.pos.x}%`, top: `${bot.pos.y}%` }}
-                       >
-                          <div className={`w-full h-full rounded-full border-4 border-white shadow-2xl flex items-center justify-center transition-all ${bot.status === 'SECURITY_LOCK' ? 'bg-rose-600' : selectedBotId === bot.id ? 'bg-indigo-600' : 'bg-emerald-600'}`}>
-                             <HenIcon size={28} className="text-white" />
-                          </div>
-                          {selectedBotId === bot.id && <div className="absolute inset-[-20px] rounded-full border-4 border-dashed border-indigo-400 animate-spin-slow"></div>}
+                    <div className="absolute top-0 left-0 m-6 z-[400] glass-card rounded-[24px] border border-white/10 bg-black/80 p-5 shadow-2xl animate-float backdrop-blur-3xl">
+                       <div className="flex items-center gap-3 mb-2">
+                          <Radio className="text-emerald-400 animate-pulse" size={18} />
+                          <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Live Fleet Nexus</span>
                        </div>
-                    ))}
-                    
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                       <div className="w-20 h-20 bg-white rounded-full shadow-[0_0_100px_#fff] z-10 animate-pulse border-[12px] border-white/20"></div>
-                       <p className="absolute mt-32 text-[12px] font-black text-white uppercase tracking-[0.6em] opacity-40 italic">EA_CORE_#882A</p>
-                    </div>
-                    
-                    <div className="absolute top-0 left-0 p-8 glass-card rounded-[32px] border border-white/10 bg-black/60 backdrop-blur-xl animate-float">
-                       <div className="flex items-center gap-4 mb-3">
-                          <Radio className="text-emerald-400 animate-pulse" size={24} />
-                          <span className="text-sm font-black text-white uppercase tracking-widest">Live Radar Ingest</span>
-                       </div>
-                       <p className="text-[11px] font-mono text-slate-500 uppercase tracking-widest">Sector_4 Range: 1.4km</p>
+                       <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest leading-relaxed">System Coordinates synced<br/>to real-time mesh.</p>
                     </div>
                  </div>
 

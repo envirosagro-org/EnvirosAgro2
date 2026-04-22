@@ -63,6 +63,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@firebase/eslint-plugin-security-rules": "^0.0.1",
     "@jridgewell/sourcemap-codec": "^1.5.0",
     "@rollup/plugin-inject": "^5.0.5",
     "@tailwindcss/vite": "^4.2.2",

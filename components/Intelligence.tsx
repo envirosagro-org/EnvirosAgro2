@@ -28,6 +28,8 @@ import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
 import { SEO } from './SEO';
 import { SectionTabs } from './SectionTabs';
+import { telemetryService } from '../services/telemetryService';
+import { DroneTelemetry } from '../types';
 import { AIAssistant } from './AIAssistant';
 
 interface IntelligenceProps {
@@ -188,16 +190,22 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   const [telemetryLogs, setTelemetryLogs] = useState<{timestamp: string, metric: string, value: string}[]>([]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (['telemetry', 'hub', 'twin'].includes(activeTab)) {
+    if (!['telemetry', 'hub', 'twin'].includes(activeTab)) return;
+
+    const cleanup = telemetryService.onLiveReading((reading: DroneTelemetry) => {
+      setTelemetryLogs(prev => {
         const metrics = ['Temperature', 'Soil Purity', 'm-Constant Drift', 'Photosynthetic Flux'];
         const metric = metrics[Math.floor(Math.random() * metrics.length)];
-        const value = (Math.random() * 100).toFixed(2);
-        const newLog = { timestamp: new Date().toLocaleTimeString(), metric, value };
-        setTelemetryLogs(prev => [newLog, ...prev].slice(0, 8));
-      }
-    }, 5000);
-    return () => clearInterval(interval);
+        const newLog = { 
+          timestamp: new Date().toLocaleTimeString(), 
+          metric: `${reading.droneId} : ${metric}`, 
+          value: JSON.stringify(reading.gps) || (Math.random() * 100).toFixed(2)
+        };
+        return [newLog, ...prev].slice(0, 8);
+      });
+    });
+    
+    return cleanup;
   }, [activeTab]);
 
   // --- SIMULATOR ---
@@ -268,6 +276,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   const [aiResult, setAiResult] = useState<AgroLangResponse | null>(null);
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [fileBase64, setFileBase64] = useState<string | null>(null);
+  const [uploadedFileMime, setUploadedFileMime] = useState<string>('image/jpeg');
   const oracleFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDeepAIQuery = async () => {
@@ -276,7 +285,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
     setAiThinking(true);
     setAiResult(null);
     try {
-      const resText = await analyzeMedia(fileBase64!, 'image/jpeg', aiQuery);
+      const resText = await analyzeMedia(fileBase64!, uploadedFileMime, aiQuery);
       setAiResult({ text: resText });
       onEarnEAC(10, "ORACLE_DIAGNOSTIC_FINALIZED");
     } finally {
@@ -287,6 +296,42 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   // --- TREND INGEST ---
   const [isIngestingTrends, setIsIngestingTrends] = useState(false);
   const [trendsResult, setTrendsResult] = useState<AgroLangResponse | null>(null);
+  
+  // Audio Analysis States
+  const [audioBase64, setAudioBase64] = useState<string | null>(null);
+  const [isAnalyzingAudio, setIsAnalyzingAudio] = useState(false);
+  const [audioResult, setAudioResult] = useState<string | null>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (ev.target?.result) setAudioBase64(ev.target.result.toString());
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAnalyzeAudio = async () => {
+    if (!audioBase64) return;
+    if (!await onSpendEAC(20, 'ACOUSTIC_PEST_SCAN')) return;
+    setIsAnalyzingAudio(true);
+    setAudioResult(null);
+    try {
+      const parts = audioBase64.split(',');
+      const b64 = parts[1];
+      const mime = parts[0].split(':')[1].split(';')[0];
+      const res = await analyzeMedia(b64, mime, "Analyze this audio spectrum for potential pest detection or anomalous signatures. Suggest optimal intervention.");
+      setAudioResult(res);
+      onEarnEAC(10, 'ACOUSTIC_SIGNATURE_MAPPED');
+    } catch (e) {
+      setAudioResult("AUDIO_ERROR: Spectral analysis failed.");
+    } finally {
+      setIsAnalyzingAudio(false);
+    }
+  };
+
   const handleIngestTrends = async () => {
     setIsIngestingTrends(true);
     try {
@@ -297,7 +342,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   };
 
   return (
-    <div className="space-y-16 md:space-y-24 animate-in fade-in duration-500 pb-48 max-w-[1600px] mx-auto px-4 relative">
+    <div className="space-y-16 md:space-y-24 animate-in fade-in duration-500 pb-48 mx-auto px-4 relative w-full max-w-full">
       <SEO title="Intelligence" description="EnvirosAgro Intelligence: Access AI-driven insights, analyze sustainability metrics, and run agricultural simulations." />
       {/* HUD Header */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -658,15 +703,35 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
 
                 <div className="flex flex-col xl:flex-row gap-12 flex-1 min-h-0 h-full">
                    <div className="flex-1 min-h-[400px] h-full bg-black/60 rounded-[56px] border-2 border-white/10 relative overflow-hidden flex items-center justify-center shadow-inner">
-                      {/* Simulated Spectrogram */}
-                      <div className="absolute inset-0 flex items-end justify-around px-20 pb-20 gap-2 opacity-60">
+                       {/* Simulated Spectrogram */}
+                      <div className="absolute inset-0 flex items-end justify-around px-20 pb-20 gap-2 opacity-60 pointer-events-none">
                         {Array.from({ length: 60 }).map((_, i) => (
-                          <div key={i} className="w-full bg-indigo-500/30 rounded-t-lg animate-pulse" style={{ height: `${10 + Math.random() * 80}%`, animationDelay: `${i * 0.03}s` }}></div>
+                          <div key={i} className={`w-full ${isAnalyzingAudio ? 'bg-rose-500/50 blink' : 'bg-indigo-500/30'} rounded-t-lg transition-colors duration-1000`} style={{ height: `${10 + Math.random() * 80}%`, animationDelay: `${i * 0.03}s` }}></div>
                         ))}
                       </div>
-                      <div className="relative z-10 text-center space-y-8">
+                      <div className="relative z-10 text-center space-y-8 flex flex-col items-center">
                         <div className="w-32 h-32 rounded-full border-[6px] border-indigo-500/20 border-t-indigo-500 animate-spin mx-auto shadow-[0_0_60px_rgba(99,102,241,0.2)]"></div>
-                        <p className="text-lg font-black text-white uppercase tracking-[0.6em] italic animate-pulse">Analyzing_Planetary_Soundscape...</p>
+                        <p className="text-lg font-black text-white uppercase tracking-[0.6em] italic animate-pulse">
+                          {isAnalyzingAudio ? 'Computing_Pest_Signatures...' : audioBase64 ? 'Audio_Ready_For_Synthesis' : 'Analyzing_Planetary_Soundscape...'}
+                        </p>
+                        
+                        <div className="flex items-center gap-4 mt-8">
+                           <input type="file" accept="audio/*" ref={audioInputRef} className="hidden" onChange={handleAudioUpload} />
+                           <button onClick={() => audioInputRef.current?.click()} className="px-6 py-3 border border-indigo-500/30 hover:border-indigo-400 bg-indigo-500/10 text-indigo-300 font-bold uppercase tracking-widest text-xs rounded-full transition-all">Upload Audio</button>
+                           {audioBase64 && (
+                              <button onClick={handleAnalyzeAudio} disabled={isAnalyzingAudio} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold uppercase tracking-widest text-xs rounded-full transition-all flex items-center gap-2">
+                                {isAnalyzingAudio ? <Loader2 className="w-4 h-4 animate-spin" /> : <Waves className="w-4 h-4" />}
+                                Analyze Spectrum
+                              </button>
+                           )}
+                        </div>
+                        
+                        {audioResult && (
+                          <div className="mt-8 max-w-xl mx-auto p-6 bg-black/80 border border-emerald-500/30 rounded-3xl text-left">
+                             <div className="flex items-center gap-3 mb-4 text-emerald-400"><ShieldAlert size={20} /><span className="font-bold uppercase tracking-widest text-xs">Analysis Complete</span></div>
+                             <p className="text-sm text-slate-300 whitespace-pre-wrap">{audioResult}</p>
+                          </div>
+                        )}
                       </div>
                    </div>
                    
@@ -897,6 +962,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
                              <input type="file" ref={oracleFileInputRef} onChange={(e) => {
                                const file = e.target.files?.[0];
                                if (file) {
+                                 setUploadedFileMime(file.type || 'image/jpeg');
                                  const reader = new FileReader();
                                  reader.onloadend = () => {
                                    setUploadedFile(reader.result as string);

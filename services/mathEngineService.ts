@@ -35,6 +35,23 @@ export const runMathEngineTick = async (user: User, updateUserState: (u: User) =
     let newViralLoad = currentMetrics.viralLoadSID - (newImmunity > 50 ? 0.2 : -0.1);
     newViralLoad = Math.max(0, Math.min(newViralLoad, 100));
     
+    // 5. Staking Yield Calculation
+    let stakingRewardsEAC = 0;
+    const updatedStakes = (user.wallet.stakes || []).map(stake => {
+      const lastClaimTime = new Date(stake.lastClaim || stake.startTime).getTime();
+      const currentTime = Date.now();
+      const diffMinutes = (currentTime - lastClaimTime) / (1000 * 60);
+      
+      if (diffMinutes >= 1) { // Apply yield every minute for simulation
+        // yield is APR, so we divide by (365 * 24 * 60) for per-minute
+        const minuteYield = (stake.yield / 100) / (365 * 24 * 60);
+        const reward = stake.amount * minuteYield;
+        stakingRewardsEAC += reward * 100; // Multiplier to make it visible in simulation
+        return { ...stake, lastClaim: new Date().toISOString() };
+      }
+      return stake;
+    });
+
     const updatedMetrics: SustainabilityMetrics = {
       ...currentMetrics,
       agriculturalCodeU: Number(newCa.toFixed(4)),
@@ -47,7 +64,12 @@ export const runMathEngineTick = async (user: User, updateUserState: (u: User) =
     
     const updatedUser: User = {
       ...user,
-      metrics: updatedMetrics
+      metrics: updatedMetrics,
+      wallet: {
+        ...user.wallet,
+        balance: user.wallet.balance + stakingRewardsEAC,
+        stakes: updatedStakes
+      }
     };
 
     // Update local state

@@ -1,181 +1,127 @@
 {
   "entities": {
-    "Steward": {
-      "title": "Steward",
-      "description": "Represents a user (steward) in the EnvirosAgro network.",
+    "User": {
+      "title": "Steward User Profile",
+      "description": "Represents an EnvirosAgro Steward/User",
       "type": "object",
       "properties": {
-        "stewardId": { "type": "string" },
+        "uid": { "type": "string" },
+        "esin": { "type": "string" },
         "name": { "type": "string" },
         "email": { "type": "string" },
-        "esin": { "type": "string" },
         "role": { "type": "string" },
-        "location": { "type": "string" },
-        "lastSync": { "type": "number" },
-        "completedActions": { "type": "array", "items": { "type": "string" } }
+        "wallet": {
+          "type": "object",
+          "properties": {
+            "balance": { "type": "number" },
+            "eatBalance": { "type": "number" }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "sustainabilityScore": { "type": "number" },
+            "agriculturalCodeU": { "type": "number" }
+          }
+        }
       },
-      "required": ["stewardId", "name", "email", "esin", "role"]
+      "required": ["uid", "esin", "name", "email", "role"]
     },
-    "Signal": {
-      "title": "Signal",
-      "description": "A network signal or notification dispatched to a steward.",
+    "FleetNode": {
+      "title": "Agrobot / IoT Fleet Node",
+      "description": "Represents a single registered machine or robot",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "stewardId": { "type": "string" },
+        "name": { "type": "string" },
         "type": { "type": "string" },
-        "origin": { "type": "string" },
+        "status": { "type": "string", "enum": ["ONLINE", "OFFLINE", "MAINTENANCE"] },
+        "stewardId": { "type": "string" },
+        "lastModified": { "type": "number" }
+      },
+      "required": ["id", "name", "type", "status"]
+    },
+    "VendorProduct": {
+      "title": "Marketplace Product",
+      "description": "Items listed for sale in the marketplace",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "supplierEsin": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "name", "price", "supplierEsin"]
+    },
+    "TokenTransaction": {
+      "title": "EAC Token Transaction",
+      "description": "A record of EAC tokens earned or spent",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "farmId": { "type": "string" },
+        "details": { "type": "string" },
+        "value": { "type": "number" },
+        "unit": { "type": "string" }
+      },
+      "required": ["id", "type", "farmId", "details", "value", "unit"]
+    },
+    "LedgerBlock": {
+      "title": "Blockchain Block",
+      "description": "A block of transactions on the EnvirosAgro ledger",
+      "type": "object",
+      "properties": {
+        "hash": { "type": "string" },
+        "previousHash": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "validator": { "type": "string" },
+        "index": { "type": "number" }
+      },
+      "required": ["hash", "previousHash", "timestamp", "index"]
+    },
+    "Signal": {
+      "title": "System Signal / Notification",
+      "description": "Real-time system pulse or message",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
         "title": { "type": "string" },
         "message": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
+        "timestamp": { "type": "string" },
         "read": { "type": "boolean" },
         "priority": { "type": "string" }
       },
-      "required": ["id", "stewardId", "type", "title", "message", "timestamp", "read"]
-    },
-    "MachineNode": {
-      "title": "MachineNode",
-      "description": "An IIoT machine node registered in the network.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "stewardId": { "type": "string" },
-        "name": { "type": "string" },
-        "type": { "type": "string" },
-        "status": { "type": "string" },
-        "lastModified": { "type": "number" }
-      },
-      "required": ["id", "stewardId", "name", "type", "status"]
-    },
-    "HardwareDevice": {
-      "title": "HardwareDevice",
-      "description": "Represents an IIoT hardware device registered in the FarmSwarm network.",
-      "type": "object",
-      "properties": {
-        "deviceId": { "type": "string", "description": "Unique identifier for the hardware." },
-        "ownerUid": { "type": "string", "description": "UID of the user who registered the device." },
-        "protocol": { "type": "string", "description": "Communication protocol (e.g., CAN, MQTT, Modbus)." },
-        "status": { "type": "string", "description": "Current operational status." },
-        "registeredAt": { "type": "string", "format": "date-time", "description": "Timestamp of registration." }
-      },
-      "required": ["deviceId", "ownerUid", "protocol", "status", "registeredAt"]
-    },
-    "TelemetryData": {
-      "title": "TelemetryData",
-      "description": "Represents persistent telemetry data stored in Firestore.",
-      "type": "object",
-      "properties": {
-        "deviceId": { "type": "string" },
-        "payload": { "type": "string", "description": "Serialized telemetry payload." },
-        "timestamp": { "type": "string", "format": "date-time" }
-      },
-      "required": ["deviceId", "payload", "timestamp"]
-    },
-    "BlockchainBlock": {
-      "title": "BlockchainBlock",
-      "description": "Represents an immutable block in the EnvirosAgro blockchain ledger.",
-      "type": "object",
-      "properties": {
-        "index": { "type": "integer", "description": "The block's position in the chain." },
-        "timestamp": { "type": "string", "format": "date-time", "description": "When the block was added." },
-        "transactions": { "type": "array", "items": { "type": "object" }, "description": "An array of transaction data." },
-        "previousHash": { "type": "string", "description": "The SHA-256 hash of the previous block." },
-        "hash": { "type": "string", "description": "The SHA-256 hash of the current block." },
-        "validator": { "type": "string", "description": "The node that validated the block." },
-        "status": { "type": "string", "enum": ["Confirmed", "Pending"] }
-      },
-      "required": ["index", "timestamp", "transactions", "previousHash", "hash", "validator", "status"]
-    },
-    "MarketAnalytics": {
-      "title": "MarketAnalytics",
-      "description": "Represents market analytics data.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "sales": { "type": "number" }
-      },
-      "required": ["name", "sales"]
-    },
-    "MarketNews": {
-      "title": "MarketNews",
-      "description": "Represents market news items.",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "date": { "type": "string" }
-      },
-      "required": ["title", "date"]
-    },
-    "Plot": {
-      "title": "Plot",
-      "description": "Represents a physical plot or shard on the farm.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "stewardId": { "type": "string" },
-        "name": { "type": "string" },
-        "geometry": { "type": "object", "description": "GeoJSON polygon geometry." },
-        "deviceId": { "type": "string", "description": "Associated IIoT device." }
-      },
-      "required": ["id", "stewardId", "name", "geometry"]
-    },
-    "Mission": {
-      "title": "Mission",
-      "description": "Represents a swarm mission forged by the Oracle.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "stewardId": { "type": "string" },
-        "title": { "type": "string" },
-        "objective": { "type": "string" },
-        "status": { "type": "string", "enum": ["ACTIVE", "COMPLETED", "ABORTED"] },
-        "plotId": { "type": "string" },
-        "requiredUnits": { "type": "integer" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "stewardId", "title", "objective", "status", "timestamp"]
+      "required": ["id", "type", "title", "timestamp", "priority"]
     }
   },
   "firestore": {
-    "/stewards/{stewardId}": {
-      "schema": { "$ref": "Steward" },
-      "description": "Collection of user profiles (stewards)."
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Holds steward profile records."
+    },
+    "/fleet/{nodeId}": {
+      "schema": { "$ref": "#/entities/FleetNode" },
+      "description": "Registry of agrobots and IoT equipment."
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/VendorProduct" },
+      "description": "Global marketplace listings."
+    },
+    "/ledger/{blockHash}": {
+      "schema": { "$ref": "#/entities/LedgerBlock" },
+      "description": "Verified blocks in the decentralized ledger."
+    },
+    "/transactions/{txId}": {
+      "schema": { "$ref": "#/entities/TokenTransaction" },
+      "description": "Ledger transactions for EAC tokens."
     },
     "/signals/{signalId}": {
-      "schema": { "$ref": "Signal" },
-      "description": "Collection of network signals and notifications."
-    },
-    "/machine_nodes/{nodeId}": {
-      "schema": { "$ref": "MachineNode" },
-      "description": "Collection of registered machine nodes."
-    },
-    "/devices/{deviceId}": {
-      "schema": { "$ref": "HardwareDevice" },
-      "description": "Collection of registered hardware devices."
-    },
-    "/devices/{deviceId}/telemetry/{telemetryId}": {
-      "schema": { "$ref": "TelemetryData" },
-      "description": "Collection of persistent telemetry records for a device."
-    },
-    "/blocks/{blockId}": {
-      "schema": { "$ref": "BlockchainBlock" },
-      "description": "The immutable blockchain ledger."
-    },
-    "/market_analytics/{analyticsId}": {
-      "schema": { "$ref": "MarketAnalytics" },
-      "description": "Collection of market analytics data."
-    },
-    "/market_news/{newsId}": {
-      "schema": { "$ref": "MarketNews" },
-      "description": "Collection of market news items."
-    },
-    "/plots/{plotId}": {
-      "schema": { "$ref": "Plot" },
-      "description": "Collection of physical plots."
-    },
-    "/missions/{missionId}": {
-      "schema": { "$ref": "Mission" },
-      "description": "Collection of swarm missions."
+      "schema": { "$ref": "#/entities/Signal" },
+      "description": "System broadcast signals for user notifications."
     }
   }
 }

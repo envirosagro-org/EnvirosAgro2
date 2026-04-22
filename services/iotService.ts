@@ -9,10 +9,67 @@ const SensorReadingSchema = z.object({
   unit: z.string(),
 });
 
+export type TelemetryChannel = 'ENERGY_OUTPUT' | 'PRESSURE_DRIFT' | 'THERMAL_RESONANCE' | 'COOLANT_FLOW' | 'SHARD_VELOCITY';
+
+export interface TelemetryReading {
+  channel: TelemetryChannel;
+  value: number;
+  unit: string;
+  timestamp: string;
+  nodeId: string;
+}
+
 class IoTSensorService {
   private simulationInterval: NodeJS.Timeout | null = null;
+  private listeners: Set<(reading: TelemetryReading) => void> = new Set();
 
-  public startSimulation(onReward: (amount: number, reason: string) => void) {
+  public startSimulation() {
+    if (this.simulationInterval) return;
+    this.simulationInterval = setInterval(() => {
+      const channels: TelemetryChannel[] = ['ENERGY_OUTPUT', 'PRESSURE_DRIFT', 'THERMAL_RESONANCE', 'COOLANT_FLOW', 'SHARD_VELOCITY'];
+      const channel = channels[Math.floor(Math.random() * channels.length)];
+      
+      let value = 0;
+      let unit = '';
+      
+      switch(channel) {
+        case 'ENERGY_OUTPUT': value = 4.0 + Math.random() * 0.5; unit = 'GW'; break;
+        case 'PRESSURE_DRIFT': value = 0.02 + Math.random() * 0.01; unit = 'psi'; break;
+        case 'THERMAL_RESONANCE': value = 1400 + Math.random() * 50; unit = '°C'; break;
+        case 'COOLANT_FLOW': value = 800 + Math.random() * 100; unit = 'L/s'; break;
+        case 'SHARD_VELOCITY': value = 140 + Math.random() * 10; unit = 'sh/m'; break;
+      }
+
+      const reading: TelemetryReading = {
+        channel,
+        value,
+        unit,
+        nodeId: 'CORE_REACTOR_S7',
+        timestamp: new Date().toISOString()
+      };
+
+      this.notifyListeners(reading);
+    }, 3000);
+  }
+
+  public stopSimulation() {
+    if (this.simulationInterval) {
+      clearInterval(this.simulationInterval);
+      this.simulationInterval = null;
+    }
+  }
+
+  public subscribe(callback: (reading: TelemetryReading) => void) {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  }
+
+  private notifyListeners(reading: TelemetryReading) {
+    this.listeners.forEach(cb => cb(reading));
+  }
+
+  // Legacy support for existing components if needed
+  public startOldSimulation(onReward: (amount: number, reason: string) => void) {
     if (this.simulationInterval) return;
     this.simulationInterval = setInterval(() => {
       const mockReading = {
@@ -22,13 +79,6 @@ class IoTSensorService {
       };
       this.addReading(mockReading, onReward);
     }, 5000);
-  }
-
-  public stopSimulation() {
-    if (this.simulationInterval) {
-      clearInterval(this.simulationInterval);
-      this.simulationInterval = null;
-    }
   }
 
   public async addReading(reading: Omit<SensorReading, 'id' | 'stewardId' | 'timestamp'>, onReward: (amount: number, reason: string) => void) {

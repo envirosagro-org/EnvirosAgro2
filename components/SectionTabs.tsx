@@ -71,7 +71,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
         className="overflow-x-auto no-scrollbar snap-x"
         style={{ scale: symbioticScale > 1.2 ? 1.05 : 1 }}
       >
-        <div className="flex gap-2 p-1.5 bg-black/20 border border-white/5 rounded-[32px] w-full mx-auto backdrop-blur-md">
+        <div className="flex gap-1 p-1 bg-black/20 border border-white/5 rounded-3xl w-full mx-auto backdrop-blur-md">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -81,7 +81,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onTabChange(tab.id)}
                 className={`
-                  flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap snap-center
+                  flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap snap-center
                   ${getTabStyles(isActive)}
                 `}
               >

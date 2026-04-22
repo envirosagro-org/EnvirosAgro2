@@ -39,6 +39,8 @@ interface UiStore {
   setMultimediaParams: (params: { prompt?: string; type?: string; autoGenerate?: boolean } | null) => void;
   selectedPlot: any | null;
   setSelectedPlot: (plot: any | null) => void;
+  isScannerOpen: boolean;
+  setIsScannerOpen: (isOpen: boolean) => void;
   generateShareUrl: (v?: ViewState, section?: string | null, id?: string | null) => string;
   navigate: (v: ViewState, section?: string | null, pushToHistory?: boolean, params?: any) => void;
   goBack: () => void;
@@ -62,6 +64,8 @@ export const useUiStore = create<UiStore>((set, get) => ({
   setMultimediaParams: (multimediaParams) => set({ multimediaParams }),
   selectedPlot: null,
   setSelectedPlot: (selectedPlot) => set({ selectedPlot }),
+  isScannerOpen: false,
+  setIsScannerOpen: (isScannerOpen) => set({ isScannerOpen }),
   generateShareUrl: (v, section, id) => {
     const state = get();
     const view = v || state.view;

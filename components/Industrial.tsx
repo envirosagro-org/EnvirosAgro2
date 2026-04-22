@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { iotService, TelemetryReading } from '../services/iotService';
 import { 
   Database, 
   PlusCircle, 
@@ -116,6 +117,24 @@ const Industrial: React.FC<IndustrialProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [oracleAdvice, setOracleAdvice] = useState<string | null>(null);
+  const [telemetry, setTelemetry] = useState<Record<string, TelemetryReading>>({});
+  const [logs, setLogs] = useState<{time: string, msg: string, type: string}[]>([
+    { time: new Date().toLocaleTimeString(), msg: 'Initializing digital twin sync sequence', type: 'SYSTEM' }
+  ]);
+
+  useEffect(() => {
+    iotService.startSimulation();
+    const unsubscribe = iotService.subscribe((reading) => {
+      setTelemetry(prev => ({ ...prev, [reading.channel]: reading }));
+      setLogs(prev => [
+        { time: new Date(reading.timestamp).toLocaleTimeString(), msg: `${reading.channel.replace(/_/g, ' ')}: ${reading.value.toFixed(2)}${reading.unit}`, type: 'INFO' },
+        ...prev
+      ].slice(0, 10));
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Sync with initialSection for Vector Routing
   useEffect(() => {
@@ -184,45 +203,41 @@ const Industrial: React.FC<IndustrialProps> = ({
   };
 
   return (
-    <div className="space-y-16 md:space-y-24 animate-in fade-in duration-700 pb-48 max-w-[1700px] mx-auto px-4 relative">
+    <div className="space-y-4 md:space-y-8 animate-in fade-in duration-700 pb-10 mx-auto px-2 md:px-3 relative w-full max-w-full">
       <SEO title="Industrial" description="EnvirosAgro Industrial Hub: Manage supply chains, monitor machinery, and oversee large-scale agricultural operations." />
       
       {/* 1. Supply Chain Resonance HUD */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
         {[
-          { label: 'Mesh Throughput', val: globalThroughput.toFixed(1), unit: 'GB/s', icon: Network, color: 'text-indigo-400' },
+          { label: 'Mesh Throughput', val: (telemetry['ENERGY_OUTPUT']?.value || globalThroughput).toFixed(1), unit: 'GB/s', icon: Network, color: 'text-indigo-400' },
           { label: 'Supply Shards', val: registryNodes.length.toLocaleString(), unit: 'NODES', icon: Box, color: 'text-emerald-400' },
-          { label: 'Quorum Integrity', val: '99.98', unit: '%', icon: ShieldCheck, color: 'text-blue-400' },
-          { label: 'Chain Latency', val: '14', unit: 'ms', icon: Zap, color: 'text-amber-400' },
+          { label: 'Core Temp', val: (telemetry['THERMAL_RESONANCE']?.value || 1400.0).toFixed(1), unit: '°C', icon: Activity, color: 'text-rose-400' },
+          { label: 'Chain Latency', val: (telemetry['SHARD_VELOCITY'] ? (telemetry['SHARD_VELOCITY'].value / 10).toFixed(1) : '14.2'), unit: 'ms', icon: Zap, color: 'text-amber-400' },
         ].map((m) => (
-          <div key={m.label} className="glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 flex flex-col justify-between relative overflow-hidden group shadow-2xl min-h-[260px]">
-             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><m.icon size={120} /></div>
-             <div className="space-y-4 relative z-10">
-                <p className={`text-[10px] ${m.color} font-black uppercase tracking-[0.5em] text-nowrap`}>{m.label}</p>
-                <h4 className="text-6xl font-mono font-black text-white tracking-tighter leading-none">{m.val}<span className={`text-xl ${m.color} ml-1 italic`}>{m.unit}</span></h4>
+          <div key={m.label} className="glass-card p-5 md:p-6 rounded-3xl border border-white/5 bg-black/40 flex flex-col justify-between relative overflow-hidden shadow-lg min-h-[160px]">
+             <div className="space-y-2 relative z-10">
+                <p className={`text-[8px] ${m.color} font-black uppercase tracking-widest`}>{m.label}</p>
+                <h4 className="text-3xl md:text-4xl font-mono font-black text-white tracking-tighter leading-none">{m.val}<span className={`text-base ${m.color} ml-1 italic`}>{m.unit}</span></h4>
              </div>
-             <div className="pt-6 border-t border-white/5 flex items-center justify-between relative z-10">
-                <span className="text-[10px] font-black text-slate-700 uppercase">Registry v6.5.2</span>
-                <div className="flex items-center gap-2">
-                   <div className={`w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse`}></div>
-                   <span className={`text-[9px] font-mono ${m.color} font-bold uppercase`}>Streaming</span>
-                </div>
+             <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[8px] font-black uppercase text-slate-600 relative z-10">
+                <span>Registry v6.5.2</span>
+                <span className={`${m.color}`}>Streaming</span>
              </div>
           </div>
         ))}
       </div>
 
       {/* 2. Unified Industrial Navigation */}
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-10 relative z-20">
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-4 relative z-20 bg-[#020503]/80 backdrop-blur-md sticky top-0 py-2 -mx-2 px-2">
          <SectionTabs 
            tabs={[
-             { id: 'bridge', label: 'Registry Bridge', icon: Route },
-             { id: 'mesh', label: 'Mesh Visualization', icon: Network },
-             { id: 'twin', label: 'Digital Twin', icon: Box },
-             { id: 'sync', label: 'Process Sync', icon: RefreshCw },
-             { id: 'path', label: 'Path Analyzer', icon: Workflow },
-             { id: 'tenders', label: 'Bounty Manifest', icon: Hammer },
-             { id: 'workers', label: 'Steward Cloud', icon: Users },
+             { id: 'bridge', label: 'Bridge', icon: Route },
+             { id: 'mesh', label: 'Mesh', icon: Network },
+             { id: 'twin', label: 'Twin', icon: Box },
+             { id: 'sync', label: 'Sync', icon: RefreshCw },
+             { id: 'path', label: 'Path', icon: Workflow },
+             { id: 'tenders', label: 'Tenders', icon: Hammer },
+             { id: 'workers', label: 'Workers', icon: Users },
            ]}
            activeTab={activeTab}
            onTabChange={(id) => { setActiveTab(id); setSearchTerm(''); }}
@@ -230,55 +245,53 @@ const Industrial: React.FC<IndustrialProps> = ({
            className="w-full lg:w-auto"
          />
 
-         <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="relative group flex-1 md:w-[350px]">
-               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700 group-focus-within:text-indigo-400 transition-colors" />
+         <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-[250px]">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                <input 
                  type="text" 
                  value={searchTerm}
                  onChange={e => setSearchTerm(e.target.value)}
-                 placeholder="Audit Registry Shards..." 
-                 className="w-full bg-black/60 border border-white/10 rounded-full py-4 pl-14 pr-8 text-sm text-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-mono italic shadow-inner"
+                 placeholder="Audit..." 
+                 className="w-full bg-black/60 border border-white/10 rounded-full py-3 pl-10 pr-4 text-[10px] text-white focus:outline-none transition-all font-mono"
                />
             </div>
             <button 
               onClick={() => onNavigate('multimedia_generator')}
-              className="p-4 bg-indigo-600/10 border border-indigo-500/30 rounded-2xl text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-xl active:scale-95"
-              title="Multimedia Forge"
+              className="p-3 bg-indigo-600/10 border border-indigo-500/30 rounded-xl text-indigo-400 hover:text-white transition-all"
             >
-               <Leaf size={24} />
+               <Leaf size={18} />
             </button>
             <button 
               onClick={() => onNavigate('registry_handshake')}
-              className="p-4 bg-indigo-600/10 border border-indigo-500/30 rounded-2xl text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-xl active:scale-95"
-              title="Initialize Physical Handshake"
+              className="p-3 bg-indigo-600/10 border border-indigo-500/30 rounded-xl text-indigo-400 hover:text-white transition-all"
             >
-               <SmartphoneNfc size={24} />
+               <SmartphoneNfc size={18} />
             </button>
          </div>
       </div>
 
       {/* 3. Main Operational Viewport */}
-      <div className="min-h-[70vh] md:min-h-[80vh] relative z-10 space-y-16 md:space-y-24">
+      <div className="min-h-[50vh] md:min-h-[60vh] relative z-10 space-y-10 md:space-y-16">
         
         {/* --- VIEW: DIGITAL TWIN --- */}
         {activeTab === 'twin' && (
           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              <div className="lg:col-span-8 glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 relative overflow-hidden min-h-[700px] flex flex-col">
-                <div className="flex justify-between items-center mb-10 relative z-10">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-[28px] bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-xl">
-                      <Box size={32} />
+              <div className="lg:col-span-8 glass-card p-6 md:p-8 rounded-3xl md:rounded-[40px] border border-white/5 bg-black/40 relative overflow-hidden min-h-[500px] flex flex-col">
+                <div className="flex justify-between items-center mb-6 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-xl">
+                      <Box size={24} />
                     </div>
                     <div>
-                      <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0">Industrial <span className="text-indigo-400">Twin.</span></h3>
-                      <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.4em] mt-1">REAL_TIME_HARDWARE_REPLICA</p>
+                      <h3 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter m-0">Industrial <span className="text-indigo-400">Twin.</span></h3>
+                      <p className="text-[9px] text-indigo-400 font-black uppercase tracking-[0.3em] mt-0.5">REAL_TIME_HARDWARE_REPLICA</p>
                     </div>
                   </div>
-                  <div className="flex gap-4">
-                    <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all">CALIBRATE_SENSORS</button>
-                    <button className="px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">INIT_DIAGNOSTIC</button>
+                  <div className="flex gap-2">
+                    <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all">CALIBRATE</button>
+                    <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl">DIAGNOSTIC</button>
                   </div>
                 </div>
 
@@ -296,11 +309,11 @@ const Industrial: React.FC<IndustrialProps> = ({
                       {/* Sensor Overlays */}
                       <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-black/80 border border-emerald-500/40 px-4 py-2 rounded-xl shadow-2xl">
                         <p className="text-[8px] text-emerald-400 font-black uppercase tracking-widest">TEMP_CORE</p>
-                        <p className="text-xl font-mono font-black text-white">24.2°C</p>
+                        <p className="text-xl font-mono font-black text-white">{(telemetry['THERMAL_RESONANCE']?.value || 24.2).toFixed(1)}°C</p>
                       </div>
                       <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-black/80 border border-blue-500/40 px-4 py-2 rounded-xl shadow-2xl">
                         <p className="text-[8px] text-blue-400 font-black uppercase tracking-widest">FLOW_RATE</p>
-                        <p className="text-xl font-mono font-black text-white">1.2 L/s</p>
+                        <p className="text-xl font-mono font-black text-white">{(telemetry['COOLANT_FLOW']?.value / 1000 || 1.2).toFixed(1)} L/s</p>
                       </div>
                     </div>
 
@@ -335,20 +348,14 @@ const Industrial: React.FC<IndustrialProps> = ({
                 </div>
               </div>
 
-              <div className="lg:col-span-4 space-y-8">
-                <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
-                  <h4 className="text-sm font-black text-white uppercase tracking-widest italic">Diagnostic Logs</h4>
+              <div className="lg:col-span-4 space-y-6">
+                <div className="glass-card p-6 md:p-8 rounded-3xl border border-white/5 bg-black/40 space-y-6 shadow-2xl">
+                  <h4 className="text-xs font-black text-white uppercase tracking-widest italic">Diagnostic Logs</h4>
                   <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar-terminal">
-                    {[
-                      { time: '12:04:22', msg: 'Core temperature stabilized at 24.2°C', type: 'INFO' },
-                      { time: '12:04:15', msg: 'Nutrient pump α pressure nominal', type: 'INFO' },
-                      { time: '12:03:58', msg: 'Mesh relay handshake successful', type: 'SUCCESS' },
-                      { time: '12:03:42', msg: 'Minor drift detected in Sector 4 sensors', type: 'WARN' },
-                      { time: '12:03:10', msg: 'Initializing digital twin sync sequence', type: 'SYSTEM' }
-                    ].map((log, i) => (
+                    {logs.map((log, i) => (
                       <div key={i} className="flex gap-4 items-start font-mono">
                         <span className="text-[10px] text-slate-700 shrink-0">{log.time}</span>
-                        <p className={`text-[10px] ${log.type === 'WARN' ? 'text-amber-500' : log.type === 'SUCCESS' ? 'text-emerald-500' : 'text-slate-400'}`}>
+                        <p className={`text-[10px] ${log.type === 'WARN' ? 'text-amber-500' : log.type === 'SUCCESS' ? 'text-emerald-500' : log.type === 'SYSTEM' ? 'text-indigo-400' : 'text-slate-400'}`}>
                           <span className="font-black">[{log.type}]</span> {log.msg}
                         </p>
                       </div>
@@ -356,7 +363,7 @@ const Industrial: React.FC<IndustrialProps> = ({
                   </div>
                 </div>
 
-                <div className="glass-card p-10 rounded-[56px] border border-indigo-500/20 bg-indigo-500/[0.03] space-y-6 shadow-3xl">
+                <div className="glass-card p-6 md:p-8 rounded-3xl border border-indigo-500/20 bg-indigo-500/[0.03] space-y-4 shadow-2xl">
                   <h4 className="text-sm font-black text-white uppercase tracking-widest">Maintenance Forecast</h4>
                   <div className="space-y-4">
                     <div className="p-6 bg-black/40 rounded-3xl border border-white/5 space-y-4">
@@ -387,9 +394,9 @@ const Industrial: React.FC<IndustrialProps> = ({
 
         {/* --- VIEW: MESH VISUALIZATION --- */}
         {activeTab === 'mesh' && (
-          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-              <div className="lg:col-span-2 glass-card p-10 rounded-[64px] border border-white/5 bg-black/40 relative overflow-hidden min-h-[600px] flex items-center justify-center">
+          <div className="space-y-6 md:space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 glass-card p-6 md:p-10 rounded-3xl md:rounded-[48px] border border-white/5 bg-black/40 relative overflow-hidden min-h-[500px] flex items-center justify-center">
                 <div className="absolute inset-0 opacity-20">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500/20 via-transparent to-transparent"></div>
                   <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
@@ -447,9 +454,9 @@ const Industrial: React.FC<IndustrialProps> = ({
               </div>
 
               <div className="space-y-8">
-                <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 space-y-8 shadow-3xl">
-                  <h3 className="text-xl font-black text-white uppercase italic tracking-widest flex items-center gap-4">
-                    <Activity size={24} className="text-indigo-400" />
+                <div className="glass-card p-6 md:p-8 rounded-3xl border border-white/5 bg-black/40 space-y-6 shadow-2xl">
+                  <h3 className="text-lg font-black text-white uppercase italic tracking-widest flex items-center gap-3">
+                    <Activity size={20} className="text-indigo-400" />
                     Mesh <span className="text-indigo-400">Health.</span>
                   </h3>
                   <div className="space-y-6">
@@ -472,8 +479,8 @@ const Industrial: React.FC<IndustrialProps> = ({
                   </div>
                 </div>
 
-                <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-emerald-500/[0.03] space-y-6 shadow-3xl">
-                  <h4 className="text-sm font-black text-white uppercase tracking-widest">Active Shards</h4>
+                <div className="glass-card p-6 md:p-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/[0.03] space-y-4 shadow-2xl">
+                  <h4 className="text-xs font-black text-white uppercase tracking-widest">Active Shards</h4>
                   <div className="space-y-4">
                     {[
                       { id: 'SH-992', type: 'DATA_SYNC', status: 'COMPLETED' },
@@ -496,111 +503,39 @@ const Industrial: React.FC<IndustrialProps> = ({
             </div>
           </div>
         )}
-        
         {/* --- VIEW: REGISTRY BRIDGE (Unified Nodes) --- */}
-        {/* --- VIEW: DIGITAL TWIN --- */}
-        {activeTab === 'twin' && (
-          <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-            <div className="glass-card p-12 rounded-[64px] border border-indigo-500/20 bg-indigo-500/[0.02] space-y-10 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-20 opacity-[0.03] pointer-events-none">
-                <Box size={400} className="text-indigo-500" />
-              </div>
-
-              <div className="flex flex-col md:flex-row justify-between items-start gap-10">
-                <div className="space-y-6 max-w-xl">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-[28px] bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-2xl">
-                      <Box size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Industrial <span className="text-indigo-400">Digital Twin.</span></h3>
-                      <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.4em] mt-1">REAL_TIME_SIMULATION_SHARD</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-400 leading-relaxed font-medium">
-                    Interactive replica of the Sector 7 Core Reactor. Monitor thermal resonance, pressure drift, and energy sharding in real-time.
-                  </p>
-                  <div className="flex gap-4">
-                    <div className="px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[10px] font-black text-emerald-400 uppercase tracking-widest">STATUS: OPTIMAL</div>
-                    <div className="px-6 py-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl text-[10px] font-black text-indigo-400 uppercase tracking-widest">SYNC: 99.9%</div>
-                  </div>
-                </div>
-
-                <div className="flex-1 w-full glass-card p-8 rounded-[48px] border border-white/5 bg-black/40 min-h-[400px] flex items-center justify-center relative">
-                  {/* Mock Twin Visualization */}
-                  <div className="relative w-64 h-64">
-                    <div className="absolute inset-0 border-4 border-indigo-500/20 rounded-[40px] animate-pulse"></div>
-                    <div className="absolute inset-4 border-2 border-indigo-500/40 rounded-[32px] rotate-45 animate-spin duration-[10s]"></div>
-                    <div className="absolute inset-10 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 bg-indigo-500 rounded-xl shadow-[0_0_40px_rgba(99,102,241,0.8)]"></div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating Data Points */}
-                  <div className="absolute top-10 left-10 p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
-                    <p className="text-[8px] text-slate-500 uppercase font-black">Thermal Resonance</p>
-                    <p className="text-lg font-mono font-black text-white">1,422°C</p>
-                  </div>
-                  <div className="absolute bottom-10 right-10 p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
-                    <p className="text-[8px] text-slate-500 uppercase font-black">Pressure Drift</p>
-                    <p className="text-lg font-mono font-black text-white">0.024 psi</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {[
-                  { label: 'Energy Output', val: '4.2 GW', trend: '+2.1%', col: 'text-emerald-400' },
-                  { label: 'Coolant Flow', val: '840 L/s', trend: 'STABLE', col: 'text-blue-400' },
-                  { label: 'Sharding Velocity', val: '142/m', trend: '+14%', col: 'text-indigo-400' },
-                  { label: 'Maintenance', val: '12d', trend: 'SCHEDULED', col: 'text-amber-400' }
-                ].map((stat, i) => (
-                  <div key={i} className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-2">
-                    <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest">{stat.label}</p>
-                    <div className="flex justify-between items-end">
-                      <p className="text-xl font-black text-white">{stat.val}</p>
-                      <p className={`text-[8px] font-black uppercase ${stat.col}`}>{stat.trend}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         {activeTab === 'bridge' && (
-           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                  {registryNodes.map((node) => (
-                    <div key={node.id} className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden min-h-[400px]">
-                       <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:scale-110 transition-transform duration-[12s]"><node.bridgeIcon size={300} /></div>
+                    <div key={node.id} className="glass-card p-6 md:p-8 rounded-3xl md:rounded-[48px] border-2 border-white/5 bg-black/40 hover:border-indigo-500/40 transition-all group flex flex-col justify-between shadow-2xl relative overflow-hidden min-h-[340px]">
+                       <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover:scale-110 transition-transform duration-[12s]"><node.bridgeIcon size={200} /></div>
                        
                        <div className="flex justify-between items-start relative z-10">
-                          <div className={`p-5 rounded-3xl bg-white/5 border border-white/10 shadow-inner group-hover:rotate-6 transition-all ${node.nodeType === 'SUPPLIER' ? 'text-amber-500' : 'text-blue-400'}`}>
-                             <node.bridgeIcon size={32} />
+                          <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner group-hover:rotate-6 transition-all ${node.nodeType === 'SUPPLIER' ? 'text-amber-500' : 'text-blue-400'}`}>
+                             <node.bridgeIcon size={24} />
                           </div>
-                          <div className="text-right flex flex-col items-end gap-2">
-                             <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase border tracking-widest shadow-lg ${
+                          <div className="text-right flex flex-col items-end gap-1.5">
+                             <span className={`px-3 py-1 rounded-full text-[7px] font-black uppercase border tracking-widest shadow-lg ${
                                 node.status === 'ACTIVE' || node.status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                                 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
                              }`}>{node.status}</span>
-                             <p className="text-[9px] text-slate-700 font-mono font-black uppercase">{node.nodeType}</p>
+                             <p className="text-[8px] text-slate-700 font-mono font-black uppercase">{node.nodeType}</p>
                           </div>
                        </div>
 
-                       <div className="space-y-4 relative z-10">
-                          <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-indigo-400 transition-colors drop-shadow-2xl">{node.name.toUpperCase()}</h4>
-                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none">{node.type} // {node.location}</p>
+                       <div className="space-y-3 relative z-10">
+                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover:text-indigo-400 transition-colors drop-shadow-2xl">{node.name.toUpperCase()}</h4>
+                          <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest leading-none">{node.type} // {node.location}</p>
                           
-                          <div className="pt-8 grid grid-cols-2 gap-4">
-                             <div className="p-5 bg-black/80 rounded-[32px] border border-white/5 space-y-1 shadow-inner group/val hover:border-emerald-500/20 transition-all">
-                                <p className="text-[8px] text-slate-700 font-black uppercase tracking-widest">Resonance</p>
-                                <p className="text-2xl font-mono font-black text-emerald-400">98.2%</p>
+                          <div className="pt-6 grid grid-cols-2 gap-3">
+                             <div className="p-4 bg-black/80 rounded-[24px] border border-white/5 space-y-0.5 shadow-inner group/val hover:border-emerald-500/20 transition-all">
+                                <p className="text-[7px] text-slate-700 font-black uppercase tracking-widest">Resonance</p>
+                                <p className="text-xl font-mono font-black text-emerald-400">98.2%</p>
                              </div>
-                             <div className="p-5 bg-black/80 rounded-[32px] border border-white/5 space-y-1 shadow-inner group/val hover:border-indigo-500/20 transition-all text-right">
-                                <p className="text-[8px] text-slate-700 font-black uppercase">Load</p>
-                                <p className="text-2xl font-mono font-black text-indigo-400">1.42<span className="text-xs">m</span></p>
+                             <div className="p-4 bg-black/80 rounded-[24px] border border-white/5 space-y-0.5 shadow-inner group/val hover:border-indigo-500/20 transition-all text-right">
+                                <p className="text-[7px] text-slate-700 font-black uppercase">Load</p>
+                                <p className="text-xl font-mono font-black text-indigo-400">1.42<span className="text-xs">m</span></p>
                              </div>
                           </div>
                        </div>
@@ -639,8 +574,8 @@ const Industrial: React.FC<IndustrialProps> = ({
 
         {/* --- VIEW: PATH ANALYZER --- */}
         {activeTab === 'path' && (
-           <div className="space-y-12 animate-in zoom-in duration-700 max-w-6xl mx-auto">
-              <div className="glass-card p-12 md:p-20 rounded-[80px] border-2 border-indigo-500/20 bg-indigo-950/5 flex flex-col items-center text-center space-y-12 shadow-3xl relative overflow-hidden group">
+           <div className="space-y-8 animate-in zoom-in duration-700 max-w-5xl mx-auto">
+              <div className="glass-card p-8 md:p-12 rounded-3xl md:rounded-[48px] border-2 border-indigo-500/20 bg-indigo-950/5 flex flex-col items-center text-center space-y-8 shadow-2xl relative overflow-hidden group">
                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/noise.png')] opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity"></div>
                  
                  <div className="relative z-10 space-y-10">

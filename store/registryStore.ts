@@ -41,6 +41,9 @@ interface RegistryStore {
   
   carbonCredits: CarbonCredit[];
   setCarbonCredits: (credits: CarbonCredit[]) => void;
+  listCredit: (id: string, price: number) => void;
+  buyCredit: (id: string, buyerEsin: string) => void;
+  mintCredit: (credit: CarbonCredit) => void;
 }
 
 export const useRegistryStore = create<RegistryStore>((set) => ({
@@ -79,4 +82,17 @@ export const useRegistryStore = create<RegistryStore>((set) => ({
   
   carbonCredits: [],
   setCarbonCredits: (carbonCredits) => set({ carbonCredits }),
+  listCredit: (id, price) => set((state) => ({
+    carbonCredits: state.carbonCredits.map(c => 
+      c.id === id ? { ...c, listedPrice: price, listingStatus: 'LISTED' } : c
+    )
+  })),
+  buyCredit: (id, buyerEsin) => set((state) => ({
+    carbonCredits: state.carbonCredits.map(c => 
+      c.id === id ? { ...c, stewardEsin: buyerEsin, listingStatus: 'SOLD' } : c
+    )
+  })),
+  mintCredit: (credit) => set((state) => ({
+    carbonCredits: [credit, ...state.carbonCredits]
+  })),
 }));

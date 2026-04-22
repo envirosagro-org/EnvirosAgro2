@@ -38,29 +38,29 @@ const NaturalResources: React.FC<NaturalResourcesProps> = (props) => {
   };
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-4 pb-16">
       {/* Global Sync Status Bar */}
-      <div className="flex items-center justify-between px-6 py-3 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl backdrop-blur-xl">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Globe size={14} className="text-emerald-400 animate-pulse" />
-            <span className="text-[8px] font-black text-white uppercase tracking-widest">Global Ecosystem Sync</span>
+      <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-xl backdrop-blur-xl gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <Globe size={12} className="text-emerald-400 animate-pulse" />
+            <span className="text-[7px] font-black text-white uppercase tracking-widest">Global Sync</span>
           </div>
-          <div className="h-4 w-[1px] bg-white/10 mx-2"></div>
-          <div className="flex items-center gap-2">
-            <Layers size={12} className="text-slate-500" />
-            <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Active Dimensions: 5/5</span>
+          <div className="h-3 w-[1px] bg-white/10 mx-1"></div>
+          <div className="flex items-center gap-1.5">
+            <Layers size={10} className="text-slate-500" />
+            <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">5/5</span>
           </div>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Stability Index:</span>
-            <span className="text-[10px] font-mono font-black text-emerald-400">1.42x</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Stability:</span>
+            <span className="text-[9px] font-mono font-black text-emerald-400">1.42x</span>
           </div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck size={12} className={ecosystemState.isAnchored ? "text-emerald-500" : "text-amber-500"} />
+          <div className="flex items-center gap-1">
+            <ShieldCheck size={10} className={ecosystemState.isAnchored ? "text-emerald-500" : "text-amber-500"} />
             <span className={`text-[7px] font-black uppercase tracking-widest ${ecosystemState.isAnchored ? "text-emerald-500" : "text-amber-500"}`}>
-              {ecosystemState.isAnchored ? "ANCHORED" : "DRIFT_DETECTED"}
+              {ecosystemState.isAnchored ? "ANCHORED" : "DRIFT"}
             </span>
           </div>
         </div>

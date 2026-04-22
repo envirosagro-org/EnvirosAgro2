@@ -96,10 +96,20 @@ export interface User {
   };
 }
 
+export interface StakeInfo {
+  id: string;
+  tierId: string;
+  amount: number;
+  startTime: string;
+  yield: number;
+  lastClaim?: string;
+}
+
 export interface EACWallet {
   balance: number;
   eatBalance: number;
   stakedEat?: number;
+  stakes?: StakeInfo[];
   exchangeRate: number;
   bonusBalance: number;
   tier: 'Seed' | 'Sprout' | 'Harvest';
@@ -477,8 +487,9 @@ export type ViewState =
   | 'sitemap' | 'auth' | 'agro_lang_analyst' | 'ai_analyst' | 'settings' | 'temporal_video' | 'agrobot'
   | 'multimedia_generator' | 'cost_accounting' | 'internal_control' | 'governance' | 'carbon_credits' | 'traceability' | 'marketplace' | 'live_voice_bridge'
   | 'mesh_protocol' | 'registry_handshake' | 'educational_resources' | 'hardware_registry' | 'device_control'
-  | 'impact_dashboard' | 'traceability_map' | 'telemetry_hub'
-  | 'swarm_orchestrator' | 'mrv_engine' | 'reputation_dashboard' | 'escrow_portal';
+  | 'impact_dashboard' | 'traceability_map' | 'telemetry_hub' | 'asset_verification'
+  | 'swarm_orchestrator' | 'mrv_engine' | 'reputation_dashboard' | 'escrow_portal'
+  | 'ai_oracle';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -770,6 +781,8 @@ export interface CarbonCredit {
   verificationStatus: 'PENDING' | 'VERIFIED' | 'REVOKED';
   timestamp: string;
   verifierEsin?: string;
+  listedPrice?: number; // In EAC
+  listingStatus?: 'UNLISTED' | 'LISTED' | 'SOLD';
 }
 
 export interface StewardPosition {

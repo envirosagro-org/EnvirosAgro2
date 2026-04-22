@@ -5,7 +5,7 @@ import {
   Satellite, Fingerprint, Lock, ShieldAlert, Zap, Globe, Compass, 
   Stamp, Workflow, Terminal, Code2, Download, AlertTriangle, Info,
   BadgeCheck, Monitor, History as HistoryIcon, Send, RefreshCw, Layers,
-  FileText
+  FileText, Scan
 } from 'lucide-react';
 import { User, AgroResource, ViewState, SignalShard, HandshakeStep } from '../types';
 import { HenIcon } from './Icons';
@@ -124,8 +124,9 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
             await new Promise(r => setTimeout(r, 1500));
             break;
           case 'PHYSICAL_VERIFY':
-            setStatusMsg('WAITING FOR HQ AUDITOR QUORUM...');
-            await new Promise(r => setTimeout(r, 2500));
+            setStatusMsg('AWAITING SHARD SCAN...');
+            // In a real app we'd wait for scanner, here we simulate a successful scan if it's the "Next" step
+            await new Promise(r => setTimeout(r, 2000));
             break;
           case 'SYSTEM_AUDIT':
             setStatusMsg('EXECUTING REGISTRY CROSS-CHECK...');
@@ -376,7 +377,25 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
                           </div>
                        )}
 
-                       {currentStep >= 2 && !isProcessing && (
+                       {mode === 'HARDWARE' && steps[currentStep].id === 'PHYSICAL_VERIFY' && (
+                         <div className="space-y-10 animate-in zoom-in duration-500">
+                           <div className="w-48 h-48 rounded-[48px] border-4 border-dashed border-indigo-500/20 flex items-center justify-center relative group mx-auto">
+                              <Scan size={80} className="text-slate-700 group-hover:text-indigo-400 group-hover:scale-110 transition-all duration-700" />
+                              <div className="absolute inset-0 border-2 border-indigo-500/10 rounded-[48px] animate-pulse"></div>
+                           </div>
+                           <p className="text-slate-400 text-lg font-medium italic max-w-sm mx-auto">
+                             "Initializing physical lens for hardware shard verification. Scan the unique ID plate of the asset."
+                           </p>
+                           <button 
+                             onClick={handleNextStep}
+                             className="w-full max-w-xl py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-xl mx-auto flex items-center justify-center gap-4 border-2 border-white/10"
+                           >
+                             SCAN ASSET SHARD <SmartphoneNfc size={20} />
+                           </button>
+                         </div>
+                       )}
+
+                       {currentStep >= 2 && !isProcessing && (steps[currentStep].id !== 'PHYSICAL_VERIFY' || mode !== 'HARDWARE') && (
                           <div className="space-y-12 animate-in slide-in-from-bottom-6">
                              {agroLangShard && (
                                 <div className="p-10 bg-black/90 rounded-[48px] border border-indigo-500/20 shadow-3xl text-left relative overflow-hidden group/shard">

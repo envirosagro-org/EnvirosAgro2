@@ -376,7 +376,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
   const myLiveAssets = liveProducts.filter(p => p.stewardEsin === user.esin);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-[1700px] mx-auto px-4 relative overflow-hidden">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-32 mx-auto px-4 relative overflow-hidden w-full max-w-full">
       <SEO title="Vendor Portal" description="EnvirosAgro Vendor Portal: Manage inventory, process orders, and track supplier metrics." />
       
       {/* HUD: Supplier Dashboard */}

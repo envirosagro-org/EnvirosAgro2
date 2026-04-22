@@ -203,7 +203,7 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
   }, [signals, filter, searchTerm]);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-[1600px] mx-auto px-4">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-20 mx-auto px-4 w-full max-w-full">
       <SEO title="Explorer" description="EnvirosAgro Block Explorer: View real-time blockchain transactions, network signals, and system telemetry." />
       
       {/* 1. Monitoring HUD */}

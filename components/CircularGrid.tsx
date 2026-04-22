@@ -131,12 +131,13 @@ const CircularGrid: React.FC<CircularGridProps> = ({
       Requirements:
       1. Provide a technical remediation shard for second-life restoration.
       2. Calculate the "Circularity Potential" (0.0 to 1.0).
-      3. Identify if the asset can be re-minted into the Market Cloud.
+      3. Identify if the asset can be re-minted into the Market Cloud based on current farm wallet resonance ${user.wallet.balance} EAC.
       4. Format as a technical industrial report.`;
 
       const res = await chatWithAgroLang(prompt, []);
       setRepairVerdict(res.text);
       onEarnEAC(5, 'REPAIR_STRATEGY_CONTRIBUTION');
+      notify({ title: 'ORACLE_DIAGNOSTIC_COMPLETE', message: 'Repair strategy injected.', type: 'success' });
     } catch (e) {
       setRepairVerdict("ORACLE_SYNC_ERROR: Handshake interrupted. Potential shard fragmentation in the diagnostic buffer.");
     } finally {
