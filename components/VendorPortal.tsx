@@ -1224,11 +1224,7 @@ const VendorPortal: React.FC<VendorPortalProps> = ({
         user={user}
       />
 
-      <style>{`
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
+      
     </div>
   );
 };

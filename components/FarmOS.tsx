@@ -735,27 +735,7 @@ SEQUENCE Optimize_Cycle_882 {
         )}
       </div>
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 10px; }
-        .custom-scrollbar-editor::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-editor::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
-        .token.comment { color: #6b7280; font-style: italic; }
-        .token.string { color: #f59e0b; }
-        .token.keyword { color: #c084fc; font-weight: bold; }
-        .token.function { color: #60a5fa; }
-        .token.number { color: #34d399; }
-        .token.operator { color: #f472b6; }
-        .token.punctuation { color: #94a3b8; }
-      `}</style>
+      
     </div>
   );
 };

@@ -296,11 +296,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({ isOpen, onClose, user, on
           )}
         </div>
       </div>
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-      `}</style>
+      
     </div>
   );
 };

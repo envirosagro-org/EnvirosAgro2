@@ -493,12 +493,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
         thumbnail={activeTab === 'video' ? 'https://picsum.photos/seed/agro/1920/1080' : undefined}
       />
 
-      <style>{`
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
-      `}</style>
+      
     </div>
   );
 };

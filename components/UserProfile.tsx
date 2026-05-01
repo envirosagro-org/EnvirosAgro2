@@ -730,12 +730,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdateUser, 
          )}
       </div>
 
-      <style>{`
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-      `}</style>
+      
     </div>
   );
 };

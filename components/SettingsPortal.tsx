@@ -495,19 +495,7 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
         </div>
       </div>
 
-      <style>{`
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.9); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .custom-scrollbar-editor::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-editor::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 10px; }
-      `}</style>
+      
     </div>
   );
 };

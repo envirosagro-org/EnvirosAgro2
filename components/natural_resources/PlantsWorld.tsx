@@ -1,18 +1,10 @@
 import React from 'react';
 import { TreePine, Target, Heart, Binary } from 'lucide-react';
-import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
+import ResourceDimensionBase, { ResourceMeta, PortalProps } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
 import { useDataStore } from '../../store/dataStore';
 
-interface PlantsWorldProps {
-  user: User;
-  onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
-  onNavigate: (view: ViewState) => void;
-  initialSection?: string | null;
-}
-
-const PlantsWorld: React.FC<PlantsWorldProps> = (props) => {
+const PlantsWorld: React.FC<PortalProps> = (props) => {
   const { ecosystemState, updateEcosystemState } = useDataStore();
 
   const meta: ResourceMeta = {

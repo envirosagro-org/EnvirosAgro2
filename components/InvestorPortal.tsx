@@ -555,17 +555,7 @@ const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdateUser, onS
         </div>
       )}
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 10px; }
-        .shadow-3xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9); }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
-      `}</style>
+      
     </div>
   );
 };

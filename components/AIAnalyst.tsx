@@ -280,16 +280,7 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onNavigate }) => {
         </div>
       </div>
 
-      <style>{`
-        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95); }
-        .shadow-4xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.98); }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-scan { animation: scan 3s linear infinite; }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-      `}</style>
+      
     </div>
   );
 };

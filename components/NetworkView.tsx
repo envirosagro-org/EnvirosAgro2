@@ -625,19 +625,7 @@ const NetworkView: React.FC = () => {
         )}
       </div>
 
-      <style>{`
-        .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .shadow-3xl { box-shadow: 0 60px 180px -40px rgba(0, 0, 0, 0.95); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
-        .animate-pulse-slow { animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-      `}</style>
+      
     </div>
   );
 };

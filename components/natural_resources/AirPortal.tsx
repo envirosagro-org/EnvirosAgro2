@@ -1,18 +1,10 @@
 import React from 'react';
 import { Wind, Activity, Binary, Waves } from 'lucide-react';
-import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
+import ResourceDimensionBase, { ResourceMeta, PortalProps } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
 import { useDataStore } from '../../store/dataStore';
 
-interface AirPortalProps {
-  user: User;
-  onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
-  onNavigate: (view: ViewState) => void;
-  initialSection?: string | null;
-}
-
-const AirPortal: React.FC<AirPortalProps> = (props) => {
+const AirPortal: React.FC<PortalProps> = (props) => {
   const { ecosystemState, updateEcosystemState } = useDataStore();
 
   const meta: ResourceMeta = {

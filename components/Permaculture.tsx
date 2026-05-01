@@ -424,13 +424,7 @@ const Permaculture: React.FC<PermacultureProps> = ({ user, onEarnEAC, onSpendEAC
         )}
       </div>
 
-      <style>{`
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-      `}</style>
+      
     </div>
   );
 };

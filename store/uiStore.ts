@@ -86,33 +86,22 @@ export const useUiStore = create<UiStore>((set, get) => ({
     const state = get();
     const index = findMatrixIndex(v, section || null);
     
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('view', v);
+    if (section) {
+      newUrl.searchParams.set('section', section);
+    } else {
+      newUrl.searchParams.delete('section');
+    }
+    if (params?.id) {
+      newUrl.searchParams.set('id', params.id);
+    } else {
+      newUrl.searchParams.delete('id');
+    }
+
     if (pushToHistory) {
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('view', v);
-      if (section) {
-        newUrl.searchParams.set('section', section);
-      } else {
-        newUrl.searchParams.delete('section');
-      }
-      if (params?.id) {
-        newUrl.searchParams.set('id', params.id);
-      } else {
-        newUrl.searchParams.delete('id');
-      }
       window.history.pushState({ view: v, section, params }, '', newUrl.toString());
     } else {
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('view', v);
-      if (section) {
-        newUrl.searchParams.set('section', section);
-      } else {
-        newUrl.searchParams.delete('section');
-      }
-      if (params?.id) {
-        newUrl.searchParams.set('id', params.id);
-      } else {
-        newUrl.searchParams.delete('id');
-      }
       window.history.replaceState({ view: v, section, params }, '', newUrl.toString());
     }
     

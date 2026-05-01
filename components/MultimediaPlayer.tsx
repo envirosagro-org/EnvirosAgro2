@@ -349,10 +349,7 @@ const MultimediaPlayer: React.FC<MultimediaPlayerProps> = ({
         </div>
       </div>
 
-      <style>{`
-        .animate-spin-slow { animation: spin 10s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
+      
     </div>
   );
 };

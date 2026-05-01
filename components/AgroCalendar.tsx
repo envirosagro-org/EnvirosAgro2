@@ -693,15 +693,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
         </div>
       )}
 
-      <style>{`
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.7); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        @keyframes scan { 0% { top: -100%; } 100% { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
-        .animate-spin-slow { animation: rotate 20s linear infinite; }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
+      
     </div>
   );
 };

@@ -233,10 +233,7 @@ const FloatingConsultant: React.FC<FloatingConsultantProps> = ({ isOpen, onClose
           </div>
         </div>
 
-        <style>{`
-          .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
-        `}</style>
+        
       </div>
     </>
   );

@@ -775,15 +775,7 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
         </div>
       )}
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.95); }
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .custom-scrollbar-editor::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-editor::-webkit-scrollbar-thumb { background: rgba(232, 121, 249, 0.4); border-radius: 10px; }
-      `}</style>
+      
     </div>
   );
 };

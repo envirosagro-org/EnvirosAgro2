@@ -1,18 +1,10 @@
 import React from 'react';
 import { Droplets, Gauge, FlaskConical, Database } from 'lucide-react';
-import ResourceDimensionBase, { ResourceMeta } from '../ResourceDimensionBase';
+import ResourceDimensionBase, { ResourceMeta, PortalProps } from '../ResourceDimensionBase';
 import { User, ViewState } from '../../types';
 import { useDataStore } from '../../store/dataStore';
 
-interface AquaPortalProps {
-  user: User;
-  onEarnEAC: (amount: number, reason: string) => void;
-  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
-  onNavigate: (view: ViewState) => void;
-  initialSection?: string | null;
-}
-
-const AquaPortal: React.FC<AquaPortalProps> = (props) => {
+const AquaPortal: React.FC<PortalProps> = (props) => {
   const ecosystemState = useDataStore(state => state.ecosystemState);
   const updateEcosystemState = useDataStore(state => state.updateEcosystemState);
 

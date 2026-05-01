@@ -34,6 +34,14 @@ import { generateQuickHash } from '../systemFunctions';
 import { useDataStore } from '../store/dataStore';
 import { toast } from 'sonner';
 
+export interface PortalProps {
+  user: User;
+  onEarnEAC: (amount: number, reason: string) => void;
+  onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
+  onNavigate: (view: ViewState) => void;
+  initialSection?: string | null;
+}
+
 export interface ResourceMeta {
   title: string;
   icon: any;
@@ -607,17 +615,7 @@ ${content}
         )}
       </div>
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-        .animate-scan { animation: scan 3s linear infinite; }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .animate-spin-slow { animation: spin 20s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .shadow-3xl { box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.95); }
-      `}</style>
+      
     </div>
   );
 };

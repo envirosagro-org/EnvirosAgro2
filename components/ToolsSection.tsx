@@ -306,13 +306,10 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
     if (task) setActiveDragTask(task);
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
+  const processTaskMove = (active: any, over: any) => {
     if (!over) return;
-
     const activeId = active.id;
     const overId = over.id;
-
     if (activeId === overId) return;
 
     const isActiveTask = active.data.current?.type === 'Task';
@@ -321,43 +318,27 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
     if (!isActiveTask) return;
 
-    if (isActiveTask && isOverTask) {
-      const activeTask = tasks.find((t: any) => t.id === activeId);
+    const activeTask = tasks.find((t: any) => t.id === activeId);
+
+    if (isOverTask) {
       const overTask = tasks.find((t: any) => t.id === overId);
-      
       if (activeTask && overTask && activeTask.status !== overTask.status) {
         onSaveTask({ ...activeTask, status: overTask.status });
       }
-    }
-
-    if (isActiveTask && isOverColumn) {
-      const activeTask = tasks.find((t: any) => t.id === activeId);
+    } else if (isOverColumn) {
       if (activeTask && activeTask.status !== overId) {
         onSaveTask({ ...activeTask, status: overId as string });
       }
     }
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    processTaskMove(event.active, event.over);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveDragTask(null);
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const isActiveTask = active.data.current?.type === 'Task';
-    const isOverTask = over.data.current?.type === 'Task';
-    const isOverColumn = over.data.current?.type === 'Column';
-
-    if (isActiveTask && isOverColumn) {
-      const activeTask = tasks.find((t: any) => t.id === activeId);
-      if (activeTask && activeTask.status !== overId) {
-        onSaveTask({ ...activeTask, status: overId as string });
-      }
-    }
+    processTaskMove(event.active, event.over);
   };
 
   const sigmaLevel = useMemo(() => {
@@ -782,22 +763,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
         </div>
       )}
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-        
-        .custom-scrollbar-terminal::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar-terminal::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
-
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        .shadow-3xl { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9); }
-        @keyframes scan { from { top: -100%; } to { top: 100%; } }
-        .animate-scan { animation: scan 3s linear infinite; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-      `}</style>
+      
     </div>
   );
 };
