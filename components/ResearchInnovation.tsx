@@ -365,22 +365,22 @@ ${book.chapters.map(ch => `CHAPTER ${ch.sequence}: ${ch.title}\n\n${ch.content}\
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 max-w-[1400px] mx-auto px-4">
       
       {/* Header Section */}
-      <div className="glass-card p-12 rounded-[56px] border-emerald-500/10 bg-black/40 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-2xl">
-        <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform">
+      <div className="glass-card p-12 rounded-[56px] border border-white/5 bg-black/40 relative overflow-hidden flex flex-col items-center text-center space-y-8 shadow-2xl">
+        <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
            <Microscope className="w-96 h-96 text-white" />
         </div>
         
-        <div className="w-36 h-36 rounded-[48px] bg-emerald-500/90 flex items-center justify-center shadow-[0_0_60px_rgba(16,185,129,0.3)] shrink-0">
-           <ScrollText className="w-16 h-16 text-white" />
+        <div className="w-24 h-24 rounded-[32px] bg-indigo-600 flex items-center justify-center shadow-[0_0_60px_rgba(79,70,229,0.3)] shrink-0">
+           <ScrollText className="w-10 h-10 text-white" />
         </div>
 
         <div className="space-y-4 max-w-3xl relative z-10">
           <div className="space-y-2">
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.6em]">Invention Ledger v4.2</span>
-            <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter italic m-0">Research <span className="text-emerald-400">& Innovation</span></h2>
+            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">Invention_Ledger_v4.2</span>
+            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter italic m-0">Research <span className="text-indigo-400">& Innovation</span></h2>
           </div>
-          <p className="text-slate-400 text-lg md:text-xl leading-relaxed font-medium">
-            Forge the future of agriculture. Access the global patent archive or synthesize raw IoT telemetry into immutable research papers and technical books.
+          <p className="text-slate-500 text-sm leading-relaxed font-bold tracking-wide uppercase">
+            Forge the future of agriculture. Access global patent archive or synthesize raw IoT telemetry into immutable research papers.
           </p>
         </div>
 

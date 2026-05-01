@@ -74,8 +74,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ userEsin }) => {
             <div ref={chatEndRef} />
           </div>
           <div className="p-2 border-t border-white/5 flex gap-2">
-            <input className="flex-1 bg-transparent border-0 text-[10px] text-white focus:ring-0" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder="Ask AI..." />
-            <button onClick={sendMessage}><Send size={14} className="text-emerald-500" /></button>
+            <input className="flex-1 bg-transparent border-0 text-[9px] font-mono text-white focus:ring-0 placeholder:text-slate-700" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder="TRANSMIT_QUERY_TO_ORACLE..." />
+            <button onClick={sendMessage}><Send size={12} className="text-emerald-500" /></button>
           </div>
         </div>
       )}

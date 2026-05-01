@@ -121,31 +121,31 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onNavigate }) => {
         
         {/* LEFT: System Health Radar */}
         <div className="lg:col-span-5 space-y-10">
-           <div className="glass-card p-12 rounded-[72px] border-2 border-indigo-500/20 bg-black/40 h-full flex flex-col relative overflow-hidden shadow-4xl group/radar">
+           <div className="glass-card p-12 rounded-[56px] border border-white/5 bg-black/40 h-full flex flex-col relative overflow-hidden shadow-4xl group/radar">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.05)_0%,transparent_70%)] pointer-events-none group-hover/radar:scale-110 transition-transform duration-[10s]"></div>
               <div className="flex items-center justify-between mb-12 relative z-10">
                  <div className="space-y-1">
-                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">System <span className="text-indigo-400">Equilibrium</span></h3>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">REAL_TIME_NODE_BALANCE</p>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Node_Equilibrium</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">REAL_TIME_TELEMETRY_SYNC</p>
                  </div>
-                 <Layers size={32} className="text-slate-700 group-hover/radar:rotate-12 transition-transform" />
+                 <Layers size={20} className="text-slate-700" />
               </div>
 
               <div className="flex-1 min-h-[400px] relative z-10 flex items-center justify-center">
                  <ResponsiveContainer width="100%" height="100%">
                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={systemHealthData}>
-                     <PolarGrid stroke="#334155" />
-                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 900 }} />
+                     <PolarGrid stroke="#1e293b" />
+                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 9, fontWeight: 900 }} />
                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                      <Radar
                        name="System"
                        dataKey="A"
                        stroke="#6366f1"
                        fill="#6366f1"
-                       fillOpacity={0.6}
+                       fillOpacity={0.2}
                      />
                      <Tooltip 
-                       contentStyle={{ backgroundColor: '#000', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px', color: '#fff' }}
+                       contentStyle={{ backgroundColor: '#000', border: '1px solid #1e293b', borderRadius: '16px', fontSize: '10px', color: '#fff' }}
                        itemStyle={{ color: '#818cf8', fontWeight: 'bold' }}
                      />
                    </RadarChart>
@@ -153,15 +153,15 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onNavigate }) => {
               </div>
 
               <div className="mt-10 grid grid-cols-2 gap-4 relative z-10">
-                 <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
-                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest italic">Core Stability</p>
-                    <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                 <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-2">
+                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">CORE_STABILITY</p>
+                    <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
                        <motion.div initial={{ width: 0 }} animate={{ width: '85%' }} className="h-full bg-indigo-500" />
                     </div>
                  </div>
-                 <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
-                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest italic">Optimization Delta</p>
-                    <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                 <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-2">
+                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">DELTA_OPTIMIZATION</p>
+                    <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
                        <motion.div initial={{ width: 0 }} animate={{ width: '12%' }} className="h-full bg-emerald-500" />
                     </div>
                  </div>
@@ -172,15 +172,17 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onNavigate }) => {
         {/* RIGHT: Predictive & Logic Cards */}
         <div className="lg:col-span-7 space-y-10">
            {/* Active Analysis Feed */}
-           <div className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 shadow-3xl space-y-8 relative overflow-hidden group/feed">
+           <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-black/40 shadow-3xl space-y-8 relative overflow-hidden group/feed">
               <div className="flex items-center justify-between mb-2">
                  <div className="flex items-center gap-6">
                     <div className="p-4 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 text-indigo-400">
-                       <Activity size={24} />
+                       <Activity size={20} />
                     </div>
-                    <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">Predictive <span className="text-indigo-400">Trajectory</span></h4>
+                    <div className="space-y-1">
+                       <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Predictive_Trajectory</h4>
+                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">SHARD_YIELD_ANALYSIS</p>
+                    </div>
                  </div>
-                 <button className="p-3 bg-white/5 rounded-xl hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Filter size={16} /></button>
               </div>
 
               <div className="h-[300px] w-full">
@@ -188,18 +190,17 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onNavigate }) => {
                    <AreaChart data={predictiveYieldData}>
                      <defs>
                        <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
-                         <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
+                         <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                        </linearGradient>
                      </defs>
                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                     <XAxis dataKey="name" stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
-                     <YAxis stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
+                     <XAxis dataKey="name" stroke="#475569" fontSize={9} axisLine={false} tickLine={false} />
+                     <YAxis stroke="#475569" fontSize={9} axisLine={false} tickLine={false} />
                      <Tooltip 
-                       contentStyle={{ backgroundColor: '#000', border: '1px solid #1e293b', borderRadius: '16px', color: '#fff' }}
+                       contentStyle={{ backgroundColor: '#000', border: '1px solid #1e293b', borderRadius: '16px', color: '#fff', fontSize: '10px' }}
                      />
-                     <Area type="monotone" dataKey="yield" stroke="#6366f1" fillOpacity={1} fill="url(#colorYield)" />
-                     <Area type="monotone" dataKey="target" stroke="#10b981" strokeDasharray="5 5" fill="transparent" />
+                     <Area type="monotone" dataKey="yield" stroke="#6366f1" fillOpacity={1} fill="url(#colorYield)" strokeWidth={2} />
                    </AreaChart>
                  </ResponsiveContainer>
               </div>
@@ -207,16 +208,16 @@ const AIAnalyst: React.FC<AIAnalystProps> = ({ user, onNavigate }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
                  {[
                    { label: 'Forecast', value: '+12%', icon: TrendingUp, color: 'text-emerald-400' },
-                   { label: 'Latency', value: '42ms', icon: Zap, color: 'text-blue-400' },
+                   { label: 'Latency', value: '42ms', icon: Zap, color: 'text-amber-400' },
                    { label: 'Security', value: 'Alpha', icon: ShieldCheck, color: 'text-indigo-400' }
                  ].map((stat, i) => (
-                   <div key={i} className="p-6 rounded-[32px] bg-white/[0.02] border border-white/5 flex items-center gap-5 group/stat hover:bg-white/5 transition-all">
-                      <div className={`p-3 rounded-xl bg-black border border-white/5 ${stat.color}`}>
+                   <div key={i} className="p-6 rounded-[32px] bg-white/[0.02] border border-white/5 flex items-center gap-5 hover:bg-white/5 transition-all">
+                      <div className={`p-4 rounded-2xl bg-black border border-white/5 ${stat.color}`}>
                          <stat.icon size={16} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest">{stat.label}</span>
-                        <span className={`text-xl font-mono font-black ${stat.color}`}>{stat.value}</span>
+                        <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{stat.label}</span>
+                        <span className={`text-lg font-mono font-black ${stat.color}`}>{stat.value}</span>
                       </div>
                    </div>
                  ))}

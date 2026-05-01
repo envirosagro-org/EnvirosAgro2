@@ -1061,10 +1061,10 @@ export const analyzeMiningYield = async (miningData: any): Promise<AgroLangRespo
 };
 
 export const generateTemporalVideo = async (prompt: string) => {
-  if (!API_KEY) {
-    throw new Error("API_KEY missing");
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY missing");
   }
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   return await ai.models.generateVideos({
     model: 'veo-3.1-fast-generate-preview',
     prompt,
@@ -1120,10 +1120,10 @@ export const generateAgroDocument = async (type: string, prompt: string): Promis
 };
 
 export const getTemporalVideoOperation = async (operation: any) => {
-  if (!API_KEY) {
-    throw new Error("API_KEY missing");
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY missing");
   }
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   return await ai.operations.getVideosOperation({ operation });
 };
 

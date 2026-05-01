@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { User, SustainabilityMetrics, Mission } from '../types';
+import { toast } from 'sonner';
 import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis 
@@ -7,7 +8,7 @@ import {
 import { 
   Leaf, TrendingUp, ShieldCheck, Zap, Globe, Target, 
   Activity, Award, Sparkles, BarChart3, Binary, CloudRain,
-  Mountain, Wind, Droplets, Sun, Briefcase, History
+  Mountain, Wind, Droplets, Sun, Briefcase, History, CheckCircle2
 } from 'lucide-react';
 import { SEO } from './SEO';
 import { motion, AnimatePresence } from 'motion/react';
@@ -46,6 +47,20 @@ const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ user, metrics, missio
     { name: 'Sat', impact: 67 },
     { name: 'Sun', impact: 72 },
   ];
+
+  useEffect(() => {
+    if (missions.length > 0) {
+      toast.info("EnvirosAgro AI: System synchronization active. Mission telemetry updated.", {
+        icon: <Activity className="text-indigo-400" size={16} />
+      });
+    }
+  }, [missions]);
+
+  const handleMint = (id: string) => {
+    toast.success("Minting Shard: EAC tokens and collectibles generated for impact.", {
+      icon: <CheckCircle2 className="text-emerald-400" size={16} />
+    });
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700 pb-20 mx-auto px-2 md:px-4 w-full max-w-full">
@@ -145,11 +160,6 @@ const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ user, metrics, missio
                        <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Shard_Emission_Reductions</p>
                     </div>
                  </div>
-                 <div className="flex items-center gap-4 text-[8px] font-black text-slate-600 uppercase tracking-widest cursor-pointer">
-                    <span className="text-emerald-400 underline underline-offset-8 decoration-2">WEEKLY</span>
-                    <span>MONTHLY</span>
-                    <span>TOTAL</span>
-                 </div>
               </div>
 
               <div className="h-64 relative mb-8">
@@ -164,31 +174,27 @@ const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ user, metrics, missio
                     </BarChart>
                  </ResponsiveContainer>
               </div>
+           </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 pt-8 border-t border-white/5">
-                 <div className="p-6 bg-white/5 rounded-[32px] border border-white/5 space-y-4">
-                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20">
-                          <Zap size={16} />
-                       </div>
-                       <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Energy_Shard_Alpha</h4>
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed uppercase tracking-widest italic">
-                       "Optimizing the energy frequency for your local mesh nodes. Stability verified."
-                    </p>
+           {/* Missions Section */}
+           <div className="glass-card p-10 rounded-[48px] border border-emerald-500/10 bg-black/40">
+             <h3 className="text-sm font-black text-white uppercase italic tracking-widest mb-6 flex items-center gap-2">
+               <CheckCircle2 size={18} className="text-emerald-400" /> Active_Missions
+             </h3>
+             <div className="space-y-4">
+               {missions.map(mission => (
+                 <div key={mission.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                   <div>
+                     <p className="text-xs font-bold text-white uppercase tracking-wider">{mission.title}</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{mission.status}</p>
+                   </div>
+                   <div className="flex items-center gap-4">
+                     <span className="text-xs font-mono font-black text-emerald-400">{mission.progress}%</span>
+                     <button onClick={() => handleMint(mission.id)} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">MINT</button>
+                   </div>
                  </div>
-                 <div className="p-6 bg-white/5 rounded-[32px] border border-white/5 space-y-4">
-                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                          <ShieldCheck size={16} />
-                       </div>
-                       <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Consensus_Handshake</h4>
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed uppercase tracking-widest italic">
-                       "Verified by 12 independent oracles in the Kenya-Delta region. High resonance achieved."
-                    </p>
-                 </div>
-              </div>
+               ))}
+             </div>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

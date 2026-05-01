@@ -105,6 +105,26 @@ export interface StakeInfo {
   lastClaim?: string;
 }
 
+export interface Mission {
+  id: string;
+  stewardId: string;
+  title: string;
+  objective: string;
+  description: string;
+  category: MissionCategory;
+  progress: number; // 0-100
+  impactMetrics: {
+    carbonImpact: number;
+    socialImpact: number;
+    economicImpact: number;
+  };
+  status: 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'FAILED';
+  deadline: string;
+  plotId?: string;
+  requiredUnits?: number;
+  timestamp: string;
+}
+
 export interface EACWallet {
   balance: number;
   eatBalance: number;
@@ -848,13 +868,4 @@ export interface EscrowContract {
   status: 'LOCKED' | 'RELEASED' | 'DISPUTED';
 }
 
-export interface Mission {
-  id: string;
-  stewardId: string;
-  title: string;
-  objective: string;
-  status: 'ACTIVE' | 'COMPLETED' | 'ABORTED';
-  plotId?: string;
-  requiredUnits?: number;
-  timestamp: string;
-}
+

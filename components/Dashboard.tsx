@@ -84,19 +84,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
       <SEO title="Dashboard" description="EnvirosAgro Dashboard: Monitor agricultural projects, blockchain, and sustainability." />
       
       {/* Network Pulse Ticker - Responsive */}
-      <div className="glass-card p-2 rounded-xl md:rounded-2xl border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shrink-0 relative">
+      <div className="glass-card p-3 rounded-[32px] border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shrink-0 relative mb-8">
         <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(16,185,129,0.1),transparent)] -translate-x-full animate-[scan_3s_ease-in-out_infinite]"></div>
-        <div className="flex items-center gap-2 px-3 md:px-6 shrink-0 relative z-10">
-           <button 
-             onClick={toggleIoT}
-             className={`flex items-center gap-2 ${isIoTActive ? 'text-emerald-400' : 'text-slate-500'}`}
-           >
-             <Cpu className="w-4 h-4" />
-             <span className="text-[8px] font-black uppercase tracking-widest whitespace-nowrap">{isIoTActive ? 'IOT_ON' : 'START_IOT'}</span>
-           </button>
+        <div className="flex items-center gap-4 px-6 shrink-0 relative z-10 border-r border-emerald-500/10">
+           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+           <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">TELEMETRY_LIVE</span>
         </div>
-        <div className="flex-1 px-4 overflow-hidden relative z-10 text-[9px] font-mono font-black uppercase tracking-widest text-emerald-400/80 truncate">
-           FINALITY: {blockchain[0]?.hash.substring(0, 8) || '0xGENESIS'} • RESONANCE: 1.42x • DRIFT: {networkDrift}μ • SYCAMORE_OS_v6.5
+        <div className="flex-1 px-6 overflow-hidden relative z-10 text-[10px] font-mono font-black uppercase tracking-widest text-emerald-400/60 truncate">
+           FINALITY: {blockchain[0]?.hash.substring(0, 8) || '0xGENESIS'} • RESONANCE: 1.42x • GLOBAL_DRIFT: {networkDrift}μ • SYCAMORE_OS_v6.5 • SHARD_SYNC_ACTIVE
         </div>
       </div>
 
