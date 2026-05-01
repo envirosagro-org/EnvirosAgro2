@@ -23,7 +23,7 @@ import { SEO } from './SEO';
 
 interface InvestorPortalProps {
   user: User;
-  onUpdate: (user: User) => void;
+  onUpdateUser: (user: User) => void;
   onSpendEAC: (amount: number, reason: string) => Promise<boolean>;
   projects: AgroProject[];
   onNavigate: (view: ViewState, action?: string | null) => void;
@@ -55,7 +55,7 @@ const AGRO_CODE_CMDS = [
   "EXECUTE fallow_cycle(LAND_ID_8821) -> STATUS: ACTIVE",
 ];
 
-const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdate, onSpendEAC, projects, onNavigate }) => {
+const InvestorPortal: React.FC<InvestorPortalProps> = ({ user, onUpdateUser, onSpendEAC, projects, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'marketplace' | 'portfolio' | 'harvest'>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMission, setSelectedMission] = useState<any | null>(null);

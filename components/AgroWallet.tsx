@@ -167,9 +167,16 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   // Routine Sync
   useEffect(() => {
     // 1. Connection Test
-    getDocFromServer(doc(db, 'test', 'connection')).catch((e) => {
-      console.warn("Firestore might be offline, checking configuration.", e);
-    });
+    async function testConnection() {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error) {
+        if(error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration.");
+        }
+      }
+    }
+    testConnection();
 
     // 2. Routing Sync
     if (initialSection && ['treasury', 'staking', 'swap', 'gateway', 'ledger', 'accounting'].includes(initialSection)) {

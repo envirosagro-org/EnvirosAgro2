@@ -798,6 +798,17 @@ const App: React.FC = () => {
   const setIsSidebarOpen = useUiStore(state => state.setIsSidebarOpen);
   const isMobileMenuOpen = useUiStore(state => state.isMobileMenuOpen);
   const setIsMobileMenuOpen = useUiStore(state => state.setIsMobileMenuOpen);
+  const theme = useUiStore(state => state.theme);
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('theme-day-optimal');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('theme-day-optimal');
+    }
+  }, [theme]);
   const isGlobalSearchOpen = useUiStore(state => state.isGlobalSearchOpen);
   const setIsGlobalSearchOpen = useUiStore(state => state.setIsGlobalSearchOpen);
   const isInboxOpen = useUiStore(state => state.isInboxOpen);

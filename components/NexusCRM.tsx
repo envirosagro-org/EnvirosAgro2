@@ -47,6 +47,8 @@ import {
   RefreshCw,
   Gavel
 } from 'lucide-react';
+import { Virtuoso } from 'react-virtuoso';
+import * as _ from 'lodash-es';
 import { User, VendorProduct, ViewState, Order } from '../types';
 import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
@@ -108,11 +110,11 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
         desc: p.description,
         cost: p.price
       }));
-    return [...BASE_SERVICES, ...dynamicServices];
+    return _.orderBy([...BASE_SERVICES, ...dynamicServices], ['trust'], ['desc']);
   }, [vendorProducts]);
 
-  const filteredServices = registeredServices.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredServices = _.filter(registeredServices, (s: any) =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.provider.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -214,53 +216,56 @@ const NexusCRM: React.FC<NexusCRMProps> = ({ user, onSpendEAC, vendorProducts = 
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-12 px-4 max-w-6xl mx-auto pt-10">
-                  {filteredServices.map(srv => (
-                    <div key={srv.id} className="glass-card p-12 md:p-16 rounded-[80px] border-2 border-white/5 flex flex-col group hover:border-indigo-500/30 transition-all shadow-3xl bg-black/40 relative overflow-hidden active:scale-[0.99] duration-300">
-                      <div className="absolute top-1/2 right-16 -translate-y-1/2 opacity-[0.05] pointer-events-none group-hover:scale-110 transition-transform duration-1000">
-                         <Database size={400} className="text-white" />
-                      </div>
-                      
-                      <div className="flex items-center justify-between mb-12 relative z-10">
-                          <div className={`w-24 h-24 rounded-[40px] bg-black/40 border-2 flex items-center justify-center transition-all ${
-                            srv.status === 'Verified' ? 'border-emerald-500/30 text-emerald-500 group-hover:border-emerald-500' : 'border-amber-500/30 text-amber-500 group-hover:border-amber-500 animate-pulse'
-                          }`}>
-                            {srv.status === 'Verified' ? <ShieldCheck size={48} /> : <Clock size={48} />}
-                          </div>
-                          <div className="text-right flex flex-col items-end gap-3">
-                            <span className={`px-6 py-2 rounded-full text-[11px] font-black uppercase border tracking-widest shadow-xl transition-all ${
-                                srv.status === 'Verified' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-600/10 text-amber-400 border-amber-500/20'
-                            }`}>{srv.status.toUpperCase()}</span>
-                            <p className="text-[12px] text-slate-700 font-mono mt-2 uppercase font-black tracking-widest">{srv.id} // 0x882A</p>
-                          </div>
-                      </div>
+              <div className="grid grid-cols-1 gap-12 px-4 max-w-6xl mx-auto pt-10 h-[600px]">
+                  <Virtuoso
+                    data={filteredServices}
+                    itemContent={(index, srv: any) => (
+                      <div key={srv.id} className="glass-card p-12 md:p-16 rounded-[80px] border-2 border-white/5 flex flex-col group hover:border-indigo-500/30 transition-all shadow-3xl bg-black/40 relative overflow-hidden active:scale-[0.99] duration-300 mb-12">
+                        <div className="absolute top-1/2 right-16 -translate-y-1/2 opacity-[0.05] pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                           <Database size={400} className="text-white" />
+                        </div>
+                        
+                        <div className="flex items-center justify-between mb-12 relative z-10">
+                            <div className={`w-24 h-24 rounded-[40px] bg-black/40 border-2 flex items-center justify-center transition-all ${
+                              srv.status === 'Verified' ? 'border-emerald-500/30 text-emerald-500 group-hover:border-emerald-500' : 'border-amber-500/30 text-amber-500 group-hover:border-amber-500 animate-pulse'
+                            }`}>
+                              {srv.status === 'Verified' ? <ShieldCheck size={48} /> : <Clock size={48} />}
+                            </div>
+                            <div className="text-right flex flex-col items-end gap-3">
+                              <span className={`px-6 py-2 rounded-full text-[11px] font-black uppercase border tracking-widest shadow-xl transition-all ${
+                                  srv.status === 'Verified' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-600/10 text-amber-400 border-amber-500/20'
+                              }`}>{srv.status.toUpperCase()}</span>
+                              <p className="text-[12px] text-slate-700 font-mono mt-2 uppercase font-black tracking-widest">{srv.id} // 0x882A</p>
+                            </div>
+                        </div>
 
-                      <div className="flex-1 space-y-8 relative z-10">
-                          <h4 className="text-5xl md:text-8xl font-black text-white uppercase italic leading-none group-hover:text-indigo-400 transition-colors m-0 tracking-tighter drop-shadow-2xl">{srv.name}</h4>
-                          <p className="text-[12px] md:text-[14px] text-slate-600 font-black uppercase tracking-[0.4em] italic leading-tight">{srv.provider}</p>
-                          <p className="text-2xl md:text-3xl text-slate-400 leading-relaxed italic mt-12 opacity-80 group-hover:opacity-100 transition-opacity max-w-4xl font-medium">"{srv.desc}"</p>
-                      </div>
+                        <div className="flex-1 space-y-8 relative z-10">
+                            <h4 className="text-5xl md:text-8xl font-black text-white uppercase italic leading-none group-hover:text-indigo-400 transition-colors m-0 tracking-tighter drop-shadow-2xl">{srv.name}</h4>
+                            <p className="text-[12px] md:text-[14px] text-slate-600 font-black uppercase tracking-[0.4em] italic leading-tight">{srv.provider}</p>
+                            <p className="text-2xl md:text-3xl text-slate-400 leading-relaxed italic mt-12 opacity-80 group-hover:opacity-100 transition-opacity max-w-4xl font-medium">"{srv.desc}"</p>
+                        </div>
 
-                      <div className="mt-20 pt-16 border-t border-white/5 flex flex-col sm:flex-row items-center sm:items-end justify-between relative z-10 gap-12">
-                          <div className="space-y-6 text-center sm:text-left">
-                             <div className="flex items-center justify-center sm:justify-start gap-4">
-                                <Star size={24} className="text-amber-500 fill-amber-500" />
-                                <span className="text-[16px] md:text-lg font-mono font-black text-white tracking-widest">{srv.trust}% TRUST_SCORE</span>
-                             </div>
-                             <p className="text-7xl md:text-9xl font-mono font-black text-white tracking-tighter m-0 leading-none">{srv.cost} <span className="text-3xl md:text-4xl text-emerald-400 italic font-sans ml-2">EAC</span></p>
-                          </div>
-                          <div className="relative group/btn w-full sm:w-auto">
-                            <button 
-                              onClick={() => handleAcquireShard(srv)}
-                              className="w-full sm:w-auto px-16 md:px-24 py-10 md:py-12 bg-emerald-600 hover:bg-emerald-500 rounded-[48px] text-[16px] md:text-lg font-black text-white uppercase tracking-[0.4em] flex items-center justify-center gap-6 shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-emerald-500/5"
-                            >
-                               ACQUIRE SHARD <ArrowUpRight size={36} />
-                            </button>
-                            <div className="absolute inset-[-12px] border-4 border-emerald-400/30 rounded-[60px] pointer-events-none opacity-0 group-hover/btn:opacity-100 transition-opacity animate-pulse"></div>
-                          </div>
+                        <div className="mt-20 pt-16 border-t border-white/5 flex flex-col sm:flex-row items-center sm:items-end justify-between relative z-10 gap-12">
+                            <div className="space-y-6 text-center sm:text-left">
+                               <div className="flex items-center justify-center sm:justify-start gap-4">
+                                  <Star size={24} className="text-amber-500 fill-amber-500" />
+                                  <span className="text-[16px] md:text-lg font-mono font-black text-white tracking-widest">{srv.trust}% TRUST_SCORE</span>
+                               </div>
+                               <p className="text-7xl md:text-9xl font-mono font-black text-white tracking-tighter m-0 leading-none">{srv.cost} <span className="text-3xl md:text-4xl text-emerald-400 italic font-sans ml-2">EAC</span></p>
+                            </div>
+                            <div className="relative group/btn w-full sm:w-auto">
+                              <button 
+                                onClick={() => handleAcquireShard(srv)}
+                                className="w-full sm:w-auto px-16 md:px-24 py-10 md:py-12 bg-emerald-600 hover:bg-emerald-500 rounded-[48px] text-[16px] md:text-lg font-black text-white uppercase tracking-[0.4em] flex items-center justify-center gap-6 shadow-3xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[24px] ring-emerald-500/5"
+                              >
+                                 ACQUIRE SHARD <ArrowUpRight size={36} />
+                              </button>
+                              <div className="absolute inset-[-12px] border-4 border-emerald-400/30 rounded-[60px] pointer-events-none opacity-0 group-hover/btn:opacity-100 transition-opacity animate-pulse"></div>
+                            </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  />
               </div>
            </div>
         )}

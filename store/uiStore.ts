@@ -37,6 +37,8 @@ interface UiStore {
   setIsInboxOpen: (isOpen: boolean) => void;
   multimediaParams: { prompt?: string; type?: string; autoGenerate?: boolean } | null;
   setMultimediaParams: (params: { prompt?: string; type?: string; autoGenerate?: boolean } | null) => void;
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
   selectedPlot: any | null;
   setSelectedPlot: (plot: any | null) => void;
   isScannerOpen: boolean;
@@ -66,6 +68,8 @@ export const useUiStore = create<UiStore>((set, get) => ({
   setSelectedPlot: (selectedPlot) => set({ selectedPlot }),
   isScannerOpen: false,
   setIsScannerOpen: (isScannerOpen) => set({ isScannerOpen }),
+  theme: 'dark',
+  toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
   generateShareUrl: (v, section, id) => {
     const state = get();
     const view = v || state.view;

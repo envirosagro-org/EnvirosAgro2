@@ -61,6 +61,8 @@ import {
   // Added missing Workflow icon import
   Workflow
 } from 'lucide-react';
+import { Toggle } from './ui/Toggle';
+import { cn } from '../src/lib/utils';
 import { 
   AreaChart, 
   Area, 

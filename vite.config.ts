@@ -2,6 +2,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 // import process explicitly to resolve TypeScript errors with cwd and env properties
 import process from 'node:process';
 
@@ -12,7 +13,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), visualizer({ open: false, filename: 'stats.html' })],
     define: {
       // Emulate process.env for browser compatibility as required by the GenAI SDK
       // Fix: use process.env from explicitly imported process

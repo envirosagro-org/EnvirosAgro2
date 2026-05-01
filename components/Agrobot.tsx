@@ -50,6 +50,7 @@ import {
 import { toast } from 'sonner';
 import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
+import { Toggle } from './ui/Toggle';
 import { User, ViewState, SignalShard, Mission } from '../types';
 import { chatWithAgroLang, forgeSwarmMission, suggestZonationShards } from '../services/agroLangService';
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
@@ -474,9 +475,10 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
                         </div>
                      </div>
                      <div className="mt-10 pt-10 border-t border-white/5 flex gap-6 relative z-10 shrink-0">
-                        <button onClick={() => toggleBotLock(bot.id)} className={`flex-1 py-6 rounded-[32px] text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-xl active:scale-95 border-4 ${bot.status === 'SECURITY_LOCK' ? 'bg-indigo-600 text-white border-indigo-500/50 hover:bg-indigo-500' : 'bg-rose-950/20 text-rose-500 border-rose-500/20 hover:bg-rose-600 hover:text-white'}`}>
-                           {bot.status === 'SECURITY_LOCK' ? 'RELEASE_SHARD' : 'ISOLATE_NODE'}
-                        </button>
+                        <div className="flex items-center gap-4">
+                           <Toggle enabled={bot.status === 'SECURITY_LOCK'} onToggle={() => toggleBotLock(bot.id)} />
+                           <span className="text-[10px] font-black uppercase tracking-[0.4em]">{bot.status === 'SECURITY_LOCK' ? 'LOCKED' : 'ACTIVE'}</span>
+                        </div>
                         <button onClick={() => { setSelectedBotId(bot.id); setActiveTab('radar'); }} className="p-6 bg-white/5 border-2 border-white/10 rounded-[32px] text-slate-500 hover:text-white hover:border-indigo-500/40 transition-all shadow-xl hover:scale-105 active:scale-95"><Target size={24}/></button>
                      </div>
                   </div>

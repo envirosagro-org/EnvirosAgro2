@@ -16,12 +16,11 @@ import {
   ArrowUpRight, Copy, SmartphoneNfc,
   BellRing,
   Eye,
-  ToggleLeft,
-  ToggleRight,
   RefreshCw,
   Network,
   Cpu
 } from 'lucide-react';
+import { Toggle } from './ui/Toggle';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
   ResponsiveContainer, Radar as RechartsRadar, Tooltip 
@@ -35,7 +34,7 @@ import { SEO } from './SEO';
 interface UserProfileProps {
   user: User;
   isGuest: boolean;
-  onUpdate: (user: User) => void;
+  onUpdateUser: (user: User) => void;
   onLogin: () => void;
   onNavigate: (view: ViewState) => void;
   onLogout?: () => void;
@@ -61,7 +60,7 @@ const MONTH_FLOWERS: Record<string, { flower: string; color: string; hex: string
   'DEC': { flower: 'Narcissus', trait: 'Respect', color: 'text-blue-100', hex: '#f0f9ff', resonance: '528Hz' },
 };
 
-const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLogin, onNavigate, onLogout, onPermanentAction, notify, signals }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdateUser, onLogin, onNavigate, onLogout, onPermanentAction, notify, signals }) => {
   const [activeTab, setActiveTab] = useState<'dossier' | 'card' | 'celestial' | 'edit' | 'settings' | 'sharing' | 'signals' | 'mastery'>('dossier');
   const [isMintingCert, setIsMintingCert] = useState(false);
   
@@ -83,7 +82,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        onUpdate({ ...user, avatar: reader.result as string });
+        onUpdateUser({ ...user, avatar: reader.result as string });
         notify('success', 'AVATAR_UPDATED', 'Profile picture has been updated.');
       };
       reader.readAsDataURL(file);
@@ -160,7 +159,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
     if (!flowerData) return;
     
     setSelectedMonth(normalizedMonth);
-    onUpdate({
+    onUpdateUser({
       ...user,
       zodiacFlower: {
         month: normalizedMonth,
@@ -190,7 +189,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
   const handleSaveProfile = () => {
     setIsSaving(true);
     setTimeout(() => {
-      onUpdate({
+      onUpdateUser({
         ...user,
         name: editName,
         role: editRole,
@@ -603,7 +602,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                         { id: 'notif', label: 'Signal Dispatch', desc: 'Enable real-time push sharding for network alerts.', val: user.settings?.notificationsEnabled, icon: BellRing },
                         { id: 'whatsapp', label: 'WhatsApp Notifications', desc: 'Sync account alerts to your linked WhatsApp device.', val: user.settings?.whatsappNotifications, icon: MessageSquare },
                         { id: 'tfa_enable', label: '2-Factor Auth', desc: 'Enable secondary authentication for your node.', val: user.tfaEnabled, icon: ShieldCheck },
-                        { id: 'tfa_type', label: 'Recovery Method', desc: `Select your primary recovery channel: ${user.tfaType || 'email'}`, val: true, icon: Key, isToggle: false },
                         { id: 'sync', label: 'Autonomous Ingest', desc: 'Allow kernel to automatically resync with regional relay nodes.', val: user.settings?.autoSync, icon: RefreshCw },
                         { id: 'bio', label: 'Biometric Handshake', icon: Fingerprint, desc: 'Use local biometric shard for rapid ESIN authorization.', val: user.settings?.biometricLogin },
                      ].map(setting => (
@@ -615,11 +613,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdate, onLo
                                  <p className="text-[10px] text-slate-500 mt-2 font-medium opacity-80 group-hover:opacity-100 italic">"{setting.desc}"</p>
                               </div>
                            </div>
-                           <button 
-                              className={`p-2 transition-all ${setting.val ? 'text-emerald-500' : 'text-slate-800'}`}
-                           >
-                              {setting.isToggle === false ? null : setting.val ? <ToggleRight size={48} /> : <ToggleLeft size={48} />}
-                           </button>
+                           <Toggle 
+                              enabled={!!setting.val} 
+                              onToggle={(enabled) => {
+                                 onUpdate({
+                                    ...user,
+                                    settings: { ...user.settings, [setting.id === 'notif' ? 'notificationsEnabled' : setting.id === 'whatsapp' ? 'whatsappNotifications' : setting.id === 'sync' ? 'autoSync' : 'biometricLogin']: enabled },
+                                    ...(setting.id === 'tfa_enable' ? { tfaEnabled: enabled } : {})
+                                 });
+                              }}
+                           />
                         </div>
                      ))}
                   </div>

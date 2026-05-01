@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useUiStore } from '../store/uiStore';
 import { 
   Settings, Monitor, MapPin, ShieldCheck, Zap, Activity, Info, 
   RefreshCw, Globe, Lock, ShieldAlert, Cpu, Radio, Gauge, 
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import { User, ViewState } from '../types';
 import { HenIcon } from './Icons';
+import { Toggle } from './ui/Toggle';
 
 interface SettingsPortalProps {
   user: User;
@@ -23,6 +25,9 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
   const [activeShard, setActiveShard] = useState<'display' | 'accessibility' | 'ecosystem' | 'privacy'>('display');
   const [isSyncing, setIsSyncing] = useState(false);
   const [lumiScale, setLumiScale] = useState(false);
+  
+  const theme = useUiStore(state => state.theme);
+  const toggleTheme = useUiStore(state => state.toggleTheme);
 
   const updateSettings = (newSettings: Partial<User['settings']>) => {
     onUpdateUser({
@@ -144,6 +149,13 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
                                 <h5 className="text-[11px] font-black text-white uppercase tracking-widest">Interface Theme</h5>
                              </div>
                              <div className="grid grid-cols-1 gap-3">
+                                <div className="p-6 rounded-[32px] border-2 transition-all text-left flex justify-between items-center group bg-white/5 border-transparent text-slate-600 hover:border-white/10">
+                                   <div>
+                                      <p className="text-sm font-black uppercase italic text-white">{theme === 'light' ? 'Light Mode' : 'Dark Mode'}</p>
+                                      <p className="text-[9px] font-medium opacity-60 mt-1">Toggle between light and dark UI themes.</p>
+                                   </div>
+                                    <Toggle enabled={theme === 'light'} onToggle={toggleTheme} />
+                                </div>
                                 {[
                                    { id: 'Dark', label: 'Industrial Dark', desc: 'Standard EOS environment.' },
                                    { id: 'OLED_Black', label: 'OLED Black', desc: 'Maximize battery on mobile hardware.' },
