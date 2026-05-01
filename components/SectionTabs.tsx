@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AGRO_EQUATIONS } from '../services/agroEquations';
+import { getSymbioticScale } from '../systemFunctions';
 
 export interface TabItem {
   id: string | any;
@@ -28,7 +28,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
   sticky = false
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const symbioticScale = AGRO_EQUATIONS.getSymbioticScale(window.innerWidth, window.innerHeight);
+  const symbioticScale = getSymbioticScale(window.innerWidth, window.innerHeight);
 
   useEffect(() => {
     const activeEl = scrollRef.current?.querySelector(`[data-tab-id="${activeTab}"]`);

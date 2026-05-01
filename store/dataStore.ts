@@ -20,6 +20,9 @@ interface DataStore {
   projects: AgroProject[];
   setProjects: (projects: AgroProject[]) => void;
 
+  stewards: any[];
+  setStewards: (stewards: any[]) => void;
+
   mempool: any[];
   setMempool: (mempool: any[]) => void;
 
@@ -69,6 +72,9 @@ export const useDataStore = create<DataStore>((set) => ({
 
   projects: [],
   setProjects: (projects) => set({ projects }),
+
+  stewards: [],
+  setStewards: (stewards) => set({ stewards }),
 
   mempool: [],
   setMempool: (mempool) => set({ mempool }),

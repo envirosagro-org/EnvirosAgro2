@@ -28,12 +28,11 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { webrtcService } from '../services/webrtcService';
-import { broadcastService } from '../services/broadcastService';
+import { communicationService } from '../services/communicationService';
 import { auth, db } from '../services/firebaseService';
 import { onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
 import { spatialService } from '../services/spatialService';
-import { telemetryService } from '../services/telemetryService';
+import { iotService } from '../services/iotService';
 import { User, ViewState, WebRTCCall, BroadcastSession, BroadcastComment, SpatialTransform, DroneTelemetry, TelemetryBatch, AgroBlock } from '../types';
 import { useDataStore } from '../store/dataStore';
 import { SEO } from './SEO';
@@ -118,11 +117,11 @@ export const MediaHub: React.FC<MediaHubProps> = ({
 
   const startCall = async (targetId: string, targetName: string) => {
     try {
-      const stream = await webrtcService.startLocalStream();
+      const stream = await communicationService.startLocalStream();
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
-      const callId = await webrtcService.createCall(targetId, targetName, currentUser?.name || 'Steward');
+      const callId = await communicationService.createCall(targetId, targetName, currentUser?.name || 'Steward');
       setCurrentCallId(callId);
       setIsCalling(true);
       
@@ -138,7 +137,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
         dispatchLayers: [{ channel: 'POPUP', status: 'PENDING' }]
       });
 
-      webrtcService.onRemoteStream((remote) => {
+      communicationService.onRemoteStream((remote) => {
         setRemoteStream(remote);
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remote;
       });
@@ -150,17 +149,17 @@ export const MediaHub: React.FC<MediaHubProps> = ({
   const acceptCall = async () => {
     if (!incomingCall) return;
     try {
-      const stream = await webrtcService.startLocalStream();
+      const stream = await communicationService.startLocalStream();
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
-      await webrtcService.answerCall(incomingCall.id);
+      await communicationService.answerCall(incomingCall.id);
       setCurrentCallId(incomingCall.id);
       setIsCalling(true);
       onEarnEAC(15, 'CALL_ANSWERED_YIELD');
       setIncomingCall(null);
 
-      webrtcService.onRemoteStream((remote) => {
+      communicationService.onRemoteStream((remote) => {
         setRemoteStream(remote);
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remote;
       });
@@ -171,7 +170,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
 
   const endCall = async () => {
     if (currentCallId) {
-      await webrtcService.hangup(currentCallId);
+      await communicationService.hangup(currentCallId);
       
       onEarnEAC(5, 'CALL_TERMINATED_SYNC');
       onEmitSignal({
@@ -205,7 +204,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
   useEffect(() => {
     const targetId = currentBroadcastId || viewingSessionId;
     if (targetId) {
-      const unsubscribe = broadcastService.listenToComments(targetId, (newComment) => {
+      const unsubscribe = communicationService.listenToBroadcastComments(targetId, (newComment) => {
         setComments(prev => {
           const exists = prev.some(c => c.id === newComment.id);
           if (exists) return prev;
@@ -260,7 +259,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
   // --- IOT TELEMETRY ---
   useEffect(() => {
     if (activeTab === 'drone') {
-      const unsubscribe = telemetryService.listenToBatches('DRONE-001', (batches) => {
+      const unsubscribe = iotService.listenToBatches('DRONE-001', (batches) => {
         setTelemetryBatches(batches);
         
         // Synchronize with global blockchain if new batches arrive
@@ -304,7 +303,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
   }, [activeTab, blockchain, setBlockchain, onEmitSignal]);
 
   const sendMockTelemetry = () => {
-    telemetryService.addReading({
+    iotService.addDroneReading({
       droneId: 'DRONE-001',
       gps: { lat: 37.42, lng: -122.08, alt: 150 },
       battery: 85,
@@ -327,7 +326,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
       if (broadcastVideoRef.current) broadcastVideoRef.current.srcObject = stream;
 
       const type = typeOverride === 'LIVE' ? 'LIVE_STREAM' : (typeOverride === 'PODCAST' ? 'PODCAST' : 'DRONE');
-      const id = await broadcastService.startBroadcast(title || `New ${activeTab} Signal`, type, stream);
+      const id = await communicationService.startBroadcast(title || `New ${activeTab} Signal`, type, stream);
       setCurrentBroadcastId(id);
       setIsBroadcasting(true);
       
@@ -349,7 +348,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
 
   const stopBroadcast = async () => {
     if (currentBroadcastId) {
-      await broadcastService.stopBroadcast();
+      await communicationService.stopBroadcast();
       
       onEarnEAC(10, 'BROADCAST_TERMINATED_SYNC');
       onEmitSignal({
@@ -1109,7 +1108,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
                 onKeyDown={(e) => {
                   const targetId = currentBroadcastId || viewingSessionId;
                   if (e.key === 'Enter' && targetId && commentText) {
-                    broadcastService.sendComment(targetId, commentText);
+                    communicationService.sendBroadcastComment(targetId, commentText);
                     setCommentText('');
                   }
                 }}
@@ -1120,7 +1119,7 @@ export const MediaHub: React.FC<MediaHubProps> = ({
                 onClick={() => {
                   const targetId = currentBroadcastId || viewingSessionId;
                   if (targetId && commentText) {
-                    broadcastService.sendComment(targetId, commentText);
+                    communicationService.sendBroadcastComment(targetId, commentText);
                     setCommentText('');
                   }
                 }}

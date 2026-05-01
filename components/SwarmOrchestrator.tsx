@@ -6,7 +6,6 @@ import {
   Cpu, Target, Loader2, Play, Square, Settings2,
   Compass, Globe, Satellite
 } from 'lucide-react';
-import { getDroneMissions, updateDroneMission, getDroneTelemetry } from '../services/droneService';
 import { DroneMission, User } from '../types';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { SEO } from './SEO';
@@ -26,7 +25,7 @@ const SwarmOrchestrator: React.FC<SwarmOrchestratorProps> = ({ user }) => {
   const [isDeploying, setIsDeploying] = useState(false);
 
   useEffect(() => {
-    setMissions(getDroneMissions());
+    setMissions(iotService.getDroneMissions());
     
     // Subscribe to live telemetry
     iotService.startSimulation();
@@ -44,7 +43,7 @@ const SwarmOrchestrator: React.FC<SwarmOrchestratorProps> = ({ user }) => {
   const handleStartMission = (id: string) => {
     setIsDeploying(true);
     setTimeout(() => {
-      updateDroneMission(id, 'IN_PROGRESS');
+      iotService.updateDroneMission(id, 'IN_PROGRESS');
       setMissions(prev => prev.map(m => m.id === id ? { ...m, status: 'IN_PROGRESS' } : m));
       setIsDeploying(false);
       toast.success('Swarm Vector Engaged. Hardware shards communicating.');
@@ -52,7 +51,7 @@ const SwarmOrchestrator: React.FC<SwarmOrchestratorProps> = ({ user }) => {
   };
 
   const handleStopMission = (id: string) => {
-    updateDroneMission(id, 'IDLE');
+    iotService.updateDroneMission(id, 'IDLE');
     setMissions(prev => prev.map(m => m.id === id ? { ...m, status: 'IDLE' } : m));
     toast.info('Mission Aborted. Units returning to cradle.');
   };

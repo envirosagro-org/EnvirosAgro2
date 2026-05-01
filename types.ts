@@ -73,6 +73,8 @@ export interface User {
   tfaType?: 'email' | 'phone';
   settings?: {
     notificationsEnabled: boolean;
+    emailNotifications?: boolean;
+    whatsappNotifications?: boolean;
     privacyMode: 'Public' | 'Private' | 'Consensus_Only';
     autoSync: boolean;
     biometricLogin: boolean;
@@ -84,7 +86,6 @@ export interface User {
     anonymizedSharing?: boolean;
     geofenceSecurity?: boolean;
     dataRefreshRate?: 'Real-time' | '5m' | '1h';
-    whatsappNotifications?: boolean;
   };
   resources?: AgroResource[];
   zodiacFlower?: {
@@ -422,10 +423,41 @@ export interface NotificationShard {
   actionIcon?: any;
 }
 
+export type WorkerRole = 
+  | 'FIELD_TECHNICIAN'
+  | 'DRONE_OPERATOR'
+  | 'HARVEST_SPECIALIST'
+  | 'LOGISTICS_COORDINATOR'
+  | 'BIOTECH_ANALYST'
+  | 'SUSTAINABILITY_AUDITOR'
+  | 'AGRO_ENGINEER'
+  | 'BOT_SYSTEM_OVERSEER';
+
+export type BotType = 
+  | 'DATA_SCULPTOR' // Automates data cleaning and sync
+  | 'LEDGER_SENTINEL' // Automates blockchain anchoring
+  | 'YIELD_ORACLE' // Automates predictive modeling
+  | 'SYNC_SWARM' // Automates device/sensor connectivity
+  | 'MRV_AUDITOR' // Automates soil metrics monitoring and credit issuance
+  | 'DISPATCH_LOGISTICIAN' // Automates delivery monitoring and rerouting
+  | 'ASSET_CUSTODIAN'; // Automates asset maintenance checks
+
+export interface AgrobotProfile {
+  id: string;
+  type: BotType;
+  name: string;
+  status: 'IDLE' | 'ACTIVE' | 'CALIBRATING' | 'ERROR';
+  lastActive: string;
+  efficiency: number;
+  tasksCompleted: number;
+  shardAssigned: string;
+}
+
 export interface WorkerProfile {
   id: string;
   name: string;
   esin: string;
+  role: WorkerRole;
   skills: string[];
   sustainabilityRating: number;
   verifiedHours: number;
@@ -434,6 +466,8 @@ export interface WorkerProfile {
   efficiency: number;
   avatar: string;
   location: string;
+  currentTaskId?: string;
+  availability: 'AVAILABLE' | 'OCCUPIED' | 'OFFLINE';
 }
 
 export interface LogisticProvider {
@@ -486,6 +520,7 @@ export interface Task {
   status: 'Inception' | 'Processing' | 'Quality_Audit' | 'Completed';
   timestamp: string;
   stewardEsin: string;
+  assignedWorkerEsin?: string;
   assetId?: string; // Links to LiveAgroProduct or FarmingContract
   blueprintId?: string;
   evidenceShards?: string[]; // IDs of MediaShards/Evidence

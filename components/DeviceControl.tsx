@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { rtdb } from '../src/firebase';
-import { ref, onValue, set, push } from 'firebase/database';
+import { iotService } from '../services/iotService';
+import { onValue, push } from 'firebase/database';
 import { SEO } from './SEO';
 import { Toggle } from './ui/Toggle';
 
@@ -14,7 +14,7 @@ export const DeviceControl: React.FC<DeviceControlProps> = ({ deviceId }) => {
   const [command, setCommand] = useState('');
 
   useEffect(() => {
-    const statusRef = ref(rtdb, `devices/${deviceId}/status`);
+    const statusRef = iotService.getDeviceStatusRef(deviceId);
     const unsubscribe = onValue(statusRef, (snapshot) => {
       const val = snapshot.val();
       setStatus(val || 'Offline');
@@ -25,19 +25,11 @@ export const DeviceControl: React.FC<DeviceControlProps> = ({ deviceId }) => {
 
   const handleToggle = (enabled: boolean) => {
     setIsActive(enabled);
-    const commandsRef = ref(rtdb, `devices/${deviceId}/commands`);
-    push(commandsRef, {
-      command: enabled ? 'START_DEVICE' : 'STOP_DEVICE',
-      timestamp: Date.now(),
-    });
+    iotService.sendDeviceCommand(deviceId, enabled ? 'START_DEVICE' : 'STOP_DEVICE');
   };
 
   const sendCommand = async () => {
-    const commandsRef = ref(rtdb, `devices/${deviceId}/commands`);
-    await push(commandsRef, {
-      command,
-      timestamp: Date.now(),
-    });
+    await iotService.sendDeviceCommand(deviceId, command);
     setCommand('');
   };
 

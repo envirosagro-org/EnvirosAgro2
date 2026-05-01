@@ -28,7 +28,7 @@ import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
 import { SEO } from './SEO';
 import { SectionTabs } from './SectionTabs';
-import { telemetryService } from '../services/telemetryService';
+import { iotService } from '../services/iotService';
 import { DroneTelemetry } from '../types';
 import { AIAssistant } from './AIAssistant';
 
@@ -192,7 +192,7 @@ const Intelligence: React.FC<IntelligenceProps> = ({ user, onEarnEAC, onSpendEAC
   useEffect(() => {
     if (!['telemetry', 'hub', 'twin'].includes(activeTab)) return;
 
-    const cleanup = telemetryService.onLiveReading((reading: DroneTelemetry) => {
+    const cleanup = iotService.onLiveReading((reading: DroneTelemetry) => {
       setTelemetryLogs(prev => {
         const metrics = ['Temperature', 'Soil Purity', 'm-Constant Drift', 'Photosynthetic Flux'];
         const metric = metrics[Math.floor(Math.random() * metrics.length)];

@@ -110,6 +110,69 @@ export const mintCarbonShard = (biomass: number, confidence: number) => {
   };
 };
 
+/**
+ * m Constant: The Bio-Multiplicity Baseline
+ */
+export const M_CONSTANT = 1.61803398875; // Golden Ratio approximation as agro growth constant
+
+/**
+ * Sustainability Equation (S)
+ */
+export const getSustainabilityIndex = (intensity: number, affinity: number, stress: number) => {
+  return M_CONSTANT * ((intensity * affinity) / Math.max(stress, 0.01));
+};
+
+/**
+ * SEHTI Resilience Framework (R)
+ */
+export const getSehtiResilience = (psych: number, albedo: number, thermal: number, stress: number) => {
+  return (psych * albedo) / (thermal + stress);
+};
+
+/**
+ * EnvirosAgro Statutes Equation (L)
+ */
+export const getStatuteParity = (compliance: number, complexity: number, cycles: number) => {
+  return compliance / (complexity * Math.max(1, cycles));
+};
+
+/**
+ * Kaizen Evaluation (K)
+ */
+export const getKaizenScore = (improvement: number, baseline: number) => {
+  return (improvement / Math.max(0.1, baseline)) * M_CONSTANT;
+};
+
+/**
+ * Symbiotic Scaling (Ss)
+ */
+export const getSymbioticScale = (width: number, height: number, density: number = 0.85) => {
+  const aspect = width / height;
+  const goldenRatio = 1.618;
+  const rawScale = (aspect / goldenRatio) * density;
+  return Math.max(0.9, Math.min(1.1, rawScale));
+};
+
+/**
+ * Eco-Healthy Transformation (Eh)
+ */
+export const getHealthyColorShift = (hour: number, stressLevel: number) => {
+  const isEvening = hour > 18 || hour < 6;
+  if (isEvening) {
+    return stressLevel > 0.5 ? 'sehti-night-high-stress' : 'sehti-night-calm';
+  }
+  return 'sehti-day-optimal';
+};
+
+export const CHROMA_SEHTI_PALETTE = {
+  HEALTHY_GREEN: '#4A7C59', // Photosynthetic Health
+  CALM_INDIGO: '#312E81',   // Deep cognitive rest
+  RESILIENT_LEAF: '#10B981', // High albedo vitality
+  EYE_HEAL_WARM: '#F2CC8F', // Low blue light stress
+  NIGHT_SHARD: '#020403',   // True black for OLED/Eye rest
+  FUCHSIA_RESONANCE: '#f472b6' // Pollinator / Aesthetic peak
+};
+
 // --- FIREBASE FUNCTIONS EXPORT TEMPLATE ---
 /*
 import { onCall, onRequest } from "firebase-functions/v2/https";

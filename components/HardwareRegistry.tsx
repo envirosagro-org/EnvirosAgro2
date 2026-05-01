@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 // Fallback for db and auth if they are used elsewhere, but for this component 
 // we will stick to a state-driven industrial UI to ensure consistency with the app.
-// import { db, auth } from '../src/firebase'; 
+// import { db, auth } from '../services/firebaseService'; 
 import { 
   Server, Cpu, Activity, Zap, ShieldCheck, 
   Search, Plus, Settings, Trash2, RefreshCw,

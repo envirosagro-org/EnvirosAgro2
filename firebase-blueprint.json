@@ -10,22 +10,83 @@
         "name": { "type": "string" },
         "email": { "type": "string" },
         "role": { "type": "string" },
+        "location": { "type": "string" },
         "wallet": {
           "type": "object",
           "properties": {
             "balance": { "type": "number" },
-            "eatBalance": { "type": "number" }
+            "eatBalance": { "type": "number" },
+            "stakedEat": { "type": "number" },
+            "exchangeRate": { "type": "number" }
           }
         },
         "metrics": {
           "type": "object",
           "properties": {
             "sustainabilityScore": { "type": "number" },
-            "agriculturalCodeU": { "type": "number" }
+            "agriculturalCodeU": { "type": "number" },
+            "timeConstantTau": { "type": "number" }
           }
-        }
+        },
+        "completedActions": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["uid", "esin", "name", "email", "role"]
+    },
+    "AgroProject": {
+      "title": "Agro Project Mission",
+      "description": "A funded mission or project",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string" },
+        "fundedAmount": { "type": "number" },
+        "totalCapital": { "type": "number" },
+        "adminEsin": { "type": "string" }
+      },
+      "required": ["id", "name", "totalCapital", "adminEsin"]
+    },
+    "AgroContract": {
+      "title": "Farming Contract",
+      "description": "A contract for farming operations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "investorEsin": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string" },
+        "budget": { "type": "number" }
+      },
+      "required": ["id", "investorEsin", "budget"]
+    },
+    "LiveProduct": {
+      "title": "Live Farming Asset",
+      "description": "Real-time state of a crop or product",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stewardEsin": { "type": "string" },
+        "productType": { "type": "string" },
+        "stage": { "type": "string" },
+        "progress": { "type": "number" }
+      },
+      "required": ["id", "stewardEsin", "productType"]
+    },
+    "AgroOrder": {
+      "title": "Marketplace Order",
+      "description": "An order of goods or services",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "itemId": { "type": "string" },
+        "itemName": { "type": "string" },
+        "cost": { "type": "number" },
+        "status": { "type": "string" },
+        "customerEsin": { "type": "string" },
+        "supplierEsin": { "type": "string" }
+      },
+      "required": ["id", "itemId", "itemName", "cost", "status"]
     },
     "FleetNode": {
       "title": "Agrobot / IoT Fleet Node",
@@ -122,6 +183,22 @@
     "/signals/{signalId}": {
       "schema": { "$ref": "#/entities/Signal" },
       "description": "System broadcast signals for user notifications."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/AgroProject" },
+      "description": "Store all agro project missions."
+    },
+    "/contracts/{contractId}": {
+      "schema": { "$ref": "#/entities/AgroContract" },
+      "description": "Store all farming contracts."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/AgroOrder" },
+      "description": "Store all user orders."
+    },
+    "/live_products/{productId}": {
+      "schema": { "$ref": "#/entities/LiveProduct" },
+      "description": "Real-time production tracking."
     }
   }
 }

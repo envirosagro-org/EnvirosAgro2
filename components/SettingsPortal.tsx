@@ -49,6 +49,8 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
 
   const defaultSettings = {
     notificationsEnabled: true,
+    emailNotifications: true,
+    whatsappNotifications: false,
     privacyMode: 'Public' as const,
     autoSync: true,
     biometricLogin: false,
@@ -238,7 +240,7 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
                     </div>
                  )}
 
-                 {activeShard === 'accessibility' && (
+                  {activeShard === 'accessibility' && (
                     <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="p-8 bg-black/60 rounded-[48px] border border-white/5 space-y-8 shadow-inner">
@@ -266,28 +268,30 @@ const SettingsPortal: React.FC<SettingsPortalProps> = ({ user, onUpdateUser, onN
 
                           <div className="p-8 bg-black/60 rounded-[48px] border border-white/5 space-y-8 shadow-inner">
                              <div className="flex items-center gap-4 border-b border-white/5 pb-4 px-2">
-                                <MapPin size={20} className="text-emerald-400" />
-                                <h5 className="text-[11px] font-black text-white uppercase tracking-widest italic">Location Precision Shard</h5>
+                                <Smartphone size={20} className="text-emerald-400" />
+                                <h5 className="text-[11px] font-black text-white uppercase tracking-widest italic">Notification Shards</h5>
                              </div>
                              <div className="space-y-4">
-                                {[
-                                   { id: 'High', label: 'High Accuracy', desc: 'Ideal for soil sampling & drone sync.' },
-                                   { id: 'Battery', label: 'Battery Optimized', desc: 'Conserves node power for static monitoring.' },
-                                ].map(p => (
-                                   <button 
-                                      key={p.id}
-                                      onClick={() => updateSettings({ locationAccuracy: p.id as any })}
-                                      className={`w-full p-6 rounded-[32px] border-2 transition-all text-left flex items-center justify-between group ${currentSettings.locationAccuracy === p.id ? 'bg-emerald-600/10 border-emerald-500 text-white shadow-xl' : 'bg-black border-white/5 text-slate-700'}`}
-                                   >
-                                      <div>
-                                         <p className="text-sm font-black uppercase italic">{p.label}</p>
-                                         <p className="text-[9px] opacity-60 font-medium mt-1 uppercase tracking-tighter">{p.desc}</p>
-                                      </div>
-                                      <div className={`w-4 h-4 rounded-full border-2 border-white/10 flex items-center justify-center transition-all ${currentSettings.locationAccuracy === p.id ? 'bg-emerald-500 border-emerald-400' : ''}`}>
-                                         {currentSettings.locationAccuracy === p.id && <CheckCircle2 size={12} className="text-white" />}
-                                      </div>
-                                   </button>
-                                ))}
+                                <div className="p-6 rounded-[32px] border-2 transition-all text-left flex justify-between items-center bg-white/5 border-transparent text-slate-600 hover:border-white/10">
+                                   <div>
+                                      <p className="text-sm font-black uppercase italic text-white">Email Notifications</p>
+                                      <p className="text-[9px] font-medium opacity-60 mt-1 uppercase tracking-tighter">Receive critical system logs via email.</p>
+                                   </div>
+                                    <Toggle 
+                                      enabled={!!currentSettings.emailNotifications} 
+                                      onToggle={() => updateSettings({ emailNotifications: !currentSettings.emailNotifications })} 
+                                    />
+                                </div>
+                                <div className="p-6 rounded-[32px] border-2 transition-all text-left flex justify-between items-center bg-white/5 border-transparent text-slate-600 hover:border-white/10">
+                                   <div>
+                                      <p className="text-sm font-black uppercase italic text-white">WhatsApp Alerts</p>
+                                      <p className="text-[9px] font-medium opacity-60 mt-1 uppercase tracking-tighter">Instant WhatsApp dispatch for high-priority events.</p>
+                                   </div>
+                                    <Toggle 
+                                      enabled={!!currentSettings.whatsappNotifications} 
+                                      onToggle={() => updateSettings({ whatsappNotifications: !currentSettings.whatsappNotifications })} 
+                                    />
+                                </div>
                              </div>
                           </div>
                        </div>

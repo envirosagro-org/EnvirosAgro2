@@ -80,7 +80,7 @@ import { analyzeInstitutionalRisk, consultFinancialOracle, AgroLangResponse, cha
 import { initiatePayPalPayout } from '../services/paymentService';
 import { toast } from 'sonner';
 import { doc, getDocFromServer } from 'firebase/firestore';
-import { db } from '../src/firebase';
+import { db } from '../services/firebaseService';
 
 import { TriggerButton } from './TriggerButton';
 import CostAccountingDashboard from './CostAccountingDashboard';

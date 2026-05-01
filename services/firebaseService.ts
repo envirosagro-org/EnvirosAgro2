@@ -28,7 +28,8 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
-  writeBatch
+  writeBatch,
+  limit
 } from "firebase/firestore";
 import { 
   getDatabase, 
@@ -48,6 +49,7 @@ import { User as AgroUser, SignalShard, DispatchChannel, MachineNode } from "../
 import { generateAlphanumericId } from '../systemFunctions';
 import { handleFirestoreError, OperationType } from "./errorHandling";
 import { persistItem, queueAction } from "./persistenceService";
+import { notificationService } from "./notificationService";
 
 import firebaseConfig from "../firebase-applet-config.json";
 
@@ -121,6 +123,32 @@ export const dataConnect = getDataConnect(app, {
 if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
   connectDataConnectEmulator(dataConnect, 'localhost', 9399);
 }
+
+// --- SEEDING LOGIC ---
+/**
+ * SEED_REGISTRY_COLLECTIONS
+ * Populates Firestore with base data if collections are empty.
+ */
+export const seedRegistryCollections = async (data: { [collection: string]: any[] }) => {
+  console.log("[Registry] Checking for initial data seeding...");
+  
+  for (const [colName, items] of Object.entries(data)) {
+    try {
+      const snap = await getDocs(query(collection(db, colName), limit(1)));
+      if (snap.empty) {
+        console.log(`[Seeding] Path: /${colName} - Injecting ${items.length} records.`);
+        const batch = writeBatch(db);
+        items.forEach(item => {
+          const docRef = doc(collection(db, colName), item.id || generateAlphanumericId(7));
+          batch.set(docRef, cleanObject(item));
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn(`[Seeding] Failed to seed /${colName}:`, e);
+    }
+  }
+};
 
 /**
  * DATA CONNECT BACKGROUND SYNC
@@ -215,18 +243,39 @@ export const requestPhoneCode = async (phone: string, appVerifier: any): Promise
 export const dispatchNetworkSignal = async (signalData: Partial<SignalShard>, stewardId?: string): Promise<SignalShard | null> => {
   const userId = auth.currentUser?.uid;
   if (!userId) return null;
+  
+  const targetId = stewardId || userId;
+  const userProfile = await getStewardProfile(targetId);
+  const settings = userProfile?.settings;
+  const notificationsEnabled = settings?.notificationsEnabled !== false;
+
   const id = `SIG-${generateAlphanumericId(7)}`;
   const timestamp = new Date().toISOString();
   const layers: DispatchChannel[] = [];
   layers.push({ channel: 'INBOX', status: 'SENT', timestamp });
-  if (signalData.priority === 'critical' || signalData.priority === 'high') {
-    layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
-    layers.push({ channel: 'EMAIL', status: 'SENT', timestamp });
-    layers.push({ channel: 'CALENDAR', status: 'SENT', timestamp });
-    if (signalData.priority === 'critical') {
-      layers.push({ channel: 'PHONE', status: 'SENT', timestamp });
+
+  if (notificationsEnabled) {
+    if (signalData.priority === 'critical' || signalData.priority === 'high') {
+      layers.push({ channel: 'POPUP', status: 'SENT', timestamp });
+      
+      // Email Notification
+      if (settings?.emailNotifications && userProfile?.email) {
+        notificationService.sendEmail(userProfile.email, signalData.title || 'Network Signal', signalData.message || '');
+        layers.push({ channel: 'EMAIL', status: 'SENT', timestamp });
+      }
+
+      layers.push({ channel: 'CALENDAR', status: 'SENT', timestamp });
+      
+      // WhatsApp Notification (simulated via PHONE channel)
+      if (signalData.priority === 'critical' || settings?.whatsappNotifications) {
+        if (settings?.whatsappNotifications && userProfile?.phone) {
+          notificationService.sendWhatsApp(userProfile.phone, `${signalData.title}: ${signalData.message}`);
+          layers.push({ channel: 'PHONE', status: 'SENT', timestamp });
+        }
+      }
     }
   }
+
   const rawSignal: any = {
     id,
     type: signalData.type || 'system',

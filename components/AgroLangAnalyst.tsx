@@ -15,8 +15,6 @@ import {
   chatWithAgroLang, 
   analyzeSustainability, 
   AgroLangResponse,
-  calculateAgroCode,
-  calculateSustainabilityConstant,
   calculateSehtiTotal,
   calculateNetCarbon,
   calculateCircularEfficiency,
@@ -25,6 +23,12 @@ import {
   calculateEconomicResilience,
   calculateUnifiedSehtiImpact
 } from '../services/agroLangService';
+import { 
+  calculateAgroCode, 
+  calculateMConstant as calculateSustainabilityConstant,
+  getKaizenScore as calculateKaizenVelocity,
+  getStatuteParity as calculateTrustSignature
+} from '../systemFunctions';
 import { User as AgroUser, ViewState, SignalShard } from '../types';
 import { HenIcon } from './Icons';
 import { SycamoreLogo } from './Icons';

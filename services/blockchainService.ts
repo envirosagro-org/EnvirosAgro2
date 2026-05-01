@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
 import { AgroBlock, AgroTransaction, MempoolTransaction } from '../types';
-import { db, rtdb, auth } from '../src/firebase';
+import { db, rtdb, auth } from './firebaseService';
 import { 
   collection, 
   doc, 

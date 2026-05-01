@@ -51,9 +51,10 @@ import { toast } from 'sonner';
 import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { Toggle } from './ui/Toggle';
-import { User, ViewState, SignalShard, Mission } from '../types';
+import { User, ViewState, SignalShard, Mission, AgrobotProfile } from '../types';
 import { chatWithAgroLang, forgeSwarmMission, suggestZonationShards } from '../services/agroLangService';
 import { saveCollectionItem, listenToCollection } from '../services/firebaseService';
+import { automationService } from '../services/automationService';
 import { spatialService, Plot } from '../services/spatialService';
 import { SycamoreLogo } from './Icons';
 import { generateQuickHash } from '../systemFunctions';
@@ -95,7 +96,16 @@ const INITIAL_FLEET: Crawler[] = [
 ];
 
 const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate, onEmitSignal, initialSection }) => {
-  const [activeTab, setActiveTab] = useState<'registry' | 'forge' | 'terminal' | 'radar'>('registry');
+  const [activeTab, setActiveTab] = useState<'registry' | 'forge' | 'terminal' | 'radar' | 'automation'>('registry');
+  const [autonomousBots, setAutonomousBots] = useState<AgrobotProfile[]>([]);
+
+  useEffect(() => {
+    setAutonomousBots(automationService.getBots());
+    const interval = setInterval(() => {
+      setAutonomousBots([...automationService.getBots()]);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (initialSection === 'registry') setActiveTab('registry');
@@ -207,9 +217,9 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
           anim_state: 'working'
         });
 
-        // Send simulated telemetry to the telemetryService
-        import('../services/telemetryService').then(({ telemetryService }) => {
-          telemetryService.addReading({
+        // Send simulated telemetry to the iotService
+        import('../services/iotService').then(({ iotService }) => {
+          iotService.addDroneReading({
             droneId: bot.id,
             battery: 100 - Math.random() * 20,
             speed: Math.sqrt(dx*dx + dy*dy) * 10,
@@ -423,6 +433,7 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
             { id: 'registry', label: 'Fleet Registry', icon: Database },
             { id: 'radar', label: 'Tactical Radar', icon: Radar },
             { id: 'forge', label: 'Mission Forge', icon: Wand2 },
+            { id: 'automation', label: 'Autonomous Bots', icon: Cpu },
             { id: 'terminal', label: 'Execution Shell', icon: Terminal },
           ]}
           activeTab={activeTab}
@@ -600,7 +611,60 @@ const Agrobot: React.FC<AgrobotProps> = ({ user, onSpendEAC, onEarnEAC, onNaviga
            </div>
         )}
 
-        {/* VIEW: MISSION FORGE */}
+        {activeTab === 'automation' && (
+          <div className="space-y-12 animate-in slide-in-from-right-4 duration-700 h-full w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {autonomousBots.map(bot => (
+                <div key={bot.id} className="glass-card p-12 rounded-[64px] border-2 border-white/5 bg-black/40 hover:border-emerald-500/30 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-700">
+                     <Cpu size={120} className="text-white/20" />
+                   </div>
+                   <div className="flex justify-between items-start mb-8 relative z-10">
+                     <div className="flex items-center gap-6">
+                       <div className="w-16 h-16 rounded-[24px] bg-emerald-600/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                         <Bug size={32} />
+                       </div>
+                       <div>
+                         <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">{bot.name}</h4>
+                         <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">{bot.type}</p>
+                       </div>
+                     </div>
+                     <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest ${bot.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 animate-pulse' : 'bg-slate-800 text-slate-500 border-white/10'}`}>{bot.status}</span>
+                   </div>
+                   
+                   <div className="space-y-6 relative z-10 border-t border-white/5 pt-8">
+                     <div className="grid grid-cols-2 gap-8">
+                       <div className="text-center p-6 bg-white/5 rounded-[32px] border border-white/5">
+                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Efficiency</p>
+                         <p className="text-3xl font-black text-white italic">{bot.efficiency}%</p>
+                       </div>
+                       <div className="text-center p-6 bg-white/5 rounded-[32px] border border-white/5">
+                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Impact Units</p>
+                         <p className="text-3xl font-black text-white italic">{bot.tasksCompleted}</p>
+                       </div>
+                     </div>
+                     <div className="p-6 bg-black rounded-[32px] border border-white/5">
+                        <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">Primary Directive</p>
+                        <p className="text-xs font-bold text-slate-300 italic">Targeting {bot.shardAssigned} for autonomous sharding.</p>
+                     </div>
+                   </div>
+                </div>
+              ))}
+            </div>
+            <div className="glass-card p-10 rounded-[56px] border border-white/5 bg-emerald-500/5 flex items-center justify-between shadow-xl">
+              <div className="flex items-center gap-6">
+                <div className="w-14 h-14 bg-emerald-500 rounded-3xl flex items-center justify-center text-black">
+                  <Fingerprint size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Automation Integrity</p>
+                  <p className="text-sm font-bold text-white uppercase italic">Bot swarm residency: GLOBAL_NODE_STABLE</p>
+                </div>
+              </div>
+              <button className="px-8 py-3 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase text-slate-500 tracking-widest hover:bg-white/10 hover:text-white transition-all">Recalibrate_Swarm</button>
+            </div>
+          </div>
+        )}
         {activeTab === 'forge' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in zoom-in duration-700 w-full h-full">
              <div className="lg:col-span-5 flex flex-col min-h-0 h-full">

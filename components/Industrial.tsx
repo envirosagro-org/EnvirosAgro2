@@ -73,7 +73,8 @@ import {
   Bar,
   Cell
 } from 'recharts';
-import { User, RegisteredUnit, ViewState, WorkerProfile, AgroProject, VendorProduct, Order } from '../types';
+import { User, RegisteredUnit, ViewState, WorkerProfile, AgroProject, VendorProduct, Order, WorkerRole } from '../types';
+import { GLOBAL_WORKER_POOL, ROLE_DETAILS } from '../constants/workers';
 import { HenIcon } from './Icons';
 import { chatWithAgroLang } from '../services/agroLangService';
 import { SectionTabs } from './SectionTabs';
@@ -94,11 +95,7 @@ interface IndustrialProps {
   initialSection?: string | null;
 }
 
-const MOCK_WORKERS: WorkerProfile[] = [
-  { id: 'W-01', name: 'Dr. Sarah Chen', esin: 'EA-SRH-8821', skills: ['Soil Science', 'Spectral Analysis'], sustainabilityRating: 98, verifiedHours: 2400, isOpenToWork: true, lifetimeEAC: 45000, efficiency: 94, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150', location: 'California Hub' },
-  { id: 'W-02', name: 'Marcus T.', esin: 'EA-MRC-4420', skills: ['Hydroponics', 'IoT Maintenance'], sustainabilityRating: 85, verifiedHours: 820, isOpenToWork: true, lifetimeEAC: 12000, efficiency: 82, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150', location: 'Nairobi Ingest' },
-  { id: 'W-03', name: 'Elena R.', esin: 'EA-ELN-0922', skills: ['Registry Auth', 'ZK-Proofs'], sustainabilityRating: 94, verifiedHours: 1560, isOpenToWork: true, lifetimeEAC: 31000, efficiency: 91, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150', location: 'Valencia Shard' },
-];
+// Removed local MOCK_WORKERS as we use GLOBAL_WORKER_POOL
 
 const ANALYTICS_DATA = [
   { time: 'T-6', ingest: 45, output: 40, drift: 0.02 },
@@ -739,13 +736,14 @@ const Industrial: React.FC<IndustrialProps> = ({
         {activeTab === 'workers' && (
            <div className="space-y-12 animate-in slide-in-from-right-4 duration-700">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                 {MOCK_WORKERS.map(worker => (
-                    <div key={worker.id} className="glass-card p-12 rounded-[80px] border-2 border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden min-h-[500px]">
+                 {GLOBAL_WORKER_POOL.map(worker => (
+                    <div key={worker.id} className="glass-card p-12 rounded-[80px] border-2 border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col justify-between shadow-3xl relative overflow-hidden min-h-[550px]">
                        <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform duration-[12s]"><Fingerprint size={300} /></div>
                        
                        <div className="flex justify-between items-start mb-12 relative z-10">
-                          <div className="w-24 h-24 rounded-[40px] border-4 border-white/10 bg-slate-800 overflow-hidden shadow-3xl group-hover:scale-105 transition-transform duration-700">
+                          <div className="w-24 h-24 rounded-[40px] border-4 border-white/10 bg-slate-800 overflow-hidden shadow-3xl group-hover:scale-105 transition-transform duration-700 relative">
                              <img src={worker.avatar} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                             <div className={`absolute bottom-2 right-2 w-4 h-4 rounded-full border-2 border-black ${worker.availability === 'AVAILABLE' ? 'bg-emerald-500' : worker.availability === 'OCCUPIED' ? 'bg-amber-500' : 'bg-slate-700'}`}></div>
                           </div>
                           <div className="text-right">
                              <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase rounded-full border border-emerald-500/20 tracking-widest">VERIFIED_STEWARD</span>
@@ -754,13 +752,16 @@ const Industrial: React.FC<IndustrialProps> = ({
                        </div>
 
                        <div className="flex-1 space-y-6 relative z-10">
-                          <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{worker.name}</h4>
+                          <div>
+                            <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 group-hover:text-emerald-400 transition-colors drop-shadow-2xl">{worker.name}</h4>
+                            <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] mt-1">{ROLE_DETAILS[worker.role].label}</p>
+                          </div>
                           <div className="flex flex-wrap gap-2 pt-2">
                              {worker.skills.map(s => (
                                 <span key={s} className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">{s}</span>
                              ))}
                           </div>
-                          <p className="text-slate-400 text-lg italic opacity-80 group-hover:opacity-100">"Certified EOS Steward with {worker.verifiedHours} verified industrial hours."</p>
+                          <p className="text-slate-400 text-lg italic opacity-80 group-hover:opacity-100 italic font-medium leading-relaxed">"{ROLE_DETAILS[worker.role].desc}"</p>
                        </div>
 
                        <div className="mt-12 pt-10 border-t border-white/5 space-y-8 relative z-10">

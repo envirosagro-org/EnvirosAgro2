@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { predictYield } from '../services/aiService';
+import { predictYield } from '../services/agroLangService';
 import { Loader2, TrendingUp, Activity, Database, CloudRain } from 'lucide-react';
 import { motion } from 'motion/react';
 

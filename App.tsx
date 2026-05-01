@@ -33,7 +33,6 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
 import { SycamoreLogo, HenIcon, AgroResilienceIcon } from './components/Icons';
-import { AGRO_EQUATIONS } from './services/agroEquations';
 import { useUiStore } from './store/uiStore';
 import { useUserStore } from './store/userStore';
 import { useDataStore } from './store/dataStore';
@@ -71,11 +70,13 @@ import {
   updateSignalReadStatus,
   markAllSignalsAsReadInDb,
   verifyAppCheckHandshake,
-  startBackgroundDataSync
+  startBackgroundDataSync,
+  seedRegistryCollections
 } from './services/firebaseService';
 import { chatWithAgroLang } from './services/agroLangService';
 import { notificationService } from './services/notificationService';
-import { getFullCostAudit } from './services/costAccountingService';
+import { automationService } from './services/automationService';
+import { costAccountingService } from './services/costAccountingService';
 import { runMathEngineTick } from './services/mathEngineService';
 import { generateAlphanumericId } from './systemFunctions';
 
@@ -816,6 +817,8 @@ const App: React.FC = () => {
   const setIsInboxOpen = useUiStore(state => state.setIsInboxOpen);
   const projects = useDataStore(state => state.projects);
   const setProjects = useDataStore(state => state.setProjects);
+  const stewards = useDataStore(state => state.stewards);
+  const setStewards = useDataStore(state => state.setStewards);
   const transactions = useDataStore(state => state.transactions);
   const setTransactions = useDataStore(state => state.setTransactions);
   const signals = useDataStore(state => state.signals);
@@ -940,7 +943,7 @@ const App: React.FC = () => {
     const engineInterval = setInterval(() => {
       if (user) {
         // 1. Run Cost Audit
-        const auditResult = getFullCostAudit(100, user.metrics);
+        const auditResult = costAccountingService.getFullCostAudit(100, user.metrics);
         setCostAudit(auditResult);
 
         // 2. Run Automated Mathematical Engine
@@ -959,31 +962,37 @@ const App: React.FC = () => {
   const handleScroll = (target: HTMLElement) => { setScrollProgress((target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100); setShowZenithButton(target.scrollTop > 400); };
   const scrollToTop = () => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   useEffect(() => { const handleResize = () => { const isLg = window.innerWidth >= 1024; setIsSidebarOpen(isLg); if (isLg) setIsMobileMenuOpen(false); }; handleResize(); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
-  useEffect(() => { return onAuthStateChanged(auth, async (fbUser) => { 
-    console.log("Auth state changed:", fbUser ? fbUser.uid : "no user");
-    if (fbUser) { 
-      const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); 
-      if (isVerified) { 
-        setIsUnverified(false); 
-        console.log("Fetching steward profile...");
-        const profile = await getStewardProfile(fbUser.uid); 
-        console.log("Profile fetched:", profile);
-        if (profile) setUser(profile); 
-      } else { 
-        setIsUnverified(true); 
-        setUser(null); 
-      } 
-    } else { 
-      setIsUnverified(false); 
-      setUser(null); 
-    } 
-  }); }, []);
+  
+  // Registry Seeding & Automation
+  useEffect(() => {
+    const init = async () => {
+      await seedRegistryCollections({
+        stewards: GLOBAL_STEWARD_REGISTRY.map(s => ({ ...s, uid: s.esin })),
+        projects: GLOBAL_PROJECTS_MISSIONS,
+        media_ledger: SEARCHABLE_MEDIA_LEDGER,
+        products: [
+          { id: 'PROD-S-01', name: 'Bantu Soil Shard Kit', price: 45, category: 'Input', supplierEsin: 'EA-ALPH-8821', status: 'AUTHORIZED', supplierName: 'Steward Alpha', supplierType: 'RAW_MATERIALS', timestamp: new Date().toISOString() },
+          { id: 'PROD-T-02', name: 'LoRa Mesh Antella', price: 120, category: 'Technology', supplierEsin: 'EA-ROBO-9214', status: 'QUALIFIED', supplierName: 'Dr. Orion Bot', supplierType: 'MANUFACTURING', timestamp: new Date().toISOString() },
+        ]
+      });
+
+      // Initialize Bot Automation
+      automationService.startAutomation();
+    };
+    init();
+
+    return () => {
+      automationService.stopAutomation();
+    };
+  }, []);
+  
   const setters = useMemo(() => ({
-    setProjects, setContracts, setOrders, setVendorProducts, setIndustrialUnits, setLiveProducts, setTransactions, setSignals, setMediaShards, setBlockchain, setMempool, setTasks, setBlueprints, setProposals, setVotes, setCarbonCredits
-  }), [setProjects, setContracts, setOrders, setVendorProducts, setIndustrialUnits, setLiveProducts, setTransactions, setSignals, setMediaShards, setBlockchain, setMempool, setTasks, setBlueprints, setProposals, setVotes, setCarbonCredits]);
+    setProjects, setStewards, setContracts, setOrders, setVendorProducts, setIndustrialUnits, setLiveProducts, setTransactions, setSignals, setMediaShards, setBlockchain, setMempool, setTasks, setBlueprints, setProposals, setVotes, setCarbonCredits
+  }), [setProjects, setStewards, setContracts, setOrders, setVendorProducts, setIndustrialUnits, setLiveProducts, setTransactions, setSignals, setMediaShards, setBlockchain, setMempool, setTasks, setBlueprints, setProposals, setVotes, setCarbonCredits]);
 
   const collections = useMemo(() => [
     { name: 'projects', setter: 'setProjects', isGlobal: true },
+    { name: 'stewards', setter: 'setStewards', isGlobal: true },
     { name: 'contracts', setter: 'setContracts', isGlobal: true },
     { name: 'orders', setter: 'setOrders' },
     { name: 'products', setter: 'setVendorProducts', isGlobal: true },
@@ -1007,6 +1016,7 @@ const App: React.FC = () => {
     const unsubPulse = listenToPulse(setPulseMessage); 
     return () => { unsubPulse(); };
   }, [user]);
+
   const hookHoodRef = useRef<any>(null);
   const dispatchSignalRef = useRef<any>(null);
 
@@ -1036,13 +1046,93 @@ const App: React.FC = () => {
           hookHoodRef.current(signal.meta.payload.senderEsin, signal.type === 'task' ? 'AUDIT' : 'DEAL');
         }
       }
-
-      // Email Simulation (Log to console for now)
-      if (signal.dispatchLayers.some(l => l.channel === 'EMAIL')) {
-        console.log(`[EMAIL_ROUTING] To: ${currentUser?.email || 'Node'}, Subject: ${signal.title}, Body: ${signal.message}`);
-      }
     } 
   }, []);
+
+  // App Update Notification Simulation
+  useEffect(() => {
+    if (!user) return;
+    const lastVersion = localStorage.getItem('agro_app_version');
+    const currentVersion = '1.1.2'; // New version simulation
+    if (lastVersion && lastVersion !== currentVersion) {
+      setTimeout(() => {
+        dispatchSignal({
+          title: 'APP_UPDATE_DEPLOYED',
+          message: `EnvirosAgro v${currentVersion} is now live. Industrial ledger shards optimized for zero-latency sharding.`,
+          priority: 'high',
+          type: 'system',
+          origin: 'ORACLE',
+          actionIcon: 'Zap'
+        });
+      }, 5000);
+    }
+    localStorage.setItem('agro_app_version', currentVersion);
+  }, [user, dispatchSignal]);
+
+  useEffect(() => { 
+    return onAuthStateChanged(auth, async (fbUser) => { 
+      console.log("Auth state changed:", fbUser ? fbUser.uid : "no user");
+      if (fbUser) { 
+        const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); 
+        if (isVerified) { 
+          setIsUnverified(false); 
+          console.log("Fetching steward profile...");
+          const profile = await getStewardProfile(fbUser.uid); 
+          console.log("Profile fetched:", profile);
+          if (profile) {
+            setUser(profile); 
+            dispatchSignal({
+              title: 'SYSTEM_SYNC_OK',
+              message: 'Node re-aligned with organizational network. All thrusts active.',
+              priority: 'low',
+              type: 'system',
+              origin: 'ORACLE',
+              actionIcon: 'Zap'
+            });
+          } else {
+            // New user initialization
+            const newUser: User = {
+              uid: fbUser.uid,
+              name: fbUser.displayName || 'Unnamed Steward',
+              email: fbUser.email || '',
+              esin: `EA-${generateAlphanumericId(4).toUpperCase()}-${generateAlphanumericId(4).toUpperCase()}`,
+              mnemonic: fbUser.uid, // Placeholder mnemonic
+              regDate: new Date().toISOString(),
+              role: 'STEWARD',
+              location: 'Pending Calibration',
+              wallet: {
+                balance: 100, // Welcome bonus
+                eatBalance: 0,
+                exchangeRate: 2.5,
+                bonusBalance: 0,
+                tier: 'Seed',
+                lifetimeEarned: 0,
+                linkedProviders: []
+              },
+              metrics: {
+                agriculturalCodeU: 0.1,
+                timeConstantTau: 8,
+                sustainabilityScore: 40,
+                socialImmunity: 0.1,
+                viralLoadSID: 0.05,
+                baselineM: 1.0
+              },
+              skills: { 'Manual_Harvest': 1 },
+              isReadyForHire: false
+            };
+            await syncUserToCloud(newUser, fbUser.uid);
+            setUser(newUser);
+          }
+        } else { 
+          setIsUnverified(true); 
+          setUser(null); 
+        } 
+      } else { 
+        setIsUnverified(false); 
+        setUser(null); 
+      } 
+    }); 
+  }, [dispatchSignal]);
 
   const handleEarnEAC = useCallback(async (amount: number, reason: string, type: string = 'Inflow') => {
     const currentUser = useUserStore.getState().user;
@@ -1121,6 +1211,9 @@ const App: React.FC = () => {
       navigate('media', type.toLowerCase());
     }
   }, [user, hoodConnections, navigate, handleEarnEAC, dispatchSignal]);
+
+  hookHoodRef.current = hookHood;
+  dispatchSignalRef.current = dispatchSignal;
 
   const handleSpendEAC = useCallback(async (amount: number, reason: string, type: string = 'Outflow'): Promise<boolean> => {
     const currentUser = useUserStore.getState().user;
@@ -1303,9 +1396,13 @@ const App: React.FC = () => {
       viewSection,
       multimediaParams,
       clearParams: () => setMultimediaParams(null),
-      onUpdateUser: (u: User) => setUser(u),
+      onUpdateUser: async (u: User) => {
+        setUser(u);
+        await syncUserToCloud(u);
+      },
       onLogout: handleLogout,
       onPermanentAction: handlePerformPermanentAction,
+      stewards: stewards.length > 0 ? stewards : GLOBAL_STEWARD_REGISTRY,
       onSaveProject: (p: any) => saveCollectionItem('projects', p),
       onSaveProposal: (p: any) => saveCollectionItem('proposals', p),
       onSaveVote: (v: any) => saveCollectionItem('votes', v),
@@ -1339,14 +1436,14 @@ const App: React.FC = () => {
   // Network Signal Auto-Notify (Push Logic)
   const lastSignalRef = useRef<string | null>(null);
   useEffect(() => {
-    const currentUser = useUserStore.getState().user;
-    if (!currentUser?.settings?.notificationsEnabled || signals.length === 0) return;
+    const effectiveUser = user || GUEST_STWD;
+    if (!effectiveUser?.settings?.notificationsEnabled || signals.length === 0) return;
 
     const latestUnread = signals.filter(s => !s.read)[0];
     if (latestUnread && latestUnread.id !== lastSignalRef.current) {
       lastSignalRef.current = latestUnread.id;
       
-      // Filter out system pulses or low priority if desired, but here we follow settings
+      // Filter out system pulses or low priority if desired
       notificationService.sendNotification(latestUnread.title, {
         body: latestUnread.message,
         tag: latestUnread.id,
@@ -1354,7 +1451,7 @@ const App: React.FC = () => {
         icon: '/favicon.ico'
       } as any);
     }
-  }, [signals]);
+  }, [signals, user]);
 
   if (isBooting) return <InitializationScreen onComplete={() => setIsBooting(false)} />;
 

@@ -15,21 +15,17 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
     
-    // User validation blueprint
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'esin', 'name', 'email', 'role']) &&
-             data.uid == request.auth.uid &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             data.esin is string && data.esin.size() > 0 && data.esin.size() <= 64;
+    // User/Steward validation blueprint
+    function isValidSteward(data) {
+      return data.keys().hasAll(['esin', 'name', 'email', 'role']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100;
     }
 
-    // Ledger Block validation blueprint
-    function isValidLedgerBlock(data) {
-      return data.keys().hasAll(['hash', 'previousHash', 'timestamp', 'index']) &&
-             data.hash is string && data.hash.size() <= 256 &&
-             data.previousHash is string && data.previousHash.size() <= 256 &&
-             data.timestamp is string &&
-             data.index is number;
+    // Project validation blueprint
+    function isValidProject(data) {
+      return data.keys().hasAll(['id', 'name', 'totalCapital', 'adminEsin']) &&
+             data.name is string && data.name.size() <= 200 &&
+             data.totalCapital is number;
     }
 
     // Signal validation blueprint
@@ -51,29 +47,66 @@ service cloud.firestore {
              data.status in ['ONLINE', 'OFFLINE', 'MAINTENANCE'];
     }
 
+    // Ledger Block validation blueprint
+    function isValidLedgerBlock(data) {
+      return data.keys().hasAll(['hash', 'previousHash', 'timestamp', 'index']) &&
+             data.hash is string && data.hash.size() <= 256 &&
+             data.previousHash is string && data.previousHash.size() <= 256 &&
+             data.timestamp is string &&
+             data.index is number;
+    }
+
     // Transaction validation blueprint
     function isValidTokenTransaction(data) {
       return data.keys().hasAll(['id', 'type', 'farmId', 'details', 'value', 'unit', 'stewardId', 'lastModified']) &&
-             data.keys().size() == 8 &&
              data.id is string && data.id.size() <= 128 &&
              data.type is string && data.type.size() <= 64 &&
              data.farmId is string && data.farmId.size() <= 128 &&
-             data.farmId == request.auth.uid && 
              data.details is string && data.details.size() <= 500 &&
              data.value is number &&
              data.unit is string && data.unit.size() <= 16 &&
-             data.stewardId is string && data.stewardId == request.auth.uid &&
+             data.stewardId is string &&
              data.lastModified is number;
     }
 
     // Path rules
-    match /users/{userId} {
-      allow read: if isSignedIn(); // Users can view other stewards
-      allow create: if isVerified() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming());
-      allow update: if isVerified() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'bio', 'location', 'avatar', 'metrics', 'wallet', 'settings']);
+    match /stewards/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(userId) && userId == request.auth.uid && isValidSteward(incoming());
+      allow update: if isVerified() && isValidId(userId) && userId == request.auth.uid && isValidSteward(incoming());
     }
 
-    match /ledger/{blockHash} {
+    match /projects/{projectId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(projectId) && isValidProject(incoming());
+      allow update: if isVerified() && isValidId(projectId) && (incoming().adminEsin == existing().adminEsin || incoming().diff(existing()).affectedKeys().hasOnly(['fundedAmount', 'progress', 'status']));
+    }
+
+    match /contracts/{contractId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(contractId);
+      allow update: if isVerified() && (resource.data.investorEsin == request.auth.uid || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'applications']));
+    }
+
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
+      allow create: if isVerified() && isValidId(orderId);
+      allow update: if isVerified() && (resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
+    }
+
+    match /live_products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(productId);
+      allow update: if isVerified() && (resource.data.stewardEsin == request.auth.uid || incoming().diff(existing()).affectedKeys().hasOnly(['votes', 'progress', 'stage']));
+    }
+
+    match /media_ledger/{shardId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(shardId);
+      allow update: if false;
+    }
+
+    match /blocks/{blockHash} {
       allow list: if isSignedIn();
       allow get: if isSignedIn() && isValidId(blockHash);
       allow create: if isVerified() && isValidId(blockHash) && isValidLedgerBlock(incoming());

@@ -5,7 +5,7 @@ import {
   ChevronRight, ArrowUpRight, Network
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getStrategicAdvice, StrategyAdvice } from '../services/aiService';
+import { getAgroStrategicAdvice as getStrategicAdvice, StrategyAdvice } from '../services/agroLangService';
 import { toast } from 'sonner';
 
 interface AIOracleProps {

@@ -49,9 +49,9 @@ import { User, SignalShard } from '../types';
 import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { auditAgroLangCode, chatWithAgroLang } from '../services/agroLangService';
-import { sendDeviceCommand } from '../services/deviceService';
-import { rtdb, db } from '../src/firebase';
-import { ref, get } from 'firebase/database';
+import { iotService } from '../services/iotService';
+import { db } from '../services/firebaseService';
+import { get } from 'firebase/database';
 import { collection, getDocs } from 'firebase/firestore';
 import DeviceControl from './DeviceControl';
 import GISPortal from './GISPortal';
@@ -353,7 +353,7 @@ SEQUENCE Optimize_Cycle_882 {
         const match = line.match(/device_command\(id:\s*"(.*?)",\s*cmd:\s*"(.*?)"\)/);
         if (match) {
             const [_, deviceId, cmd] = match;
-            await sendDeviceCommand(deviceId, cmd);
+            await iotService.sendDeviceCommand(deviceId, cmd);
             addLog(`Device command sent to ${deviceId}: ${cmd}`, 'success');
         }
       }
@@ -361,7 +361,7 @@ SEQUENCE Optimize_Cycle_882 {
         const match = line.match(/get_device_status\(id:\s*"(.*?)"\)/);
         if (match) {
             const [_, deviceId] = match;
-            const statusRef = ref(rtdb, `devices/${deviceId}/status`);
+            const statusRef = iotService.getDeviceStatusRef(deviceId);
             const snapshot = await get(statusRef);
             addLog(`Device status for ${deviceId}: ${snapshot.val() || 'Offline'}`, 'info');
         }
@@ -389,7 +389,7 @@ SEQUENCE Optimize_Cycle_882 {
       const deviceId = cmd.split(' ')[1];
       if (deviceId) {
         addLog(`Acquiring status for ${deviceId}...`, 'info');
-        const statusRef = ref(rtdb, `devices/${deviceId}/status`);
+        const statusRef = iotService.getDeviceStatusRef(deviceId);
         const snapshot = await get(statusRef);
         addLog(`Device ${deviceId} status: ${snapshot.val() || 'Offline'}`, 'success');
       } else {
@@ -401,7 +401,7 @@ SEQUENCE Optimize_Cycle_882 {
       const command = parts.slice(2).join(' ');
       if (deviceId && command) {
         addLog(`Transmitting command to ${deviceId}: ${command}`, 'info');
-        await sendDeviceCommand(deviceId, command);
+        await iotService.sendDeviceCommand(deviceId, command);
         addLog(`Command transmitted successfully.`, 'success');
       } else {
         addLog("Usage: device-cmd [DEVICE_ID] [COMMAND]", 'error');
