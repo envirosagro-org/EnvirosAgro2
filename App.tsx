@@ -74,6 +74,7 @@ import {
   startBackgroundDataSync
 } from './services/firebaseService';
 import { chatWithAgroLang } from './services/agroLangService';
+import { notificationService } from './services/notificationService';
 import { getFullCostAudit } from './services/costAccountingService';
 import { runMathEngineTick } from './services/mathEngineService';
 import { generateAlphanumericId } from './systemFunctions';
@@ -1334,6 +1335,26 @@ const App: React.FC = () => {
   };
 
   const unreadSignalsCount = useMemo(() => signals.filter(s => !s.read).length, [signals]);
+
+  // Network Signal Auto-Notify (Push Logic)
+  const lastSignalRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentUser = useUserStore.getState().user;
+    if (!currentUser?.settings?.notificationsEnabled || signals.length === 0) return;
+
+    const latestUnread = signals.filter(s => !s.read)[0];
+    if (latestUnread && latestUnread.id !== lastSignalRef.current) {
+      lastSignalRef.current = latestUnread.id;
+      
+      // Filter out system pulses or low priority if desired, but here we follow settings
+      notificationService.sendNotification(latestUnread.title, {
+        body: latestUnread.message,
+        tag: latestUnread.id,
+        renotify: true,
+        icon: '/favicon.ico'
+      } as any);
+    }
+  }, [signals]);
 
   if (isBooting) return <InitializationScreen onComplete={() => setIsBooting(false)} />;
 

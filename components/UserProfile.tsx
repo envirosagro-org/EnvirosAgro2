@@ -21,6 +21,7 @@ import {
   Cpu
 } from 'lucide-react';
 import { Toggle } from './ui/Toggle';
+import { notificationService } from '../services/notificationService';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
   ResponsiveContainer, Radar as RechartsRadar, Tooltip 
@@ -615,10 +616,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdateUser, 
                            </div>
                            <Toggle 
                               enabled={!!setting.val} 
-                              onToggle={(enabled) => {
-                                 onUpdate({
+                              onToggle={async (enabled) => {
+                                 if (setting.id === 'notif' && enabled) {
+                                    const permission = await notificationService.requestPermission();
+                                    if (permission !== 'granted') {
+                                       notify('warning', 'PERMISSION_DENIED', 'Browser notifications were blocked by your device.');
+                                    }
+                                 }
+                                 onUpdateUser({
                                     ...user,
-                                    settings: { ...user.settings, [setting.id === 'notif' ? 'notificationsEnabled' : setting.id === 'whatsapp' ? 'whatsappNotifications' : setting.id === 'sync' ? 'autoSync' : 'biometricLogin']: enabled },
+                                    settings: { ...(user.settings || {}), [setting.id === 'notif' ? 'notificationsEnabled' : setting.id === 'whatsapp' ? 'whatsappNotifications' : setting.id === 'sync' ? 'autoSync' : 'biometricLogin']: enabled } as any,
                                     ...(setting.id === 'tfa_enable' ? { tfaEnabled: enabled } : {})
                                  });
                               }}
