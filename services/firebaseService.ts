@@ -104,12 +104,11 @@ export const verifyAppCheckHandshake = async (): Promise<boolean> => {
 export const auth = getAuth(app);
 
 // FORCED RESILIENCE CONFIG: Using persistent local cache for offline support
+console.log("Initializing Firestore with persistent local cache...");
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
-}); 
-
+  localCache: persistentLocalCache()
+});
+console.log("Firestore initialized.");
 export const rtdb = getDatabase(app);
 export const storage = getStorage(app);
 

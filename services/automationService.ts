@@ -1,6 +1,7 @@
 import { AgrobotProfile, BotType, SignalShard } from '../types';
 import { dispatchNetworkSignal } from './firebaseService';
 import { generateAlphanumericId } from '../systemFunctions';
+import { socialBotService } from './socialBotService';
 
 class AutomationService {
   private static instance: AutomationService;
@@ -11,7 +12,8 @@ class AutomationService {
     { id: 'BOT-SS-04', type: 'SYNC_SWARM', name: 'Swarm-Node-04', status: 'CALIBRATING', lastActive: new Date().toISOString(), efficiency: 0, tasksCompleted: 0, shardAssigned: 'IOT_MESH' },
     { id: 'BOT-MA-05', type: 'MRV_AUDITOR', name: 'Auditor-Sigma', status: 'ACTIVE', lastActive: new Date().toISOString(), efficiency: 97.8, tasksCompleted: 540, shardAssigned: 'CARBON_LEDGER' },
     { id: 'BOT-DL-06', type: 'DISPATCH_LOGISTICIAN', name: 'Logi-Master', status: 'ACTIVE', lastActive: new Date().toISOString(), efficiency: 95.2, tasksCompleted: 1200, shardAssigned: 'SUPPLY_CHAIN' },
-    { id: 'BOT-AC-07', type: 'ASSET_CUSTODIAN', name: 'Custodian-Zeta', status: 'ACTIVE', lastActive: new Date().toISOString(), efficiency: 98.5, tasksCompleted: 310, shardAssigned: 'HARDWARE_REGISTRY' }
+    { id: 'BOT-AC-07', type: 'ASSET_CUSTODIAN', name: 'Custodian-Zeta', status: 'ACTIVE', lastActive: new Date().toISOString(), efficiency: 98.5, tasksCompleted: 310, shardAssigned: 'HARDWARE_REGISTRY' },
+    { id: 'BOT-SB-08', type: 'SOCIAL_BOT', name: 'EnviroBot-Social', status: 'ACTIVE', lastActive: new Date().toISOString(), efficiency: 99.0, tasksCompleted: 0, shardAssigned: 'SOCIAL_MEDIA' }
   ];
 
   private intervals: NodeJS.Timeout[] = [];
@@ -45,6 +47,9 @@ class AutomationService {
 
     // Asset Maintenance Cycle (Every 10m)
     this.intervals.push(setInterval(() => this.runAssetMaintenance(), 600000));
+
+    // Social Media Cycle (Every 20s)
+    this.intervals.push(setInterval(() => socialBotService.processQueue(), 20000));
   }
 
   public stopAutomation() {

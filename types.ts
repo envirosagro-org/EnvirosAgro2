@@ -440,7 +440,8 @@ export type BotType =
   | 'SYNC_SWARM' // Automates device/sensor connectivity
   | 'MRV_AUDITOR' // Automates soil metrics monitoring and credit issuance
   | 'DISPATCH_LOGISTICIAN' // Automates delivery monitoring and rerouting
-  | 'ASSET_CUSTODIAN'; // Automates asset maintenance checks
+  | 'ASSET_CUSTODIAN' // Automates asset maintenance checks
+  | 'SOCIAL_BOT'; // Automates social media actions
 
 export interface AgrobotProfile {
   id: string;
@@ -567,7 +568,7 @@ export interface HoodConnection {
 export interface SignalShard {
   id: string;
   type: 'system' | 'engagement' | 'network' | 'commerce' | 'pulse' | 'task' | 'liturgical' | 'ledger_anchor' | 'emergency';
-  origin: 'MANUAL' | 'CALENDAR' | 'ORACLE' | 'EXTERNAL' | 'TREASURY' | 'CARBON' | 'TRACE' | 'EMERGENCY_CMD';
+  origin: 'MANUAL' | 'CALENDAR' | 'ORACLE' | 'EXTERNAL' | 'TREASURY' | 'CARBON' | 'TRACE' | 'EMERGENCY_CMD' | 'SOCIAL_ORACLE';
   title: string;
   message: string;
   timestamp: string;

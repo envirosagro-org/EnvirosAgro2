@@ -28,7 +28,7 @@ const HardwareRegistry = React.lazy(() => import('./HardwareRegistry'));
 const DeviceControl = React.lazy(() => import('./DeviceControl'));
 const ToolsSection = React.lazy(() => import('./ToolsSection'));
 const LiveVoiceBridge = React.lazy(() => import('./LiveVoiceBridge'));
-const Channelling = React.lazy(() => import('./Channelling'));
+import Channelling from './Channelling';
 const Governance = React.lazy(() => import('./GlobalGovernance').then(m => ({ default: m.GlobalGovernance })));
 const AIOracleView = React.lazy(() => import('./AIOracleView'));
 const CarbonCredits = React.lazy(() => import('./CarbonCredits'));
