@@ -513,7 +513,7 @@ const InfoPortal: React.FC<InfoPortalProps> = ({ user, onNavigate, onAcceptAll, 
               {[
                 { i: MapPin, t: 'Headquarters', c: '9X6C+P6, Kiriaini', sub: 'Global Zone Node', cl: 'text-emerald-400', bg: 'bg-emerald-500/10' },
                 { i: Phone, t: 'Technical Signal', c: '0740 161 447', sub: 'Registry Direct', cl: 'text-blue-400', bg: 'bg-blue-500/10' },
-                { i: Mail, t: 'Archive Ingest', c: 'envirosagro.com@gmail.com', sub: 'Official Shard Ingest', cl: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+                { i: Mail, t: 'Archive Ingest', c: 'EnvirosAgro.org@gmail.com', sub: 'Official Shard Ingest', cl: 'text-indigo-400', bg: 'bg-indigo-500/10' },
               ].map((box, i) => (
                 <div key={i} className="glass-card p-14 rounded-[80px] border-2 border-white/5 bg-black/60 space-y-10 hover:border-white/10 transition-all group shadow-3xl text-center relative overflow-hidden min-h-[480px] flex flex-col justify-center">
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.01] to-transparent"></div>

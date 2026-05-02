@@ -1,187 +1,187 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://envirosagro.com/</loc>
+    <loc>https://envirosagro.org/</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=dashboard</loc>
+    <loc>https://envirosagro.org/?view=dashboard</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>always</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=governance</loc>
+    <loc>https://envirosagro.org/?view=governance</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=sustainability</loc>
+    <loc>https://envirosagro.org/?view=sustainability</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=marketplace</loc>
+    <loc>https://envirosagro.org/?view=marketplace</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>always</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=explorer</loc>
+    <loc>https://envirosagro.org/?view=explorer</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>always</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=community</loc>
+    <loc>https://envirosagro.org/?view=community</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=agrowild</loc>
+    <loc>https://envirosagro.org/?view=agrowild</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=envirosagro_store</loc>
+    <loc>https://envirosagro.org/?view=envirosagro_store</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=industrial</loc>
+    <loc>https://envirosagro.org/?view=industrial</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=info</loc>
+    <loc>https://envirosagro.org/?view=info</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=profile</loc>
+    <loc>https://envirosagro.org/?view=profile</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=economy</loc>
+    <loc>https://envirosagro.org/?view=economy</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=ecosystem</loc>
+    <loc>https://envirosagro.org/?view=ecosystem</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=traceability</loc>
+    <loc>https://envirosagro.org/?view=traceability</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>always</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=carbon_credits</loc>
+    <loc>https://envirosagro.org/?view=carbon_credits</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=intelligence</loc>
+    <loc>https://envirosagro.org/?view=intelligence</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=media</loc>
+    <loc>https://envirosagro.org/?view=media</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=wallet</loc>
+    <loc>https://envirosagro.org/?view=wallet</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=investor</loc>
+    <loc>https://envirosagro.org/?view=investor</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=vendor</loc>
+    <loc>https://envirosagro.org/?view=vendor</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=ingest</loc>
+    <loc>https://envirosagro.org/?view=ingest</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=hardware_registry</loc>
+    <loc>https://envirosagro.org/?view=hardware_registry</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=device_control</loc>
+    <loc>https://envirosagro.org/?view=device_control</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=tools</loc>
+    <loc>https://envirosagro.org/?view=tools</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=live_voice_bridge</loc>
+    <loc>https://envirosagro.org/?view=live_voice_bridge</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=channelling</loc>
+    <loc>https://envirosagro.org/?view=channelling</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=crm</loc>
+    <loc>https://envirosagro.org/?view=crm</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=multimedia_generator</loc>
+    <loc>https://envirosagro.org/?view=multimedia_generator</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=cost_accounting</loc>
+    <loc>https://envirosagro.org/?view=cost_accounting</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://envirosagro.com/?view=internal_control</loc>
+    <loc>https://envirosagro.org/?view=internal_control</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
