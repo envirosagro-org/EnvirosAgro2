@@ -55,7 +55,7 @@ const MRVEngine: React.FC<MRVEngineProps> = ({ user, liveProducts, onNavigate, d
     setProcessingStep(3);
     await new Promise(r => setTimeout(r, 1500));
     
-    const newReport = generateMRVReport('ASSET-PRIME-01');
+    const newReport = await generateMRVReport('ASSET-PRIME-01');
     setReports([newReport, ...reports]);
     setIsProcessing(false);
     setProcessingStep(0);

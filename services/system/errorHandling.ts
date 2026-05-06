@@ -1,5 +1,5 @@
 
-import { auth } from "./firebaseService";
+import { auth } from "../core/firebaseService";
 
 export enum OperationType {
   CREATE = 'create',

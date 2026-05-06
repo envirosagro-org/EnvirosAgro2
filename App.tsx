@@ -1025,10 +1025,10 @@ const App: React.FC = () => {
     const signal = await dispatchNetworkSignal(signalData, currentUser?.esin); 
     if (signal) { 
       // Multi-channel routing
-      const popupLayer = (signal.dispatchLayers || []).find(l => l.channel === 'POPUP'); 
+      const popupLayer = (signal.dispatchLayers || []).find((l: any) => l.channel === 'POPUP'); 
       if (popupLayer) { 
         const id = generateAlphanumericId(7).toLowerCase(); 
-        setNotifications(prev => [{ 
+        setNotifications((prev: NotificationShard[]) => [{ 
           id, 
           type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info', 
           title: signal.title, 

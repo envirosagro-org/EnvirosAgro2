@@ -41,16 +41,16 @@ const EscrowPortal: React.FC<EscrowPortalProps> = ({ user }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [newEscrow, setNewEscrow] = useState({ seller: '', amount: 100, desc: '' });
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const sc = createEscrowContract(user.esin, newEscrow.seller, newEscrow.amount);
+    const sc = await createEscrowContract(user.esin, newEscrow.seller, newEscrow.amount);
     setContracts([sc, ...contracts]);
     setIsCreating(false);
     toast.success('Escrow Anchor Initialized. Funds sharded across network.');
   };
 
-  const handleRelease = (id: string) => {
-    releaseEscrow(id);
+  const handleRelease = async (id: string) => {
+    await releaseEscrow(id);
     setContracts(prev => prev.map(c => c.id === id ? { ...c, status: 'RELEASED' } : c));
     toast.success('Shard Released. Settlement synchronized.');
   };

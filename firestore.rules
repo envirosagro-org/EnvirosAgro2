@@ -38,8 +38,8 @@ service cloud.firestore {
              data.priority in ['low', 'medium', 'high', 'critical'];
     }
 
-    // Fleet validation blueprint
-    function isValidFleetNode(data) {
+    // Machine node validation blueprint
+    function isValidMachineNode(data) {
       return data.keys().hasAll(['id', 'name', 'type', 'status']) &&
              data.id is string && data.id.size() <= 128 &&
              data.name is string && data.name.size() <= 100 &&
@@ -47,26 +47,49 @@ service cloud.firestore {
              data.status in ['ONLINE', 'OFFLINE', 'MAINTENANCE'];
     }
 
-    // Ledger Block validation blueprint
-    function isValidLedgerBlock(data) {
-      return data.keys().hasAll(['hash', 'previousHash', 'timestamp', 'index']) &&
-             data.hash is string && data.hash.size() <= 256 &&
-             data.previousHash is string && data.previousHash.size() <= 256 &&
-             data.timestamp is string &&
-             data.index is number;
+    // MRV Job validation blueprint
+    function isValidMRVJob(data) {
+      return data.keys().hasAll(['assetId', 'status', 'createdAt']) &&
+             data.assetId is string && data.assetId.size() <= 128 &&
+             data.status is string && data.status.size() <= 64;
     }
 
-    // Transaction validation blueprint
-    function isValidTokenTransaction(data) {
-      return data.keys().hasAll(['id', 'type', 'farmId', 'details', 'value', 'unit', 'stewardId', 'lastModified']) &&
+    // Auditor validation blueprint
+    function isValidAuditor(data) {
+      return data.keys().hasAll(['email']) &&
+             data.email is string && data.email.size() <= 200;
+    }
+
+    // WebRTC Call validation blueprint
+    function isValidWebRTCCall(data) {
+      return data.keys().hasAll(['id', 'callerId', 'calleeId', 'status']) &&
              data.id is string && data.id.size() <= 128 &&
-             data.type is string && data.type.size() <= 64 &&
-             data.farmId is string && data.farmId.size() <= 128 &&
-             data.details is string && data.details.size() <= 500 &&
-             data.value is number &&
-             data.unit is string && data.unit.size() <= 16 &&
-             data.stewardId is string &&
-             data.lastModified is number;
+             data.callerId is string && data.callerId.size() <= 128 &&
+             data.calleeId is string && data.calleeId.size() <= 128 &&
+             data.status in ['INITIATED', 'ESTABLISHED', 'ENDED'];
+    }
+
+    // Broadcast validation blueprint
+    function isValidBroadcast(data) {
+      return data.keys().hasAll(['id', 'hostId', 'status']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.hostId is string && data.hostId.size() <= 128 &&
+             data.status in ['LIVE', 'FINISHED'];
+    }
+
+    // AR Anchor validation blueprint
+    function isValidARAnchor(data) {
+      return data.keys().hasAll(['id', 'stewardId']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.stewardId is string && data.stewardId.size() <= 128;
+    }
+
+    // IoT Reading validation blueprint
+    function isValidDroneTelemetry(data) {
+      return data.keys().hasAll(['id', 'droneId', 'timestamp']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.droneId is string && data.droneId.size() <= 128 &&
+             data.timestamp is string;
     }
 
     // Path rules
@@ -79,25 +102,25 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow read: if isSignedIn();
       allow create: if isVerified() && isValidId(projectId) && isValidProject(incoming());
-      allow update: if isVerified() && isValidId(projectId) && (incoming().adminEsin == existing().adminEsin || incoming().diff(existing()).affectedKeys().hasOnly(['fundedAmount', 'progress', 'status']));
+      allow update: if isVerified() && isValidId(projectId) && isValidProject(incoming()) && (incoming().adminEsin == existing().adminEsin || incoming().diff(existing()).affectedKeys().hasOnly(['fundedAmount', 'progress', 'status']));
     }
 
     match /contracts/{contractId} {
       allow read: if isSignedIn();
       allow create: if isVerified() && isValidId(contractId);
-      allow update: if isVerified() && (resource.data.investorEsin == request.auth.uid || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'applications']));
+      allow update: if isVerified() && isValidId(contractId) && (resource.data.investorEsin == request.auth.uid || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'applications']));
     }
 
     match /orders/{orderId} {
       allow read: if isSignedIn() && (resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
       allow create: if isVerified() && isValidId(orderId);
-      allow update: if isVerified() && (resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
+      allow update: if isVerified() && isValidId(orderId) && (resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
     }
 
     match /live_products/{productId} {
       allow read: if isSignedIn();
       allow create: if isVerified() && isValidId(productId);
-      allow update: if isVerified() && (resource.data.stewardEsin == request.auth.uid || incoming().diff(existing()).affectedKeys().hasOnly(['votes', 'progress', 'stage']));
+      allow update: if isVerified() && isValidId(productId) && (resource.data.stewardEsin == request.auth.uid || incoming().diff(existing()).affectedKeys().hasOnly(['votes', 'progress', 'stage']));
     }
 
     match /media_ledger/{shardId} {
@@ -126,10 +149,47 @@ service cloud.firestore {
       allow update: if isVerified() && isValidId(signalId) && isValidSignal(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
     }
 
-    match /fleet/{nodeId} {
+    match /machine_nodes/{nodeId} {
       allow read: if isSignedIn();
-      allow create: if isVerified() && isValidId(nodeId) && isValidFleetNode(incoming());
-      allow update: if isVerified() && isValidId(nodeId) && isValidFleetNode(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'lastModified']);
+      allow create: if isVerified() && isValidId(nodeId) && isValidMachineNode(incoming());
+      allow update: if isVerified() && isValidId(nodeId) && isValidMachineNode(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'lastModified']);
+    }
+
+    // New collections
+    match /mrv_jobs/{jobId} {
+        allow read: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+        allow create: if isVerified() && isValidId(jobId) && isValidMRVJob(incoming());
+        allow update: if isVerified() && isValidId(jobId) && isValidMRVJob(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+    }
+
+    match /auditors/{auditorId} {
+        allow read: if isSignedIn();
+        // Specific auditor logic needed?
+        allow create: if isVerified() && isValidId(auditorId) && isValidAuditor(incoming());
+    }
+
+    match /calls/{callId} {
+        allow read: if isSignedIn() && (resource.data.callerId == request.auth.uid || resource.data.calleeId == request.auth.uid);
+        allow create: if isVerified() && isValidId(callId) && isValidWebRTCCall(incoming());
+        allow update: if isVerified() && isValidId(callId) && isValidWebRTCCall(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+    }
+
+    match /broadcasts/{broadcastId} {
+        allow read: if isSignedIn();
+        allow create: if isVerified() && isValidId(broadcastId) && isValidBroadcast(incoming());
+        allow update: if isVerified() && isValidId(broadcastId) && isValidBroadcast(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+    }
+
+    match /ar_anchors/{anchorId} {
+        allow read: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+        allow create: if isVerified() && isValidId(anchorId) && isValidARAnchor(incoming());
+        allow update: if false;
+    }
+
+    match /sensor_readings/{readingId} {
+        allow read: if isSignedIn();
+        allow create: if isVerified() && isValidId(readingId) && isValidDroneTelemetry(incoming());
+        allow update: if false;
     }
   }
 }

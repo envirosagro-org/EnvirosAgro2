@@ -217,7 +217,7 @@ SEQUENCE Optimize_Cycle_882 {
     if (initialSection === 'ide' || initialCode) {
       setActiveTab('ide');
       if (initialCode) {
-        setCodeMap(prev => ({ ...prev, 'External_Inflow.al': initialCode }));
+        setCodeMap({ ...codeMap, 'External_Inflow.al': initialCode });
         setActiveShard('External_Inflow.al');
       }
     } else if (initialSection === 'shell') {

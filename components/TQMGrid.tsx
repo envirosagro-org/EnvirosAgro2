@@ -74,8 +74,8 @@ import {
 import { User, Order, LiveAgroProduct, ViewState, SignalShard } from '../types';
 import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
-import { chatWithAgroLang } from '../services/agroLangService';
-import { generateQuickHash } from '../systemFunctions';
+import { getTraceHistory as getTraceHistoryFromService, runAiAudit } from '../services/domain/qualityTraceabilityService';
+import { generateQuickHash } from '../systemFunctions'; // <-- Restore this
 
 interface TQMGridProps {
   user: User;
@@ -89,7 +89,7 @@ interface TQMGridProps {
 }
 
 interface TraceEvent {
-  stage: 'Procurement' | 'Industrial_Kanban' | 'Live_Processing' | 'Market_Cloud_Validation' | 'Auditor_Verification' | 'Inventory_CRM';
+  stage: 'Procurement' | 'Industrial_Kanban' | 'Live_Processing' | 'Market_Cloud_Validation' | 'Auditor_Verification' | 'Inventory_CRM' | string;
   timestamp: string;
   source_portal: string;
   payload: any;
@@ -140,20 +140,11 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
   };
 
   const getTraceHistory = (order: Order): TraceEvent[] => {
-    const sku = order.id;
-    const h1 = "0x0000_GENESIS_VOID";
-    const h2 = generateCryptographicShard(sku, h1, "Procurement", { batch: order.trackingHash });
-    const h3 = generateCryptographicShard(sku, h2, "Industrial_Kanban", { bin_id: 'B-44', tool_id: 'K-88' });
-    const h4 = generateCryptographicShard(sku, h3, "Live_Processing", { moisture: '12%', status: 'OPTIMAL' });
-    const h5 = generateCryptographicShard(sku, h4, "Market_Cloud_Validation", { customer_tier: 'Gold', satisfaction: 9.5 });
-
-    return [
-      { stage: 'Procurement', source_portal: 'Vendor_Portal', timestamp: order.timestamp, payload: { origin: 'Verified Supplier', batch: order.trackingHash }, prev_hash: h1, unique_hash: h2, verification_signature: 'EA-ORACLE-V1' },
-      { stage: 'Industrial_Kanban', source_portal: 'Industrial_Portal', timestamp: 'Finalized', payload: { bin_id: "B-44", status: "In-Progress", tool_id: "K-88" }, prev_hash: h2, unique_hash: h3, verification_signature: 'EA-SYSTEM-B42' },
-      { stage: 'Live_Processing', source_portal: 'Live_Farming', timestamp: 'Active', payload: { passed_inspection: true, moisture_level: "12%" }, prev_hash: h3, unique_hash: h4, verification_signature: 'CERT_EA_STUDIO_01' },
-      { stage: 'Market_Cloud_Validation', source_portal: 'Market_Cloud', timestamp: 'Ready', payload: { warehouse_loc: "Zone-A", customer_tier: "Gold" }, prev_hash: h4, unique_hash: h5, verification_signature: 'LOG_MGR' },
-    ];
-  };
+    // Re-use logic from TQMGrid
+    // Replace with actual implementation or mapping to the service.
+    // Simplifying for now based on service return.
+    return getTraceHistoryFromService(order);
+  }
 
   const currentTrace = useMemo(() => {
     if (!activeTraceId) return null;
@@ -168,20 +159,8 @@ const TQMGrid: React.FC<TQMGridProps> = ({ user, onSpendEAC, orders = [], onUpda
     setAuditVerdict(null);
 
     try {
-      const prompt = `Act as a TQM Auditor. Analyze the following Product Trace History for SKU: ${currentTrace.order.id}. 
-      Verify that the unique hashes align sequentially and identify any anomalies in the 'Live Processing' stage that deviate from the 'Industrial Kanban' requirements. 
-      Flag any SKU that lacks a 'Validator_ID' in the final transition to the Consumer.
-      
-      Trace History: ${JSON.stringify(currentTrace.history)}
-      
-      Requirements:
-      1. Check hash sequentiality (prev_hash match).
-      2. Detect deviations from Industrial Kanban protocols.
-      3. Verify the existence of verification_signature at each stage.
-      4. Provide a technical industrial finality report.`;
-
-      const res = await chatWithAgroLang(prompt, []);
-      setAuditVerdict(res.text);
+      const auditResult = await runAiAudit(currentTrace);
+      setAuditVerdict(auditResult);
     } catch (e) {
       setAuditVerdict("ORACLE_SYNC_ERROR: Ledger handshake interrupted. Shard sequentiality could not be verified.");
     } finally {

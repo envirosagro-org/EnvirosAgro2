@@ -88,9 +88,9 @@
       },
       "required": ["id", "itemId", "itemName", "cost", "status"]
     },
-    "FleetNode": {
-      "title": "Agrobot / IoT Fleet Node",
-      "description": "Represents a single registered machine or robot",
+    "MachineNode": {
+      "title": "Agrobot / IoT Machine Node",
+      "description": "Represents a single registered machine, bot, or IoT device",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -157,6 +157,70 @@
         "priority": { "type": "string" }
       },
       "required": ["id", "type", "title", "timestamp", "priority"]
+    },
+    "MRVJob": {
+      "title": "MRV Analysis Job",
+      "description": "A job for background MRV analysis",
+      "type": "object",
+      "properties": {
+        "assetId": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["assetId", "status", "createdAt"]
+    },
+    "Auditor": {
+      "title": "Auditor",
+      "description": "Registered auditor",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    },
+    "WebRTCCall": {
+      "title": "WebRTC Call",
+      "description": "Session record for WebRTC calls",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "callerId": { "type": "string" },
+        "calleeId": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "callerId", "calleeId", "status"]
+    },
+    "BroadcastSession": {
+      "title": "Broadcast Session",
+      "description": "Live or recorded broadcast session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "hostId": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "hostId", "status"]
+    },
+    "ARAnchor": {
+      "title": "AR Anchor",
+      "description": "Spatial mapping anchor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stewardId": { "type": "string" }
+      },
+      "required": ["id", "stewardId"]
+    },
+    "DroneTelemetry": {
+      "title": "Telemetry Reading",
+      "description": "Reading from IoT sensors",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "droneId": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "droneId", "timestamp"]
     }
   },
   "firestore": {
@@ -164,9 +228,21 @@
       "schema": { "$ref": "#/entities/User" },
       "description": "Holds steward profile records."
     },
+    "/stewards/{stewardId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Steward profiles alternative registration path."
+    },
     "/fleet/{nodeId}": {
-      "schema": { "$ref": "#/entities/FleetNode" },
+      "schema": { "$ref": "#/entities/MachineNode" },
       "description": "Registry of agrobots and IoT equipment."
+    },
+    "/machine_nodes/{nodeId}": {
+      "schema": { "$ref": "#/entities/MachineNode" },
+      "description": "Alternative machine registry."
+    },
+    "/devices/{deviceId}": {
+      "schema": { "$ref": "#/entities/MachineNode" },
+      "description": "Device control registry."
     },
     "/products/{productId}": {
       "schema": { "$ref": "#/entities/VendorProduct" },
@@ -199,6 +275,31 @@
     "/live_products/{productId}": {
       "schema": { "$ref": "#/entities/LiveProduct" },
       "description": "Real-time production tracking."
+    },
+    "/mrv_jobs/{jobId}": {
+      "schema": { "$ref": "#/entities/MRVJob" },
+      "description": "Background MRV jobs."
+    },
+    "/auditors/{auditorId}": {
+      "schema": { "$ref": "#/entities/Auditor" },
+      "description": "Registered auditors."
+    },
+    "/calls/{callId}": {
+      "schema": { "$ref": "#/entities/WebRTCCall" },
+      "description": "WebRTC call sessions."
+    },
+    "/broadcasts/{broadcastId}": {
+      "schema": { "$ref": "#/entities/BroadcastSession" },
+      "description": "Broadcast sessions."
+    },
+    "/ar_anchors/{anchorId}": {
+      "schema": { "$ref": "#/entities/ARAnchor" },
+      "description": "AR spatial anchors."
+    },
+    "/sensor_readings/{readingId}": {
+      "schema": { "$ref": "#/entities/DroneTelemetry" },
+      "description": "IoT sensor readings."
     }
   }
 }
+

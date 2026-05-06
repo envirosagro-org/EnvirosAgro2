@@ -50,6 +50,7 @@ import { toast } from 'sonner';
 import { User, Order } from '../types';
 import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
+import { processOrderPayment } from '../services/domain/paymentService'; // <-- Add this
 import { SEO } from './SEO';
 
 interface EnvirosAgroStoreProps {
@@ -185,26 +186,35 @@ const EnvirosAgroStore: React.FC<EnvirosAgroStoreProps> = ({ user, onSpendEAC, o
     setProvisionStep('escrow');
   };
 
-  // Fix: handleExecuteEscrow made async and awaits onSpendEAC to handle Promise<boolean> correctly.
   const handleExecuteEscrow = async () => {
     if (esinSign.toUpperCase() !== user.esin.toUpperCase()) {
       toast.error("SIGNATURE ERROR: Node ESIN mismatch.");
       return;
     }
 
+    const orderData = {
+      id: `ORD_${Date.now()}`,
+      itemId: selectedAsset.id,
+      itemName: selectedAsset.name,
+      itemType: selectedAsset.category,
+      itemImage: selectedAsset.thumb,
+      cost: selectedAsset.price,
+      status: 'PAYMENT_HELD' as const,
+      supplierEsin: selectedAsset.supplier,
+      customerEsin: user.esin,
+      timestamp: new Date().toISOString(),
+      trackingHash: `HASH_${Date.now()}`,
+      sourceTab: 'store' as const
+    };
+
+    // Authenticate and process the order payment
+    await processOrderPayment(orderData, 'EAC');
+
     if (await onSpendEAC(selectedAsset.price, `OFFICIAL_STORE_PROVISION_${selectedAsset.id}`)) {
       setProvisionStep('anchor');
       setIsProcessing(true);
       setTimeout(() => {
-        onPlaceOrder({
-          itemId: selectedAsset.id,
-          itemName: selectedAsset.name,
-          itemType: selectedAsset.category,
-          itemImage: selectedAsset.thumb,
-          cost: selectedAsset.price,
-          supplierEsin: selectedAsset.supplier,
-          sourceTab: 'store'
-        });
+        onPlaceOrder(orderData);
         setIsProcessing(false);
         setProvisionStep('success');
       }, 3000);

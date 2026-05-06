@@ -3,7 +3,6 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
-import bodyParser from "body-parser";
 import apiRoutes from "./routes/api";
 import { socialBotService } from "./services/socialBotService";
 
@@ -13,15 +12,25 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(cors());
-  app.use(bodyParser.json());
+  // Strict CORS: Limit to app domain (example, adjust if necessary)
+  app.use(cors({
+    origin: process.env.VITE_APP_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+  }));
+  
+  // Use built-in JSON parser
+  app.use(express.json());
 
   // API routes
   app.use("/api", apiRoutes);
   
-  // Periodic task processing
+  // Periodic task processing with error handling
   setInterval(() => {
-    socialBotService.processQueue();
+    try {
+      socialBotService.processQueue();
+    } catch (error) {
+      console.error("[Server] Error in periodic socialBotService task:", error);
+    }
   }, 20000);
 
   // Vite middleware for development

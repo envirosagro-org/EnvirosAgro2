@@ -149,12 +149,12 @@ const TelemetryHub: React.FC = () => {
                  <div className="flex gap-4">
                     <div className="text-right">
                        <p className="text-[7px] text-slate-500 font-black uppercase">Current_Resonance</p>
-                       <p className="text-lg font-black text-white tabular-nums">{readings[0]?.value.toFixed(2) || '0.00'}</p>
+                       <p className="text-lg font-black text-white tabular-nums">{readings[0]?.value?.toFixed(2) || '0.00'}</p>
                     </div>
                     <div className="w-[1px] h-10 bg-white/10 mx-2" />
                     <div className="text-right">
                        <p className="text-[7px] text-slate-500 font-black uppercase">Optimal_Baseline</p>
-                       <p className="text-lg font-black text-slate-600 tabular-nums">{readings[0]?.optimalValue.toFixed(2) || '0.00'}</p>
+                       <p className="text-lg font-black text-slate-600 tabular-nums">{readings[0]?.optimalValue?.toFixed(2) || '0.00'}</p>
                     </div>
                  </div>
               </div>

@@ -411,6 +411,7 @@ export interface LiveAgroProduct {
   sourceAssetType?: string;
   associatedPrograms?: string[];
   associatedMissions?: string[];
+  price?: number;
 }
 
 export interface NotificationShard {
@@ -883,7 +884,7 @@ export interface MRVReport {
   assetId: string;
   dataPoints: SensorReading[];
   carbonCreditsMinted: number;
-  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  status: 'PENDING' | 'VERIFIED' | 'REJECTED' | 'COMPLETED';
   timestamp: string;
 }
 
