@@ -31,11 +31,13 @@ export const AgroResilienceIcon: React.FC<{
   );
 };
 
+import { audioManager } from '../services/audioService';
+
 /**
  * Sycamore Logo: Represents interconnected organic growth grids
- * Uses Fibonacci arcs and Phi algorithms to construct the tree pattern.
+[ ... ]
  */
-export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ className = "", size = 32 }) => {
+export const SycamoreLogo: React.FC<{ className?: string; size?: number; onClick?: () => void }> = ({ className = "", size = 32, onClick }) => {
   // Generates fractal-like tree branches based on EnvirosAgro equations
   const constructFractalTree = () => {
     return (
@@ -64,11 +66,19 @@ export const SycamoreLogo: React.FC<{ className?: string; size?: number }> = ({ 
   };
 
   return (
-    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className}`}>
-      <g style={{ transformOrigin: 'center' }} className="animate-spin-slow">
-        {constructFractalTree()}
-      </g>
-    </svg>
+    <div 
+      onClick={() => {
+        audioManager.playSycamoreLeafSound();
+        if (onClick) onClick();
+      }}
+      className={`inline-block cursor-pointer ${className}`}
+    >
+      <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g style={{ transformOrigin: 'center' }} className="animate-spin-slow">
+          {constructFractalTree()}
+        </g>
+      </svg>
+    </div>
   );
 };
 

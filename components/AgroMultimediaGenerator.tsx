@@ -65,6 +65,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [status, setStatus] = useState('');
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [resultText, setResultText] = useState<string | null>(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [hasKey, setHasKey] = useState<boolean | null>(null);
@@ -113,6 +114,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
           const apiKey = process.env.GEMINI_API_KEY;
           const response = await fetch(`${downloadLink}&key=${apiKey}`);
           const blob = await response.blob();
+          setResultBlob(blob);
           setResultUrl(URL.createObjectURL(blob));
         }
       } else if (t === 'audio') {
@@ -474,6 +476,7 @@ const AgroMultimediaGenerator: React.FC<AgroMultimediaGeneratorProps> = ({
                      className="px-12 py-6 bg-white/5 border-2 border-white/10 rounded-full text-slate-400 font-black text-xs uppercase tracking-[0.4em] hover:text-white transition-all flex items-center gap-4"
                      iconSize={20}
                      label="DISPATCH_SIGNAL"
+                     files={resultBlob ? [new File([resultBlob], `shard.${activeTab === 'video' ? 'mp4' : 'wav'}`, { type: resultBlob.type })] : undefined}
                    />
                 </div>
               </div>

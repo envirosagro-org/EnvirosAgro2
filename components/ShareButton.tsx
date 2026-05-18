@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Share2, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { SycamoreLogo } from './Icons';
 import { useUiStore } from '../store/uiStore';
 import { useDataStore } from '../store/dataStore';
 import { ViewState } from '../types';
@@ -14,6 +15,7 @@ interface ShareButtonProps {
   className?: string;
   iconSize?: number;
   label?: string;
+  files?: File[];
 }
 
 export const ShareButton: React.FC<ShareButtonProps> = ({ 
@@ -25,7 +27,8 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   id,
   className = '', 
   iconSize = 16, 
-  label 
+  label,
+  files
 }) => {
   const [copied, setCopied] = useState(false);
   const generateShareUrl = useUiStore(state => state.generateShareUrl);
@@ -38,11 +41,15 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
     
     if (navigator.share) {
       try {
-        await navigator.share({
+        const shareData: ShareData = {
           title,
           text,
           url: shareUrl,
-        });
+        };
+        if (files && navigator.canShare && navigator.canShare({ files })) {
+          shareData.files = files;
+        }
+        await navigator.share(shareData);
       } catch (error) {
         console.error('Error sharing:', error);
       }
@@ -64,7 +71,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       className={`flex items-center justify-center transition-all ${className}`}
       title="Share"
     >
-      {copied ? <Check size={iconSize} className="text-emerald-400" /> : <Share2 size={iconSize} />}
+      {copied ? <Check size={iconSize} className="text-emerald-400" /> : <SycamoreLogo size={iconSize} className="text-gray-500" />}
       {label && <span className="ml-2">{label}</span>}
     </button>
   );
