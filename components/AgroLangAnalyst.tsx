@@ -8,7 +8,7 @@ import {
   LayoutGrid, ClipboardCheck, Briefcase, Landmark, Sprout,
   // Added missing icons for blueprint evaluation
   Coins, Microscope, Scan, Users, PawPrint, Leaf, Brain, ShoppingBag, Lightbulb, Trees, Layers, Stamp,
-  FileSearch, ClipboardList, ShieldAlert, Calculator
+  FileSearch, ClipboardList, ShieldAlert, Calculator, FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -34,6 +34,7 @@ import { HenIcon } from './Icons';
 import { SycamoreLogo } from './Icons';
 import ShareButton from './ShareButton';
 import { SEO } from './SEO';
+import { AgroLangReportGenerator } from './AgroLangReportGenerator';
 
 interface AgroLangAnalystProps {
   user: AgroUser;
@@ -94,7 +95,7 @@ const BLUEPRINT_AUDIT_GROUPS = [
 ];
 
 const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, onNavigate }) => {
-  const [activeMode, setActiveMode] = useState<'neural' | 'tunnelling' | 'status' | 'kaizen'>('neural');
+  const [activeMode, setActiveMode] = useState<'neural' | 'tunnelling' | 'status' | 'kaizen' | 'report'>('neural');
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: `Greetings Steward ${user.name}. I am the primary Agro Lang Analyst for Node ${user.esin}. My systems are currently synchronized with the 60-shard architecture. How can I facilitate your agricultural finality today?` }
   ]);
@@ -244,6 +245,13 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
             >
               <Calculator className="w-4 h-4" />
               Kaizen Evaluation
+            </button>
+            <button 
+              onClick={() => setActiveMode('report')}
+              className={`w-full flex items-center gap-6 p-6 rounded-3xl text-[11px] font-black uppercase tracking-widest transition-all ${activeMode === 'report' ? 'bg-indigo-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}
+            >
+              <FileText className="w-4 h-4" />
+              Report Generator
             </button>
             
             <div className="h-px bg-white/5 my-4"></div>
@@ -592,6 +600,8 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
               </div>
             </div>
           </div>
+        ) : activeMode === 'report' ? (
+          <AgroLangReportGenerator user={user} onEmitSignal={onEmitSignal} />
         ) : activeMode === 'kaizen' ? (
           <div className="flex flex-col h-full animate-in zoom-in-95 duration-500 p-8 md:p-12 overflow-y-auto custom-scrollbar">
              <SEO title="Kaizen Evaluation" description="EnvirosAgro Kaizen Evaluation: Mathematical foundations of the EOS v6.5 Sustainability Framework." />
