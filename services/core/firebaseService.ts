@@ -197,13 +197,23 @@ export const startBackgroundDataSync = (onSyncUpdate?: (status: string) => void)
 // --- UTILITIES ---
 const cleanObject = (obj: any): any => {
   if (obj === null || obj === undefined) return null;
-  if (Array.isArray(obj)) return obj.map(cleanObject);
+  if (typeof obj === 'symbol' || typeof obj === 'function') return null;
+  if (Array.isArray(obj)) {
+    return obj
+      .map(cleanObject)
+      .filter((x) => x !== undefined && typeof x !== 'symbol' && typeof x !== 'function');
+  }
   if (typeof obj !== 'object') return obj;
   
+  // Handle Date, don't clean them as plain object
+  if (obj instanceof Date) return obj;
+  // If it's a Firestore Timestamp or similar custom class with a toDate method, preserve it
+  if (obj && typeof obj.toDate === 'function') return obj;
+
   const newObj: any = {};
   Object.keys(obj).forEach((key) => {
     const val = obj[key];
-    if (val !== undefined && val !== null) {
+    if (val !== undefined && val !== null && typeof val !== 'symbol' && typeof val !== 'function') {
       if (typeof val === 'object' && !Array.isArray(val)) {
         newObj[key] = cleanObject(val);
       } else {

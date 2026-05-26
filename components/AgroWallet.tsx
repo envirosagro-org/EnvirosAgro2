@@ -164,6 +164,61 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   const [stakingAmount, setStakingAmount] = useState('100');
   const [selectedTier, setSelectedTier] = useState(STAKING_TIERS[0]);
 
+  // Green DeFi & Eco-Action Pools Staking States
+  const [stakingSubView, setStakingSubView] = useState<'equity' | 'eco'>('equity');
+  const [pledgeAmounts, setPledgeAmounts] = useState<Record<string, string>>({
+    'eco-pool-1': '500',
+    'eco-pool-2': '250',
+    'eco-pool-3': '1000',
+  });
+  const [ecoPools, setEcoPools] = useState([
+    { id: 'eco-pool-1', title: 'Bantu Seed Preservation Program', desc: 'Secure indigenous agronomic seed banks containing resilient Bantu climate variants and ancestral grain preservation blocks.', baseApr: 8.5, pledged: 34200, goal: 50000, category: 'Genetic Reservoir' },
+    { id: 'eco-pool-2', title: 'Lake Victoria Canopy Drone Mesh', desc: 'Deploy low-altitude agrobot fleet relays and spectral boundary shields securing the riparian wetlands.', baseApr: 12.2, pledged: 79400, goal: 120000, category: 'IoT Mesh & Security' },
+    { id: 'eco-pool-3', title: 'Nairobi Solar Micro-Grid Inflow Inverter', desc: 'Fund hardware smart-meters matching solar backup converters directly to agricultural drying hubs.', baseApr: 14.8, pledged: 45000, goal: 100000, category: 'Zero-Carbon Power' }
+  ]);
+
+  const handleEcoStakingSponsor = (poolId: string) => {
+    const pledgeAmountStr = pledgeAmounts[poolId];
+    const amountToStake = parseFloat(pledgeAmountStr);
+    
+    if (isNaN(amountToStake) || amountToStake <= 0) {
+      toast.error('Please input a valid positive EAC amount.');
+      return;
+    }
+
+    if (user.wallet.balance < amountToStake) {
+      toast.error('Insufficient EAC balance in your steward card.');
+      return;
+    }
+
+    // Process sponsorship
+    const updatedBalance = user.wallet.balance - amountToStake;
+    
+    // Update local state and mock database
+    setEcoPools(prev => prev.map(pool => {
+      if (pool.id === poolId) {
+        return {
+          ...pool,
+          pledged: pool.pledged + amountToStake
+        };
+      }
+      return pool;
+    }));
+
+    // Perform balance update
+    onUpdateUser({
+      ...user,
+      wallet: {
+        ...user.wallet,
+        balance: updatedBalance
+      }
+    });
+
+    toast.success(`Proof of Eco-Action Locked: Staked ${amountToStake.toLocaleString()} EAC to sponsor program!`, {
+      style: { background: '#0e1726', border: '1px solid #10b981', color: '#10b981' }
+    });
+  };
+
   // Routine Sync
   useEffect(() => {
     // 1. Connection Test

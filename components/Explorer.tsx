@@ -328,6 +328,33 @@ const Explorer: React.FC<ExplorerProps> = ({ blockchain = [], isMining = false, 
                           <p className="text-slate-400 text-sm italic font-medium">"All planetary nodes handshaking at 1.42x resonance. No critical drift detected in Sector 4."</p>
                        </div>
                        <button onClick={handleRunPulseAnalysis} className="w-full py-5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase text-slate-500 hover:text-white transition-all">Request Mesh Audit</button>
+                     </div>
+
+                     {/* Spatial Cryptographic Oracles Widget */}
+                     <div className="glass-card p-8 rounded-[48px] border border-emerald-500/20 bg-emerald-950/[0.03] space-y-6 flex flex-col justify-between shadow-2xl text-left">
+                        <div className="flex justify-between items-center bg-transparent">
+                           <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest font-sans block">Shielded Location Feed</h4>
+                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 italic text-left leading-relaxed block">
+                           Multi-spectral biome sensors validated via zero-knowledge location commitments. Coordinates are obfuscated onchain.
+                        </p>
+                        <div className="space-y-2 text-left font-mono block">
+                           {[
+                              { hash: 'zk-0x7a8c9b2e04f11a8d05a2e9432f8df1', label: 'Bantu Seed Preservation', status: 'PROVEN' },
+                              { hash: 'zk-0xbf2c40e11a14b98fa0d923ca7942', label: 'Victoria Riparian Buffer', status: 'PROVEN' },
+                           ].map((item, idx) => (
+                              <div key={idx} className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between">
+                                 <div>
+                                    <p className="text-[8px] font-sans font-black text-white uppercase leading-none mb-1 text-left">{item.label}</p>
+                                    <p className="text-[7px] text-slate-500 truncate max-w-[140px] font-mono leading-none">{item.hash}</p>
+                                 </div>
+                                 <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[6px] font-sans font-black rounded-full border border-emerald-500/20 leading-none">
+                                    {item.status}
+                                 </span>
+                              </div>
+                           ))}
+                        </div>
                     </div>
                  </div>
               </div>

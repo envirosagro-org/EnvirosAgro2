@@ -101,7 +101,7 @@ export const callBackendEA = async (params: { model: string; contents: any; conf
   let mappedModel = params.model;
   
   if (mappedModel === 'envirosagro-core-model') {
-    mappedModel = 'gemini-3.1-flash-lite-preview';
+    mappedModel = 'gemini-3.5-flash';
   } else if (mappedModel === 'envirosagro-image-model') {
     mappedModel = 'gemini-2.5-flash-image';
   }
@@ -1075,7 +1075,7 @@ export const generateTemporalVideo = async (prompt: string) => {
   }
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   return await ai.models.generateVideos({
-    model: 'veo-3.1-fast-generate-preview',
+    model: 'veo-3.1-lite-generate-preview',
     prompt,
     config: {
       numberOfVideos: 1,
@@ -1145,7 +1145,7 @@ export interface StrategyAdvice {
 }
 
 export const getAgroStrategicAdvice = async (context: string): Promise<StrategyAdvice> => {
-  const model = "gemini-3.1-flash-lite-preview";
+  const model = "gemini-3.5-flash";
   const prompt = `Analyze the following agro-industrial telemetry and protocol state. 
   Provide strategic advice for optimizing carbon credit yield and hardware efficiency.
   

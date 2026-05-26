@@ -24,6 +24,63 @@ const SwarmOrchestrator: React.FC<SwarmOrchestratorProps> = ({ user }) => {
   const [liveTelemetry, setLiveTelemetry] = useState<Record<string, TelemetryReading>>({});
   const [isDeploying, setIsDeploying] = useState(false);
 
+  // Agrobot Task Scheduler & Path Vectors State
+  interface AgrobotTask {
+    id: string;
+    botId: string;
+    task: string;
+    type: 'Tilling' | 'Planting' | 'Sensing' | 'Seeding';
+    coordinates: { x: number; y: number }[];
+    status: 'SCHEDULED' | 'RUNNING' | 'COMPLETED';
+    gcodeHex: string;
+  }
+
+  const [schedulerTasks, setSchedulerTasks] = useState<AgrobotTask[]>([
+    { id: 'TSK-01', botId: 'BOT-VECTOR-A', task: 'Till & Aerate Bantu Seed Zone 5A', type: 'Tilling', coordinates: [{ x: 50, y: 120 }, { x: 120, y: 180 }, { x: 200, y: 150 }], status: 'SCHEDULED', gcodeHex: 'G21 G90; G1 X50 Y120 F1200; G1 X120 Y180; G1 X200 Y150;' },
+    { id: 'TSK-02', botId: 'BOT-VECTOR-B', task: 'Plant Indigenous Bantu Sorghum Seeds', type: 'Seeding', coordinates: [{ x: 80, y: 240 }, { x: 140, y: 310 }, { x: 260, y: 280 }], status: 'SCHEDULED', gcodeHex: 'G21 G90; G1 X80 Y240 F1000; G1 X140 Y310; M08; M09;' },
+    { id: 'TSK-03', botId: 'BOT-VECTOR-C', task: 'Multi-Spectral Health Scan Corridor 12C', type: 'Sensing', coordinates: [{ x: 180, y: 90 }, { x: 220, y: 140 }, { x: 340, y: 200 }], status: 'RUNNING', gcodeHex: 'M106 S255; G1 X180 Y90 F1500; G1 X220 Y140; G1 X340 Y200; M107;' },
+  ]);
+
+  const [activeTaskId, setActiveTaskId] = useState<string>('TSK-01');
+  const [hardwarePushingId, setHardwarePushingId] = useState<string | null>(null);
+  const [hardwareTerminal, setHardwareTerminal] = useState<string[]>([
+    'Agrobot Hardware Controller online.',
+    'Ready for sequence injection.'
+  ]);
+
+  const activeTask = useMemo(() => 
+    schedulerTasks.find(t => t.id === activeTaskId) || schedulerTasks[0]
+  , [schedulerTasks, activeTaskId]);
+
+  const handleTransmitTaskToHost = (task: AgrobotTask) => {
+    setHardwarePushingId(task.id);
+    setHardwareTerminal(prev => [...prev, `[INIT] Injecting sequence ${task.id} to G-code buffer...`]);
+
+    const codeLogs = [
+      `[REGIST] Allocating memory register: G90 (Absolute Coordinates)`,
+      `[HARDWARE] Commencing driver spin-lock...`,
+      `[DRIVE] Transmitting coordinates: ${JSON.stringify(task.coordinates)}`,
+      `[BUFFER] Written: ${task.gcodeHex}`,
+      `[CONNEC] Handshake OK. Steps verification sum match: 0xF8419B`,
+      `[OK] Sequence executed on local physical agrobot controller.`
+    ];
+
+    codeLogs.forEach((log, index) => {
+      setTimeout(() => {
+        setHardwareTerminal(prev => [...prev, log]);
+        if (index === codeLogs.length - 1) {
+          setHardwarePushingId(null);
+          setSchedulerTasks(prev => 
+            prev.map(t => t.id === task.id ? { ...t, status: 'RUNNING' } : t)
+          );
+          toast.success(`Task ${task.id} successfully initiated on hardware controller.`, {
+            style: { background: '#090d16', border: '1px solid #10b981', color: '#10b981' }
+          });
+        }
+      }, (index + 1) * 700);
+    });
+  };
+
   useEffect(() => {
     setMissions(iotService.getDroneMissions());
     
@@ -261,15 +318,169 @@ const SwarmOrchestrator: React.FC<SwarmOrchestratorProps> = ({ user }) => {
                  <h4 className="text-sm font-black text-white uppercase italic leading-none mb-2">AI Pilot Shard</h4>
                  <p className="text-[9px] text-slate-500 font-bold leading-relaxed uppercase tracking-widest italic">
                     "Analyzing spectral anomalies in the canopy. Adjusting flight vectors for multi-spectral normalization."
-                 </p>
-              </div>
-              <div className="pt-4 flex items-center justify-between border-t border-emerald-500/20">
-                 <span className="text-[7px] font-black text-emerald-600 uppercase">Resonance Status</span>
-                 <span className="text-[8px] font-mono text-emerald-400 font-black tracking-widest">STABLE_98%</span>
-              </div>
-           </div>
-        </div>
+                  </p>
+               </div>
+               <div className="pt-4 flex items-center justify-between border-t border-emerald-500/20">
+                  <span className="text-[7px] font-black text-emerald-600 uppercase">Resonance Status</span>
+                  <span className="text-[8px] font-mono text-emerald-400 font-black tracking-widest">STABLE_98%</span>
+               </div>
+            </div>
+         </div>
       </div>
+
+      {/* --- NEW SECTION: AGROBOT SWARM PATH SCHEDULING GRID --- */}
+      <div className="border-t border-white/5 pt-12 mt-12 space-y-8 text-left animate-in fade-in duration-500">
+         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-4 border-b border-white/5">
+            <div>
+               <h3 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter m-0 font-sans">
+                  Agrobot <span className="text-emerald-400 font-bold">Task Scheduler & Route Vectors</span>
+               </h3>
+               <p className="text-[10px] text-slate-500 font-mono font-black uppercase tracking-widest leading-none mt-2">SUB_UNIT: ROTATION_SCHEDULING_CONTROLLERS // NO_TELEMETRY_MOCK</p>
+            </div>
+            <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black rounded-full uppercase tracking-widest font-sans inline-block">
+               DRIVE_SYS_CONNECTED
+            </span>
+         </div>
+
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
+            {/* Main Interactive Task Table */}
+            <div className="lg:col-span-2 space-y-6">
+               <div className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/40 space-y-6 shadow-3xl">
+                  <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                     <span className="text-xs font-black text-white uppercase tracking-widest font-sans block font-bold">Queue of Regional Rotations</span>
+                     <span className="text-[8px] text-slate-500 font-mono block font-bold">{schedulerTasks.length} Operations Loaded</span>
+                  </div>
+
+                  <div className="space-y-4">
+                     {schedulerTasks.map(task => {
+                        const isSelected = task.id === activeTaskId;
+                        return (
+                           <div
+                              key={task.id}
+                              onClick={() => setActiveTaskId(task.id)}
+                              className={`p-6 rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${
+                                 isSelected 
+                                    ? 'bg-indigo-600/10 border-indigo-500/40 text-white shadow-lg' 
+                                    : 'bg-white/[0.02] border-white/5 hover:border-white/10 text-slate-400'
+                              }`}
+                           >
+                              <div className="space-y-2 flex-grow text-left">
+                                 <div className="flex items-center gap-3">
+                                    <span className="text-[8px] font-mono font-black text-slate-500 bg-white/5 px-2 py-0.5 rounded uppercase font-bold">
+                                       {task.id}
+                                    </span>
+                                    <span className={`text-[8px] font-sans font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                       task.type === 'Tilling' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                       task.type === 'Seeding' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                       task.type === 'Sensing' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                    }`}>
+                                       {task.type}
+                                    </span>
+                                 </div>
+                                 <h4 className="text-sm font-black text-white uppercase italic tracking-tight m-0 leading-tight block">
+                                    {task.task}
+                                 </h4>
+                                 <p className="text-[9px] font-mono text-slate-500 leading-none block">
+                                    Assigned: {task.botId} • Coordinates: {task.coordinates.map(c => `(${c.x}, ${c.y})`).join(' → ')}
+                                 </p>
+                              </div>
+
+                              <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-none border-white/10 pt-3 md:pt-0">
+                                 <div className="text-right">
+                                    <p className="text-[7px] text-slate-600 font-mono leading-none uppercase">Status</p>
+                                    <span className={`text-[9px] font-mono font-black uppercase block mt-1 ${
+                                       task.status === 'RUNNING' ? 'text-amber-400 animate-pulse' :
+                                       task.status === 'COMPLETED' ? 'text-emerald-400' : 'text-slate-500'
+                                    }`}>
+                                       {task.status}
+                                    </span>
+                                 </div>
+                                 
+                                 <button
+                                    onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleTransmitTaskToHost(task);
+                                    }}
+                                    disabled={task.status !== 'SCHEDULED' || hardwarePushingId !== null}
+                                    className="px-6 py-3.5 bg-white hover:bg-slate-200 disabled:opacity-35 disabled:hover:bg-white rounded-xl text-black font-black text-[9px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+                                 >
+                                    {hardwarePushingId === task.id ? 'TRANSMITTING...' : 'INJECT_COORD'}
+                                 </button>
+                              </div>
+                           </div>
+                        );
+                     })}
+                  </div>
+               </div>
+            </div>
+
+            {/* Path Overlays & Steppers console */}
+            <div className="space-y-6 text-left">
+               <div className="glass-card p-8 rounded-[40px] border border-white/5 bg-black/40 space-y-6 shadow-3xl flex flex-col justify-between">
+                  <div className="border-b border-white/5 pb-4">
+                     <h4 className="text-xs font-black text-white uppercase tracking-widest font-sans">Route Vector Overlay</h4>
+                     <p className="text-[8px] text-slate-500 font-mono uppercase tracking-widest leading-none mt-1">AXIS_X & AXIS_Y PHYSICAL GRID</p>
+                  </div>
+
+                  {/* SVG Path Canvas */}
+                  <div className="aspect-video bg-neutral-950 rounded-2xl border border-white/5 relative overflow-hidden flex items-center justify-center p-4 shadow-inner">
+                     <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                     
+                     {/* Draw line sequence */}
+                     <svg className="absolute inset-0 w-full h-full p-4" viewBox="0 0 400 400">
+                        {activeTask?.coordinates && (
+                           <>
+                              {/* Path Vector Line */}
+                              <polyline
+                                 fill="none"
+                                 stroke="#818cf8"
+                                 strokeWidth="3"
+                                 strokeDasharray="5,5"
+                                 points={activeTask.coordinates.map(c => `${c.x},${c.y}`).join(' ')}
+                                 className="animate-pulse"
+                              />
+                              {/* Glowing node coordinates points */}
+                              {activeTask.coordinates.map((c, idx) => (
+                                 <g key={idx}>
+                                    <circle cx={c.x} cy={c.y} r="6" className="fill-indigo-400 stroke-black stroke-2" />
+                                    <circle cx={c.x} cy={c.y} r="12" className="fill-none stroke-indigo-500/40 stroke-1 animate-pulse" />
+                                    <text x={c.x + 8} y={c.y + 4} fill="#64748b" className="text-[8px] font-mono leading-none font-bold">
+                                       Pt_{idx + 1} ({c.x},{c.y})
+                                    </text>
+                                 </g>
+                              ))}
+                           </>
+                        )}
+                     </svg>
+
+                     <div className="absolute top-3 right-3 px-3 py-1.5 bg-black/85 border border-white/10 rounded-lg text-[7px] text-indigo-400 font-mono leading-none animate-pulse">
+                        TASK_ID: {activeTask?.id || 'NULL'}
+                     </div>
+                  </div>
+
+                  {/* Physical Hardware Steppers Log Console */}
+                  <div className="space-y-3 font-mono">
+                     <p className="text-[9px] font-sans font-black text-slate-500 uppercase tracking-widest italic leading-none">Direct G-code Injection Buffer</p>
+                     
+                     <div className="bg-slate-950 p-4 rounded-xl border border-white/5 min-h-[140px] flex flex-col justify-between overflow-hidden">
+                        <div className="space-y-1.5 text-[8px] text-indigo-400 leading-tight overflow-y-auto max-h-[120px] scrollbar-hide font-mono">
+                           {hardwareTerminal.map((log, idx) => (
+                              <p key={idx} className="truncate select-all leading-none">&gt; {log}</p>
+                           ))}
+                        </div>
+                        {activeTask?.gcodeHex && (
+                           <div className="pt-2 border-t border-white/5 mt-2 bg-transparent">
+                              <p className="text-[6px] text-slate-600 uppercase font-black font-sans leading-none mb-1">Raw Stepper Sequence Register</p>
+                              <p className="text-[8px] text-slate-500 font-mono break-all leading-none">{activeTask.gcodeHex}</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+
     </div>
   );
 };

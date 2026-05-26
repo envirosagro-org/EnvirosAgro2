@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 // import process explicitly to resolve TypeScript errors with cwd and env properties
 import process from 'node:process';
+import path from 'node:path';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` (development, production, etc.)
@@ -13,6 +14,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
+    resolve: {
+      alias: {
+        'react': path.resolve(process.cwd(), 'node_modules/react'),
+        'react-dom': path.resolve(process.cwd(), 'node_modules/react-dom')
+      }
+    },
     plugins: [react(), tailwindcss(), visualizer({ open: false, filename: 'stats.html' })],
     define: {
       // Emulate process.env for browser compatibility as required by the GenAI SDK
