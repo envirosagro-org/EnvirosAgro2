@@ -105,6 +105,12 @@ class SpatialService {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Plot));
   }
 
+  public async getAllPlots() {
+    const q = collection(db, 'plots');
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Plot));
+  }
+
   public async deletePlot(plotId: string) {
     const plotRef = doc(db, 'plots', plotId);
     await deleteDoc(plotRef);

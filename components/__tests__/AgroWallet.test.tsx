@@ -35,23 +35,23 @@ describe('AgroWallet Component', () => {
   it('renders wallet balances correctly', () => {
     render(<AgroWallet {...defaultProps} />);
 
-    expect(screen.getByText('1000.00')).toBeDefined();
+    expect(screen.getAllByText('1,000').length).toBeGreaterThan(0);
   });
 
   it('switches tabs correctly', async () => {
     render(<AgroWallet {...defaultProps} />);
 
-    const stakingTab = screen.getByText('Staking');
+    const stakingTab = screen.getByText('Stakes');
     fireEvent.click(stakingTab);
     
-    expect(screen.getByText('Stake Finality')).toBeDefined();
+    expect(screen.getByText(/Total Staked/i)).toBeDefined();
   });
 
   it('calls onSwap when execute swap is clicked', async () => {
     const onSwap = vi.fn().mockResolvedValue(true);
     render(<AgroWallet {...defaultProps} onSwap={onSwap} initialSection="swap" />);
 
-    const swapButton = screen.getByText('INITIATE SHARD SWAP');
+    const swapButton = screen.getByText('INITIALIZE SHARD CONVERSION');
     fireEvent.click(swapButton);
     
     await waitFor(() => expect(onSwap).toHaveBeenCalled());

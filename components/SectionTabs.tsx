@@ -32,7 +32,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
 
   useEffect(() => {
     const activeEl = scrollRef.current?.querySelector(`[data-tab-id="${activeTab}"]`);
-    if (activeEl) {
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   }, [activeTab]);

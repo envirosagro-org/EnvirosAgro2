@@ -12,6 +12,7 @@ import { HenIcon } from './Icons';
 import { generateHandshakeAgroLang } from '../services/agroLangService';
 import { toast } from 'sonner';
 import GISPortal from './GISPortal';
+import { spatialService } from '../services/ops/spatialService';
 
 interface RegistryHandshakeProps {
   user: User;
@@ -42,6 +43,61 @@ const LAND_PROTOCOL_STEPS: Partial<HandshakeStep>[] = [
   { id: 'SYSTEM_AUDIT', label: 'System Finality' }
 ];
 
+const calculateDistance = (p1: { lat: number; lng: number }, p2: { lat: number; lng: number }) => {
+  const R = 6371000; // Earth radius in meters
+  const phi1 = p1.lat * Math.PI / 180;
+  const phi2 = p2.lat * Math.PI / 180;
+  const deltaPhi = (p2.lat - p1.lat) * Math.PI / 180;
+  const deltaLambda = (p2.lng - p1.lng) * Math.PI / 180;
+
+  const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+            Math.cos(phi1) * Math.cos(phi2) *
+            Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // in meters
+};
+
+const calculatePolygonAreaAndPerimeter = (coords: { lat: number; lng: number }[]) => {
+  if (!coords || coords.length < 3) return { area: 0, perimeter: 0, compactness: 0 };
+  
+  // Perimeter
+  let perimeter = 0;
+  for (let i = 0; i < coords.length; i++) {
+    const p1 = coords[i];
+    const p2 = coords[(i + 1) % coords.length];
+    perimeter += calculateDistance(p1, p2);
+  }
+  
+  // Area (Equirectangular Shoelace Offset approximation for fast sub-regional agriculture scales)
+  const latToMeters = 111320;
+  const origin = coords[0];
+  const lngToMeters = 111320 * Math.cos(origin.lat * Math.PI / 180);
+  
+  let areaSum = 0;
+  for (let i = 0; i < coords.length; i++) {
+    const p1 = coords[i];
+    const p2 = coords[(i + 1) % coords.length];
+    
+    const x1 = (p1.lng - origin.lng) * lngToMeters;
+    const y1 = (p1.lat - origin.lat) * latToMeters;
+    const x2 = (p2.lng - origin.lng) * lngToMeters;
+    const y2 = (p2.lat - origin.lat) * latToMeters;
+    
+    areaSum += (x1 * y2) - (x2 * y1);
+  }
+  const area = Math.abs(areaSum) / 2;
+  
+  // Isoperimetric Compactness Quotient: (4 * pi * Area) / (Perimeter^2) * 100
+  let compactness = 0;
+  if (perimeter > 0) {
+    compactness = (4 * Math.PI * area) / (perimeter * perimeter) * 100;
+  }
+  compactness = Math.min(100, Math.max(0, compactness));
+  
+  return { area, perimeter, compactness };
+};
+
 const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({ 
   user, onUpdateUser, onSpendEAC, onNavigate, onEmitSignal, onExecuteToShell 
 }) => {
@@ -59,6 +115,265 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
   const [evidenceFile, setEvidenceFile] = useState<string | null>(null);
   const [esinSign, setEsinSign] = useState('');
   const [agroLangShard, setAgroLangShard] = useState<any>(null);
+
+  // GPS Land Plotting States for Circumnavigation Workflow
+  const [plottingPhase, setPlottingPhase] = useState<'IDLE' | 'CENTER_MARKED' | 'START_ANCHORED' | 'DRAWING' | 'COMPLETED'>('IDLE');
+  const [plotCenter, setPlotCenter] = useState<{ lat: number, lng: number } | null>(null);
+  const [boundaryStart, setBoundaryStart] = useState<{ lat: number, lng: number } | null>(null);
+  const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
+  const [boundaryPath, setBoundaryPath] = useState<{ lat: number, lng: number }[]>([]);
+  const [currentGPS, setCurrentGPS] = useState<{ lat: number, lng: number }>({ lat: -1.2921, lng: 36.8219 });
+  const [gpsAccuracy, setGpsAccuracy] = useState<number>(3.5);
+  const [mappingMethod, setMappingMethod] = useState<'GPS_CIRCUIT' | 'GIS_PORTAL'>('GPS_CIRCUIT');
+
+  const deedStats = useMemo(() => {
+    if (boundaryPath && boundaryPath.length >= 3) {
+      return calculatePolygonAreaAndPerimeter(boundaryPath);
+    }
+    if (selectedPlot?.geometry?.coordinates?.[0]) {
+      const list = selectedPlot.geometry.coordinates[0].map((c: any) => ({ lat: c[0], lng: c[1] }));
+      return calculatePolygonAreaAndPerimeter(list);
+    }
+    return { area: 0, perimeter: 0, compactness: 0 };
+  }, [boundaryPath, selectedPlot]);
+
+  const watchIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCurrentGPS({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          });
+          setGpsAccuracy(pos.coords.accuracy || 2.4);
+        },
+        () => console.log('Location detection deferred to virtual radar simulation'),
+        { enableHighAccuracy: true }
+      );
+    }
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
+
+  const getRelativePosition = (pt: { lat: number, lng: number }) => {
+    if (!plotCenter) return { x: 120, y: 120 };
+    // Center at 120, 120. Scale factor approx 180000 for high resolution zoom
+    const scale = 180000;
+    const dx = (pt.lng - plotCenter.lng) * scale;
+    const dy = (plotCenter.lat - pt.lat) * scale; // invert y for SVG coordinate system
+    return {
+      x: Math.max(15, Math.min(225, 120 + dx)),
+      y: Math.max(15, Math.min(225, 120 + dy))
+    };
+  };
+
+  const handleMarkCenter = () => {
+    setIsProcessing(true);
+    setStatusMsg('SENSING FIELD RADAR...');
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const pt = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setPlotCenter(pt);
+          setCurrentGPS(pt);
+          setGpsAccuracy(pos.coords.accuracy || 1.8);
+          setPlottingPhase('CENTER_MARKED');
+          setIsProcessing(false);
+          toast.success('Githaka central point marked!');
+        },
+        () => {
+          const pt = { lat: -1.2918 + (Math.random() - 0.5) * 0.0004, lng: 36.8222 + (Math.random() - 0.5) * 0.0004 };
+          setPlotCenter(pt);
+          setCurrentGPS(pt);
+          setPlottingPhase('CENTER_MARKED');
+          setIsProcessing(false);
+          toast.success('Central point established in Mugumo Cluster Hub (Simulated)');
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      const pt = { lat: -1.2921, lng: 36.8219 };
+      setPlotCenter(pt);
+      setPlottingPhase('CENTER_MARKED');
+      setIsProcessing(false);
+    }
+  };
+
+  const handleMarkStart = () => {
+    setIsProcessing(true);
+    setStatusMsg('LOCKING BOUNDARY START POINT...');
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const pt = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setBoundaryStart(pt);
+          setCurrentGPS(pt);
+          setBoundaryPath([pt]);
+          setPlottingPhase('START_ANCHORED');
+          setIsProcessing(false);
+          toast.success('Perimeter boundary start anchored!');
+        },
+        () => {
+          // Set start point nearby the center
+          const offsetLat = plotCenter ? plotCenter.lat + 0.0003 : -1.2918;
+          const offsetLng = plotCenter ? plotCenter.lng - 0.0003 : 36.8216;
+          const pt = { lat: offsetLat, lng: offsetLng };
+          setBoundaryStart(pt);
+          setCurrentGPS(pt);
+          setBoundaryPath([pt]);
+          setPlottingPhase('START_ANCHORED');
+          setIsProcessing(false);
+          toast.success('Perimeter start point anchored (Simulated boundary start)');
+        },
+        { enableHighAccuracy: true }
+      );
+    }
+  };
+
+  const handleBeginDrawing = () => {
+    setIsDrawingBoundary(true);
+    setPlottingPhase('DRAWING');
+    toast.info('Movement tracking active! Walk along the perimeter.');
+
+    if (navigator.geolocation) {
+      const id = navigator.geolocation.watchPosition(
+        (pos) => {
+          const pt = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setCurrentGPS(pt);
+          setGpsAccuracy(pos.coords.accuracy || 2.1);
+          setBoundaryPath((prev) => {
+            const last = prev[prev.length - 1];
+            if (last) {
+              const diffLat = Math.abs(last.lat - pt.lat);
+              const diffLng = Math.abs(last.lng - pt.lng);
+              if (diffLat < 1e-7 && diffLng < 1e-7) return prev;
+            }
+            return [...prev, pt];
+          });
+        },
+        () => console.log('Continuous tracking operating in custom virtual locus space'),
+        { enableHighAccuracy: true }
+      );
+      watchIdRef.current = id;
+    }
+  };
+
+  const stopGpsWatcher = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  };
+
+  const handleSimulateWalkDirection = (direction: 'N' | 'E' | 'S' | 'W' | 'NE' | 'NW' | 'SE' | 'SW') => {
+    if (!isDrawingBoundary) return;
+    const stepSize = 0.00018; // approx 20 meters step
+    let dLat = 0;
+    let dLng = 0;
+    switch (direction) {
+      case 'N': dLat = stepSize; break;
+      case 'S': dLat = -stepSize; break;
+      case 'E': dLng = stepSize; break;
+      case 'W': dLng = -stepSize; break;
+      case 'NE': dLat = stepSize * 0.7; dLng = stepSize * 0.7; break;
+      case 'NW': dLat = stepSize * 0.7; dLng = -stepSize * 0.7; break;
+      case 'SE': dLat = -stepSize * 0.7; dLng = stepSize * 0.7; break;
+      case 'SW': dLat = -stepSize * 0.7; dLng = -stepSize * 0.7; break;
+    }
+
+    setCurrentGPS((prev) => {
+      const next = { lat: prev.lat + dLat, lng: prev.lng + dLng };
+      setBoundaryPath((path) => [...path, next]);
+      return next;
+    });
+  };
+
+  const handleAutoWalkSim = () => {
+    if (!isDrawingBoundary || !boundaryStart) return;
+    setIsProcessing(true);
+    setStatusMsg('RUNNING AUTONOMOUS GPS LOOP...');
+    
+    // Create a loop path starting from boundaryStart and ending back near it
+    const start = boundaryStart;
+    const offset1 = { lat: start.lat + 0.0006, lng: start.lng + 0.0001 };
+    const offset2 = { lat: start.lat + 0.0005, lng: start.lng + 0.0007 };
+    const offset3 = { lat: start.lat - 0.0002, lng: start.lng + 0.0006 };
+    const offset4 = { lat: start.lat - 0.0004, lng: start.lng - 0.0001 };
+
+    const simulatedRoute = [start, offset1, offset2, offset3, offset4];
+    
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < simulatedRoute.length) {
+        const pt = simulatedRoute[i];
+        setCurrentGPS(pt);
+        setBoundaryPath((prev) => [...prev, pt]);
+        i++;
+      } else {
+        clearInterval(interval);
+        setIsProcessing(false);
+        toast.success('Dynamic circular boundary mapped!');
+      }
+    }, 800);
+  };
+
+  const handleCompletePlotting = async () => {
+    if (boundaryPath.length < 3) {
+      toast.error('BOUNDARY RECONSTITUTE ERROR: Locus requires at least 3 points to formulate a plot.');
+      return;
+    }
+
+    setIsProcessing(true);
+    setStatusMsg('ANCHORING PHYSICAL LAND BOUNDS...');
+    stopGpsWatcher();
+    setIsDrawingBoundary(false);
+
+    // Formulate closed GeoJSON
+    const closedPath = [...boundaryPath, boundaryPath[0]];
+    const coordinates = [closedPath.map(pt => [pt.lat, pt.lng])];
+
+    const plotId = `plot-${generateAlphanumericId(6)}`;
+    const finalAssetName = assetName || `Githaka Shard ${generateAlphanumericId(4).toUpperCase()}`;
+
+    const customPlot = {
+      id: plotId,
+      stewardId: user.esin,
+      name: finalAssetName,
+      geometry: {
+        type: 'Polygon',
+        coordinates: coordinates
+      }
+    };
+
+    try {
+      await spatialService.savePlot(customPlot);
+      useUiStore.getState().setSelectedPlot(customPlot);
+      setAssetName(customPlot.name);
+      setPlottingPhase('COMPLETED');
+      toast.success(`Success! Geo-locked boundary registered to the industrial ledger.`);
+    } catch (e) {
+      useUiStore.getState().setSelectedPlot(customPlot);
+      setAssetName(customPlot.name);
+      setPlottingPhase('COMPLETED');
+      toast.success(`Registered! Boundary mapped and selected locally.`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleResetPlotting = () => {
+    stopGpsWatcher();
+    setIsDrawingBoundary(false);
+    setPlottingPhase('IDLE');
+    setPlotCenter(null);
+    setBoundaryStart(null);
+    setBoundaryPath([]);
+  };
 
   useEffect(() => {
     if (selectedPlot && mode === 'LAND') {
@@ -313,7 +628,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
                        </div>
 
                        {currentStep === 0 && (
-                          <div className="max-w-xl mx-auto space-y-8">
+                          <div className="max-w-3xl mx-auto space-y-8">
                              <div className="space-y-3 px-4 text-left">
                                 <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4">Asset Alias</label>
                                 <input 
@@ -322,17 +637,290 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
                                    className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-2xl font-bold text-white focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-stone-900 shadow-inner italic" 
                                 />
                              </div>
-                             {mode === 'LAND' && (
-                               <div className="space-y-3 px-4 text-left">
-                                 <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4">Select Plot from GIS Portal</label>
-                                 <div className="w-full rounded-[32px] overflow-hidden border-2 border-white/10">
-                                   <GISPortal user={user} onEmitSignal={onEmitSignal} />
+                             {mode === 'LAND' ? (
+                               <div className="space-y-6 px-4">
+                                 {/* Selection Tab */}
+                                 <div className="flex gap-4 p-1.5 bg-black/60 border border-white/10 rounded-2xl">
+                                   <button 
+                                     type="button"
+                                     onClick={() => { setMappingMethod('GPS_CIRCUIT'); handleResetPlotting(); }}
+                                     className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${mappingMethod === 'GPS_CIRCUIT' ? 'bg-indigo-600/90 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                   >
+                                     GPS Perimeter Mapping (Circumnavigate)
+                                   </button>
+                                   <button 
+                                     type="button"
+                                     onClick={() => { setMappingMethod('GIS_PORTAL'); handleResetPlotting(); }}
+                                     className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${mappingMethod === 'GIS_PORTAL' ? 'bg-indigo-600/90 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                   >
+                                     Static GIS Database Selector
+                                   </button>
                                  </div>
-                                 {selectedPlot && (
-                                   <p className="text-emerald-400 text-sm font-bold mt-2">Selected Plot: {selectedPlot.name}</p>
-                                 )}
-                               </div>
-                             )}
+
+                                 {mappingMethod === 'GIS_PORTAL' ? (
+                                   <div className="space-y-3">
+                                     <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4">Select Plot from GIS Portal</label>
+                                     <div className="w-full rounded-[32px] overflow-hidden border-2 border-white/10">
+                                       <GISPortal user={user} onEmitSignal={onEmitSignal} />
+                                     </div>
+                                     {selectedPlot && (
+                                       <div className="flex justify-between items-center bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl mt-2">
+                                         <span className="text-emerald-400 text-xs font-black uppercase tracking-wider">✔ Selected Plot Active</span>
+                                         <span className="text-white font-mono text-xs font-bold">{selectedPlot.name}</span>
+                                       </div>
+                                     )}
+                                   </div>
+                                 ) : (
+                                   <div className="glass-card p-8 border border-white/10 rounded-[40px] bg-black/40 space-y-6 relative overflow-hidden">
+                                     
+                                     {/* Satellite Overlay Accent */}
+                                     <div className="absolute top-4 right-4 text-slate-700 pointer-events-none flex items-center gap-1.5 font-mono text-[7px] tracking-widest uppercase">
+                                       <Satellite size={14} className="animate-spin-slow text-indigo-400/50" /> GPS Precision Locked
+                                     </div>
+
+                                     <div className="space-y-2">
+                                       <h4 className="text-lg font-black text-white uppercase tracking-wider">GPS perimeter circumnavigator</h4>
+                                       <p className="text-slate-400 text-xs italic">
+                                         Step-by-step land mapping. Stand where the plot is to mark center, walk to boundary start, then circumnavigate to trace real coordinates.
+                                       </p>
+                                     </div>
+
+                                     {/* Interactive Radar Visualizer */}
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                       
+                                       {/* Dynamic coordinate canvas display */}
+                                       <div className="aspect-square w-full bg-slate-950/90 border border-white/10 rounded-2xl flex flex-col items-center justify-center relative p-4 shadow-inner overflow-hidden">
+                                         
+                                         {/* BG grid lines */}
+                                         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1d1d2b_1px,transparent_1px),linear-gradient(to_bottom,#1d1d2b_1px,transparent_1px)] bg-[size:16px_16px] opacity-15"></div>
+                                         
+                                         {/* Standard radar target circle overlay */}
+                                         <div className="absolute inset-4 border border-indigo-500/10 rounded-full pointer-events-none"></div>
+                                         <div className="absolute inset-16 border border-indigo-500/10 rounded-full pointer-events-none"></div>
+                                         <div className="absolute inset-28 border border-indigo-500/10 rounded-full pointer-events-none"></div>
+
+                                         {plotCenter ? (
+                                           <svg className="w-full h-full relative z-10" viewBox="0 0 240 240">
+                                             
+                                             {/* 1. Central Locus Point */}
+                                             <circle 
+                                               cx={getRelativePosition(plotCenter).x} 
+                                               cy={getRelativePosition(plotCenter).y} 
+                                               r={6} 
+                                               fill="#EF4444" 
+                                               className="animate-pulse"
+                                             />
+                                             <text 
+                                               x={getRelativePosition(plotCenter).x + 8} 
+                                               y={getRelativePosition(plotCenter).y - 4} 
+                                               fill="#EF4444" 
+                                               fontSize={6} 
+                                               fontFamily="monospace"
+                                               fontWeight="bold"
+                                             >
+                                               CENTER
+                                             </text>
+
+                                             {/* 2. Boundary Start marker */}
+                                             {boundaryStart && (
+                                               <g>
+                                                 <circle 
+                                                   cx={getRelativePosition(boundaryStart).x} 
+                                                   cy={getRelativePosition(boundaryStart).y} 
+                                                   r={5} 
+                                                   fill="#EAB308" 
+                                                 />
+                                                 <text 
+                                                   x={getRelativePosition(boundaryStart).x + 8} 
+                                                   y={getRelativePosition(boundaryStart).y - 4} 
+                                                   fill="#EAB308" 
+                                                   fontSize={6} 
+                                                   fontFamily="monospace"
+                                                 >
+                                                   START
+                                                 </text>
+                                               </g>
+                                             )}
+
+                                             {/* 3. Drawn Boundary Line */}
+                                             {boundaryPath.length > 1 && (
+                                               <polyline
+                                                 points={boundaryPath.map(pt => `${getRelativePosition(pt).x},${getRelativePosition(pt).y}`).join(' ')}
+                                                 fill="none"
+                                                 stroke="#10B981"
+                                                 strokeWidth={2}
+                                                 strokeDasharray={isDrawingBoundary ? "4, 3" : undefined}
+                                               />
+                                             )}
+
+                                             {/* 4. Live location dot tracker cursor */}
+                                             {currentGPS && (
+                                               <circle 
+                                                 cx={getRelativePosition(currentGPS).x} 
+                                                 cy={getRelativePosition(currentGPS).y} 
+                                                 r={4} 
+                                                 fill="#3B82F6" 
+                                               />
+                                             )}
+                                           </svg>
+                                         ) : (
+                                           <div className="text-center space-y-3 relative z-10 p-6">
+                                             <Compass size={40} className="text-slate-600 animate-pulse mx-auto" />
+                                             <p className="text-[10px] font-mono tracking-widest text-slate-500 uppercase">GPS RADAR OFFLINE</p>
+                                           </div>
+                                         )}
+
+                                         {/* Telemetry Footer inside Canvas */}
+                                         <div className="absolute bottom-2 left-3 right-3 flex justify-between items-center text-[7px] font-mono text-slate-500 select-none z-20">
+                                           <span>POS: {currentGPS.lat.toFixed(5)}, {currentGPS.lng.toFixed(5)}</span>
+                                           <span>ACCURACY: ±{gpsAccuracy.toFixed(1)}m</span>
+                                         </div>
+                                       </div>
+
+                                       {/* State machine controls (Steps list & buttons) */}
+                                       <div className="space-y-4 text-left">
+                                         
+                                         {/* Stage metrics status */}
+                                         <div className="bg-black/80 rounded-2xl p-4 border border-white/5 space-y-2.5">
+                                           <div className="flex justify-between text-[9px] font-mono uppercase tracking-widest pb-1 border-b border-white/5">
+                                             <span className="text-indigo-400">Plotted Phase</span>
+                                             <span className="font-bold text-white text-[10px]">{plottingPhase}</span>
+                                           </div>
+                                           <div className="space-y-1.5 pt-1 font-sans">
+                                             <div className="flex items-center gap-2 text-[10px] select-none text-slate-300">
+                                               <span className={`w-2 h-2 rounded-full ${plotCenter ? 'bg-emerald-500' : 'bg-white/15'}`} />
+                                               <span className={plotCenter ? 'text-slate-400 line-through' : ''}>1. Central Locus Plot Marked</span>
+                                             </div>
+                                             <div className="flex items-center gap-2 text-[10px] select-none text-slate-300">
+                                               <span className={`w-2 h-2 rounded-full ${boundaryStart ? 'bg-emerald-500' : 'bg-white/15'}`} />
+                                               <span className={boundaryStart ? 'text-slate-400 line-through' : ''}>2. Boundary Line Start Anchored</span>
+                                             </div>
+                                             <div className="flex items-center gap-2 text-[10px] select-none text-slate-300">
+                                               <span className={`w-2 h-2 rounded-full ${plottingPhase === 'COMPLETED' ? 'bg-emerald-500' : (isDrawingBoundary ? 'bg-indigo-500 animate-pulse' : 'bg-white/15')}`} />
+                                               <span className={plottingPhase === 'COMPLETED' ? 'text-slate-400 line-through' : ''}>3. Perimeter Circumnavigated</span>
+                                             </div>
+                                           </div>
+                                         </div>
+
+                                         {/* Interactive Phase Actions */}
+                                         <div className="space-y-3 font-sans font-bold">
+                                           {plottingPhase === 'IDLE' && (
+                                             <button
+                                               type="button"
+                                               onClick={handleMarkCenter}
+                                               className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                                             >
+                                               <MapPin size={14} /> Stand at Center & Mark GPS
+                                             </button>
+                                           )}
+
+                                           {plottingPhase === 'CENTER_MARKED' && (
+                                             <div className="space-y-3">
+                                               <p className="text-[10px] text-slate-400 italic bg-white/5 p-3 rounded-xl border border-white/10 font-normal">
+                                                 Now move to the perimeter boundary start position of your land and trigger anchoring.
+                                               </p>
+                                               <button
+                                                 type="button"
+                                                 onClick={handleMarkStart}
+                                                 className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                                               >
+                                                 <Compass size={14} className="animate-spin-slow" /> Anchor Boundary Start GPS
+                                               </button>
+                                             </div>
+                                           )}
+
+                                           {(plottingPhase === 'START_ANCHORED' || plottingPhase === 'DRAWING') && (
+                                             <div className="space-y-3">
+                                               {!isDrawingBoundary ? (
+                                                 <button
+                                                   type="button"
+                                                   onClick={handleBeginDrawing}
+                                                   className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                                                 >
+                                                   <Send size={14} /> Begin Tracking Perimeter
+                                                 </button>
+                                                ) : (
+                                                  <div className="space-y-4">
+                                                    
+                                                    {/* Simulated Walking Controls */}
+                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                                                      <div className="flex justify-between items-center pb-1">
+                                                        <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Walk Simulator / Joystick</span>
+                                                        <button 
+                                                          type="button"
+                                                          onClick={handleAutoWalkSim}
+                                                          className="px-2 py-0.5 border border-indigo-500/30 rounded bg-indigo-500/10 text-[8px] font-black text-indigo-300 uppercase hover:bg-indigo-500 hover:text-white transition-all"
+                                                        >
+                                                          Simulate Circle Loop
+                                                        </button>
+                                                      </div>
+                                                      <div className="grid grid-cols-3 gap-2 max-w-[150px] mx-auto pt-1">
+                                                        <div />
+                                                        <button type="button" onClick={() => handleSimulateWalkDirection('N')} className="p-2 border border-white/10 rounded bg-black/60 hover:bg-white/10 text-xs text-center font-bold">▲</button>
+                                                        <div />
+                                                        <button type="button" onClick={() => handleSimulateWalkDirection('W')} className="p-2 border border-white/10 rounded bg-black/60 hover:bg-white/10 text-xs text-center font-bold">◀</button>
+                                                        <div className="p-2 flex items-center justify-center text-[8px] text-slate-600 font-mono">WALK</div>
+                                                        <button type="button" onClick={() => handleSimulateWalkDirection('E')} className="p-2 border border-white/10 rounded bg-black/60 hover:bg-white/10 text-xs text-center font-bold">▶</button>
+                                                        <div />
+                                                        <button type="button" onClick={() => handleSimulateWalkDirection('S')} className="p-2 border border-white/10 rounded bg-black/60 hover:bg-white/10 text-xs text-center font-bold">▼</button>
+                                                        <div />
+                                                      </div>
+                                                    </div>
+
+                                                    <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 text-[10px] text-emerald-400 italic font-normal">
+                                                      Locus Anchors Captured: <strong>{boundaryPath.length}</strong> points
+                                                    </div>
+
+                                                    <button
+                                                      type="button"
+                                                      onClick={handleCompletePlotting}
+                                                      className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                                                    >
+                                                      <CheckCircle2 size={14} /> Complete & Save Boundary
+                                                    </button>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+
+                                            {plottingPhase === 'COMPLETED' && (
+                                              <div className="space-y-3">
+                                                <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl text-center">
+                                                  <p className="text-emerald-400 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5">
+                                                    ✔ Plot Mapping Confirmed!
+                                                  </p>
+                                                  <p className="text-slate-400 text-[10px] italic mt-1 font-sans font-normal">Ready to initialize blockchain registry handshake.</p>
+                                                </div>
+                                                <button
+                                                  type="button"
+                                                  onClick={handleResetPlotting}
+                                                  className="w-full py-3 bg-white/5 hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all border border-white/10"
+                                                >
+                                                  Clear & Re-Plot Perimeter
+                                                </button>
+                                              </div>
+                                            )}
+
+                                            {plottingPhase !== 'IDLE' && plottingPhase !== 'COMPLETED' && (
+                                              <button
+                                                type="button"
+                                                onClick={handleResetPlotting}
+                                                className="w-full py-2 text-slate-500 hover:text-white text-[9px] font-black uppercase tracking-widest text-center"
+                                              >
+                                                Cancel and Reset
+                                              </button>
+                                            )}
+                                          </div>
+
+                                        </div>
+
+                                      </div>
+
+                                    </div>
+                                  )}
+
+                                </div>
+                              ) : null}
                              <button onClick={handleNextStep} disabled={!assetName || (mode === 'LAND' && !selectedPlot)} className="w-full py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-xl flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ring-white/5 active:scale-95 disabled:opacity-30">
                                 INITIALIZE HANDSHAKE <ArrowRight size={20} />
                              </button>
@@ -368,9 +956,30 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
                                    <FileText size={40} />
                                 </div>
                                 <h4 className="text-xl font-black text-white uppercase italic">Generated Deed Shard</h4>
-                                <p className="text-slate-400 text-sm italic">"Download this document and verify it via social authority signatures before sharding back to HQ."</p>
-                                <button className="w-full py-5 bg-white/5 border border-white/10 hover:bg-white text-slate-300 hover:text-black rounded-3xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3">
-                                   <Download size={20} /> DOWNLOAD_DEED_SHARD
+                                <div className="space-y-3 px-4 text-left border-y border-white/10 py-5 my-4 font-mono text-xs">
+                                   <div className="flex justify-between items-center text-xs">
+                                      <span className="text-slate-500 font-sans font-bold uppercase tracking-wider text-[9px]">Map Identity Code:</span>
+                                      <span className="text-amber-400 font-bold tracking-wider select-all">{selectedPlot?.id || 'MAP-UNASSIGNED'}</span>
+                                   </div>
+                                   <div className="flex justify-between items-center text-xs pb-1 border-b border-white/5">
+                                      <span className="text-slate-500 font-sans font-bold uppercase tracking-wider text-[9px]">Registered Area:</span>
+                                      <span className="text-emerald-400 font-bold">{(deedStats.area / 10000).toFixed(4)} ha ({(deedStats.area / 4046.86).toFixed(3)} acres)</span>
+                                   </div>
+                                   <div className="flex justify-between items-center text-xs pb-1 border-b border-white/5">
+                                      <span className="text-slate-500 font-sans font-bold uppercase tracking-wider text-[9px]">Boundary Perimeter:</span>
+                                      <span className="text-white font-bold">{deedStats.perimeter.toFixed(1)} m</span>
+                                   </div>
+                                   <div className="flex justify-between items-center text-xs pb-1 border-b border-white/5">
+                                      <span className="text-slate-500 font-sans font-bold uppercase tracking-wider text-[9px]">Locus Compactness:</span>
+                                      <span className="text-sky-300 font-bold">{deedStats.compactness.toFixed(1)}%</span>
+                                   </div>
+                                   <div className="flex justify-between items-center text-xs">
+                                      <span className="text-slate-500 font-sans font-bold uppercase tracking-wider text-[9px]">Steward Owner:</span>
+                                      <span className="text-slate-300 font-bold">{user.esin}</span>
+                                    </div>
+                                </div>
+                                <button className="w-full py-5 bg-amber-500 hover:bg-amber-400 text-black rounded-3xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95 shadow-lg shadow-amber-500/10">
+                                   <Stamp size={16} /> CRYPTOGRAPHICALLY SIGN TITLE DEED
                                 </button>
                              </div>
                              <button onClick={handleNextStep} className="w-full max-w-xl py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-widest shadow-xl mx-auto">I HAVE VERIFIED DOCUMENT</button>

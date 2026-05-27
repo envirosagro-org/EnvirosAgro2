@@ -92,6 +92,26 @@ service cloud.firestore {
              data.timestamp is string;
     }
 
+    // LedgerBlock validation blueprint
+    function isValidLedgerBlock(data) {
+      return data.keys().hasAll(['hash', 'previousHash', 'timestamp', 'index']) &&
+             data.hash is string && data.hash.size() <= 128 &&
+             data.previousHash is string && data.previousHash.size() <= 128 &&
+             data.timestamp is string &&
+             data.index is number;
+    }
+
+    // TokenTransaction validation blueprint
+    function isValidTokenTransaction(data) {
+      return data.keys().hasAll(['id', 'type', 'farmId', 'details', 'value', 'unit']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.type is string && data.type.size() <= 64 &&
+             data.farmId is string && data.farmId.size() <= 128 &&
+             data.details is string && data.details.size() <= 200 &&
+             data.value is number &&
+             data.unit is string && data.unit.size() <= 32;
+    }
+
     // Path rules
     match /stewards/{userId} {
       allow read: if isSignedIn();
