@@ -19,6 +19,16 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showMyListings, setShowMyListings] = useState(false);
   const [selectedNews, setSelectedNews] = useState<any | null>(null);
+  const [cart, setCart] = useState<any[]>([]);
+  const [showCart, setShowCart] = useState(false);
+
+  const addToCart = (product: any) => {
+    setCart([...cart, product]);
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart(cart.filter(item => item.id !== productId));
+  };
 
   const { data: fetchedVendorProducts = [] } = useMarketplaceProducts(user);
   const { data: analyticsData = [] } = useMarketplaceAnalytics();
@@ -134,6 +144,27 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
         </div>
       )}
 
+      {showCart && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowCart(false)}>
+          <div className="glass-card rounded-3xl p-8 max-w-lg w-full border border-white/10 bg-black/90" onClick={e => e.stopPropagation()}>
+            <h3 className="text-2xl font-bold text-white mb-4">Your Cart</h3>
+            {cart.length === 0 ? <p className="text-slate-400">Cart is empty.</p> : (
+              <div className="space-y-4">
+                {cart.map(item => (
+                  <div key={item.id} className="flex justify-between items-center text-white">
+                    <span>{item.name}</span>
+                    <button onClick={() => removeFromCart(item.id)} className="text-red-500 text-sm">Remove</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button onClick={() => setShowCart(false)} className="mt-8 w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Existing Marketplace Content */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
@@ -151,6 +182,9 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
             </button>
           )}
         </div>
+        <button onClick={() => setShowCart(true)} className="flex items-center gap-2 px-4 py-3 bg-emerald-600 rounded-2xl text-white font-bold text-sm">
+           <ShoppingBag className="w-4 h-4" /> Cart ({cart.length})
+        </button>
         <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 custom-scrollbar">
           <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10">
             <button 
@@ -239,7 +273,10 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, vendorProducts, onNavig
                       className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400"
                       iconSize={20}
                     />
-                    <button className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400">
+                    <button 
+                      onClick={() => addToCart(item)}
+                      className="p-3 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all text-slate-400"
+                    >
                       <ShoppingBag className="w-5 h-5" />
                     </button>
                   </div>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Check } from 'lucide-react';
-import { SycamoreLogo } from './Icons';
+import { Check, Share2 } from 'lucide-react';
 import { useUiStore } from '../store/uiStore';
 import { useDataStore } from '../store/dataStore';
 import { ViewState } from '../types';
@@ -28,7 +27,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   className = '', 
   iconSize = 16, 
   label,
-  files
+  files,
 }) => {
   const [copied, setCopied] = useState(false);
   const generateShareUrl = useUiStore(state => state.generateShareUrl);
@@ -71,7 +70,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       className={`flex items-center justify-center transition-all ${className}`}
       title="Share"
     >
-      {copied ? <Check size={iconSize} className="text-emerald-400" /> : <SycamoreLogo size={iconSize} className="text-gray-500" />}
+      {copied ? (
+        <Check size={iconSize} className="text-emerald-400" />
+      ) : (
+        <Share2 size={iconSize} className="text-gray-500" />
+      )}
       {label && <span className="ml-2">{label}</span>}
     </button>
   );
