@@ -43,6 +43,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
     { id: 'alt-1', type: 'CRITICAL', msg: 'Node EA-42 reporting 15% drop in Resonance', time: '2m ago' },
     { id: 'alt-2', type: 'INFO', msg: 'New Bounty Shard: 500 EAC for Sonic Soil Repair', time: '15m ago' },
   ]);
+  const [pulseActive, setPulseActive] = useState(false);
+
+  useEffect(() => {
+    setPulseActive(true);
+    const timer = setTimeout(() => {
+      setPulseActive(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [blockchain.length, mempool.length, orders.length, networkDrift, batteryLevel, isOnline]);
+
   const totalBalance = user.wallet.balance + (user.wallet.bonusBalance || 0);
 
   const toggleIoT = () => {
@@ -87,7 +97,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
       <div className="glass-card p-3 rounded-[32px] border-emerald-500/20 bg-emerald-500/5 flex items-center overflow-hidden shrink-0 relative mb-8">
         <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(16,185,129,0.1),transparent)] -translate-x-full animate-[scan_3s_ease-in-out_infinite]"></div>
         <div className="flex items-center gap-4 px-6 shrink-0 relative z-10 border-r border-emerald-500/10">
-           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+           <div className="relative flex items-center justify-center w-3 h-3">
+              {/* Ambient continuous glow ring */}
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40 animate-ping"></span>
+              {/* Active update wave ring */}
+              {pulseActive && (
+                <span className="absolute inline-flex h-5 w-5 rounded-full bg-emerald-300 opacity-75 animate-[ping_0.8s_ease-out_infinite]"></span>
+              )}
+              {/* Core responsive indicator dot with glowing shadows */}
+              <div className={`relative inline-flex rounded-full h-2 w-2 bg-emerald-500 transition-all duration-300 ${
+                pulseActive ? 'bg-emerald-300 scale-150 shadow-[0_0_12px_#34d399]' : 'scale-100'
+              }`} />
+           </div>
            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">TELEMETRY_LIVE</span>
         </div>
         <div className="flex-1 px-6 overflow-hidden relative z-10 text-[10px] font-mono font-black uppercase tracking-widest text-emerald-400/60 truncate">
