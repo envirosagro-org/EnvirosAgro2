@@ -8,7 +8,7 @@ import {
   Monitor, ClipboardCheck, HeartHandshake, Recycle, Wrench, Bot, 
   PawPrint, TreePine, Droplets, Mountain, Wind, ShieldPlus, Siren, 
   History, Scale, CalendarDays, Palette, Zap, Dna, Compass, BoxSelect, 
-  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu, Landmark, Plane, Award, Lock, Radio
+  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu, Landmark, Plane, Award, Lock, Radio, Cloud
 } from 'lucide-react';
 
 export const REGISTRY_NODES: RegistryGroup[] = [
@@ -34,6 +34,7 @@ export const REGISTRY_NODES: RegistryGroup[] = [
     category: 'Command & Strategy', 
     items: [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
+      { id: 'google_drive', name: 'Google Drive Shard', icon: Cloud, sections: [{id: 'files', label: 'My Files'}] },
       { id: 'ai_oracle', name: 'Strategic Oracle', icon: Brain },
       { id: 'mesh_protocol', name: 'Mesh Protocol', icon: Network, sections: [{id: 'topology', label: 'Network Topology'}, {id: 'commits', label: 'Block Shards'}, {id: 'mempool', label: 'Inbound Mempool'}] },
       { id: 'agro_lang_analyst', name: 'EnvirosAgro Agro Lang', icon: SycamoreLogo },

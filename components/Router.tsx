@@ -72,6 +72,7 @@ const Biotechnology = React.lazy(() => import('./Biotechnology'));
 const Permaculture = React.lazy(() => import('./Permaculture'));
 const EmergencyPortal = React.lazy(() => import('./EmergencyPortal'));
 const Impact = React.lazy(() => import('./Impact'));
+const GoogleDriveView = React.lazy(() => import('./GoogleDriveView'));
 
 export const getComponentForView = (
   view: ViewState,
@@ -141,6 +142,7 @@ export const getComponentForView = (
     case 'educational_resources': return <EducationalResources {...props} />;
     case 'registry_handshake': return <RegistryHandshake {...props} />;
     case 'impact': return <Impact {...props} />;
+    case 'google_drive': return <GoogleDriveView {...props} />;
     case 'animal_world': return <NaturalResources {...props} type="animal_world" />;
     case 'plants_world': return <NaturalResources {...props} type="plants_world" />;
     case 'aqua_portal': return <NaturalResources {...props} type="aqua_portal" />;

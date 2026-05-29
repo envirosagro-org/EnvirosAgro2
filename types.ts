@@ -531,7 +531,7 @@ export interface Task {
 }
 
 export type ViewState = 
-  | 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' 
+  | 'google_drive' | 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' 
   | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' 
   | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' 
   | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research' 
