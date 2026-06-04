@@ -14,6 +14,7 @@ import {
   Leaf, 
   Heart, 
   Loader2, 
+  Check,
   Upload, 
   CheckCircle2, 
   Scan, 
@@ -96,9 +97,283 @@ const ARCHITECTURAL_PALETTES = [
   { zone: 'Lilies Node', name: 'Celestial Fuchsia', hex: '#f472b6', albedo: 0.35, resilience: 'Ultra', function: 'High spectral albedo for pollinator sharding and aesthetic impact.' },
 ];
 
+const PRE_CATALOGUED_RESOURCES = [
+  { id: 'hibiscus', name: 'Wild Hibiscus Flowers', pigment: 'Anthocyanins', hex: '#B02A50', r: 176, g: 42, b: 80, code: 'EA-HIBIS-V2', context: 'Rich crimson, high-vitality visual sharding' },
+  { id: 'woad', name: 'Woad Leaves', pigment: 'Indigotin', hex: '#2D4F7C', r: 45, g: 79, b: 124, code: 'EA-WOAD-B1', context: 'Deep calming indigo, technology nodes' },
+  { id: 'marigold', name: 'Marigold Petals', pigment: 'Lutein Yellow', hex: '#F5B041', r: 245, g: 176, b: 65, code: 'EA-MARI-Y6', context: 'High reflectance, protective albedo shield' },
+  { id: 'beetroot', name: 'Beetroot Root', pigment: 'Betalain', hex: '#871F54', r: 135, g: 31, b: 84, code: 'EA-BEET-F3', context: 'Vibrant fuchsia, aesthetic lilies resonance' },
+  { id: 'walnut', name: 'Black Walnut Hulls', pigment: 'Juglone Brown', hex: '#5C4033', r: 92, g: 64, b: 51, code: 'EA-WALN-BR4', context: 'Organic deep brown, soil carbon integration' },
+];
+
 const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'mapping' | 'design' | 'paint' | 'macro' | 'micro'>('mapping');
+
+  // Bioclimatic Parameters (Macro) declared early to allow downstream derived selectors
+  const [albedo, setAlbedo] = useState(0.92);
+  const [psychScore, setPsychScore] = useState(8);
+  const [thermalCoeff, setThermalCoeff] = useState(0.45);
+  const [footprint, setFootprint] = useState(0.12);
+  const [isCalculatingSc, setIsCalculatingSc] = useState(false);
+  const [scResult, setScResult] = useState<{name: string, hex: string} | null>(null);
   
+  // Chroma SEHTI Color Mixing States
+  const [chlorophyllTealRatio, setChlorophyllTealRatio] = useState(40);
+  const [soilOxideRedRatio, setSoilOxideRedRatio] = useState(20);
+  const [pollinatorRoseRatio, setPollinatorRoseRatio] = useState(20);
+  const [celestialOchreRatio, setCelestialOchreRatio] = useState(20);
+  const [customPaintName, setCustomPaintName] = useState('Spectral Foliage White');
+  const [customPaintPrice, setCustomPaintPrice] = useState(45);
+  const [isAnchoringMarket, setIsAnchoringMarket] = useState(false);
+  
+  // Sub tab tracking inside Architectural Sc Tab
+  const [macroSubTab, setMacroSubTab] = useState<'spec' | 'market'>('spec');
+  const [processingState, setProcessingState] = useState<'idle' | 'mixing' | 'binding' | 'titrating' | 'done'>('idle');
+  const [processorMessage, setProcessorMessage] = useState('');
+
+  // Natural resources pigment tracking inside Chromatography Tab
+  const [microTab, setMicroTab] = useState<'audit' | 'natural'>('audit');
+  const [selectedNaturalResource, setSelectedNaturalResource] = useState<string>('hibiscus');
+  const [customResourceName, setCustomResourceName] = useState('');
+  const [customPigmentName, setCustomPigmentName] = useState('');
+  const [isForgingExtraction, setIsForgingExtraction] = useState(false);
+  const [extractionResult, setExtractionResult] = useState<string | null>(null);
+
+  // Chroma Market Cloud state listing
+  const [marketCloudColors, setMarketCloudColors] = useState<any[]>([
+    {
+      id: "EA-CHROMA-82-MINT",
+      name: "Algal Chlorophyll B-82",
+      code: "EA-PAINT-CT50-SR10-PR10-CO30-ALB72",
+      hex: "#4E8F79",
+      price: 35,
+      author: "Steward Alpha",
+      esin: "EA-ALPH-8821",
+      scValue: 8.2,
+      pigments: "Teal 50%, Red 10%, Rose 10%, Ochre 30%",
+      status: "Active",
+      efficiency: "88%",
+      albedo: 0.72,
+      purchased: false,
+    },
+    {
+      id: "EA-CHROMA-45-CLAY",
+      name: "Terracotta Oxide Red",
+      code: "EA-PAINT-CT10-SR70-PR10-CO10-ALB35",
+      hex: "#9F3D3D",
+      price: 45,
+      author: "Gaia Green",
+      esin: "EA-GAIA-1104",
+      scValue: 4.5,
+      pigments: "Teal 10%, Red 70%, Rose 10%, Ochre 10%",
+      status: "Active",
+      efficiency: "74%",
+      albedo: 0.35,
+      purchased: false,
+    },
+    {
+      id: "EA-CHROMA-104-ROSE",
+      name: "Atrium Celestial Pink",
+      code: "EA-PAINT-CT15-SR15-PR50-CO20-ALB85",
+      hex: "#CF729E",
+      price: 60,
+      author: "Aesthetic Rose",
+      esin: "EA-LILY-0042",
+      scValue: 10.4,
+      pigments: "Teal 15%, Red 15%, Rose 50%, Ochre 20%",
+      status: "Active",
+      efficiency: "96%",
+      albedo: 0.85,
+      purchased: false,
+    }
+  ]);
+
+  // Unified color blender utilizing exact SEHTI variables
+  const getMixedColor = useMemo(() => {
+    const totalRatio = chlorophyllTealRatio + soilOxideRedRatio + pollinatorRoseRatio + celestialOchreRatio;
+    if (totalRatio === 0) return "#808080"; // Neutral grey
+
+    // Base colors coordinates in RGB
+    // Chlorophyll Teal: (15, 118, 110)
+    // Soil Oxide Red: (185, 28, 28)
+    // Pollinator Rose Gold: (244, 114, 182)
+    // Celestial Ochre: (217, 119, 6)
+    let mixedR = (chlorophyllTealRatio * 15 + soilOxideRedRatio * 185 + pollinatorRoseRatio * 244 + celestialOchreRatio * 217) / totalRatio;
+    let mixedG = (chlorophyllTealRatio * 118 + soilOxideRedRatio * 28 + pollinatorRoseRatio * 114 + celestialOchreRatio * 119) / totalRatio;
+    let mixedB = (chlorophyllTealRatio * 110 + soilOxideRedRatio * 28 + pollinatorRoseRatio * 182 + celestialOchreRatio * 6) / totalRatio;
+
+    // Saturation adjustment governed by psychScore (vibrancy, standard = 5)
+    const satCoeff = psychScore / 5;
+    const neutralGreyIntensity = 128;
+    mixedR = Math.min(255, Math.max(0, neutralGreyIntensity + (mixedR - neutralGreyIntensity) * satCoeff));
+    mixedG = Math.min(255, Math.max(0, neutralGreyIntensity + (mixedG - neutralGreyIntensity) * satCoeff));
+    mixedB = Math.min(255, Math.max(0, neutralGreyIntensity + (mixedB - neutralGreyIntensity) * satCoeff));
+
+    // Lightness/Reflectance adjustment governed by albedo (reflectance, center = 0.5)
+    const reflectanceBoost = (albedo - 0.5) * 2; // -1.0 to 0.9
+    if (reflectanceBoost > 0) {
+      mixedR = mixedR * (1 - reflectanceBoost) + 255 * reflectanceBoost;
+      mixedG = mixedG * (1 - reflectanceBoost) + 255 * reflectanceBoost;
+      mixedB = mixedB * (1 - reflectanceBoost) + 255 * reflectanceBoost;
+    } else {
+      const absorptionCoeff = Math.abs(reflectanceBoost);
+      mixedR = mixedR * (1 - absorptionCoeff);
+      mixedG = mixedG * (1 - absorptionCoeff);
+      mixedB = mixedB * (1 - absorptionCoeff);
+    }
+
+    const valueToHex = (num: number) => {
+      const hex = Math.round(num).toString(16);
+      return hex.length === 1 ? "0" + hex : hex;
+    };
+
+    return `#${valueToHex(mixedR)}${valueToHex(mixedG)}${valueToHex(mixedB)}`.toUpperCase();
+  }, [chlorophyllTealRatio, soilOxideRedRatio, pollinatorRoseRatio, celestialOchreRatio, psychScore, albedo]);
+
+  const mixedPaintCode = useMemo(() => {
+    return `EA-PAINT-CT${chlorophyllTealRatio}-SR${soilOxideRedRatio}-PR${pollinatorRoseRatio}-CO${celestialOchreRatio}-ALB${Math.round(albedo * 100)}`;
+  }, [chlorophyllTealRatio, soilOxideRedRatio, pollinatorRoseRatio, celestialOchreRatio, albedo]);
+
+  const rawScValue = useMemo(() => {
+    return (albedo * psychScore) / (thermalCoeff + footprint);
+  }, [albedo, psychScore, thermalCoeff, footprint]);
+
+  const handleAnchorAndSell = async () => {
+    if (!customPaintName.trim()) {
+      toast.error("Color/Paint blueprint name required.");
+      return;
+    }
+
+    setIsAnchoringMarket(true);
+    try {
+      const newListing = {
+        id: `EA-CHROMA-${Math.floor(rawScValue * 10)}-${generateQuickHash().substring(0, 4).toUpperCase()}`,
+        name: customPaintName,
+        code: mixedPaintCode,
+        hex: getMixedColor,
+        price: customPaintPrice,
+        author: user.name,
+        resin: user.esin,
+        scValue: parseFloat(rawScValue.toFixed(2)),
+        pigments: `Teal ${chlorophyllTealRatio}%, Red ${soilOxideRedRatio}%, Rose ${pollinatorRoseRatio}%, Ochre ${celestialOchreRatio}%`,
+        status: "Active",
+        efficiency: `${Math.round(Math.min(100, rawScValue * 10))}%`,
+        albedo: albedo,
+        purchased: false,
+      };
+
+      setMarketCloudColors(prev => [newListing, ...prev]);
+
+      try {
+        await saveCollectionItem('media_ledger', {
+          title: `CHROMA BLUEPRINT: ${customPaintName}`,
+          type: 'ORACLE',
+          source: 'Market Cloud',
+          author: user.name,
+          authorEsin: user.esin,
+          timestamp: new Date().toISOString(),
+          hash: `0x${generateQuickHash()}`,
+          mImpact: (1.5 + Math.random() * 0.3).toFixed(2),
+          size: '1.2 KB',
+          content: JSON.stringify(newListing),
+        });
+      } catch (f) {
+        console.warn("Firestore save skipped, listing added locally.");
+      }
+
+      await onEarnEAC(30, 'CHROMA_BLUEPRINT_LISTED');
+      toast.success(`Success! "${customPaintName}" color code listings anchored to Market Cloud.`);
+      setMacroSubTab('market');
+    } catch (e) {
+      toast.error("Ledger registration failed.");
+    } finally {
+      setIsAnchoringMarket(false);
+    }
+  };
+
+  const handleProcessPaint = (colorItem: any) => {
+    if (processingState !== 'idle') return;
+
+    setProcessingState('mixing');
+    setProcessorMessage(`Verifying paint blueprint code "${colorItem.code}" on chain...`);
+
+    setTimeout(() => {
+      setProcessingState('binding');
+      setProcessorMessage(`Extracting natural chroma pigments & blending with organic soy-based binders...`);
+
+      setTimeout(() => {
+        setProcessingState('titrating');
+        setProcessorMessage(`Analyzing spectrophotometric properties. Stabilizing reflection curve...`);
+
+        setTimeout(() => {
+          setProcessingState('done');
+          setProcessorMessage(`Paint batch successfully process-mixed! Pigments verified from EnvirosAgro chroma system. Shipped to local paint outlets.`);
+
+          setMarketCloudColors(prev => prev.map(c => c.id === colorItem.id ? { ...c, purchased: true } : c));
+          onEarnEAC(40, `PAINT_PROCESSING_REWARD_${colorItem.id}`);
+          toast.success(`Paint batch formulated! Code is active: "${colorItem.code}"`);
+
+          setTimeout(() => {
+            setProcessingState('idle');
+            setProcessorMessage('');
+          }, 4500);
+        }, 1800);
+      }, 1800);
+    }, 1800);
+  };
+
+  const handleValueForgeExtraction = async () => {
+    let sourceMaterial = "";
+    let targetPigment = "";
+
+    if (selectedNaturalResource === 'custom') {
+      if (!customResourceName.trim() || !customPigmentName.trim()) {
+        toast.error("Resource name and Pigment name are required.");
+        return;
+      }
+      sourceMaterial = customResourceName;
+      targetPigment = customPigmentName;
+    } else {
+      const selected = PRE_CATALOGUED_RESOURCES.find(r => r.id === selectedNaturalResource);
+      if (selected) {
+        sourceMaterial = selected.name;
+        targetPigment = selected.pigment;
+      } else {
+        toast.error("Invalid natural resource choice.");
+        return;
+      }
+    }
+
+    const processCost = 25;
+    if (!await onSpendEAC(processCost, `VALUE_FORGE_PIGMENT_MAPPING_${sourceMaterial.toUpperCase()}`)) {
+      return;
+    }
+
+    setIsForgingExtraction(true);
+    setExtractionResult(null);
+
+    const forensicPrompt = `Act as an expert Bio-chromatography Chemical Engineer for the EnvirosAgro chroma system. Develop a meticulous organic extraction blueprint and value route mapping for:
+- Sustainable Natural Source: "${sourceMaterial}"
+- Active Organic Pigment: "${targetPigment}"
+
+Provide a detailed manual consisting of instructions for paint formulation, formatting with exact, bold sections:
+1. **PIGMENT ATTRIBUTES & CHROMATIC METRICS**: Define the organic chromophore class (anthocyanins, carotenoids, chlorophylls, betalains) and estimate the resulting SEHTI spectrum mapping, albedo factors, and direct formulation compatibility codes (RAL, Pantone) for mixing.
+2. **HARVEST & SITE-PREP CONTEXT**: Specify optimal drying indexes, mill grinding speeds, and solid-to-solvent ratios without toxic reactants.
+3. **PIGMENT ISOLATION VIA CHROMATOGRAPHY**: Detail a step-by-step Column, Paper, or Gas chromatography purification sequence. Describe mobile phase ratios (e.g. ethanol-water), stationery phase (cellulose/silica), and the target retention factor (Rf values) for high-purity shades.
+4. **SUSPENSION, eco-BINDERS & STABILIZERS**: Recommend earth-friendly binding agents (linseed oil, casein, soy proteins, lecithin) to come up with long-term, sun-resilient sustainable paints.
+5. **AGGREGATION ROUTE**: Explain how paint processors can execute this extraction in live farming systems to mass manufacture paints with real pigments from EnvirosAgro.`;
+
+    try {
+      const res = await chatWithAgroLang(forensicPrompt, []);
+      setExtractionResult(res.text);
+      onEarnEAC(20, 'VALUE_FORGE_EXTRACTION_COMPLETED');
+      toast.success(`Success! Extraction protocol compiled for ${sourceMaterial}.`);
+    } catch (e) {
+      setExtractionResult(`ZK_ERROR: Connection timed out. Direct manual laboratory parameters below:\n\nMaterial: ${sourceMaterial}\nPigment: ${targetPigment}\nSuggested path: Ethanol-Water reflux combined with Column Chromatography.`);
+    } finally {
+      setIsForgingExtraction(false);
+    }
+  };
+
   // Paint with Nature States
   const [imagePrompt, setImagePrompt] = useState('');
   const [selectedThrust, setSelectedThrust] = useState(SEHTI_CHROMA_MAPPING[3]); 
@@ -108,13 +383,7 @@ const ChromaSystem: React.FC<ChromaSystemProps> = ({ user, onSpendEAC, onEarnEAC
   const [graphicAnchored, setGraphicAnchored] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('1:1');
 
-  // Macro States
-  const [albedo, setAlbedo] = useState(0.92);
-  const [psychScore, setPsychScore] = useState(8);
-  const [thermalCoeff, setThermalCoeff] = useState(0.45);
-  const [footprint, setFootprint] = useState(0.12);
-  const [isCalculatingSc, setIsCalculatingSc] = useState(false);
-  const [scResult, setScResult] = useState<{name: string, hex: string} | null>(null);
+  // Macro States are declared early at the very top of the component.
 
   // Micro States
   const [isScanning, setIsScanning] = useState(false);
@@ -688,109 +957,318 @@ ${content}
         {/* --- VIEW: ARCHITECTURAL Sc (MACRO) --- */}
         {activeTab === 'macro' && (
            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
-              <div className="lg:col-span-4 space-y-8">
-                 <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl">
-                    <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+              {/* Left Column: Sustainable Parameters & Pigments Mixer */}
+              <div className="lg:col-span-5 space-y-8">
+                 {/* Panel 1: Bioclimatic Parameters */}
+                 <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-black/40 space-y-8 shadow-3xl">
+                    <div className="flex items-center gap-6 border-b border-white/5 pb-6">
                        <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl">
                           <Box className="w-8 h-8 text-white" />
                        </div>
                        <div>
-                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Resilience <span className="text-emerald-400">Sc</span></h3>
-                          <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">CHROMA_MACRO_CALC</p>
+                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Bioclimatic <span className="text-emerald-400">Sc</span></h3>
+                          <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">EOS_COEFFICIENT_DRIVERS</p>
                        </div>
                     </div>
-                    <div className="space-y-10">
+                    <div className="space-y-6">
                        <div className="group">
-                          <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-emerald-400 transition-colors">Albedo (Reflectance)</label><span className="text-xs font-mono text-emerald-400 font-black">{albedo}</span></div>
-                          <input type="range" min="0.05" max="0.95" step="0.01" value={albedo} onChange={e => setAlbedo(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner" />
+                          <div className="flex justify-between px-2 mb-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-emerald-400 transition-colors">Target Albedo (Reflectance)</label><span className="text-xs font-mono text-emerald-400 font-black">{albedo.toFixed(2)}</span></div>
+                          <input type="range" min="0.05" max="0.95" step="0.01" value={albedo} onChange={e => { setAlbedo(parseFloat(e.target.value)); calculateSc(); }} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner" />
                        </div>
                        <div className="group">
-                          <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">Psychological Score</label><span className="text-xs font-mono text-blue-400 font-black">{psychScore}/10</span></div>
-                          <input type="range" min="1" max="10" step="1" value={psychScore} onChange={e => setPsychScore(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500 shadow-inner" />
+                          <div className="flex justify-between px-2 mb-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">Psychological Score (Vibrancy)</label><span className="text-xs font-mono text-blue-400 font-black">{psychScore}/10</span></div>
+                          <input type="range" min="1" max="10" step="1" value={psychScore} onChange={e => { setPsychScore(parseInt(e.target.value)); calculateSc(); }} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500 shadow-inner" />
                        </div>
                        <div className="group">
-                          <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-amber-400 transition-colors">Thermal Coeff (k)</label><span className="text-xs font-mono text-amber-400 font-black">{thermalCoeff}</span></div>
-                          <input type="range" min="0.1" max="1.0" step="0.05" value={thermalCoeff} onChange={e => setThermalCoeff(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-amber-500 shadow-inner" />
+                          <div className="flex justify-between px-2 mb-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-amber-400 transition-colors">Thermal Coefficient (k)</label><span className="text-xs font-mono text-amber-400 font-black">{thermalCoeff.toFixed(2)}</span></div>
+                          <input type="range" min="0.1" max="1.0" step="0.05" value={thermalCoeff} onChange={e => { setThermalCoeff(parseFloat(e.target.value)); calculateSc(); }} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-amber-500 shadow-inner" />
                        </div>
                        <div className="group">
-                          <div className="flex justify-between px-2 mb-3"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-rose-400 transition-colors">Acreage Footprint</label><span className="text-xs font-mono text-rose-400 font-black">{footprint}ha</span></div>
-                          <input type="range" min="0.01" max="0.5" step="0.01" value={footprint} onChange={e => setFootprint(parseFloat(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-500 shadow-inner" />
+                          <div className="flex justify-between px-2 mb-2"><label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-rose-400 transition-colors">Acreage Footprint Factor</label><span className="text-xs font-mono text-rose-400 font-black">{footprint.toFixed(2)}ha</span></div>
+                          <input type="range" min="0.01" max="0.5" step="0.01" value={footprint} onChange={e => { setFootprint(parseFloat(e.target.value)); calculateSc(); }} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-rose-500 shadow-inner" />
                        </div>
                     </div>
-                    <button 
-                       onClick={calculateSc}
-                       disabled={isCalculatingSc}
-                       className="w-full py-8 agro-gradient rounded-[40px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center gap-6 active:scale-95 transition-all disabled:opacity-30 border-4 border-white/10 ring-8 ring-white/5"
-                    >
-                       {isCalculatingSc ? <Loader2 className="w-6 h-6 animate-spin" /> : <RefreshCw className="w-6 h-6" />}
-                       {isCalculatingSc ? 'CALIBRATING...' : 'COMPUTE COEFFICIENT'}
-                    </button>
+                 </div>
+
+                 {/* Panel 2: Sustainable Pigment Mixing System */}
+                 <div className="glass-card p-10 rounded-[56px] border border-blue-500/20 bg-black/40 space-y-8 shadow-3xl">
+                    <div className="flex items-center gap-6 border-b border-white/5 pb-6">
+                       <div className="p-4 bg-blue-600 rounded-2xl shadow-xl">
+                          <Palette className="w-8 h-8 text-white" />
+                       </div>
+                       <div>
+                          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Pigment <span className="text-sky-400">Blender</span></h3>
+                          <p className="text-[10px] text-sky-400/60 font-mono tracking-widest uppercase mt-2">CHROMA_SYSTEM_ABILITIES</p>
+                       </div>
+                    </div>
+                    <div className="space-y-6">
+                       <p className="text-xs text-slate-400 leading-relaxed italic">
+                         Adjust the organic raw material ratios below to compile a custom structural shade.
+                       </p>
+                       
+                       <div className="group">
+                          <div className="flex justify-between px-2 mb-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-emerald-400 transition-colors">Chlorophyll Teal (Botanical)</label>
+                             <span className="text-xs font-mono text-emerald-400 font-black">{chlorophyllTealRatio}%</span>
+                          </div>
+                          <input type="range" min="0" max="100" step="5" value={chlorophyllTealRatio} onChange={e => setChlorophyllTealRatio(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500 shadow-inner" />
+                       </div>
+
+                       <div className="group">
+                          <div className="flex justify-between px-2 mb-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-red-400 transition-colors">Soil Oxide Red (Foliage Oxide)</label>
+                             <span className="text-xs font-mono text-red-400 font-black">{soilOxideRedRatio}%</span>
+                          </div>
+                          <input type="range" min="0" max="100" step="5" value={soilOxideRedRatio} onChange={e => setSoilOxideRedRatio(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-red-500 shadow-inner" />
+                       </div>
+
+                       <div className="group">
+                          <div className="flex justify-between px-2 mb-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-pink-400 transition-colors">Pollinator Rose Gold (Nectar)</label>
+                             <span className="text-xs font-mono text-pink-400 font-black">{pollinatorRoseRatio}%</span>
+                          </div>
+                          <input type="range" min="0" max="100" step="5" value={pollinatorRoseRatio} onChange={e => setPollinatorRoseRatio(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-pink-500 shadow-inner" />
+                       </div>
+
+                       <div className="group">
+                          <div className="flex justify-between px-2 mb-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-amber-400 transition-colors">Celestial Ochre (Red Clay)</label>
+                             <span className="text-xs font-mono text-amber-400 font-black">{celestialOchreRatio}%</span>
+                          </div>
+                          <input type="range" min="0" max="100" step="5" value={celestialOchreRatio} onChange={e => setCelestialOchreRatio(parseInt(e.target.value))} className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-amber-500 shadow-inner" />
+                       </div>
+                    </div>
                  </div>
               </div>
 
-              <div className="lg:col-span-8 flex flex-col gap-10">
-                 <div className="glass-card p-16 rounded-[80px] border-2 border-white/5 bg-black/40 shadow-3xl relative overflow-hidden flex flex-col items-center justify-center min-h-[500px]">
-                    <div className="absolute inset-0 opacity-10 animate-pulse bg-gradient-to-br from-indigo-500/10 to-emerald-500/10 pointer-events-none"></div>
-                    {!scResult ? (
-                       <div className="space-y-8 flex flex-col items-center opacity-30 text-center">
-                          <Scale size={120} className="text-slate-600" />
-                          <p className="text-3xl font-black uppercase tracking-[0.6em] text-white italic">CALC_STANDBY</p>
-                       </div>
-                    ) : (
-                       <div className="animate-in zoom-in duration-700 space-y-12 text-center w-full max-w-2xl">
-                          <div className="space-y-4">
-                             <p className="text-[12px] text-slate-500 font-black uppercase tracking-[0.8em]">RESULTANT_CHROMA</p>
-                             <h4 className="text-7xl md:text-9xl font-black text-white uppercase italic tracking-tighter m-0 leading-none drop-shadow-2xl">
-                                {scResult.name.split(' ').map((s, idx) => <span key={idx} className={idx === 1 ? 'text-emerald-400 block' : ''}>{s} </span>)}
-                             </h4>
-                          </div>
-                          
-                          <div className="flex justify-center items-center gap-12">
-                             <div className="w-48 h-48 rounded-[64px] shadow-3xl border-4 border-white/10 ring-[24px] ring-white/5 transition-transform duration-700 hover:rotate-12" style={{ backgroundColor: scResult.hex }}></div>
-                             <div className="text-left space-y-6">
-                                <div>
-                                   <p className="text-[9px] text-slate-600 font-black uppercase mb-1">HEX Signature</p>
-                                   <p className="text-4xl font-mono font-black text-white tracking-widest uppercase">{scResult.hex}</p>
-                                </div>
-                                <div className="flex items-center gap-4 py-3 px-6 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                                   <ShieldCheck size={18} className="text-emerald-400" />
-                                   <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">RESILIENCE_CERTIFIED</span>
-                                </div>
-                             </div>
-                          </div>
-
-                          <div className="pt-10 border-t border-white/5 grid grid-cols-2 gap-8">
-                             <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group hover:border-emerald-500/20 transition-all">
-                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Efficiency Multiplier</p>
-                                <p className="text-4xl font-mono font-black text-white">x1.24</p>
-                             </div>
-                             <div className="p-8 bg-black/60 rounded-[44px] border border-white/5 space-y-2 shadow-inner group hover:border-blue-500/20 transition-all">
-                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Thermal Buffer</p>
-                                <p className="text-4xl font-mono font-black text-white">45%</p>
-                             </div>
-                          </div>
-                       </div>
-                    )}
+              {/* Right Column: Spec Sheet & Market Cloud */}
+              <div className="lg:col-span-7 flex flex-col gap-10">
+                 {/* Tab selectors for Right Column */}
+                 <div className="flex gap-4 bg-black/60 p-2 rounded-full border border-white/5 self-center md:self-start">
+                    <button 
+                      onClick={() => setMacroSubTab('spec')}
+                      className={`px-10 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all ${macroSubTab === 'spec' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    >
+                      Paint Specification
+                    </button>
+                    <button 
+                      onClick={() => setMacroSubTab('market')}
+                      className={`px-10 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all relative ${macroSubTab === 'market' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    >
+                      Market Cloud Ledger
+                      {marketCloudColors.some(c => !c.purchased && c.author !== user.name) && (
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-ping" />
+                      )}
+                    </button>
                  </div>
 
-                 <div className="glass-card p-12 rounded-[64px] border-emerald-500/20 bg-emerald-600/5 flex flex-col md:flex-row items-center justify-between gap-12 shadow-xl">
-                    <div className="flex items-center gap-8">
-                       <div className="w-20 h-20 bg-emerald-600 rounded-[32px] flex items-center justify-center text-white shadow-2xl shrink-0"><Stamp size={32} /></div>
-                       <div className="space-y-2">
-                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Architectural Finality</h4>
-                          <p className="text-slate-400 text-sm font-medium italic">"Anchor your architectural chroma profile to the regional node for solar-efficiency boosts."</p>
+                 {macroSubTab === 'spec' ? (
+                    <div className="glass-card p-12 rounded-[64px] border-2 border-white/5 bg-black/40 shadow-3xl relative overflow-hidden flex flex-col items-center justify-center min-h-[550px] space-y-10">
+                       <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-indigo-500/10 to-emerald-500/10 pointer-events-none"></div>
+                       
+                       <div className="text-center space-y-4">
+                          <p className="text-[11px] text-slate-500 font-black uppercase tracking-[0.8em]">ORGANIC_BLENDED_SHADE</p>
+                          <h4 className="text-5xl md:text-6xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">
+                             {customPaintName}
+                          </h4>
+                       </div>
+
+                       <div className="flex flex-col md:flex-row justify-center items-center gap-12 w-full">
+                          <div className="relative group">
+                             <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500 to-sky-500 rounded-[72px] opacity-20 group-hover:opacity-40 blur-lg transition duration-700 animate-pulse" />
+                             <div className="w-56 h-56 rounded-[56px] shadow-3xl border-8 border-white/10 relative transition-transform duration-700 hover:scale-105" style={{ backgroundColor: getMixedColor }}>
+                                <div className="absolute inset-x-0 bottom-4 flex justify-center">
+                                   <span className="text-white bg-black/60 px-4 py-2 rounded-full text-[10px] font-mono font-bold tracking-widest border border-white/10 backdrop-blur-md uppercase">{getMixedColor}</span>
+                                </div>
+                             </div>
+                          </div>
+
+                          <div className="text-left space-y-4 max-w-xs">
+                             <div>
+                                <p className="text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Standard Paint Outlet Code</p>
+                                <p className="text-lg font-mono font-black text-emerald-400 tracking-tight break-all bg-black/40 p-4 rounded-2xl border border-white/5">{mixedPaintCode}</p>
+                             </div>
+                             
+                             <p className="text-[10.5px] text-slate-400 leading-relaxed italic">
+                               Paint dealers can input this generated SEHTI chromatic code into paint tinting terminals (Spectrophotometers) to reconstruct the exact pigment concentration.
+                             </p>
+                          </div>
+                       </div>
+
+                       {/* Equations and Coefficients */}
+                       <div className="w-full border-t border-white/5 pt-8 grid grid-cols-3 gap-6 text-center">
+                          <div className="p-4 bg-black/30 rounded-3xl border border-white/5">
+                             <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mb-1">Impact Psi</p>
+                             <p className="text-2xl font-mono font-black text-emerald-400">{rawScValue.toFixed(2)}</p>
+                          </div>
+                          <div className="p-4 bg-black/30 rounded-3xl border border-white/5">
+                             <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mb-1">Albedo Index</p>
+                             <p className="text-2xl font-mono font-black text-sky-400">{albedo.toFixed(2)}</p>
+                          </div>
+                          <div className="p-4 bg-black/30 rounded-3xl border border-white/5">
+                             <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mb-1">Thermal Buffer</p>
+                             <p className="text-2xl font-mono font-black text-pink-400">{Math.round((0.95 - thermalCoeff) * 100)}%</p>
+                          </div>
+                       </div>
+
+                       {/* Sell to Market Cloud Panel */}
+                       <div className="w-full bg-emerald-500/5 border border-emerald-500/15 p-6 rounded-[36px] space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <label className="text-[9px] text-slate-400 font-black uppercase tracking-widest pl-2 block mb-2">Blueprint Shade Name</label>
+                                <input 
+                                  type="text" 
+                                  value={customPaintName}
+                                  onChange={e => setCustomPaintName(e.target.value)}
+                                  className="w-full px-5 py-3 bg-black/60 rounded-2xl border border-white/5 text-xs text-white font-black"
+                                  placeholder="e.g. Amber Sunrise"
+                                />
+                             </div>
+                             <div>
+                                <span className="flex justify-between items-center text-[9px] text-slate-400 font-black uppercase tracking-widest px-2 mb-2">
+                                  <span>Selling Value</span>
+                                  <span className="text-emerald-400 font-mono font-black">{customPaintPrice} EAC</span>
+                                </span>
+                                <input 
+                                  type="range" min="10" max="150" step="5"
+                                  value={customPaintPrice}
+                                  onChange={e => setCustomPaintPrice(parseInt(e.target.value))}
+                                  className="w-full h-2 bg-black/40 rounded-full appearance-none cursor-pointer accent-emerald-500" 
+                                />
+                             </div>
+                          </div>
+                          <button 
+                            onClick={handleAnchorAndSell}
+                            disabled={isAnchoringMarket}
+                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-4 border border-white/10"
+                          >
+                             {isAnchoringMarket ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Stamp className="w-4 h-4" />}
+                             Anchor & Sell to Market Cloud (+30 EAC)
+                          </button>
                        </div>
                     </div>
-                    <button className="px-12 py-5 bg-emerald-700 hover:bg-emerald-600 rounded-3xl text-white font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 transition-all">ANCHOR PROFILE</button>
-                 </div>
+                 ) : (
+                    <div className="glass-card p-10 rounded-[64px] border-2 border-white/5 bg-black/40 shadow-3xl flex flex-col min-h-[550px] space-y-8">
+                       <div className="border-b border-white/5 pb-4 flex justify-between items-center">
+                          <div>
+                             <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Market Cloud Registry</h4>
+                             <p className="text-[10px] text-slate-400 font-mono tracking-widest mt-1">AVAILABLE_CHROMA_BLUEPRINTS</p>
+                          </div>
+                          <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-mono text-emerald-400 rounded-md font-black">
+                             {marketCloudColors.length} CODES REGISTERED
+                          </span>
+                       </div>
+
+                       {/* Live Processing Simulator Console Block */}
+                       {processingState !== 'idle' && (
+                          <div className="bg-slate-950 p-6 rounded-3xl border border-cyan-500/30 font-mono relative overflow-hidden animate-in fade-in zoom-in duration-300">
+                             <div className="absolute top-2 right-4 flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 bg-cyan-400 rounded-full animate-ping" />
+                                <span className="text-[9px] text-cyan-400 font-black uppercase">LIVE_TITRATION_PROCESSOR</span>
+                             </div>
+                             <p className="text-[11px] text-cyan-400 uppercase font-black tracking-widest mb-3">SCADA Chroma System Operations</p>
+                             
+                             <div className="space-y-2 text-xs">
+                                <div className="flex items-center gap-3">
+                                   {processingState === 'mixing' ? <Loader2 size={13} className="animate-spin text-cyan-400" /> : <Check size={13} className="text-emerald-400" />}
+                                   <span className={processingState === 'mixing' ? 'text-cyan-400' : 'text-slate-400'}>Phase 1: Pigment Mix Verification</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                   {processingState === 'binding' ? <Loader2 size={13} className="animate-spin text-blue-400" /> : <Check size={13} className={['mixing'].includes(processingState) ? 'text-slate-600' : 'text-emerald-400'} />}
+                                   <span className={processingState === 'binding' ? 'text-blue-400' : ['mixing'].includes(processingState) ? 'text-slate-600' : 'text-slate-400'}>Phase 2: Organic Binders Binding Integration</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                   {processingState === 'titrating' ? <Loader2 size={13} className="animate-spin text-yellow-500" /> : <Check size={13} className={['mixing', 'binding'].includes(processingState) ? 'text-slate-600' : 'text-emerald-400'} />}
+                                   <span className={processingState === 'titrating' ? 'text-yellow-400' : ['mixing', 'binding'].includes(processingState) ? 'text-slate-600' : 'text-slate-400'}>Phase 3: Spectrophotometric Titration Checks (528Hz)</span>
+                                </div>
+                             </div>
+
+                             <div className="mt-4 pt-3 border-t border-white/5 text-[11px] text-emerald-400 italic font-sans font-bold">
+                                {processorMessage}
+                             </div>
+                          </div>
+                       )}
+
+                       {/* Dynamic Ledger Grid */}
+                       <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+                          {marketCloudColors.map((colorItem, i) => (
+                             <div 
+                               key={colorItem.id} 
+                               className={`p-6 bg-black/50 border border-white/5 rounded-3xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-emerald-500/20 transition-all ${colorItem.purchased ? 'opacity-60 border-slate-750' : ''}`}
+                             >
+                                <div className="flex items-center gap-5">
+                                   <div className="w-16 h-16 rounded-[20px] shadow-md border-2 border-white/10 shrink-0" style={{ backgroundColor: colorItem.hex }} />
+                                   <div>
+                                      <div className="flex items-center gap-2">
+                                         <h5 className="font-black text-white text-sm m-0">{colorItem.name}</h5>
+                                         {colorItem.author === user.name && (
+                                            <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-[7px] text-emerald-400 font-bold rounded">MY BLUEPRINT</span>
+                                         )}
+                                      </div>
+                                      <p className="text-[10px] text-slate-500 font-mono tracking-wide mt-1">{colorItem.code}</p>
+                                      <div className="flex items-center gap-4 mt-2 text-[9px] text-slate-400 font-semibold">
+                                         <span>Pigments: <strong className="text-slate-300 font-mono">{colorItem.pigments}</strong></span>
+                                         <span>Sc Coefficient: <strong className="text-emerald-400 font-mono">{colorItem.scValue}</strong></span>
+                                      </div>
+                                   </div>
+                                </div>
+
+                                <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
+                                   <div className="text-left md:text-right shrink-0">
+                                      <p className="text-[8px] text-slate-500 font-black uppercase tracking-wider mb-0.5">Anchored Cost</p>
+                                      <p className="text-md font-mono font-black text-emerald-400">{colorItem.price} EAC</p>
+                                   </div>
+
+                                   {colorItem.purchased ? (
+                                      <span className="px-6 py-2 bg-emerald-950/40 border border-emerald-800 text-emerald-400 text-[10px] uppercase tracking-widest font-black rounded-xl">
+                                         PROCESSED
+                                      </span>
+                                   ) : (
+                                      <button 
+                                        onClick={() => handleProcessPaint(colorItem)}
+                                        disabled={processingState !== 'idle'}
+                                        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 hover:scale-105 disabled:opacity-40 text-white text-[10px] uppercase font-black tracking-widest rounded-xl transition-all shadow-md flex items-center gap-2"
+                                      >
+                                         <Activity size={12} className="text-white" />
+                                         PROCESS PAINT
+                                      </button>
+                                   )}
+                                </div>
+                             </div>
+                          ))}
+                       </div>
+
+                       <p className="text-[10px] text-slate-500 text-center italic mt-auto pt-4 leading-relaxed font-sans font-medium">
+                         "Color codes listed above are distributed to paint processors for live farming. Processing a code invokes molecular pigment extraction using regional EnvirosAgro raw reservoirs."
+                       </p>
+                    </div>
+                 )}
               </div>
            </div>
         )}
 
         {/* --- VIEW: CHROMATOGRAPHY (MICRO) --- */}
         {activeTab === 'micro' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-right-4 duration-500">
-             <div className="lg:col-span-4 space-y-8">
+          <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+             {/* Sub-tab switcher */}
+             <div className="flex gap-4 bg-black/60 p-2 rounded-full border border-white/5 self-center md:self-start w-fit mx-auto md:mx-0">
+                <button 
+                  onClick={() => setMicroTab('audit')}
+                  className={`px-10 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all ${microTab === 'audit' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                >
+                  Digital Ingestion Scan
+                </button>
+                <button 
+                  onClick={() => setMicroTab('natural')}
+                  className={`px-10 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all relative ${microTab === 'natural' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                >
+                  Organic Extraction Route
+                </button>
+             </div>
+
+             {microTab === 'audit' ? (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                   <div className="lg:col-span-4 space-y-8">
                 <div className="glass-card p-10 rounded-[56px] border-emerald-500/20 bg-black/40 space-y-10 shadow-3xl">
                    <div className="flex items-center gap-6 border-b border-white/5 pb-8">
                       <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl">
@@ -933,6 +1411,179 @@ ${content}
                    </div>
                 </div>
              </div>
+          </div>
+          ) : (
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in fade-in duration-500">
+                {/* Left Column: Natural Pre-Catalogued Pigments Picker & Prompter */}
+                <div className="lg:col-span-4 space-y-8">
+                   <div className="glass-card p-10 rounded-[56px] border border-emerald-500/20 bg-black/40 space-y-6 shadow-3xl">
+                      <div className="flex items-center gap-6 border-b border-white/5 pb-6">
+                         <div className="p-4 bg-emerald-600 rounded-2xl shadow-xl">
+                            <FlaskConical size={32} className="text-white" />
+                         </div>
+                         <div>
+                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter m-0">Organic <span className="text-emerald-400">Forge</span></h3>
+                            <p className="text-[10px] text-emerald-400/60 font-mono tracking-widest uppercase mt-2">VALUE_ROUTE_MAPPING</p>
+                         </div>
+                      </div>
+
+                      <div className="space-y-4">
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Select Botanical Source</label>
+                         <div className="grid grid-cols-1 gap-2">
+                            {PRE_CATALOGUED_RESOURCES.map(res => (
+                               <button 
+                                 key={res.id}
+                                 onClick={() => setSelectedNaturalResource(res.id)}
+                                 className={`p-4 rounded-2xl border text-left flex justify-between items-center transition-all ${selectedNaturalResource === res.id ? 'bg-emerald-600/10 border-emerald-500/50 shadow-inner' : 'bg-black/30 border-white/5 hover:border-white/10'}`}
+                               >
+                                  <div className="flex items-center gap-3">
+                                     <div className="w-5 h-5 rounded-full border border-white/10 shrink-0" style={{ backgroundColor: res.hex }} />
+                                     <div>
+                                        <p className="text-xs font-black text-white tracking-widest">{res.name}</p>
+                                        <p className="text-[9px] text-slate-500 font-mono mt-0.5">{res.pigment}</p>
+                                     </div>
+                                  </div>
+                                  <span className="text-[9px] font-mono font-black text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/10 shrink-0">{res.code}</span>
+                               </button>
+                            ))}
+
+                            <button 
+                              onClick={() => setSelectedNaturalResource('custom')}
+                              className={`p-4 rounded-2xl border text-left flex justify-between items-center transition-all ${selectedNaturalResource === 'custom' ? 'bg-emerald-600/10 border-emerald-500/50 shadow-inner' : 'bg-black/30 border-white/5 hover:border-white/10'}`}
+                            >
+                               <div className="flex items-center gap-3">
+                                  <div className="w-5 h-5 rounded-full bg-gradient-to-r from-teal-400 via-yellow-400 to-rose-400 border border-white/10 shrink-0" />
+                                  <div>
+                                     <p className="text-xs font-black text-white tracking-widest">Custom Organic Input...</p>
+                                     <p className="text-[9px] text-slate-500 font-mono mt-0.5">Prompt any unique organic source</p>
+                                  </div>
+                               </div>
+                            </button>
+                         </div>
+                      </div>
+
+                      {selectedNaturalResource === 'custom' && (
+                         <div className="space-y-4 p-4 bg-black/60 rounded-3xl border border-white/5 animate-in slide-in-from-top-4 duration-300">
+                            <div>
+                               <label className="text-[9px] text-slate-400 font-black uppercase tracking-widest pl-2 block mb-2">Natural Source Name</label>
+                               <input 
+                                 type="text"
+                                 value={customResourceName}
+                                 onChange={e => setCustomResourceName(e.target.value)}
+                                 className="w-full px-4 py-3 bg-black/40 rounded-xl border border-white/5 text-xs text-white uppercase font-bold"
+                                 placeholder="e.g. Red Rose petals"
+                               />
+                            </div>
+                            <div>
+                               <label className="text-[9px] text-slate-400 font-black uppercase tracking-widest pl-2 block mb-2">Target Active Pigment</label>
+                               <input 
+                                 type="text"
+                                 value={customPigmentName}
+                                 onChange={e => setCustomPigmentName(e.target.value)}
+                                 className="w-full px-4 py-3 bg-black/40 rounded-xl border border-white/5 text-xs text-white uppercase font-bold"
+                                 placeholder="e.g. Anthocyanins"
+                               />
+                            </div>
+                         </div>
+                      )}
+
+                      <button 
+                        onClick={handleValueForgeExtraction}
+                        disabled={isForgingExtraction}
+                        className="w-full py-6 agro-gradient rounded-3xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-30 border-2 border-white/10"
+                      >
+                         {isForgingExtraction ? <Loader2 className="w-5 h-5 animate-spin" /> : <FlaskConical className="w-5 h-5" />}
+                         Forge Extraction Route (-25 EAC)
+                      </button>
+                   </div>
+                </div>
+
+                {/* Right Column: Generation Output / Extraction Protocol Report */}
+                <div className="lg:col-span-8">
+                   <div className="glass-card rounded-[64px] min-h-[650px] border-2 border-white/10 bg-[#050706] flex flex-col relative overflow-hidden shadow-3xl">
+                      <div className="p-10 border-b border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0 relative z-20">
+                         <div className="flex items-center gap-8">
+                            <span className="p-4 bg-emerald-600 rounded-2xl block text-white shadow-xl">
+                               <Atom size={24} />
+                            </span>
+                            <div>
+                               <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Extraction <span className="text-emerald-400">Blueprint</span></h3>
+                               <p className="text-emerald-400/60 text-[10px] font-mono tracking-widest uppercase mt-3">ZK_VALUE_FORG_ORACLE // REGIONAL_EXTRACTION_SYSTEMs</p>
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="flex-1 p-12 overflow-y-auto custom-scrollbar relative z-20">
+                         {!extractionResult && !isForgingExtraction ? (
+                            <div className="h-full flex flex-col items-center justify-center text-center space-y-12 py-20 opacity-10 group">
+                               <div className="relative">
+                                  <Atom size={140} className="text-slate-500 group-hover:text-emerald-500 transition-colors duration-1000" />
+                                  <div className="absolute inset-[-40px] border-4 border-dashed border-white/10 rounded-full scale-125 animate-spin-slow"></div>
+                               </div>
+                               <div className="space-y-4">
+                                  <p className="text-5xl font-black uppercase tracking-[0.6em] text-white italic leading-none">SHAFT_STANDBY</p>
+                                  <p className="text-xl font-bold italic text-slate-700 uppercase tracking-[0.4em]">Ready to Map Value Route</p>
+                               </div>
+                            </div>
+                         ) : isForgingExtraction ? (
+                            <div className="h-full flex flex-col items-center justify-center space-y-12 py-20 text-center animate-in zoom-in duration-500">
+                               <div className="relative animate-spin-slow">
+                                  <FlaskConical size={80} className="text-emerald-400 mx-auto" />
+                               </div>
+                               <div className="space-y-6">
+                                  <p className="text-emerald-400 font-black text-xl uppercase tracking-[0.8em] animate-pulse italic m-0">MINING ORGANIC CHROMOPHORES...</p>
+                                  <p className="text-[10px] text-slate-500 max-w-sm mx-auto uppercase tracking-widest leading-relaxed">Connecting to system LangOracle. Solving solvent equations and Rf chromatographic indexes...</p>
+                               </div>
+                            </div>
+                         ) : (
+                            <div className="animate-in slide-in-from-bottom-10 duration-1000 space-y-12 pb-10 flex-1">
+                               <div className="p-12 md:p-16 bg-black/80 rounded-[64px] border border-emerald-500/20 max-w-none shadow-3xl border-l-[12px] border-l-emerald-600 relative overflow-hidden group/shard animate-in zoom-in">
+                                  <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none"><Atom size={600} className="text-emerald-400" /></div>
+                                  
+                                  <div className="flex justify-between items-center mb-10 relative z-10 border-b border-white/5 pb-8">
+                                     <div className="flex items-center gap-6">
+                                        <ShieldCheck className="w-10 h-10 text-emerald-400" />
+                                        <h4 className="text-2xl font-black text-white uppercase italic m-0 tracking-tighter leading-none">Extraction Oracle Shard</h4>
+                                     </div>
+                                     <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-mono text-emerald-400 rounded-md font-black animate-pulse">
+                                        SOLVENT_INDEX_VERIFIED
+                                     </span>
+                                  </div>
+
+                                  <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-line font-medium relative z-10 pl-4 border-l border-white/10 max-h-[450px] overflow-y-auto custom-scrollbar">
+                                     {extractionResult}
+                                  </div>
+
+                                  <div className="mt-16 pt-10 border-t border-white/10 relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
+                                     <div className="flex items-center gap-6">
+                                        <Fingerprint size={40} className="text-indigo-400" />
+                                        <div className="text-left">
+                                           <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">EXTRACTION_HASH</p>
+                                           <p className="text-lg font-mono text-white">0x{generateQuickHash()}_EXTRACT_SYNC</p>
+                                        </div>
+                                     </div>
+                                     <div className="flex gap-4">
+                                         <button onClick={() => downloadReport(extractionResult || '', 'Extraction', 'Process')} className="px-10 py-5 bg-white/5 border-2 border-white/10 rounded-full text-white font-black text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 shadow-xl">
+                                            <Download size={20} /> Download Shard
+                                         </button>
+                                         <button 
+                                           onClick={() => anchorToLedger(extractionResult || '', 'Extraction', 'Value_Forge')}
+                                           disabled={isArchiving === `Extraction_Value_Forge_${extractionResult?.substring(0, 20)}` || archivedShards.has(`Extraction_Value_Forge_${extractionResult?.substring(0, 20)}`)}
+                                           className={`px-12 py-5 rounded-full text-white font-black text-[11px] uppercase tracking-[0.4em] shadow-3xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 border-2 border-white/10 ring-8 ${archivedShards.has(`Extraction_Value_Forge_${extractionResult?.substring(0, 20)}`) ? 'bg-emerald-600/50 border-emerald-500/50 ring-emerald-500/10' : 'agro-gradient ring-white/5'}`}
+                                         >
+                                            {isArchiving === `Extraction_Value_Forge_${extractionResult?.substring(0, 20)}` ? <Loader2 size={18} className="animate-spin" /> : archivedShards.has(`Extraction_Value_Forge_${extractionResult?.substring(0, 20)}`) ? <CheckCircle2 size={18} /> : <Stamp size={18} />}
+                                            {archivedShards.has(`Extraction_Value_Forge_${extractionResult?.substring(0, 20)}`) ? 'ANCHORED' : 'ANCHOR TO LEDGER'}
+                                         </button>
+                                     </div>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
+                      </div>
+                   </div>
+                </div>
+             </div>
+          )}
           </div>
         )}
 
