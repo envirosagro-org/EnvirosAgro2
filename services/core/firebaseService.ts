@@ -103,13 +103,13 @@ export const verifyAppCheckHandshake = async (): Promise<boolean> => {
 // 3. Initialize services
 export const auth = getAuth(app);
 
-// FORCED RESILIENCE CONFIG: Using persistent local cache for offline support
-console.log("Initializing Firestore with persistent local cache...");
+// FORCED RESILIENCE CONFIG: Using persistent local cache for offline support with the target database ID
+console.log("Initializing Firestore with persistent local cache and target database ID:", (firebaseConfig as any).firestoreDatabaseId);
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     tabManager: persistentMultipleTabManager()
   })
-});
+}, (firebaseConfig as any).firestoreDatabaseId);
 
 import { getDocFromServer } from 'firebase/firestore';
 
@@ -123,7 +123,7 @@ async function testConnection() {
     if(error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('offline'))) {
       console.warn("Firestore running in [OFFLINE_CACHED] mode. Some real-time shards may be delayed.");
     } else {
-      console.error("Firestore connectivity error:", error);
+      console.warn("Firestore connectivity warning (using offline/local cache fallback):", error);
     }
   }
 }
@@ -133,16 +133,27 @@ console.log("Firestore initialized.");
 export const rtdb = getDatabase(app);
 export const storage = getStorage(app);
 
-// 4. Data Connect Initialization
-export const dataConnect = getDataConnect(app, {
-  location: 'us-central1',
-  connector: 'envirosagro-connector',
-  service: 'envirosagro-service'
-});
+// 4. Data Connect Initialization (Lazy-loaded to prevent unauthorized network warnings/errors on page load)
+let dataConnectInstance: any = null;
+export const getFirebaseDataConnect = () => {
+  if (!dataConnectInstance) {
+    try {
+      dataConnectInstance = getDataConnect(app, {
+        location: 'us-central1',
+        connector: 'envirosagro-connector',
+        service: 'envirosagro-service'
+      });
+      if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        connectDataConnectEmulator(dataConnectInstance, 'localhost', 9399);
+      }
+    } catch (e) {
+      console.warn("Could not initialize Firebase Data Connect:", e);
+    }
+  }
+  return dataConnectInstance;
+};
 
-if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-  connectDataConnectEmulator(dataConnect, 'localhost', 9399);
-}
+export const dataConnect = typeof window !== 'undefined' ? getFirebaseDataConnect() : null;
 
 // --- SEEDING LOGIC ---
 /**
@@ -474,13 +485,29 @@ export const saveCollectionItem = async (collectionName: string, item: any, stew
 
 /**
  * UPLOAD MEDIA SHARD
- * Uploads binary data (video/PDF/photo) to Cloud Storage with resumable support.
+ * Uploads binary data (video/PDF/photo) directly to Google Drive if authorized (for cost savings),
+ * with standard Cloud Storage as a resilient offline fallback.
  */
 export const uploadMediaShard = (
   file: File, 
   onProgress?: (progress: number) => void
 ): Promise<string> => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Dynamic import to avoid circular dependencies with googleDriveService
+      const driveService = await import('../googleDriveService');
+      const token = await driveService.getDriveAccessToken();
+      if (token) {
+        console.log("Saving cost! Uploading media shard directly to Google Drive...");
+        const driveFile = await driveService.uploadFileToDrive(file, 'root', onProgress);
+        const url = driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`;
+        resolve(url);
+        return;
+      }
+    } catch (e) {
+      console.warn("Bypassing Google Drive upload, using standard Firebase cloud storage:", e);
+    }
+
     const userId = auth.currentUser?.uid;
     if (!userId) {
       reject(new Error("Authentication required for upload."));
@@ -499,7 +526,7 @@ export const uploadMediaShard = (
         if (onProgress) onProgress(progress);
       }, 
       (error) => {
-        console.error("Upload failed:", error);
+        console.error("Upload failed in Firebase storage fallback:", error);
         reject(error);
       }, 
       async () => {

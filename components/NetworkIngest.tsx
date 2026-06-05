@@ -72,6 +72,7 @@ import { HenIcon } from './Icons';
 
 import { chatWithAgroLang, analyzeMedia } from '../services/agroLangService';
 import { saveCollectionItem, uploadMediaShard } from '../services/firebaseService';
+import { getDriveAccessToken } from '../services/googleDriveService';
 import { generateAlphanumericId } from '../systemFunctions';
 import { SEO } from './SEO';
 
@@ -144,6 +145,11 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpda
   const [activeTab, setActiveTab] = useState<'overview' | 'handshake' | 'vault' | 'api' | 'analyzer'>('overview');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [keys, setKeys] = useState<APIKey[]>(INITIAL_KEYS);
+  const [driveConnected, setDriveConnected] = useState(false);
+
+  useEffect(() => {
+    getDriveAccessToken().then(token => setDriveConnected(!!token));
+  }, []);
   
   // Handshake Sub-Workflow States
   const [handshakeMode, setHandshakeMode] = useState<'hardware' | 'land' | null>(null);
@@ -503,11 +509,28 @@ const NetworkIngest: React.FC<NetworkIngestProps> = ({ user, shards = [], onUpda
                     <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0 leading-none">Evidence <span className="text-blue-400">Vault.</span></h3>
                     <p className="text-slate-500 text-xl italic font-medium">"Managing multi-format shards for industrial finality audits."</p>
                  </div>
-                 <label className={`px-12 py-6 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all flex items-center gap-4 cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                 <div className="flex flex-wrap items-center gap-4">
+                   {driveConnected ? (
+                     <div className="text-[9px] font-mono text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 px-6 py-2.5 rounded-full border border-emerald-500/20 shadow-md">
+                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                       <span>GOOGLE DRIVE STORAGE ACTIVE (SAVES CLOUD COST)</span>
+                     </div>
+                   ) : (
+                     <button 
+                        onClick={() => onNavigate('google_drive')}
+                        className="text-[9px] font-mono text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 px-6 py-2.5 rounded-full border border-amber-500/20 shadow-md"
+                        title="Connect Google Drive to save Firebase storage costs and avoid usage fees."
+                     >
+                       <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                       <span>ENABLE DRIVE TO SAVE COST</span>
+                     </button>
+                   )}
+                   <label className={`px-12 py-6 agro-gradient rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:scale-105 transition-all flex items-center gap-4 cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
                     {isUploading ? <Zap className="animate-spin" size={20} /> : <CloudUpload size={20} />}
-                    {isUploading ? `UPLOADING ${uploadProgress.toFixed(0)}%` : 'INGEST NEW PROOF'}
+                    {isUploading ? `UPLOADING ${uploadProgress.toFixed(0)}%` : driveConnected ? 'INGEST PROOF (DRIVE ACTIVE)' : 'INGEST NEW PROOF'}
                     <input type="file" className="hidden" onChange={handleFileUpload} />
                  </label>
+              </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

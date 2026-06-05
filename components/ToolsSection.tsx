@@ -122,6 +122,8 @@ import { MediaShard, Task } from '../types';
 import { HenIcon } from './Icons';
 import { SectionTabs } from './SectionTabs';
 import { SEO } from './SEO';
+import { listTasks, createTask, updateTaskStatus } from '../services/googleTasksService';
+import { initDriveAuth, googleDriveSignIn } from '../services/googleDriveService';
 
 interface ToolsSectionProps {
   user: any; 
@@ -288,6 +290,88 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
   const [opportunities, setOpportunities] = useState(1000);
 
   const [activeDragTask, setActiveDragTask] = useState<any | null>(null);
+
+  // Google Tasks Synchronization States
+  const [hasGoogleAuth, setHasGoogleAuth] = useState(false);
+  const [isGoogleSyncing, setIsGoogleSyncing] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = initDriveAuth(
+      () => setHasGoogleAuth(true),
+      () => setHasGoogleAuth(false)
+    );
+    return () => unsubscribe();
+  }, []);
+
+  const handleGoogleTasksSync = async () => {
+    setIsGoogleSyncing(true);
+    try {
+      if (!hasGoogleAuth) {
+        const result = await googleDriveSignIn();
+        if (!result) {
+          notify('error', 'GOOGLE_AUTH_FAILED', "Google Workspace authorization denied.");
+          setIsGoogleSyncing(false);
+          return;
+        }
+        setHasGoogleAuth(true);
+      }
+
+      if (onSpendEAC) {
+        const authorized = await onSpendEAC(5, 'KANBAN_GOOGLE_TASKS_SYNC');
+        if (!authorized) {
+          setIsGoogleSyncing(false);
+          return;
+        }
+      }
+
+      // Reconcile
+      const gList = await listTasks();
+      let addedToGoogle = 0;
+      let addedToKanban = 0;
+
+      // Local Kanban tasks to Google
+      for (const localTask of tasks) {
+        const match = gList.find(gt => gt.title.toLowerCase() === localTask.title.toLowerCase());
+        if (!match) {
+          await createTask(
+            localTask.title,
+            `EnvirosAgro Local Shard. Thrust: ${localTask.thrust}. Priority: ${localTask.priority}`,
+            localTask.status === 'Completed' ? new Date().toISOString() : undefined
+          );
+          addedToGoogle++;
+        }
+      }
+
+      // Google Tasks to Local Kanban
+      for (const gt of gList) {
+        const match = tasks.find(lt => lt.title.toLowerCase() === gt.title.toLowerCase());
+        if (!match) {
+          const newLocalTask: Partial<Task> = {
+            id: `TSK-${Math.floor(Math.random() * 9000 + 1000)}`,
+            title: gt.title,
+            thrust: 'Genesis',
+            priority: 'Medium',
+            status: gt.status === 'completed' ? 'Completed' : 'Inception',
+            description: gt.notes || 'Imported via Google Tasks synchronization.',
+            timestamp: new Date().toISOString(),
+            stewardEsin: user?.esin || 'ESIN-ROOT'
+          };
+          onSaveTask(newLocalTask);
+          addedToKanban++;
+        }
+      }
+
+      notify('success', 'GOOGLE_TASKS_SYNCED', `Reconciliation complete! Pushed: ${addedToGoogle}, Pulled: ${addedToKanban}.`);
+      if (onEarnEAC && (addedToGoogle + addedToKanban) > 0) {
+        onEarnEAC(10, 'GOOGLE_TASKS_SYNCHRONICITY_BONUS');
+      }
+    } catch (err: any) {
+      console.error(err);
+      notify('error', 'GOOGLE_TASKS_SYNC_FAILED', err.message || 'Verification consensus dropped.');
+    } finally {
+      setIsGoogleSyncing(false);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -462,13 +546,38 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
 
       <div className="min-h-[700px] relative z-10">
         {activeTool === 'kanban' && (
-          <DndContext 
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-          >
+          <div className="space-y-6">
+            {/* Google Tasks Quick Reconciler Banner */}
+            <div className="glass-card p-6 rounded-[32px] border border-blue-500/20 bg-blue-500/5 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-600/10 border border-blue-500/20 rounded-2xl text-blue-400">
+                  <RefreshCw size={20} className={isGoogleSyncing ? 'animate-spin' : ''} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-white uppercase italic tracking-tight flex items-center gap-2">
+                    Google Tasks Sync Controller
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-medium">Reconcile cloud tasks with physical-lean agricultural Kanban columns.</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleGoogleTasksSync}
+                disabled={isGoogleSyncing}
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-[10px] uppercase tracking-widest rounded-full shadow-lg transition-all flex items-center gap-3 disabled:opacity-30 active:scale-95 border border-white/10"
+              >
+                {isGoogleSyncing ? <Loader2 size={12} className="animate-spin" /> : null}
+                {isGoogleSyncing ? 'Synchronizing...' : hasGoogleAuth ? 'Sync Google Tasks' : 'Authorize & Sync'}
+              </button>
+            </div>
+
+            <DndContext 
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in slide-in-from-bottom-8 duration-700">
                {KANBAN_STAGES.map(stage => (
                   <DroppableColumn 
@@ -485,6 +594,7 @@ const ToolsSection: React.FC<ToolsSectionProps> = ({ user, onSpendEAC, onEarnEAC
               ) : null}
             </DragOverlay>
           </DndContext>
+         </div>
         )}
 
         {/* Other tools follow original logic... */}

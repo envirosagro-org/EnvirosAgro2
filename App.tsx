@@ -587,6 +587,8 @@ const App: React.FC = () => {
   const user = useUserStore(state => state.user);
   const setUser = useUserStore(state => state.setUser);
   const [telemetryTheme, setTelemetryTheme] = useState('theme-day-optimal');
+  const [expandedItemIds, setExpandedItemIds] = useState<Record<string, boolean>>({});
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   // Telemetry-Driven UX: Dynamic Theme Shifting
   useEffect(() => {
@@ -1359,19 +1361,73 @@ const App: React.FC = () => {
         </div>
 
         <nav className="px-4 py-8 space-y-10">
-           {REGISTRY_NODES.map((group) => (
-             <div key={group.category} className="space-y-4">
-                {(isSidebarOpen || isMobileMenuOpen) && <p className={`px-4 text-[7px] font-black uppercase tracking-0.3em text-slate-700 italic`}>{group.category}</p>}
-                <div className="space-y-1">
-                  {group.items.map(item => (
-                    <NavigationLink key={item.id} path={item.id} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id || (view === 'network_signals' && item.id === 'explorer') ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
-                      <item.icon size={16} className={view === item.id ? 'text-white' : 'text-slate-500'} />
-                      {(isSidebarOpen || isMobileMenuOpen) && <span className="text-[8px] font-black uppercase tracking-[0.2em] text-left leading-none">{item.name}</span>}
-                    </NavigationLink>
-                  ))}
-                </div>
-             </div>
-           ))}
+           {REGISTRY_NODES.map((group) => {
+             const isCategoryExpanded = !(isSidebarOpen || isMobileMenuOpen) || expandedCategories[group.category] !== false;
+             return (
+               <div key={group.category} className="space-y-4">
+                  {(isSidebarOpen || isMobileMenuOpen) && (
+                    <button
+                      onClick={() => setExpandedCategories(prev => ({ ...prev, [group.category]: !isCategoryExpanded }))}
+                      className="w-full flex items-center justify-between px-4 py-2 hover:bg-white/5 rounded-xl transition-all group/cat text-slate-700 hover:text-emerald-400 select-none"
+                    >
+                      <p className={`text-[7px] font-black uppercase tracking-0.3em italic text-left`}>{group.category}</p>
+                      <ChevronDown size={10} className={`transition-all duration-300 ${isCategoryExpanded ? 'rotate-180 text-emerald-400' : ''}`} />
+                    </button>
+                  )}
+                  {isCategoryExpanded && (
+                    <div className="space-y-1 animate-in fade-in duration-200">
+                      {group.items.map(item => {
+                        const isExpanded = expandedItemIds[item.id] ?? (view === item.id);
+                        return (
+                          <div key={item.id} className="space-y-1">
+                            <div className="flex items-center justify-between w-full group/nav">
+                              <NavigationLink path={item.id} className={`flex-1 flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${view === item.id || (view === 'network_signals' && item.id === 'explorer') ? 'bg-emerald-600 text-white shadow-lg font-black' : 'text-slate-500 hover:text-white hover:bg-white/5 font-medium'}`}>
+                                <item.icon size={16} className={(view === item.id || (view === 'network_signals' && item.id === 'explorer')) ? 'text-white' : 'text-slate-500 group-hover/nav:text-white transition-colors'} />
+                                {(isSidebarOpen || isMobileMenuOpen) && <span className="text-[8px] font-black uppercase tracking-[0.2em] text-left leading-none">{item.name}</span>}
+                              </NavigationLink>
+                              
+                              {item.sections && item.sections.length > 0 && (isSidebarOpen || isMobileMenuOpen) && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedItemIds(prev => ({ ...prev, [item.id]: !isExpanded }));
+                                  }}
+                                  className={`p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-all mr-2 ${isExpanded ? 'rotate-180 text-emerald-400' : ''}`}
+                                >
+                                  <ChevronDown size={14} />
+                                </button>
+                              )}
+                            </div>
+
+                            {item.sections && item.sections.length > 0 && isExpanded && (isSidebarOpen || isMobileMenuOpen) && (
+                              <div className="pl-8 pr-2 py-1.5 space-y-1.5 border-l border-emerald-500/10 ml-6 animate-in slide-in-from-top-1 duration-200">
+                                {item.sections.map(section => {
+                                  const isSectionActive = view === item.id && viewSection === section.id;
+                                  return (
+                                    <NavigationLink 
+                                      key={section.id} 
+                                      path={`${item.id}/${section.id}`} 
+                                      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                                        isSectionActive 
+                                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-inner' 
+                                          : 'text-slate-600 hover:text-slate-300 hover:bg-white/[0.02]'
+                                      }`}
+                                    >
+                                      <span>{section.label}</span>
+                                      {isSectionActive && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                                    </NavigationLink>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+               </div>
+             );
+           })}
         </nav>
       </div>
 

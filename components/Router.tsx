@@ -73,6 +73,17 @@ const Permaculture = React.lazy(() => import('./Permaculture'));
 const EmergencyPortal = React.lazy(() => import('./EmergencyPortal'));
 const Impact = React.lazy(() => import('./Impact'));
 const GoogleDriveView = React.lazy(() => import('./GoogleDriveView'));
+const GmailView = React.lazy(() => import('./GmailView').then(m => ({ default: m.GmailView })));
+const GoogleCalendarView = React.lazy(() => import('./GoogleCalendarView').then(m => ({ default: m.GoogleCalendarView })));
+const GoogleMeetView = React.lazy(() => import('./GoogleMeetView').then(m => ({ default: m.GoogleMeetView })));
+const GoogleTasksView = React.lazy(() => import('./GoogleTasksView'));
+const GoogleSheetsView = React.lazy(() => import('./GoogleSheetsView'));
+const GoogleDocsView = React.lazy(() => import('./GoogleDocsView'));
+const GoogleSlidesView = React.lazy(() => import('./GoogleSlidesView'));
+const GoogleChatView = React.lazy(() => import('./GoogleChatView'));
+const GoogleFormsView = React.lazy(() => import('./GoogleFormsView'));
+const GoogleKeepView = React.lazy(() => import('./GoogleKeepView'));
+const ContactsView = React.lazy(() => import('./ContactsView'));
 
 export const getComponentForView = (
   view: ViewState,
@@ -143,6 +154,17 @@ export const getComponentForView = (
     case 'registry_handshake': return <RegistryHandshake {...props} />;
     case 'impact': return <Impact {...props} />;
     case 'google_drive': return <GoogleDriveView {...props} />;
+    case 'gmail': return <GmailView {...props} />;
+    case 'google_calendar': return <GoogleCalendarView {...props} />;
+    case 'google_meet': return <GoogleMeetView {...props} />;
+    case 'google_tasks': return <GoogleTasksView {...props} />;
+    case 'google_sheets': return <GoogleSheetsView {...props} />;
+    case 'google_docs': return <GoogleDocsView {...props} />;
+    case 'google_slides': return <GoogleSlidesView {...props} />;
+    case 'google_chat': return <GoogleChatView {...props} />;
+    case 'google_forms': return <GoogleFormsView {...props} />;
+    case 'google_keep': return <GoogleKeepView {...props} />;
+    case 'contacts': return <ContactsView {...props} />;
     case 'animal_world': return <NaturalResources {...props} type="animal_world" />;
     case 'plants_world': return <NaturalResources {...props} type="plants_world" />;
     case 'aqua_portal': return <NaturalResources {...props} type="aqua_portal" />;

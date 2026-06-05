@@ -6,10 +6,21 @@ let cachedAccessToken: string | null = null;
 let currentGoogleUser: User | null = null;
 let isSigningIn = false;
 
-// Create and configure provider with Google Drive permissions
+// Create and configure provider with Google Drive, Gmail, Calendar, Meet, Tasks, Sheets, Docs, Slides, Chat, Forms, and Contacts permissions
 const getDriveProvider = () => {
   const provider = new GoogleAuthProvider();
   provider.addScope('https://www.googleapis.com/auth/drive');
+  provider.addScope('https://www.googleapis.com/auth/gmail.readonly');
+  provider.addScope('https://www.googleapis.com/auth/gmail.send');
+  provider.addScope('https://www.googleapis.com/auth/calendar');
+  provider.addScope('https://www.googleapis.com/auth/meetings.space.created');
+  provider.addScope('https://www.googleapis.com/auth/tasks');
+  provider.addScope('https://www.googleapis.com/auth/spreadsheets');
+  provider.addScope('https://www.googleapis.com/auth/documents');
+  provider.addScope('https://www.googleapis.com/auth/presentations');
+  provider.addScope('https://www.googleapis.com/auth/chat.messages');
+  provider.addScope('https://www.googleapis.com/auth/forms.body');
+  provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
   // Optional but helpful: request offline access if needed
   provider.setCustomParameters({
     prompt: 'consent'
@@ -296,5 +307,46 @@ export const uploadFileToDrive = async (
     };
 
     reader.readAsArrayBuffer(file);
+  });
+};
+
+/**
+ * Lists Google Docs, Sheets, or Slides based on given types.
+ */
+export const listDocumentsByType = async (type: 'document' | 'spreadsheet' | 'presentation'): Promise<DriveFile[]> => {
+  let mimeType = 'application/vnd.google-apps.document';
+  if (type === 'spreadsheet') mimeType = 'application/vnd.google-apps.spreadsheet';
+  if (type === 'presentation') mimeType = 'application/vnd.google-apps.presentation';
+  
+  const q = `mimeType = '${mimeType}' and trashed = false`;
+  const fields = 'files(id, name, mimeType, iconLink, webViewLink, createdTime, owners(displayName, photoLink, emailAddress))';
+  const urlParams = new URLSearchParams({
+    q,
+    fields,
+    orderBy: 'createdTime desc',
+    pageSize: '50'
+  });
+  
+  const data = await driveFetch(`/files?${urlParams.toString()}`);
+  return data.files || [];
+};
+
+/**
+ * Creates a new blank Google Doc, Spreadsheet, or Presentation in user's Drive.
+ */
+export const createDocumentByType = async (title: string, type: 'document' | 'spreadsheet' | 'presentation'): Promise<DriveFile> => {
+  let mType = 'application/vnd.google-apps.document';
+  if (type === 'spreadsheet') mType = 'application/vnd.google-apps.spreadsheet';
+  if (type === 'presentation') mType = 'application/vnd.google-apps.presentation';
+  
+  const body = {
+    name: title,
+    mimeType: mType
+  };
+  
+  return driveFetch('/files?fields=id,name,mimeType,webViewLink', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   });
 };

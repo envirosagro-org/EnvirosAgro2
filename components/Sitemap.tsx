@@ -3,6 +3,7 @@ import {
   Network, 
   Map as MapIcon, 
   ChevronRight, 
+  ChevronDown,
   ArrowRight,
   Database,
   Activity,
@@ -57,6 +58,8 @@ interface SitemapProps {
 
 const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
   const [resolverInput, setResolverInput] = useState('');
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [activeDimension, setActiveDimension] = useState<number | null>(null);
   const [isCrawling, setIsCrawling] = useState(false);
   const dispatchSignal = useDataStore(state => state.dispatchSignal);
@@ -224,67 +227,98 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
 
       {/* 3. The 6-Dimensional Registry Map */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-12 pt-10">
-        {nodes.map((group, dIdx) => (
-          <div 
-            key={dIdx} 
-            className={`glass-card p-12 rounded-[80px] border-2 transition-all duration-700 flex flex-col group/dim bg-black/40 shadow-3xl relative overflow-hidden h-fit ${
-              activeDimension === dIdx ? 'border-emerald-500/40' : 'border-white/5 hover:border-emerald-500/20'
-            }`}
-            onClick={() => setActiveDimension(activeDimension === dIdx ? null : dIdx)}
-          >
-            <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/dim:scale-125 transition-transform duration-[15s] pointer-events-none">
-              <Network size={400} className="text-emerald-400" />
-            </div>
+        {nodes.map((group, dIdx) => {
+          const isCategoryExpanded = expandedCategories[group.category] !== false;
+          return (
+            <div 
+              key={dIdx} 
+              className={`glass-card p-12 rounded-[80px] border-2 transition-all duration-700 flex flex-col group/dim bg-black/40 shadow-3xl relative overflow-hidden h-fit ${
+                activeDimension === dIdx ? 'border-emerald-500/40' : 'border-white/5 hover:border-emerald-500/20'
+              }`}
+            >
+              <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover/dim:scale-125 transition-transform duration-[15s] pointer-events-none">
+                <Network size={400} className="text-emerald-400" />
+              </div>
 
-            <div className="flex items-center justify-between border-b border-white/5 pb-10 mb-10 relative z-10">
-               <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-emerald-400 uppercase tracking-[0.4em] leading-none m-0 drop-shadow-xl">{group.category}</h3>
-                  <p className="text-[10px] text-slate-600 font-mono font-black uppercase tracking-widest italic">DIMENSION_0{dIdx + 1}</p>
-               </div>
-               <div className="w-16 h-16 rounded-[24px] bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-black text-xl shadow-inner">
-                 D{dIdx + 1}
-               </div>
-            </div>
-
-            <div className="space-y-12 relative z-10">
-               {group.items.map((item, eIdx) => (
-                  <div key={item.id} className="space-y-8 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${eIdx * 100}ms` }}>
-                    {/* Element Node */}
-                    <div className="flex items-start gap-8 group/node">
-                       <div className="w-20 h-20 rounded-[32px] bg-black border-2 border-white/10 flex items-center justify-center text-slate-600 group-hover/node:bg-indigo-600/10 group-hover/node:text-indigo-400 group-hover/node:border-indigo-500/40 transition-all shadow-xl shrink-0">
-                          <item.icon size={36} />
-                       </div>
-                       <div className="flex-1 space-y-4">
-                          <div 
-                            onClick={(e) => { e.stopPropagation(); onNavigate(item.id as ViewState); }}
-                            className="flex items-center gap-3 cursor-pointer group/link w-fit"
-                          >
-                             <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover/link:text-emerald-400 transition-colors drop-shadow-lg">{item.name}</h4>
-                             <span className="text-[11px] font-mono text-emerald-500/20 bg-emerald-500/5 px-3 py-1 rounded-lg border border-emerald-500/10 shadow-inner">[{dIdx+1}.{eIdx+1}]</span>
-                          </div>
-                          
-                          {/* Vector Shards (Sections) */}
-                          <div className="flex flex-wrap gap-3 pt-2">
-                             {item.sections?.map((section, sIdx) => (
-                                <button 
-                                  key={section.id}
-                                  onClick={(e) => { e.stopPropagation(); onNavigate(item.id as ViewState, section.id); }}
-                                  className="px-6 py-3 bg-white/5 hover:bg-indigo-600 border border-white/10 hover:border-indigo-400 rounded-full text-[11px] font-black uppercase text-slate-500 hover:text-white transition-all flex items-center gap-3 group/shard shadow-lg active:scale-95"
-                                >
-                                   <span className="text-[9px] font-mono text-indigo-500/40 group-hover/shard:text-white/50">[{dIdx+1}.{eIdx+1}.{sIdx+1}]</span>
-                                   <div className="w-1.5 h-1.5 rounded-full bg-slate-800 group-hover/shard:bg-white transition-colors"></div>
-                                   {section.label}
-                                </button>
-                             ))}
-                          </div>
-                       </div>
+              <div 
+                onClick={() => {
+                  setActiveDimension(activeDimension === dIdx ? null : dIdx);
+                  setExpandedCategories(prev => ({ ...prev, [group.category]: !isCategoryExpanded }));
+                }}
+                className="flex items-center justify-between border-b border-white/5 pb-10 mb-10 relative z-10 cursor-pointer select-none hover:bg-white/[0.02] -m-4 p-4 rounded-[40px] transition-all group/header"
+              >
+                 <div className="space-y-2 flex items-center gap-4">
+                    <div className={`p-2 p-2.5 rounded-xl bg-white/5 border border-white/10 text-emerald-400 transition-all ${isCategoryExpanded ? 'rotate-180' : ''}`}>
+                       <ChevronDown size={18} />
                     </div>
-                    {eIdx < group.items.length - 1 && <div className="h-px w-full bg-white/5 ml-28"></div>}
-                  </div>
-               ))}
+                    <div>
+                       <h3 className="text-2xl font-black text-emerald-400 uppercase tracking-[0.4em] leading-none m-0 drop-shadow-xl">{group.category}</h3>
+                       <p className="text-[10px] text-slate-600 font-mono font-black uppercase tracking-widest italic">DIMENSION_0{dIdx + 1}</p>
+                    </div>
+                 </div>
+                 <div className="w-16 h-16 rounded-[24px] bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-black text-xl shadow-inner shrink-0">
+                   D{dIdx + 1}
+                 </div>
+              </div>
+
+              {isCategoryExpanded && (
+                <div className="space-y-12 relative z-10 pt-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                   {group.items.map((item, eIdx) => (
+                      <div key={item.id} className="space-y-8 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${eIdx * 50}ms` }}>
+                        {/* Element Node */}
+                        <div className="flex items-start gap-8 group/node">
+                           <div className="w-20 h-20 rounded-[32px] bg-black border-2 border-white/10 flex items-center justify-center text-slate-600 group-hover/node:bg-indigo-600/10 group-hover/node:text-indigo-400 group-hover/node:border-indigo-500/40 transition-all shadow-xl shrink-0">
+                              <item.icon size={36} />
+                           </div>
+                           <div className="flex-1 space-y-4">
+                              <div 
+                                onClick={(e) => { e.stopPropagation(); onNavigate(item.id as ViewState); }}
+                                className="flex items-center gap-3 cursor-pointer group/link w-fit"
+                              >
+                                 <h4 className="text-3xl font-black text-white uppercase italic tracking-tighter m-0 leading-none group-hover/link:text-emerald-400 transition-colors drop-shadow-lg">{item.name}</h4>
+                                 <span className="text-[11px] font-mono text-emerald-500/20 bg-emerald-500/5 px-3 py-1 rounded-lg border border-emerald-500/10 shadow-inner">[{dIdx+1}.{eIdx+1}]</span>
+                              </div>
+                              {item.sections && item.sections.length > 0 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                                  }}
+                                  className={`p-1.5 rounded-lg bg-white/5 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all ${expandedItems[item.id] ? 'rotate-180 text-emerald-400' : 'text-slate-500'}`}
+                                  title="Toggle down sections"
+                                >
+                                  <ChevronDown size={14} />
+                                </button>
+                              )}
+                              <div className="hidden">
+                              </div>
+                              
+                              {/* Vector Shards (Sections) */}
+                              {item.sections && item.sections.length > 0 && expandedItems[item.id] && (
+                                <div className="flex flex-wrap gap-3 pt-2 animate-in slide-in-from-top-1 duration-200">
+                                   {item.sections?.map((section, sIdx) => (
+                                      <button 
+                                        key={section.id}
+                                        onClick={(e) => { e.stopPropagation(); onNavigate(item.id as ViewState, section.id); }}
+                                        className="px-6 py-3 bg-white/5 hover:bg-indigo-600 border border-white/10 hover:border-indigo-400 rounded-full text-[11px] font-black uppercase text-slate-500 hover:text-white transition-all flex items-center gap-3 group/shard shadow-lg active:scale-95"
+                                      >
+                                         <span className="text-[9px] font-mono text-indigo-500/40 group-hover/shard:text-white/50">[{dIdx+1}.{eIdx+1}.{sIdx+1}]</span>
+                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-800 group-hover/shard:bg-white transition-colors"></div>
+                                         {section.label}
+                                      </button>
+                                   ))}
+                                </div>
+                              )}
+                           </div>
+                        </div>
+                        {eIdx < group.items.length - 1 && <div className="h-px w-full bg-white/5 ml-28"></div>}
+                      </div>
+                   ))}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 4. Matrix Legend / Bottom Branding */}

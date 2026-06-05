@@ -8,7 +8,7 @@ import {
   Monitor, ClipboardCheck, HeartHandshake, Recycle, Wrench, Bot, 
   PawPrint, TreePine, Droplets, Mountain, Wind, ShieldPlus, Siren, 
   History, Scale, CalendarDays, Palette, Zap, Dna, Compass, BoxSelect, 
-  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu, Landmark, Plane, Award, Lock, Radio, Cloud
+  FileStack, Tv, Share2, SmartphoneNfc, BookOpen, ShieldCheck, Cpu, Landmark, Plane, Award, Lock, Radio, Cloud, Mail, Video, ListChecks, FileSpreadsheet, FileText, Presentation, MessageSquare, FormInput, StickyNote, UserCog
 } from 'lucide-react';
 
 export const REGISTRY_NODES: RegistryGroup[] = [
@@ -35,6 +35,17 @@ export const REGISTRY_NODES: RegistryGroup[] = [
     items: [
       { id: 'dashboard', name: 'Command Center', icon: LayoutDashboard, sections: [{id: 'metrics', label: 'Node Metrics'}, {id: 'oracle', label: 'Oracle Hub'}, {id: 'path', label: 'Strategic Path'}] },
       { id: 'google_drive', name: 'Google Drive Shard', icon: Cloud, sections: [{id: 'files', label: 'My Files'}] },
+      { id: 'gmail', name: 'Gmail Audit Hub', icon: Mail, sections: [{id: 'inbox', label: 'Inbox'}, {id: 'compose', label: 'Send Audit'}] },
+      { id: 'google_calendar', name: 'Google Calendar Shard', icon: CalendarDays, sections: [{id: 'agenda', label: 'My Agenda'}, {id: 'schedule', label: 'Quick Schedule'}] },
+      { id: 'google_meet', name: 'Google Meet Shard', icon: Video, sections: [{id: 'instacall', label: 'Instant Meeting Rooms'}, {id: 'rooms', label: 'Synchronized Spaces'}] },
+      { id: 'google_tasks', name: 'Google Tasks Shard', icon: ListChecks, sections: [{id: 'inbox', label: 'Task List'}] },
+      { id: 'google_sheets', name: 'Google Sheets Shard', icon: FileSpreadsheet, sections: [{id: 'list', label: 'My Sheets'}] },
+      { id: 'google_docs', name: 'Google Docs Shard', icon: FileText, sections: [{id: 'list', label: 'My Docs'}] },
+      { id: 'google_slides', name: 'Google Slides Shard', icon: Presentation, sections: [{id: 'list', label: 'My Slides'}] },
+      { id: 'google_chat', name: 'Google Chat Shard', icon: MessageSquare, sections: [{id: 'list', label: 'Chats'}] },
+      { id: 'google_forms', name: 'Google Forms Shard', icon: FormInput, sections: [{id: 'list', label: 'My Forms'}] },
+      { id: 'google_keep', name: 'Google Keep Shard', icon: StickyNote, sections: [{id: 'list', label: 'My Notes'}] },
+      { id: 'contacts', name: 'Contacts Shard', icon: UserCog, sections: [{id: 'list', label: 'My Contacts'}] },
       { id: 'ai_oracle', name: 'Strategic Oracle', icon: Brain },
       { id: 'mesh_protocol', name: 'Mesh Protocol', icon: Network, sections: [{id: 'topology', label: 'Network Topology'}, {id: 'commits', label: 'Block Shards'}, {id: 'mempool', label: 'Inbound Mempool'}] },
       { id: 'agro_lang_analyst', name: 'EnvirosAgro Agro Lang', icon: SycamoreLogo },

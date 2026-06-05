@@ -41,6 +41,8 @@ import { User, SignalShard, ViewState } from '../types';
 import { SectionTabs } from './SectionTabs';
 import { HenIcon } from './Icons';
 import { getWeatherForecast, chatWithAgroLang, AgroLangResponse } from '../services/agroLangService';
+import { listCalendarEvents, createCalendarEvent } from '../services/googleCalendarService';
+import { initDriveAuth, googleDriveSignIn } from '../services/googleDriveService';
 
 interface AgroCalendarProps {
   user: User;
@@ -144,6 +146,8 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
   const [weatherData, setWeatherData] = useState<AgroLangResponse | null>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSchedulingOffice, setIsSchedulingOffice] = useState(false);
+  const [hasGoogleAuth, setHasGoogleAuth] = useState(false);
   
   const [liturgicalShard, setLiturgicalShard] = useState<string | null>(null);
   const [isForgingShard, setIsForgingShard] = useState(false);
@@ -154,10 +158,15 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
   }, [signals]);
   const [isLinking, setIsLinking] = useState(false);
   const [isCalendarLinked, setIsCalendarLinked] = useState(false);
-  const [externalEvents, setExternalEvents] = useState([
-    { id: 'ext-1', title: 'Nairobi Ingest Audit', time: '14:30', pillar: 'Industry', icon: Factory },
-    { id: 'ext-2', title: 'Zone 4 Moisture Check', time: '16:00', pillar: 'Environmental', icon: Droplets }
-  ]);
+  const [externalEvents, setExternalEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const unsubscribe = initDriveAuth(
+      () => setHasGoogleAuth(true),
+      () => setHasGoogleAuth(false)
+    );
+    return () => unsubscribe();
+  }, []);
 
   const pulseSchedule = useMemo(() => [
     { id: 'P1', label: 'EAC MINT QUORUM', time: 'T+4m', status: 'WAITING', type: 'CORE' },
@@ -231,19 +240,95 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
     }
   };
 
-  const handleLinkCalendar = () => {
+  const handleLinkCalendar = async () => {
     setIsLinking(true);
-    setTimeout(() => {
+    try {
+      if (!hasGoogleAuth) {
+        const result = await googleDriveSignIn();
+        if (!result) {
+          setIsLinking(false);
+          return;
+        }
+        setHasGoogleAuth(true);
+      }
+
+      // Fetch real events
+      const fetched = await listCalendarEvents(10);
+      const mapped = fetched.map(ev => {
+        const dateObj = ev.start.dateTime ? new Date(ev.start.dateTime) : ev.start.date ? new Date(ev.start.date) : new Date();
+        const keywords = (ev.summary + ' ' + (ev.description || '')).toLowerCase();
+        let pillar = 'Environmental';
+        let icon: any = Leaf;
+        if (keywords.includes('audit') || keywords.includes('industry') || keywords.includes('job') || keywords.includes('work')) {
+          pillar = 'Industrial';
+          icon = Factory;
+        } else if (keywords.includes('tech') || keywords.includes('iot') || keywords.includes('sensor') || keywords.includes('code')) {
+          pillar = 'IoT Protocol';
+          icon = Binary;
+        } else if (keywords.includes('water') || keywords.includes('rain') || keywords.includes('wet')) {
+          pillar = 'Hydrology';
+          icon = Droplets;
+        }
+        return {
+          id: ev.id,
+          title: ev.summary,
+          time: dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          pillar: pillar,
+          icon: icon
+        };
+      });
+
+      setExternalEvents(mapped);
       setIsCalendarLinked(true);
-      setIsLinking(false);
-      onEmitSignal({
+
+      await onEmitSignal({
         type: 'system',
         origin: 'EXTERNAL',
-        title: 'GOOGLE_CALENDAR_INGEST',
-        message: 'External schedule shards adsorbed into liturgical terminal. JIT triggers active.',
+        title: 'GOOGLE_CALENDAR_INGEST_OK',
+        message: `Fetched ${mapped.length} active schedule shards from cloud calendar. Temporal JIT synced.`,
         priority: 'medium'
       });
-    }, 2500);
+      onEarnEAC(10, 'GOOGLE_CALENDAR_HANDSHAKE_COMPLETED');
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  const handleScheduleOfficeOnCalendar = async () => {
+    if (!hasGoogleAuth) {
+      const result = await googleDriveSignIn();
+      if (!result) return;
+      setHasGoogleAuth(true);
+    }
+
+    setIsSchedulingOffice(true);
+    try {
+      const start = new Date();
+      start.setHours(parseInt(currentOffice.time.split(':')[0]), 0, 0, 0);
+      const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hr duration
+
+      await createCalendarEvent({
+        summary: `EnvirosAgro Daily reminder: ${currentOffice.name} Office`,
+        description: `Stewardship focus: ${currentOffice.desc}. Status: ${currentOffice.state}`,
+        startTime: start.toISOString(),
+        endTime: end.toISOString()
+      });
+
+      onEarnEAC(15, 'LITURGICAL_OFFICE_SCHEDULED');
+      await onEmitSignal({
+         type: 'liturgical',
+         origin: 'CALENDAR',
+         title: `CALENDAR_SHARD_CREATED`,
+         message: `${currentOffice.name} calendar shard dispatched successfully to cloud services.`,
+         priority: 'medium'
+      });
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setIsSchedulingOffice(false);
+    }
   };
 
   return (
@@ -323,6 +408,14 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                          >
                             {isSyncing ? <Loader2 size={24} className="animate-spin" /> : <RefreshCw size={24} />}
                             {isSyncing ? 'SYNCHRONIZING...' : 'SYNC DAILY OFFICE'}
+                         </button>
+                         <button 
+                           onClick={handleScheduleOfficeOnCalendar}
+                           disabled={isSchedulingOffice || isSyncing}
+                           className="w-full py-6 bg-indigo-650 hover:bg-indigo-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 disabled:opacity-30 border border-white/10 shadow-lg"
+                         >
+                            {isSchedulingOffice ? <Loader2 size={16} className="animate-spin" /> : <CalendarCheck className="w-4 h-4" />}
+                            {isSchedulingOffice ? 'SCHEDULING...' : 'EXPORT TO GOOGLE CALENDAR'}
                          </button>
                       </div>
                    </div>
