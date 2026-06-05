@@ -1368,10 +1368,23 @@ const App: React.FC = () => {
                   {(isSidebarOpen || isMobileMenuOpen) && (
                     <button
                       onClick={() => setExpandedCategories(prev => ({ ...prev, [group.category]: !isCategoryExpanded }))}
-                      className="w-full flex items-center justify-between px-4 py-2 hover:bg-white/5 rounded-xl transition-all group/cat text-slate-700 hover:text-emerald-400 select-none"
+                      className="w-full flex items-center justify-between px-4 py-2 hover:bg-white/5 rounded-xl transition-all group/cat text-slate-700 hover:text-emerald-400 select-none cursor-pointer"
                     >
                       <p className={`text-[7px] font-black uppercase tracking-0.3em italic text-left`}>{group.category}</p>
-                      <ChevronDown size={10} className={`transition-all duration-300 ${isCategoryExpanded ? 'rotate-180 text-emerald-400' : ''}`} />
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-300 ease-in-out ${
+                            isCategoryExpanded ? 'bg-emerald-500/80 shadow-[0_0_6px_rgba(16,185,129,0.3)]' : 'bg-slate-800'
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white transition duration-300 ease-in-out ${
+                              isCategoryExpanded ? 'translate-x-[12px]' : 'translate-x-0'
+                            }`}
+                          />
+                        </span>
+                        <ChevronDown size={10} className={`transition-all duration-300 ${isCategoryExpanded ? 'rotate-180 text-emerald-400' : ''}`} />
+                      </div>
                     </button>
                   )}
                   {isCategoryExpanded && (

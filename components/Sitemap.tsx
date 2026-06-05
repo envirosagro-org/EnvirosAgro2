@@ -225,6 +225,73 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
          )}
       </div>
 
+      {/* 2.5 Category Matrix Toggles */}
+      <div className="glass-card p-10 rounded-[48px] border-emerald-500/15 bg-emerald-500/[0.01] max-w-7xl mx-auto relative z-20 space-y-8 shadow-2xl">
+         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-white/5">
+            <div className="space-y-1">
+               <h3 className="text-xl font-black text-white uppercase tracking-wider italic flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Registry Category Controllers
+               </h3>
+               <p className="text-[11px] text-slate-500 font-medium max-w-xl">
+                  Use the high-precision toggle switches below to expand or collapse the primary registry dimensions in real-time.
+               </p>
+            </div>
+            <div className="flex items-center gap-4 shrink-0">
+               <button
+                  onClick={() => {
+                     const allCollapsed = nodes.every(g => expandedCategories[g.category] === false);
+                     const nextState: Record<string, boolean> = {};
+                     nodes.forEach(g => {
+                        nextState[g.category] = allCollapsed;
+                     });
+                     setExpandedCategories(nextState);
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/10 hover:text-emerald-400 border border-white/10 hover:border-emerald-500/30 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+               >
+                  {nodes.every(g => expandedCategories[g.category] === false) ? "Expand All" : "Collapse All"}
+               </button>
+            </div>
+         </div>
+
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {nodes.map((group, idx) => {
+               const isCategoryExpanded = expandedCategories[group.category] !== false;
+               return (
+                  <div 
+                     key={idx}
+                     onClick={() => setExpandedCategories(prev => ({ ...prev, [group.category]: !isCategoryExpanded }))}
+                     className={`p-6 rounded-3xl border transition-all flex items-center justify-between gap-4 cursor-pointer select-none active:scale-[0.98] ${
+                        isCategoryExpanded
+                           ? 'bg-emerald-500/5 border-emerald-500/20 shadow-[inset_0_1px_1px_rgba(16,185,129,0.05)] text-white hover:border-emerald-500/30'
+                           : 'bg-black/30 border-white/5 text-slate-500 hover:border-white/10 hover:bg-white/[0.02]'
+                     }`}
+                  >
+                     <div className="space-y-1">
+                        <span className="text-[8px] font-mono text-emerald-500/40 font-bold tracking-widest uppercase block">Dimension_0{idx + 1}</span>
+                        <span className="text-sm font-black uppercase italic tracking-tight">{group.category}</span>
+                     </div>
+                     
+                     {/* Toggle Down Switch */}
+                     <span className="relative flex items-center pointer-events-none">
+                        <span
+                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out ${
+                              isCategoryExpanded ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]' : 'bg-slate-800'
+                           }`}
+                        >
+                           <span
+                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out ${
+                                 isCategoryExpanded ? 'translate-x-[20px]' : 'translate-x-0'
+                              }`}
+                           />
+                        </span>
+                     </span>
+                  </div>
+               );
+            })}
+         </div>
+      </div>
+
       {/* 3. The 6-Dimensional Registry Map */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-12 pt-10">
         {nodes.map((group, dIdx) => {
@@ -248,7 +315,7 @@ const Sitemap: React.FC<SitemapProps> = ({ nodes, onNavigate }) => {
                 className="flex items-center justify-between border-b border-white/5 pb-10 mb-10 relative z-10 cursor-pointer select-none hover:bg-white/[0.02] -m-4 p-4 rounded-[40px] transition-all group/header"
               >
                  <div className="space-y-2 flex items-center gap-4">
-                    <div className={`p-2 p-2.5 rounded-xl bg-white/5 border border-white/10 text-emerald-400 transition-all ${isCategoryExpanded ? 'rotate-180' : ''}`}>
+                    <div className={`p-2.5 rounded-xl bg-white/5 border border-white/10 text-emerald-400 transition-all ${isCategoryExpanded ? 'rotate-180' : ''}`}>
                        <ChevronDown size={18} />
                     </div>
                     <div>
