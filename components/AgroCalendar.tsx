@@ -440,7 +440,7 @@ const AgroCalendar: React.FC<AgroCalendarProps> = ({ user, onEarnEAC, onSpendEAC
                                   <p className="text-6xl font-mono font-black text-white tracking-tighter">24<span className="text-2xl text-emerald-600 italic ml-1">°C</span></p>
                                   <div className="flex flex-col">
                                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Optimal Ingest</span>
-                                     <span className="text-[8px] text-slate-500 font-mono mt-1">LAT: {user.location.split(',')[0]}</span>
+                                     <span className="text-[8px] text-slate-500 font-mono mt-1">LAT: {(user.location || '').split(',')[0]}</span>
                                   </div>
                                </div>
                                <div className="p-6 bg-black/60 rounded-[32px] border border-white/5 space-y-4 shadow-inner">

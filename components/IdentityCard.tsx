@@ -74,7 +74,7 @@ const IdentityCard: React.FC<IdentityCardProps> = ({ user, isPrintMode = false }
                  <div className="overflow-hidden">
                     <p className="text-[6px] md:text-[7px] text-slate-600 font-black uppercase tracking-widest">Node</p>
                     <p className="text-[9px] md:text-[11px] text-slate-200 font-bold uppercase truncate tracking-tight flex items-center gap-1 mt-0.5 md:mt-1">
-                       <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3 text-emerald-500 shrink-0" /> {user.location.split(',')[0]}
+                       <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3 text-emerald-500 shrink-0" /> {(user.location || '').split(',')[0]}
                     </p>
                  </div>
               </div>

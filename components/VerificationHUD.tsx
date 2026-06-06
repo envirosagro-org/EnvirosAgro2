@@ -22,10 +22,10 @@ import {
   BadgeCheck,
   Binary,
   Workflow,
-  /* Added Globe2 import to fix error on line 205 */
-  Globe2
+  Globe2,
+  Chrome
 } from 'lucide-react';
-import { refreshAuthUser, sendVerificationShard, signOutSteward } from '../services/firebaseService';
+import { refreshAuthUser, sendVerificationShard, signOutSteward, signInWithGoogle } from '../services/firebaseService';
 import { SycamoreLogo } from './Icons';
 
 interface VerificationHUDProps {
@@ -37,6 +37,7 @@ interface VerificationHUDProps {
 const VerificationHUD: React.FC<VerificationHUDProps> = ({ userEmail, onVerified, onLogout }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isGoogleVerifying, setIsGoogleVerifying] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [calibrationPhase, setCalibrationPhase] = useState(0);
 
@@ -46,6 +47,23 @@ const VerificationHUD: React.FC<VerificationHUDProps> = ({ userEmail, onVerified
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleGoogleVerify = async () => {
+    setIsGoogleVerifying(true);
+    setStatusMessage("INITIALIZING_GOOGLE_SHARD_SYNC...");
+    try {
+      await signInWithGoogle();
+      setStatusMessage("GOOGLE_SYNC_SUCCESS: Handshake verified.");
+      setTimeout(() => {
+        onVerified();
+      }, 1000);
+    } catch (e: any) {
+      console.error(e);
+      setStatusMessage(`GOOGLE_SYNC_ERROR: ${e.message}`);
+    } finally {
+      setIsGoogleVerifying(false);
+    }
+  };
 
   const checkStatus = async () => {
     setIsRefreshing(true);
@@ -177,23 +195,34 @@ const VerificationHUD: React.FC<VerificationHUDProps> = ({ userEmail, onVerified
            </div>
          )}
 
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 pt-4">
+         <div className="space-y-6 relative z-10 pt-4">
             <button 
-              onClick={checkStatus}
-              disabled={isRefreshing}
-              className="py-10 bg-emerald-600 hover:bg-emerald-500 rounded-[48px] text-white font-black text-xs md:text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(16,185,129,0.3)] flex items-center justify-center gap-6 transition-all active:scale-95 disabled:opacity-50 border-4 border-white/10 ring-[16px] ring-emerald-500/5 group/ref"
+              onClick={handleGoogleVerify}
+              disabled={isGoogleVerifying}
+              className="w-full py-10 bg-white hover:bg-slate-100 text-black font-black text-xs md:text-sm uppercase tracking-[0.5em] rounded-[48px] shadow-[0_0_80px_rgba(255,255,255,0.15)] flex items-center justify-center gap-6 transition-all active:scale-95 disabled:opacity-50 border-4 border-slate-200 ring-[16px] ring-white/5 group/google animate-pulse"
             >
-               {isRefreshing ? <Loader2 size={28} className="animate-spin" /> : <RefreshCw size={28} className="group-hover/ref:rotate-180 transition-transform duration-700" />}
-               REFRESH NODE
+               {isGoogleVerifying ? <Loader2 size={28} className="animate-spin" /> : <Chrome size={28} className="group-hover/google:rotate-12 transition-transform duration-500" />}
+               INITIALIZE SHARD SYNC (GOOGLE AUTH)
             </button>
-            <button 
-              onClick={resendShard}
-              disabled={isResending}
-              className="py-10 bg-black/60 hover:bg-white/5 border-2 border-white/10 rounded-[48px] text-slate-300 font-black text-xs md:text-sm uppercase tracking-[0.5em] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-6 shadow-xl"
-            >
-               {isResending ? <Loader2 size={28} className="animate-spin" /> : <Send size={28} />}
-               RESEND SHARD
-            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 pb-2">
+               <button 
+                 onClick={checkStatus}
+                 disabled={isRefreshing}
+                 className="py-10 bg-emerald-600 hover:bg-emerald-500 rounded-[48px] text-white font-black text-xs md:text-sm uppercase tracking-[0.5em] shadow-[0_0_80px_rgba(16,185,129,0.3)] flex items-center justify-center gap-6 transition-all active:scale-95 disabled:opacity-50 border-4 border-white/10 ring-[16px] ring-emerald-500/5 group/ref"
+               >
+                  {isRefreshing ? <Loader2 size={28} className="animate-spin" /> : <RefreshCw size={28} className="group-hover/ref:rotate-180 transition-transform duration-700" />}
+                  REFRESH NODE
+               </button>
+               <button 
+                 onClick={resendShard}
+                 disabled={isResending}
+                 className="py-10 bg-black/60 hover:bg-white/5 border-2 border-white/10 rounded-[48px] text-slate-300 font-black text-xs md:text-sm uppercase tracking-[0.5em] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-6 shadow-xl"
+               >
+                  {isResending ? <Loader2 size={28} className="animate-spin" /> : <Send size={28} />}
+                  RESEND SHARD
+               </button>
+            </div>
          </div>
 
          <div className="pt-10 border-t border-white/5 flex flex-col items-center gap-10 relative z-10">

@@ -71,7 +71,7 @@ const WorkerCloud: React.FC<WorkerCloudProps> = ({ currentUser }) => {
       isOpenToWork: currentUser.isReadyForHire,
       lifetimeEAC: currentUser.wallet?.lifetimeEarned || 0,
       efficiency: 99,
-      avatar: currentUser.name.split(' ').map(n => n[0]).join(''),
+      avatar: (currentUser.name || 'Anonymous').split(' ').map(n => n ? n[0] : '').join(''),
       location: currentUser.location || 'Global',
       availability: 'AVAILABLE'
     });

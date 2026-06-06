@@ -376,7 +376,7 @@ ${content}
                           <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center">
                              <UserIcon size={12} className="text-slate-500" />
                           </div>
-                          <span className="text-[8px] font-black text-slate-500 uppercase">Steward: {user.name.split(' ')[0]}</span>
+                          <span className="text-[8px] font-black text-slate-500 uppercase">Steward: {(user.name || '').split(' ')[0]}</span>
                        </div>
                        <button className="text-[8px] font-black text-emerald-500 uppercase hover:text-emerald-400 flex items-center gap-2">View Shard <ChevronRight size={10} /></button>
                     </div>

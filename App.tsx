@@ -893,7 +893,7 @@ const App: React.FC = () => {
     return onAuthStateChanged(auth, async (fbUser) => { 
       console.log("Auth state changed:", fbUser ? fbUser.uid : "no user");
       if (fbUser) { 
-        const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone'); 
+        const isVerified = fbUser.emailVerified || fbUser.providerData?.some((p: any) => p.providerId === 'phone' || p.providerId === 'google.com'); 
         if (isVerified) { 
           setIsUnverified(false); 
           console.log("Fetching steward profile...");
@@ -1219,6 +1219,14 @@ const App: React.FC = () => {
       onUpdateUser: async (u: User) => {
         setUser(u);
         await syncUserToCloud(u);
+      },
+      onLogin: (u?: User) => {
+        if (u) {
+          setUser(u);
+          navigate('dashboard', null, false);
+        } else {
+          navigate('auth', null, false);
+        }
       },
       onLogout: handleLogout,
       onPermanentAction: handlePerformPermanentAction,
@@ -1589,7 +1597,7 @@ const App: React.FC = () => {
 
               {user && <button onClick={() => navigate('wallet')} className="px-3 py-2 glass-card rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2 hover:bg-emerald-500/10 transition-all group"><Coins size={12} className="text-emerald-400 group-hover:rotate-12 transition-transform" /><span className="text-[8px] sm:text-[10px] font-mono font-black text-white">{(user?.wallet.balance || 0).toFixed(0)}</span></button>}
               <button onClick={() => navigate('profile')} className={`flex items-center gap-2 px-2 py-1.5 rounded-xl border transition-all shadow-xl overflow-hidden ${user ? 'border-white/10 bg-slate-800' : 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
-                 {user ? (<><div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" referrerPolicy="no-referrer" /> : <UserIcon size={12} className="text-slate-500 m-auto mt-1.5" />}</div><span className="text-[8px] font-black text-white hidden sm:block truncate max-w-[60px] uppercase italic">{user.name.split(' ')[0]}</span></>) : (<><UserPlus size={14} className="text-emerald-400" /><span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Sync</span></>)}
+                 {user ? (<><div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-black/40">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" referrerPolicy="no-referrer" /> : <UserIcon size={12} className="text-slate-500 m-auto mt-1.5" />}</div><span className="text-[8px] font-black text-white hidden sm:block truncate max-w-[60px] uppercase italic">{(user.name || '').split(' ')[0]}</span></>) : (<><UserPlus size={14} className="text-emerald-400" /><span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">Sync</span></>)}
               </button>
            </div>
         </header>

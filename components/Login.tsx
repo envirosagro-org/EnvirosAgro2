@@ -166,10 +166,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
   };
 
   const createStewardProfile = async (uid: string, userEmail: string, userName: string, phone?: string) => {
+    const fallbackEsin = `EA-${generateAlphanumericId(4).toUpperCase()}-${generateAlphanumericId(4).toUpperCase()}`;
     const newUser: User = {
       name: userName || 'Anonymous Steward',
       email: userEmail.toLowerCase() || `${phone}@phone.auth`,
-      esin: esin,
+      esin: esin || fallbackEsin,
       mnemonic: "seed plant grow harvest sun rain soil root leaf flower fruit seed",
       regDate: new Date().toLocaleDateString(),
       role: 'REGENERATIVE FARMER',
@@ -385,7 +386,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
                 className="w-full py-6 bg-white text-black font-black text-xs uppercase tracking-[0.4em] rounded-[32px] flex items-center justify-center gap-4 shadow-3xl hover:bg-slate-100 transition-all active:scale-95 group/google"
               >
                  {loading ? <Loader2 className="animate-spin" /> : <Chrome size={20} className="group-hover/google:rotate-12 transition-transform" />}
-                 {loading ? 'SEQUENCING...' : 'SYNC GLOBAL SHARD'}
+                 {loading ? 'SYNCING...' : mode === 'register' ? 'SIGN UP WITH GOOGLE' : 'SIGN IN WITH GOOGLE'}
               </button>
               <div className="flex items-center gap-6 py-2 opacity-30">
                  <div className="h-px bg-white/20 flex-1"></div>

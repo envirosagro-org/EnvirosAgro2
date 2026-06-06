@@ -292,7 +292,7 @@ const AgroLangAnalyst: React.FC<AgroLangAnalystProps> = ({ user, onEmitSignal, o
                 <span className="text-white font-black text-[10px] uppercase italic">Node {user.esin}</span>
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></div>
               </div>
-              <p className="text-[9px] text-slate-600 font-mono uppercase">{user.role} - {user.location.split(',')[0]}</p>
+              <p className="text-[9px] text-slate-600 font-mono uppercase">{user.role} - {(user.location || '').split(',')[0]}</p>
             </div>
             <button onClick={clearHistory} className="w-full flex items-center justify-center gap-3 p-4 bg-white/5 hover:bg-rose-600/10 hover:text-rose-500 border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">
               <Trash2 className="w-4 h-4" />

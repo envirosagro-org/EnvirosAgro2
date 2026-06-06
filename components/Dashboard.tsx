@@ -125,11 +125,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
              <div className="flex flex-col sm:flex-row justify-between gap-4 items-center pb-4 border-b border-white/5 mb-4">
                 <div className="flex items-center justify-center sm:justify-start gap-3">
                   <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-white text-slate-900 flex items-center justify-center text-2xl md:text-3xl font-black shadow-lg relative shrink-0">
-                    {user.name[0]}
+                    {(user.name || 'U')[0]}
                   </div>
                   <div className="space-y-0.5">
                      <h3 className="text-xl md:text-2xl font-black tracking-tighter uppercase italic text-white drop-shadow-lg">
-                      {user.name.split(' ')[0]} <span className="text-emerald-400">{user.name.split(' ')[1] || 'STEWARD'}</span>
+                      {(user.name || '').split(' ')[0]} <span className="text-emerald-400">{(user.name || '').split(' ')[1] || 'STEWARD'}</span>
                     </h3>
                     <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{user.role}</p>
                   </div>
