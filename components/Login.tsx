@@ -270,11 +270,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
         try {
           getOrInitRecaptcha();
           const userCredential = await createUserWithEmailAndPassword(null, email, password);
-          await createStewardProfile(userCredential.user.uid, email, name);
-          await sendVerificationShard();
+          const { profile: newProfile } = await createStewardProfile(userCredential.user.uid, email, name);
+          try {
+            await sendVerificationShard();
+          } catch (err) {
+            console.warn("Verification email skipped in development:", err);
+          }
           isSuccessRef.current = true;
           setRegistrationState(null); // Clear state upon successful registration
-          setMode('waiting_verification');
+          onLogin(newProfile);
         } catch (error: any) {
           setMessage({ type: 'error', text: `REGISTRY_ERROR: ${error.message}` });
         } finally {
@@ -289,12 +293,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
       getOrInitRecaptcha();
       if (mode === 'login') {
         const userCredential = await signInWithEmailAndPassword(null, email, password);
-        if (!userCredential.user.emailVerified) {
-          setMode('waiting_verification');
-          return;
-        }
         const profile = await getStewardProfile(userCredential.user.uid);
-        if (profile) onLogin(profile);
+        if (profile) {
+          onLogin(profile);
+        } else {
+          const { profile: newProfile } = await createStewardProfile(userCredential.user.uid, email, name || 'Steward');
+          onLogin(newProfile);
+        }
       }
     } catch (error: any) {
       setMessage({ type: 'error', text: `REGISTRY_ERROR: ${error.message}` });
@@ -374,8 +379,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isEmbed = false }) => {
 
          <div className="flex justify-center p-2 glass-card rounded-[32px] bg-black/80 border border-white/10 w-fit mx-auto overflow-hidden gap-2">
             <button onClick={() => setMode('login')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'login' || mode === 'forgot' ? 'bg-white text-black shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>REGISTRY_AUTH</button>
-            <button onClick={() => setMode('phone')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'phone' || mode === 'verify_phone' ? 'bg-blue-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>2FACTOR_VERIFICATION</button>
-            <button onClick={handleRegisterClick} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>MINT_NODE</button>
+                        <button onClick={handleRegisterClick} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-3xl transition-all ${mode === 'register' ? 'bg-emerald-600 text-white shadow-2xl scale-105' : 'text-slate-600 hover:text-white'}`}>MINT_NODE</button>
          </div>
 
          {mode !== 'forgot' && mode !== 'verify_phone' && mode !== 'waiting_verification' && (

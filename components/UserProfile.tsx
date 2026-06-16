@@ -10,7 +10,7 @@ import {
   Shield as ShieldIcon, Globe, Lock, Info, Download,
   FileCode, History, Camera, UserPlus, HeartPulse,
   Coins, ShieldX, Settings, Share2, Bell, LogOut,
-  Mail, Phone, ExternalLink, Globe2, Trash2, Save,
+  Mail, Phone, ExternalLink, Globe2, Trash2, Save, Send,
   X, CheckCircle2, CreditCard, Key, AlertCircle,
   Pencil, MessageSquare, Twitter, Linkedin, Facebook,
   ArrowUpRight, Copy, SmartphoneNfc,
@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Toggle } from './ui/Toggle';
 import { notificationService } from '../services/notificationService';
+import { triggerEmailChange, sendVerificationShard } from '../services/firebaseService';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
   ResponsiveContainer, Radar as RechartsRadar, Tooltip 
@@ -73,6 +74,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdateUser, 
   const [editBio, setEditBio] = useState(user.bio || '');
   const [editLocation, setEditLocation] = useState(user.location);
   const [isSaving, setIsSaving] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [isEmailSaving, setIsEmailSaving] = useState(false);
+  const [tfaMethod, setTfaMethod] = useState<'EMAIL' | 'SMS'>(user.tfaMethod || 'EMAIL');
+  const [isTfaActionLoading, setIsTfaActionLoading] = useState(false);
+  const [securityStatusMsg, setSecurityStatusMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   const idCardRef = useRef<HTMLDivElement>(null);
   const certRef = useRef<HTMLDivElement>(null);
@@ -598,40 +604,166 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdateUser, 
                      <h3 className="text-2xl font-black text-white uppercase italic">System <span className="text-indigo-400">Configurations</span></h3>
                   </div>
 
+                  {securityStatusMsg && (
+                     <div className={`p-8 rounded-[40px] border text-xs font-black uppercase tracking-widest animate-in zoom-in flex items-center gap-4 text-left shadow-2xl ${
+                       securityStatusMsg.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-500'
+                     }`}>
+                        <ShieldCheck className="shrink-0 text-indigo-400 animate-pulse" size={24} />
+                        <span className="leading-relaxed">{securityStatusMsg.text}</span>
+                     </div>
+                  )}
+
                   <div className="space-y-6">
                      {[
                         { id: 'notif', label: 'Signal Dispatch', desc: 'Enable real-time push sharding for network alerts.', val: user.settings?.notificationsEnabled, icon: BellRing },
                         { id: 'whatsapp', label: 'WhatsApp Notifications', desc: 'Sync account alerts to your linked WhatsApp device.', val: user.settings?.whatsappNotifications, icon: MessageSquare },
-                        { id: 'tfa_enable', label: '2-Factor Auth', desc: 'Enable secondary authentication for your node.', val: user.tfaEnabled, icon: ShieldCheck },
+                        { id: 'tfa_enable', label: '2-Factor Auth', desc: 'Secure your node using secondary authorization.', val: user.tfaEnabled, icon: ShieldCheck },
                         { id: 'sync', label: 'Autonomous Ingest', desc: 'Allow kernel to automatically resync with regional relay nodes.', val: user.settings?.autoSync, icon: RefreshCw },
                         { id: 'bio', label: 'Biometric Handshake', icon: Fingerprint, desc: 'Use local biometric shard for rapid ESIN authorization.', val: user.settings?.biometricLogin },
                      ].map(setting => (
-                        <div key={setting.id} className="p-8 bg-white/5 rounded-[40px] border border-white/10 flex items-center justify-between group hover:border-indigo-500/40 transition-all">
-                           <div className="flex items-center gap-6">
-                              <div className="p-4 bg-black/40 rounded-2xl text-indigo-400 shadow-inner group-hover:scale-110 transition-transform"><setting.icon size={24} /></div>
-                              <div className="text-left">
-                                 <h4 className="text-lg font-black text-white uppercase italic leading-none">{setting.label}</h4>
-                                 <p className="text-[10px] text-slate-500 mt-2 font-medium opacity-80 group-hover:opacity-100 italic">"{setting.desc}"</p>
+                        <div key={setting.id} className="p-8 bg-white/5 rounded-[40px] border border-white/10 flex flex-col gap-6 group hover:border-indigo-500/40 transition-all">
+                           <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-6">
+                                 <div className="p-4 bg-black/40 rounded-2xl text-indigo-400 shadow-inner group-hover:scale-110 transition-transform"><setting.icon size={24} /></div>
+                                 <div className="text-left">
+                                    <h4 className="text-lg font-black text-white uppercase italic leading-none">{setting.label}</h4>
+                                    <p className="text-[10px] text-slate-500 mt-2 font-medium opacity-80 group-hover:opacity-100 italic">"{setting.desc}"</p>
+                                 </div>
                               </div>
-                           </div>
-                           <Toggle 
-                              enabled={!!setting.val} 
-                              onToggle={async (enabled) => {
-                                 if (setting.id === 'notif' && enabled) {
-                                    const permission = await notificationService.requestPermission();
-                                    if (permission !== 'granted') {
-                                       notify('warning', 'PERMISSION_DENIED', 'Browser notifications were blocked by your device.');
+                              <Toggle 
+                                 enabled={!!setting.val} 
+                                 onToggle={async (enabled) => {
+                                    if (setting.id === 'notif' && enabled) {
+                                       const permission = await notificationService.requestPermission();
+                                       if (permission !== 'granted') {
+                                          notify('warning', 'PERMISSION_DENIED', 'Browser notifications were blocked by your device.');
+                                       }
                                     }
-                                 }
-                                 onUpdateUser({
-                                    ...user,
-                                    settings: { ...(user.settings || {}), [setting.id === 'notif' ? 'notificationsEnabled' : setting.id === 'whatsapp' ? 'whatsappNotifications' : setting.id === 'sync' ? 'autoSync' : 'biometricLogin']: enabled } as any,
-                                    ...(setting.id === 'tfa_enable' ? { tfaEnabled: enabled } : {})
-                                 });
-                              }}
-                           />
+                                    onUpdateUser({
+                                       ...user,
+                                       settings: { ...(user.settings || {}), [setting.id === 'notif' ? 'notificationsEnabled' : setting.id === 'whatsapp' ? 'whatsappNotifications' : setting.id === 'sync' ? 'autoSync' : 'biometricLogin']: enabled } as any,
+                                       ...(setting.id === 'tfa_enable' ? { tfaEnabled: enabled } : {})
+                                    });
+                                 }}
+                              />
+                           </div>
+
+                           {setting.id === 'tfa_enable' && user.tfaEnabled && (
+                              <div className="p-8 bg-black/50 rounded-[32px] border border-indigo-500/10 space-y-8 animate-in slide-in-from-top-4 duration-500 text-left">
+                                 <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">SELECT 2-FACTOR METHOD</h5>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <button 
+                                       onClick={() => {
+                                          setTfaMethod('EMAIL');
+                                          onUpdateUser({ ...user, tfaMethod: 'EMAIL' });
+                                       }}
+                                       className={`p-6 rounded-[24px] border transition-all text-left space-y-2 ${tfaMethod === 'EMAIL' ? 'bg-indigo-600/10 border-indigo-500' : 'bg-transparent border-white/10 opacity-60'}`}
+                                    >
+                                       <div className="flex items-center gap-3">
+                                          <Mail className="text-indigo-400" size={16} />
+                                          <span className="text-[11px] font-black text-white uppercase tracking-widest font-mono">EMAIL_TOKEN</span>
+                                       </div>
+                                       <p className="text-[9px] text-slate-500 italic font-medium leading-normal">Authenticate nodes via direct email signature confirmation shards.</p>
+                                    </button>
+
+                                    <button 
+                                       onClick={() => {
+                                          setTfaMethod('SMS');
+                                          onUpdateUser({ ...user, tfaMethod: 'SMS' });
+                                       }}
+                                       className={`p-6 rounded-[24px] border transition-all text-left space-y-2 ${tfaMethod === 'SMS' ? 'bg-indigo-600/10 border-indigo-500' : 'bg-transparent border-white/10 opacity-60'}`}
+                                    >
+                                       <div className="flex items-center gap-3">
+                                          <SmartphoneNfc className="text-indigo-400" size={16} />
+                                          <span className="text-[11px] font-black text-white uppercase tracking-widest font-mono">SMS_SHARD_RELAY</span>
+                                       </div>
+                                       <p className="text-[9px] text-slate-500 italic font-medium leading-normal">Authenticate nodes via mobile transceiver dynamic SMS shards.</p>
+                                    </button>
+                                 </div>
+
+                                 <div className="pt-4">
+                                    <button
+                                       onClick={async () => {
+                                          setIsTfaActionLoading(true);
+                                          setSecurityStatusMsg(null);
+                                          try {
+                                             await sendVerificationShard();
+                                             setSecurityStatusMsg({ type: 'success', text: `2FA_SHARD_SENT: Verification email sent to your current address ${user.email} to confirm and unlock 2-Factor authentication.` });
+                                             notify('success', '2FA_DISPATCH_COMPLETE', 'Authentication shard shipped to your inbox.');
+                                          } catch (err: any) {
+                                             setSecurityStatusMsg({ type: 'error', text: `DISPATCH_ERROR: ${err.message}` });
+                                          } finally {
+                                             setIsTfaActionLoading(false);
+                                          }
+                                       }}
+                                       disabled={isTfaActionLoading}
+                                       className="w-full py-4 agro-gradient border border-white/10 rounded-full text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    >
+                                       {isTfaActionLoading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                                       DISPATCH 2FA CONFIRMATION EMAIL
+                                    </button>
+                                 </div>
+                              </div>
+                           )}
                         </div>
                      ))}
+                  </div>
+
+                  {/* Email Change Resigning Sector */}
+                  <div className="pt-8 border-t border-white/5 space-y-8 text-left animate-in fade-in duration-500">
+                     <div className="flex items-center gap-3">
+                        <Key size={18} className="text-indigo-400" />
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">RE-SIGN NODE SIGNATURE (EMAIL CHANGE)</span>
+                     </div>
+
+                     <div className="space-y-6 bg-white/5 p-8 rounded-[40px] border border-white/10">
+                        <div className="space-y-1">
+                           <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic font-mono">Current Identifier Signature</p>
+                           <p className="text-md font-mono text-white italic">{user.email}</p>
+                        </div>
+
+                        <div className="space-y-3">
+                           <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest font-mono">New Node Identifier (Email Address)</label>
+                           <div className="flex flex-col md:flex-row gap-4">
+                              <input 
+                                 type="email" 
+                                 value={newEmail} 
+                                 onChange={e => setNewEmail(e.target.value)} 
+                                 placeholder="steward-new@envirosagro.org" 
+                                 className="flex-1 bg-black/60 border border-white/10 rounded-full py-5 px-8 text-sm text-white font-mono outline-none focus:border-indigo-500 transition-all italic leading-none" 
+                              />
+                              <button 
+                                 onClick={async () => {
+                                    if (!newEmail || !newEmail.includes('@')) {
+                                       setSecurityStatusMsg({ type: 'error', text: 'INVALID_SIGNATURE: Please enter a valid email address.' });
+                                       return;
+                                    }
+                                    setIsEmailSaving(true);
+                                    setSecurityStatusMsg(null);
+                                    try {
+                                       const success = await triggerEmailChange(newEmail);
+                                       if (success) {
+                                          setSecurityStatusMsg({ type: 'success', text: `HANDSHAKE_EMITTED: Security confirm dispatched to ${newEmail}. Open inbox to finalize signature transfer.` });
+                                          notify('success', 'EMAIL_CHANGE_SHIPT', 'Handshake confirmation email triggered.');
+                                          setNewEmail('');
+                                       } else {
+                                          setSecurityStatusMsg({ type: 'error', text: 'HANDSHAKE_FAILURE: Could not establish communication with root sync.' });
+                                       }
+                                    } catch (err: any) {
+                                        setSecurityStatusMsg({ type: 'error', text: `SECURITY_RESET_FAILED: ${err.message}` });
+                                    } finally {
+                                       setIsEmailSaving(false);
+                                    }
+                                 }}
+                                 disabled={isEmailSaving}
+                                 className="py-5 px-10 bg-indigo-600 hover:bg-indigo-550 text-white rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 border-2 border-white/5"
+                              >
+                                 {isEmailSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                 {isEmailSaving ? 'EMITTING...' : 'DISPATCH EMAIL CHANGE SHARD'}
+                              </button>
+                           </div>
+                        </div>
+                     </div>
                   </div>
 
                   <div className="pt-10 border-t border-white/5 flex gap-4">

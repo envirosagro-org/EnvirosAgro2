@@ -21,6 +21,10 @@ const getDriveProvider = () => {
   provider.addScope('https://www.googleapis.com/auth/chat.messages');
   provider.addScope('https://www.googleapis.com/auth/forms.body');
   provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+  provider.addScope('https://www.googleapis.com/auth/classroom.courses.readonly');
+  provider.addScope('https://www.googleapis.com/auth/classroom.courseworkmaterials');
+  provider.addScope('https://www.googleapis.com/auth/classroom.coursework.me');
+  provider.addScope('https://www.googleapis.com/auth/classroom.announcements');
   // Optional but helpful: request offline access if needed
   provider.setCustomParameters({
     prompt: 'consent'
@@ -350,3 +354,33 @@ export const createDocumentByType = async (title: string, type: 'document' | 'sp
     body: JSON.stringify(body)
   });
 };
+
+/**
+ * Automatically saves user's data payload as a JSON file to Google Drive.
+ * Deletes any existing one to avoid duplicate files.
+ */
+export const syncUserDataToDrive = async (userData: any): Promise<DriveFile | null> => {
+  const token = await getDriveAccessToken();
+  if (!token) return null;
+  try {
+    // Check for existing files with the same name and delete them
+    const existingFiles = await listDriveFiles('root', 'envirosagro_steward_profile.json');
+    const matched = existingFiles.filter(f => f.name === 'envirosagro_steward_profile.json');
+    for (const f of matched) {
+      try {
+        await deleteDriveFile(f.id);
+      } catch (err) {
+        console.warn('Failed to delete old drive profile:', err);
+      }
+    }
+    // Upload the new file
+    const jsonStr = JSON.stringify(userData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const file = new File([blob], 'envirosagro_steward_profile.json', { type: 'application/json' });
+    return await uploadFileToDrive(file, 'root');
+  } catch (error) {
+    console.error('Failed to sync user data to Google Drive:', error);
+    return null;
+  }
+};
+

@@ -132,9 +132,16 @@ service cloud.firestore {
     }
 
     match /orders/{orderId} {
-      allow read: if isSignedIn() && (resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.stewardId == request.auth.uid || resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
+      allow get: if isSignedIn() && isValidId(orderId) && (resource.data.stewardId == request.auth.uid || resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
       allow create: if isVerified() && isValidId(orderId);
-      allow update: if isVerified() && isValidId(orderId) && (resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
+      allow update: if isVerified() && isValidId(orderId) && (resource.data.stewardId == request.auth.uid || resource.data.customerEsin == request.auth.uid || resource.data.supplierEsin == request.auth.uid);
+    }
+
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(productId);
+      allow update: if isVerified() && isValidId(productId);
     }
 
     match /live_products/{productId} {
@@ -157,14 +164,14 @@ service cloud.firestore {
     }
 
     match /transactions/{txId} {
-      allow list: if isSignedIn() && resource.data.farmId == request.auth.uid;
-      allow get: if isSignedIn() && isValidId(txId) && resource.data.farmId == request.auth.uid;
+      allow list: if isSignedIn() && (resource.data.stewardId == request.auth.uid || resource.data.farmId == request.auth.uid);
+      allow get: if isSignedIn() && isValidId(txId) && (resource.data.stewardId == request.auth.uid || resource.data.farmId == request.auth.uid);
       allow create: if isVerified() && isValidId(txId) && isValidTokenTransaction(incoming());
       allow update, delete: if false; // Immutable transactions
     }
 
     match /signals/{signalId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && resource.data.stewardId == request.auth.uid;
       allow create: if isVerified() && isValidId(signalId) && isValidSignal(incoming());
       allow update: if isVerified() && isValidId(signalId) && isValidSignal(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
     }
@@ -175,7 +182,6 @@ service cloud.firestore {
       allow update: if isVerified() && isValidId(nodeId) && isValidMachineNode(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'lastModified']);
     }
 
-    // New collections
     match /mrv_jobs/{jobId} {
         allow read: if isSignedIn() && resource.data.stewardId == request.auth.uid;
         allow create: if isVerified() && isValidId(jobId) && isValidMRVJob(incoming());
@@ -184,7 +190,6 @@ service cloud.firestore {
 
     match /auditors/{auditorId} {
         allow read: if isSignedIn();
-        // Specific auditor logic needed?
         allow create: if isVerified() && isValidId(auditorId) && isValidAuditor(incoming());
     }
 
@@ -210,6 +215,52 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow create: if isVerified() && isValidId(readingId) && isValidDroneTelemetry(incoming());
         allow update: if false;
+    }
+
+    // New additions based on missing collections
+    match /industrial_units/{unitId} {
+      allow list: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+      allow get: if isSignedIn() && isValidId(unitId) && resource.data.stewardId == request.auth.uid;
+      allow create: if isVerified() && isValidId(unitId);
+      allow update: if isVerified() && isValidId(unitId) && resource.data.stewardId == request.auth.uid;
+    }
+
+    match /tasks/{taskId} {
+      allow list: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+      allow get: if isSignedIn() && isValidId(taskId) && resource.data.stewardId == request.auth.uid;
+      allow create: if isVerified() && isValidId(taskId);
+      allow update: if isVerified() && isValidId(taskId) && resource.data.stewardId == request.auth.uid;
+    }
+
+    match /blueprints/{blueprintId} {
+      allow list: if isSignedIn() && resource.data.stewardId == request.auth.uid;
+      allow get: if isSignedIn() && isValidId(blueprintId) && resource.data.stewardId == request.auth.uid;
+      allow create: if isVerified() && isValidId(blueprintId);
+      allow update: if isVerified() && isValidId(blueprintId) && resource.data.stewardId == request.auth.uid;
+    }
+
+    match /proposals/{proposalId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(proposalId);
+      allow update: if isVerified() && isValidId(proposalId);
+    }
+
+    match /votes/{voteId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(voteId);
+      allow update: if isVerified() && isValidId(voteId);
+    }
+
+    match /carbon_credits/{creditId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(creditId);
+      allow update: if isVerified() && isValidId(creditId);
+    }
+
+    match /mempool/{mempoolId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(mempoolId);
+      allow update: if isVerified() && isValidId(mempoolId);
     }
   }
 }

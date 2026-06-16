@@ -14,6 +14,7 @@ import { ShareButton } from './ShareButton';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { SEO } from './SEO';
+import { GoogleClassroomView } from './GoogleClassroomView';
 
 interface Resource {
   id: string;
@@ -47,7 +48,7 @@ interface EducationalResourcesProps {
 }
 
 const EducationalResources: React.FC<EducationalResourcesProps> = ({ user, onNavigate, onUpdateUser, onEmitSignal }) => {
-  const [activeTab, setActiveTab] = useState<'resources' | 'elearning' | 'tree' | 'industrial'>('resources');
+  const [activeTab, setActiveTab] = useState<'resources' | 'elearning' | 'tree' | 'industrial' | 'classroom'>('resources');
   const [activeCategory, setActiveCategory] = useState<'all' | 'sustainable_ag' | 'blockchain' | 'platform_usage'>('all');
   const [knowledgeProgress, setKnowledgeProgress] = useState(42);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
@@ -99,7 +100,8 @@ const EducationalResources: React.FC<EducationalResourcesProps> = ({ user, onNav
               { id: 'resources', label: 'Library', icon: Library },
               { id: 'elearning', label: 'E-Learning', icon: GraduationCap },
               { id: 'tree', label: 'Evo-Tree', icon: RefreshCw },
-              { id: 'industrial', label: 'Industrial', icon: Binary }
+              { id: 'industrial', label: 'Industrial', icon: Binary },
+              { id: 'classroom', label: 'Google Classroom', icon: GraduationCap }
             ]}
             activeTab={activeTab}
             onTabChange={(id) => setActiveTab(id as any)}
@@ -264,7 +266,7 @@ const EducationalResources: React.FC<EducationalResourcesProps> = ({ user, onNav
                    <button className="px-10 py-5 bg-rose-600 hover:bg-rose-500 text-white rounded-[24px] font-black uppercase tracking-widest transition-all shadow-xl shadow-rose-500/20">INITIATE_PRO_SIMULATION</button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-2 gap-4">
                    <div className="glass-card p-6 rounded-3xl border border-white/5 bg-white/5 flex items-center gap-4 shadow-inner">
                       <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
                          <Target size={20} />
@@ -284,6 +286,18 @@ const EducationalResources: React.FC<EducationalResourcesProps> = ({ user, onNav
                       </div>
                    </div>
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'classroom' && (
+              <motion.div 
+                key="classroom"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-6"
+              >
+                <GoogleClassroomView user={user} onNavigate={onNavigate} />
               </motion.div>
             )}
           </AnimatePresence>

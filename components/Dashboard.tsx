@@ -10,7 +10,7 @@ import {
   LayoutGrid, ArrowUpRight, ShoppingBag, Radio, Signal, Eye, ChevronRight,
   Gem, Landmark, PlayCircle, BookOpen, Lightbulb, CheckCircle2,
   AlertCircle, Target, Waves, ShieldAlert, UserPlus, AlertTriangle,
-  Loader2, Atom, Network, Gauge, Leaf, Heart, Wifi, Settings, Layers
+  Loader2, Atom, Network, Gauge, Leaf, Heart, Wifi, Settings, Layers, RefreshCw
 } from 'lucide-react';
 import { ViewState, User, Order, AgroBlock } from '../types';
 import { HenIcon } from './Icons';
@@ -111,8 +111,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
            </div>
            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">TELEMETRY_LIVE</span>
         </div>
-        <div className="flex-1 px-6 overflow-hidden relative z-10 text-[10px] font-mono font-black uppercase tracking-widest text-emerald-400/60 truncate">
-           FINALITY: {blockchain[0]?.hash.substring(0, 8) || '0xGENESIS'} • RESONANCE: 1.42x • GLOBAL_DRIFT: {networkDrift}μ • SYCAMORE_OS_v6.5 • SHARD_SYNC_ACTIVE
+        <div className="flex-1 px-6 overflow-hidden relative z-10 text-[10px] font-mono font-black uppercase tracking-widest text-emerald-400/60 truncate flex flex-wrap items-center justify-between gap-2">
+           <span>FINALITY: {blockchain[0]?.hash.substring(0, 8) || '0xGENESIS'} • RESONANCE: 1.42x • GLOBAL_DRIFT: {networkDrift}μ • SYCAMORE_OS_v6.5 •</span>
+           {isGuest ? (
+             <button 
+               onClick={() => onNavigate('auth')}
+               id="btn-telemetry-sync-login"
+               className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-900 border border-emerald-400/30 rounded-full font-black text-[9px] uppercase tracking-widest animate-pulse hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+             >
+               <RefreshCw size={10} className="animate-spin" style={{ animationDuration: '3s' }} /> SYNC SHARD (LOG IN)
+             </button>
+           ) : (
+             <span className="text-emerald-400 flex items-center gap-1.5">
+               <CheckCircle2 size={10} className="text-emerald-400" /> SHARD_SYNC_ACTIVE
+             </span>
+           )}
         </div>
       </div>
 
@@ -136,6 +149,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, isGuest, orders = [], block
                 </div>
                 
                 <div className="flex flex-row gap-2 w-full sm:w-auto">
+                   {isGuest && (
+                     <button 
+                       onClick={() => onNavigate('auth')}
+                       id="btn-identity-sync-login"
+                       className="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer border border-indigo-500/20 hover:scale-105 active:scale-95 animate-pulse"
+                     >
+                       <RefreshCw size={12} className="animate-spin" style={{ animationDuration: '4s' }} /> SYNC PROFILE (LOG IN)
+                     </button>
+                   )}
                    <NavigationLink path="profile/card" className="flex-1 sm:flex-none px-4 py-2.5 agro-gradient rounded-lg text-[9px] font-black uppercase tracking-widest text-white transition-all shadow-lg flex items-center justify-center gap-2">
                      <Fingerprint size={12} /> ID
                    </NavigationLink>

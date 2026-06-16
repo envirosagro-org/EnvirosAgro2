@@ -12,7 +12,8 @@ import {
   signInWithPhoneNumber,
   ConfirmationResult,
   sendEmailVerification,
-  reload
+  reload,
+  verifyBeforeUpdateEmail
 } from "firebase/auth";
 import { 
   initializeFirestore,
@@ -259,6 +260,13 @@ export const refreshAuthUser = async () => {
   }
   return null;
 };
+export const triggerEmailChange = async (newEmail: string) => {
+  if (auth.currentUser) {
+    await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
+    return true;
+  }
+  return false;
+};
 
 // --- PHONE AUTH ---
 export const setupRecaptcha = (containerId: string) => {
@@ -427,7 +435,31 @@ export const syncUserToCloud = async (userData: AgroUser, uid?: string) => {
   if (!userId) return false;
   try {
     const cleanUserData = cleanObject(userData);
-    await setDoc(doc(db, "stewards", userId), { ...cleanUserData, lastSync: Date.now(), stewardId: userData.esin || userId }, { merge: true });
+    const enrichedData = { ...cleanUserData, lastSync: Date.now(), stewardId: userData.esin || userId };
+
+    // 1. Save to Cloud Firestore
+    await setDoc(doc(db, "stewards", userId), enrichedData, { merge: true });
+
+    // 2. Save to Local Storage & LocalForage offline cache
+    try {
+      localStorage.setItem('envirosagro_steward_profile', JSON.stringify(enrichedData));
+      await persistItem('envirosagro_steward_profile', enrichedData);
+    } catch (localErr) {
+      console.warn("Failed to save to local storage:", localErr);
+    }
+
+    // 3. Save to Google Drive if user has authenticated with Google
+    try {
+      const driveService = await import('../googleDriveService');
+      const token = await driveService.getDriveAccessToken();
+      if (token) {
+        console.log("Syncing user data to Google Drive...");
+        await driveService.syncUserDataToDrive(enrichedData);
+      }
+    } catch (driveErr) {
+      console.warn("Google Drive Sync skipped or failed:", driveErr);
+    }
+
     return true;
   } catch (e) { 
     handleFirestoreError(e, OperationType.WRITE, `stewards/${userId}`);

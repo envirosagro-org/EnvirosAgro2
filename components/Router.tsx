@@ -74,6 +74,7 @@ const EmergencyPortal = React.lazy(() => import('./EmergencyPortal'));
 const Impact = React.lazy(() => import('./Impact'));
 const GoogleDriveView = React.lazy(() => import('./GoogleDriveView'));
 const GmailView = React.lazy(() => import('./GmailView').then(m => ({ default: m.GmailView })));
+const GoogleClassroomView = React.lazy(() => import('./GoogleClassroomView').then(m => ({ default: m.GoogleClassroomView })));
 const GoogleCalendarView = React.lazy(() => import('./GoogleCalendarView').then(m => ({ default: m.GoogleCalendarView })));
 const GoogleMeetView = React.lazy(() => import('./GoogleMeetView').then(m => ({ default: m.GoogleMeetView })));
 const GoogleTasksView = React.lazy(() => import('./GoogleTasksView'));
@@ -154,6 +155,7 @@ export const getComponentForView = (
     case 'registry_handshake': return <RegistryHandshake {...props} />;
     case 'impact': return <Impact {...props} />;
     case 'google_drive': return <GoogleDriveView {...props} />;
+    case 'google_classroom': return <GoogleClassroomView {...props} />;
     case 'gmail': return <GmailView {...props} />;
     case 'google_calendar': return <GoogleCalendarView {...props} />;
     case 'google_meet': return <GoogleMeetView {...props} />;

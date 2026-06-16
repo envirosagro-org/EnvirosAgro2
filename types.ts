@@ -71,6 +71,7 @@ export interface User {
   phone?: string;
   tfaEnabled?: boolean;
   tfaType?: 'email' | 'phone';
+  tfaMethod?: 'EMAIL' | 'SMS';
   settings?: {
     notificationsEnabled: boolean;
     emailNotifications?: boolean;
@@ -531,7 +532,7 @@ export interface Task {
 }
 
 export type ViewState = 
-  | 'google_drive' | 'gmail' | 'google_calendar' | 'google_meet' | 'google_tasks' | 'google_sheets' | 'google_docs' | 'google_slides' | 'google_chat' | 'google_forms' | 'google_keep' | 'contacts' | 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' 
+  | 'google_classroom' | 'google_drive' | 'gmail' | 'google_calendar' | 'google_meet' | 'google_tasks' | 'google_sheets' | 'google_docs' | 'google_slides' | 'google_chat' | 'google_forms' | 'google_keep' | 'contacts' | 'dashboard' | 'wallet' | 'sustainability' | 'economy' | 'industrial' 
   | 'intelligence' | 'community' | 'explorer' | 'ecosystem' | 'media' 
   | 'info' | 'profile' | 'investor' | 'vendor' | 'ingest' | 'tools' 
   | 'channelling' | 'circular' | 'crm' | 'tqm' | 'research' 
