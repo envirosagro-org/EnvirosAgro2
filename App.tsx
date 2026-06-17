@@ -1414,9 +1414,20 @@ const App: React.FC = () => {
                                     e.stopPropagation();
                                     setExpandedItemIds(prev => ({ ...prev, [item.id]: !isExpanded }));
                                   }}
-                                  className={`p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-all mr-2 ${isExpanded ? 'rotate-180 text-emerald-400' : ''}`}
+                                  className="p-2 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-all mr-2 flex items-center gap-1.5 group/toggle"
+                                  title="Toggle Section Details"
                                 >
-                                  <ChevronDown size={14} />
+                                  <span
+                                    className={`relative inline-flex h-3 w-5.5 shrink-0 rounded-full border border-transparent transition-colors duration-300 ease-in-out ${
+                                      isExpanded ? 'bg-emerald-500/80 shadow-[0_0_6px_rgba(16,185,129,0.3)]' : 'bg-slate-800'
+                                    }`}
+                                  >
+                                    <span
+                                      className={`pointer-events-none inline-block h-2 w-2 transform rounded-full bg-white transition duration-300 ease-in-out ${
+                                        isExpanded ? 'translate-x-2.5' : 'translate-x-0'
+                                      }`}
+                                    />
+                                  </span>
                                 </button>
                               )}
                             </div>

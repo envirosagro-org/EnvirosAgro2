@@ -13,6 +13,7 @@ import { generateHandshakeAgroLang } from '../services/agroLangService';
 import { toast } from 'sonner';
 import GISPortal from './GISPortal';
 import { spatialService } from '../services/ops/spatialService';
+import GooglePlacesLocalitySelector from './GooglePlacesLocalitySelector';
 
 interface RegistryHandshakeProps {
   user: User;
@@ -124,7 +125,7 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
   const [boundaryPath, setBoundaryPath] = useState<{ lat: number, lng: number }[]>([]);
   const [currentGPS, setCurrentGPS] = useState<{ lat: number, lng: number }>({ lat: -1.2921, lng: 36.8219 });
   const [gpsAccuracy, setGpsAccuracy] = useState<number>(3.5);
-  const [mappingMethod, setMappingMethod] = useState<'GPS_CIRCUIT' | 'GIS_PORTAL'>('GPS_CIRCUIT');
+  const [mappingMethod, setMappingMethod] = useState<'GPS_CIRCUIT' | 'GIS_PORTAL' | 'GOOGLE_PLACES'>('GOOGLE_PLACES');
 
   const deedStats = useMemo(() => {
     if (boundaryPath && boundaryPath.length >= 3) {
@@ -641,6 +642,13 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
                                <div className="space-y-6 px-4">
                                  {/* Selection Tab */}
                                  <div className="flex gap-4 p-1.5 bg-black/60 border border-white/10 rounded-2xl">
+                                    <button 
+                                      type="button"
+                                      onClick={() => { setMappingMethod('GOOGLE_PLACES'); handleResetPlotting(); }}
+                                      className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${mappingMethod === 'GOOGLE_PLACES' ? 'bg-indigo-600/90 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                      Google Places Locality
+                                    </button>
                                    <button 
                                      type="button"
                                      onClick={() => { setMappingMethod('GPS_CIRCUIT'); handleResetPlotting(); }}
@@ -657,7 +665,24 @@ const RegistryHandshake: React.FC<RegistryHandshakeProps> = ({
                                    </button>
                                  </div>
 
-                                 {mappingMethod === 'GIS_PORTAL' ? (
+                                 {mappingMethod === 'GOOGLE_PLACES' ? (
+                                    <div className="space-y-3">
+                                      <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4">Verify Locality via Google Places</label>
+                                      <div className="w-full rounded-[32px] overflow-hidden">
+                                        <GooglePlacesLocalitySelector 
+                                          user={user} 
+                                          onEmitSignal={onEmitSignal}
+                                          assetName={assetName}
+                                          setAssetName={setAssetName}
+                                          onSelectPlot={(plot) => {
+                                            useUiStore.getState().setSelectedPlot(plot);
+                                            setAssetName(plot.name);
+                                            setPlottingPhase('COMPLETED');
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : mappingMethod === 'GIS_PORTAL' ? (
                                    <div className="space-y-3">
                                      <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest px-4">Select Plot from GIS Portal</label>
                                      <div className="w-full rounded-[32px] overflow-hidden border-2 border-white/10">
