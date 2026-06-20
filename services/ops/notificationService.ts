@@ -1,5 +1,6 @@
 
 import { useUserStore } from '../../store/userStore';
+import { audioManager } from '../audioService';
 
 export class NotificationService {
   private static instance: NotificationService;
@@ -57,6 +58,13 @@ export class NotificationService {
    * Displays a browser notification.
    */
   public sendNotification(title: string, options?: NotificationOptions) {
+    // Play the Agromusika synthesized acoustic alert chime
+    try {
+      audioManager.playNotificationPing();
+    } catch (e) {
+      console.warn('Notification audio trigger failed:', e);
+    }
+
     if (!('Notification' in window) || !this.isNotificationAllowed('browser')) return;
 
     if (Notification.permission === 'granted') {

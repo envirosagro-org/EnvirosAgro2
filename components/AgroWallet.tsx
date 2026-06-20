@@ -155,6 +155,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   // New Provider State
   const [newProvFragment, setNewProvFragment] = useState('');
+  const [newProvType, setNewProvType] = useState<'PayPal' | 'Mobile'>('PayPal');
 
   // Swap State
   const [swapAmount, setSwapAmount] = useState('100');
@@ -247,10 +248,11 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   const handleLinkProvider = () => {
     if (!newProvFragment) return;
+    const isMpesa = newProvType === 'Mobile';
     const newProv: LinkedProvider = {
       id: `PRV-${Date.now()}`,
-      type: 'PayPal',
-      name: 'PayPal',
+      type: newProvType,
+      name: isMpesa ? 'M-Pesa' : 'PayPal',
       accountFragment: newProvFragment,
       status: 'Active',
       lastSync: new Date().toISOString()
@@ -268,7 +270,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
     setSelectedProvider(newProv);
     notify({ 
       title: 'PROVIDER_SYNCED', 
-      message: `PayPal node anchored to wallet registry.`, 
+      message: isMpesa ? `M-Pesa node anchored to wallet registry.` : `PayPal node anchored to wallet registry.`, 
       type: 'network', 
       priority: 'medium',
       actionIcon: 'Link2'
@@ -300,7 +302,49 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   const executeGatewayHandshake = async () => {
     if (!selectedProvider) return;
     
-    if (showGatewayModal === 'withdrawal') {
+    if (selectedProvider.type === 'Mobile') {
+      setGatewayStep('handoff');
+      try {
+        const response = await fetch('/api/mpesa/stkpush', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phoneNumber: selectedProvider.accountFragment,
+            amount: gatewayCurrency === 'KES' ? Number(gatewayAmount) : Number(gatewayAmount) * FOREX_RATES.USD_KES,
+            accountReference: user.esin.substring(0, 12),
+            transactionDesc: 'AgroWallet Ingest'
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'STK Push failed');
+        }
+
+        const resData = await response.json();
+        
+        if (resData.data?.isSimulated) {
+          toast.success("M-PESA SIMULATION: STK Push simulated successfully on handset!", {
+            duration: 5000,
+            style: { background: '#0e1726', border: '1px solid #10b981', color: '#10b981' }
+          });
+        } else {
+          toast.success("M-PESA: STK Push prompt sent successfully to your handset!", {
+            duration: 5000
+          });
+        }
+
+        await new Promise(r => setTimeout(r, 2000));
+        setGatewayStep('external_sync');
+        await new Promise(r => setTimeout(r, 2000));
+        setGatewayStep('sign');
+      } catch (err: any) {
+        toast.error(`M-PESA HANDSHAKE ERROR: ${err.message}`);
+        setGatewayStep('config');
+      }
+    } else if (showGatewayModal === 'withdrawal') {
       setGatewayStep('handoff');
       await new Promise(r => setTimeout(r, 1500));
       setGatewayStep('external_sync');
@@ -331,16 +375,17 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
     setIsProcessingGateway(true);
     setTimeout(() => {
       const amt = gatewayEacEquivalent;
+      const isMpesa = selectedProvider?.type === 'Mobile';
       if (showGatewayModal === 'deposit') {
-        onEarnEAC(amt, `EXTERNAL_INGEST_PAYPAL`);
+        onEarnEAC(amt, isMpesa ? `EXTERNAL_INGEST_MPESA` : `EXTERNAL_INGEST_PAYPAL`);
       } else {
-        onEarnEAC(-amt, `EXTERNAL_WITHDRAWAL_PAYPAL`);
+        onEarnEAC(-amt, isMpesa ? `EXTERNAL_WITHDRAWAL_MPESA` : `EXTERNAL_WITHDRAWAL_PAYPAL`);
       }
       setIsProcessingGateway(false);
       setGatewayStep('success');
       notify({ 
         title: 'SETTLEMENT_FINALIZED', 
-        message: "PayPal sharding protocol commitment successful.", 
+        message: isMpesa ? "M-Pesa sharding protocol commitment successful." : "PayPal sharding protocol commitment successful.", 
         type: 'ledger_anchor', 
         priority: 'high',
         actionIcon: 'Stamp'
@@ -406,6 +451,16 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
 
   const paypalProviders = useMemo(() => 
     (user.wallet.linkedProviders || []).filter(p => p.type === 'PayPal'),
+    [user.wallet.linkedProviders]
+  );
+
+  const mpesaProviders = useMemo(() => 
+    (user.wallet.linkedProviders || []).filter(p => p.type === 'Mobile'),
+    [user.wallet.linkedProviders]
+  );
+
+  const allProviders = useMemo(() => 
+    (user.wallet.linkedProviders || []).filter(p => p.type === 'PayPal' || p.type === 'Mobile'),
     [user.wallet.linkedProviders]
   );
 
@@ -488,56 +543,73 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
         </div>
       </div>
 
-        {/* --- VIEW: PAYPAL BRIDGES --- */}
+        {/* --- VIEW: SOVEREIGN BRIDGES --- */}
         {activeSubTab === 'gateway' && (
            <div className="space-y-12 animate-in slide-in-from-right-4 duration-700 px-4">
               <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-10 px-4">
                  <div className="space-y-2">
-                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">PayPal <span className="text-indigo-400">Bridges</span></h3>
-                    <p className="text-slate-500 text-lg md:text-xl font-medium italic opacity-70">"Synchronizing your steward identity with global financial shards."</p>
+                    <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter m-0">Sovereign <span className="text-indigo-400">Bridges</span></h3>
+                    <p className="text-slate-500 text-lg md:text-xl font-medium italic opacity-70">"Synchronizing your steward identity with global currency gateways."</p>
                  </div>
                  <button 
                   onClick={() => setShowLinkProvider(true)}
                   className="px-12 py-5 bg-indigo-600 hover:bg-indigo-500 rounded-full text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-xl transition-all flex items-center justify-center gap-4 active:scale-95 border-2 border-white/10"
                  >
-                    <PlusCircle size={20} /> LINK PAYPAL ACCOUNT
+                    <PlusCircle size={20} /> ANCHOR NEW BRIDGE
                  </button>
               </div>
 
               {showLinkProvider && (
                  <div className="glass-card p-10 rounded-[56px] border-2 border-indigo-500/40 bg-indigo-950/10 animate-in zoom-in duration-500 shadow-3xl space-y-10 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[15s]"><Mail size={400} /></div>
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:rotate-12 transition-transform duration-[15s]">{newProvType === 'Mobile' ? <Smartphone size={400} className="text-emerald-500" /> : <Mail size={400} />}</div>
                     <div className="flex items-center justify-between border-b border-white/5 pb-8 relative z-10">
                        <div className="flex items-center gap-6">
-                          <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl animate-float"><Mail size={32} /></div>
-                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">Authorize PayPal Bridge</h4>
+                          <div className={`w-16 h-16 rounded-2xl ${newProvType === 'Mobile' ? 'bg-emerald-600 animate-pulse' : 'bg-indigo-600 animate-float'} flex items-center justify-center text-white shadow-xl`}>{newProvType === 'Mobile' ? <Smartphone size={32} /> : <Mail size={32} />}</div>
+                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">{newProvType === 'Mobile' ? 'Authorize M-Pesa Bridge' : 'Authorize PayPal Bridge'}</h4>
                        </div>
-                       <button onClick={() => setShowLinkProvider(false)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X size={24}/></button>
+                       <button onClick={() => setShowLinkProvider(false)} className="p-4 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all inline-flex items-center gap-4">
+                           <div className="flex bg-black/60 p-1 rounded-xl border border-white/5 mr-2">
+                              <button 
+                                 type="button" 
+                                 onClick={() => { setNewProvType('PayPal'); setNewProvFragment(''); }}
+                                 className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${newProvType === 'PayPal' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                              >
+                                 PayPal
+                              </button>
+                              <button 
+                                 type="button" 
+                                 onClick={() => { setNewProvType('Mobile'); setNewProvFragment(''); }}
+                                 className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${newProvType === 'Mobile' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-emerald-400'}`}
+                              >
+                                 M-Pesa
+                              </button>
+                           </div>
+                           <X size={24}/></button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                        <div className="space-y-4">
                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 italic">Provider Protocol</label>
-                          <div className="p-8 rounded-[32px] border-2 border-indigo-500 bg-indigo-600/10 text-white flex flex-col items-center gap-4 shadow-xl">
-                             <Mail size={32} className="text-indigo-400" />
-                             <span className="text-xs font-black uppercase tracking-widest">PayPal Secure Ingest</span>
+                          <div className={`p-8 rounded-[32px] border-2 ${newProvType === 'Mobile' ? 'border-emerald-500 bg-emerald-600/10' : 'border-indigo-500 bg-indigo-600/10'} text-white flex flex-col items-center gap-4 shadow-xl`}>
+                             {newProvType === 'Mobile' ? <Smartphone size={32} className="text-emerald-400" /> : <Mail size={32} className="text-indigo-400" />}
+                             <span className="text-xs font-black uppercase tracking-widest">{newProvType === 'Mobile' ? 'M-Pesa Ingest Protocol' : 'PayPal Secure Ingest'}</span>
                           </div>
                        </div>
                        <div className="md:col-span-2 space-y-8">
                           <div className="space-y-4">
-                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4 italic">PayPal Email Address</label>
+                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-4 italic">{newProvType === 'Mobile' ? 'Safaricom M-Pesa Phone Number' : 'PayPal Email Address'}</label>
                              <input 
-                                type="email" value={newProvFragment} onChange={e => setNewProvFragment(e.target.value)}
-                                placeholder="steward@email.com"
+                                type={newProvType === 'Mobile' ? 'text' : 'email'} value={newProvFragment} onChange={e => setNewProvFragment(e.target.value)}
+                                placeholder={newProvType === 'Mobile' ? 'e.g., 254712345678' : 'steward@email.com'}
                                 className="w-full bg-black border-2 border-white/10 rounded-[32px] py-8 px-10 text-3xl font-mono font-black text-white outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all placeholder:text-stone-900 shadow-inner" 
                              />
                           </div>
                           <button 
                             onClick={handleLinkProvider}
                             disabled={!newProvFragment}
-                            className="w-full py-8 agro-gradient rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-white/5 disabled:opacity-30"
+                            className={`w-full py-8 rounded-full text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:scale-105 active:scale-95 transition-all border-4 border-white/10 ring-[12px] ring-white/5 disabled:opacity-30 ${newProvType === 'Mobile' ? 'bg-emerald-600' : 'agro-gradient'}`}
                           >
-                             <ShieldPlus size={24} /> ANCHOR PAYPAL SHARD
+                             <ShieldPlus size={24} className="inline mr-2" /> {newProvType === 'Mobile' ? 'ANCHOR M-PESA DARAJA' : 'ANCHOR PAYPAL SHARD'}
                           </button>
                        </div>
                     </div>
@@ -545,10 +617,10 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                 {paypalProviders.length === 0 ? (
+                 {allProviders.length === 0 ? (
                     <div className="col-span-full py-40 text-center opacity-10 border-4 border-dashed border-white/5 rounded-[80px] bg-black/40 flex flex-col items-center gap-10">
                        <Mail size={120} className="text-slate-600 animate-spin-slow" />
-                       <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic">NO_PAYPAL_BRIDGES</p>
+                       <p className="text-4xl font-black uppercase tracking-[0.5em] text-white italic">NO_SOVEREIGN_BRIDGES</p>
                     </div>
                  ) : (
                     paypalProviders.map(p => (
@@ -838,12 +910,12 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
                                   onChange={e => setSelectedProvider(user.wallet.linkedProviders?.find(p => p.id === e.target.value) || null)}
                                   className="w-full bg-black border-2 border-white/10 rounded-[32px] py-6 px-10 text-xl font-bold text-white focus:ring-8 focus:ring-indigo-500/10 outline-none transition-all appearance-none cursor-pointer italic"
                                 >
-                                   {paypalProviders.length > 0 ? (
-                                      paypalProviders.map(p => (
-                                        <option key={p.id} value={p.id}>{p.accountFragment} (Steward Node)</option>
+                                   {allProviders.length > 0 ? (
+                                      allProviders.map(p => (
+                                        <option key={p.id} value={p.id}>{p.accountFragment} ({p.name} Node)</option>
                                       ))
                                    ) : (
-                                      <option value="">No PayPal Shards Found</option>
+                                      <option value="">No Sovereign Bridges Found</option>
                                    )}
                                 </select>
                                 <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-700 pointer-events-none group-hover:text-indigo-400 transition-colors" />

@@ -1,8 +1,40 @@
 import express from "express";
 import { socialBotService } from "../services/socialBotService";
 import { generateAlphanumericId } from "../systemFunctions";
+import { initiateMpesaStkPush } from "../services/mpesaService";
 
 const router = express.Router();
+
+// M-Pesa Daraja payment proxy routes
+router.post("/mpesa/stkpush", async (req, res) => {
+  const { phoneNumber, amount, accountReference, transactionDesc } = req.body;
+
+  if (!phoneNumber || !amount || !accountReference) {
+    return res.status(400).json({ error: "Missing required fields: phoneNumber, amount, accountReference" });
+  }
+
+  try {
+    const result = await initiateMpesaStkPush({
+      phoneNumber,
+      amount: Number(amount),
+      accountReference,
+      transactionDesc
+    });
+    res.json({ status: "success", data: result });
+  } catch (error: any) {
+    console.error("[Daraja Route Error]", error);
+    res.status(500).json({ error: error.message || "Failed to trigger Daraja STK Push session" });
+  }
+});
+
+router.post("/mpesa/callback", (req, res) => {
+  console.log("[M-Pesa Callback Received]:", JSON.stringify(req.body, null, 2));
+  // In production, you would process the transaction result, check for success, 
+  // and credit the user's wallet accordingly. Since state is client-focused in this prototype,
+  // we return success.
+  res.json({ ResultCode: 0, ResultDesc: "Success" });
+});
+
 
 // Social Media Alliance
 router.post("/social/post", (req, res) => {

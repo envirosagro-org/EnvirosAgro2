@@ -30,6 +30,7 @@ const ToolsSection = React.lazy(() => import('./ToolsSection'));
 const LiveVoiceBridge = React.lazy(() => import('./LiveVoiceBridge'));
 import Channelling from './Channelling';
 const Governance = React.lazy(() => import('./GlobalGovernance').then(m => ({ default: m.GlobalGovernance })));
+const ScentGenerator = React.lazy(() => import('./ScentGeneratorView'));
 const AIOracleView = React.lazy(() => import('./AIOracleView'));
 const CarbonCredits = React.lazy(() => import('./CarbonCredits'));
 const Traceability = React.lazy(() => import('./Traceability'));
@@ -114,6 +115,7 @@ export const getComponentForView = (
     case 'channelling': return <Channelling {...props} />;
     case 'governance': return <Governance {...props} />;
     case 'ai_oracle': return <AIOracleView {...props} />;
+    case 'scent_generator': return <ScentGenerator {...props} />;
     case 'carbon_credits': return <CarbonCredits {...props} />;
     case 'traceability': return <Traceability {...props} />;
     case 'marketplace': return <Marketplace {...props} />;

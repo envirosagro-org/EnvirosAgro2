@@ -106,7 +106,8 @@ export const REGISTRY_NODES: RegistryGroup[] = [
       { id: 'plants_world', name: 'Plants World', icon: TreePine },
       { id: 'aqua_portal', name: 'Aqua Portal', icon: Droplets },
       { id: 'soil_portal', name: 'Soil Portal', icon: Mountain },
-      { id: 'air_portal', name: 'Air Portal', icon: Wind }
+      { id: 'air_portal', name: 'Air Portal', icon: Wind },
+      { id: 'scent_generator', name: 'Scent Generator', icon: Wind }
     ]
   },
   {

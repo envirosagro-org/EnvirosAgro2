@@ -547,7 +547,8 @@ export type ViewState =
   | 'mesh_protocol' | 'registry_handshake' | 'educational_resources' | 'hardware_registry' | 'device_control'
   | 'impact_dashboard' | 'traceability_map' | 'telemetry_hub' | 'asset_verification'
   | 'swarm_orchestrator' | 'mrv_engine' | 'reputation_dashboard' | 'escrow_portal'
-  | 'ai_oracle';
+  | 'ai_oracle'
+  | 'scent_generator';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 

@@ -797,6 +797,9 @@ const App: React.FC = () => {
 
       // Initialize Bot Automation
       automationService.startAutomation();
+      
+      // Initialize Agromusika Acoustic Sound Engine
+      audioManager.initialize();
     };
     init();
 
