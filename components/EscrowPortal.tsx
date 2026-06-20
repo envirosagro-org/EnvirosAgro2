@@ -9,6 +9,7 @@ import { EscrowContract, User } from '../types';
 import { SEO } from './SEO';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { BiometricVerificationModal } from './BiometricVerificationModal';
 
 interface EscrowPortalProps {
   user: User;
@@ -40,6 +41,10 @@ const EscrowPortal: React.FC<EscrowPortalProps> = ({ user }) => {
   const [activeStep, setActiveStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   const [newEscrow, setNewEscrow] = useState({ seller: '', amount: 100, desc: '' });
+  
+  // High-Security Biometric Protection Segment State
+  const [isBioOpen, setIsBioOpen] = useState(false);
+  const [pendingReleaseId, setPendingReleaseId] = useState<string | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +52,18 @@ const EscrowPortal: React.FC<EscrowPortalProps> = ({ user }) => {
     setContracts([sc, ...contracts]);
     setIsCreating(false);
     toast.success('Escrow Anchor Initialized. Funds sharded across network.');
+  };
+
+  const handleReleaseClick = (id: string) => {
+    setPendingReleaseId(id);
+    setIsBioOpen(true);
+  };
+
+  const handleBioSuccess = async () => {
+    if (pendingReleaseId) {
+      await handleRelease(pendingReleaseId);
+      setPendingReleaseId(null);
+    }
   };
 
   const handleRelease = async (id: string) => {
@@ -155,7 +172,7 @@ const EscrowPortal: React.FC<EscrowPortalProps> = ({ user }) => {
                       <div className="flex flex-col justify-end gap-3">
                          {escrow.status === 'LOCKED' ? (
                            <button 
-                             onClick={() => handleRelease(escrow.id)}
+                             onClick={() => handleReleaseClick(escrow.id)}
                              className="w-full py-4 bg-white text-black hover:bg-slate-200 transition-all rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 flex items-center justify-center gap-3"
                            >
                              EXECUTE_RELEASE_SHARD <Handshake size={16} />
@@ -308,6 +325,14 @@ const EscrowPortal: React.FC<EscrowPortalProps> = ({ user }) => {
           </div>
         )}
       </AnimatePresence>
+
+      <BiometricVerificationModal 
+        isOpen={isBioOpen}
+        onClose={() => setIsBioOpen(false)}
+        onSuccess={handleBioSuccess}
+        actionName={`Authorize Smart Escrow Release (${pendingReleaseId})`}
+        stewardEsin={user.esin}
+      />
     </div>
   );
 };

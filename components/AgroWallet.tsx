@@ -79,6 +79,7 @@ import { HenIcon } from './Icons';
 import { analyzeInstitutionalRisk, consultFinancialOracle, AgroLangResponse, chatWithAgroLang } from '../services/agroLangService';
 import { initiatePayPalPayout } from '../services/paymentService';
 import { toast } from 'sonner';
+import { BiometricVerificationModal } from './BiometricVerificationModal';
 import { doc, getDocFromServer } from 'firebase/firestore';
 import { db } from '../services/firebaseService';
 
@@ -149,6 +150,7 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
   );
   const [esinSign, setEsinSign] = useState('');
   const [isProcessingGateway, setIsProcessingGateway] = useState(false);
+  const [isBioOpen, setIsBioOpen] = useState(false);
 
   // Oracle States
   const [oracleAdvice, setOracleAdvice] = useState<string | null>(null);
@@ -372,6 +374,11 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       return;
     }
 
+    // Trigger high-security hardware biometric enclave scan
+    setIsBioOpen(true);
+  };
+
+  const executeFinalSettlement = () => {
     setIsProcessingGateway(true);
     setTimeout(() => {
       const amt = gatewayEacEquivalent;
@@ -1058,6 +1065,13 @@ const AgroWallet: React.FC<AgroWalletProps> = ({
       )}
 
       
+      <BiometricVerificationModal 
+        isOpen={isBioOpen}
+        onClose={() => setIsBioOpen(false)}
+        onSuccess={executeFinalSettlement}
+        actionName={`Sovereign Bridge Settlement Transaction (${gatewayAmount} ${gatewayCurrency})`}
+        stewardEsin={user.esin}
+      />
     </>
   );
 };

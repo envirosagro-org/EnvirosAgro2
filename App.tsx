@@ -850,10 +850,25 @@ const App: React.FC = () => {
       const popupLayer = (signal.dispatchLayers || []).find((l: any) => l.channel === 'POPUP'); 
       if (popupLayer) { 
         const id = generateAlphanumericId(7).toLowerCase(); 
-        audioManager.playHenCluck();
+        const nType = signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info';
+        
+        // Trigger Agromusika acoustic synthesis and physical chicken clucks in tandem
+        try {
+          if (nType === 'success') {
+            audioManager.playSystemSuccess();
+          } else if (nType === 'error' || nType === 'warning') {
+            audioManager.playSystemError();
+          } else {
+            audioManager.playNotificationPing();
+          }
+          audioManager.playHenCluck();
+        } catch (soundErr) {
+          console.warn('Acoustic dispatch error:', soundErr);
+        }
+
         setNotifications((prev: NotificationShard[]) => [{ 
           id, 
-          type: signal.type === 'ledger_anchor' ? 'success' : signal.priority === 'critical' ? 'error' : signal.priority === 'high' ? 'warning' : 'info', 
+          type: nType, 
           title: signal.title, 
           message: signal.message, 
           duration: 6000, 

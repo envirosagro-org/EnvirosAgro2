@@ -19,7 +19,7 @@ class AudioManager {
   private sycamoreLeaf: Howl;
   private isInitialized: boolean = false;
 
-  // Web Audio bio-synthesizer properties (Agromusika Engine)
+  // Web Audio bio-synthesizer properties
   private audioCtx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private oscEarth: OscillatorNode | null = null;
@@ -35,7 +35,7 @@ class AudioManager {
   private lfoGain: GainNode | null = null;
 
   private isSynthPlaying: boolean = false;
-  private volumeLevel: number = 0.4; // Controlled range [0..1]
+  private volumeLevel: number = 0.5; // Starts active but controllable
 
   constructor() {
     this.henCluck = new Howl({
@@ -55,7 +55,7 @@ class AudioManager {
   initialize() {
     if (this.isInitialized) return;
     this.isInitialized = true;
-    console.log('Agromusika Acoustic System Initialized');
+    console.log('EnvirosAgro Audio System Initialized');
   }
 
   playHenCluck() {
@@ -74,7 +74,7 @@ class AudioManager {
     }
   }
 
-  // --- Web Audio Agromusika Engine Implementation ---
+  // --- Web Audio Bio-Synthesizer Implementation ---
 
   private ensureAudioContext() {
     if (!this.audioCtx) {
@@ -92,9 +92,9 @@ class AudioManager {
   }
 
   setVolume(level: number) {
-    this.volumeLevel = Math.max(0, Math.min(1, level));
-    if (this.masterGain && this.audioCtx) {
-      this.masterGain.gain.setTargetAtTime(this.volumeLevel, this.audioCtx.currentTime, 0.1);
+    this.volumeLevel = level;
+    if (this.audioCtx && this.masterGain) {
+      this.masterGain.gain.setValueAtTime(level, this.audioCtx.currentTime);
     }
   }
 
@@ -117,21 +117,18 @@ class AudioManager {
 
       const ctx = this.audioCtx;
 
-      // 1. Earth Resonance (Soil Health model: deep sub grounding frequency)
+      // 1. Earth Resonance (Soil Health controls pitch and depth)
       this.oscEarth = ctx.createOscillator();
       this.oscEarth.type = 'triangle';
       this.oscEarthGain = ctx.createGain();
-      this.oscEarthGain.gain.setValueAtTime(0, ctx.currentTime);
       
-      // 2. Flora Vibrations (Plant Diversity model: sweet middle floral vibes)
+      // 2. Flora Vibrations (Plant Diversity controls higher sweet harmonic frequencies)
       this.oscFlora = ctx.createOscillator();
       this.oscFlora.type = 'sine';
       this.oscFloraGain = ctx.createGain();
-      this.oscFloraGain.gain.setValueAtTime(0, ctx.currentTime);
 
-      // 3. Atmospheric Breeze (Air Purity model: white noise band-pass wind gusting)
+      // 3. Leafy Breeze (Pure Air Purity controls white noise wind level)
       this.noiseGain = ctx.createGain();
-      this.noiseGain.gain.setValueAtTime(0, ctx.currentTime);
       this.noiseFilter = ctx.createBiquadFilter();
       this.noiseFilter.type = 'lowpass';
       
@@ -146,7 +143,7 @@ class AudioManager {
       this.noiseSource.buffer = buffer;
       this.noiseSource.loop = true;
 
-      // 4. Hydration Water Ripple (Water Quality model: LFO routing)
+      // 4. Hydration Ripple (Water quality modulates oscillator volume using an slowly oscillating LFO)
       this.lfo = ctx.createOscillator();
       this.lfo.type = 'sine';
       this.lfoGain = ctx.createGain();
@@ -162,21 +159,23 @@ class AudioManager {
       this.noiseFilter.connect(this.noiseGain);
       this.noiseGain.connect(this.masterGain);
 
-      // LFO modulates Flora gain nodes dynamically for a ripple flow effect
+      // Connect LFO: modulate Flora Gain Node slightly to simulate running water/waves ripples
       this.lfo.connect(this.lfoGain);
-      this.lfoGain.connect(this.oscFloraGain.gain);
+      this.lfoGain.connect(this.oscFloraGain.gain); // Modulate gain dynamically
 
-      // Start sound nodes
+      // Start all nodes
       this.oscEarth.start(0);
       this.oscFlora.start(0);
       this.noiseSource.start(0);
       this.lfo.start(0);
 
       this.isSynthPlaying = true;
+      
+      // Initial state push
       this.updateScentSynth(factors);
-      console.log('Agromusika Synth: Activated');
+      console.log('Bio-Scent Ambient Synthesizer Stream ACTIVE');
     } catch (e) {
-      console.error('Agromusika failed to initialize synthesis nodes', e);
+      console.error('Failed to start scent synth', e);
     }
   }
 
@@ -186,51 +185,51 @@ class AudioManager {
       const ctx = this.audioCtx;
       const t = ctx.currentTime;
 
-      // Soil Health maps to deep frequency (45Hz - 110Hz)
+      // Map Soil Health to deep grounding freq (40Hz to 120Hz)
       if (this.oscEarth && this.oscEarthGain) {
-        const earthFreq = 45 + (factors.soilHealth / 100) * 65;
-        this.oscEarth.frequency.setTargetAtTime(earthFreq, t, 0.3);
-        const gainVal = (factors.soilHealth / 100) * 0.12;
-        this.oscEarthGain.gain.setTargetAtTime(gainVal, t, 0.3);
+        const earthFreq = 40 + (factors.soilHealth / 100) * 80;
+        this.oscEarth.frequency.exponentialRampToValueAtTime(earthFreq, t + 0.5);
+        this.oscEarthGain.gain.linearRampToValueAtTime(0.12, t + 0.3);
       }
 
-      // Plant Diversity maps to mid floral harmony (160Hz - 440Hz)
+      // Map Plant Diversity to middle flora freq (180Hz to 480Hz)
       if (this.oscFlora && this.oscFloraGain) {
-        const floraFreq = 160 + (factors.plantDiversity / 100) * 280;
-        this.oscFlora.frequency.setTargetAtTime(floraFreq, t, 0.3);
-        const gainVal = (factors.plantDiversity / 100) * 0.08;
-        this.oscFloraGain.gain.setTargetAtTime(gainVal, t, 0.3);
+        const floraFreq = 180 + (factors.plantDiversity / 100) * 300;
+        this.oscFlora.frequency.exponentialRampToValueAtTime(floraFreq, t + 0.5);
+        this.oscFloraGain.gain.linearRampToValueAtTime(0.08, t + 0.3);
       }
 
-      // Water Quality maps to LFO Ripple rate (0.2Hz - 3.2Hz)
+      // Map Water Quality to Hydration Ripple LFO speed & depth
       if (this.lfo && this.lfoGain) {
-        const lfoSpeed = 0.2 + (factors.waterQuality / 100) * 3.0;
-        this.lfo.frequency.setTargetAtTime(lfoSpeed, t, 0.3);
-        const lfoDepth = (factors.waterQuality / 100) * 0.04;
-        this.lfoGain.gain.setTargetAtTime(lfoDepth, t, 0.3);
+        const lfoSpeed = 0.1 + (factors.waterQuality / 100) * 2.4; // 0.1Hz to 2.5Hz
+        this.lfo.frequency.linearRampToValueAtTime(lfoSpeed, t + 0.5);
+        const lfoDepth = (factors.waterQuality / 100) * 0.05; // gain depth modulation swing
+        this.lfoGain.gain.linearRampToValueAtTime(lfoDepth, t + 0.3);
       }
 
-      // Air Purity maps to breeze frequency cutoff (100Hz - 1600Hz)
+      // Map Air Purity to Breeze Level filter cutoff & intensity
       if (this.noiseFilter && this.noiseGain) {
-        const filterCutoff = 100 + (factors.airPurity / 100) * 1500;
-        this.noiseFilter.frequency.setTargetAtTime(filterCutoff, t, 0.3);
-        const breezeVolume = (factors.airPurity / 100) * 0.06;
-        this.noiseGain.gain.setTargetAtTime(breezeVolume, t, 0.3);
+        const filterCutoff = 150 + (factors.airPurity / 100) * 1200; // 150Hz to 1350Hz cut-off
+        this.noiseFilter.frequency.exponentialRampToValueAtTime(filterCutoff, t + 0.5);
+        const breezeVolume = (factors.airPurity / 100) * 0.08;
+        this.noiseGain.gain.linearRampToValueAtTime(breezeVolume, t + 0.3);
       }
+
     } catch (e) {
-      console.warn('Agromusika synth update failure', e);
+      console.warn('Synthesizer adjustment failed', e);
     }
   }
 
   stopScentSynth() {
     try {
       if (!this.audioCtx || !this.isSynthPlaying) return;
+      
       const t = this.audioCtx.currentTime;
       
-      // Fast fade out then teardown
-      this.oscEarthGain?.gain.setTargetAtTime(0, t, 0.1);
-      this.oscFloraGain?.gain.setTargetAtTime(0, t, 0.1);
-      this.noiseGain?.gain.setTargetAtTime(0, t, 0.1);
+      // Elegant fade out
+      this.oscEarthGain?.gain.linearRampToValueAtTime(0, t + 0.3);
+      this.oscFloraGain?.gain.linearRampToValueAtTime(0, t + 0.3);
+      this.noiseGain?.gain.linearRampToValueAtTime(0, t + 0.3);
 
       setTimeout(() => {
         try {
@@ -244,11 +243,54 @@ class AudioManager {
           this.noiseSource = null;
           this.lfo = null;
           this.isSynthPlaying = false;
-          console.log('Agromusika Synth: Suspended');
+          console.log('Bio-Scent Ambient Synthesizer Stream STANDBY');
         } catch (err) {}
-      }, 250);
+      }, 350);
+
     } catch (e) {
-      console.error('Agromusika teardown failure', e);
+      console.error('Failed to stop scent synth', e);
+    }
+  }
+
+  // Active trigger beep-swishing effect for dispensing
+  triggerDispenseHum(durationMs: number = 3000) {
+    try {
+      this.ensureAudioContext();
+      if (!this.audioCtx || !this.masterGain) return;
+
+      const ctx = this.audioCtx;
+      const t = ctx.currentTime;
+      const dur = durationMs / 1000;
+
+      // Ultrasonic active mist hum
+      const oscMist = ctx.createOscillator();
+      const gainMist = ctx.createGain();
+
+      oscMist.type = 'sine';
+      
+      // Sweep sound: starts in sub-bass and sweeps quickly into sweet mid-frequencies (like a compressed mist nozzle opening!)
+      oscMist.frequency.setValueAtTime(80, t);
+      oscMist.frequency.exponentialRampToValueAtTime(1200, t + 0.4);
+      oscMist.frequency.exponentialRampToValueAtTime(600, t + dur / 2);
+      oscMist.frequency.exponentialRampToValueAtTime(20, t + dur);
+
+      // Volume envelope: rapid attack, gentle sustain, fading to absolute quiet
+      gainMist.gain.setValueAtTime(0, t);
+      gainMist.gain.linearRampToValueAtTime(0.18, t + 0.25);
+      gainMist.gain.linearRampToValueAtTime(0.1, t + dur - 0.5);
+      gainMist.gain.linearRampToValueAtTime(0, t + dur);
+
+      oscMist.connect(gainMist);
+      gainMist.connect(this.masterGain);
+
+      oscMist.start(t);
+      oscMist.stop(t + dur);
+
+      // Trigger standard sycamore leaf click for high physical feedback
+      this.playSycamoreLeafSound();
+
+    } catch (e) {
+      console.error('Failed sweeping active mist hum', e);
     }
   }
 
@@ -357,44 +399,6 @@ class AudioManager {
       osc.stop(t + 0.45);
     } catch (e) {
       console.error('Error audio synthesis issue:', e);
-    }
-  }
-
-  /**
-   * M2M cybernetic handshake audio sweep
-   */
-  triggerDispenseHum(durationMs: number = 3000) {
-    try {
-      this.ensureAudioContext();
-      if (!this.audioCtx || !this.masterGain) return;
-
-      const ctx = this.audioCtx;
-      const t = ctx.currentTime;
-      const dur = durationMs / 1000;
-
-      const oscMist = ctx.createOscillator();
-      const gainMist = ctx.createGain();
-
-      oscMist.type = 'sine';
-      oscMist.frequency.setValueAtTime(90, t);
-      oscMist.frequency.exponentialRampToValueAtTime(1100, t + 0.3);
-      oscMist.frequency.exponentialRampToValueAtTime(650, t + dur / 2);
-      oscMist.frequency.exponentialRampToValueAtTime(30, t + dur);
-
-      gainMist.gain.setValueAtTime(0, t);
-      gainMist.gain.linearRampToValueAtTime(0.16, t + 0.2);
-      gainMist.gain.linearRampToValueAtTime(0.1, t + dur - 0.4);
-      gainMist.gain.linearRampToValueAtTime(0, t + dur);
-
-      oscMist.connect(gainMist);
-      gainMist.connect(this.masterGain);
-
-      oscMist.start(t);
-      oscMist.stop(t + dur);
-
-      this.playSycamoreLeafSound();
-    } catch (e) {
-      console.error('Dispense hum audio synthesis issue:', e);
     }
   }
 }

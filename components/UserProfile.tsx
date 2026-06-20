@@ -1,6 +1,9 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
+import { BiometricVerificationModal } from './BiometricVerificationModal';
+import { biometricService } from '../services/biometricService';
+import { Plus, Cpu } from 'lucide-react';
 import { 
   User as UserIcon, MapPin, ShieldCheck, Edit3, 
   BadgeCheck, Loader2, Star, Flower2, Stamp, Wallet, 
@@ -79,6 +82,34 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdateUser, 
   const [tfaMethod, setTfaMethod] = useState<'EMAIL' | 'SMS'>(user.tfaMethod || 'EMAIL');
   const [isTfaActionLoading, setIsTfaActionLoading] = useState(false);
   const [securityStatusMsg, setSecurityStatusMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
+
+  // High security biometric passkeys bindings
+  const [passkeys, setPasskeys] = useState<any[]>([]);
+  const [isBioEnrollOpen, setIsBioEnrollOpen] = useState(false);
+
+  useEffect(() => {
+    if (user && user.esin) {
+      setPasskeys(biometricService.getRegisteredPasskeys(user.esin));
+    }
+  }, [user]);
+
+  const handleEnrollPasskeySuccess = async () => {
+    try {
+      const newKey = await biometricService.registerPasskey(user.esin, user.name, async () => {
+        return true;
+      });
+      setPasskeys(biometricService.getRegisteredPasskeys(user.esin));
+      notify('success', 'PASSKEY_ENROLLED', `Biometric Passkey [${newKey.displayName}] enrolled and stored in Secure Enclave.`);
+    } catch (err: any) {
+      notify('error', 'BIOMETRIC_ENROLLMENT_FAILED', err.message);
+    }
+  };
+
+  const handleRevokePasskey = (pkId: string, displayName: string) => {
+    biometricService.revokePasskey(user.esin, pkId);
+    setPasskeys(biometricService.getRegisteredPasskeys(user.esin));
+    notify('success', 'PASSKEY_REVOKED', `Biometric Passkey [${displayName}] revoked successfully.`);
+  };
 
   const idCardRef = useRef<HTMLDivElement>(null);
   const certRef = useRef<HTMLDivElement>(null);
@@ -709,6 +740,70 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdateUser, 
                      ))}
                   </div>
 
+                   {/* WebAuthn Credentials / Passkey Manager Sector */}
+                   <div className="pt-8 border-t border-white/5 space-y-8 text-left animate-in fade-in duration-500">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                         <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                               <Fingerprint size={18} className="text-emerald-400" />
+                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">WebAuthn SECURE ENCLAVE CREDENTIALS</span>
+                            </div>
+                            <p className="text-[9px] text-slate-500 italic max-w-md">
+                               Hardware keys linked directly to this device's biometric keychain chip (Touch ID, Face ID, or Windows Hello).
+                            </p>
+                         </div>
+                         <button
+                            onClick={() => setIsBioEnrollOpen(true)}
+                            className="px-5 py-2.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2"
+                         >
+                            <Plus size={12} /> ENROLL HARDWARE PASSKEY
+                         </button>
+                      </div>
+
+                      {passkeys.length === 0 ? (
+                         <div className="p-8 text-center bg-white/5 border border-white/5 rounded-3xl space-y-2">
+                            <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase italic">NO PASSKEYS DETECTED ON NODE</p>
+                            <p className="text-[9px] text-slate-600 max-w-xs mx-auto italic">
+                               Enforce local device biometric handshakes for instant checkout authorization & treasury security by enrolling your device keychain.
+                            </p>
+                         </div>
+                      ) : (
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {passkeys.map((pk) => (
+                               <div key={pk.id} className="p-5 bg-black/60 rounded-[24px] border border-white/5 text-left space-y-4 relative group hover:border-emerald-500/20 transition-all">
+                                  <div className="flex justify-between items-start">
+                                     <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                                           <Cpu size={18} />
+                                        </div>
+                                        <div>
+                                           <p className="text-[10px] text-white font-black truncate max-w-[180px] font-mono uppercase">{pk.displayName}</p>
+                                           <p className="text-[8px] text-slate-600 font-mono">ID: {pk.id.substring(0, 16)}...</p>
+                                        </div>
+                                     </div>
+                                     <button
+                                        onClick={() => handleRevokePasskey(pk.id, pk.displayName)}
+                                        className="p-1 px-2.5 bg-rose-950/20 hover:bg-rose-900/60 border border-rose-900/40 text-rose-400 rounded-full text-[8px] font-mono font-black uppercase transition-all cursor-pointer"
+                                     >
+                                        REVOKE
+                                     </button>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 text-[8px] font-mono text-slate-500 pt-2 border-t border-white/5">
+                                     <div>
+                                        <span>ALGO: </span>
+                                        <span className="text-slate-300 font-bold">{pk.algorithm}</span>
+                                     </div>
+                                     <div className="text-right">
+                                        <span>DATE: </span>
+                                        <span className="text-slate-300 font-bold">{new Date(pk.registeredAt).toLocaleDateString()}</span>
+                                     </div>
+                                  </div>
+                               </div>
+                            ))}
+                         </div>
+                      )}
+                   </div>
+
                   {/* Email Change Resigning Sector */}
                   <div className="pt-8 border-t border-white/5 space-y-8 text-left animate-in fade-in duration-500">
                      <div className="flex items-center gap-3">
@@ -863,6 +958,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, isGuest, onUpdateUser, 
       </div>
 
       
+      <BiometricVerificationModal 
+        isOpen={isBioEnrollOpen}
+        onClose={() => setIsBioEnrollOpen(false)}
+        onSuccess={handleEnrollPasskeySuccess}
+        actionName="Enroll Device Keychain Passkey Shard"
+        stewardEsin={user.esin}
+      />
     </div>
   );
 };
